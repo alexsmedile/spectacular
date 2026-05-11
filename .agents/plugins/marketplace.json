@@ -1,0 +1,20 @@
+{
+  "name": "spectacular",
+  "interface": {
+    "displayName": "spectacular"
+  },
+  "plugins": [
+    {
+      "name": "spectacular",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/alexsmedile/spectacular.git"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

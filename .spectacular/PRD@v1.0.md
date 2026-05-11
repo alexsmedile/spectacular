@@ -1,0 +1,698 @@
+# Spectacular — Product Requirements Document
+
+## Vision
+
+Spectacular is an AI-native operational workspace for software projects.
+
+It helps humans and coding agents maintain coherence across long-running product development by separating:
+
+- strategic context
+- current system truth
+- active requests
+- operational memory
+- reusable execution skills
+
+The framework is designed for modern AI-assisted development where the primary bottleneck is no longer code generation, but context management, decision continuity, and execution clarity.
+
+---
+
+# Core Principles
+
+## 1. Context is the system
+
+The project structure must optimize:
+- retrieval quality
+- context layering
+- long-running continuity
+- low context entropy
+
+Agents should load:
+- only relevant information
+- progressively
+- by capability and task
+
+Never the entire repository.
+
+---
+
+## 2. Separate intent from truth
+
+Strategic documents define:
+- why the product exists
+- goals
+- philosophy
+- constraints
+
+Operational documents define:
+- current behavior
+- implementation truth
+- active work
+
+Temporary work should never pollute canonical truth.
+
+---
+
+## 3. Small files over giant documents
+
+Prefer:
+- modular capability files
+- layered context
+- local reasoning
+
+Avoid:
+- giant PRDs
+- monolithic specs
+- mega prompts
+
+---
+
+## 4. Humans and agents share the same workspace
+
+The repository should:
+- remain readable by humans
+- remain structured for agents
+- support retrieval systems
+- support automation
+
+---
+
+## 5. Operational memory compounds
+
+The system should preserve:
+- lessons
+- failures
+- architectural traps
+- recurring bugs
+- implementation patterns
+
+Agents should not repeatedly rediscover solved problems.
+
+---
+
+# Goals
+
+## Primary Goals
+
+- create a scalable AI-native project structure
+- reduce context rot
+- improve agent execution quality
+- improve long-running project coherence
+- separate stable truth from active work
+- support multi-agent workflows
+- enable reusable operational skills
+
+---
+
+# Non-Goals
+
+Spectacular is NOT:
+- a ticketing system
+- a project management tool
+- a documentation wiki
+- a replacement for git
+- a replacement for human facing READMEs
+- a rigid enterprise requirements framework
+
+The system should remain lightweight and operational.
+
+---
+
+# Target Users
+
+## Primary Users
+
+- solo developers using AI coding agents
+- startup teams
+- AI-native product teams
+- technical founders
+- rapid iteration teams
+
+---
+
+## Secondary Users
+
+- agencies
+- open-source maintainers
+- internal platform teams
+
+---
+
+# Repository Architecture
+
+```txt
+.spectacular/
+|
+| <root-layer>
+│
+├── ideas/              # exploratory thinking, possible futures
+│
+├── current/            # current source of truth
+│
+├── requests/           # proposed evolution or active work
+│
+├── skills/             # reusable operational capabilities
+│
+├── workflows/          # execution processes
+│
+├── memory/             # long-term operational learning
+│
+└── archive/            # completed work, historical memory
+```
+
+---
+
+# Root Layer
+
+The root layer contains stable project grounding.
+
+Example:
+
+```txt
+├── PRD.md # product/business intent
+├── STACK.md # technologies + architecture
+├── PRINCIPLES.md # optional context but helpful
+├── DECISIONS.md # optional context but helpful
+├── AGENTS.md # important orchestration layer
+└── config.yaml
+```
+
+## Purpose
+
+Defines:
+- project intent
+- engineering philosophy
+- stack constraints
+- global agent rules
+- stable architecture decisions
+
+## Rules
+
+- should change infrequently
+- should remain concise
+- should avoid implementation details
+- should optimize retrieval quality
+
+---
+
+### STACK.md
+
+Example:
+
+```md
+Frontend
+- Next.js 15
+- Tailwind v4
+- Zustand
+
+Backend
+- Supabase
+- Edge Functions
+
+Rules
+- Prefer server actions
+- Avoid client-side fetching
+```
+
+---
+
+### DECISIONS.md
+
+Example:
+
+```md
+# Decisions
+
+## 2026-05-11
+
+Decision:
+Use Postgres RLS instead of app-level permissions
+
+Why:
+Centralized security logic
+
+Tradeoffs:
+Harder local debugging
+```
+
+---
+
+# Ideas Layer
+
+The ideas layer stores exploratory concepts before formalization. Often messy and unconfirmed “pre-spec thinking”.
+
+You need a place for:
+
+* raw thoughts
+* market observations
+* UX experiments
+* discarded approaches
+* future concepts
+
+Example:
+
+```txt
+ideas/
+├── multiplayer-editor.md
+├── ai-memory-system.md
+└── growth-loops.md
+```
+
+Often talks about: Problem, Hypothesis, User value, Risks, Open questions, Possible approaches, Raw thoughts.
+
+## Purpose
+
+Capture:
+- experiments
+- hypotheses
+- rough concepts
+- future opportunities
+- discarded approaches
+
+## Rules
+
+- low commitment
+- speculative
+- non-canonical
+
+---
+
+# Current Specs Layer
+
+The current specs layer represents the canonical system truth.
+
+Example:
+
+```txt
+current/
+├── auth/
+├── billing/
+└── editor/
+```
+
+## Purpose
+
+Defines:
+- current behavior
+- active capabilities
+- security requirements
+- performance expectations
+- user-visible behavior
+
+## Rules
+
+- authoritative
+- current only
+- behavior-oriented
+- modular
+- implementation-aware when necessary
+
+---
+
+# Requests Layer
+
+The requests layer contains proposed or active work.
+
+Example:
+
+```txt
+requests/add-team-billing/
+├── PLAN.md
+├── TASKS.md
+├── SESSION.md
+├── VERIFY.md
+├── specs/
+└── artifacts/
+│      ├── screenshots/
+│      └── research/
+```
+
+## Purpose
+
+Track:
+- planned changes
+- execution work
+- temporary reasoning
+- implementation state
+
+## Rules
+
+- temporary
+- operational
+- disposable after completion
+- create execution-oriented TASKS
+
+---
+
+# Skills Layer
+
+Skills define reusable operational behaviors.
+
+Example:
+
+```txt
+skills/
+├── planning/
+├── debugging/
+├── refactoring/
+├── testing/
+└── review/
+```
+
+Often symlinked to actual .claude/skills / .agents/skills.
+Those can be spectacular standard skills or project specific.
+
+## Purpose
+
+Provide:
+- reusable execution logic
+- repeatable workflows
+- operational checklists
+- task specialization
+
+---
+
+# Workflows Layer (Optional)
+
+Workflows define procedural execution sequences.
+
+Example:
+
+```txt
+workflows/
+├── feature.md
+├── migration.md
+├── hotfix.md
+└── release.md
+```
+
+## Purpose
+
+Standardize:
+- implementation flow
+- validation flow
+- release flow
+- collaboration patterns
+
+---
+
+# Memory Layer (Optional)
+
+The memory layer stores long-term operational learning.
+
+Example:
+
+```txt
+memory/
+├── failures.md
+├── lessons.md
+├── architecture-traps.md
+└── recurring-bugs.md
+```
+
+Open question: decide how to pair it with .claude .agents memory systems.
+
+## Purpose
+
+Prevent repeated mistakes.
+
+---
+
+# Archive Layer
+
+Archive completed requests and preserve historical context.
+
+Example:
+
+```txt
+archive/
+└── add-team-billing/
+```
+
+Keep same slug/id.
+
+---
+
+# Lifecycle Model
+
+Spectacular follows a simple philosophy: mental order is half the project.
+
+```txt
+IDEA
+→ PLANNED
+→ ACTIVE
+→ IMPLEMENT
+→ REVIEW
+→ VERIFIED
+→ ARCHIVED
+```
+
+Introduce lifecycle states:
+`ideas → planned → active → review → archived`
+Put this in frontmatter `status: active`.
+
+---
+
+# Specification Model
+
+Capability specifications should remain modular.
+
+Example:
+
+```txt
+current/auth/
+├── login.md
+├── sessions.md
+└── permissions.md
+```
+
+Each specification should contain:
+- purpose
+- requirements
+- scenarios
+- security considerations
+- performance expectations
+
+---
+
+# Request Model
+
+Each request should contain:
+
+## PLAN.md
+
+“Plan” implies:
+
+* actionable
+* executable
+* temporary
+
+Defines (example):
+- goal
+- why
+- scope / out of scope
+- approach
+- success criteria
+- rollout
+
+---
+
+## TASKS.md
+
+Defines:
+- executable implementation checklist
+- grouped work items
+- verification tasks
+
+---
+
+## SESSION.md (optional)
+
+Defines:
+- temporary execution state
+- current blockers
+- next actions
+
+---
+
+## RISKS.md (optional)
+
+Defines:
+- edge cases
+- architectural risks
+- mitigation plans
+
+Agents rarely reason about failure modes unless explicitly prompted.
+
+This file can improve implementation quality dramatically.
+
+---
+
+## VERIFY.md (optional)
+
+Defines:
+- manual QA
+- automated testing
+- regression verification
+- rollback validation
+
+---
+
+## Add artifacts/
+
+Important for modern product work.
+
+Store:
+
+* screenshots
+* diagrams
+* benchmark results
+* copied research
+* prompt outputs
+
+Example:
+
+```txt
+artifacts/
+├── screenshots/
+├── benchmarks/
+├── user-feedback/
+└── research/
+```
+
+---
+
+## Add frontmatter
+
+Example:
+
+```md
+---
+status: active
+owner: product
+priority: high
+updated: 2026-05-11
+related:
+  - auth
+  - billing
+---
+```
+
+Open task: better define front matter and for which docs.
+
+---
+
+## Add machine-readable config
+
+```txt
+.spectacular/config.yaml
+```
+
+Example:
+
+```yaml
+naming:
+  changes: kebab-case
+
+required_files:
+  - PLAN.md
+  - TASKS.md
+
+agents:
+  default_context:
+    - PRD.md
+    - STACK.md
+    - DECISIONS.md
+```
+
+Open question: still undefined. still unclear on how to use it and when.
+
+---
+
+## Optimize for partial context loading
+
+This is the biggest architectural improvement.
+Don’t assume “load everything”. That fails at scale.
+
+The system should support context layers.
+
+```txt
+global context
+→ product context
+→ capability context
+→ change context
+→ task context
+```
+
+
+---
+
+# Agent Design Principles
+
+Agents should:
+- load minimal viable context
+- prefer local capability reasoning
+- summarize before handoff
+- avoid giant prompts
+- preserve continuity through memory
+
+---
+
+# Retrieval Principles
+
+## Retrieval order
+
+### Planning
+- PRD.md
+- PRINCIPLES.md
+- DECISIONS.md
+
+### Implementation
+- STACK.md
+- PLAN.md
+- TASKS.md
+- local capability specs
+
+### Review
+- VERIFY.md
+- capability specs
+- risks
+
+---
+
+# Anti-Entropy Rules
+
+- prefer spec files shorter than 500 lines
+- avoid duplicated truth
+- archive stale execution context
+- split capabilities aggressively
+- prefer explicit lifecycle states
+- preserve operational memory
+
+## The most important insight
+
+You are NOT designing:
+a documentation system
+
+You are designing:
+a temporal operational model
+
+The names should express time/state.
+current and requests do that beautifully.
+
+Current truth `load current/auth/`.
+Active work `load requests/add-team-billing/`.
+
+---
+
+# Future Vision
+
+Spectacular should evolve into:
+- a repository operating system
+- an AI-native development memory layer
+- a context orchestration framework
+- a multi-agent execution workspace
+
+The system should scale from:
+- solo builders
+to
+- autonomous multi-agent engineering systems.

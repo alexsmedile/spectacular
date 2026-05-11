@@ -1,0 +1,24 @@
+project:
+  name: spectacular
+  summary: "AI-native operational workspace — directory convention, skill, and CLI bootstrap for software projects"
+
+naming:
+  requests: kebab-case
+  prefix: ""
+
+required_files:
+  requests:
+    - PLAN.md
+    - TASKS.md
+
+agents:
+  file: AGENTS.md             # override to CLAUDE.md for Claude-only teams
+  tool_overrides:             # per-tool agent files (read in addition to file: above)
+    # claude: CLAUDE.md       # uncomment if AGENTS.md is primary but Claude also needs CLAUDE.md
+  default_context:
+    - PRD.md
+    - STACK.md
+    - DECISIONS.md
+
+skills:
+  symlink_on_init: []

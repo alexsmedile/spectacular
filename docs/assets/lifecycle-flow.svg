@@ -1,0 +1,50 @@
+<svg viewBox="0 0 860 120" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace">
+
+  <!-- background -->
+  <rect width="860" height="120" fill="#0d1117" rx="12"/>
+
+  <!-- planned -->
+  <rect x="20" y="35" width="120" height="50" rx="8" fill="#1c2128" stroke="#30363d" stroke-width="1.5"/>
+  <text x="80" y="57" text-anchor="middle" fill="#8b949e" font-size="10" letter-spacing="0.5">STATUS</text>
+  <text x="80" y="74" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="600">planned</text>
+
+  <!-- arrow 1 -->
+  <line x1="141" y1="60" x2="181" y2="60" stroke="#30363d" stroke-width="1.5"/>
+  <polygon points="181,55 191,60 181,65" fill="#30363d"/>
+
+  <!-- active -->
+  <rect x="192" y="35" width="120" height="50" rx="8" fill="#1c2128" stroke="#238636" stroke-width="1.5"/>
+  <text x="252" y="57" text-anchor="middle" fill="#3fb950" font-size="10" letter-spacing="0.5">STATUS</text>
+  <text x="252" y="74" text-anchor="middle" fill="#3fb950" font-size="13" font-weight="600">active</text>
+
+  <!-- arrow 2 -->
+  <line x1="313" y1="60" x2="353" y2="60" stroke="#30363d" stroke-width="1.5"/>
+  <polygon points="353,55 363,60 353,65" fill="#30363d"/>
+
+  <!-- review -->
+  <rect x="364" y="35" width="120" height="50" rx="8" fill="#1c2128" stroke="#d29922" stroke-width="1.5"/>
+  <text x="424" y="57" text-anchor="middle" fill="#d29922" font-size="10" letter-spacing="0.5">STATUS</text>
+  <text x="424" y="74" text-anchor="middle" fill="#d29922" font-size="13" font-weight="600">review</text>
+
+  <!-- arrow 3 -->
+  <line x1="485" y1="60" x2="525" y2="60" stroke="#30363d" stroke-width="1.5"/>
+  <polygon points="525,55 535,60 525,65" fill="#30363d"/>
+
+  <!-- verified -->
+  <rect x="536" y="35" width="120" height="50" rx="8" fill="#1c2128" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="596" y="57" text-anchor="middle" fill="#58a6ff" font-size="10" letter-spacing="0.5">STATUS</text>
+  <text x="596" y="74" text-anchor="middle" fill="#58a6ff" font-size="13" font-weight="600">verified</text>
+
+  <!-- arrow 4 -->
+  <line x1="657" y1="60" x2="697" y2="60" stroke="#30363d" stroke-width="1.5"/>
+  <polygon points="697,55 707,60 697,65" fill="#30363d"/>
+
+  <!-- archived -->
+  <rect x="708" y="35" width="132" height="50" rx="8" fill="#1c2128" stroke="#6e7681" stroke-width="1.5"/>
+  <text x="774" y="57" text-anchor="middle" fill="#6e7681" font-size="10" letter-spacing="0.5">STATUS</text>
+  <text x="774" y="74" text-anchor="middle" fill="#6e7681" font-size="13" font-weight="600">archived</text>
+
+  <!-- caption -->
+  <text x="430" y="108" text-anchor="middle" fill="#484f58" font-size="10">state lives in PLAN.md frontmatter · skill detects signals and proposes transitions</text>
+
+</svg>

@@ -1,0 +1,17 @@
+# spectacular workspace personal overrides
+.spectacular.local/
+
+# tool caches
+.scrapekit/
+.playwright-mcp/
+
+# backups and archives
+_backups/
+_archive/
+_archived/
+
+# OS
+.DS_Store
+
+# node (if CLI gains deps later)
+node_modules/

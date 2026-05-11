@@ -1,0 +1,468 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ── constants ────────────────────────────────────────────────────────────────
+GITHUB_REPO="alexsmedile/spectacular"
+GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
+GITHUB_MAIN_TARBALL="https://github.com/${GITHUB_REPO}/archive/refs/heads/main.tar.gz"
+SKILL_PATH_IN_TARBALL="skills/spectacular"
+TODAY="$(date +%Y-%m-%d)"
+
+# ── defaults ─────────────────────────────────────────────────────────────────
+OPT_NAME=""
+OPT_SUMMARY=""
+OPT_AGENTS_FILE="AGENTS.md"
+OPT_GLOBAL=false
+OPT_UPDATE=false
+OPT_INTERACTIVE=false
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+die()  { echo "Error: $*" >&2; exit 1; }
+info() { echo "$*"; }
+skip() { echo "  skipped  $*"; }
+created() { echo "  created  $*"; }
+
+slug_from_dir() {
+  basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//'
+}
+
+write_if_missing() {
+  local path="$1"; shift
+  if [[ -e "$path" ]]; then
+    skip "$path"
+  else
+    mkdir -p "$(dirname "$path")"
+    printf '%s' "$*" > "$path"
+    created "$path"
+  fi
+}
+
+# ── usage ────────────────────────────────────────────────────────────────────
+usage() {
+  cat <<EOF
+Usage: spectacular init [options]
+
+Bootstrap a new project with the Spectacular workspace scaffold.
+
+Options:
+  -i, --interactive         Prompt for all foundational settings
+      --name <slug>         Project name (default: current folder slug)
+      --summary <text>      Project summary (default: empty)
+      --agents-file <file>  Primary agents file (default: AGENTS.md)
+      --global              Install skill to ~/.agents/skills/ and ~/.claude/skills/
+      --update              Re-download latest skill release and update skills.lock
+  -h, --help                Show this help
+
+Examples:
+  spectacular init
+  spectacular init -i
+  spectacular init --name my-app --agents-file CLAUDE.md
+  spectacular init --global
+  spectacular init --update
+EOF
+}
+
+# ── arg parsing ───────────────────────────────────────────────────────────────
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      init) shift ;;
+      -i|--interactive) OPT_INTERACTIVE=true; shift ;;
+      --name) OPT_NAME="$2"; shift 2 ;;
+      --summary) OPT_SUMMARY="$2"; shift 2 ;;
+      --agents-file) OPT_AGENTS_FILE="$2"; shift 2 ;;
+      --global) OPT_GLOBAL=true; shift ;;
+      --update) OPT_UPDATE=true; shift ;;
+      -h|--help) usage; exit 0 ;;
+      *) die "Unknown option: $1. Run 'spectacular --help' for usage." ;;
+    esac
+  done
+}
+
+# ── interactive prompts ───────────────────────────────────────────────────────
+run_interactive() {
+  local default_name
+  default_name="$(slug_from_dir)"
+
+  printf "Project name [%s]: " "$default_name"
+  read -r input
+  OPT_NAME="${input:-$default_name}"
+
+  printf "Project summary (optional): "
+  read -r input
+  OPT_SUMMARY="${input:-}"
+
+  printf "Primary agents file [AGENTS.md / CLAUDE.md] (default: AGENTS.md): "
+  read -r input
+  input="${input:-AGENTS.md}"
+  if [[ "$input" != "AGENTS.md" && "$input" != "CLAUDE.md" ]]; then
+    OPT_AGENTS_FILE="$input"
+  else
+    OPT_AGENTS_FILE="$input"
+  fi
+
+  printf "Install scope [project / global] (default: project): "
+  read -r input
+  if [[ "${input:-project}" == "global" ]]; then
+    OPT_GLOBAL=true
+  fi
+}
+
+# ── skill install paths ───────────────────────────────────────────────────────
+agents_skill_dir() {
+  if $OPT_GLOBAL; then
+    echo "$HOME/.agents/skills/spectacular"
+  else
+    echo "$(pwd)/.agents/skills/spectacular"
+  fi
+}
+
+claude_skill_dir() {
+  if $OPT_GLOBAL; then
+    echo "$HOME/.claude/skills/spectacular"
+  else
+    echo "$(pwd)/.claude/skills/spectacular"
+  fi
+}
+
+skills_lock_path() {
+  echo "$(pwd)/.spectacular/skills.lock"
+}
+
+# ── fetch latest release ──────────────────────────────────────────────────────
+fetch_latest_ref() {
+  local ref url
+  if command -v curl &>/dev/null; then
+    ref="$(curl -fsSL "$GITHUB_API" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')"
+  fi
+  if [[ -z "$ref" ]]; then
+    ref="main"
+  fi
+  echo "$ref"
+}
+
+tarball_url_for_ref() {
+  local ref="$1"
+  if [[ "$ref" == "main" ]]; then
+    echo "$GITHUB_MAIN_TARBALL"
+  else
+    echo "https://github.com/${GITHUB_REPO}/archive/refs/tags/${ref}.tar.gz"
+  fi
+}
+
+# ── skill download + install ──────────────────────────────────────────────────
+download_and_install_skill() {
+  local target_dir="$1"
+  local ref url tmpdir tarball sha
+
+  ref="$(fetch_latest_ref)"
+  url="$(tarball_url_for_ref "$ref")"
+
+  tmpdir="$(mktemp -d)"
+  tarball="${tmpdir}/spectacular.tar.gz"
+
+  info ""
+  info "Fetching skill (${ref}) from GitHub..."
+
+  if command -v curl &>/dev/null; then
+    curl -fsSL "$url" -o "$tarball" || die "Could not fetch skill from GitHub (no network or repo not found).\nInstall manually: https://github.com/${GITHUB_REPO}"
+  elif command -v wget &>/dev/null; then
+    wget -q "$url" -O "$tarball" || die "Could not fetch skill from GitHub (no network or repo not found).\nInstall manually: https://github.com/${GITHUB_REPO}"
+  else
+    die "Neither curl nor wget found. Install one to proceed."
+  fi
+
+  sha="$(shasum -a 256 "$tarball" 2>/dev/null | awk '{print $1}' || sha256sum "$tarball" 2>/dev/null | awk '{print $1}' || echo "unknown")"
+
+  tar -xzf "$tarball" -C "$tmpdir"
+
+  local extracted_skill
+  extracted_skill="$(find "$tmpdir" -type d -name "spectacular" | grep "skills/spectacular$" | head -1)"
+  [[ -z "$extracted_skill" ]] && die "Could not find skills/spectacular in downloaded tarball."
+
+  mkdir -p "$(dirname "$target_dir")"
+  rm -rf "$target_dir"
+  cp -r "$extracted_skill" "$target_dir"
+  rm -rf "$tmpdir"
+
+  echo "$ref|$sha|$url"
+}
+
+write_skills_lock() {
+  local ref="$1" sha="$2" url="$3"
+  local lock_path
+  lock_path="$(skills_lock_path)"
+  mkdir -p "$(dirname "$lock_path")"
+  cat > "$lock_path" <<EOF
+spectacular:
+  ref: ${ref}
+  sha: ${sha}
+  installed: ${TODAY}
+  source: ${url}
+EOF
+  created "$lock_path"
+}
+
+read_lock_ref() {
+  local lock_path
+  lock_path="$(skills_lock_path)"
+  if [[ -f "$lock_path" ]]; then
+    grep '  ref:' "$lock_path" | sed 's/.*ref: *//'
+  fi
+}
+
+install_skill() {
+  local agents_dir claude_dir
+  agents_dir="$(agents_skill_dir)"
+  claude_dir="$(claude_skill_dir)"
+
+  local result ref sha url
+  result="$(download_and_install_skill "$agents_dir")"
+  ref="$(echo "$result" | cut -d'|' -f1)"
+  sha="$(echo "$result" | cut -d'|' -f2)"
+  url="$(echo "$result" | cut -d'|' -f3)"
+
+  # symlink .claude/skills/spectacular → .agents/skills/spectacular
+  mkdir -p "$(dirname "$claude_dir")"
+  rm -f "$claude_dir"
+  ln -s "$agents_dir" "$claude_dir"
+
+  write_skills_lock "$ref" "$sha" "$url"
+
+  INSTALLED_REF="$ref"
+  AGENTS_SKILL_INSTALLED="$agents_dir"
+  CLAUDE_SKILL_INSTALLED="$claude_dir"
+}
+
+update_skill() {
+  local lock_ref agents_dir claude_dir
+  lock_ref="$(read_lock_ref)"
+  agents_dir="$(agents_skill_dir)"
+  claude_dir="$(claude_skill_dir)"
+
+  local latest_ref
+  latest_ref="$(fetch_latest_ref)"
+
+  if [[ -n "$lock_ref" && "$lock_ref" == "$latest_ref" ]]; then
+    info "Skill is already up to date (${latest_ref})."
+    exit 0
+  fi
+
+  info "Updating skill: ${lock_ref:-unknown} → ${latest_ref}"
+
+  local result ref sha url
+  result="$(download_and_install_skill "$agents_dir")"
+  ref="$(echo "$result" | cut -d'|' -f1)"
+  sha="$(echo "$result" | cut -d'|' -f2)"
+  url="$(echo "$result" | cut -d'|' -f3)"
+
+  mkdir -p "$(dirname "$claude_dir")"
+  rm -f "$claude_dir"
+  ln -s "$agents_dir" "$claude_dir"
+
+  write_skills_lock "$ref" "$sha" "$url"
+  info "Skill updated to ${ref}."
+  exit 0
+}
+
+# ── scaffold files ────────────────────────────────────────────────────────────
+scaffold() {
+  local name="$1" summary="$2" agents_file="$3"
+
+  # dirs
+  mkdir -p .spectacular/current .spectacular/requests
+  created ".spectacular/current/"
+  created ".spectacular/requests/"
+
+  # config.yaml
+  write_if_missing ".spectacular/config.yaml" "project:
+  name: ${name}
+  summary: \"${summary}\"
+
+naming:
+  requests: kebab-case
+  prefix: \"\"
+
+required_files:
+  requests:
+    - PLAN.md
+    - TASKS.md
+
+agents:
+  file: ${agents_file}             # override to CLAUDE.md for Claude-only teams
+  tool_overrides:                  # per-tool agent files (read in addition to file: above)
+    # claude: CLAUDE.md            # uncomment if AGENTS.md is primary but Claude also needs CLAUDE.md
+  default_context:
+    - PRD.md
+    - STACK.md
+    - DECISIONS.md
+
+skills:
+  symlink_on_init: []
+"
+
+  # PRD.md
+  write_if_missing ".spectacular/PRD.md" "---
+version: 1.0
+updated: ${TODAY}
+summary: \"\"
+---
+
+# Product Requirements Document
+
+## Vision
+
+
+## Goals
+-
+
+## Non-goals
+-
+
+## Target users
+-
+"
+
+  # STACK.md
+  write_if_missing ".spectacular/STACK.md" "---
+version: 1.0
+updated: ${TODAY}
+summary: \"Technology stack and engineering rules\"
+---
+
+# Stack
+
+## Rules
+-
+"
+
+  # DECISIONS.md
+  write_if_missing ".spectacular/DECISIONS.md" "---
+version: 1.0
+updated: ${TODAY}
+summary: \"Architectural and product decisions log\"
+---
+
+# Decisions
+
+## ${TODAY}
+
+**Decision:**
+**Why:**
+**Tradeoffs:**
+"
+
+  # agents file (AGENTS.md or CLAUDE.md etc.)
+  write_if_missing ".spectacular/${agents_file}" "---
+version: 1.0
+updated: ${TODAY}
+summary: \"Agent orchestration rules for this project\"
+---
+
+# Agents
+
+## Context loading rules
+
+| Task type | Load |
+|---|---|
+| Planning | PRD.md, DECISIONS.md |
+| Implementation | STACK.md, PLAN.md, TASKS.md, current/<capability> |
+| Review | VERIFY.md, current/<capability>, RISKS.md |
+
+## Available skills
+
+- spectacular — workspace management
+
+## Handoff conventions
+
+- Summarize state in SESSION.md before handing off to another agent
+"
+
+  # .gitignore
+  local gitignore=".gitignore"
+  if [[ -f "$gitignore" ]]; then
+    if grep -qF ".spectacular.local/" "$gitignore"; then
+      skip ".gitignore (already contains .spectacular.local/)"
+    else
+      echo ".spectacular.local/" >> "$gitignore"
+      info "  updated  .gitignore (.spectacular.local/ added)"
+    fi
+  else
+    printf '.spectacular.local/\n' > "$gitignore"
+    created ".gitignore"
+  fi
+}
+
+# ── print summary ─────────────────────────────────────────────────────────────
+print_summary() {
+  local agents_dir claude_dir ref
+  agents_dir="$(agents_skill_dir)"
+  claude_dir="$(claude_skill_dir)"
+  ref="${INSTALLED_REF:-}"
+
+  echo ""
+  echo "Spectacular initialized."
+  echo ""
+  echo "Run /spectacular to get started."
+}
+
+# ── main ──────────────────────────────────────────────────────────────────────
+main() {
+  local subcmd="${1:-}"
+
+  if [[ "$subcmd" == "--help" || "$subcmd" == "-h" ]]; then
+    usage; exit 0
+  fi
+
+  if [[ "$subcmd" != "init" ]]; then
+    die "Unknown command: '${subcmd}'. Did you mean 'spectacular init'?"
+  fi
+
+  shift
+  parse_args "$@"
+
+  if $OPT_UPDATE; then
+    update_skill
+  fi
+
+  if $OPT_INTERACTIVE; then
+    run_interactive
+  fi
+
+  [[ -z "$OPT_NAME" ]] && OPT_NAME="$(slug_from_dir)"
+
+  local agents_dir claude_dir lock_ref
+  agents_dir="$(agents_skill_dir)"
+  claude_dir="$(claude_skill_dir)"
+  lock_ref="$(read_lock_ref)"
+
+  echo "Spectacular init"
+  echo ""
+  echo "Scaffold:"
+
+  scaffold "$OPT_NAME" "$OPT_SUMMARY" "$OPT_AGENTS_FILE"
+
+  echo ""
+  echo "Skill:"
+
+  INSTALLED_REF=""
+  AGENTS_SKILL_INSTALLED=""
+  CLAUDE_SKILL_INSTALLED=""
+
+  if [[ -n "$lock_ref" && -d "$agents_dir" ]]; then
+    skip "${agents_dir}  (${lock_ref}, already installed)"
+    skip "${claude_dir}  → symlink"
+  else
+    install_skill
+    info "  installed  ${AGENTS_SKILL_INSTALLED}  (${INSTALLED_REF})"
+    info "  symlinked  ${CLAUDE_SKILL_INSTALLED}  → ${AGENTS_SKILL_INSTALLED}"
+  fi
+
+  print_summary
+}
+
+INSTALLED_REF=""
+AGENTS_SKILL_INSTALLED=""
+CLAUDE_SKILL_INSTALLED=""
+
+main "$@"

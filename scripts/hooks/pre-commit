@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+# git-guard — version consistency check
+# Managed by skizl git-guard. Edit scripts/hooks/.git-guard.json to configure.
+
+set -uo pipefail
+
+CHECK_ONLY=false
+[[ "${1:-}" == "--check" ]] && CHECK_ONLY=true
+
+ROOT="$(git rev-parse --show-toplevel)"
+CONFIG="$ROOT/scripts/hooks/.git-guard.json"
+VERSIONS=()
+LABELS=()
+TYPES=()
+
+collect() {
+  local label="$1" version="$2" type="${3:-version}"
+  LABELS+=("$label")
+  VERSIONS+=("$version")
+  TYPES+=("$type")
+}
+
+semver_max() {
+  local a="$1" b="$2"
+  local sortcmd
+  if gsort --version &>/dev/null 2>&1; then
+    sortcmd="gsort"
+  else
+    sortcmd="sort"
+  fi
+  if printf '1.9.0\n1.10.0\n' | "$sortcmd" -V | tail -1 | grep -q '1.10.0'; then
+    printf '%s\n%s' "$a" "$b" | "$sortcmd" -V | tail -1
+  else
+    local IFS=.
+    local -a av=($a) bv=($b)
+    for i in 0 1 2; do
+      local ai="${av[$i]:-0}" bi="${bv[$i]:-0}"
+      if (( ai > bi )); then echo "$a"; return; fi
+      if (( bi > ai )); then echo "$b"; return; fi
+    done
+    echo "$a"
+  fi
+}
+
+if [ -f "$ROOT/.claude-plugin/plugin.json" ]; then
+  v=$(jq -r '.version // empty' "$ROOT/.claude-plugin/plugin.json" 2>/dev/null)
+  [ -n "$v" ] && collect ".claude-plugin/plugin.json" "$v"
+fi
+
+if [ -f "$ROOT/.claude-plugin/marketplace.json" ]; then
+  v=$(jq -r '.metadata.version // empty' "$ROOT/.claude-plugin/marketplace.json" 2>/dev/null)
+  [ -n "$v" ] && collect ".claude-plugin/marketplace.json (metadata)" "$v"
+  v=$(jq -r '.plugins[0].version // empty' "$ROOT/.claude-plugin/marketplace.json" 2>/dev/null)
+  [ -n "$v" ] && collect ".claude-plugin/marketplace.json (plugins[0])" "$v"
+fi
+
+if [ -f "$ROOT/.codex-plugin/plugin.json" ]; then
+  v=$(jq -r '.version // empty' "$ROOT/.codex-plugin/plugin.json" 2>/dev/null)
+  [ -n "$v" ] && collect ".codex-plugin/plugin.json" "$v"
+fi
+
+if [ -f "$ROOT/README.md" ]; then
+  v=$(grep -oE 'version-[0-9]+\.[0-9]+\.[0-9]+' "$ROOT/README.md" | head -1 | sed 's/version-//')
+  [ -n "$v" ] && collect "README.md badge" "$v"
+fi
+
+if [ -f "$ROOT/CHANGELOG.md" ]; then
+  v=$(grep -oE '^\#\# \[[0-9]+\.[0-9]+\.[0-9]+\]' "$ROOT/CHANGELOG.md" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+  [ -n "$v" ] && collect "CHANGELOG.md (top entry)" "$v"
+fi
+
+v=$(git -C "$ROOT" tag --sort=-version:refname 2>/dev/null | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -1 | sed 's/^v//')
+[ -n "$v" ] && collect "git tag (latest)" "$v" "tag"
+
+SKILL_CHECK=$(jq -r '.skill_check // "none"' "$CONFIG" 2>/dev/null || echo "none")
+if [ "$SKILL_CHECK" = "all" ]; then
+  for f in "$ROOT"/skills/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    v=$(grep -E '^version:' "$f" | head -1 | sed 's/version:[[:space:]]*//')
+    [ -n "$v" ] && collect "${f#$ROOT/}" "$v"
+  done
+elif [ "$SKILL_CHECK" = "selected" ]; then
+  while IFS= read -r f; do
+    [ -f "$ROOT/$f" ] || continue
+    v=$(grep -E '^version:' "$ROOT/$f" | head -1 | sed 's/version:[[:space:]]*//')
+    [ -n "$v" ] && collect "$f" "$v"
+  done < <(jq -r '.skill_paths[]? // empty' "$CONFIG" 2>/dev/null)
+fi
+
+if [ ${#VERSIONS[@]} -eq 0 ]; then
+  echo ""
+  echo "  git-guard: no version sources found — nothing to check"
+  echo ""
+  exit 0
+fi
+
+HIGHEST=""
+for v in "${VERSIONS[@]+"${VERSIONS[@]}"}"; do
+  if [ -z "$HIGHEST" ]; then
+    HIGHEST="$v"
+  else
+    HIGHEST=$(semver_max "$HIGHEST" "$v")
+  fi
+done
+
+DRIFT=0
+echo ""
+echo "version check"
+echo "─────────────────────────────────────────────────"
+printf "  %-42s %s\n" "source of truth (highest found):" "$HIGHEST"
+echo ""
+for i in "${!LABELS[@]}"; do
+  label="${LABELS[$i]}"
+  ver="${VERSIONS[$i]}"
+  type="${TYPES[$i]}"
+  if [ "$type" = "tag" ]; then
+    if [ "$(semver_max "$ver" "$HIGHEST")" = "$ver" ] && [ "$ver" != "$HIGHEST" ]; then
+      mark="✗"; DRIFT=1
+    else
+      mark="✓"
+    fi
+  else
+    if [ "$ver" = "$HIGHEST" ]; then
+      mark="✓"
+    else
+      mark="✗"; DRIFT=1
+    fi
+  fi
+  printf "  %s  %-40s %s\n" "$mark" "$label" "$ver"
+done
+echo ""
+
+if [ "$DRIFT" -eq 1 ] && [ "$CHECK_ONLY" = false ]; then
+  echo "  version mismatch — commit blocked"
+  echo "  update the ✗ files to $HIGHEST, then commit again"
+  echo ""
+  exit 1
+fi
+
+[ "$DRIFT" -eq 0 ] && echo "  all versions consistent ✓"
+echo ""
+exit 0

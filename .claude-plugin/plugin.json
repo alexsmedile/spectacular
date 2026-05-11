@@ -1,0 +1,22 @@
+{
+  "name": "spectacular",
+  "version": "0.1.0",
+  "description": "AI-native operational workspace for software projects. Stop losing context. Start shipping.",
+  "author": {
+    "name": "Alessandro Smedile"
+  },
+  "homepage": "https://github.com/alexsmedile/spectacular",
+  "repository": "https://github.com/alexsmedile/spectacular",
+  "license": "MIT",
+  "keywords": [
+    "spectacular",
+    "workspace",
+    "project-management",
+    "context",
+    "agents",
+    "lifecycle",
+    "spec-driven",
+    "claude-code",
+    "skills"
+  ]
+}

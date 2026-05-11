@@ -3,7 +3,8 @@ set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
 GITHUB_REPO="alexsmedile/spectacular"
-GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
+GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
+GITHUB_TAGS_API="https://api.github.com/repos/${GITHUB_REPO}/tags"
 GITHUB_MAIN_TARBALL="https://github.com/${GITHUB_REPO}/archive/refs/heads/main.tar.gz"
 SKILL_PATH_IN_TARBALL="skills/spectacular"
 TODAY="$(date +%Y-%m-%d)"
@@ -131,10 +132,16 @@ skills_lock_path() {
 
 # ── fetch latest release ──────────────────────────────────────────────────────
 fetch_latest_ref() {
-  local ref url
+  local ref=""
   if command -v curl &>/dev/null; then
-    ref="$(curl -fsSL "$GITHUB_API" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')"
+    # 1. try releases API
+    ref="$(curl -fsSL "$GITHUB_RELEASES_API" 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')"
+    # 2. try tags API
+    if [[ -z "$ref" ]]; then
+      ref="$(curl -fsSL "$GITHUB_TAGS_API" 2>/dev/null | grep '"name"' | head -1 | sed 's/.*"name": *"\([^"]*\)".*/\1/')"
+    fi
   fi
+  # 3. fall back to main
   if [[ -z "$ref" ]]; then
     ref="main"
   fi

@@ -161,8 +161,8 @@ download_and_install_skill() {
   tmpdir="$(mktemp -d)"
   tarball="${tmpdir}/spectacular.tar.gz"
 
-  info ""
-  info "Fetching skill (${ref}) from GitHub..."
+  info "" >&2
+  info "Fetching skill (${ref}) from GitHub..." >&2
 
   if command -v curl &>/dev/null; then
     curl -fsSL "$url" -o "$tarball" || die "Could not fetch skill from GitHub (no network or repo not found).\nInstall manually: https://github.com/${GITHUB_REPO}"

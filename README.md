@@ -45,12 +45,12 @@ curl -fsSL https://raw.githubusercontent.com/alexsmedile/spectacular/main/cli/in
 cd your-project
 spectacular init
 
-# Open Claude Code and run
+# Open Claude Code or Codex and run
 /spectacular
 ```
 
 > [!TIP]
-> `spectacular init` scaffolds the `.spectacular/` directory and installs the `/spectacular` skill into `.agents/skills/spectacular/` (source) and `.claude/skills/spectacular/` (symlink). After init, `/spectacular` is immediately available in Claude Code.
+> `spectacular init` scaffolds the `.spectacular/` directory and installs the `/spectacular` skill into `.agents/skills/spectacular/` (source) and `.claude/skills/spectacular/` (symlink). After init, `/spectacular` is immediately available to Codex and Claude Code.
 
 > [!NOTE]
 > `spectacular init` is zero-prompt by default. It infers the project name from the folder slug and uses `AGENTS.md` as the primary agent context file. Pass `-i` for interactive setup, or use flags: `--name`, `--summary`, `--agents-file`, `--global`.
@@ -163,14 +163,42 @@ spectacular init --update                 # re-download latest skill release
 curl -fsSL https://raw.githubusercontent.com/alexsmedile/spectacular/main/cli/install.sh | bash
 ```
 
-**Skill only** (no CLI) — manual copy or via `apm`:
+**Claude Code plugin** — from Claude Code:
+
+```text
+/plugin marketplace add alexsmedile/spectacular
+/plugin install spectacular@spectacular
+/reload-plugins
+```
+
+You can also use the Claude Code CLI:
 
 ```bash
-# via apm
-apm --mode skills install spectacular
+claude plugin marketplace add alexsmedile/spectacular
+claude plugin install spectacular@spectacular
+```
 
+**Codex plugin** — from Codex, open `/plugins`, add this marketplace, then install or enable `spectacular`:
+
+```text
+alexsmedile/spectacular
+```
+
+Codex CLI builds that expose marketplace commands can add the marketplace first:
+
+```bash
+codex plugin marketplace add alexsmedile/spectacular
+```
+
+Then open Codex and use `/plugins` to install or enable `spectacular`.
+
+**Skill only** (no CLI, no plugin marketplace):
+
+```bash
 # manual
 cp -r skills/spectacular ~/.claude/skills/
+mkdir -p ~/.agents/skills
+cp -r skills/spectacular ~/.agents/skills/
 ```
 
 **Skill install locations:**

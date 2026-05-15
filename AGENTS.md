@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Spectacular is a Bash CLI plus an agent skill. `cli/spectacular` is the executable used by `spectacular init`; `cli/install.sh` installs it into `~/.local/bin`. The skill lives in `skills/spectacular/`: keep `SKILL.md` as the lean orchestrator and place detailed workflows in `skills/spectacular/references/`. Plugin metadata is under `.claude-plugin/` and `.codex-plugin/`. Hook definitions live in `hooks/`, with the implementation in `scripts/hooks/pre-commit`. Documentation and visual assets are in `docs/`; release notes and launch material are in `releases/`. This repository also uses its own `.spectacular/` workspace for planning and project state.
+Spectacular is a Bash CLI plus an agent skill. `cli/spectacular` is the executable used by `spectacular init`; `cli/install.sh` installs it into `~/.local/bin`. The skill lives in `skills/spectacular/`: keep `SKILL.md` as the lean orchestrator and place detailed workflows in `skills/spectacular/references/`. Plugin metadata is under `.claude-plugin/` and `.codex-plugin/`. Hook definitions live in `hooks/`, with the implementation in `scripts/hooks/pre-commit`. Documentation and visual assets are in `docs/`. This repository also uses its own `.spectacular/` workspace for planning and project state.
 
 ## Build, Test, and Development Commands
 

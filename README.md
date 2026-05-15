@@ -190,6 +190,12 @@ Codex CLI builds that expose marketplace commands can add the marketplace first:
 codex plugin marketplace add alexsmedile/spectacular
 ```
 
+To update an already-added marketplace:
+
+```bash
+codex plugin marketplace upgrade spectacular
+```
+
 Then open Codex and use `/plugins` to install or enable `spectacular`.
 
 **Skill only** (no CLI, no plugin marketplace):

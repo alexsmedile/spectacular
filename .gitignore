@@ -15,3 +15,6 @@ _archived/
 
 # node (if CLI gains deps later)
 node_modules/
+
+# release drafts and launch material (local only)
+releases/

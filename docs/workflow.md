@@ -16,10 +16,13 @@ This creates the required workspace files:
 
 ```text
 .spectacular/
-├── PRD.md
-├── STACK.md
-├── DECISIONS.md
-├── AGENTS.md
+├── PRD.md              # product intent
+├── PRINCIPLES.md       # operating principles
+├── ARCHITECTURE.md     # workspace structure
+├── ROADMAP.md          # versioned future work
+├── STACK.md            # host tech choices
+├── DECISIONS.md        # ADR log
+├── AGENTS.md           # onboarding for agents
 ├── config.yaml
 ├── current/
 └── requests/
@@ -37,14 +40,17 @@ spectacular init -i
 
 ## 2. Fill the stable project context
 
-Before asking an agent to do serious work, add concise grounding to:
+Before asking an agent to do serious work, add concise grounding to the seven canonical root docs:
 
-- `.spectacular/PRD.md` — product intent, goals, non-goals, target users
-- `.spectacular/STACK.md` — technology choices and engineering rules
-- `.spectacular/DECISIONS.md` — decisions and tradeoffs
-- `.spectacular/AGENTS.md` — what context agents should load for each task type
+- `.spectacular/PRD.md` — product intent (problem, who, success, non-goals, constraints, milestone). Run `spectacular prd` for an interactive 6-slot grill if starting from scratch.
+- `.spectacular/PRINCIPLES.md` — operating principles + how the skill enforces each at runtime
+- `.spectacular/ARCHITECTURE.md` — the workspace structure itself (frontmatter, lifecycle, versioning)
+- `.spectacular/ROADMAP.md` — versioned future work (v1 / v2 / v3+)
+- `.spectacular/STACK.md` — host project's technology choices and engineering rules
+- `.spectacular/DECISIONS.md` — ADR-style log of decisions and tradeoffs
+- `.spectacular/AGENTS.md` — onboarding doc for any agent landing in `.spectacular/`; defines context loading by task type
 
-These files should stay short. They are not a wiki. Their job is to keep agents oriented.
+These files should stay short and focused. They are not a wiki — their job is to keep agents oriented and let each one load only what the current task needs (progressive disclosure).
 
 ---
 

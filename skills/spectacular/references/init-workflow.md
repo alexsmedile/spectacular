@@ -42,11 +42,20 @@ Write `.spectacular/config.yaml` using the template from `scaffold-reference.md`
 
 ### Step 3 — Create stub root files
 
-Create with frontmatter stubs (user fills in content):
-- `.spectacular/PRD.md`
-- `.spectacular/STACK.md`
-- `.spectacular/DECISIONS.md`
-- `.spectacular/AGENTS.md`
+Create with frontmatter stubs (user fills in content). Templates live in `scaffold-reference.md`.
+
+**Required (always created):**
+- `.spectacular/PRD.md` — product intent
+- `.spectacular/STACK.md` — host project tech choices
+- `.spectacular/DECISIONS.md` — ADR-style log
+- `.spectacular/AGENTS.md` — onboarding doc for agents in this workspace
+
+**Optional but recommended (offer during init):**
+- `.spectacular/PRINCIPLES.md` — operating principles + enforcement hooks
+- `.spectacular/ARCHITECTURE.md` — `.spectacular/` structure reference
+- `.spectacular/ROADMAP.md` — versioned future work
+
+In `-i` (interactive) mode, ask once: *"Create the full canonical doc set (PRD + PRINCIPLES + ARCHITECTURE + ROADMAP), or PRD only?"* Default for non-interactive: PRD only — the others can be added by the user later or via a follow-up scaffold command.
 
 ### Step 4 — Install skill
 
@@ -72,7 +81,8 @@ Add to `.gitignore`:
 After init, the project has:
 - `current/` and `requests/` directories
 - `config.yaml` with project name/summary
-- Stub root files with frontmatter
+- Required stub root files (`PRD.md`, `STACK.md`, `DECISIONS.md`, `AGENTS.md`) with frontmatter
+- Optional canonical docs (`PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`) if user opted in
 - Skill installed and accessible
 - `.spectacular.local/` gitignored
 - Other directories (`ideas/`, `memory/`, `skills/`, `archive/`) created on demand

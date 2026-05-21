@@ -1,23 +1,8 @@
 ---
-updated: 2026-05-21
-related:
-  - PLAN.md
-  - ../canonical-docs-rework/PLAN.md
+updated: 2026-05-11
 ---
 
 # Tasks — cli-bootstrap
-
-## Canonical doc set alignment (new — 2026-05-21)
-
-Triggered by `canonical-docs-rework`. The CLI must scaffold the post-rework 7-doc root layer.
-
-- [x] Update `PRD.md` stub — 6-slot shape + `related:` frontmatter pointing to siblings
-- [x] Add `PRINCIPLES.md` stub — 8 default principles with `How the skill enforces this:` placeholders
-- [x] Add `ARCHITECTURE.md` stub — section headers for Layout / Root layer / Frontmatter / Lifecycle / Versioning
-- [x] Add `ROADMAP.md` stub — v1 / v2 / v3+ section headers
-- [x] Update `AGENTS.md` stub — onboarding shape (What this folder is / How to operate / Context loading / Don'ts)
-- [x] Success output already lists created files inline via `write_if_missing` — auto-extends to all 7 docs
-- [x] `config.yaml` `agents.default_context:` left as PRD/STACK/DECISIONS for back-compat; full context map now in AGENTS.md per onboarding shape
 
 ## Repo layout
 
@@ -89,12 +74,10 @@ Triggered by `canonical-docs-rework`. The CLI must scaffold the post-rework 7-do
 
 ## Testing
 
-- [x] Bare init on blank directory — correct scaffold, zero prompts (tested 2026-05-21)
-- [x] `-i` mode — all prompts fire, flags pre-fill defaults (tested 2026-05-21 — name "my-test-app" captured into config.yaml + PRD heading)
-- [ ] `--global` — skill lands in `~/.agents/` and `~/.claude/` (**blocked**: alters user home dir; defer to first real published install)
-- [x] Re-run idempotency — all files skipped, correct report (tested 2026-05-21 — all 10 files reported skipped)
-- [ ] `--update` — fetches new version, updates `skills.lock` (**blocked**: needs published tagged repo with multiple versions)
+- [x] Bare init on blank directory — correct scaffold, zero prompts
+- [ ] `-i` mode — all prompts fire, flags pre-fill defaults
+- [ ] `--global` — skill lands in `~/.agents/` and `~/.claude/`
+- [x] Re-run idempotency — all files skipped, correct report
+- [ ] `--update` — fetches new version, updates `skills.lock` (needs published repo)
 - [x] Network failure — exits non-zero, scaffold files intact
-- [x] `install.sh` — syntax-checked OK; full curl-install test **blocked** until repo published to GitHub
-- [x] Bash syntax check on `spectacular` binary — clean
-- [x] Stub files match canonical-docs-rework shape — PRD 6-slot, PRINCIPLES 8 numbered, ARCHITECTURE 5-section, ROADMAP 3-tier, AGENTS onboarding shape (verified 2026-05-21)
+- [ ] `install.sh` — binary lands at `~/.local/bin/spectacular`, is executable

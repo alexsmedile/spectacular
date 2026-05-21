@@ -44,7 +44,7 @@ Create only on demand (skill proposes, user confirms):
 
 ---
 
-## PLAN.md template
+## PLAN.md template (7-slot decomposition)
 
 ```md
 ---
@@ -54,30 +54,44 @@ owner:
 updated: <today>
 summary: "<one-line description>"
 related:
+  - ../../PRD.md
   - current/<capability>
 ---
 
 # <Request title>
 
 ## Goal
-<What are we trying to achieve?>
+<One sentence — compressed intent. Traces back to a success criterion in the root PRD.>
 
-## Why
-<Why now? What problem does this solve?>
+## Why (intent)
+<Why now? What problem does this solve? The full why lives in PRD.md — keep this tight.>
 
-## Scope
-- 
-- 
+## Constraints
+- <What's fixed before starting — budget, tech, policy>
 
-## Out of scope
-- 
+## Milestones
+1. **<Milestone name>** — <demoable outcome, not a task>
+2. ...
 
-## Approach
-<High-level implementation approach>
+## Tasks
+See [TASKS.md](TASKS.md).
 
-## Success criteria
-- 
+## Dependencies
+- <Other requests, skills, blocking decisions — or "none">
+
+## Validation
+| Milestone | How we verify it passed |
+|---|---|
+| 1 | <test, demo, review> |
+
+## Deliverables
+- <Artifact that ships out of this request>
+
+## Open questions
+- <Things you don't know yet>
 ```
+
+**Anti-pattern:** never create `requests/<slug>/PRD.md`. Product intent is project-wide and lives at `.spectacular/PRD.md`. If a request needs to extend or revise product intent, edit the root PRD (snapshot first) — don't fork it into a request folder.
 
 ---
 

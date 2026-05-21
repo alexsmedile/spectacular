@@ -6,7 +6,7 @@ Canonical documents are **never overwritten in place**. Always snapshot first.
 
 ## What counts as canonical
 
-- Root layer files: `PRD.md`, `STACK.md`, `DECISIONS.md`, `AGENTS.md`
+- Root layer files: `PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `AGENTS.md`, `STACK.md`, `DECISIONS.md`
 - `current/` capability specs
 - `config.yaml`
 

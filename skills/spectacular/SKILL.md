@@ -7,11 +7,12 @@ description: |
   Use when: opening /spectacular on any project, scaffolding a new request, archiving completed
   work, capturing a memory, snapshotting a canonical doc, or onboarding to an existing workspace.
   Triggers: /spectacular, spectacular status, spectacular new, spectacular archive, spectacular
-  remember this, spectacular snapshot, spectacular promote, spectacular init.
+  remember this, spectacular snapshot, spectacular promote, spectacular init, spectacular prd,
+  spectacular prd refine, spectacular prd review.
 when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively.
-version: 0.1.1
+version: 0.2.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle]
@@ -36,6 +37,9 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular snapshot <file>` | → `references/versioning.md` |
 | First invocation on existing `.spectacular/` project | → `references/onboarding.md` |
 | `spectacular init` (CLI context) | → `references/init-workflow.md` |
+| `spectacular prd` or `spectacular prd grill` | → `references/prd-grill.md` |
+| `spectacular prd refine` | → `references/prd-refine.md` |
+| `spectacular prd review` | → `references/prd-review.md` |
 | Actively working on a request | → `references/active-request.md` |
 
 ---
@@ -44,10 +48,12 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 
 Before any action, read frontmatter from:
 1. `.spectacular/config.yaml` — project config, naming rules
-2. `.spectacular/AGENTS.md` — context loading rules for this project
-3. Root files (`PRD.md`, `STACK.md`, `DECISIONS.md`) — stable grounding
+2. `.spectacular/AGENTS.md` — **authoritative** context-loading rules per task type; follow its table over guessing
+3. Root canonical docs — `PRD.md` (intent), `PRINCIPLES.md` (rules), `ARCHITECTURE.md` (structure), `ROADMAP.md` (time), `STACK.md` (host tech), `DECISIONS.md` (ADR log)
 4. `current/` — canonical capability specs (read summaries/status only unless task requires depth)
 5. `requests/*/PLAN.md` — active work (read all frontmatter for status briefing)
+
+Load **only** what the task needs (principle 6 — progressive disclosure). For planning, PRD + PRINCIPLES + DECISIONS. For implementation, STACK + PLAN + TASKS + relevant `current/`. For review, VERIFY + RISKS + capability specs. AGENTS.md owns the full table.
 
 Never read `archive/` during normal operation.
 
@@ -85,3 +91,21 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/scaffold-reference.md` | Canonical file templates with frontmatter stubs |
 | `references/onboarding.md` | First invocation on an existing project |
 | `references/init-workflow.md` | CLI init + first-time project setup |
+| `references/prd-grill.md` | Interactive 6-slot PRD crafting (one Q at a time) |
+| `references/prd-refine.md` | Vibe→spec rewrite patterns + `[NEEDS CLARIFICATION]` markers |
+| `references/prd-review.md` | Pass/fail quality gate for PRD.md |
+
+---
+
+## Templates index
+
+| Path | Purpose |
+|---|---|
+| `templates/prd/base.md` | Canonical 6-slot PRD template (general-purpose) |
+| `templates/prd/kits/coding.md` | Coding kit — base + stack + interfaces |
+| `templates/prd/kits/product.md` | Product kit — base + user stories + metrics + distribution |
+| `templates/prd/kits/content.md` | Content kit — base + audience + format + distribution |
+| `templates/prd/kits/research.md` | Research kit — base + hypothesis + method + deliverable |
+| `templates/prd/kits/blank.md` | Blank kit — pure base, no extras |
+
+Project may override by placing files at `.spectacular/templates/prd/...` — same filenames, project-local takes precedence.

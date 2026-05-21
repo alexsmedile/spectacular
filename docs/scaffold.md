@@ -8,10 +8,13 @@ The `.spectacular/` directory is the operational workspace for a project. This d
 
 ```
 .spectacular/
-├── PRD.md              # product intent (required)
-├── STACK.md            # technology stack and rules (required)
-├── DECISIONS.md        # architectural decision log (required)
-├── AGENTS.md           # agent context loading rules (required)
+├── PRD.md              # product intent — what & why & for whom (required)
+├── PRINCIPLES.md       # operating principles + enforcement hooks (required)
+├── ARCHITECTURE.md     # workspace structure, frontmatter, lifecycle, versioning (required)
+├── ROADMAP.md          # time-ordered "what's next" (required)
+├── AGENTS.md           # onboarding doc for any agent in .spectacular/ (required)
+├── STACK.md            # host project's technology choices (required)
+├── DECISIONS.md        # ADR-style decision log (required)
 ├── config.yaml         # machine-readable project config (required)
 │
 ├── current/            # canonical system truth — one file per capability
@@ -22,8 +25,8 @@ The `.spectacular/` directory is the operational workspace for a project. This d
 │
 ├── requests/           # active and planned work — one folder per request
 │   └── add-team-billing/
-│       ├── PLAN.md     # required
-│       ├── TASKS.md    # required
+│       ├── PLAN.md     # required — 7-slot decomposition, owns lifecycle state
+│       ├── TASKS.md    # required — executable checklist
 │       ├── SESSION.md  # created on active
 │       ├── RISKS.md    # on demand
 │       ├── VERIFY.md   # on demand
@@ -35,6 +38,8 @@ The `.spectacular/` directory is the operational workspace for a project. This d
 └── archive/            # completed requests and promoted ideas
     └── add-team-billing/
 ```
+
+**Requests never carry their own `PRD.md`** — product intent is project-wide and lives at `.spectacular/PRD.md`. Use `PLAN.md` for request-level intent.
 
 `.spectacular.local/` — personal overrides at the repo root. Always gitignored, never committed.
 
@@ -56,21 +61,98 @@ The `.spectacular/` directory is the operational workspace for a project. This d
 
 ## Root layer files
 
-These five files form the stable grounding for the workspace. They should change infrequently and remain concise. **Never overwrite in place — snapshot before editing** (see [Versioning](#versioning)).
+These files form the stable grounding for the workspace. They should change infrequently and remain concise. **Never overwrite in place — snapshot before editing** (see [Versioning](#versioning)).
+
+Spectacular splits root grounding across **seven focused docs** so agents can load only what a task needs (progressive disclosure). The PRD answers *what & why*; PRINCIPLES answers *how we operate*; ARCHITECTURE answers *what's where*; ROADMAP answers *when*; STACK answers *built with*; DECISIONS answers *why we chose what*; AGENTS answers *how to work in here*.
 
 ### `PRD.md`
 
-Product/business intent. Why the project exists, what it is trying to achieve, who it is for.
+Product/business intent. Why the project exists, what it is trying to achieve, who it is for. Uses the 6-slot canonical PRD shape.
 
 ```yaml
 ---
 version: 1.0
-updated: 2026-05-11
+updated: 2026-05-21
 summary: "One-sentence description of this file's purpose"
+related:
+  - PRINCIPLES.md
+  - ARCHITECTURE.md
+  - ROADMAP.md
+  - AGENTS.md
+  - DECISIONS.md
+  - STACK.md
 ---
 ```
 
-Sections: Vision, Goals, Non-goals, Target users.
+Sections (in order): Vision, Problem, Target users, Deliverable, Goals & success criteria, Non-goals, Constraints, First milestone, Principles (summary), Related docs.
+
+For interactive PRD building, use `spectacular prd` — the skill walks the 6-slot grill (problem, who, success, non-goals, constraints, milestone) with kit-aware templates.
+
+---
+
+### `PRINCIPLES.md`
+
+Operating principles + runtime enforcement hooks. Each principle states a belief and pairs it with a concrete "How the skill enforces this:" sub-bullet — principles without enforcement are posters.
+
+```yaml
+---
+version: 1.0
+updated: 2026-05-21
+summary: "Operating principles + runtime enforcement hooks"
+related:
+  - PRD.md
+  - ARCHITECTURE.md
+---
+```
+
+Default 8 principles (customize per project):
+1. Context is the system
+2. Separate intent from truth
+3. Small files over giant documents
+4. Humans and agents share the same workspace
+5. Operational memory compounds
+6. Progressive disclosure
+7. Three layers — intent → execution → validation
+8. Humans decide, agents propose
+
+---
+
+### `ARCHITECTURE.md`
+
+The workspace structure itself — what each folder is for, frontmatter conventions, lifecycle states, versioning rules. Distinct from `STACK.md` (which describes the *host project's* tech choices); ARCHITECTURE describes the `.spectacular/` workspace.
+
+```yaml
+---
+version: 1.0
+updated: 2026-05-21
+summary: ".spectacular/ structure, frontmatter, lifecycle, versioning"
+related:
+  - PRD.md
+  - PRINCIPLES.md
+  - AGENTS.md
+---
+```
+
+Sections: Layout, Root layer, Frontmatter conventions, Ideas / Current / Requests / Skills / Memory / Archive layers, Request files, Lifecycle, Versioning, Configuration.
+
+---
+
+### `ROADMAP.md`
+
+Time-ordered "what's next". Coarse targets, not commitments. Detail for in-flight work lives in `requests/<slug>/`.
+
+```yaml
+---
+version: 1.0
+updated: 2026-05-21
+summary: "Roadmap — v1 status, v2 features, v3+ direction"
+related:
+  - PRD.md
+  - ARCHITECTURE.md
+---
+```
+
+Sections: v1 (current), v2 features, v3+ direction.
 
 ---
 
@@ -116,34 +198,47 @@ Entry format:
 
 ### `AGENTS.md`
 
-Agent orchestration rules for this specific project. Defines which context to load for which task type and which skills are available. The `/spectacular` skill reads this file to configure its own behavior.
+Onboarding doc for any agent or human landing inside `.spectacular/`. Defines what the folder is, how to operate in it, which context to load per task type, available skills, and don'ts. The `/spectacular` skill treats this file as the authoritative context-loading table.
 
 ```yaml
 ---
 version: 1.0
-updated: 2026-05-11
-summary: "Agent orchestration rules for this project"
+updated: 2026-05-21
+summary: "Onboarding doc for any agent or human landing inside .spectacular/"
+related:
+  - PRD.md
+  - PRINCIPLES.md
+  - ARCHITECTURE.md
 ---
 ```
 
 Standard sections:
 
 ```md
-## Context loading rules
+## What this folder is
+## How to operate
+## Context loading by task
 
 | Task type | Load |
 |---|---|
-| Planning | PRD.md, DECISIONS.md |
-| Implementation | STACK.md, PLAN.md, TASKS.md, current/<capability> |
-| Review | VERIFY.md, current/<capability>, RISKS.md |
+| Planning / design | PRD.md, PRINCIPLES.md, DECISIONS.md |
+| Refining intent / PRD work | PRD.md, skill refs prd-grill.md / prd-refine.md / prd-review.md |
+| Implementing a request | STACK.md, requests/<slug>/PLAN.md, TASKS.md, relevant current/<capability>/ |
+| Reviewing / QA | requests/<slug>/VERIFY.md, relevant current/<capability>/, RISKS.md |
+| Onboarding cold | PRD.md, ARCHITECTURE.md, this file |
 
 ## Available skills
-
 - spectacular — workspace management
 
-## Handoff conventions
+## Creating requests
+Use `spectacular new <description>`. Never create requests/<slug>/PRD.md — anti-pattern.
 
-- Summarize state in SESSION.md before handing off to another agent
+## Don'ts
+- Don't touch archive/
+- Don't duplicate truth
+- Don't overwrite canonical docs in place
+- Don't write to memory/ autonomously
+- Don't create per-request PRDs
 ```
 
 > [!NOTE]
@@ -177,6 +272,7 @@ agents:
     - PRD.md
     - STACK.md
     - DECISIONS.md
+    # Full per-task context map lives in .spectacular/AGENTS.md
 
 skills:
   symlink_on_init: []         # project skills to auto-symlink on init
@@ -252,23 +348,26 @@ State lives exclusively in `PLAN.md` frontmatter. The skill reads it to surface 
 
 ### `PLAN.md` (required)
 
-Defines intent — what is being built and why. Owns lifecycle state.
+Defines intent + plan for one request. Owns lifecycle state. Uses the **7-slot decomposition** that gives every request the same shape: goal → constraints → milestones → tasks (pointer) → dependencies → validation → deliverables.
 
 ```yaml
 ---
 status: planned | active | review | verified
 priority: high | medium | low
 owner: alex
-updated: 2026-05-11
+updated: 2026-05-21
 summary: "One-line description of what this request changes"
 related:
+  - ../../PRD.md
   - current/auth
 ---
 ```
 
-Sections: Goal, Why, Scope, Out of scope, Approach, Success criteria.
+Sections (in order): Goal, Why (intent), Constraints, Milestones, Tasks (pointer to TASKS.md), Dependencies, Validation, Deliverables. Optional trailing: Open questions.
 
 **Required fields:** `status`, `updated`, `summary`. All others optional.
+
+**Anti-pattern: never create `requests/<slug>/PRD.md`.** Product intent is project-wide and lives at the root. If a request needs to extend product intent, edit `.spectacular/PRD.md` (snapshot first).
 
 ---
 
@@ -373,7 +472,7 @@ The skill does not read `archive/` during normal operation.
 
 ## Versioning
 
-Canonical documents (`PRD.md`, `STACK.md`, `DECISIONS.md`, `config.yaml`, `current/` specs) are never overwritten in place.
+Canonical documents (`PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`, `AGENTS.md`, `config.yaml`, `current/` specs) are never overwritten in place.
 
 **Convention:** snapshot before editing, using the `@version` suffix:
 

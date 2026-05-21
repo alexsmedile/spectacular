@@ -172,6 +172,8 @@ agents:
 
 Keep this list small. Spectacular works best when agents load targeted context instead of the full project history.
 
+The **full per-task context map** lives in `.spectacular/AGENTS.md` (under "Context loading by task") — `default_context` is just the always-on baseline. AGENTS.md is the authoritative source; the skill reads it on every invocation.
+
 ---
 
 ## `skills`

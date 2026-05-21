@@ -1,13 +1,11 @@
 ---
 status: active
-priority: high
+priority: medium
 owner: alex
-updated: 2026-05-21
+updated: 2026-05-11
 summary: "Bash CLI that bootstraps a new project with the Spectacular scaffold and installs the skill from GitHub"
 related:
-  - ../../PRD.md
-  - ../../ARCHITECTURE.md
-  - ../canonical-docs-rework/PLAN.md
+  - current/cli
 ---
 
 # CLI Bootstrap Tool
@@ -78,9 +76,6 @@ Spectacular initialized.
 Created:
   .spectacular/config.yaml
   .spectacular/PRD.md
-  .spectacular/PRINCIPLES.md
-  .spectacular/ARCHITECTURE.md
-  .spectacular/ROADMAP.md
   .spectacular/STACK.md
   .spectacular/DECISIONS.md
   .spectacular/AGENTS.md
@@ -102,9 +97,6 @@ Run /spectacular to get started.
 - `spectacular init` with flags above
 - `skills.lock` written by CLI
 - Multiplatform: `.agents/skills/` + `.claude/skills/` both populated
-- **Full canonical doc set on every init** — PRD, PRINCIPLES, ARCHITECTURE, ROADMAP, STACK, DECISIONS, AGENTS. Aligned with the post-rework root layer ([`canonical-docs-rework`](../canonical-docs-rework/PLAN.md)).
-- PRD stub uses the 6-slot shape (problem / who / success / non-goals / constraints / milestone)
-- AGENTS.md stub uses the new onboarding shape (folder purpose, context loading, don'ts)
 
 ## Out of scope
 

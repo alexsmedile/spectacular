@@ -114,6 +114,9 @@ This protects project context from accidental replacement. Edit existing files m
 It does not rewrite:
 
 - `.spectacular/PRD.md`
+- `.spectacular/PRINCIPLES.md`
+- `.spectacular/ARCHITECTURE.md`
+- `.spectacular/ROADMAP.md`
 - `.spectacular/STACK.md`
 - `.spectacular/DECISIONS.md`
 - `.spectacular/AGENTS.md`
@@ -166,6 +169,9 @@ spectacular remember this
 spectacular snapshot <file>
 spectacular promote <idea>
 spectacular status
+spectacular prd
+spectacular prd refine
+spectacular prd review
 ```
 
 If you run `spectacular new ...` in a terminal, the CLI will reject it. Use the trigger inside Claude Code, Codex, or another agent that has loaded the skill.
@@ -213,8 +219,12 @@ Prefer archiving completed work over deleting it.
 Canonical docs should be snapshotted before edits:
 
 - `.spectacular/PRD.md`
+- `.spectacular/PRINCIPLES.md`
+- `.spectacular/ARCHITECTURE.md`
+- `.spectacular/ROADMAP.md`
 - `.spectacular/STACK.md`
 - `.spectacular/DECISIONS.md`
+- `.spectacular/AGENTS.md`
 - `.spectacular/config.yaml`
 - `.spectacular/current/**`
 

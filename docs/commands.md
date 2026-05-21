@@ -105,7 +105,7 @@ Re-downloads the latest skill release and updates `.spectacular/skills.lock`.
 spectacular init --update
 ```
 
-This updates the installed skill. It does not rewrite existing workspace documents such as `PRD.md`, `STACK.md`, or `DECISIONS.md`.
+This updates the installed skill. It does not rewrite existing workspace documents such as `PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, or `DECISIONS.md`.
 
 ---
 
@@ -180,8 +180,12 @@ spectacular snapshot .spectacular/PRD.md
 Canonical documents include:
 
 - `PRD.md`
+- `PRINCIPLES.md`
+- `ARCHITECTURE.md`
+- `ROADMAP.md`
 - `STACK.md`
 - `DECISIONS.md`
+- `AGENTS.md`
 - `config.yaml`
 - `current/` capability specs
 
@@ -194,6 +198,32 @@ spectacular promote pricing-model-notes
 ```
 
 The skill should create a request and move the original idea into `.spectacular/archive/ideas/`.
+
+### `spectacular prd` / `spectacular prd grill`
+
+Walks the user through the 6-slot canonical PRD (problem / who / success / non-goals / constraints / milestone), one question at a time, with kit-aware prompts. Asks for a kit first (`coding` / `product` / `content` / `research` / `blank`), then drives the interview.
+
+```text
+spectacular prd
+```
+
+Use on fresh projects or when `PRD.md` is empty / placeholder-only. If a real PRD already exists, the skill asks whether to refine in place or start fresh (snapshots first).
+
+### `spectacular prd refine`
+
+Runs vibe→spec rewrite patterns on an existing PRD — flags vague adjectives, plural users, unbounded success metrics, inserts `[NEEDS CLARIFICATION: …]` markers where it can't resolve.
+
+```text
+spectacular prd refine
+```
+
+### `spectacular prd review`
+
+Runs the PRD quality gate — pass/fail check on all 6 required slots, vague-word scan, intent-trace check.
+
+```text
+spectacular prd review
+```
 
 ---
 

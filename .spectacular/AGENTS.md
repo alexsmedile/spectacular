@@ -1,26 +1,103 @@
 ---
-version: 1.0
-updated: 2026-05-11
-summary: "Agent orchestration rules for the Spectacular project"
+version: 2.0
+updated: 2026-05-21
+summary: "Onboarding doc for any agent or human landing inside .spectacular/ — how to operate, what to load, what not to touch"
+related:
+  - PRD.md
+  - PRINCIPLES.md
+  - ARCHITECTURE.md
 ---
 
-# Agents
+# AGENTS.md — Working in `.spectacular/`
 
-## Context loading rules
+You just entered a Spectacular workspace. This doc tells you how to operate inside it without breaking the conventions.
+
+---
+
+## What this folder is
+
+`.spectacular/` is an AI-native operational workspace. It separates:
+
+- **Intent** (what we want) — `PRD.md`, `PRINCIPLES.md`
+- **Structure** (how it's organized) — `ARCHITECTURE.md`, `ROADMAP.md`
+- **Truth** (what currently exists) — `current/`
+- **Work** (what's changing) — `requests/`
+- **Memory** (what we learned) — `memory/`
+- **History** (what's done) — `archive/`
+
+Read [PRD.md](PRD.md) before planning anything. Read [ARCHITECTURE.md](ARCHITECTURE.md) if you need to understand where to put a file. Read [PRINCIPLES.md](PRINCIPLES.md) if you're unsure whether an action is allowed.
+
+---
+
+## How to operate
+
+1. **Read frontmatter first**, file bodies second. Status, summary, version, related — these are the navigation layer.
+2. **Load progressively.** Don't pre-load `current/` or `requests/` wholesale; load only what the current task needs (see Context loading below).
+3. **Snapshot before overwrite** on any canonical doc (root layer + `current/`). The snapshot name is `FILE@vN.md`. This is non-optional.
+4. **Propose, don't act**, on irreversibles: archive, lifecycle promote, memory writes, bulk edits >5 files. Confirm with the human first.
+5. **Never read `archive/`** during normal operation. It's write-only from your perspective.
+6. **Write to `memory/` only on confirmation.** Never autonomously.
+
+---
+
+## Context loading by task
+
+Load only what the task needs. Don't load the entire repository.
 
 | Task type | Load |
 |---|---|
-| Planning / design | PRD.md, DECISIONS.md, SPECTACULAR_PRD.md |
-| Skill implementation | STACK.md, PLAN.md, TASKS.md, current/skill/ |
-| CLI implementation | STACK.md, PLAN.md, TASKS.md, current/cli/ |
-| Review / QA | VERIFY.md, current/<capability>, RISKS.md |
+| Planning / design | `PRD.md`, `PRINCIPLES.md`, `DECISIONS.md` |
+| Refining intent / writing a PRD | `PRD.md`, skill references `prd-grill.md` / `prd-refine.md` / `prd-review.md` |
+| Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `requests/<slug>/TASKS.md`, relevant `current/<capability>/` |
+| Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `current/<capability>/`, `requests/<slug>/RISKS.md` |
+| Onboarding cold | `PRD.md`, `ARCHITECTURE.md`, this file |
+| Structural questions | `ARCHITECTURE.md` only |
+| Principles questions | `PRINCIPLES.md` only |
+| Roadmap questions | `ROADMAP.md` only |
+
+---
 
 ## Available skills
 
-- `spectacular` — workspace management (self-referential: this project uses the skill it's building)
+- **`spectacular`** — workspace management. Lean orchestrator that routes to reference docs. Trigger via `/spectacular` or commands like `spectacular new`, `spectacular archive`, `spectacular prd`, `spectacular remember this`, `spectacular snapshot`, `spectacular promote`, `spectacular status`.
+
+When a new skill is added, update this list manually. The skill will warn if it detects a skill in `.spectacular/skills/` that isn't listed here.
+
+---
+
+## Creating requests
+
+Use `spectacular new <description>` (or describe the work to `/spectacular` and let it derive the slug). The skill scaffolds `requests/<slug>/PLAN.md` + `TASKS.md` from the canonical template. Slugs are kebab-case; the skill confirms before creating.
+
+Per-request folders contain `PLAN.md` + `TASKS.md` + (on demand) `SESSION.md`, `RISKS.md`, `VERIFY.md`, `specs/`, `artifacts/`. They **never** contain a `PRD.md` — product intent is project-wide and lives at the root.
+
+---
+
+## Don'ts
+
+- **Don't touch `archive/`.** Write-only from your perspective.
+- **Don't duplicate truth.** If a fact exists in `PRD.md`, don't restate it in a request's PLAN — link instead.
+- **Don't overwrite canonical docs in place.** Always snapshot to `FILE@vN.md` first.
+- **Don't write to `memory/` autonomously.** Propose; human confirms.
+- **Don't create `requests/<slug>/PRD.md`.** It's an explicit anti-pattern.
+- **Don't load `.spectacular/` wholesale.** Read frontmatter; load bodies on demand.
+- **Don't trigger Claude Code's auto-memory** when writing to `.spectacular/memory/` — they're separate systems and double-capture is a bug.
+
+---
 
 ## Handoff conventions
 
-- Summarize state in SESSION.md before handing off
-- Load only the capability spec relevant to the current task, not all of current/
-- The authoritative PRD for the product is `SPECTACULAR_PRD.md` at the repo root
+When ending a session or handing off to another agent:
+
+- Update `requests/<slug>/SESSION.md` with current state, blockers, next actions
+- Summarize decisions made; if any are architectural, propose a `DECISIONS.md` entry
+- Surface any insights worth remembering via `spectacular remember this`
+
+---
+
+## Related
+
+- [PRD.md](PRD.md) — what Spectacular is, what we're building
+- [ARCHITECTURE.md](ARCHITECTURE.md) — the structure you're operating inside
+- [PRINCIPLES.md](PRINCIPLES.md) — the rules behind the conventions
+- [ROADMAP.md](ROADMAP.md) — what's coming next

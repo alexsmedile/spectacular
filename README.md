@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
 ![Platform](https://img.shields.io/badge/platform-Claude%20%7C%20Codex%20%7C%20Cursor-lightgrey)
-![Version](https://img.shields.io/badge/version-0.1.1-green)
+![Version](https://img.shields.io/badge/version-0.2.0-green)
 
 </div>
 
@@ -24,6 +24,8 @@ The bottleneck isn't code generation. It's everything around it.
 ## What it is
 
 Spectacular is an operational workspace for AI-assisted software projects. Drop a `.spectacular/` directory in any repo and it becomes the shared brain for you and every agent that touches the project.
+
+Strategic context is split across seven focused canonical docs (PRD / PRINCIPLES / ARCHITECTURE / ROADMAP / STACK / DECISIONS / AGENTS) so agents load only what each task needs, not the entire repo.
 
 It ships as three layers:
 
@@ -63,11 +65,20 @@ spectacular init
 
 <img src="docs/assets/layer-map.svg" width="100%" alt="Strategy, truth, and work mapped to the .spectacular/ directory" />
 
-**Strategy** — changes rarely. Documents why the project exists, what stack it uses, and why decisions were made. Agents load this once at the start of a session.
+**Strategy** — changes rarely. Split across focused canonical docs:
+- `PRD.md` — *what* the product is and *why*
+- `PRINCIPLES.md` — operating principles + runtime enforcement hooks
+- `ARCHITECTURE.md` — the workspace structure itself
+- `ROADMAP.md` — versioned future work
+- `STACK.md` — host project's tech choices
+- `DECISIONS.md` — ADR-style decision log
+- `AGENTS.md` — onboarding doc for any agent landing in `.spectacular/`
+
+Agents load only what the current task needs (planning loads PRD + PRINCIPLES + DECISIONS; implementation loads STACK + PLAN + TASKS).
 
 **Current truth** — reflects actual system behavior right now. Modular capability specs (auth, billing, editor). Never overwritten in place — the skill snapshots before proposing edits.
 
-**Active work** — temporary. Each request gets a folder with `PLAN.md` (intent) and `TASKS.md` (execution checklist). Archived on completion, not deleted.
+**Active work** — temporary. Each request gets a folder with `PLAN.md` (intent + 7-slot decomposition: goal, constraints, milestones, tasks, dependencies, validation, deliverables) and `TASKS.md` (execution checklist). Archived on completion, not deleted.
 
 ---
 
@@ -83,10 +94,13 @@ State lives in `PLAN.md` frontmatter. The skill reads it on every invocation and
 
 ```
 .spectacular/
-├── PRD.md              # product intent
-├── STACK.md            # tech + rules
-├── DECISIONS.md        # why we chose what we chose
-├── AGENTS.md           # context loading rules for this project
+├── PRD.md              # product intent — what & why & for whom
+├── PRINCIPLES.md       # operating principles + enforcement hooks
+├── ARCHITECTURE.md     # .spectacular/ structure, frontmatter, lifecycle, versioning
+├── ROADMAP.md          # time-ordered "what's next"
+├── STACK.md            # host project's tech choices
+├── DECISIONS.md        # ADR-style decision log
+├── AGENTS.md           # onboarding doc for agents working in this folder
 ├── config.yaml         # naming, required files, agent file overrides
 │
 ├── current/            # canonical system truth (capability specs)
@@ -95,7 +109,7 @@ State lives in `PLAN.md` frontmatter. The skill reads it on every invocation and
 │
 ├── requests/           # active and planned work
 │   └── add-team-billing/
-│       ├── PLAN.md     # goal, approach, success criteria (owns lifecycle state)
+│       ├── PLAN.md     # 7-slot decomposition (owns lifecycle state)
 │       ├── TASKS.md    # executable checklist
 │       └── SESSION.md  # current execution state
 │

@@ -18,3 +18,6 @@ node_modules/
 
 # release drafts and launch material (local only)
 releases/
+
+# local working notes
+TODO.md

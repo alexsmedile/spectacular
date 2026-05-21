@@ -1,10 +1,18 @@
 ---
-version: 1.0
-updated: 2026-05-11
+version: 1.1
+updated: 2026-05-21
 summary: "Architectural and product decisions for the Spectacular project"
 ---
 
 # Decisions
+
+## 2026-05-21
+
+**Decision:** Split `PRD.md` into 4 focused root docs — `PRD.md` (intent), `PRINCIPLES.md` (beliefs), `ARCHITECTURE.md` (structure), `ROADMAP.md` (time). `AGENTS.md` rewritten as in-folder onboarding doc.
+**Why:** The original `PRD.md` had grown to 896 lines holding four different documents (PRD + architecture spec + roadmap + skill interaction). This violated principle 3 ("small files over giant documents") and principle 1 (anyone planning had to load the whole thing). Splitting also unblocks future work on agent spec, capabilities, and runtime-enforced principles, none of which could land cleanly while PRD was the catch-all.
+**Tradeoffs:** 4 root docs instead of 1 — more cross-links to maintain. Mitigated by the `related:` frontmatter convention and a tail "Related" section on each doc. Old `PRD@v1.3.md` and `AGENTS@v1.0.md` snapshots preserved as the authoritative pre-split content. The split was tracked end-to-end via `requests/canonical-docs-rework/`.
+
+---
 
 ## 2026-05-11
 

@@ -12,21 +12,133 @@ Canonical templates for all Spectacular files. Used by the skill when creating n
 version: 1.0
 updated: <today>
 summary: "<one-line product/business intent>"
+related:
+  - PRINCIPLES.md
+  - ARCHITECTURE.md
+  - ROADMAP.md
+  - AGENTS.md
+  - DECISIONS.md
+  - STACK.md
 ---
 
-# Product Requirements Document
+# <Project name> — Product Requirements Document
 
 ## Vision
-<What this product is and why it exists>
+<One paragraph — what this product is and why it exists>
 
-## Goals
-- 
-
-## Non-goals
-- 
+## Problem
+<One sentence — the concrete pain this solves. Who hurts, in what situation, how often.>
 
 ## Target users
-- 
+<One primary user. Not a list, not "everyone".>
+
+## Deliverable
+<What ships at v1. The artifacts a user can touch.>
+
+## Goals & success criteria
+- <Measurable success criterion with a number and a timeframe>
+
+## Non-goals
+- <Explicit exclusion you'd push back on>
+
+## Constraints
+- <What's fixed before starting — budget, tech, policy>
+
+## First milestone
+<One concrete, demoable near-term outcome.>
+
+## Related docs
+- See `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `AGENTS.md`
+```
+
+For full PRD crafting, prefer the kit-based templates in `templates/prd/` — use `prd-grill.md` to drive the interactive flow.
+
+### PRINCIPLES.md
+```md
+---
+version: 1.0
+updated: <today>
+summary: "Operating principles for this project + runtime enforcement hooks"
+related:
+  - PRD.md
+  - ARCHITECTURE.md
+---
+
+# <Project> — Operating Principles
+
+## 1. <Principle name>
+<Statement>
+
+**How the skill enforces this:**
+- <concrete hook>
+
+## 2. <Principle name>
+...
+```
+
+Default principles (Spectacular-aligned, customize per project):
+1. Context is the system
+2. Separate intent from truth
+3. Small files over giant documents
+4. Humans and agents share the same workspace
+5. Operational memory compounds
+6. Progressive disclosure
+7. Three layers: intent → execution → validation
+8. Humans decide, agents propose
+
+### ARCHITECTURE.md
+```md
+---
+version: 1.0
+updated: <today>
+summary: "<one-line description of this project's structure>"
+related:
+  - PRD.md
+  - PRINCIPLES.md
+---
+
+# <Project> — Architecture
+
+## Layout
+<Tree of the project's key directories>
+
+## Root layer
+<Files at the project root and what each is for>
+
+## <Domain> layer
+<Repeat per major domain>
+
+## Frontmatter conventions
+<Schema for canonical files>
+
+## Lifecycle
+<State transitions, if applicable>
+
+## Versioning
+<Snapshot rules>
+```
+
+### ROADMAP.md
+```md
+---
+version: 1.0
+updated: <today>
+summary: "<project> roadmap — v1 status, v2 features, v3+ direction"
+related:
+  - PRD.md
+  - ARCHITECTURE.md
+---
+
+# <Project> — Roadmap
+
+## v1 (current)
+- [ ] <shipped or in-progress item>
+
+## v2 — <feature group>
+<What it is, why it's deferred>
+
+## v3+ — <direction>
+<Long-term direction, not commitments>
 ```
 
 ### STACK.md
@@ -74,26 +186,48 @@ summary: "Architectural and product decisions log"
 ---
 version: 1.0
 updated: <today>
-summary: "Agent orchestration rules for this project"
+summary: "Onboarding doc for any agent or human landing inside .spectacular/"
+related:
+  - PRD.md
+  - PRINCIPLES.md
+  - ARCHITECTURE.md
 ---
 
-# Agents
+# AGENTS.md — Working in `.spectacular/`
 
-## Context loading rules
+## What this folder is
+`.spectacular/` is an AI-native operational workspace. Read `PRD.md` before planning, `ARCHITECTURE.md` for structure, `PRINCIPLES.md` for rules.
+
+## How to operate
+1. Read frontmatter first, file bodies second
+2. Load progressively — don't pre-load `current/` or `requests/` wholesale
+3. Snapshot before overwrite on any canonical doc (`FILE@vN.md`)
+4. Propose, don't act, on irreversibles
+5. Never read `archive/` during normal operation
+6. Write to `memory/` only on confirmation
+
+## Context loading by task
 
 | Task type | Load |
 |---|---|
-| Planning | PRD.md, DECISIONS.md |
-| Implementation | STACK.md, PLAN.md, TASKS.md, current/<capability> |
-| Review | VERIFY.md, current/<capability>, RISKS.md |
+| Planning / design | `PRD.md`, `PRINCIPLES.md`, `DECISIONS.md` |
+| Refining intent / PRD work | `PRD.md`, skill refs `prd-grill.md` / `prd-refine.md` / `prd-review.md` |
+| Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `TASKS.md`, relevant `current/<capability>/` |
+| Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `current/<capability>/`, `RISKS.md` |
+| Onboarding cold | `PRD.md`, `ARCHITECTURE.md`, this file |
 
 ## Available skills
+- `spectacular` — workspace management
 
-- spectacular — workspace management
+## Creating requests
+Use `spectacular new <description>` — never create `requests/<slug>/PRD.md` (anti-pattern; product intent is project-wide).
 
-## Handoff conventions
-
-- Summarize state in SESSION.md before handing off to another agent
+## Don'ts
+- Don't touch `archive/`
+- Don't duplicate truth
+- Don't overwrite canonical docs in place
+- Don't write to `memory/` autonomously
+- Don't create per-request PRDs
 ```
 
 ### config.yaml
@@ -125,7 +259,7 @@ skills:
 
 ## Requests layer
 
-### PLAN.md
+### PLAN.md (7-slot decomposition)
 ```md
 ---
 status: planned
@@ -134,29 +268,44 @@ owner:
 updated: <today>
 summary: "<one-line description>"
 related:
+  - ../../PRD.md
   - current/<capability>
 ---
 
 # <Request title>
 
 ## Goal
-<What are we trying to achieve?>
+<One sentence — compressed intent. Traces back to a success criterion in the root PRD.>
 
-## Why
-<Why now? What problem does this solve?>
+## Why (intent)
+<Why now? What problem does this solve? Keep tight — the full why lives in `PRD.md`.>
 
-## Scope
-- 
+## Constraints
+- <What's fixed before starting>
 
-## Out of scope
-- 
+## Milestones
+1. **<Milestone name>** — <demoable outcome>
+2. ...
 
-## Approach
-<High-level implementation approach>
+## Tasks
+See [TASKS.md](TASKS.md).
 
-## Success criteria
-- 
+## Dependencies
+- <Other requests, skills, blocking decisions>
+
+## Validation
+| Milestone | How we verify it passed |
+|---|---|
+| 1 | <test, demo, review> |
+
+## Deliverables
+- <Artifact that ships out of this request>
+
+## Open questions
+- <Things you don't know yet>
 ```
+
+PRD vs PLAN distinction: PRD is project-wide and lives at `.spectacular/PRD.md`; PLAN is per-request and lives at `requests/<slug>/PLAN.md`. **Never create `requests/<slug>/PRD.md`** — explicit anti-pattern.
 
 ### TASKS.md
 ```md

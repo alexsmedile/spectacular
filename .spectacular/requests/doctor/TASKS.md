@@ -1,0 +1,98 @@
+---
+status: planned
+updated: 2026-05-22
+related:
+  - PLAN.md
+---
+
+# Tasks — Doctor
+
+## v1
+
+### M1 — Detection taxonomy + report format
+- [ ] Draft `references/doctor.md` with full check list per area (skill, workspace, frontmatter, snapshots, links, lifecycle, kits)
+- [ ] Decide severity model — ✅ pass / ⚠️ warning / ❌ error (mirror flutter doctor + claude doctor conventions)
+- [ ] Lock report format: text (default, with ANSI colors) and `--format json` (structured findings)
+- [ ] Define JSON schema: each finding has `area`, `severity`, `file`, `message`, `proposed_fix`, `fix_type` (mechanical | judgment)
+- [ ] Document repair flow: detect → emit → (CLI mechanical OR skill judgment) → user `y/n/q` → snapshot → write
+
+### M2 — CLI detect-only mode
+- [ ] Add `doctor` subcommand to `cli/spectacular` arg parser
+- [ ] Implement `check_skill()` — install path + symlink + skills.lock parse + SKILL.md frontmatter
+- [ ] Implement `check_workspace()` — `.spectacular/` exists + always-set present + config.yaml parses
+- [ ] Implement `check_frontmatter()` — each canonical doc has required fields per registry
+- [ ] Implement `check_snapshots()` — version sequence regex per file, flag gaps
+- [ ] Implement `check_links()` — walk `related:` frontmatter, flag missing targets
+- [ ] Implement `check_lifecycle()` — request status vs required artifacts (SESSION/VERIFY/etc.)
+- [ ] Implement `check_kits()` — bundled + project-local kit frontmatter parses cleanly
+- [ ] Wire `--area` flag for scoped runs
+- [ ] Wire `--format text|json` flag
+- [ ] Exit codes: 0 (clean), 1 (warnings only), 2 (errors)
+- [ ] Test against this workspace; expect missing PRD@v1.1.md surfaced
+
+### M3 — CLI mechanical fixes
+- [ ] Add `--fix` flag parsing
+- [ ] `fix_gitignore_append()` — add `.spectacular.local/` entry if absent (no prompt — trivial)
+- [ ] `fix_missing_dirs()` — create missing `requests/` / `current/` (no prompt — trivial)
+- [ ] `fix_broken_symlink()` — repair `.claude/skills/spectacular` if dangling and `.agents/skills/spectacular/` exists (single-attempt, no prompt)
+- [ ] `fix_missing_stub()` — re-scaffold missing always-set file with init's template (no prompt — restores baseline only)
+- [ ] All `--fix` operations write to stdout: `✓ fixed <area>: <action>`
+- [ ] Findings requiring judgment → still report, append "→ requires `/spectacular doctor --fix` for agent-driven repair"
+- [ ] Confirm: `--fix` never modifies an existing non-empty canonical doc (judgment required → agent)
+
+### M4 — Skill repair flow (`/spectacular doctor --fix`)
+- [ ] Update SKILL.md routing: `spectacular doctor [<area>] [--fix]` → `references/doctor.md`
+- [ ] In `references/doctor.md` § Repair flow: skill reads CLI's `--format json` report
+- [ ] For each judgment-requiring finding: skill proposes a context-aware fix
+- [ ] Per-finding `y/n/q` confirm flow
+- [ ] Snapshot before any canonical-doc edit (route through existing versioning.md rule)
+- [ ] On `q`: print remaining-findings summary + exit
+- [ ] On all-applied: re-run detect, confirm clean state, summarize what changed
+
+### M5 — Skill-invoked subset
+- [ ] In `references/status.md` — if `doc-registry.md` parse fails during state read, auto-run doctor's `kits` + `frontmatter` checks, surface findings inline
+- [ ] In `references/grill.md` — if kit file parse fails during pre-flight, auto-run doctor's `kits` check, surface findings inline, refuse to grill
+- [ ] In `references/onboarding.md` — first-invocation flow runs doctor's `workspace` + `frontmatter` checks
+- [ ] Document the skill-invoked surface in `references/doctor.md` § Skill-invoked checks
+
+### M6 — Smart-init message update
+- [ ] Update `cli/spectacular` `diag()` helper: replace generic message with area-specific pointer
+- [ ] Frontmatter issue → `⊘ <file> (run \`spectacular doctor frontmatter\` for details)`
+- [ ] Schema mismatch → `⊘ <file> (schema mismatch — run \`spectacular doctor frontmatter --fix\`)`
+- [ ] Move corresponding v2-deferred item out of `smart-init/TASKS.md` deferred list (mark done)
+
+### M7 — Tests + VERIFY.md
+- [ ] Create `tests/cli/doctor.test.sh` — test harness reuses scenario pattern from init.test.sh
+- [ ] Scenario: clean workspace → exit 0, no findings
+- [ ] Scenario: missing always-set file → flagged + `--fix` re-creates it
+- [ ] Scenario: malformed frontmatter → flagged + NOT auto-fixed (requires agent)
+- [ ] Scenario: snapshot gap (synthetic v1.0 + v1.2 without v1.1) → flagged, exit 1
+- [ ] Scenario: dangling `related:` link → flagged, exit 1
+- [ ] Scenario: scoped area run (`spectacular doctor frontmatter`) skips other areas
+- [ ] Scenario: `--format json` emits parseable JSON
+- [ ] Scenario: `spectacular doctor --fix` mechanical-only path (no agent invocation needed)
+- [ ] Create `requests/doctor/VERIFY.md` for agent-flow scenarios (per-finding judgment, snapshot before edit, q-to-quit) — these can't be automated, manual walkthrough required
+
+### M8 — Dogfood
+- [ ] Run `spectacular doctor` against this very workspace
+- [ ] Confirm missing `PRD@v1.1.md` snapshot is surfaced
+- [ ] Walk a real fix via `/spectacular doctor --fix` (best candidate: the snapshot gap or any frontmatter drift the scan finds)
+- [ ] Run `spectacular doctor` post-fix → all findings resolved
+- [ ] Run `tests/run.sh`; all green
+
+### Verification (folded into TASKS per [[verification]] convention)
+- [ ] All M7 test scenarios pass
+- [ ] All VERIFY.md scenarios manually walked
+- [ ] PLAN § Validation criteria each confirmed
+- [ ] CHANGELOG.md entry written (v0.3.1 minor, or v0.4.0 if treated as feature release)
+
+## v2 (deferred)
+
+- [ ] Cross-doc semantic validation (PRD goals ↔ PLAN milestones) — belongs in doc-writer v2 anyway
+- [ ] `prd diff <a> <b>` + `prd merge` subcommands — move to doc-writer's scope
+- [ ] Performance benchmarks of skill operations
+- [ ] Multi-workspace diagnostics
+- [ ] Git history rewriting for snapshot backfill (currently proposes new commits only)
+- [ ] `--yes-to-all` flag — explicitly rejected for v1, may revisit if user demand emerges
+- [ ] JSON Schema validation of `doc-registry.md` itself
+- [ ] Project-type-aware checks (skill project vs CLI project doctor behaviors)

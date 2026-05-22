@@ -39,8 +39,16 @@ requests/<slug>/
 Create only on demand (skill proposes, user confirms):
 - `SESSION.md` — when request moves to `active`
 - `RISKS.md` — when request touches auth, billing, migrations, or anything flagged sensitive in STACK.md
-- `VERIFY.md` — when request has user-visible behavior changes or high-stakes implementation
+- `VERIFY.md` — when the **2-of-6 rule** in [[verification]] triggers. Default for doc/refactor/spec requests is **no VERIFY.md** — verification lives in PLAN § Validation or TASKS § Verification instead. The file is opt-in; **the practice is not** — every request must reach `verified` through some artifact.
 - `artifacts/` — when screenshots, benchmarks, or research need storing
+
+### Verification routing at scaffold time
+
+Before finalizing the PLAN.md, the skill should:
+1. Apply the 2-of-6 rule from [[verification]] against the request's nature
+2. If yes — propose `VERIFY.md` scaffold; populate PLAN § Validation with milestone checkpoints only
+3. If no — populate PLAN § Validation with full per-milestone checks; optionally add `### Verification` group to TASKS.md for procedural items
+4. Either way — verification is documented somewhere before `active` ends
 
 ---
 

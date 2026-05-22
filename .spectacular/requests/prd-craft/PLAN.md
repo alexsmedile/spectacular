@@ -1,11 +1,12 @@
 ---
-status: active
+status: verified
 priority: high
 owner: alex
 updated: 2026-05-21
 summary: "Effortless, interactive PRD crafting for any kind of project — grill, refine, review"
 related:
   - skills/spectacular/SKILL.md
+  - ../doc-writer/PLAN.md
 ---
 
 # Plan — PRD Craft
@@ -169,3 +170,71 @@ PRD passes when:
 
 - Auto-detect kit from existing project context (vs. always asking)? Deferred to v2.
 - Should the grill ever offer to draft slots from existing files (`STACK.md`, `README.md`, etc.) instead of asking cold? Deferred — risks crossing the line into research-pipeline territory the scope explicitly rejects.
+
+---
+
+## v1.1 — Slot alignment + kit-prep
+
+Added 2026-05-21 after auditing prd-craft against the post-rework canonical docs (PRD v2.0 / ARCHITECTURE v1.0). Slot names diverged from the root PRD; Vision + Deliverable sections live in the root PRD but aren't grill slots.
+
+### Why now
+
+The dogfood task ("run `prd review` against root PRD.md") can't pass cleanly while the grill's slot names and slot set differ from what the canonical root PRD uses. v1.1 fixes the alignment before dogfood runs. Kit refactor is delegated to [[kits-as-plugins]] — v1.1 only **prepares** the base for that refactor.
+
+### Scope (v1.1)
+
+**Slot rename — align with root PRD.md**
+- Slot 2: "Who it's for" → **"Target users"**
+- Slot 3: "What success looks like" → **"Goals & success criteria"**
+
+**Slot additions — bring base in line with root PRD shape**
+- Add slot 0: **"Vision"** — the philosophical "what this is" (one paragraph, narrative)
+- Add slot: **"Deliverable"** — what concretely ships (between Target users and Goals & success criteria, per root PRD order)
+
+**New base slot order (8 slots)**
+1. Vision
+2. Problem
+3. Target users
+4. Deliverable
+5. Goals & success criteria
+6. Non-goals
+7. Constraints
+8. First milestone
+
+**Files touched**
+- `templates/prd/base.md` — rename + add 2 slots
+- `references/prd-grill.md` — update slot loop count + names + intro
+- `references/prd-review.md` — update gate checklist to 8 slots; vague-word list unchanged
+- `references/prd-refine.md` — update slot references in patterns
+
+**Not in v1.1 — punted to [[kits-as-plugins]]**
+- Refactoring kits to diff-only format
+- Kits declaring `triggers-docs`
+- Composition rules
+
+### Anti-pattern
+
+Don't refactor kits in v1.1. Keep them as standalone-with-extras temporarily; [[kits-as-plugins]] does the formal refactor against the now-stable 8-slot base.
+
+### Success criteria (v1.1)
+
+- Root `.spectacular/PRD.md` passes `prd review` against the updated 8-slot gate (snapshot to `PRD@v2.0.md` first if any edits land)
+- A grill run on a throwaway project produces a PRD whose slot names match root PRD verbatim
+- All 5 existing kits still load through grill without error (even though refactor is deferred)
+
+### v1.1 dependency for downstream requests
+
+Implementation order locked 2026-05-21:
+
+```
+prd-craft v1.1  →  doc-writer  →  kits-as-plugins  →  smart-init
+                                   ↘                   ↘
+                                    doctor (can land in parallel with smart-init)
+```
+
+- **[[doc-writer]]** waits for v1.1 — generalizes grill/refine/review into a shared engine + adds the doc registry. PRD becomes the first registry entry, modeled against the v1.1 8-slot base.
+- **[[kits-as-plugins]]** waits for doc-writer — kits become registry-aware deltas, declaring `triggers-docs` for the engine to consume.
+- **[[smart-init]]** waits for kits-as-plugins — CLI consumes registry + kit `triggers-docs` to drive selective scaffolding.
+- **[[doctor]]** waits for doc-writer — needs the registry to know what "correct" scaffold looks like; can land in parallel with smart-init.
+
+v1.1 itself is intentionally narrow: slot rename + add Vision/Deliverable. The engine generalization is **not** in scope here.

@@ -1,82 +1,76 @@
 ---
-version: 1.0
-updated: <DATE>
-summary: "<one-sentence description of the content project>"
 kit: content
+version: 2.0
+extends: prd
+adds-slots:
+  - name: Audience
+    after: Target users
+    required: true
+    prompt: |
+      Beyond the persona: where does this audience currently get this kind of content?
+      Why would they switch?
+    example: |
+      Currently consuming: Stratechery, Lenny's Newsletter.
+      Will switch because: deeper technical examples paired with strategic framing.
+  - name: Format
+    after: Deliverable
+    required: true
+    prompt: |
+      Concrete production format. Medium, structure, length, cadence.
+    example: |
+      Medium: text + occasional diagrams.
+      Structure: long-form essay with embedded code samples.
+      Length: 1,500-2,500 words per issue.
+      Cadence: weekly, Tuesdays.
+  - name: Distribution
+    after: Format
+    required: true
+    prompt: |
+      Where pieces live, how the audience finds them, how they retain.
+    example: |
+      Home base: own newsletter (Buttondown).
+      Discovery: cross-posts to dev.to + HN Show.
+      Retention: email subscription, ~50% open rate target.
+  - name: Editorial principles
+    after: Constraints
+    required: false
+    prompt: |
+      3-5 rules that define the voice and quality bar. What makes a piece "on-brand"?
+    example: |
+      - No "10 reasons" listicles — every piece has one core argument
+      - All code samples runnable as-is
+      - Cite primary sources, never secondhand summaries
+modifies-slots:
+  - name: Deliverable
+    note: |
+      For content: name the format + cadence + count.
+      Example: "Weekly newsletter, 12-issue arc, published Tuesdays."
+  - name: Goals & success criteria
+    note: |
+      For content: measure engagement, not publication.
+      Bad: "publish 12 issues". Good: "1,000 subscribers + 40% open rate by episode 8."
+triggers-docs:
+  always:
+    - roadmap
+  suggested:
+    - principles
+    - decisions
+description: |
+  Courses, newsletters, books, video series, podcasts, documentation projects.
+  Adds Audience + Format + Distribution + Editorial principles slots.
 ---
 
-# <Project Name> — Product Requirements Document
+# Content kit
 
-<!-- Content kit: 6-slot base + audience + format + distribution. -->
-<!-- For courses, newsletters, books, video series, podcasts, documentation projects. -->
+For content projects where engagement and audience-building matter.
 
-## 1. Problem
+Use when the project ships:
+- A newsletter or essay series
+- A course or tutorial sequence
+- A book or long-form publication
+- A video or podcast series
+- A documentation project with a defined audience
 
-<!-- What knowledge gap does this fill, or what perspective does it offer that's missing? -->
-
-<PROBLEM>
-
-## 2. Who it's for
-
-<!-- One primary reader/viewer. Their existing knowledge level matters. -->
-<!-- Example: "Mid-level engineers who can read TypeScript but haven't built a CLI tool before." -->
-
-<PRIMARY USER>
-
-## 3. What success looks like
-
-<!-- Engagement, not just publication. -->
-<!-- Example: "1,000 subscribers within 90 days with 40% open rate by episode 8." -->
-
-<SUCCESS CRITERIA>
-
-## 4. Non-goals
-
-- <NON-GOAL 1>
-- <NON-GOAL 2>
-- <NON-GOAL 3>
-
-## 5. Constraints
-
-- Cadence: <e.g. weekly, monthly>
-- Length: <typical piece length>
-- <OTHER CONSTRAINT>
-
-## 6. First milestone
-
-<!-- First piece published + first audience signal. -->
-
-<MILESTONE>
-
----
-
-## Audience
-
-<!-- Beyond persona: where do they currently get this kind of content? Why would they switch? -->
-
-- Currently consuming: <competing sources>
-- Will switch because: <your unique angle>
-
-## Format
-
-<!-- Concrete production format. -->
-
-- Medium: <text / video / audio / mixed>
-- Structure: <e.g. essay, tutorial, interview, narrative>
-- Typical length / runtime: <duration>
-- Production cadence: <weekly / monthly / one-shot>
-
-## Distribution
-
-<!-- Where pieces live, how the audience finds them. -->
-
-- Home base: <where it's published>
-- Discovery: <SEO / social / cross-post / community>
-- Retention: <newsletter / RSS / app>
-
-## Editorial principles
-
-<!-- 3-5 rules that define the voice and quality bar. -->
-
-- <PRINCIPLE 1>
-- <PRINCIPLE 2>
+Skip this kit when:
+- The project ships code as the primary artifact (→ `coding`)
+- The output is research feeding a single decision, not ongoing publication (→ `research`)

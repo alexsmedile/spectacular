@@ -1,37 +1,21 @@
 ---
-version: 1.0
-updated: <DATE>
-summary: "<one-sentence description>"
 kit: blank
+version: 2.0
+extends: prd
+adds-slots: []
+modifies-slots: []
+triggers-docs:
+  always: []
+  suggested: []
+description: |
+  No extras. Pure 8-slot base PRD. Use when no other kit fits, or when starting with maximum flexibility.
 ---
 
-# <Project Name> — Product Requirements Document
+# Blank kit
 
-<!-- Blank kit: pure 6-slot base, no domain-specific extras. -->
-<!-- Use when no other kit fits, or when starting with maximum flexibility. -->
+The empty kit. Picks the base PRD as-is, no additions, no triggered docs beyond smart-init's always-set.
 
-## 1. Problem
-
-<PROBLEM>
-
-## 2. Who it's for
-
-<PRIMARY USER>
-
-## 3. What success looks like
-
-<SUCCESS CRITERIA>
-
-## 4. Non-goals
-
-- <NON-GOAL 1>
-- <NON-GOAL 2>
-
-## 5. Constraints
-
-- <CONSTRAINT 1>
-- <CONSTRAINT 2>
-
-## 6. First milestone
-
-<MILESTONE>
+Choose this when:
+- The project doesn't map to coding / product / content / research
+- You want maximum flexibility and will add structure later
+- You're scaffolding a stub and will refine the kit choice during refinement

@@ -16,45 +16,12 @@ OPT_AGENTS_FILE="AGENTS.md"
 OPT_GLOBAL=false
 OPT_UPDATE=false
 OPT_INTERACTIVE=false
-OPT_KIT="blank"
-OPT_WITH=""
-OPT_MINIMAL=false
-
-# Always-set: scaffolded regardless of kit. The 5-file minimum.
-#   PRD.md, config.yaml, AGENTS.md (file name varies per --agents-file), requests/, current/
-ALWAYS_SET="prd config agents"
-
-# Known doc IDs (kit triggers-docs entries and --with values must match these)
-KNOWN_DOCS="prd principles architecture roadmap stack decisions agents config"
-
-# Bundled kits (must exist as templates/prd/kits/<id>.md in installed skill)
-KNOWN_KITS="blank coding content product research"
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 die()  { echo "Error: $*" >&2; exit 1; }
 info() { echo "$*"; }
-skip() { echo "  ⊘  $*"; }
-created() { echo "  ✓  $*"; }
-filled() { echo "  ✓  $* (filled empty stub)"; }
-diag()  { echo "  ⊘  $* (issues detected — run diagnostics via \`spectacular doctor\` once available)"; }
-
-# Returns 0 if file is "effectively empty" (0 bytes or only whitespace)
-is_empty_file() {
-  local path="$1"
-  [[ ! -s "$path" ]] && return 0
-  ! grep -q '[^[:space:]]' "$path" 2>/dev/null
-}
-
-# Returns 0 if `needle` (whitespace-trimmed) appears in space-separated `haystack`
-# IFS is explicitly reset so callers using comma-IFS don't break the split.
-in_list() {
-  local needle="$1" haystack="$2"
-  local IFS=$' \t\n'
-  for item in $haystack; do
-    [[ "$item" == "$needle" ]] && return 0
-  done
-  return 1
-}
+skip() { echo "  skipped  $*"; }
+created() { echo "  created  $*"; }
 
 slug_from_dir() {
   basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//'
@@ -63,18 +30,7 @@ slug_from_dir() {
 write_if_missing() {
   local path="$1"; shift
   if [[ -e "$path" ]]; then
-    if is_empty_file "$path"; then
-      printf '%s' "$*" > "$path"
-      filled "$path"
-    else
-      # Cheap heuristic: file looks malformed if it has no frontmatter delimiter
-      # and the doc is supposed to have frontmatter
-      if [[ "$path" == *.md ]] && ! head -1 "$path" | grep -q '^---$'; then
-        diag "$path"
-      else
-        skip "$path"
-      fi
-    fi
+    skip "$path"
   else
     mkdir -p "$(dirname "$path")"
     printf '%s' "$*" > "$path"
@@ -90,28 +46,17 @@ Usage: spectacular init [options]
 Bootstrap a new project with the Spectacular workspace scaffold.
 
 Options:
-  -i, --interactive         Prompt for all foundational settings (incl. kit + suggested docs)
+  -i, --interactive         Prompt for all foundational settings
       --name <slug>         Project name (default: current folder slug)
       --summary <text>      Project summary (default: empty)
       --agents-file <file>  Primary agents file (default: AGENTS.md)
-      --kit <name>          Kit identity for the PRD + extra docs (default: blank)
-                            One of: blank, coding, content, product, research
-      --with <a,b,c>        Comma-separated extra root docs to scaffold beyond always-set
-                            Doc IDs: principles, architecture, roadmap, stack, decisions
-      --minimal             Scaffold the 5-file always-set only; ignore kit triggers-docs
       --global              Install skill to ~/.agents/skills/ and ~/.claude/skills/
       --update              Re-download latest skill release and update skills.lock
   -h, --help                Show this help
 
-Always-set (scaffolded regardless of kit/flags):
-  PRD.md, config.yaml, <agents-file>, requests/, current/
-
 Examples:
-  spectacular init                              # always-set + blank kit (no extras)
-  spectacular init -i                           # interactive: pick kit + per-suggested-doc prompts
-  spectacular init --kit coding                 # adds STACK + ARCHITECTURE (coding kit's always-docs)
-  spectacular init --with principles,roadmap    # adds those two on top of always-set
-  spectacular init --kit coding --minimal       # always-set only; kit identity recorded but no extras
+  spectacular init
+  spectacular init -i
   spectacular init --name my-app --agents-file CLAUDE.md
   spectacular init --global
   spectacular init --update
@@ -127,135 +72,17 @@ parse_args() {
       --name) OPT_NAME="$2"; shift 2 ;;
       --summary) OPT_SUMMARY="$2"; shift 2 ;;
       --agents-file) OPT_AGENTS_FILE="$2"; shift 2 ;;
-      --kit) OPT_KIT="$2"; shift 2 ;;
-      --with) OPT_WITH="$2"; shift 2 ;;
-      --minimal) OPT_MINIMAL=true; shift ;;
       --global) OPT_GLOBAL=true; shift ;;
       --update) OPT_UPDATE=true; shift ;;
       -h|--help) usage; exit 0 ;;
       *) die "Unknown option: $1. Run 'spectacular --help' for usage." ;;
     esac
   done
-
-  # Validate --kit
-  if ! in_list "$OPT_KIT" "$KNOWN_KITS"; then
-    die "Unknown kit: '$OPT_KIT'. Known kits: $KNOWN_KITS"
-  fi
-
-  # Validate --with entries
-  if [[ -n "$OPT_WITH" ]]; then
-    local IFS=','
-    for doc in $OPT_WITH; do
-      doc="${doc// /}"  # strip whitespace
-      [[ -z "$doc" ]] && continue
-      if ! in_list "$doc" "$KNOWN_DOCS"; then
-        die "Unknown doc ID in --with: '$doc'. Known doc IDs: $KNOWN_DOCS"
-      fi
-    done
-  fi
-}
-
-# Resolve the final doc-set to scaffold, given kit + flags.
-# Output: space-separated list of doc IDs (lowercase).
-# Rules:
-#   - always-set always included
-#   - kit's triggers-docs.always included unless --minimal
-#   - --with entries always included (additive over kit)
-#   - duplicates collapsed
-resolve_doc_set() {
-  local resolved="$ALWAYS_SET"
-  local kit_always=""
-
-  if ! $OPT_MINIMAL; then
-    kit_always="$(kit_triggers_always "$OPT_KIT")"
-    for doc in $kit_always; do
-      if ! in_list "$doc" "$resolved"; then
-        resolved="$resolved $doc"
-      fi
-    done
-  fi
-
-  if [[ -n "$OPT_WITH" ]]; then
-    local IFS=','
-    for doc in $OPT_WITH; do
-      doc="${doc// /}"
-      [[ -z "$doc" ]] && continue
-      if ! in_list "$doc" "$resolved"; then
-        resolved="$resolved $doc"
-      fi
-    done
-  fi
-
-  echo "$resolved"
-}
-
-# Read kit frontmatter and extract triggers-docs.always entries.
-# Naive YAML parser: looks for `always:` under `triggers-docs:` and lists trailing `  - <doc>` items.
-# Falls back to empty if kit file not yet installed or parse fails.
-kit_triggers_always() {
-  local kit_id="$1"
-  local kit_file
-  kit_file="$(find_kit_file "$kit_id")"
-  [[ -z "$kit_file" ]] && return 0
-
-  awk '
-    /^---$/ { fm = !fm; next }
-    !fm { exit }
-    /^triggers-docs:/ { in_td = 1; in_always = 0; next }
-    in_td && /^  always:/ { in_always = 1; next }
-    in_td && /^  suggested:/ { in_always = 0; next }
-    in_td && /^[a-zA-Z]/ { in_td = 0; in_always = 0; next }
-    in_always && /^    - / {
-      gsub(/^    - /, "", $0)
-      gsub(/[[:space:]]/, "", $0)
-      print $0
-    }
-  ' "$kit_file" | tr '\n' ' '
-}
-
-# Same as kit_triggers_always but for suggested
-kit_triggers_suggested() {
-  local kit_id="$1"
-  local kit_file
-  kit_file="$(find_kit_file "$kit_id")"
-  [[ -z "$kit_file" ]] && return 0
-
-  awk '
-    /^---$/ { fm = !fm; next }
-    !fm { exit }
-    /^triggers-docs:/ { in_td = 1; in_sugg = 0; next }
-    in_td && /^  suggested:/ { in_sugg = 1; next }
-    in_td && /^  always:/ { in_sugg = 0; next }
-    in_td && /^[a-zA-Z]/ { in_td = 0; in_sugg = 0; next }
-    in_sugg && /^    - / {
-      gsub(/^    - /, "", $0)
-      gsub(/[[:space:]]/, "", $0)
-      print $0
-    }
-  ' "$kit_file" | tr '\n' ' '
-}
-
-# Locate a kit file. Prefer project-local override, then installed skill.
-find_kit_file() {
-  local kit_id="$1"
-  local local_override="$(pwd)/.spectacular/templates/prd/kits/${kit_id}.md"
-  if [[ -f "$local_override" ]]; then
-    echo "$local_override"
-    return 0
-  fi
-  local installed
-  installed="$(agents_skill_dir)/templates/prd/kits/${kit_id}.md"
-  if [[ -f "$installed" ]]; then
-    echo "$installed"
-    return 0
-  fi
-  # Skill may not be installed yet (happens on first init). Return empty.
-  return 0
 }
 
 # ── interactive prompts ───────────────────────────────────────────────────────
 run_interactive() {
-  local default_name input
+  local default_name
   default_name="$(slug_from_dir)"
 
   printf "Project name [%s]: " "$default_name"
@@ -279,55 +106,6 @@ run_interactive() {
   read -r input
   if [[ "${input:-project}" == "global" ]]; then
     OPT_GLOBAL=true
-  fi
-
-  # Kit selection
-  echo ""
-  echo "Pick a kit (extends the base PRD with extra slots + suggests root docs):"
-  echo "  1) blank     — no extras, pure 8-slot base PRD"
-  echo "  2) coding    — adds Stack + Interfaces; triggers STACK + ARCHITECTURE"
-  echo "  3) content   — adds Audience + Format + Distribution; triggers ROADMAP"
-  echo "  4) product   — adds User stories + Metrics + Distribution; triggers ROADMAP"
-  echo "  5) research  — adds Hypothesis + Method + Decision-being-informed"
-  printf "Kit [1-5] (default: 1=blank): "
-  read -r input
-  case "${input:-1}" in
-    1|blank)    OPT_KIT="blank" ;;
-    2|coding)   OPT_KIT="coding" ;;
-    3|content)  OPT_KIT="content" ;;
-    4|product)  OPT_KIT="product" ;;
-    5|research) OPT_KIT="research" ;;
-    *) die "Invalid kit selection: $input" ;;
-  esac
-  echo ""
-  echo "  → kit: $OPT_KIT"
-
-  # Per-suggested-doc prompts. Only fires if the kit's frontmatter is parseable
-  # (skill must be installed). On fresh init this is usually a no-op since skill
-  # installs after scaffold; user can re-run with --with for finer control.
-  local suggested
-  suggested="$(kit_triggers_suggested "$OPT_KIT")"
-  if [[ -n "$suggested" ]]; then
-    echo ""
-    echo "The '$OPT_KIT' kit suggests these additional root docs. Add each?"
-    local extra_with=""
-    for doc in $suggested; do
-      printf "  Scaffold %s.md? [Y/n]: " "$(echo "$doc" | tr '[:lower:]' '[:upper:]')"
-      read -r input
-      case "${input:-y}" in
-        y|Y|yes|YES) extra_with="${extra_with},${doc}" ;;
-        *) ;;
-      esac
-    done
-    # Strip leading comma and merge into OPT_WITH
-    extra_with="${extra_with#,}"
-    if [[ -n "$extra_with" ]]; then
-      if [[ -n "$OPT_WITH" ]]; then
-        OPT_WITH="${OPT_WITH},${extra_with}"
-      else
-        OPT_WITH="$extra_with"
-      fi
-    fi
   fi
 }
 
@@ -494,22 +272,19 @@ update_skill() {
   exit 0
 }
 
-# ── per-doc scaffolders ───────────────────────────────────────────────────────
-# Each doc_<id>() takes positional args from scaffold() and writes one canonical file.
-# Always-set is enforced by the orchestrator, not by individual writers.
+# ── scaffold files ────────────────────────────────────────────────────────────
+scaffold() {
+  local name="$1" summary="$2" agents_file="$3"
 
-doc_dirs() {
-  # Report creation only when the dir genuinely didn't exist before
-  [[ -d ".spectacular/current" ]] || { mkdir -p .spectacular/current; created ".spectacular/current/"; }
-  [[ -d ".spectacular/requests" ]] || { mkdir -p .spectacular/requests; created ".spectacular/requests/"; }
-}
+  # dirs
+  mkdir -p .spectacular/current .spectacular/requests
+  created ".spectacular/current/"
+  created ".spectacular/requests/"
 
-doc_config() {
-  local name="$1" summary="$2" agents_file="$3" kit_id="$4"
+  # config.yaml
   write_if_missing ".spectacular/config.yaml" "project:
   name: ${name}
   summary: \"${summary}\"
-  kit: ${kit_id}
 
 naming:
   requests: kebab-case
@@ -532,52 +307,52 @@ agents:
 skills:
   symlink_on_init: []
 "
-}
 
-doc_prd() {
-  # Init scaffolds a BASE 8-slot PRD with `kit:` recorded in frontmatter.
-  # The kit's adds-slots / modifies-slots deltas are NOT applied here — the
-  # doc-writer engine (grill flow) handles slot insertion when the user later
-  # runs `spectacular prd grill`. Init only handles `triggers-docs` (which
-  # sibling docs to scaffold). See references/kits-contract.md.
-  local name="$1" kit_id="$2"
+  # PRD.md
   write_if_missing ".spectacular/PRD.md" "---
-version: 1.1
+version: 1.0
 updated: ${TODAY}
 summary: \"\"
-kit: ${kit_id}
+related:
+  - PRINCIPLES.md
+  - ARCHITECTURE.md
+  - ROADMAP.md
+  - AGENTS.md
+  - DECISIONS.md
+  - STACK.md
 ---
 
 # ${name} — Product Requirements Document
 
-## 1. Vision
-<One paragraph — what this product is and why it exists. Higher abstraction OK.>
+## Vision
+<One paragraph — what this product is and why it exists>
 
-## 2. Problem
+## Problem
 <One sentence — the concrete pain this solves. Who hurts, in what situation, how often.>
 
-## 3. Target users
-<One primary user. Not a list, not \"everyone\". A specific role + situation + constraint.>
+## Target users
+<One primary user. Not a list, not \"everyone\".>
 
-## 4. Deliverable
-<What ships at v1. Name the concrete artifacts a user can touch.>
+## Deliverable
+<What ships at v1. The artifacts a user can touch.>
 
-## 5. Goals & success criteria
-- <Measurable: number + verb + timeframe>
+## Goals & success criteria
+- <Measurable success criterion with a number and a timeframe>
 
-## 6. Non-goals
+## Non-goals
 - <Explicit exclusion you'd push back on>
 
-## 7. Constraints
+## Constraints
 - <What's fixed before starting — budget, tech, policy>
 
-## 8. First milestone
-<One concrete, demoable near-term outcome. Date-bound.>
-"
-}
+## First milestone
+<One concrete, demoable near-term outcome.>
 
-doc_principles() {
-  local name="$1"
+## Related docs
+See \`PRINCIPLES.md\`, \`ARCHITECTURE.md\`, \`ROADMAP.md\`, \`AGENTS.md\`.
+"
+
+  # PRINCIPLES.md
   write_if_missing ".spectacular/PRINCIPLES.md" "---
 version: 1.0
 updated: ${TODAY}
@@ -637,10 +412,8 @@ Irreversibles require confirmation.
 **How the skill enforces this:**
 - <add hook>
 "
-}
 
-doc_architecture() {
-  local name="$1"
+  # ARCHITECTURE.md
   write_if_missing ".spectacular/ARCHITECTURE.md" "---
 version: 1.0
 updated: ${TODAY}
@@ -668,10 +441,8 @@ related:
 ## Versioning
 <Snapshot-before-overwrite rule and naming (FILE@vN.md)>
 "
-}
 
-doc_roadmap() {
-  local name="$1"
+  # ROADMAP.md
   write_if_missing ".spectacular/ROADMAP.md" "---
 version: 1.0
 updated: ${TODAY}
@@ -692,9 +463,8 @@ related:
 ## v3+ — <direction>
 <Long-term direction, not commitments>
 "
-}
 
-doc_stack() {
+  # STACK.md
   write_if_missing ".spectacular/STACK.md" "---
 version: 1.0
 updated: ${TODAY}
@@ -706,9 +476,8 @@ summary: \"Technology stack and engineering rules\"
 ## Rules
 -
 "
-}
 
-doc_decisions() {
+  # DECISIONS.md
   write_if_missing ".spectacular/DECISIONS.md" "---
 version: 1.0
 updated: ${TODAY}
@@ -723,10 +492,8 @@ summary: \"Architectural and product decisions log\"
 **Why:**
 **Tradeoffs:**
 "
-}
 
-doc_agents() {
-  local name="$1" agents_file="$2"
+  # agents file (AGENTS.md or CLAUDE.md etc.)
   write_if_missing ".spectacular/${agents_file}" "---
 version: 1.0
 updated: ${TODAY}
@@ -776,53 +543,20 @@ Use \`spectacular new <description>\`. Never create \`requests/<slug>/PRD.md\` �
 - Don't write to \`memory/\` autonomously
 - Don't create per-request PRDs
 "
-}
 
-doc_gitignore() {
+  # .gitignore
   local gitignore=".gitignore"
   if [[ -f "$gitignore" ]]; then
     if grep -qF ".spectacular.local/" "$gitignore"; then
       skip ".gitignore (already contains .spectacular.local/)"
     else
       echo ".spectacular.local/" >> "$gitignore"
-      info "  ✓  updated .gitignore (.spectacular.local/ added)"
+      info "  updated  .gitignore (.spectacular.local/ added)"
     fi
   else
     printf '.spectacular.local/\n' > "$gitignore"
     created ".gitignore"
   fi
-}
-
-# ── scaffold orchestrator ─────────────────────────────────────────────────────
-# Resolves the doc-set per kit + flags, then dispatches to doc_<id>() functions.
-scaffold() {
-  local name="$1" summary="$2" agents_file="$3"
-  local kit_id="${OPT_KIT:-blank}"
-  local doc_set
-  doc_set="$(resolve_doc_set)"
-
-  echo "  kit:    $kit_id"
-  echo "  docs:   $doc_set"
-  echo ""
-
-  # Always: dirs + gitignore
-  doc_dirs
-  doc_gitignore
-
-  # Dispatch per-doc
-  for doc in $doc_set; do
-    case "$doc" in
-      config)        doc_config "$name" "$summary" "$agents_file" "$kit_id" ;;
-      prd)           doc_prd "$name" "$kit_id" ;;
-      principles)    doc_principles "$name" ;;
-      architecture)  doc_architecture "$name" ;;
-      roadmap)       doc_roadmap "$name" ;;
-      stack)         doc_stack ;;
-      decisions)     doc_decisions ;;
-      agents)        doc_agents "$name" "$agents_file" ;;
-      *) die "Unknown doc ID in resolved set: '$doc'" ;;
-    esac
-  done
 }
 
 # ── print summary ─────────────────────────────────────────────────────────────
@@ -870,29 +604,6 @@ main() {
 
   echo "Spectacular init"
   echo ""
-
-  # Interactive mode: show final summary, ask for confirmation before any writes
-  if $OPT_INTERACTIVE; then
-    local doc_set_preview
-    doc_set_preview="$(resolve_doc_set)"
-    echo "Ready to scaffold:"
-    echo "  project:     $OPT_NAME"
-    echo "  summary:     ${OPT_SUMMARY:-(none)}"
-    echo "  agents-file: $OPT_AGENTS_FILE"
-    echo "  kit:         $OPT_KIT"
-    echo "  scope:       $($OPT_GLOBAL && echo global || echo project)"
-    echo "  docs:        $doc_set_preview"
-    echo ""
-    printf "Proceed? [Y/n]: "
-    local confirm
-    read -r confirm
-    case "${confirm:-y}" in
-      y|Y|yes|YES) ;;
-      *) echo "Aborted. No files written."; exit 0 ;;
-    esac
-    echo ""
-  fi
-
   echo "Scaffold:"
 
   scaffold "$OPT_NAME" "$OPT_SUMMARY" "$OPT_AGENTS_FILE"

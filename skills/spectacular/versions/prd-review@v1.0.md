@@ -16,24 +16,22 @@ Review is the safety net at the end of every grill and every refine. It reads `.
 
 | # | Check | How |
 |---|---|---|
-| 1 | All 8 required slots non-empty | No `<PLACEHOLDER>` markers remain in slots 1-8 |
+| 1 | All 6 required slots non-empty | No `<PLACEHOLDER>` markers remain in slots 1-6 |
 | 2 | No unresolved clarifications | Zero `[NEEDS CLARIFICATION: ...]` markers anywhere |
-| 3 | Success criteria is measurable | Slot 5 contains ≥1 number AND ≥1 verb AND ≥1 date/timeframe |
-| 4 | No vague-word hits in critical slots | Slots 2, 5, 8 contain none of the vague-word list (see `prd-refine.md`). Vision (slot 1) and Deliverable (slot 4) are exempt. |
-| 5 | Non-goals are specific | Slot 6 has ≥2 items, none of which are vague meta-terms ("scope creep", "feature bloat") |
-| 6 | Single primary user | Slot 3 reads as a singular role + situation + constraint (heuristic: no plural noun phrases like "users", "customers", "developers" without qualifiers) |
-| 7 | Deliverable names artifacts | Slot 4 contains at least one concrete noun (binary, library, doc, plugin, format, etc.) — not just generic categories ("tool", "system", "platform") |
-| 8 | Vision is non-trivial | Slot 1 is at least 2 sentences OR 30+ words. No length-quality check beyond that — Vision tolerates abstraction. |
+| 3 | Success criteria is measurable | Slot 3 contains ≥1 number AND ≥1 verb AND ≥1 date/timeframe |
+| 4 | No vague-word hits in critical slots | Slots 1, 3, 6 contain none of the vague-word list (see `prd-refine.md`) |
+| 5 | Non-goals are specific | Slot 4 has ≥2 items, none of which are vague meta-terms ("scope creep", "feature bloat") |
+| 6 | Single primary user | Slot 2 reads as a singular role + situation + constraint (heuristic: no plural noun phrases like "users", "customers", "developers" without qualifiers) |
 
-If all 8 pass → PRD is usable. Exit with a green confirmation.
+If all 6 pass → PRD is usable. Exit with a green confirmation.
 If any fail → produce a punch list.
 
 ## Detection rules
 
 ### Check 1: Placeholders
 
-Look for these unresolved markers anywhere in slots 1-8:
-- `<VISION>`, `<PROBLEM>`, `<TARGET USERS>`, `<DELIVERABLE>`, `<GOALS AND SUCCESS CRITERIA>`, `<NON-GOAL 1>`, `<CONSTRAINT 1>`, `<MILESTONE>`
+Look for these unresolved markers anywhere in slots 1-6:
+- `<PROBLEM>`, `<PRIMARY USER>`, `<SUCCESS CRITERIA>`, `<NON-GOAL 1>`, `<CONSTRAINT 1>`, `<MILESTONE>`
 - Any uppercase angle-bracket placeholder (`<ANYTHING>`)
 
 ### Check 2: Clarifications
@@ -42,7 +40,7 @@ Regex: `\[NEEDS CLARIFICATION:.*?\]` — any match anywhere fails the gate.
 
 ### Check 3: Measurable success
 
-Slot 5 content must contain:
+Slot 3 content must contain:
 - **A number** — digits (`50`, `1000`) OR quantified comparison (`half of`, `3x`, `most`)
 - **A verb** — action or observable outcome (`open`, `complete`, `return`, `reach`, `ship`, `launch`)
 - **A timeframe** — explicit date (`2026-09-01`), relative window (`within 30 days`, `by Q3`), or named event (`at launch`, `by demo day`)
@@ -51,19 +49,15 @@ Missing any → fails. Punch list says exactly which signal is absent.
 
 ### Check 4: Vague-word scan
 
-Use the vague-word list from `prd-refine.md`. Scan slots 2, 5, and 8 only (not 1/3/4/6/7 — those have legitimate uses or are explicitly exempt).
+Use the vague-word list from `prd-refine.md`. Scan slots 1, 3, and 6 only (not 2/4/5 — those have legitimate uses).
 
 Vague words: `fast`, `slow`, `intuitive`, `simple`, `easy`, `scalable`, `seamless`, `great`, `good`, `nice`, `clean`, `flexible`, `robust`, `powerful`, `elegant`, `modern`, `smart`, `lightweight`, `solid`, `polished`.
 
 Each hit produces one punch-list entry: `Slot N: "<word>" — quantify or replace`.
 
-**Vision (slot 1) is exempt** — narrative abstraction is the point of Vision. A line like "AI-native operational workspace" is fine here.
-
-**Deliverable (slot 4) is exempt from the vague-word scan** but has its own concrete-artifact check (see Check 7).
-
 ### Check 5: Specific non-goals
 
-Slot 6 fails if:
+Slot 4 fails if:
 - Fewer than 2 list items
 - Any item is a vague meta-term: `scope creep`, `feature bloat`, `over-engineering`, `complexity`, `tech debt` (without context)
 
@@ -71,29 +65,11 @@ These meta-terms describe what you *don't want*, not what you're *excluding*. Pu
 
 ### Check 6: Single primary user
 
-Heuristic — slot 3 fails if:
+Heuristic — slot 2 fails if:
 - The first sentence uses a bare plural noun ("Users", "Customers", "Developers", "Teams") without a qualifier like "Solo devs who..." or "5-15 person teams that..."
 - The slot lists multiple distinct user types (e.g. "Both PMs and engineers")
 
 This is heuristic, not strict — the user can override by explicitly answering "yes, this is a singular primary user" during grill.
-
-### Check 7: Concrete deliverable
-
-Slot 4 fails if:
-- The text is only generic-category nouns: `tool`, `system`, `platform`, `framework`, `solution`, `service` — without naming the concrete artifact
-- Pass example: "CLI binary + Claude skill + Bash installer" (three concrete artifacts)
-- Pass example: "Weekly newsletter, 12 issues, published Tuesdays" (format + cadence)
-- Fail example: "a tool to help with PRDs" (no artifact named)
-
-A deliverable can use the generic words *alongside* concrete artifacts — `"A CLI tool (Bash binary)"` passes; `"A tool"` fails.
-
-### Check 8: Vision non-trivial
-
-Slot 1 fails only if:
-- Empty (caught by Check 1)
-- Single short sentence under 30 words and not split into 2+ sentences
-
-Vision tolerates abstraction; this check ensures it's actually written, not skipped. No vague-word gate applies.
 
 ## Output format
 
@@ -103,7 +79,7 @@ Vision tolerates abstraction; this check ensures it's actually written, not skip
 ✓ PRD review passed
 
   .spectacular/PRD.md is ready.
-  All 8 required slots filled, measurable success, no clarification gaps.
+  All 6 required slots filled, measurable success, no clarification gaps.
 
   Next:
     - spectacular new <slug>      scaffold the first request
@@ -115,18 +91,18 @@ Vision tolerates abstraction; this check ensures it's actually written, not skip
 ```
 ✗ PRD review found 4 issues
 
-  Slot 2 — Problem
-    L14  vague: "easier" — quantify or replace
+  Slot 1 — Problem
+    L12  vague: "easier" — quantify or replace
 
-  Slot 3 — Target users
-    L20  plural primary user: "developers"
+  Slot 2 — Who it's for
+    L18  plural primary user: "developers"
          → pick one specific role + situation + constraint
 
-  Slot 4 — Deliverable
-    L28  generic only: "a tool" — name the artifact
+  Slot 3 — Success
+    L24  missing timeframe — add a date or window
 
-  Slot 8 — First milestone
-    L48  [NEEDS CLARIFICATION: define MVP scope]
+  Slot 6 — First milestone
+    L40  [NEEDS CLARIFICATION: define MVP scope]
 
   Fix path:
     spectacular prd refine        # propose rewrites for all findings
@@ -138,20 +114,20 @@ Vision tolerates abstraction; this check ensures it's actually written, not skip
 
 - It does not score. Pass or fail.
 - It does not rewrite. The user (or `prd refine`) does that.
-- It does not check optional sections (stakeholders, risks, etc.). They're optional — only the 8 required slots gate.
-- It does not check PLAN.md or TASKS.md. Those have separate gates (delivered by [[doc-writer]]).
+- It does not check optional sections (stakeholders, risks, etc.). They're optional — only the 6 required slots gate.
+- It does not check PLAN.md or TASKS.md. Those have separate gates (future).
 - It does not warn about long PRDs. Length isn't a quality signal here.
 
 ## Dogfood test
 
 This skill's own PRD must pass:
-1. `.spectacular/PRD.md` (the spectacular product PRD) — passes the 8-slot gate after canonical-docs-rework
+1. `.spectacular/PRD.md` (the spectacular product PRD) — passes
 2. `.spectacular/requests/prd-craft/PLAN.md` — the request-level PLAN should also pass (different artifact, but follows the same measurable-success rule)
 
 ## Karpathy alignment
 
 - **Think before coding:** the gate makes assumptions checkable.
-- **Simplicity first:** 8 binary checks, no scoring, no NLP.
+- **Simplicity first:** 6 binary checks, no scoring, no NLP.
 - **Surgical changes:** review never touches the file, only reads.
 - **Goal-driven:** every check has a verifiable signal.
 

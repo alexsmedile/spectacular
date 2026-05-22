@@ -64,7 +64,7 @@ Vague-word list (full): `fast`, `slow`, `intuitive`, `simple`, `easy`, `scalable
 
 ### 2. Plural-user → single primary user
 
-In **slot 3 (Target users)** only:
+In **slot 2 (Who it's for)** only:
 
 | Vibe | Spec |
 |---|---|
@@ -73,11 +73,11 @@ In **slot 3 (Target users)** only:
 | "everyone" | "[NEEDS CLARIFICATION: pick one primary user — 'everyone' = no one]" |
 | "small teams" | "5-15 person product teams shipping weekly, no dedicated PM" |
 
-Other slots can have plurals (non-goals lists, stakeholders, etc.) — only refine plural primary users in slot 3.
+Other slots can have plurals (non-goals lists, stakeholders, etc.) — only refine plural primary users in slot 2.
 
 ### 3. Unbounded success → number + verb + date
 
-In **slot 5 (Goals & success criteria)** only. Required signals:
+In **slot 3 (Success)** only. Required signals:
 - At least one **number** (or quantifiable comparison)
 - At least one **verb** (action / observable outcome)
 - At least one **timeframe** (date, "N days/weeks", or named event)
@@ -91,7 +91,7 @@ In **slot 5 (Goals & success criteria)** only. Required signals:
 
 ### 4. Tech jargon in problem statement
 
-In **slot 2 (Problem)** only. The problem must be user-visible, not implementation-flavored.
+In **slot 1 (Problem)** only. The problem must be user-visible, not implementation-flavored.
 
 | Vibe | Spec |
 |---|---|
@@ -101,7 +101,7 @@ In **slot 2 (Problem)** only. The problem must be user-visible, not implementati
 
 ### 5. Empty / weak non-goals
 
-In **slot 6** only.
+In **slot 4** only.
 
 If non-goals has fewer than 2 items, ask: "What would you push back on if a stakeholder tried to expand scope tomorrow?"
 
@@ -109,7 +109,7 @@ If non-goals are themselves vague (e.g. "scope creep", "feature bloat"), refine 
 
 ### 6. Soft constraints → hard constraints
 
-In **slot 7**.
+In **slot 5**.
 
 | Vibe | Spec |
 |---|---|
@@ -119,7 +119,7 @@ In **slot 7**.
 
 ### 7. Vague milestones
 
-In **slot 8**.
+In **slot 6**.
 
 | Vibe | Spec |
 |---|---|
@@ -127,27 +127,12 @@ In **slot 8**.
 | "beta" | "10 invited users complete the core flow without bugs by 2026-07-15" |
 | "v1" | "Tagged v1.0 release, install path documented, 1 external user onboarded" |
 
-### 8. Vague deliverables
-
-In **slot 4 (Deliverable)** only.
-
-Deliverable must name concrete artifacts, not generic categories.
-
-| Vibe | Spec |
-|---|---|
-| "a tool" | "[NEEDS CLARIFICATION: name the artifact — CLI binary, library, doc, plugin?]" |
-| "a system" | "[NEEDS CLARIFICATION: name the components that ship]" |
-| "a platform" | "[NEEDS CLARIFICATION: what concretely ships — API, dashboard, SDK?]" |
-| "a framework" | "Three layers — Convention (markdown directory), Skill (/spectacular slash command), CLI (spectacular init)" |
-
-Vision (slot 1) is exempt from this entirely — narrative abstraction is the point there.
-
 ## The `[NEEDS CLARIFICATION]` convention
 
 Borrowed from spec-kit. Inserted inline at the exact location of the gap:
 
 ```markdown
-## 5. Goals & success criteria
+## 3. What success looks like
 
 [NEEDS CLARIFICATION: success criteria has no measurable signal — add a number + timeframe]
 ```
@@ -177,19 +162,19 @@ Rules:
 ```
 Found 5 issues in .spectacular/PRD.md:
 
-  L14  Slot 2  "make PRD writing easier"
+  L12  Slot 1  "make PRD writing easier"
        → vague — propose: "reduces time to first PRD from 2 hours to 15 minutes"
 
-  L20  Slot 3  "for developers"
+  L18  Slot 2  "for developers"
        → plural — propose: "[NEEDS CLARIFICATION: pick one primary user]"
 
-  L28  Slot 4  "a tool that helps with PRDs"
-       → vague deliverable — propose: "[NEEDS CLARIFICATION: name the artifact]"
-
-  L34  Slot 5  no number found
+  L24  Slot 3  no number found
        → add timeframe — propose: "[NEEDS CLARIFICATION: add number + date]"
 
-  L48  Slot 8  "MVP"
+  L31  Slot 4  only 1 non-goal listed
+       → propose: "What else would you push back on?"
+
+  L40  Slot 6  "MVP"
        → vague — propose: "[NEEDS CLARIFICATION: define MVP scope]"
 
 Apply all / pick specific / cancel?

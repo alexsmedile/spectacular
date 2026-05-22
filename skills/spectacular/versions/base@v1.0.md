@@ -1,5 +1,5 @@
 ---
-version: 1.1
+version: 1.0
 updated: <DATE>
 summary: "<one-sentence description of what this product is and who it's for>"
 ---
@@ -7,29 +7,17 @@ summary: "<one-sentence description of what this product is and who it's for>"
 # <Project Name> — Product Requirements Document
 
 <!--
-  Canonical 8-slot PRD template.
+  Canonical 6-slot PRD template.
   General-purpose: works for software, content, research, hardware, or any project.
 
   Rules:
-  - All 8 required slots must be filled before this PRD is considered usable.
+  - All 6 required slots must be filled before this PRD is considered usable.
   - Replace every <placeholder> with concrete content.
   - Remove [NEEDS CLARIFICATION: ...] markers before declaring the PRD done.
   - Optional sections — delete if not relevant to your project.
-
-  Slot order aligns with .spectacular/PRD.md canonical shape (v2.0+):
-    Vision → Problem → Target users → Deliverable → Goals & success criteria → Non-goals → Constraints → First milestone
 -->
 
-## 1. Vision
-
-<!-- One paragraph. The philosophical "what this is" — narrative, not bullet points. -->
-<!-- Why does this exist in the world? What's the larger context it operates inside? -->
-<!-- Tolerates higher abstraction than the other slots; not gated for vague words. -->
-<!-- Example: "Spectacular is an AI-native operational workspace for software projects. It helps humans and coding agents maintain coherence across long-running development by separating strategy, current truth, active work, and operational memory." -->
-
-<VISION>
-
-## 2. Problem
+## 1. Problem
 
 <!-- One sentence. What concrete pain does this project solve? -->
 <!-- Avoid: "make X better", "improve Y experience". -->
@@ -37,34 +25,24 @@ summary: "<one-sentence description of what this product is and who it's for>"
 
 <PROBLEM>
 
-## 3. Target users
+## 2. Who it's for
 
 <!-- One primary user. Not a list. Not "everyone". -->
 <!-- A specific role, situation, and constraint. -->
 <!-- Example: "solo devs using Claude Code on side projects who don't have a PM to write PRDs for them". -->
 
-<TARGET USERS>
+<PRIMARY USER>
 
-## 4. Deliverable
-
-<!-- What concretely ships? One paragraph or short bullet list. -->
-<!-- Distinguish from Vision (the why) and Goals (the how-we-know-it-worked). -->
-<!-- For software: name the artifacts (CLI binary, library, plugin, doc set). -->
-<!-- For content: name the format (newsletter cadence, course modules, book chapters). -->
-<!-- Example: "Three layers — Convention (.spectacular/ directory), Skill (/spectacular slash command), CLI (spectacular init)." -->
-
-<DELIVERABLE>
-
-## 5. Goals & success criteria
+## 3. What success looks like
 
 <!-- Measurable. Time-boxed. At least one number + one verb + one date/timeframe. -->
 <!-- Bad:  "users love it"  → unmeasurable -->
 <!-- Bad:  "ship fast"      → unmeasurable -->
 <!-- Good: "30 days after launch, 50% of users who run /spectacular prd open the resulting PRD.md again within 7 days" -->
 
-<GOALS AND SUCCESS CRITERIA>
+<SUCCESS CRITERIA>
 
-## 6. Non-goals
+## 4. Non-goals
 
 <!-- Explicit exclusions. What you are NOT doing and will push back on. -->
 <!-- This is where most PRDs save themselves later. Be specific. -->
@@ -74,7 +52,7 @@ summary: "<one-sentence description of what this product is and who it's for>"
 - <NON-GOAL 2>
 - <NON-GOAL 3>
 
-## 7. Constraints
+## 5. Constraints
 
 <!-- Budget, time, tech, policy, team. What's fixed before you start? -->
 <!-- Example: "Markdown-only, no new binaries", "Ships before Q3", "Must work offline". -->
@@ -82,7 +60,7 @@ summary: "<one-sentence description of what this product is and who it's for>"
 - <CONSTRAINT 1>
 - <CONSTRAINT 2>
 
-## 8. First milestone
+## 6. First milestone
 
 <!-- One concrete, near-term outcome that proves the project is real. -->
 <!-- Date-bound. Demoable or shippable. Not a list of every feature ever. -->

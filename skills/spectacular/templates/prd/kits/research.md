@@ -1,83 +1,65 @@
 ---
-version: 1.0
-updated: <DATE>
-summary: "<one-sentence description of the research question>"
 kit: research
+version: 2.0
+extends: prd
+adds-slots:
+  - name: Hypothesis
+    after: Problem
+    required: true
+    prompt: |
+      What do you currently believe is true? Frame falsifiable — there must be a possible answer that disproves it.
+    example: |
+      Users in cohort A spend 30% more time on task X than cohort B, due to onboarding-flow differences.
+  - name: Method
+    after: Deliverable
+    required: true
+    prompt: |
+      How will you investigate? Specific enough that someone else could execute.
+      Cover: approach, sources, tools, analysis.
+    example: |
+      Approach: comparative session analysis + 10 user interviews per cohort.
+      Sources: 90 days of session data; recruit interviewees via in-app prompt.
+      Tools: Mixpanel for sessions, NotebookLM for interview synthesis.
+      Analysis: time-on-task comparison + thematic coding of interview transcripts.
+  - name: Decision being informed
+    after: Constraints
+    required: true
+    prompt: |
+      What downstream decision does this research feed? Who owns it? When is it due?
+      Research without a decision is hobby.
+    example: |
+      Decision: Whether to invest 6 weeks rebuilding the cohort-B onboarding flow.
+      Decision owner: Head of Product.
+      Decision deadline: 2026-07-15.
+modifies-slots:
+  - name: Deliverable
+    note: |
+      For research: name the artifact + location + length.
+      Example: "Decision memo (~1,500 words) saved to _research/onboarding-cohorts/, with 5+ cited sources."
+  - name: Goals & success criteria
+    note: |
+      For research: define the stop condition. "Done when ___" with measurable signal.
+      Example: "Done when recommendation is published with confidence rating + 5 cited sources by 2026-06-15."
+triggers-docs:
+  always: []
+  suggested:
+    - decisions
+description: |
+  Investigations, experiments, market research, technical spikes, literature reviews.
+  Adds Hypothesis + Method + Decision-being-informed slots.
 ---
 
-# <Project Name> — Product Requirements Document
+# Research kit
 
-<!-- Research kit: 6-slot base + hypothesis + method + deliverable. -->
-<!-- For investigations, experiments, market research, technical spikes, literature reviews. -->
+For projects whose output is knowledge, not a shipped artifact.
 
-## 1. Problem
+Use when the project is:
+- A technical spike to validate an approach
+- A market or competitive analysis
+- A user research investigation
+- A literature review feeding an architectural decision
+- An experiment with measurable hypothesis
 
-<!-- What decision can't be made without this research? -->
-<!-- Research without a downstream decision is hobby — name the decision. -->
-
-<PROBLEM>
-
-## 2. Who it's for
-
-<!-- Who consumes the output and acts on it? -->
-<!-- Example: "the product team deciding whether to invest in offline mode" -->
-
-<PRIMARY USER>
-
-## 3. What success looks like
-
-<!-- The research is "done" when ___. A clear stop condition. -->
-<!-- Example: "By 2026-06-15, produce a recommendation with at least 5 cited sources and a confidence score." -->
-
-<SUCCESS CRITERIA>
-
-## 4. Non-goals
-
-- <NON-GOAL 1>
-- <NON-GOAL 2>
-
-## 5. Constraints
-
-- Time budget: <hours/days>
-- Source budget: <max sources to review>
-- <OTHER CONSTRAINT>
-
-## 6. First milestone
-
-<!-- First evidence point or first interim summary. -->
-
-<MILESTONE>
-
----
-
-## Hypothesis
-
-<!-- What you currently believe is true. Frame falsifiable. -->
-<!-- Example: "Users in cohort A spend 30% more time on task X than cohort B." -->
-
-<HYPOTHESIS>
-
-## Method
-
-<!-- How you'll investigate. Specific enough that someone else could execute. -->
-
-- Approach: <literature review / user interviews / benchmark / data analysis>
-- Sources / participants: <where you'll look, how many>
-- Tools: <NotebookLM, surveys, instrumentation, etc.>
-- Analysis: <how findings will be synthesized>
-
-## Deliverable
-
-<!-- The artifact this research produces. -->
-
-- Format: <report / memo / decision doc / dataset>
-- Location: <where it's saved — e.g. `_research/<topic>/`>
-- Length: <pages / words>
-
-## Decision being informed
-
-<!-- The downstream decision. Restate from "Problem" with precision. -->
-
-- **Decision:** <what gets decided>
-- **Decision owner:** <who decides>
-- **Decision deadline:** <date>
+Skip this kit when:
+- The project ships code (→ `coding`) or content (→ `content`) as primary output
+- There's no downstream decision the research feeds — without one, "research" becomes hobby

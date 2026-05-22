@@ -1,69 +1,53 @@
 ---
-version: 1.0
-updated: <DATE>
-summary: "<one-sentence description of the software product>"
 kit: coding
+version: 2.0
+extends: prd
+adds-slots:
+  - name: Stack
+    after: Constraints
+    required: true
+    prompt: |
+      What tech does this run on? Language, runtime, key deps, distribution mechanism.
+    example: |
+      Bash 5+, macOS/Linux. Single-file CLI installed to ~/.local/bin via curl one-liner.
+  - name: Interfaces
+    after: Stack
+    required: false
+    prompt: |
+      What surfaces do users interact with? CLI commands, API endpoints, UI screens.
+    example: |
+      CLI: `spectacular init`, `spectacular new`, `spectacular <doc> <verb>`.
+modifies-slots:
+  - name: Deliverable
+    note: |
+      For coding projects: name the concrete artifact (CLI binary, library, npm package, etc.).
+      Don't just say "a tool" — name what users install/import.
+triggers-docs:
+  always:
+    - stack
+    - architecture
+  suggested:
+    - principles
+    - roadmap
+    - decisions
+description: |
+  Coding projects: CLIs, libraries, apps, services, SDKs.
+  Adds Stack + Interfaces slots. Triggers STACK.md + ARCHITECTURE.md scaffolding.
 ---
 
-# <Project Name> — Product Requirements Document
+# Coding kit
 
-<!-- Coding kit: 6-slot base + stack + interfaces sections. -->
-<!-- For software projects: CLIs, libraries, apps, services. -->
+For software projects shipping installable or runnable artifacts.
 
-## 1. Problem
+Pairs naturally with `spectacular init --kit coding`, which scaffolds STACK.md and ARCHITECTURE.md alongside the always-set.
 
-<!-- The developer/user pain. Avoid framing this as "we don't have X yet". -->
+Common usage:
+- CLI tools (Bash, Go, Rust, Node binaries)
+- Libraries (npm, pip, gem, cargo)
+- Web apps and APIs
+- SDKs and integrations
 
-<PROBLEM>
-
-## 2. Who it's for
-
-<!-- One primary user role + their environment. -->
-<!-- Example: "solo devs using Claude Code on macOS for side projects" -->
-
-<PRIMARY USER>
-
-## 3. What success looks like
-
-<!-- Measurable usage signal — not "code is shipped". -->
-<!-- Example: "30 days after release, 100 users have run `myapp init` and 30% return weekly" -->
-
-<SUCCESS CRITERIA>
-
-## 4. Non-goals
-
-- <NON-GOAL 1>
-- <NON-GOAL 2>
-- <NON-GOAL 3>
-
-## 5. Constraints
-
-- <CONSTRAINT 1>
-- <CONSTRAINT 2>
-
-## 6. First milestone
-
-<MILESTONE>
-
----
-
-## Stack
-
-<!-- The tech the product is built on. Mirrors .spectacular/STACK.md. -->
-
-- Language: <LANG>
-- Runtime/Platform: <RUNTIME>
-- Key dependencies: <DEPS>
-- Distribution: <how users install/access>
-
-## Interfaces
-
-<!-- The surfaces users interact with. -->
-
-- CLI: <command surface, if any>
-- API: <endpoints / shape, if any>
-- UI: <screens / components, if any>
-
-## Risks
-
-- **<technical risk>** — mitigation: <plan>
+Skip this kit when:
+- The project ships content rather than code (→ `content`)
+- The project is research feeding a decision (→ `research`)
+- The project doesn't ship runnable artifacts (→ `blank`)

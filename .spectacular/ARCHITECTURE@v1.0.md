@@ -1,6 +1,6 @@
 ---
-version: 1.1
-updated: 2026-05-22
+version: 1.0
+updated: 2026-05-21
 summary: "The .spectacular/ directory — layers, file roles, frontmatter conventions, lifecycle, versioning"
 related:
   - PRD.md
@@ -313,25 +313,15 @@ Agents rarely reason about failure modes unless explicitly prompted — this fil
 
 ## VERIFY.md (on demand)
 
-**On-demand only.** The skill proposes creation when the request hits the **2-of-6 rule** (see [[verification]] for full text):
-
-1. User-visible change
-2. High reversibility cost
-3. Multi-surface verification
-4. Risk surface non-trivial (auth/billing/security/data)
-5. External contract change
-6. Rollback plan exists
-
-When fewer than 2 axes hit, **fold verification into PLAN § Validation or TASKS § Verification** — no separate file. Most internal/spec/refactor/doc requests don't need VERIFY.md.
+Skill proposes creation for requests with user-visible behavior changes or high-stakes implementation.
 
 **Purpose: execution proof** — how you confirm the implementation actually worked.
 
-Distinct from PLAN.md and TASKS.md:
-- PLAN § Validation answers "what does each milestone need to satisfy?"
-- TASKS § Verification answers "what step-by-step checks confirm done?"
-- VERIFY.md answers "did we build it correctly and safely, with risk-aware coverage?"
+Distinct from PLAN.md:
+- PLAN answers "did we build the right thing?"
+- VERIFY answers "did we build it correctly and safely?"
 
-Contains (when scaffolded): step-by-step manual QA checklist, specific edge cases, regression checklist, rollback validation.
+Contains: step-by-step manual QA checklist, specific edge cases, regression checklist, rollback validation.
 
 ---
 
@@ -463,42 +453,14 @@ Canonical documents are **never overwritten in place**.
 
 # Init flow
 
-`spectacular init` is a one-time CLI bootstrap. Detailed implementation lives in [`requests/cli-bootstrap/PLAN.md`](requests/cli-bootstrap/PLAN.md) (v0.2.x) and [`requests/smart-init/PLAN.md`](requests/smart-init/PLAN.md) (v0.3.0+).
+`spectacular init` is a one-time CLI bootstrap. Detailed implementation lives in [`requests/cli-bootstrap/PLAN.md`](requests/cli-bootstrap/PLAN.md).
 
-## v0.3.0 — smart init
-
-As of v0.3.0, init scaffolds **only what the project needs**, not all root docs.
-
-**Always-set** (5 files + 2 dirs, scaffolded unconditionally):
-- `.spectacular/PRD.md` — anchor doc; every other doc references it
-- `.spectacular/config.yaml` — project name, kit identity, naming rules
-- `.spectacular/<agents-file>` — onboarding doc (defaults to `AGENTS.md`)
-- `.spectacular/requests/` — request folders
-- `.spectacular/current/` — capability specs
-
-**Kit-driven additions** (see [[kits-contract]]):
-- The user picks a kit (`blank`, `coding`, `content`, `product`, `research`)
-- Each kit declares `triggers-docs.always` (scaffolded automatically) and `triggers-docs.suggested` (interactive prompt y/n)
-- Non-interactive default: `blank` kit, no extras
-
-**Explicit additions** via `--with <doc1,doc2,...>` flag — additive over kit defaults.
-
-**Suppression** via `--minimal` — scaffolds always-set only, ignoring kit's always-docs. Kit identity is still recorded in PRD frontmatter.
-
-## Sequence
-
-1. Parse flags + validate (`--kit` known, `--with` doc IDs in registry)
-2. If `-i`: run interactive prompts (name, summary, agents-file, scope, kit menu, per-suggested-doc y/n)
-3. Resolve doc-set: `always-set ∪ (kit always-docs unless --minimal) ∪ --with entries`
-4. Scaffold directories
-5. Per-doc dispatch via `write_if_missing` (pre-flight rules: skip if exists, fill if empty, diagnose if malformed)
-6. Update `.gitignore` (append `.spectacular.local/` if absent)
-7. Install skill into `.agents/skills/spectacular/` (or `~/.agents/skills/spectacular/` with `--global`)
-8. Symlink `.claude/skills/spectacular/` → install location
-
-## Idempotency + non-destructive
-
-Re-running init on an initialized workspace is always safe — no file is ever overwritten. Adding a kit later (`spectacular init --kit coding` on an existing project) only scaffolds the kit's missing always-docs; existing files are left alone.
+Summary:
+1. Scaffold `.spectacular/` directory structure
+2. Prompt for project name and summary; write `config.yaml`
+3. Create stub root files with frontmatter templates
+4. Install the skill into `.claude/skills/spectacular/` (project-local) or `~/.claude/skills/spectacular/` (global)
+5. Add `.spectacular.local/` to `.gitignore`
 
 `.spectacular/` is always fully committed. `.spectacular.local/` is always gitignored.
 

@@ -5,6 +5,37 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [0.3.0] — 2026-05-22
+
+### Changed (breaking)
+
+- **`spectacular init` scaffolds only what the project needs**, not all 7 root docs. Default = 5-file always-set (`PRD.md`, `config.yaml`, `<agents-file>`, `requests/`, `current/`). Extra docs come from the selected kit's `triggers-docs.always` and `triggers-docs.suggested` lists, or via explicit `--with <doc1,doc2>` flag.
+
+### Added
+
+- **PRD 8-slot shape** — base PRD template + all 5 kits versioned to v1.1 (Vision / Problem / Target users / Deliverable / Goals & success criteria / Non-goals / Constraints / First milestone).
+- **Doc-writer engine** — generic `grill.md` / `refine.md` / `review.md` references that consume `doc-registry.md` to handle any doc type. PRD-specific logic moved to `prd-overrides.md`. Per-doc overrides for PLAN + TASKS. New templates for plan/tasks/principles/architecture/roadmap/stack/agents/decisions.
+- **Kits as diff-only plugins** — kits now declare `adds-slots`, `modifies-slots`, `triggers-docs.always`, `triggers-docs.suggested` via frontmatter. Single-kit-only in v1. Documented in `references/kits-contract.md`. All 5 bundled kits (`blank`, `coding`, `content`, `product`, `research`) refactored to diff format.
+- **Verification convention** — `references/verification.md` formalizes when VERIFY.md is needed (2-of-6 rule) vs folded into PLAN § Validation or TASKS § Verification. "Opt-in" refers to file scaffolding only; verification itself is mandatory before any `verified` transition.
+- **CLI flags** — `--kit <name>`, `--with <doc1,doc2>`, `--minimal` flags for `spectacular init`. Backwards-compatible with existing `--name`, `--summary`, `--agents-file`, `--global`, `--update`, `-i` flags.
+- **Pre-flight non-overwrite** — init detects existing/empty/malformed files and skips/fills/diagnoses without ever overwriting. Generic "run diagnostics via `spectacular doctor`" message emitted for malformed cases (to be replaced when doctor ships).
+- **Test harness** — `tests/run.sh` discovers and runs `tests/**/*.test.sh`. First test suite at `tests/cli/init.test.sh` covers 6 smart-init scenarios (41 asserts).
+
+### Anti-patterns formalized
+
+- Per-doc skills (e.g. one skill per doc type) — superseded by all-in-one `/spectacular` with registry-driven verbs.
+- `--force` flag — explicitly rejected. Re-init never overwrites; to regenerate a stub, delete the file first.
+- Project-type inference in init — bare init uses `blank` kit unconditionally. Auto-detection deferred to v2.
+- Skipping verification because "VERIFY.md is optional" — opt-in refers to the file, not the practice. Every request reaches `verified` through some artifact (VERIFY.md > TASKS § Verification > PLAN § Validation).
+
+### Upgrading from v0.2.x
+
+`spectacular init` on a v0.2.x workspace is safe — pre-flight skips every existing file. To add docs the v0.3.0 init no longer scaffolds by default (PRINCIPLES, ARCHITECTURE, etc.), run `spectacular init --with <docs>` or `spectacular init --kit <kit>`.
+
+CLI snapshot preserved at `cli/spectacular@v0.2.0` for reference.
+
+---
+
 ## [0.2.0] — 2026-05-21
 
 ### Changed

@@ -13,9 +13,10 @@ The skill detects signals and **proposes** transitions. The user can also force 
 | From | To | Signal | Skill action |
 |---|---|---|---|
 | `planned` | `active` | User starts working on request | Create SESSION.md, update frontmatter |
-| `active` | `review` | All TASKS.md items checked | Propose move to review |
+| `active` | `review` | All TASKS.md items checked | Propose move to review; also propose VERIFY.md if 2-of-6 rule triggers (see [[verification]]) |
 | `active` | `review` | User says "done" / "ready to review" | Propose move to review |
-| `review` | `verified` | VERIFY.md checklist all passed | Propose verified status |
+| `review` | `verified` | All `- [x]` in VERIFY.md (when present) | Propose verified status |
+| `review` | `verified` | All TASKS § Verification + PLAN § Validation items confirmed (when no VERIFY.md) | Propose verified status |
 | `review` | `verified` | User confirms everything works | Update frontmatter |
 | `verified` | `archived` | User runs `spectacular archive <slug>` | See `archive.md` |
 
@@ -29,7 +30,19 @@ The skill detects signals and **proposes** transitions. The user can also force 
 
 When reading TASKS.md and all `- [ ]` items are now `- [x]`:
 
-> "All tasks in `<slug>` are checked. Ready to move to `review`? I can also create a VERIFY.md checklist if you don't have one."
+> "All tasks in `<slug>` are checked. Ready to move to `review`?"
+
+If moving to review, also evaluate the 2-of-6 rule (see [[verification]]) — only propose creating VERIFY.md when the request actually warrants one. Default for doc-only / refactor / spec requests is **no VERIFY.md** — use PLAN § Validation or add a `### Verification` group to TASKS.md instead.
+
+### Verification artifact detection (review → verified)
+
+Verification is **never skipped**. The skill always checks against some artifact before allowing `verified`. The only question is which artifact:
+
+1. **VERIFY.md exists** — load-bearing. Every `- [ ]` blocks the transition. The skill never moves to verified with unchecked items.
+2. **No VERIFY.md, TASKS has `### Verification` group** — every item in that group must be `- [x]`. Blocks transition until checked.
+3. **Neither exists** — every PLAN.md § Validation item must be explicitly confirmed by the user before transition.
+
+Per [[verification]], "opt-in" refers to **whether a standalone VERIFY.md file gets scaffolded** — not whether verification runs. The 2-of-6 rule decides the file; verification itself is mandatory.
 
 ### Stale request detection
 

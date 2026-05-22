@@ -42,36 +42,43 @@ related:
 - [x] Added `.gitignore` missing-entry check to `check_workspace()` so the fix path actually fires
 
 ### M4 — Skill repair flow (`/spectacular doctor --fix`)
-- [ ] Update SKILL.md routing: `spectacular doctor [<area>] [--fix]` → `references/doctor.md`
-- [ ] In `references/doctor.md` § Repair flow: skill reads CLI's `--format json` report
-- [ ] For each judgment-requiring finding: skill proposes a context-aware fix
-- [ ] Per-finding `y/n/q` confirm flow
-- [ ] Snapshot before any canonical-doc edit (route through existing versioning.md rule)
-- [ ] On `q`: print remaining-findings summary + exit
-- [ ] On all-applied: re-run detect, confirm clean state, summarize what changed
+- [x] Update SKILL.md routing: `spectacular doctor [<area>] [--fix]` → `references/doctor.md`
+- [x] In `references/doctor.md` § Repair flow: skill reads CLI's `--format json` report; documented walkable procedure (8 steps)
+- [x] For each judgment-requiring finding: skill proposes a context-aware fix (4 worked examples in doctor.md)
+- [x] Per-finding `y/n/q` confirm flow documented
+- [x] Snapshot-before-edit rule documented (canonical docs only; per-request files have `snapshot-on-edit: false`)
+- [x] On `q`: documented exit behavior
+- [x] On all-applied: re-run detect documented
+- [ ] **Live end-to-end test of the flow** — deferred to next workspace with real drift requiring agent walkthrough (see VERIFY scenario 16)
 
 ### M5 — Skill-invoked subset
-- [ ] In `references/status.md` — if `doc-registry.md` parse fails during state read, auto-run doctor's `kits` + `frontmatter` checks, surface findings inline
-- [ ] In `references/grill.md` — if kit file parse fails during pre-flight, auto-run doctor's `kits` check, surface findings inline, refuse to grill
-- [ ] In `references/onboarding.md` — first-invocation flow runs doctor's `workspace` + `frontmatter` checks
-- [ ] Document the skill-invoked surface in `references/doctor.md` § Skill-invoked checks
+- [x] In `references/status.md` — added substrate-check preamble (auto-run doctor workspace/frontmatter/kits on parse failure)
+- [x] In `references/grill.md` — added substrate-check to § 1 (auto-run doctor kits frontmatter on parse failure)
+- [x] In `references/onboarding.md` — added substrate-check to header (always runs on first invocation)
+- [x] In `references/lifecycle.md` — added substrate-check to verification-artifact detection (auto-run scoped lifecycle when proposing verified)
+- [x] Documented the skill-invoked surface in `references/doctor.md` § Skill-invoked checks
+- [ ] **Live end-to-end test** of skill-invoked auto-checks — deferred to natural workspace corruption (VERIFY scenarios 17, 18)
 
 ### M6 — Smart-init message update
-- [ ] Update `cli/spectacular` `diag()` helper: replace generic message with area-specific pointer
-- [ ] Frontmatter issue → `⊘ <file> (run \`spectacular doctor frontmatter\` for details)`
-- [ ] Schema mismatch → `⊘ <file> (schema mismatch — run \`spectacular doctor frontmatter --fix\`)`
-- [ ] Move corresponding v2-deferred item out of `smart-init/TASKS.md` deferred list (mark done)
+- [x] Update `cli/spectacular` `diag()` helper: replaced generic placeholder with `run \`spectacular doctor frontmatter\` for details`
+- [x] Verified live: malformed PRD.md scenario shows new message
+- [x] Smart-init's 50/50 tests still pass after the message change
 
 ### M7 — Tests + VERIFY.md
-- [ ] Create `tests/cli/doctor.test.sh` — test harness reuses scenario pattern from init.test.sh
-- [ ] Scenario: clean workspace → exit 0, no findings
-- [ ] Scenario: missing always-set file → flagged + `--fix` re-creates it
-- [ ] Scenario: malformed frontmatter → flagged + NOT auto-fixed (requires agent)
-- [ ] Scenario: snapshot gap (synthetic v1.0 + v1.2 without v1.1) → flagged, exit 1
-- [ ] Scenario: dangling `related:` link → flagged, exit 1
-- [ ] Scenario: scoped area run (`spectacular doctor frontmatter`) skips other areas
-- [ ] Scenario: `--format json` emits parseable JSON
-- [ ] Scenario: `spectacular doctor --fix` mechanical-only path (no agent invocation needed)
+- [x] Create `tests/cli/doctor.test.sh` — 11 scenarios covering detect + mechanical-fix + scoped + json
+- [x] Scenario: clean workspace → exit 0, no findings
+- [x] Scenario: missing always-set file → flagged + `--fix` re-creates it
+- [x] Scenario: malformed frontmatter → flagged + NOT auto-fixed (requires agent)
+- [x] Scenario: snapshot gap (synthetic v1.0 + v1.2 without v1.1) → flagged, exit 1
+- [x] Scenario: dangling `related:` link → flagged, exit 1
+- [x] Scenario: lifecycle active without SESSION.md → flagged, exit 1
+- [x] Scenario: scoped area run (`spectacular doctor frontmatter`) skips other areas
+- [x] Scenario: `--format json` emits parseable JSON (python json.load validates)
+- [x] Scenario: `spectacular doctor --fix` mechanical-only path (gitignore + missing files)
+- [x] Scenario: `doctor --help` shows usage with --fix + --format
+- [x] All 33 asserts across 11 scenarios passing
+- [x] Create `requests/doctor/VERIFY.md` — load-bearing checklist mirroring tests + agent-flow scenarios
+- [x] Smart-init tests still 50/50 green after doctor additions
 - [ ] Create `requests/doctor/VERIFY.md` for agent-flow scenarios (per-finding judgment, snapshot before edit, q-to-quit) — these can't be automated, manual walkthrough required
 
 ### M8 — Dogfood

@@ -18,6 +18,8 @@ No upfront interview. No multi-step research. The grill walks the slots declared
 2. If `mode != grill`, route accordingly: `append` → `refine` engine in append mode; `freeform` → just scaffold the template and exit.
 3. Load: `template`, `slots`, `location`, `snapshot-on-edit`, `overrides`.
 
+**Substrate check (auto-invoked on failure):** if `doc-registry.md` won't parse, or the requested doc's `overrides:` file is malformed, or the active `kit:` file fails to load — auto-run `spectacular doctor kits frontmatter` and surface findings before refusing to grill. See [[doctor]] § Skill-invoked checks.
+
 ### 2. Pre-flight
 
 Before asking anything:

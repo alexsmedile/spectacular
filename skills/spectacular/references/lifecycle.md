@@ -42,6 +42,8 @@ Verification is **never skipped**. The skill always checks against some artifact
 2. **No VERIFY.md, TASKS has `### Verification` group** — every item in that group must be `- [x]`. Blocks transition until checked.
 3. **Neither exists** — every PLAN.md § Validation item must be explicitly confirmed by the user before transition.
 
+**Substrate check (auto-invoked):** when the skill proposes `verified`, also run `spectacular doctor lifecycle` scoped to that request — confirms the verification artifact exists per the convention. If doctor reports an error, abort the transition with the finding.
+
 Per [[verification]], "opt-in" refers to **whether a standalone VERIFY.md file gets scaffolded** — not whether verification runs. The 2-of-6 rule decides the file; verification itself is mandatory.
 
 ### Stale request detection

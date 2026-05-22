@@ -5,6 +5,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [0.3.1] — 2026-05-23
+
+### Added
+
+- **`spectacular doctor`** — environment/infrastructure self-check. CLI detects substrate drift across 7 areas (`skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`); skill handles judgment-requiring repairs via `/spectacular doctor --fix`. Severity model: ✅ pass / ⚠️ warning / ❌ error / ℹ️ info. Exit codes: 0 clean, 1 warnings, 2 errors. `--format text|json` for human + machine consumption. `--fix` applies content-free mechanical repairs (`.gitignore` append, missing always-set dirs, dangling symlinks, re-stub missing canonical files).
+- **Skill-invoked doctor subsets** — `status.md`, `grill.md`, `onboarding.md`, `lifecycle.md` auto-run scoped doctor checks when substrate failures block their operation; findings surface inline.
+- **`references/doctor.md`** — full spec: check definitions per area, severity model, report format (text + JSON), CLI vs skill split, repair-flow walkthrough with worked examples, anti-patterns.
+- **`tests/cli/doctor.test.sh`** — 11 scenarios, 33 asserts covering detect, mechanical fix, scoped areas, JSON output, regression.
+
+### Changed
+
+- Smart-init's diagnostic placeholder (`"run diagnostics via spectacular doctor once available"`) replaced with explicit area pointer: `"run \`spectacular doctor frontmatter\` for details"`.
+- `references/SKILL.md` routing extended with doctor triggers + skill-invoked-subset note.
+
+### Workspace cleanup (from doctor dogfood)
+
+- Fixed broken `related:` paths in `prd-craft/PLAN.md` + `repo-conventions/PLAN.md` (file-relative paths instead of repo-root-relative).
+- Parked `cli-bootstrap` request (`active → planned`) since smart-init shipped at v0.3.0.
+- Documented `PRD@v1.1.md` snapshot gap in `DECISIONS.md` (version bump skipped during canonical-docs-rework; no git trace exists).
+
+---
+
 ## [0.3.0] — 2026-05-22
 
 ### Changed (breaking)

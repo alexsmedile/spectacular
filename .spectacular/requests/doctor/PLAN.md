@@ -1,8 +1,8 @@
 ---
-status: planned
+status: review
 priority: medium
 owner: alex
-updated: 2026-05-22
+updated: 2026-05-23
 summary: "Spectacular doctor — environment/infrastructure self-check (CLI detects, skill repairs)"
 related:
   - ../doc-writer/PLAN.md

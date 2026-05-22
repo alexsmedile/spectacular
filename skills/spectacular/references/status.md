@@ -4,6 +4,17 @@ Triggered by: `/spectacular` with no arguments, or `spectacular status`.
 
 ---
 
+## Substrate check (auto-invoked on failure)
+
+If any of the steps below fail to read or parse — `config.yaml` malformed, root doc frontmatter unparseable, `doc-registry.md` not loadable — **do not silently proceed with partial state**. Instead:
+
+1. Auto-run `spectacular doctor workspace frontmatter kits` (the relevant subset)
+2. Surface the doctor findings inline before the briefing
+3. Suggest `spectacular doctor --fix` (mechanical) and/or `/spectacular doctor --fix` (judgment)
+4. If errors block reading enough state to brief, abort with the doctor report; don't fabricate
+
+See [[doctor]] § Skill-invoked checks for the full list of scoped checks.
+
 ## Steps
 
 1. Read `.spectacular/config.yaml` for project name and config.

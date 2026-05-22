@@ -2,6 +2,8 @@
 
 Triggered by: first time `/spectacular` is invoked in a project that already has a `.spectacular/` directory.
 
+**Substrate check (always runs):** on first invocation, auto-run `spectacular doctor workspace frontmatter` to confirm the workspace is in a known-good shape. Findings are surfaced before the briefing. Errors → recommend `spectacular doctor --fix` or `/spectacular doctor --fix` before proceeding. Warnings are noted but don't block.
+
 ---
 
 ## Goal

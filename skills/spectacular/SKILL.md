@@ -45,6 +45,8 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular snapshot <file>` | → `references/versioning.md` |
 | First invocation on existing `.spectacular/` project | → `references/onboarding.md` |
 | `spectacular init` (CLI context) | → `references/init-workflow.md` |
+| `spectacular doctor` / `spectacular doctor <area>` / `spectacular doctor --fix` | → `references/doctor.md` |
+| Skill operation hits substrate failure (registry won't parse, kit malformed, etc.) | → `references/doctor.md` § Skill-invoked checks (scoped) |
 | Actively working on a request | → `references/active-request.md` |
 
 ### Doc-writing (generalized — works for any registered doc)
@@ -134,6 +136,7 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/active-request.md` | Continue work, session state, task tracking |
 | `references/lifecycle.md` | State transitions, signal detection, proactive proposals |
 | `references/verification.md` | When VERIFY.md is needed (2-of-6 rule) vs folded into PLAN § Validation or TASKS § Verification |
+| `references/doctor.md` | Environment/infrastructure self-check (CLI detects, skill repairs); judgment-fix repair flow |
 | `references/archive.md` | Archive a request, propose current/ sync + memory entries |
 | `references/memory.md` | `remember this` command, write triggers, anti-collision rules |
 | `references/versioning.md` | Snapshot-before-edit rules, naming convention |

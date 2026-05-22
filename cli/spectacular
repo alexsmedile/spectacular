@@ -36,7 +36,7 @@ info() { echo "$*"; }
 skip() { echo "  ⊘  $*"; }
 created() { echo "  ✓  $*"; }
 filled() { echo "  ✓  $* (filled empty stub)"; }
-diag()  { echo "  ⊘  $* (issues detected — run diagnostics via \`spectacular doctor\` once available)"; }
+diag()  { echo "  ⊘  $* (issues detected — run \`spectacular doctor frontmatter\` for details)"; }
 
 # Returns 0 if file is "effectively empty" (0 bytes or only whitespace)
 is_empty_file() {
@@ -931,7 +931,12 @@ check_skill() {
     return
   fi
 
-  # Symlink validity
+  # Symlink validity. Only report a problem when .claude/ exists (user is
+  # actively using Claude Code) but the symlink under it is missing/broken.
+  # If .claude/ doesn't exist at all, the user isn't using Claude Code here
+  # and there's nothing to fix.
+  local claude_parent
+  claude_parent=$(dirname "$claude_dir")
   if [[ -L "$claude_dir" ]]; then
     if [[ -e "$claude_dir" ]]; then
       doc_add "skill" "pass" "$claude_dir" "symlink resolves"
@@ -939,8 +944,8 @@ check_skill() {
       doc_add "skill" "error" "$claude_dir" "symlink is dangling (target missing)" \
         "recreate symlink to $agents_dir" "mechanical"
     fi
-  elif [[ ! -e "$claude_dir" ]]; then
-    doc_add "skill" "warning" "$claude_dir" "no symlink found" \
+  elif [[ -d "$claude_parent" ]] && [[ ! -e "$claude_dir" ]]; then
+    doc_add "skill" "warning" "$claude_dir" "no symlink found (claude dir exists but skill not symlinked here)" \
       "create symlink from $claude_dir to $agents_dir" "mechanical"
   fi
 

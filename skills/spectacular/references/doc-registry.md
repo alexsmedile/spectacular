@@ -26,7 +26,7 @@ Each entry is YAML inside a fenced block. Required fields are marked **required*
   template: <path>                     # required, relative to skills/spectacular/
   mode: grill | append | freeform      # required
   location: <path>                     # required, where the file is created
-  scope: project-wide | per-request    # required
+  scope: project-wide | per-request | user  # required
   slots: [Slot1, Slot2, ...]           # required if mode=grill, omit otherwise
   snapshot-on-edit: true | false       # default false
   overrides: <path>                    # optional, path to per-doc override doc
@@ -47,7 +47,7 @@ Each entry is YAML inside a fenced block. Required fields are marked **required*
 - `.spectacular/PRD.md` (project-wide)
 - `.spectacular/requests/<slug>/PLAN.md` (per-request — slug supplied by `spectacular new`)
 
-**`scope`** — `project-wide` files exist once at `.spectacular/` root; `per-request` files exist once per request folder.
+**`scope`** — `project-wide` files exist once at `.spectacular/` root; `per-request` files exist once per request folder; `user` files live under `$HOME` (e.g. `~/.spectacular/packs/<name>/`) and are shared across all projects on the host.
 
 **`slots`** — ordered list of slot names. The engine walks these in order. Slot names appear as `## N. <Name>` section headings in the template.
 
@@ -145,7 +145,23 @@ tasks:
   snapshot-on-edit: false
   overrides: references/tasks-overrides.md
   description: "Executable checklist for one request"
+
+# ─── Convention packs (folder-shape mini-skills) ──────────────────────────
+
+convention-pack:
+  template: templates/packs/minimal/pack.md
+  mode: grill
+  location: ~/.spectacular/packs/<name>/pack.md
+  scope: user
+  slots: [Name & scope, Naming, Taxonomy, Root files & README, Gitignore, File placement, Project types]
+  snapshot-on-edit: false
+  overrides: references/pack-overrides.md
+  description: "Repo-shape convention pack — naming + taxonomy + gitignore + file-placement rules"
 ```
+
+> **`scope: user`** — packs live under `$HOME` by default, not per-project. Per-project override at `<project>/.spectacular/packs/<name>/` is allowed (precedence rules: see [[packs-contract]]). This differs from the rest of the registry, which uses `project-wide` / `per-request`.
+
+> **`overrides: references/pack-overrides.md`** — file does not exist in v1 (lands in request 2: convention-pack-fabricator). The registry entry is forward-declared so request 2 has a target.
 
 ## How the engine uses this
 

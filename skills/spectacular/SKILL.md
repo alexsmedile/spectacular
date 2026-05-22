@@ -153,6 +153,7 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/plan-overrides.md` | PLAN-specific rules: milestone ordering, dependency-link validation |
 | `references/tasks-overrides.md` | TASKS-specific rules: checklist format, frontmatter sync |
 | `references/kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs; single-kit-only in v1 |
+| `references/packs-contract.md` | Convention pack schema: pack folder shape + 6 rule categories (naming/taxonomy/root-files/gitignore/file-placement/project-types) |
 | **Legacy PRD references (deprecated, kept for backwards compat)** | |
 | `references/prd-grill.md` | Legacy — superseded by `grill.md` + `prd-overrides.md` |
 | `references/prd-refine.md` | Legacy — superseded by `refine.md` + `prd-overrides.md` |
@@ -178,5 +179,6 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `templates/stack/base.md` | Host project tech choices |
 | `templates/agents/base.md` | Onboarding doc for `.spectacular/` agents |
 | `templates/decisions/entry.md` | Single ADR entry (append-mode template) |
+| `templates/packs/minimal/` | Bundled convention pack — `.gitignore` + README contract only (see [[packs-contract]]) |
 
 Project may override by placing files at `.spectacular/templates/<doc>/...` — same filenames, project-local takes precedence.

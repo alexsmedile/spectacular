@@ -1,0 +1,24 @@
+# Spectacular
+.spectacular.local/
+
+# Archives & backups (kept locally, never committed)
+_archive/
+_archived/
+_backup/
+_backups/
+
+# Temp work
+_tmp/
+scratch/
+
+# Sensitive
+.env.local
+.env.*.local
+
+# Tool-generated hidden dirs — NEVER auto-added.
+# Uncomment only if you've decided this project should ignore them.
+# .scrapekit/
+# .playwright-mcp/
+# .smart-env/
+
+# Language-specific defaults are added by the pack when a stack is detected.

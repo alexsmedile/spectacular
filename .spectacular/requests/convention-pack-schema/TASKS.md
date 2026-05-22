@@ -1,5 +1,5 @@
 ---
-status: planned
+status: verified
 updated: 2026-05-23
 related:
   - PLAN.md
@@ -10,49 +10,48 @@ related:
 ## v1
 
 ### M1 — Schema locked
-- [ ] Draft `references/packs-contract.md` mirroring `kits-contract.md` structure
-- [ ] Define `pack.md` frontmatter fields: `name`, `version`, `description`, `extends`, `applies-to`, `mode` (suggest|scaffold|enforce hint default), `rules`, `templates`, `references`
-- [ ] Document the 6 rule categories: `naming`, `taxonomy`, `root-files`, `gitignore`, `file-placement`, `project-types`
-- [ ] Each rule category gets a frontmatter example + a worked use case
-- [ ] Document the override convention (how project-local packs extend or override the active pack)
+- [x] Draft `references/packs-contract.md` mirroring `kits-contract.md` structure
+- [x] Define `pack.md` frontmatter fields: `pack`, `version`, `description`, `extends`, `applies-to`, `rules`, `templates`, `references`
+- [x] Document the 6 rule categories: `naming`, `taxonomy`, `root-files`, `gitignore`, `file-placement`, `project-types`
+- [x] Each rule category gets a frontmatter example + doctor-enforcement note
+- [x] Document the override convention (project-local → user → app-store → bundled precedence; `extends:` declared but resolved in v2)
 
 ### M2 — Folder shape ratified
-- [ ] Document pack folder layout (pack.md + templates/ + references/ + optional scripts/)
-- [ ] Explain how the folder shape maps to the existing skill convention
-- [ ] Decide naming: `pack.md` (main file) vs `PACK.md` vs `<name>.md` — recommend `pack.md` for consistency with how kits use the kit-id as filename
+- [x] Document pack folder layout (pack.md + templates/ + references/ + optional scripts/)
+- [x] Explain how the folder shape maps to the existing skill convention (kit comparison table)
+- [x] Decide naming: `pack.md` (chosen for consistency)
 
 ### M3 — `minimal` pack shipped
-- [ ] Create `skills/spectacular/templates/packs/minimal/`
-- [ ] Write `pack.md` with frontmatter: name=minimal, version=1.0, description, applies-to=any, rules=minimal (gitignore + README contract only)
-- [ ] Write `templates/.gitignore` — the canonical gitignore defaults from the archived repo-conventions PLAN
-- [ ] Write `templates/README.md` — the README contract stub (Type/Stack/Run header + sections)
-- [ ] Write `references/why-minimal.md` — explains the philosophy: opinions are opt-in; minimal ships the essentials; download alex-default if you want stronger defaults
-- [ ] Confirm pack parses via awk frontmatter parser (smoke test)
+- [x] Create `skills/spectacular/templates/packs/minimal/`
+- [x] Write `pack.md` with frontmatter: pack=minimal, version=1.0, description, applies-to=[any], rules=minimal (root-files + gitignore only)
+- [x] Write `templates/.gitignore` — canonical gitignore defaults from archived repo-conventions PLAN
+- [x] Write `templates/README.md` — README contract stub (Type/Stack/Run header + What/Setup/Usage sections)
+- [x] Write `references/why-minimal.md` — philosophy: opt-in opinions, two essentials only, when to install heavier packs
+- [x] Confirm pack parses via awk frontmatter parser (smoke tested)
 
 ### M4 — Registry entry
-- [ ] Add `convention-pack` entry to `doc-registry.md`
-- [ ] Fields: template=templates/packs/minimal/pack.md, mode=grill, location=~/.spectacular/packs/<name>/pack.md, scope=user, snapshot-on-edit=false, overrides=references/pack-overrides.md (placeholder for now), description
-- [ ] Document the new `scope: user` value — packs live under $HOME, not per-project (with project-local override layer)
-- [ ] Confirm registry stays parseable (no breaking changes to existing entries)
+- [x] Add `convention-pack` entry to `doc-registry.md`
+- [x] Fields: template=templates/packs/minimal/pack.md, mode=grill, location=~/.spectacular/packs/<name>/pack.md, scope=user, snapshot-on-edit=false, overrides=references/pack-overrides.md (forward-declared), description
+- [x] Document the new `scope: user` value in registry schema + field-semantics section
+- [x] Confirm registry stays parseable (no breaking changes — only adds a new entry + a new scope value)
 
 ### M5 — App-store folder established
-- [ ] Create `<repo-root>/packs/` directory at the spectacular repo root
-- [ ] Write `packs/README.md` — explains: this is the "app store"; each subfolder is a downloadable pack; users install via `spectacular pack install <name>` (lands in request 2)
-- [ ] Reserve `packs/alex-default/` slot with a stub README pointing forward to request 2's dogfood that will produce it
+- [x] Create `<repo-root>/packs/` directory
+- [x] Write `packs/README.md` — explains app-store model, available packs table, install/contribute flow, mode semantics
+- [x] Reserve `packs/alex-default/` slot with stub README pointing forward to request 2
 
 ### M6 — Schema coverage check
-- [ ] Walk each of the 10 convention sections from `archive/repo-conventions/PLAN.md`
-- [ ] For each section, write a mini example in `references/packs-contract.md` showing how that convention encodes in the schema
-- [ ] Flag any section the schema can't express → schema adjustment OR explicit out-of-scope note
-- [ ] Capture findings in `references/packs-contract.md` § Schema coverage
+- [x] Walked all 10 convention sections from `archive/repo-conventions/PLAN.md`
+- [x] Coverage table in `references/packs-contract.md` § Schema coverage check — 10/10 expressible
+- [x] One judgment call captured: convention 6 ("most-specific AGENTS.md wins") is runtime behavior, lives in pack's `references/` narrative, not schema
 
-### Validation (folded into TASKS per [[verification]] convention)
-- [ ] All 6 milestone validations from PLAN § Validation confirmed
-- [ ] `packs-contract.md` exists with full schema spec
-- [ ] Minimal pack parses through awk frontmatter
-- [ ] `doc-registry.md` has convention-pack entry
-- [ ] All 10 archived conventions expressible in schema
-- [ ] `packs/` at repo root with README
+### Validation (folded — verification score 1/6, no VERIFY.md per [[verification]])
+- [x] All 6 milestone validations from PLAN § Validation confirmed
+- [x] `packs-contract.md` exists with full schema spec
+- [x] Minimal pack parses through awk frontmatter
+- [x] `doc-registry.md` has convention-pack entry
+- [x] All 10 archived conventions expressible in schema
+- [x] `packs/` at repo root with README + alex-default placeholder
 
 ## v2 (deferred — handled by other requests)
 
@@ -62,3 +61,4 @@ related:
 - [ ] Pack composition (multi-pack per repo) — single-pack-only in v1
 - [ ] Auto-detection of project type from `package.json` / `pyproject.toml` / `SKILL.md` etc.
 - [ ] `spectacular pack list` / `pack install <name>` / `pack remove <name>` CLI commands
+- [ ] `extends:` cross-pack inheritance resolution (parsed-only in v1)

@@ -839,6 +839,748 @@ print_summary() {
 }
 
 # ── main ──────────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# DOCTOR — environment / infrastructure self-check
+#
+# CLI detects substrate drift. Mechanical fixes (gitignore append, missing dirs,
+# dangling symlinks, missing always-set stubs) can apply via --fix. Anything
+# requiring judgment is reported as fix_type=judgment and routes to the skill
+# (/spectacular doctor --fix). See references/doctor.md for the full spec.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── doctor globals ────────────────────────────────────────────────────────────
+DOC_OPT_AREA=""        # empty = all areas
+DOC_OPT_FIX=false
+DOC_OPT_FORMAT="text"  # text | json
+
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits"
+
+# Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
+# severity: pass | warning | error | info
+# fix_type: mechanical | judgment | none
+DOC_FINDINGS=""
+
+doc_add() {
+  local area="$1" sev="$2" file="$3" msg="$4" fix="${5:-}" ftype="${6:-none}"
+  DOC_FINDINGS+="${area}|${sev}|${file}|${msg}|${fix}|${ftype}"$'\n'
+}
+
+# ── usage block for doctor ────────────────────────────────────────────────────
+doctor_usage() {
+  cat <<EOF
+Usage: spectacular doctor [<area>] [options]
+
+Run substrate self-check on the current .spectacular/ workspace.
+
+Areas (run all if omitted):
+  skill         skill install + symlinks + skills.lock
+  workspace     .spectacular/ directory + always-set + config.yaml
+  frontmatter   required fields per canonical doc; schema versions
+  snapshots     version-sequence continuity (PRD@v1.0 + v1.2 without v1.1)
+  links         related: frontmatter targets exist
+  lifecycle     request status vs required verification artifacts
+  kits          bundled + project-local kit files parse cleanly
+
+Options:
+  --fix              Apply mechanical fixes (gitignore append, missing dirs,
+                     dangling symlinks, missing always-set stubs). Judgment
+                     fixes require the skill: /spectacular doctor --fix.
+  --format text|json Report format (default: text). JSON suitable for the
+                     skill or other tools to consume.
+  -h, --help         Show this help
+
+Exit codes: 0 clean, 1 warnings only, 2 errors present.
+
+Examples:
+  spectacular doctor
+  spectacular doctor frontmatter
+  spectacular doctor --fix
+  spectacular doctor --format json > .spectacular/.doctor-report.json
+EOF
+}
+
+doctor_parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --fix) DOC_OPT_FIX=true; shift ;;
+      --format) DOC_OPT_FORMAT="$2"; shift 2 ;;
+      -h|--help) doctor_usage; exit 0 ;;
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits)
+        DOC_OPT_AREA="$1"; shift ;;
+      *) die "Unknown doctor option: $1. Run 'spectacular doctor --help'." ;;
+    esac
+  done
+
+  if [[ "$DOC_OPT_FORMAT" != "text" && "$DOC_OPT_FORMAT" != "json" ]]; then
+    die "--format must be 'text' or 'json'"
+  fi
+}
+
+# ── area: skill ───────────────────────────────────────────────────────────────
+check_skill() {
+  local agents_dir claude_dir lock_ref
+  agents_dir="$(agents_skill_dir)"
+  claude_dir="$(claude_skill_dir)"
+
+  # Install path
+  if [[ -d "$agents_dir" || -L "$agents_dir" ]]; then
+    doc_add "skill" "pass" "$agents_dir" "skill installed"
+  else
+    doc_add "skill" "error" "$agents_dir" "skill not installed at this path" \
+      "re-run \`spectacular init\` (or \`spectacular init --update\`)" "judgment"
+    return
+  fi
+
+  # Symlink validity
+  if [[ -L "$claude_dir" ]]; then
+    if [[ -e "$claude_dir" ]]; then
+      doc_add "skill" "pass" "$claude_dir" "symlink resolves"
+    else
+      doc_add "skill" "error" "$claude_dir" "symlink is dangling (target missing)" \
+        "recreate symlink to $agents_dir" "mechanical"
+    fi
+  elif [[ ! -e "$claude_dir" ]]; then
+    doc_add "skill" "warning" "$claude_dir" "no symlink found" \
+      "create symlink from $claude_dir to $agents_dir" "mechanical"
+  fi
+
+  # skills.lock present + parseable
+  # If running in the spectacular source repo itself (where cli/spectacular lives),
+  # missing skills.lock is expected — downgrade warning to info.
+  local lock="$(pwd)/.spectacular/skills.lock"
+  local is_source_repo=false
+  if [[ -f "$(pwd)/cli/spectacular" && -d "$(pwd)/skills/spectacular" ]]; then
+    is_source_repo=true
+  fi
+  if [[ -f "$lock" ]]; then
+    if grep -q "^spectacular:" "$lock" 2>/dev/null || grep -q "ref:" "$lock" 2>/dev/null; then
+      doc_add "skill" "pass" ".spectacular/skills.lock" "skills.lock present"
+    else
+      doc_add "skill" "warning" ".spectacular/skills.lock" "skills.lock present but no ref/version detected" "" "judgment"
+    fi
+  elif $is_source_repo; then
+    doc_add "skill" "info" ".spectacular/skills.lock" "absent (this is the spectacular source repo — expected)"
+  else
+    doc_add "skill" "warning" ".spectacular/skills.lock" "missing (skill may not have been installed via CLI)" "" "judgment"
+  fi
+
+  # SKILL.md parseable
+  local skill_md="$agents_dir/SKILL.md"
+  if [[ -f "$skill_md" ]]; then
+    if head -1 "$skill_md" | grep -q '^---$'; then
+      doc_add "skill" "pass" "$skill_md" "SKILL.md frontmatter loads"
+    else
+      doc_add "skill" "error" "$skill_md" "SKILL.md missing frontmatter delimiter" \
+        "re-install the skill via \`spectacular init --update\`" "judgment"
+    fi
+  else
+    doc_add "skill" "error" "$skill_md" "SKILL.md missing" \
+      "re-install the skill via \`spectacular init --update\`" "judgment"
+  fi
+}
+
+# ── area: workspace ───────────────────────────────────────────────────────────
+check_workspace() {
+  if [[ ! -d ".spectacular" ]]; then
+    doc_add "workspace" "error" ".spectacular/" "directory missing — workspace not initialized" \
+      "run \`spectacular init\`" "judgment"
+    return
+  fi
+  doc_add "workspace" "pass" ".spectacular/" "workspace directory present"
+
+  # Always-set files (per smart-init's definition)
+  # Determine which agents-file is in use by reading config.yaml first
+  local agents_file="AGENTS.md"
+  if [[ -f ".spectacular/config.yaml" ]]; then
+    local cfg_agents
+    cfg_agents=$(awk '/^  file:/ { print $2; exit }' ".spectacular/config.yaml" 2>/dev/null)
+    [[ -n "$cfg_agents" ]] && agents_file="$cfg_agents"
+  fi
+
+  local always_set=("PRD.md" "config.yaml" "$agents_file")
+  for f in "${always_set[@]}"; do
+    if [[ -f ".spectacular/$f" ]]; then
+      doc_add "workspace" "pass" ".spectacular/$f" "always-set file present"
+    else
+      doc_add "workspace" "error" ".spectacular/$f" "always-set file missing" \
+        "re-scaffold via \`spectacular doctor --fix\` or \`spectacular init\`" "mechanical"
+    fi
+  done
+
+  # Always-set directories
+  for d in "requests" "current"; do
+    if [[ -d ".spectacular/$d" ]]; then
+      doc_add "workspace" "pass" ".spectacular/$d/" "always-set directory present"
+    else
+      doc_add "workspace" "error" ".spectacular/$d/" "always-set directory missing" \
+        "mkdir -p .spectacular/$d (mechanical fix available)" "mechanical"
+    fi
+  done
+
+  # config.yaml parses
+  if [[ -f ".spectacular/config.yaml" ]]; then
+    if grep -q "^project:" ".spectacular/config.yaml" 2>/dev/null; then
+      doc_add "workspace" "pass" ".spectacular/config.yaml" "config.yaml has project: stanza"
+    else
+      doc_add "workspace" "error" ".spectacular/config.yaml" "config.yaml missing project: stanza" \
+        "rewrite config.yaml with project name/summary/kit" "judgment"
+    fi
+  fi
+}
+
+# ── area: frontmatter ─────────────────────────────────────────────────────────
+# For each canonical .md at .spectacular/ root, check it has frontmatter delimiters
+# and required fields (version, updated, summary). Schema-version drift = warning.
+check_frontmatter() {
+  if [[ ! -d ".spectacular" ]]; then
+    return
+  fi
+
+  local required_fields="version updated summary"
+  shopt -s nullglob
+  for f in .spectacular/*.md; do
+    local base
+    base=$(basename "$f")
+
+    # Skip snapshot files (handled by snapshots area)
+    if [[ "$base" =~ @v ]]; then
+      continue
+    fi
+
+    # Frontmatter delimiter check
+    if ! head -1 "$f" | grep -q '^---$'; then
+      doc_add "frontmatter" "error" "$f" "missing frontmatter delimiter (first line must be '---')" \
+        "add proper frontmatter block" "judgment"
+      continue
+    fi
+
+    # Extract frontmatter block (between first two ---)
+    local fm
+    fm=$(awk '/^---$/ { count++; if (count == 2) exit; next } count == 1' "$f")
+
+    for field in $required_fields; do
+      if ! echo "$fm" | grep -q "^${field}:"; then
+        doc_add "frontmatter" "warning" "$f" "missing required field: ${field}" \
+          "add \`${field}:\` to frontmatter" "judgment"
+      fi
+    done
+
+    # ISO date check on updated:
+    local updated_val
+    updated_val=$(echo "$fm" | awk -F': ' '/^updated:/ { print $2; exit }' | tr -d '"' | tr -d "'")
+    if [[ -n "$updated_val" ]] && ! [[ "$updated_val" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+      doc_add "frontmatter" "warning" "$f" "\`updated:\` not in ISO format (got: $updated_val)" \
+        "use YYYY-MM-DD format" "judgment"
+    fi
+  done
+  shopt -u nullglob
+}
+
+# ── area: snapshots ───────────────────────────────────────────────────────────
+# For each <doc>@v<N>.<M>.md, group by doc and detect gaps in version sequence.
+check_snapshots() {
+  if [[ ! -d ".spectacular" ]]; then
+    return
+  fi
+
+  # Group snapshots by canonical doc name (the prefix before @v)
+  shopt -s nullglob
+  local snapshots=(.spectacular/*@v*.md)
+  shopt -u nullglob
+
+  if [[ ${#snapshots[@]} -eq 0 ]]; then
+    return  # No snapshots is fine — many workspaces have none yet
+  fi
+
+  # Collect unique doc bases
+  local doc_bases=""
+  for s in "${snapshots[@]}"; do
+    local base
+    base=$(basename "$s")
+    local prefix="${base%@v*}"
+    if ! in_list "$prefix" "$doc_bases"; then
+      doc_bases+="$prefix "
+    fi
+  done
+
+  # For each base, collect versions and check continuity
+  for base in $doc_bases; do
+    local versions=""
+    for s in "${snapshots[@]}"; do
+      local b
+      b=$(basename "$s")
+      [[ "$b" == "${base}@v"* ]] || continue
+      # Extract X.Y from <base>@vX.Y.md
+      local ver="${b#${base}@v}"
+      ver="${ver%.md}"
+      versions+="$ver "
+    done
+
+    # Parse major.minor pairs, sort, look for gaps in the minor sequence within
+    # each major. Heuristic: if v<M>.<N1> and v<M>.<N3> exist but v<M>.<N2> is
+    # missing for any 0 < N2 < max minor, flag the gap.
+    local sorted
+    sorted=$(echo "$versions" | tr ' ' '\n' | sort -t. -k1n -k2n | grep -v '^$' | tr '\n' ' ')
+
+    # Build minor-version list per major
+    local prev_major="" prev_minor=""
+    for v in $sorted; do
+      local major="${v%.*}"
+      local minor="${v#*.}"
+      if [[ "$major" == "$prev_major" ]]; then
+        local expected=$((prev_minor + 1))
+        while [[ $expected -lt $minor ]]; do
+          local missing="${major}.${expected}"
+          doc_add "snapshots" "warning" ".spectacular/${base}@v${missing}.md" \
+            "version-sequence gap (have v${prev_major}.${prev_minor} and v${major}.${minor})" \
+            "backfill from git log if possible, or document the skip in DECISIONS.md" \
+            "judgment"
+          expected=$((expected + 1))
+        done
+      fi
+      prev_major="$major"
+      prev_minor="$minor"
+    done
+
+    if [[ -z "$sorted" ]]; then continue; fi
+    doc_add "snapshots" "info" ".spectacular/${base}@v*.md" \
+      "$(echo "$sorted" | wc -w | tr -d ' ') snapshot(s) found for $base"
+  done
+}
+
+# ── area: links ───────────────────────────────────────────────────────────────
+# Walk every canonical .md, extract `related:` frontmatter entries, verify each
+# target exists (resolved relative to the file's location).
+check_links() {
+  if [[ ! -d ".spectacular" ]]; then return; fi
+
+  shopt -s nullglob
+  while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    # Skip snapshots
+    if [[ "$(basename "$f")" =~ @v ]]; then continue; fi
+
+    local in_fm=false in_related=false
+    while IFS= read -r line; do
+      if [[ "$line" == "---" ]]; then
+        if $in_fm; then break; else in_fm=true; continue; fi
+      fi
+      $in_fm || continue
+      if [[ "$line" =~ ^related: ]]; then in_related=true; continue; fi
+      # Exit related: block on next top-level key
+      if $in_related && [[ "$line" =~ ^[a-zA-Z] ]]; then in_related=false; fi
+
+      if $in_related && [[ "$line" =~ ^[[:space:]]+-[[:space:]]+(.+)$ ]]; then
+        local target="${BASH_REMATCH[1]}"
+        # Strip quotes + comments
+        target="${target%%#*}"
+        target="${target%\"}"; target="${target#\"}"
+        target="${target%\'}"; target="${target#\'}"
+        target="$(echo "$target" | xargs)"  # trim whitespace
+        [[ -z "$target" ]] && continue
+
+        # Resolve relative to file's dir
+        local base_dir
+        base_dir=$(dirname "$f")
+        local resolved="$base_dir/$target"
+
+        if [[ -e "$resolved" ]]; then
+          : # pass — don't spam pass entries for every link
+        else
+          doc_add "links" "warning" "$f" \
+            "related: target '$target' does not exist (resolved: $resolved)" \
+            "remove the stale link or fix the target" \
+            "judgment"
+        fi
+      fi
+    done < "$f"
+  done < <(find ".spectacular" -type f -name "*.md")
+  shopt -u nullglob
+
+  # If no warnings emitted, add a single pass note
+  if ! echo "$DOC_FINDINGS" | grep -q "^links|warning"; then
+    doc_add "links" "pass" ".spectacular/" "all related: targets resolve"
+  fi
+}
+
+# ── area: lifecycle ───────────────────────────────────────────────────────────
+# For each request, check status frontmatter against required artifacts.
+check_lifecycle() {
+  if [[ ! -d ".spectacular/requests" ]]; then return; fi
+
+  shopt -s nullglob
+  local request_dirs=(.spectacular/requests/*/)
+  shopt -u nullglob
+
+  if [[ ${#request_dirs[@]} -eq 0 ]]; then
+    doc_add "lifecycle" "info" ".spectacular/requests/" "no requests yet"
+    return
+  fi
+
+  local issues=0
+  for d in "${request_dirs[@]}"; do
+    local plan="$d/PLAN.md"
+    local slug
+    slug=$(basename "$d")
+
+    if [[ ! -f "$plan" ]]; then
+      doc_add "lifecycle" "warning" "$plan" "request '$slug' has no PLAN.md" "" "judgment"
+      issues=$((issues + 1))
+      continue
+    fi
+
+    local status
+    status=$(awk -F': ' '/^---$/{c++; next} c==1 && /^status:/ { print $2; exit }' "$plan" | tr -d '"' | tr -d "'" | xargs)
+
+    case "$status" in
+      active)
+        if [[ ! -f "$d/SESSION.md" ]]; then
+          doc_add "lifecycle" "warning" "$d" "request '$slug' active without SESSION.md" \
+            "create SESSION.md or move status back to planned" "judgment"
+          issues=$((issues + 1))
+        fi
+        ;;
+      review|verified)
+        # Must have at least one verification artifact:
+        # VERIFY.md OR TASKS.md with ### Verification section OR PLAN.md with ## Validation
+        local has_verify=false
+        if [[ -f "$d/VERIFY.md" ]]; then
+          has_verify=true
+          # When status=verified, VERIFY.md must have zero unchecked items
+          if [[ "$status" == "verified" ]] && grep -qE '^- \[ \]' "$d/VERIFY.md"; then
+            doc_add "lifecycle" "error" "$d/VERIFY.md" \
+              "request '$slug' is verified but VERIFY.md has unchecked items" \
+              "complete remaining items or move status back to review" \
+              "judgment"
+            issues=$((issues + 1))
+          fi
+        fi
+        if ! $has_verify; then
+          local has_tasks_verif=false
+          [[ -f "$d/TASKS.md" ]] && grep -qE "^### Verification|^## Verification" "$d/TASKS.md" && has_tasks_verif=true
+          local has_plan_valid=false
+          # Per [[verification]], PLAN's validation may live under several heading names:
+          # "Validation", "Success criteria", "Goals & success criteria", or "Acceptance"
+          grep -qE "^## .*[Vv]alidation|^## .*[Ss]uccess criteria|^## .*[Aa]cceptance" "$plan" && has_plan_valid=true
+          if ! $has_tasks_verif && ! $has_plan_valid; then
+            doc_add "lifecycle" "error" "$d" \
+              "request '$slug' is $status without any verification artifact (VERIFY.md / TASKS Verification / PLAN Validation)" \
+              "add one of: VERIFY.md (2-of-6 rule), TASKS § Verification, or PLAN § Validation/Success criteria" \
+              "judgment"
+            issues=$((issues + 1))
+          fi
+        fi
+
+        # Stale verified — info only
+        if [[ "$status" == "verified" ]]; then
+          local updated
+          updated=$(awk -F': ' '/^---$/{c++; next} c==1 && /^updated:/ { print $2; exit }' "$plan" | tr -d '"' | tr -d "'" | xargs)
+          if [[ -n "$updated" ]]; then
+            local age_days
+            age_days=$(( ( $(date +%s) - $(date -j -f "%Y-%m-%d" "$updated" +%s 2>/dev/null || echo 0) ) / 86400 ))
+            if [[ $age_days -gt 7 && $age_days -lt 99999 ]]; then
+              doc_add "lifecycle" "info" "$d" \
+                "request '$slug' verified $age_days days ago — archive candidate" \
+                "run \`spectacular archive $slug\`" \
+                "judgment"
+            fi
+          fi
+        fi
+        ;;
+      planned)
+        : # No verification artifact required for planned
+        ;;
+      "")
+        doc_add "lifecycle" "warning" "$plan" "request '$slug' has no status: field" "" "judgment"
+        issues=$((issues + 1))
+        ;;
+    esac
+  done
+
+  if [[ $issues -eq 0 ]]; then
+    doc_add "lifecycle" "pass" ".spectacular/requests/" "all requests have valid lifecycle state"
+  fi
+}
+
+# ── area: kits ────────────────────────────────────────────────────────────────
+check_kits() {
+  local agents_dir
+  agents_dir="$(agents_skill_dir)"
+  local kits_dir="$agents_dir/templates/prd/kits"
+
+  if [[ ! -d "$kits_dir" ]]; then
+    doc_add "kits" "warning" "$kits_dir" "bundled kits directory missing" \
+      "re-install skill via \`spectacular init --update\`" "judgment"
+    return
+  fi
+
+  shopt -s nullglob
+  local kit_files=("$kits_dir"/*.md)
+  shopt -u nullglob
+
+  local ok=0 bad=0
+  for kit in "${kit_files[@]}"; do
+    local name
+    name=$(basename "$kit" .md)
+    # Frontmatter present?
+    if ! head -1 "$kit" | grep -q '^---$'; then
+      doc_add "kits" "error" "$kit" "kit '$name' has no frontmatter" \
+        "fix kit frontmatter or re-install skill" "judgment"
+      bad=$((bad + 1))
+      continue
+    fi
+    # extends: prd (only allowed value in v1)
+    local extends_val
+    extends_val=$(awk -F': ' '/^---$/{c++; next} c==1 && /^extends:/ { print $2; exit }' "$kit" | xargs)
+    if [[ -n "$extends_val" && "$extends_val" != "prd" ]]; then
+      doc_add "kits" "error" "$kit" "kit '$name' extends '$extends_val' (only 'prd' allowed in v1)" \
+        "change to extends: prd or remove kit" "judgment"
+      bad=$((bad + 1))
+      continue
+    fi
+    # triggers-docs entries match KNOWN_DOCS
+    local triggers
+    triggers=$(kit_triggers_always "$name")
+    triggers+=" $(kit_triggers_suggested "$name")"
+    local kit_ok=true
+    for doc in $triggers; do
+      [[ -z "$doc" ]] && continue
+      if ! in_list "$doc" "$KNOWN_DOCS"; then
+        doc_add "kits" "warning" "$kit" "kit '$name' triggers-docs references unknown doc ID: '$doc'" \
+          "remove or rename to a known doc ID: $KNOWN_DOCS" "judgment"
+        kit_ok=false
+      fi
+    done
+    if $kit_ok; then ok=$((ok + 1)); else bad=$((bad + 1)); fi
+  done
+
+  # Project-local kits override
+  local local_kits=".spectacular/templates/prd/kits"
+  if [[ -d "$local_kits" ]]; then
+    shopt -s nullglob
+    local local_files=("$local_kits"/*.md)
+    shopt -u nullglob
+    if [[ ${#local_files[@]} -gt 0 ]]; then
+      doc_add "kits" "info" "$local_kits" "${#local_files[@]} project-local kit override(s) found"
+    fi
+  fi
+
+  # PRD kit identity check
+  if [[ -f ".spectacular/PRD.md" ]]; then
+    local prd_kit
+    prd_kit=$(awk -F': ' '/^---$/{c++; next} c==1 && /^kit:/ { print $2; exit }' .spectacular/PRD.md | xargs)
+    if [[ -n "$prd_kit" ]]; then
+      if [[ -f "$kits_dir/$prd_kit.md" ]] || [[ -f "$local_kits/$prd_kit.md" ]]; then
+        doc_add "kits" "pass" ".spectacular/PRD.md" "declared kit '$prd_kit' is resolvable"
+      else
+        doc_add "kits" "error" ".spectacular/PRD.md" "declares kit '$prd_kit' but no matching kit file found" \
+          "install missing kit or change PRD's kit: field" "judgment"
+      fi
+    fi
+  fi
+
+  if [[ $bad -eq 0 && $ok -gt 0 ]]; then
+    doc_add "kits" "pass" "$kits_dir" "$ok bundled kits parse cleanly"
+  fi
+}
+
+# ── doctor orchestrator ───────────────────────────────────────────────────────
+doctor() {
+  doctor_parse_args "$@"
+
+  DOC_FINDINGS=""
+
+  local areas_to_run
+  if [[ -n "$DOC_OPT_AREA" ]]; then
+    areas_to_run="$DOC_OPT_AREA"
+  else
+    areas_to_run="$DOC_AREAS"
+  fi
+
+  for area in $areas_to_run; do
+    case "$area" in
+      skill)       check_skill ;;
+      workspace)   check_workspace ;;
+      frontmatter) check_frontmatter ;;
+      snapshots)   check_snapshots ;;
+      links)       check_links ;;
+      lifecycle)   check_lifecycle ;;
+      kits)        check_kits ;;
+    esac
+  done
+
+  # Apply mechanical fixes if --fix flag set
+  if $DOC_OPT_FIX; then
+    doctor_apply_mechanical_fixes
+    # Re-run detection to refresh state
+    DOC_FINDINGS=""
+    for area in $areas_to_run; do
+      case "$area" in
+        skill)       check_skill ;;
+        workspace)   check_workspace ;;
+        frontmatter) check_frontmatter ;;
+        snapshots)   check_snapshots ;;
+        links)       check_links ;;
+        lifecycle)   check_lifecycle ;;
+        kits)        check_kits ;;
+      esac
+    done
+  fi
+
+  if [[ "$DOC_OPT_FORMAT" == "json" ]]; then
+    doctor_emit_json
+  else
+    doctor_emit_text
+  fi
+
+  # Exit code
+  if echo "$DOC_FINDINGS" | grep -q "|error|"; then
+    exit 2
+  elif echo "$DOC_FINDINGS" | grep -q "|warning|"; then
+    exit 1
+  fi
+  exit 0
+}
+
+doctor_apply_mechanical_fixes() {
+  local applied=0
+  while IFS='|' read -r area sev file msg fix ftype; do
+    [[ "$ftype" == "mechanical" ]] || continue
+    case "$file" in
+      *.gitignore*) ;;  # handled below
+    esac
+
+    # gitignore append
+    if [[ "$file" == ".gitignore"* || "$msg" == *".gitignore"* ]]; then
+      if [[ -f ".gitignore" ]]; then
+        if ! grep -qF ".spectacular.local/" .gitignore; then
+          echo ".spectacular.local/" >> .gitignore
+          echo "  ✓ fixed [gitignore]: appended .spectacular.local/"
+          applied=$((applied + 1))
+        fi
+      else
+        echo ".spectacular.local/" > .gitignore
+        echo "  ✓ fixed [gitignore]: created with .spectacular.local/"
+        applied=$((applied + 1))
+      fi
+      continue
+    fi
+
+    # Missing dir
+    if [[ "$file" == ".spectacular/requests/" || "$file" == ".spectacular/current/" ]]; then
+      mkdir -p "$file"
+      echo "  ✓ fixed [workspace]: created $file"
+      applied=$((applied + 1))
+      continue
+    fi
+
+    # Dangling symlink
+    if [[ "$sev" == "error" && "$file" == *".claude/skills/spectacular"* ]]; then
+      local agents_dir
+      agents_dir="$(agents_skill_dir)"
+      if [[ -d "$agents_dir" ]]; then
+        rm -f "$file"
+        mkdir -p "$(dirname "$file")"
+        ln -s "$agents_dir" "$file"
+        echo "  ✓ fixed [skill]: recreated symlink $file → $agents_dir"
+        applied=$((applied + 1))
+      fi
+      continue
+    fi
+
+    # Missing always-set file → re-scaffold using doc_<id>
+    if [[ "$file" == ".spectacular/PRD.md" || "$file" == ".spectacular/config.yaml" || "$file" == ".spectacular/AGENTS.md" || "$file" == ".spectacular/CLAUDE.md" ]]; then
+      local fname
+      fname=$(basename "$file")
+      local name="${OPT_NAME:-$(slug_from_dir)}"
+      case "$fname" in
+        PRD.md)        doc_prd "$name" "blank" ;;
+        config.yaml)   doc_config "$name" "" "AGENTS.md" "blank" ;;
+        AGENTS.md|CLAUDE.md) doc_agents "$name" "$fname" ;;
+      esac
+      echo "  ✓ fixed [workspace]: re-scaffolded $file"
+      applied=$((applied + 1))
+      continue
+    fi
+  done <<< "$DOC_FINDINGS"
+
+  if [[ $applied -eq 0 ]]; then
+    echo "  (no mechanical fixes applied)"
+  fi
+  echo ""
+}
+
+# ── text emitter ──────────────────────────────────────────────────────────────
+doctor_emit_text() {
+  echo "Spectacular doctor"
+  echo ""
+
+  local last_area="" errors=0 warnings=0 infos=0
+  while IFS='|' read -r area sev file msg fix ftype; do
+    [[ -z "$area" ]] && continue
+    if [[ "$area" != "$last_area" ]]; then
+      last_area="$area"
+    fi
+    case "$sev" in
+      pass)    icon="✅" ;;
+      warning) icon="⚠️ "; warnings=$((warnings + 1)) ;;
+      error)   icon="❌"; errors=$((errors + 1)) ;;
+      info)    icon="ℹ️ "; infos=$((infos + 1)) ;;
+      *)       icon="?"  ;;
+    esac
+    printf "%-13s %s %s — %s\n" "$area" "$icon" "$file" "$msg"
+    if [[ -n "$fix" && "$sev" != "pass" ]]; then
+      local route="(mechanical — \`--fix\` applies)"
+      [[ "$ftype" == "judgment" ]] && route="(judgment — \`/spectacular doctor --fix\`)"
+      printf "%-13s    → %s %s\n" "" "$fix" "$route"
+    fi
+  done <<< "$DOC_FINDINGS"
+
+  echo ""
+  printf "%d error(s), %d warning(s), %d info\n" "$errors" "$warnings" "$infos"
+  if [[ $errors -gt 0 || $warnings -gt 0 ]]; then
+    echo ""
+    echo "Run \`spectacular doctor --fix\` for mechanical repairs."
+    echo "Run \`/spectacular doctor --fix\` (in your AI agent) for judgment repairs."
+  fi
+}
+
+# ── json emitter ──────────────────────────────────────────────────────────────
+doctor_emit_json() {
+  local ran_at
+  ran_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  local workspace="$(pwd)"
+  local errors=0 warnings=0 infos=0 first=true
+
+  printf '{\n'
+  printf '  "version": "0.3.0",\n'
+  printf '  "ran_at": "%s",\n' "$ran_at"
+  printf '  "workspace": "%s",\n' "$workspace"
+  printf '  "findings": [\n'
+
+  while IFS='|' read -r area sev file msg fix ftype; do
+    [[ -z "$area" ]] && continue
+    [[ "$sev" == "pass" ]] && continue  # pass entries omitted from json (signal-to-noise)
+    case "$sev" in
+      warning) warnings=$((warnings + 1)) ;;
+      error)   errors=$((errors + 1)) ;;
+      info)    infos=$((infos + 1)) ;;
+    esac
+    if ! $first; then printf ',\n'; fi
+    first=false
+    # JSON-escape strings (basic — escape quotes and backslashes)
+    local esc_msg="${msg//\\/\\\\}"; esc_msg="${esc_msg//\"/\\\"}"
+    local esc_fix="${fix//\\/\\\\}"; esc_fix="${esc_fix//\"/\\\"}"
+    local esc_file="${file//\\/\\\\}"; esc_file="${esc_file//\"/\\\"}"
+    printf '    {"area": "%s", "severity": "%s", "file": "%s", "message": "%s", "proposed_fix": "%s", "fix_type": "%s"}' \
+      "$area" "$sev" "$esc_file" "$esc_msg" "$esc_fix" "$ftype"
+  done <<< "$DOC_FINDINGS"
+
+  printf '\n  ],\n'
+  printf '  "summary": { "errors": %d, "warnings": %d, "info": %d }\n' "$errors" "$warnings" "$infos"
+  printf '}\n'
+}
+
 main() {
   local subcmd="${1:-}"
 
@@ -846,8 +1588,15 @@ main() {
     usage; exit 0
   fi
 
+  if [[ "$subcmd" == "doctor" ]]; then
+    shift
+    doctor "$@"
+    # doctor exits internally; this is unreachable
+    exit 0
+  fi
+
   if [[ "$subcmd" != "init" ]]; then
-    die "Unknown command: '${subcmd}'. Did you mean 'spectacular init'?"
+    die "Unknown command: '${subcmd}'. Did you mean 'spectacular init' or 'spectacular doctor'?"
   fi
 
   shift

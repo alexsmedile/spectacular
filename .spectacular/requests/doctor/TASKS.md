@@ -10,25 +10,25 @@ related:
 ## v1
 
 ### M1 — Detection taxonomy + report format
-- [ ] Draft `references/doctor.md` with full check list per area (skill, workspace, frontmatter, snapshots, links, lifecycle, kits)
-- [ ] Decide severity model — ✅ pass / ⚠️ warning / ❌ error (mirror flutter doctor + claude doctor conventions)
-- [ ] Lock report format: text (default, with ANSI colors) and `--format json` (structured findings)
-- [ ] Define JSON schema: each finding has `area`, `severity`, `file`, `message`, `proposed_fix`, `fix_type` (mechanical | judgment)
-- [ ] Document repair flow: detect → emit → (CLI mechanical OR skill judgment) → user `y/n/q` → snapshot → write
+- [x] Draft `references/doctor.md` with full check list per area (skill, workspace, frontmatter, snapshots, links, lifecycle, kits)
+- [x] Severity model locked — ✅ pass / ⚠️ warning / ❌ error / ℹ️ info
+- [x] Report format locked: text default + `--format json`
+- [x] JSON schema defined: `area`, `severity`, `file`, `message`, `proposed_fix`, `fix_type` (mechanical | judgment)
+- [x] Repair flow documented in doctor.md § CLI vs skill split, § Mechanical fixes, § Judgment fixes
 
 ### M2 — CLI detect-only mode
-- [ ] Add `doctor` subcommand to `cli/spectacular` arg parser
-- [ ] Implement `check_skill()` — install path + symlink + skills.lock parse + SKILL.md frontmatter
-- [ ] Implement `check_workspace()` — `.spectacular/` exists + always-set present + config.yaml parses
-- [ ] Implement `check_frontmatter()` — each canonical doc has required fields per registry
-- [ ] Implement `check_snapshots()` — version sequence regex per file, flag gaps
-- [ ] Implement `check_links()` — walk `related:` frontmatter, flag missing targets
-- [ ] Implement `check_lifecycle()` — request status vs required artifacts (SESSION/VERIFY/etc.)
-- [ ] Implement `check_kits()` — bundled + project-local kit frontmatter parses cleanly
-- [ ] Wire `--area` flag for scoped runs
-- [ ] Wire `--format text|json` flag
-- [ ] Exit codes: 0 (clean), 1 (warnings only), 2 (errors)
-- [ ] Test against this workspace; expect missing PRD@v1.1.md surfaced
+- [x] Add `doctor` subcommand to `cli/spectacular` arg parser (dispatch in `main()`)
+- [x] Implement `check_skill()` — install path + symlink + skills.lock parse + SKILL.md frontmatter (with source-repo detection downgrading missing skills.lock to info)
+- [x] Implement `check_workspace()` — `.spectacular/` exists + always-set present + config.yaml parses
+- [x] Implement `check_frontmatter()` — every canonical doc has required fields (`version`, `updated`, `summary`); ISO date check on `updated:`
+- [x] Implement `check_snapshots()` — group `<doc>@vX.Y.md` by base, detect gaps in minor-version sequence per major
+- [x] Implement `check_links()` — walk `related:` frontmatter, resolve relative to file's dir, flag missing targets
+- [x] Implement `check_lifecycle()` — verification artifact detection (VERIFY.md OR TASKS § Verification OR PLAN § Validation/Success criteria/Acceptance); status mismatch detection; stale verified surfaces archive candidate
+- [x] Implement `check_kits()` — bundled + local kit frontmatter parses; `extends: prd` only; `triggers-docs` references known doc IDs; PRD's declared kit resolvable
+- [x] Wire scoped area as positional arg (`spectacular doctor frontmatter`)
+- [x] Wire `--format text|json` flag
+- [x] Exit codes: 0 (clean), 1 (warnings only), 2 (errors)
+- [x] Tested against this workspace → 5 real findings surfaced including the missing PRD@v1.1.md snapshot
 
 ### M3 — CLI mechanical fixes
 - [ ] Add `--fix` flag parsing

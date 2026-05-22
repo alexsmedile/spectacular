@@ -13,7 +13,8 @@ description: |
   remember this, spectacular snapshot, spectacular promote, spectacular init,
   spectacular <doc>, spectacular <doc> grill, spectacular <doc> refine, spectacular <doc> review,
   spectacular prd, spectacular plan, spectacular tasks, spectacular decisions, spectacular
-  principles, spectacular architecture, spectacular roadmap, spectacular stack, spectacular agents.
+  principles, spectacular architecture, spectacular roadmap, spectacular stack, spectacular agents,
+  spectacular pack new, spectacular pack grill, spectacular pack refine, spectacular pack review.
 when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
@@ -60,7 +61,21 @@ The generalized handler matches `spectacular <doc> [<verb>]` where `<doc>` is an
 | `spectacular <doc> refine` | → `references/refine.md` (with registry context) |
 | `spectacular <doc> review` | → `references/review.md` (with registry context) |
 
-**Doc IDs registered in v0.3.0:** `prd`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`.
+**Doc IDs registered in v0.3.0:** `prd`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `convention-pack`.
+
+### Pack-specific aliases (convenience over `spectacular convention-pack <verb>`)
+
+Packs use a short alias and add a `new <name>` verb (since packs are user-scope, identified by name, not project-singleton):
+
+| User says | Route to |
+|---|---|
+| `spectacular pack new <name>` | → `references/grill.md` + `pack-overrides.md` — pre-flight resolves target `~/.spectacular/packs/<name>/` |
+| `spectacular pack new <name> --from <p1>,<p2>` | same + source-ingestion mode active |
+| `spectacular pack new <name> --scope project` | same + target `<project>/.spectacular/packs/<name>/` |
+| `spectacular pack grill <name>` | → `grill.md` + `pack-overrides.md` — resume grill on an existing pack |
+| `spectacular pack refine <name>` | → `refine.md` + `pack-overrides.md` |
+| `spectacular pack review <name>` | → `review.md` + `pack-overrides.md` |
+| `spectacular convention-pack <verb>` | full doc-id form — equivalent to `pack <verb>` but without the `<name>` argument convention |
 
 ### Verification routing (when writing PLAN.md or moving requests to review)
 
@@ -118,6 +133,19 @@ Never read `archive/` during normal operation.
 - **Memory** (`spectacular remember this`) writes to `.spectacular/memory/` — git-committed, team-visible. Never to `.claude/` memory.
 - Be proactive: surface stale state, propose lifecycle transitions, flag blocked requests.
 
+### Task tracking — two layers
+
+Spectacular uses **two task trackers at different granularities**:
+
+| Layer | Tool | Purpose |
+|---|---|---|
+| **Milestones** | On-disk `requests/<slug>/TASKS.md` | Persisted, git-committed, team-visible. Owns the M1/M2/M3… block structure user reads to gauge request state. |
+| **Session steps** | Harness `TaskCreate` / `TaskUpdate` | Ephemeral, per-session. Decomposes the *current* milestone into concrete edits/commits/tests. Drives the CLI's live progress UI. |
+
+**When starting non-trivial work** (3+ steps), create harness micro-tasks for the immediate steps and mark them `in_progress` → `completed` as you go. Never copy every TASKS.md line into the harness one-for-one — harness tasks are *finer-grained* than TASKS.md items and exist only for the active session.
+
+The on-disk TASKS.md is updated at session end (or at milestone completion within a session). The harness tracker decays naturally when the session ends. Full convention in `.spectacular/AGENTS.md` § Task tracking.
+
 ---
 
 ## Output format
@@ -154,6 +182,7 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/tasks-overrides.md` | TASKS-specific rules: checklist format, frontmatter sync |
 | `references/kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs; single-kit-only in v1 |
 | `references/packs-contract.md` | Convention pack schema: pack folder shape + 6 rule categories (naming/taxonomy/root-files/gitignore/file-placement/project-types) |
+| `references/pack-overrides.md` | Pack-specific grill rules: slot prompts, mini-refine patterns, source-ingestion (`--from`), reserved pack-ids, review gate checks 4-12 |
 | **Legacy PRD references (deprecated, kept for backwards compat)** | |
 | `references/prd-grill.md` | Legacy — superseded by `grill.md` + `prd-overrides.md` |
 | `references/prd-refine.md` | Legacy — superseded by `refine.md` + `prd-overrides.md` |

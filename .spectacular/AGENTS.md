@@ -73,6 +73,26 @@ Per-request folders contain `PLAN.md` + `TASKS.md` + (on demand) `SESSION.md`, `
 
 ---
 
+## Task tracking — two layers, different scopes
+
+Spectacular tracks work at **two distinct granularities** that must not be confused:
+
+| Layer | Tool | Scope | Lifetime |
+|---|---|---|---|
+| **Milestone blocks** | On-disk `requests/<slug>/TASKS.md` | Whole request, persisted in git, team-visible | Days to weeks; survives sessions |
+| **Session micro-tasks** | Harness `TaskCreate` / `TaskUpdate` (Claude Code built-in) | Current working session, ephemeral, agent-only | Minutes to hours; ends with session |
+
+**Rule:** when starting a non-trivial session of work on any request, the agent creates harness tasks for the granular steps (file-by-file, gate-by-gate) and marks them `in_progress` / `completed` as work proceeds. On-disk `TASKS.md` continues to own the **milestone-level checklist** that the user reads to understand request status.
+
+The two layers complement each other:
+- Harness micro-tasks **silence the runtime's "task tools haven't been used" warning** while preserving the live progress signal in the CLI UI.
+- On-disk `TASKS.md` items are **never duplicated** as harness tasks one-to-one. Harness tasks are *finer* — they decompose a single TASKS.md milestone into the concrete edits / commits / tests that complete it.
+- When a session ends, harness tasks evaporate; their results live on in committed code + ticked on-disk TASKS items.
+
+Anti-pattern: copying every line from `TASKS.md` into the harness one-for-one. That defeats the granularity split and creates duplicate maintenance.
+
+---
+
 ## Don'ts
 
 - **Don't touch `archive/`.** Write-only from your perspective.

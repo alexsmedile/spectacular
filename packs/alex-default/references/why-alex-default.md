@@ -1,6 +1,6 @@
 # Why alex-default?
 
-This pack distills a working set of conventions used across a personal `~/code/` collection and a long-running Obsidian vault. It's opinionated by design — if you'd rather opinionate yourself, install `minimal` instead.
+This pack distills a working set of conventions used across a personal monorepo (`~/code/`-style mono-collection) and an adjacent Obsidian vault. It's opinionated by design — if you'd rather opinionate yourself, install `minimal` instead.
 
 ## What this pack stands for
 

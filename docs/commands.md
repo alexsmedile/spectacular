@@ -56,7 +56,7 @@ spectacular doctor --fix                  # apply mechanical fixes interactively
 spectacular doctor --format json          # JSON report for skill/tool consumption
 ```
 
-Available areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`.
+Available areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions` *(v0.4.0+)*.
 
 Exit codes:
 - `0` clean (no warnings, no errors)
@@ -68,6 +68,40 @@ Severity legend:
 - `⚠️` warning (non-blocking drift)
 - `❌` error (blocking — substrate is broken)
 - `ℹ️` info (informational, e.g. snapshot counts)
+
+---
+
+### `spectacular pack` *(v0.4.0+)*
+
+Manage convention packs — opt-in repo-shape opinions (naming, taxonomy, gitignore, README contract, file-placement, project-type scaffolds).
+
+```bash
+spectacular pack list                         # show all installed packs across scopes
+spectacular pack install <name>               # copy bundled/app-store pack to ~/.spectacular/packs/<name>/
+spectacular pack install <name> --from <path> # install from arbitrary local folder
+spectacular pack show <name>                  # print scope + path + pack.md frontmatter
+spectacular pack remove <name>                # delete user-scope pack
+spectacular pack remove <name> --force        # allow removing bundled/app-store/project-local
+```
+
+**Pack scopes** (precedence: project-local > user > app-store > bundled):
+
+| Scope | Path | Notes |
+|---|---|---|
+| `bundled` | `skills/spectacular/templates/packs/<name>/` | Ships with the skill (`minimal` only) |
+| `app-store` | `<spectacular-repo>/packs/<name>/` | Distributable via this repo |
+| `user` | `~/.spectacular/packs/<name>/` | Installed via `pack install` |
+| `project-local` | `<project>/.spectacular/packs/<name>/` | Per-project override |
+
+**Activate a pack per-repo** by adding to `.spectacular/config.yaml`:
+
+```yaml
+convention_pack:
+  source: <pack-name>
+  mode: suggest | scaffold | enforce
+```
+
+See [configuration.md](configuration.md#convention-packs) for `convention_pack:` field semantics.
 
 ---
 

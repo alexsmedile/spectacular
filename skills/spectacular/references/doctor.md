@@ -97,6 +97,21 @@ Exit codes: 0 (clean), 1 (warnings only), 2 (errors present).
 | `extends:` is known | ❌ per unknown | Currently only `prd` is allowed |
 | Kit declared in PRD frontmatter exists | ❌ if missing | If a PRD has `kit: <id>`, the kit file must be findable |
 
+### `conventions` (v0.4.0+)
+
+Active only when `.spectacular/config.yaml` declares `convention_pack:`. Otherwise reports `ℹ️ no convention_pack declared — skipped` and exits the area.
+
+| Check | Severity | Detects |
+|---|---|---|
+| Pack source resolves | ❌ if missing | `convention_pack.source: <name>` must resolve via scope precedence (project-local → user → app-store → bundled) |
+| Pack mode is valid | ⚠️ if unknown | `mode:` must be `suggest`, `scaffold`, or `enforce` (default `suggest` if omitted) |
+| gitignore alignment (scaffold mode) | ⚠️ per missing entry | Each `pack.rules.gitignore.always-add` entry must appear in `.gitignore` |
+| gitignore alignment (enforce mode) | ❌ per missing entry | Same check, severity escalated to error |
+
+In `suggest` mode no drift checks run — the area only confirms the pack is active and reachable.
+
+Mechanical fix: missing gitignore entries are appended by `spectacular doctor --fix` (extracts the entry from the finding message via single-quote pattern).
+
 ## Report format
 
 ### Text (default)

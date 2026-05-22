@@ -189,6 +189,45 @@ In v1, Spectacular installs its own skill and leaves project-specific skill auto
 
 ---
 
+## `convention_pack` *(v0.4.0+)*
+
+Opt-in. Declares which convention pack the repo follows and how strictly it's enforced.
+
+```yaml
+convention_pack:
+  source: alex-default        # pack name; resolved via 4-tier scope precedence
+  mode: scaffold              # suggest | scaffold | enforce
+  overrides: []               # reserved for v2 (modular packs) — unused in v0.4.0
+```
+
+### Fields
+
+**`source`** (required) — pack id (kebab-case). The CLI resolves this name via the precedence chain `project-local → user → app-store → bundled` and uses the first match. Run `spectacular pack list` to see what's available.
+
+**`mode`** (required when `convention_pack:` is declared) — how the pack interacts with init + doctor:
+
+| Mode | Init behavior | Doctor `conventions` area |
+|---|---|---|
+| `suggest` | Pack read, never applied automatically. Skill may surface pack opinions during interactive work. | Reports the pack is active; no drift checks. |
+| `scaffold` | Init appends pack's `gitignore.always-add` entries to `.gitignore` (deduplicated). Always-set wins on conflicts. | Flags missing entries as warnings (exit 1). |
+| `enforce` | Same as scaffold. | Flags missing entries as errors (exit 2). `spectacular doctor --fix` mechanically repairs. |
+
+**`overrides`** (reserved) — declared but unused in v0.4.0. v2 ([convention-pack-modules](../.spectacular/requests/convention-pack-modules/)) will use this to skip specific rules from a pack while keeping the rest.
+
+### Resolution and precedence
+
+Same pack name in multiple scopes: most-specific wins. If `alex-default` exists in both `~/.spectacular/packs/` (user) and `<project>/.spectacular/packs/` (project-local), the project-local copy is used. v0.4.0 does **not** merge across scopes — first hit wins entirely.
+
+### Errors and recovery
+
+- **Pack source not found** — `doctor conventions` reports `❌ convention_pack source '<name>' not found in any scope`. Fix: `spectacular pack install <name>` or change the source field.
+- **Pack file corrupt** — pack.md frontmatter unparseable → init logs a warning and skips pack scaffold. Doctor flags as error.
+- **Unknown mode** — falls back to `suggest`; doctor adds an info note.
+
+Full pack schema in [`skills/spectacular/references/packs-contract.md`](../skills/spectacular/references/packs-contract.md).
+
+---
+
 ## `.spectacular.local/`
 
 `.spectacular.local/` is a personal override layer at the repository root.

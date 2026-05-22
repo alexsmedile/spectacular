@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
 ![Platform](https://img.shields.io/badge/platform-Claude%20%7C%20Codex%20%7C%20Cursor-lightgrey)
-![Version](https://img.shields.io/badge/version-0.3.1-green)
+![Version](https://img.shields.io/badge/version-0.4.0-green)
 
 </div>
 
@@ -147,10 +147,39 @@ spectacular init --global                     # install skill to ~/.agents/ and 
 spectacular init --update                     # re-download latest skill release
 
 spectacular doctor                            # substrate self-check (all areas)
-spectacular doctor <area>                     # scoped check: skill | workspace | frontmatter | snapshots | links | lifecycle | kits
-spectacular doctor --fix                      # apply mechanical fixes (gitignore, missing dirs, dangling symlinks)
+spectacular doctor <area>                     # scoped: skill | workspace | frontmatter | snapshots | links | lifecycle | kits | conventions
+spectacular doctor --fix                      # apply mechanical fixes (gitignore, missing dirs, dangling symlinks, pack drift)
 spectacular doctor --format json              # JSON report for the skill or other tools
+
+spectacular pack list                         # show installed packs (bundled + app-store + user + project-local)
+spectacular pack install <name>               # install pack to ~/.spectacular/packs/<name>/
+spectacular pack install <name> --from <path> # install from arbitrary local folder
+spectacular pack show <name>                  # print scope + pack.md frontmatter
+spectacular pack remove <name>                # remove user-scope pack (--force for bundled/app-store/project-local)
 ```
+
+### Convention packs (v0.4.0)
+
+Packs encode opt-in repo-shape opinions — naming rules, folder taxonomy, gitignore baseline, README contract, file-placement rules, project-type scaffolds. Two ship out of the box:
+
+- **`minimal`** (bundled) — README contract + safe gitignore baseline. The default.
+- **`alex-default`** (app-store) — fully-opinionated: kebab-case naming with role suffixes, mono-collection detection, 8 project-type scaffolds, language-specific gitignore blocks.
+
+Activate a pack per-repo by adding to `.spectacular/config.yaml`:
+
+```yaml
+convention_pack:
+  source: alex-default
+  mode: scaffold     # suggest | scaffold | enforce
+```
+
+| Mode | Init behavior | Doctor behavior |
+|---|---|---|
+| `suggest` | Pack read, not applied | Reports pack active, no drift checks |
+| `scaffold` | Appends pack gitignore entries | Warnings on drift (exit 1) |
+| `enforce` | Same as scaffold | Errors on drift (exit 2); `--fix` repairs |
+
+Full schema in [`skills/spectacular/references/packs-contract.md`](skills/spectacular/references/packs-contract.md). App-store packs live in [`packs/`](packs/).
 
 > [!TIP]
 > Init scaffolds the **5-file always-set** by default (`PRD.md`, `config.yaml`, `<agents-file>`, `requests/`, `current/`). Kits add docs they need. Use `--with` for explicit extras. Use `--minimal` to ignore the kit's defaults.

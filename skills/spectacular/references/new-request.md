@@ -40,7 +40,7 @@ Create only on demand (skill proposes, user confirms):
 - `SESSION.md` — when request moves to `active`
 - `RISKS.md` — when request touches auth, billing, migrations, or anything flagged sensitive in STACK.md
 - `VERIFY.md` — when the **2-of-6 rule** in [[verification]] triggers. Default for doc/refactor/spec requests is **no VERIFY.md** — verification lives in PLAN § Validation or TASKS § Verification instead. The file is opt-in; **the practice is not** — every request must reach `verified` through some artifact.
-- `artifacts/` — when screenshots, benchmarks, or research need storing
+- `artifacts/` — when screenshots, benchmarks, or research need storing. **Pack consultation:** if a convention pack is active (config.yaml `convention_pack:` declared), the skill reads the pack's `file-placement.request-artifacts:` rule for the artifact subdirectory layout. Default when no pack: `artifacts/<kind>/`.
 
 ### Verification routing at scaffold time
 

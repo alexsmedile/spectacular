@@ -2,7 +2,6 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_REPO="alexsmedile/spectacular"
 GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
 GITHUB_TAGS_API="https://api.github.com/repos/${GITHUB_REPO}/tags"
@@ -532,43 +531,7 @@ agents:
 
 skills:
   symlink_on_init: []
-
-# Convention pack — opt-in repo-shape opinions.
-# Uncomment + set source to a pack name (run \`spectacular pack list\` to see options).
-# convention_pack:
-#   source: minimal           # pack name (resolved via scope precedence)
-#   mode: suggest             # suggest | scaffold | enforce
-#   overrides: []             # optional list of rule paths to skip (e.g. naming.forbidden-words)
 "
-}
-
-# ── config.yaml parsers ───────────────────────────────────────────────────────
-# Read convention_pack: stanza values from .spectacular/config.yaml
-# Stdout: pack source name (empty if no convention_pack block or commented out)
-config_pack_source() {
-  local cfg=".spectacular/config.yaml"
-  [[ -f "$cfg" ]] || return 0
-  awk '
-    /^convention_pack:/ { in_block=1; next }
-    in_block && /^[^[:space:]]/ { in_block=0 }
-    in_block && /^  source:/ { gsub(/^  source:[[:space:]]*/, ""); gsub(/[[:space:]]*$/, ""); print; exit }
-  ' "$cfg"
-}
-
-# Stdout: pack mode (suggest|scaffold|enforce); default "suggest" if convention_pack present without mode
-config_pack_mode() {
-  local cfg=".spectacular/config.yaml"
-  [[ -f "$cfg" ]] || return 0
-  local src
-  src="$(config_pack_source)"
-  [[ -z "$src" ]] && return 0
-  local mode
-  mode=$(awk '
-    /^convention_pack:/ { in_block=1; next }
-    in_block && /^[^[:space:]]/ { in_block=0 }
-    in_block && /^  mode:/ { gsub(/^  mode:[[:space:]]*/, ""); gsub(/[[:space:]]*$/, ""); print; exit }
-  ' "$cfg")
-  echo "${mode:-suggest}"
 }
 
 doc_prd() {
@@ -830,55 +793,6 @@ doc_gitignore() {
   fi
 }
 
-# Parse a pack's gitignore.always-add list from its pack.md frontmatter.
-# Args: $1 = absolute path to a pack folder
-# Stdout: one entry per line
-pack_gitignore_always_add() {
-  local pack_dir="$1"
-  local manifest="${pack_dir}/pack.md"
-  [[ -f "$manifest" ]] || return 0
-  awk '
-    /^---$/ { fm++; if (fm==2) exit; next }
-    fm==1 && /^  gitignore:/ { in_gi=1; next }
-    fm==1 && in_gi && /^  [a-z]/ { in_gi=0 }
-    fm==1 && in_gi && /^    always-add:/ { in_aa=1; next }
-    fm==1 && in_gi && in_aa && /^    [a-z]/ { in_aa=0 }
-    fm==1 && in_gi && in_aa && /^      - / {
-      v=$0; sub(/^      - /, "", v); gsub(/[[:space:]]*$/, "", v); print v
-    }
-  ' "$manifest"
-}
-
-# Apply the active pack's scaffold to the project, when mode allows.
-# Currently: appends gitignore.always-add entries (deduplicated).
-# Always-set wins on conflicts (gitignore append never overwrites existing lines).
-pack_apply_scaffold() {
-  local pack_src="$1"   # resolved pack folder
-  local mode="$2"       # suggest | scaffold | enforce
-  case "$mode" in
-    scaffold|enforce) ;;
-    *) return 0 ;;
-  esac
-
-  local gitignore=".gitignore"
-  [[ -f "$gitignore" ]] || touch "$gitignore"
-
-  local added=0
-  while IFS= read -r entry; do
-    [[ -z "$entry" ]] && continue
-    if ! grep -qF -- "$entry" "$gitignore"; then
-      echo "$entry" >> "$gitignore"
-      added=$((added + 1))
-    fi
-  done < <(pack_gitignore_always_add "$pack_src")
-
-  if [[ $added -gt 0 ]]; then
-    info "  ✓  pack scaffold ($mode): appended $added gitignore entries from $(basename "$pack_src")"
-  else
-    skip "  pack scaffold ($mode): .gitignore already covered"
-  fi
-}
-
 # ── scaffold orchestrator ─────────────────────────────────────────────────────
 # Resolves the doc-set per kit + flags, then dispatches to doc_<id>() functions.
 scaffold() {
@@ -909,19 +823,6 @@ scaffold() {
       *) die "Unknown doc ID in resolved set: '$doc'" ;;
     esac
   done
-
-  # Convention pack: apply scaffold if config.yaml declares one and mode allows
-  local pack_src_name pack_mode
-  pack_src_name="$(config_pack_source)"
-  if [[ -n "$pack_src_name" ]]; then
-    pack_mode="$(config_pack_mode)"
-    local pack_resolved
-    if pack_resolved="$(pack_resolve "$pack_src_name")"; then
-      pack_apply_scaffold "$pack_resolved" "$pack_mode"
-    else
-      info "  ⚠  convention_pack source '$pack_src_name' not found in any scope — skipped"
-    fi
-  fi
 }
 
 # ── print summary ─────────────────────────────────────────────────────────────
@@ -952,7 +853,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -979,7 +880,6 @@ Areas (run all if omitted):
   links         related: frontmatter targets exist
   lifecycle     request status vs required verification artifacts
   kits          bundled + project-local kit files parse cleanly
-  conventions   active convention_pack resolves; gitignore drift in scaffold/enforce modes
 
 Options:
   --fix              Apply mechanical fixes (gitignore append, missing dirs,
@@ -1005,7 +905,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits)
         DOC_OPT_AREA="$1"; shift ;;
       *) die "Unknown doctor option: $1. Run 'spectacular doctor --help'." ;;
     esac
@@ -1506,62 +1406,6 @@ check_kits() {
   fi
 }
 
-# check_conventions — validates the active convention pack and (when mode=enforce)
-# flags drift between project state and the pack's declared rules.
-# Active only when .spectacular/config.yaml declares convention_pack:.
-check_conventions() {
-  local pack_src_name pack_mode
-  pack_src_name="$(config_pack_source 2>/dev/null)"
-
-  if [[ -z "$pack_src_name" ]]; then
-    doc_add "conventions" "info" ".spectacular/config.yaml" "no convention_pack declared — skipped"
-    return
-  fi
-
-  pack_mode="$(config_pack_mode)"
-  local pack_resolved
-  if ! pack_resolved="$(pack_resolve "$pack_src_name")"; then
-    doc_add "conventions" "error" ".spectacular/config.yaml" \
-      "convention_pack source '$pack_src_name' not found in any scope" \
-      "run 'spectacular pack install $pack_src_name' or change source in config.yaml" "judgment"
-    return
-  fi
-
-  doc_add "conventions" "pass" "$pack_resolved" "active pack '$pack_src_name' ($pack_mode) resolves to $(pack_scope_of "$pack_resolved")"
-
-  # In suggest mode, doctor only reports the pack is active; no drift checks
-  if [[ "$pack_mode" == "suggest" ]]; then
-    doc_add "conventions" "info" "$pack_resolved" "mode=suggest — drift checks are disabled (use scaffold or enforce)"
-    return
-  fi
-
-  # In scaffold/enforce modes, check gitignore alignment
-  local gitignore=".gitignore"
-  if [[ ! -f "$gitignore" ]]; then
-    doc_add "conventions" "warning" ".gitignore" "pack '$pack_src_name' declares gitignore.always-add but .gitignore is missing" \
-      "create .gitignore (or run 'spectacular init' to scaffold)" "mechanical"
-    return
-  fi
-
-  local missing=0 expected=0
-  while IFS= read -r entry; do
-    [[ -z "$entry" ]] && continue
-    expected=$((expected + 1))
-    if ! grep -qF -- "$entry" "$gitignore"; then
-      local sev="warning"
-      [[ "$pack_mode" == "enforce" ]] && sev="error"
-      doc_add "conventions" "$sev" ".gitignore" \
-        "pack '$pack_src_name' requires gitignore entry: '$entry' (missing)" \
-        "append to .gitignore (or run 'spectacular init' to re-apply pack)" "mechanical"
-      missing=$((missing + 1))
-    fi
-  done < <(pack_gitignore_always_add "$pack_resolved")
-
-  if [[ $expected -gt 0 && $missing -eq 0 ]]; then
-    doc_add "conventions" "pass" ".gitignore" "all $expected required gitignore entries from pack '$pack_src_name' present"
-  fi
-}
-
 # ── doctor orchestrator ───────────────────────────────────────────────────────
 doctor() {
   doctor_parse_args "$@"
@@ -1584,7 +1428,6 @@ doctor() {
       links)       check_links ;;
       lifecycle)   check_lifecycle ;;
       kits)        check_kits ;;
-      conventions) check_conventions ;;
     esac
   done
 
@@ -1629,24 +1472,7 @@ doctor_apply_mechanical_fixes() {
       *.gitignore*) ;;  # handled below
     esac
 
-    # Pack-driven gitignore drift (from check_conventions in scaffold/enforce modes)
-    # Findings have area=conventions and msg containing "requires gitignore entry: 'X'"
-    if [[ "$area" == "conventions" && "$msg" == *"gitignore entry:"* ]]; then
-      # Extract the entry between single quotes: ...entry: 'X' (...
-      local entry
-      entry=$(echo "$msg" | sed -n "s/.*gitignore entry: '\([^']*\)'.*/\1/p")
-      if [[ -n "$entry" ]]; then
-        [[ -f ".gitignore" ]] || touch .gitignore
-        if ! grep -qF -- "$entry" .gitignore; then
-          echo "$entry" >> .gitignore
-          echo "  ✓ fixed [conventions]: appended $entry to .gitignore"
-          applied=$((applied + 1))
-        fi
-      fi
-      continue
-    fi
-
-    # gitignore append (workspace area — .spectacular.local/ baseline)
+    # gitignore append
     if [[ "$file" == ".gitignore"* || "$msg" == *".gitignore"* ]]; then
       if [[ -f ".gitignore" ]]; then
         if ! grep -qF ".spectacular.local/" .gitignore; then
@@ -1777,284 +1603,6 @@ doctor_emit_json() {
   printf '}\n'
 }
 
-# ────────────────────────────────────────────────────────────────────────────
-# pack subcommand — convention-pack lifecycle (install / list / remove)
-# ────────────────────────────────────────────────────────────────────────────
-
-pack_usage() {
-  cat <<EOF
-Usage: spectacular pack <verb> [args]
-
-Manage convention packs — repo-shape opinions (naming + taxonomy + gitignore
-+ file-placement + project-types). Schema: skills/spectacular/references/packs-contract.md
-
-Verbs:
-  list                       Show installed packs across all scopes
-  install <name> [--from <path>]
-                             Install pack to ~/.spectacular/packs/<name>/.
-                             --from <path> copies from a local folder (default:
-                             searches bundled, then app-store at <repo>/packs/<name>).
-  remove <name> [--force]    Remove user-scope pack at ~/.spectacular/packs/<name>/.
-                             --force allows removing bundled/project-local packs.
-  show <name>                Print pack.md frontmatter for the named pack.
-
-Pack scopes (precedence: project-local > user > app-store > bundled):
-  bundled        skills/spectacular/templates/packs/<name>/
-  app-store      <repo-root>/packs/<name>/
-  user           ~/.spectacular/packs/<name>/
-  project-local  <project>/.spectacular/packs/<name>/
-
-Examples:
-  spectacular pack list
-  spectacular pack install minimal
-  spectacular pack install alex-default --from /path/to/pack
-  spectacular pack show minimal
-  spectacular pack remove old-pack
-EOF
-}
-
-pack_user_dir() { echo "${HOME}/.spectacular/packs"; }
-
-pack_bundled_dir() {
-  local agents_dir
-  agents_dir="$(agents_skill_dir)"
-  echo "${agents_dir}/templates/packs"
-}
-
-pack_appstore_dir() {
-  # Walk up from cli/ looking for a packs/ sibling (source repo layout)
-  # Fallback: cwd/packs if present
-  local candidate
-  if [[ -d "${SCRIPT_DIR}/../packs" ]]; then
-    candidate="$(cd "${SCRIPT_DIR}/.." && pwd)/packs"
-    echo "$candidate"
-  elif [[ -d "./packs" ]]; then
-    echo "$(pwd)/packs"
-  else
-    echo ""
-  fi
-}
-
-pack_projectlocal_dir() {
-  if [[ -d "./.spectacular/packs" ]]; then
-    echo "$(pwd)/.spectacular/packs"
-  else
-    echo ""
-  fi
-}
-
-# Resolve a pack name to a source folder, applying precedence rules.
-# Args: $1 = pack name, $2 = optional explicit source override (--from)
-# Stdout: absolute path to the resolved pack folder, or empty if not found
-pack_resolve() {
-  local name="$1"
-  local override="${2:-}"
-
-  if [[ -n "$override" ]]; then
-    [[ -d "$override" ]] && echo "$override" && return 0
-    return 1
-  fi
-
-  # Precedence order for INSTALL source (read from): project-local → user → app-store → bundled
-  local pl ud as bd
-  pl="$(pack_projectlocal_dir)"
-  ud="$(pack_user_dir)"
-  as="$(pack_appstore_dir)"
-  bd="$(pack_bundled_dir)"
-
-  for dir in "$pl" "$ud" "$as" "$bd"; do
-    [[ -z "$dir" ]] && continue
-    if [[ -d "${dir}/${name}" && -f "${dir}/${name}/pack.md" ]]; then
-      echo "${dir}/${name}"
-      return 0
-    fi
-  done
-  return 1
-}
-
-pack_scope_of() {
-  local path="$1"
-  local pl ud as bd
-  pl="$(pack_projectlocal_dir)"
-  ud="$(pack_user_dir)"
-  as="$(pack_appstore_dir)"
-  bd="$(pack_bundled_dir)"
-
-  # Order matters: most-specific scope first. Empty scope dirs are skipped
-  # (an empty $pl would otherwise expand the pattern to "/*" and match everything).
-  [[ -n "$pl" && "$path" == "${pl}/"* ]] && echo "project-local" && return
-  [[ -n "$ud" && "$path" == "${ud}/"* ]] && echo "user" && return
-  [[ -n "$as" && "$path" == "${as}/"* ]] && echo "app-store" && return
-  [[ -n "$bd" && "$path" == "${bd}/"* ]] && echo "bundled" && return
-  echo "unknown"
-}
-
-pack_list() {
-  echo "Convention packs:"
-  echo ""
-  local found=0
-  for scope_pair in \
-    "bundled|$(pack_bundled_dir)" \
-    "app-store|$(pack_appstore_dir)" \
-    "user|$(pack_user_dir)" \
-    "project-local|$(pack_projectlocal_dir)"
-  do
-    local scope="${scope_pair%%|*}"
-    local dir="${scope_pair##*|}"
-    [[ -z "$dir" || ! -d "$dir" ]] && continue
-    local entries=()
-    for sub in "$dir"/*/; do
-      [[ -d "$sub" ]] || continue
-      local name
-      name="$(basename "$sub")"
-      [[ -f "${sub}pack.md" ]] || continue
-      entries+=("$name")
-      found=$((found + 1))
-    done
-    if [[ ${#entries[@]} -gt 0 ]]; then
-      printf "  %-14s %s\n" "[${scope}]" "$dir"
-      for e in "${entries[@]}"; do
-        printf "    • %s\n" "$e"
-      done
-    fi
-  done
-  echo ""
-  if [[ $found -eq 0 ]]; then
-    echo "  (no packs found)"
-  else
-    echo "Install: spectacular pack install <name>"
-    echo "Show:    spectacular pack show <name>"
-  fi
-}
-
-pack_install() {
-  local name="$1"
-  local from_path="${2:-}"
-  [[ -z "$name" ]] && die "pack install: missing pack name. Usage: spectacular pack install <name> [--from <path>]"
-
-  local src
-  if ! src="$(pack_resolve "$name" "$from_path")"; then
-    if [[ -n "$from_path" ]]; then
-      die "pack install: source path not found or not a pack folder: $from_path"
-    fi
-    die "pack install: pack '$name' not found. Run 'spectacular pack list' to see available packs."
-  fi
-
-  local user_dir
-  user_dir="$(pack_user_dir)"
-  mkdir -p "$user_dir"
-  local dest="${user_dir}/${name}"
-
-  if [[ -d "$dest" ]]; then
-    die "pack install: '$name' already installed at $dest. Remove first: spectacular pack remove $name"
-  fi
-
-  # Copy via cp -R (POSIX-portable enough; preserves dotfiles like templates/.gitignore)
-  cp -R "$src" "$dest"
-
-  echo "✓ installed $name → $dest"
-  echo "  source:  $src ($(pack_scope_of "$src"))"
-  echo ""
-  echo "Activate per-repo by adding to .spectacular/config.yaml:"
-  echo "  convention_pack:"
-  echo "    source: $name"
-  echo "    mode: suggest    # or scaffold | enforce"
-}
-
-pack_remove() {
-  local name="$1"
-  local force="${2:-false}"
-  [[ -z "$name" ]] && die "pack remove: missing pack name. Usage: spectacular pack remove <name> [--force]"
-
-  local user_dir
-  user_dir="$(pack_user_dir)"
-  local target="${user_dir}/${name}"
-
-  if [[ -d "$target" ]]; then
-    rm -rf "$target"
-    echo "✓ removed user-scope pack: $target"
-    return 0
-  fi
-
-  # If not in user scope, check if it exists elsewhere — refuse without --force
-  local found
-  if found="$(pack_resolve "$name")"; then
-    local scope
-    scope="$(pack_scope_of "$found")"
-    if [[ "$force" != "true" ]]; then
-      die "pack remove: '$name' lives in $scope scope ($found). Use --force to remove."
-    fi
-    rm -rf "$found"
-    echo "✓ removed $scope pack: $found"
-    return 0
-  fi
-
-  die "pack remove: '$name' not installed in any scope."
-}
-
-pack_show() {
-  local name="$1"
-  [[ -z "$name" ]] && die "pack show: missing pack name. Usage: spectacular pack show <name>"
-
-  local src
-  if ! src="$(pack_resolve "$name")"; then
-    die "pack show: '$name' not found in any scope."
-  fi
-
-  local manifest="${src}/pack.md"
-  [[ -f "$manifest" ]] || die "pack show: $manifest missing"
-
-  echo "pack:   $name"
-  echo "scope:  $(pack_scope_of "$src")"
-  echo "path:   $src"
-  echo ""
-  echo "── pack.md frontmatter ──"
-  awk '/^---$/{c++; if(c==2) exit; if(c==1) next} c==1' "$manifest"
-}
-
-pack() {
-  local verb="${1:-}"
-  case "$verb" in
-    ""|--help|-h) pack_usage; exit 0 ;;
-    list)
-      pack_list
-      ;;
-    install)
-      shift
-      local name="${1:-}"
-      shift || true
-      local from_path=""
-      while [[ $# -gt 0 ]]; do
-        case "$1" in
-          --from) from_path="$2"; shift 2 ;;
-          *) die "pack install: unknown option: $1" ;;
-        esac
-      done
-      pack_install "$name" "$from_path"
-      ;;
-    remove)
-      shift
-      local name="${1:-}"
-      shift || true
-      local force="false"
-      while [[ $# -gt 0 ]]; do
-        case "$1" in
-          --force) force="true"; shift ;;
-          *) die "pack remove: unknown option: $1" ;;
-        esac
-      done
-      pack_remove "$name" "$force"
-      ;;
-    show)
-      shift
-      pack_show "${1:-}"
-      ;;
-    *)
-      die "Unknown pack verb: '$verb'. Run 'spectacular pack --help' for usage."
-      ;;
-  esac
-}
-
 main() {
   local subcmd="${1:-}"
 
@@ -2069,14 +1617,8 @@ main() {
     exit 0
   fi
 
-  if [[ "$subcmd" == "pack" ]]; then
-    shift
-    pack "$@"
-    exit 0
-  fi
-
   if [[ "$subcmd" != "init" ]]; then
-    die "Unknown command: '${subcmd}'. Did you mean 'spectacular init', 'spectacular doctor', or 'spectacular pack'?"
+    die "Unknown command: '${subcmd}'. Did you mean 'spectacular init' or 'spectacular doctor'?"
   fi
 
   shift

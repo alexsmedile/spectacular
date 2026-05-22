@@ -42,9 +42,12 @@ spectacular/
 
 | Slug | Status | Summary |
 |---|---|---|
-| `cli-bootstrap` | active | `spectacular init` Bash CLI — built, doc-set updated to 7 canonical docs, pending GitHub publish |
-| `prd-craft` | active | Interactive `/prd` flow with kits — pending fresh-project dogfood test |
-| `canonical-docs-rework` | verified | PRD split into PRD + PRINCIPLES + ARCHITECTURE + ROADMAP (shipped 2026-05-21) |
+| `convention-pack-schema` | verified | Pack schema + bundled `minimal` pack + app-store folder (shipped v0.4.0) |
+| `convention-pack-fabricator` | review | `pack-overrides.md` grill + `alex-default` dogfood — live grill scenarios pending |
+| `convention-pack-application` | review | CLI `pack` subcommand + `convention_pack:` config + init/doctor wiring — live three-mode scenarios pending |
+| `convention-pack-modules` | planned | v2 modular packs — stays planned until composition pain surfaces from v1 use |
+| `doctor` | review | Substrate self-check (shipped v0.3.1) — interactive skill-side scenarios pending |
+| `cli-bootstrap` | planned | Parked — kept for v0.2.x maintenance fixes |
 
 ## Skill Architecture
 
@@ -64,9 +67,16 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 | `init-workflow.md` | `spectacular init` (CLI context) |
 | `onboarding.md` | First invocation on existing `.spectacular/` project |
 | `scaffold-reference.md` | File template reference — frontmatter stubs for all file types |
-| `prd-grill.md` | `spectacular prd` / `spectacular prd grill` — interactive PRD building |
-| `prd-refine.md` | `spectacular prd refine` — vibe→spec rewrite patterns |
-| `prd-review.md` | `spectacular prd review` — quality gate for PRD.md |
+| `doc-registry.md` | Doc-type registry: template + slots + mode + location + overrides for every registered doc |
+| `grill.md` / `refine.md` / `review.md` | Generic engine for any registered doc (driven by registry + per-doc overrides) |
+| `prd-overrides.md` | PRD-specific rules: kit selection, slot prompts, vague-word list, gate checks |
+| `plan-overrides.md` / `tasks-overrides.md` | PLAN/TASKS-specific rules consumed by the same engine |
+| `pack-overrides.md` | Convention-pack-specific grill rules — slot prompts, source-ingestion (`--from`), reserved pack-ids |
+| `kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs |
+| `packs-contract.md` | Convention-pack schema: 6 rule categories, 4-tier scope precedence, modular-pack v2 sketch |
+| `verification.md` | 2-of-6 rule for when VERIFY.md is required vs folded into PLAN/TASKS |
+| `doctor.md` | Substrate self-check spec — areas, severity model, repair flow (CLI mechanical + skill judgment) |
+| `prd-grill.md` / `prd-refine.md` / `prd-review.md` | Legacy — superseded by generic engine + `prd-overrides.md` |
 
 ## Key Conventions
 
@@ -79,6 +89,10 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 **Memory (`spectacular remember this`) writes to `.spectacular/memory/`** — git-committed, team-visible. Never to `.claude/` personal memory.
 
 **`.spectacular/`** is fully committed to git. **`.spectacular.local/`** is always gitignored.
+
+**Convention packs (v0.4.0+)** are opt-in repo-shape opinions declared via `.spectacular/config.yaml`'s `convention_pack:` block. Packs ship in four scope locations (project-local → user → app-store → bundled, in precedence order). The bundled `minimal` pack enforces only README contract + gitignore baseline; `alex-default` in the app-store is the fully-opinionated reference. Three modes (`suggest` / `scaffold` / `enforce`) control how strictly the pack is applied during init + doctor. Full schema: `skills/spectacular/references/packs-contract.md`.
+
+**Two-layer task tracking:** harness `TaskCreate`/`TaskUpdate` = ephemeral session micro-tracker (drives CLI live progress UI); on-disk `requests/<slug>/TASKS.md` = persistent milestone blocks. Anti-pattern: one-for-one duplication. Full convention in `.spectacular/AGENTS.md` § Task tracking.
 
 ## Context Loading Rules (from .spectacular/AGENTS.md)
 
@@ -98,13 +112,25 @@ Load only the capability spec relevant to the current task, not all of `current/
 `cli/spectacular` — Bash binary, installed to `~/.local/bin/spectacular` via `cli/install.sh`.
 
 ```
-spectacular init                    # zero prompts, defaults
-spectacular init -i                 # interactive mode
+spectacular init                    # zero prompts, always-set (5 files) + blank kit
+spectacular init -i                 # interactive: kit menu + per-doc prompts
+spectacular init --kit coding       # adds STACK + ARCHITECTURE (coding kit triggers)
+spectacular init --with principles,roadmap   # additive: extras on top of always-set
+spectacular init --minimal          # always-set only; kit identity preserved
 spectacular init --name my-app --agents-file CLAUDE.md
 spectacular init --global           # install to ~/.agents/ and ~/.claude/
 spectacular init --update           # re-download latest skill release
+
+spectacular doctor                  # substrate self-check (8 areas)
+spectacular doctor <area>           # scoped: skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions
+spectacular doctor --fix            # apply mechanical fixes
+
+spectacular pack list               # show packs across all 4 scopes
+spectacular pack install <name>     # copy to ~/.spectacular/packs/<name>/
+spectacular pack show <name>        # print scope + frontmatter
+spectacular pack remove <name>      # delete user-scope pack
 ```
 
 Skill is fetched from GitHub (tagged release tarball → `.agents/skills/spectacular/`). `.claude/skills/spectacular/` is a symlink to the `.agents/` target. Version tracked in `.spectacular/skills.lock`.
 
-See `.spectacular/requests/cli-bootstrap/` for full scope and task checklist.
+Full command reference: `docs/commands.md`. Config schema: `docs/configuration.md`.

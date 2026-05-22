@@ -5,6 +5,47 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [0.4.0] — 2026-05-23
+
+### Added — Convention Pack system
+
+A new opt-in layer for declaring repo-shape opinions: naming rules, folder taxonomy, required root files, gitignore defaults, file-placement rules, project-type scaffolds. Packs are mini-skills (folder + `pack.md` + `templates/` + `references/`), distributable via four scope locations (project-local → user → app-store → bundled, in precedence order).
+
+- **`packs-contract.md`** — full schema spec covering 6 rule categories (`naming`, `taxonomy`, `root-files`, `gitignore`, `file-placement`, `project-types`), pack folder shape, 4-tier scope precedence, single-pack-only v1 (multi-pack composition in [convention-pack-modules](.spectacular/requests/convention-pack-modules/)).
+- **`pack-overrides.md`** — pack-specific grill rules: 7 slot prompts, source-ingestion (`--from`), 8 mini-refine patterns, vibe→spec rewrite tables, review gate checks, reserved pack-id enforcement.
+- **`spectacular pack` CLI subcommand** — `list` (shows all 4 scope locations), `install <name> [--from <path>]` (copies pack to `~/.spectacular/packs/<name>/`), `remove <name> [--force]` (refuses bundled/app-store/project-local without `--force`), `show <name>` (prints scope + frontmatter).
+- **`config.yaml` `convention_pack:` block** — declares active pack per repo with `source`, `mode` (suggest|scaffold|enforce), and reserved `overrides` field.
+- **Init wiring** — when a pack is declared with `mode: scaffold` or `enforce`, init appends the pack's `gitignore.always-add` entries (deduplicated). Always-set wins on conflicts; pack scaffold is purely additive.
+- **Doctor `conventions` area** — validates pack source resolves; in `scaffold` mode flags gitignore drift as warnings (exit 1); in `enforce` mode escalates to errors (exit 2); `suggest` mode skips drift checks. `--fix` mechanically appends missing pack-declared gitignore entries.
+- **Bundled `minimal` pack** — ships at `skills/spectacular/templates/packs/minimal/`. Enforces only README contract + `.gitignore` baseline. The implicit default when no other pack is declared.
+- **App-store `alex-default` pack** — ships at `packs/alex-default/`. Fully-opinionated pack encoding kebab-case naming with role suffixes, mono-collection detection, 8 project-type scaffolds, full `.gitignore` baseline + language-specific blocks for Python/Node/Go.
+- **`tests/cli/pack.test.sh`** — 12 scenarios, 44 asserts covering list/install/remove/show, init wiring, doctor across all 3 modes, mechanical fix repair, scope precedence, `--from` install, error paths.
+
+### Added — Workflow conventions
+
+- **Two-layer task tracking convention** documented in `.spectacular/AGENTS.md` and skill's `SKILL.md`: harness `TaskCreate`/`TaskUpdate` = ephemeral session micro-tracker (drives CLI live progress UI); on-disk `requests/<slug>/TASKS.md` = persistent milestone blocks. Anti-pattern: one-for-one duplication. Resolves the recurring "task tools haven't been used" warning by giving it a real role.
+
+### Changed
+
+- `references/init-workflow.md` — § "Convention packs (v0.4.0+)" added with 3-mode behavior table + 4-tier precedence table.
+- `references/doctor.md` — `conventions` check area added; severity-per-mode table.
+- `references/new-request.md` — `artifacts/` directory consults active pack's `file-placement.request-artifacts:` rule.
+- `references/doc-registry.md` — `convention-pack` entry registered with new `scope: user` value (packs live under `$HOME`, not per-project).
+- `cli/spectacular` — new `SCRIPT_DIR` constant; `pack` subcommand sibling of `init` + `doctor`; `check_conventions()` doctor area; `pack_apply_scaffold()` init hook; `config_pack_source/mode()` awk parsers.
+- `cli/spectacular@v0.3.1` snapshot captured before v0.4.0 work.
+
+### Convention pack chain (3 requests)
+
+- `convention-pack-schema` (verified) — locks the schema + ships bundled `minimal`
+- `convention-pack-fabricator` (review) — pack-overrides + alex-default dogfood; live grill walkthroughs remain for full signoff
+- `convention-pack-application` (review) — CLI + init + doctor wiring; live three-mode + cross-machine scenarios remain
+
+### Planned
+
+- **`convention-pack-modules`** (planned, v0.5.0+) — split monolithic packs into composable rule-category modules. Stays planned until composition pain surfaces from v1 use.
+
+---
+
 ## [0.3.1] — 2026-05-23
 
 ### Added

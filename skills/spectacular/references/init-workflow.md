@@ -100,8 +100,37 @@ Init is **always idempotent + non-destructive**. Re-running on an initialized wo
 4. Scaffold directories (`current/`, `requests/`)
 5. Scaffold each resolved doc via `write_if_missing` (pre-flight rules apply per file)
 6. Update `.gitignore` (append `.spectacular.local/` if absent)
-7. Install skill (or skip if already installed per `skills.lock`)
-8. Print summary
+7. **Pack consultation** — if `.spectacular/config.yaml` declares `convention_pack:` with `mode: scaffold` or `mode: enforce`, append the pack's `gitignore.always-add` entries (deduplicated). Pack source resolved via scope precedence (project-local → user → app-store → bundled). Always-set always wins on conflicts; pack never overwrites existing lines.
+8. Install skill (or skip if already installed per `skills.lock`)
+9. Print summary
+
+## Convention packs (v0.4.0+)
+
+Packs are opt-in repo-shape opinions. A pack declares rules across 6 categories (naming / taxonomy / root-files / gitignore / file-placement / project-types) — see [[packs-contract]] for the full schema.
+
+A repo activates a pack via `config.yaml`:
+
+```yaml
+convention_pack:
+  source: alex-default     # pack name resolved via scope precedence
+  mode: suggest            # suggest | scaffold | enforce
+```
+
+**Three modes:**
+
+| Mode | Init behavior | Doctor behavior |
+|---|---|---|
+| `suggest` | Pack is read but not applied. Skill may mention pack opinions during interactive work. | `conventions` check reports the pack is active but skips drift checks. |
+| `scaffold` | Init appends pack's `gitignore.always-add` entries to `.gitignore` (idempotent). | `conventions` check flags missing gitignore entries as warnings. |
+| `enforce` | Same as scaffold. | `conventions` check flags missing gitignore entries as errors (exit 2). |
+
+**Pack precedence** (when same name exists in multiple scopes — first hit wins):
+1. `<project>/.spectacular/packs/<name>/` (project-local)
+2. `~/.spectacular/packs/<name>/` (user)
+3. `<spectacular-repo>/packs/<name>/` (app-store, source-repo only)
+4. `<skill>/templates/packs/<name>/` (bundled — currently just `minimal`)
+
+**Why init does not auto-declare a pack:** on first init the user hasn't picked an opinion yet. `minimal` is the implicit baseline (it IS the bundled README + gitignore stub). To activate a heavier pack, user edits config.yaml after init and re-runs (idempotent) — or wires it via interactive init in a future version.
 
 ---
 

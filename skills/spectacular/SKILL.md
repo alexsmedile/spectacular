@@ -19,7 +19,7 @@ when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type registered in doc-registry.md.
-version: 0.3.0
+version: 0.4.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -61,7 +61,7 @@ The generalized handler matches `spectacular <doc> [<verb>]` where `<doc>` is an
 | `spectacular <doc> refine` | → `references/refine.md` (with registry context) |
 | `spectacular <doc> review` | → `references/review.md` (with registry context) |
 
-**Doc IDs registered in v0.3.0:** `prd`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `convention-pack`.
+**Doc IDs registered (v0.4.0):** `prd`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `convention-pack`.
 
 ### Pack-specific aliases (convenience over `spectacular convention-pack <verb>`)
 

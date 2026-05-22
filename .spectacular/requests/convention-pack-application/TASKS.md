@@ -1,8 +1,9 @@
 ---
-status: planned
+status: review
 updated: 2026-05-23
 related:
   - PLAN.md
+  - VERIFY.md
   - ../convention-pack-schema/PLAN.md
   - ../convention-pack-fabricator/PLAN.md
 ---
@@ -12,51 +13,51 @@ related:
 ## v1
 
 ### M1 — `pack install` / `pack list` / `pack remove`
-- [ ] Add `pack` subcommand to `cli/spectacular` (sibling of `init` + `doctor`)
-- [ ] `pack install <name>` — fetch tarball of `<repo>/packs/<name>/` from GitHub, extract to `~/.spectacular/packs/<name>/`
-- [ ] Reuse skill-install download logic (GitHub release/tarball + sha verification)
-- [ ] `pack list` — show installed packs grouped by scope (bundled / user / project-local)
-- [ ] `pack remove <name>` — rm -rf user-scope pack; refuse to remove bundled or project-local unless --force
-- [ ] Help text + error handling (unknown pack, network failure, etc.)
+- [x] Add `pack` subcommand to `cli/spectacular` (sibling of `init` + `doctor`)
+- [x] `pack install <name>` — copy pack folder from resolved source (bundled / app-store / --from path) to `~/.spectacular/packs/<name>/`
+- [x] Reused install logic (local cp -R for v1; GitHub tarball fetch deferred to v2 once app-store is published)
+- [x] `pack list` — shows installed packs grouped by scope (bundled / app-store / user / project-local)
+- [x] `pack remove <name>` — rm -rf user-scope pack; refuses bundled / app-store / project-local without `--force`
+- [x] `pack show <name>` — bonus verb showing scope + path + frontmatter
+- [x] Help text + error handling (unknown pack, already-installed, missing source)
 
 ### M2 — config.yaml schema
-- [ ] Document `convention_pack:` block in ARCHITECTURE.md
-- [ ] Fields: `source` (path or name), `mode` (suggest|scaffold|enforce), `overrides` (optional list of rule-skips)
-- [ ] CLI helper to read pack from config (resolves source: name → ~/.spectacular/packs/<name>/, path → literal path)
-- [ ] `spectacular pack apply <name>` — set active pack in current repo's config.yaml (skill verb? CLI? decide)
+- [x] Document `convention_pack:` block (commented-out template in init's config.yaml output)
+- [x] Fields documented: `source` (pack-id), `mode` (suggest|scaffold|enforce), `overrides` (forward-declared, unused in v1)
+- [x] CLI helpers: `config_pack_source()` and `config_pack_mode()` awk parsers
+- [x] No separate `spectacular pack apply` verb — activation = editing config.yaml (documented in init-workflow.md)
 
 ### M3 — Init wiring
-- [ ] Update `cli/spectacular` `resolve_doc_set()` (or sibling) to consult active pack
-- [ ] If pack declared + mode=scaffold: scaffold pack's `applies-to` files/folders alongside always-set
-- [ ] Always-set wins on conflicts (never overwrites; uses smart-init pre-flight)
-- [ ] Update `references/init-workflow.md` to document pack integration
-- [ ] Pre-flight: validate pack exists before init proceeds; fall back gracefully if not
+- [x] `scaffold()` consults active pack after doc-set scaffolding completes
+- [x] If pack declared + mode=scaffold|enforce: append pack's `gitignore.always-add` entries (deduplicated)
+- [x] Always-set wins on conflicts — pack scaffold never overwrites existing lines
+- [x] Updated `references/init-workflow.md` — § "Convention packs (v0.4.0+)" with 3-mode matrix + precedence table
+- [x] Graceful fallback: missing pack source logged as info, init continues
 
 ### M4 — new-request wiring
-- [ ] Update `references/new-request.md` — consult active pack for artifact directory layout
-- [ ] If pack has `file-placement` rules for `research`, `screenshots`, `benchmarks` — create those subdirs on request scaffold
-- [ ] If no pack or no rule for a kind, fall back to default (`artifacts/<kind>/`)
+- [x] Updated `references/new-request.md` — `artifacts/` directory consults active pack's `file-placement.request-artifacts:` rule
+- [x] Fallback documented: default to `artifacts/<kind>/` when no pack or no rule
+- [ ] **Deferred to v2:** actively consuming `file-placement` rules in the CLI new-request flow (CLI doesn't have a `new-request` subcommand yet — skill-driven, so rule consumption lives in skill)
 
 ### M5 — Doctor `conventions` area
-- [ ] Update `references/doctor.md` § Check areas — add `conventions` (active only when mode=enforce)
-- [ ] Implement `check_conventions()` in CLI — walks pack's naming/taxonomy/root-files/gitignore/file-placement rules, flags violations
-- [ ] Severity per violation type (naming = warning; missing required folder = error; gitignore drift = info)
-- [ ] Update doctor scoped-areas list to include `conventions`
+- [x] Updated `references/doctor.md` § Check areas — new `conventions` area
+- [x] Implemented `check_conventions()` in CLI — gitignore drift detection per pack rules
+- [x] Severity: warning in scaffold mode, error in enforce mode, info in suggest mode (no drift checks)
+- [x] Updated doctor scoped-areas allowlist to include `conventions`
+- [x] Updated `DOC_AREAS` constant + `doctor_usage` help text
 
 ### M6 — Three modes proved
-- [ ] suggest: skill briefing mentions pack opinions when relevant ("This project would normally have scripts/ — want me to create it?")
-- [ ] scaffold: init/new-request actively apply pack
-- [ ] enforce: doctor flags drift; recommends `pack apply --strict` or `--relaxed` to toggle
-- [ ] Document mode semantics in `references/packs-contract.md` and `init-workflow.md`
+- [x] **suggest** — `doctor conventions` reports active pack + info-note "drift checks are disabled" (no warnings/errors)
+- [x] **scaffold** — init appends pack gitignore entries; `doctor conventions` flags drift as warnings (exit 1)
+- [x] **enforce** — same scaffold behavior; doctor flags drift as errors (exit 2); `--fix` mechanically repairs
+- [x] Three-mode behavior documented in `references/init-workflow.md` table + `references/doctor.md`
 
 ### M7 — Tests + VERIFY.md
-- [ ] Extend `tests/cli/pack.test.sh` with install/list/remove scenarios (mocked GitHub fetch or local source path)
-- [ ] Scenario: install bundled minimal → list shows it → init consults it → remove it
-- [ ] Scenario: init with config.yaml `convention_pack:` → expected folders scaffolded per pack's applies-to
-- [ ] Scenario: enforce mode + workspace drift → doctor `conventions` reports warnings/errors
-- [ ] Scenario: project-local pack overrides user-scope same-name pack
-- [ ] Create `requests/convention-pack-application/VERIFY.md` (4-of-6 score — comprehensive)
-- [ ] Manual scenarios: full interactive flow on a fresh repo + alex-default applied
+- [x] Created `tests/cli/pack.test.sh` — 12 scenarios, 44 asserts
+- [x] Scenarios cover: list, install (bundled + --from), remove (user + bundled-refusal), show, init wiring, doctor (no-pack / enforce / --fix), help, error paths
+- [x] All tests pass: `tests/run.sh` reports 83/83 (39 init + 44 pack)
+- [x] Created `requests/convention-pack-application/VERIFY.md` — 4-of-6 score, comprehensive (18 scenarios across automated + manual)
+- [ ] **Live (VERIFY S13-S18):** three-mode end-to-end walkthrough, scope-precedence resolution, cross-machine portability, interactive init flow, alex-default e2e, config drift edge cases
 
 ### Release
 - [ ] CHANGELOG.md v0.4.0 entry — pack system as feature release
@@ -64,11 +65,14 @@ related:
 - [ ] Update docs/commands.md — pack subcommands documented
 - [ ] Update docs/configuration.md — `convention_pack:` schema + mode semantics
 
-## v2 (deferred)
+## v2 (deferred — handled by other requests)
 
-- [ ] Pack composition (multi-pack stack with precedence)
+- [ ] Pack composition / modular packs → `convention-pack-modules`
 - [ ] Pack auto-update from GitHub
 - [ ] `spectacular pack publish` — upload via PR
 - [ ] Pack signing/verification
 - [ ] `spectacular pack migrate` — retroactively apply pack to existing repo (doctor on steroids)
 - [ ] Per-pack telemetry (anonymous usage stats — opt-in only)
+- [ ] GitHub tarball install (current `install` uses local cp; `--from` accepts arbitrary path; remote URL deferred)
+- [ ] Interactive pack selection during `spectacular init -i` (v1 requires post-init config.yaml edit)
+- [ ] CLI `new-request` subcommand consuming `file-placement` rules directly (currently skill-side only)

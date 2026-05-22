@@ -1,9 +1,13 @@
 ---
-status: planned
+status: superseded
 priority: medium
 owner: alex
-updated: 2026-05-21
-summary: "Bake the user's repo-structure conventions into Spectacular so init/new-request scaffolds the right shape by default"
+updated: 2026-05-23
+superseded_by:
+  - ../convention-pack-schema/PLAN.md
+  - ../convention-pack-fabricator/PLAN.md
+  - ../convention-pack-application/PLAN.md
+summary: "Bake the user's repo-structure conventions into Spectacular so init/new-request scaffolds the right shape by default — SUPERSEDED 2026-05-23. Original plan baked one opinionated shape directly into the skill. Replaced by an extensible convention-pack system (3 new requests). The 10 sections of conventions from this plan become the schema the fabricator grills against, plus an opinionated alex-default pack in the repo's app-store folder for opt-in download."
 related:
   - ../../../skills/spectacular/SKILL.md
   - ../../STACK.md

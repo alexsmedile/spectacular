@@ -1057,6 +1057,7 @@ check_frontmatter() {
 
   local required_fields="version updated summary"
   shopt -s nullglob
+  # Note: only scan .spectacular root, not archive/ (archive is read-only per architecture)
   for f in .spectacular/*.md; do
     local base
     base=$(basename "$f")
@@ -1178,6 +1179,8 @@ check_links() {
     [[ -f "$f" ]] || continue
     # Skip snapshots
     if [[ "$(basename "$f")" =~ @v ]]; then continue; fi
+    # Skip archive/ per architecture: skill does not read archive/ during normal operation
+    if [[ "$f" == *".spectacular/archive/"* ]]; then continue; fi
 
     local in_fm=false in_related=false
     while IFS= read -r line; do

@@ -2,7 +2,7 @@
 updated: 2026-05-21
 related:
   - PLAN.md
-  - ../canonical-docs-rework/PLAN.md
+  - ../../archive/canonical-docs-rework/PLAN.md
 ---
 
 # Tasks — cli-bootstrap

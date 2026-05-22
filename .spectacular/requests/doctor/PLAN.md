@@ -5,8 +5,8 @@ owner: alex
 updated: 2026-05-23
 summary: "Spectacular doctor — environment/infrastructure self-check (CLI detects, skill repairs)"
 related:
-  - ../doc-writer/PLAN.md
-  - ../smart-init/PLAN.md
+  - ../../archive/doc-writer/PLAN.md
+  - ../../archive/smart-init/PLAN.md
   - ../../ARCHITECTURE.md
   - ../../../skills/spectacular/references/verification.md
 ---

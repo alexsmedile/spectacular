@@ -7,7 +7,7 @@ summary: "Bash CLI that bootstraps a new project with the Spectacular scaffold a
 related:
   - ../../PRD.md
   - ../../ARCHITECTURE.md
-  - ../canonical-docs-rework/PLAN.md
+  - ../../archive/canonical-docs-rework/PLAN.md
 ---
 
 # CLI Bootstrap Tool

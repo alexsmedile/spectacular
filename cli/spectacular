@@ -1026,6 +1026,20 @@ check_workspace() {
         "rewrite config.yaml with project name/summary/kit" "judgment"
     fi
   fi
+
+  # .gitignore present + includes .spectacular.local/
+  local gitignore=".gitignore"
+  if [[ -f "$gitignore" ]]; then
+    if grep -qF ".spectacular.local/" "$gitignore"; then
+      doc_add "workspace" "pass" ".gitignore" ".spectacular.local/ ignored"
+    else
+      doc_add "workspace" "warning" ".gitignore" "missing .spectacular.local/ entry" \
+        "append .spectacular.local/ to .gitignore" "mechanical"
+    fi
+  else
+    doc_add "workspace" "warning" ".gitignore" ".gitignore not found; .spectacular.local/ unprotected" \
+      "create .gitignore with .spectacular.local/" "mechanical"
+  fi
 }
 
 # ── area: frontmatter ─────────────────────────────────────────────────────────

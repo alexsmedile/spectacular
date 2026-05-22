@@ -31,14 +31,15 @@ related:
 - [x] Tested against this workspace → 5 real findings surfaced including the missing PRD@v1.1.md snapshot
 
 ### M3 — CLI mechanical fixes
-- [ ] Add `--fix` flag parsing
-- [ ] `fix_gitignore_append()` — add `.spectacular.local/` entry if absent (no prompt — trivial)
-- [ ] `fix_missing_dirs()` — create missing `requests/` / `current/` (no prompt — trivial)
-- [ ] `fix_broken_symlink()` — repair `.claude/skills/spectacular` if dangling and `.agents/skills/spectacular/` exists (single-attempt, no prompt)
-- [ ] `fix_missing_stub()` — re-scaffold missing always-set file with init's template (no prompt — restores baseline only)
-- [ ] All `--fix` operations write to stdout: `✓ fixed <area>: <action>`
-- [ ] Findings requiring judgment → still report, append "→ requires `/spectacular doctor --fix` for agent-driven repair"
-- [ ] Confirm: `--fix` never modifies an existing non-empty canonical doc (judgment required → agent)
+- [x] Add `--fix` flag parsing (within `doctor_parse_args()`)
+- [x] `.gitignore` append/create logic (handles 3 cases: no file → create, missing entry → append, has entry → no-op)
+- [x] Missing-dir fix (`mkdir -p .spectacular/requests` and `current`)
+- [x] Dangling-symlink fix (remove broken `.claude/skills/spectacular` + recreate pointing to `.agents/skills/spectacular`)
+- [x] Missing always-set file fix (re-scaffold PRD/config/AGENTS via existing `doc_<id>` functions)
+- [x] All `--fix` operations write `✓ fixed [<area>]: <action>` to stdout
+- [x] Judgment findings still report; ANSI suffix shows `(judgment — \`/spectacular doctor --fix\`)`
+- [x] Verified: `--fix` never touches existing non-empty canonical doc (uses `write_if_missing` semantics from smart-init)
+- [x] Added `.gitignore` missing-entry check to `check_workspace()` so the fix path actually fires
 
 ### M4 — Skill repair flow (`/spectacular doctor --fix`)
 - [ ] Update SKILL.md routing: `spectacular doctor [<area>] [--fix]` → `references/doctor.md`

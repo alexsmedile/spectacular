@@ -5,7 +5,7 @@ owner: alex
 updated: 2026-05-21
 summary: "Effortless, interactive PRD crafting for any kind of project — grill, refine, review"
 related:
-  - skills/spectacular/SKILL.md
+  - ../../../skills/spectacular/SKILL.md
   - ../doc-writer/PLAN.md
 ---
 

@@ -99,11 +99,43 @@ This is expected. The initializer uses "write if missing" behavior for workspace
 If a file already exists, it is not overwritten:
 
 ```text
-skipped  .spectacular/PRD.md
-skipped  .spectacular/config.yaml
+⊘  .spectacular/PRD.md already present, leaving alone
+⊘  .spectacular/config.yaml already present, leaving alone
 ```
 
-This protects project context from accidental replacement. Edit existing files manually when needed.
+If a file is empty (0 bytes or whitespace only), init fills it with a fresh stub:
+
+```text
+✓  .spectacular/PRD.md (filled empty stub)
+```
+
+If a file exists but is malformed (no frontmatter, etc.), init skips it with a hint to run doctor:
+
+```text
+⊘  .spectacular/PRD.md (issues detected — run `spectacular doctor frontmatter` for details)
+```
+
+This protects project context from accidental replacement. Edit existing files manually when needed, or use `/spectacular doctor --fix` for agent-driven repair of detected drift.
+
+---
+
+## Running `spectacular doctor`
+
+Doctor is the workspace self-check. Run it any time something feels off:
+
+```bash
+spectacular doctor                    # full sweep, exit 0/1/2 per severity
+spectacular doctor frontmatter        # scoped to one area
+spectacular doctor --fix              # apply mechanical repairs (gitignore, missing dirs, dangling symlinks)
+```
+
+Doctor surfaces issues in 7 areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`. For repairs requiring judgment (frontmatter drift, missing snapshot, lifecycle mismatch), use the skill side in your AI agent:
+
+```text
+/spectacular doctor --fix
+```
+
+The skill reads doctor's JSON report, proposes context-aware fixes per finding, and walks you through `y/n/q` confirmation.
 
 ---
 

@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
 ![Platform](https://img.shields.io/badge/platform-Claude%20%7C%20Codex%20%7C%20Cursor-lightgrey)
-![Version](https://img.shields.io/badge/version-0.2.0-green)
+![Version](https://img.shields.io/badge/version-0.3.1-green)
 
 </div>
 
@@ -94,31 +94,26 @@ State lives in `PLAN.md` frontmatter. The skill reads it on every invocation and
 
 ```
 .spectacular/
+│   ── always-set (created by every init) ─────────────────────────────
 ├── PRD.md              # product intent — what & why & for whom
+├── config.yaml         # naming, kit identity, agent file overrides
+├── AGENTS.md           # onboarding doc for agents working in this folder
+├── requests/           # active and planned work
+└── current/            # canonical system truth (capability specs)
+
+│   ── opt-in (scaffolded by kit declaration or --with flag) ──────────
 ├── PRINCIPLES.md       # operating principles + enforcement hooks
 ├── ARCHITECTURE.md     # .spectacular/ structure, frontmatter, lifecycle, versioning
 ├── ROADMAP.md          # time-ordered "what's next"
 ├── STACK.md            # host project's tech choices
 ├── DECISIONS.md        # ADR-style decision log
-├── AGENTS.md           # onboarding doc for agents working in this folder
-├── config.yaml         # naming, required files, agent file overrides
-│
-├── current/            # canonical system truth (capability specs)
-│   ├── auth/
-│   └── billing/
-│
-├── requests/           # active and planned work
-│   └── add-team-billing/
-│       ├── PLAN.md     # 7-slot decomposition (owns lifecycle state)
-│       ├── TASKS.md    # executable checklist
-│       └── SESSION.md  # current execution state
-│
+
+│   ── created on demand ─────────────────────────────────────────────
 ├── memory/             # long-term operational learning (git-committed)
-│   ├── lessons.md
-│   └── failures.md
-│
 └── archive/            # completed requests (never deleted)
 ```
+
+A typical coding project (`spectacular init --kit coding`) scaffolds the always-set + `STACK.md` + `ARCHITECTURE.md`. A doc-only or research project (`spectacular init --kit research` or `--kit blank`) gets only the always-set. Smart-init never overwrites existing files — re-running is always safe.
 
 `.spectacular.local/` — personal overrides, always gitignored.
 
@@ -141,14 +136,24 @@ State lives in `PLAN.md` frontmatter. The skill reads it on every invocation and
 ## CLI reference
 
 ```
-spectacular init                          # zero prompts, all defaults
-spectacular init -i                       # interactive — prompts for all settings
-spectacular init --name my-app            # set project name
-spectacular init --summary "..."          # set project summary
-spectacular init --agents-file CLAUDE.md  # use CLAUDE.md instead of AGENTS.md
-spectacular init --global                 # install to ~/.agents/ and ~/.claude/
-spectacular init --update                 # re-download latest skill release
+spectacular init                              # always-set + blank kit (5 files only)
+spectacular init -i                           # interactive — kit menu + per-doc prompts
+spectacular init --kit coding                 # always-set + coding kit's STACK + ARCHITECTURE
+spectacular init --with principles,roadmap   # additive — those two on top of always-set
+spectacular init --kit coding --minimal       # always-set only; kit identity preserved
+spectacular init --name my-app
+spectacular init --agents-file CLAUDE.md      # use CLAUDE.md instead of AGENTS.md
+spectacular init --global                     # install skill to ~/.agents/ and ~/.claude/
+spectacular init --update                     # re-download latest skill release
+
+spectacular doctor                            # substrate self-check (all areas)
+spectacular doctor <area>                     # scoped check: skill | workspace | frontmatter | snapshots | links | lifecycle | kits
+spectacular doctor --fix                      # apply mechanical fixes (gitignore, missing dirs, dangling symlinks)
+spectacular doctor --format json              # JSON report for the skill or other tools
 ```
+
+> [!TIP]
+> Init scaffolds the **5-file always-set** by default (`PRD.md`, `config.yaml`, `<agents-file>`, `requests/`, `current/`). Kits add docs they need. Use `--with` for explicit extras. Use `--minimal` to ignore the kit's defaults.
 
 > [!TIP]
 > Claude-only team? Use `--agents-file CLAUDE.md`. Multi-tool team? Keep `AGENTS.md` as primary and add `tool_overrides.claude: CLAUDE.md` to `config.yaml` — the skill will surface both.

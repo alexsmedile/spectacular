@@ -67,7 +67,7 @@ Spectacular splits root grounding across **seven focused docs** so agents can lo
 
 ### `PRD.md`
 
-Product/business intent. Why the project exists, what it is trying to achieve, who it is for. Uses the 6-slot canonical PRD shape.
+Product/business intent. Why the project exists, what it is trying to achieve, who it is for. Uses the 8-slot canonical PRD shape (Vision / Problem / Target users / Deliverable / Goals & success criteria / Non-goals / Constraints / First milestone).
 
 ```yaml
 ---
@@ -86,7 +86,7 @@ related:
 
 Sections (in order): Vision, Problem, Target users, Deliverable, Goals & success criteria, Non-goals, Constraints, First milestone, Principles (summary), Related docs.
 
-For interactive PRD building, use `spectacular prd` — the skill walks the 6-slot grill (problem, who, success, non-goals, constraints, milestone) with kit-aware templates.
+For interactive PRD building, use `spectacular prd` — the skill walks the 8-slot grill (Vision, Problem, Target users, Deliverable, Goals & success criteria, Non-goals, Constraints, First milestone) with kit-aware slot extensions.
 
 ---
 

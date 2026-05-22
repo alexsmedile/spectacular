@@ -42,7 +42,7 @@ spectacular init -i
 
 Before asking an agent to do serious work, add concise grounding to the seven canonical root docs:
 
-- `.spectacular/PRD.md` — product intent (problem, who, success, non-goals, constraints, milestone). Run `spectacular prd` for an interactive 6-slot grill if starting from scratch.
+- `.spectacular/PRD.md` — product intent (Vision, Problem, Target users, Deliverable, Goals & success criteria, Non-goals, Constraints, First milestone). Run `spectacular prd` for an interactive 8-slot grill if starting from scratch.
 - `.spectacular/PRINCIPLES.md` — operating principles + how the skill enforces each at runtime
 - `.spectacular/ARCHITECTURE.md` — the workspace structure itself (frontmatter, lifecycle, versioning)
 - `.spectacular/ROADMAP.md` — versioned future work (v1 / v2 / v3+)

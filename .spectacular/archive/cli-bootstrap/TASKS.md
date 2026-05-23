@@ -1,5 +1,5 @@
 ---
-updated: 2026-05-21
+updated: 2026-05-23
 related:
   - PLAN.md
   - ../../archive/canonical-docs-rework/PLAN.md
@@ -91,9 +91,9 @@ Triggered by `canonical-docs-rework`. The CLI must scaffold the post-rework 7-do
 
 - [x] Bare init on blank directory — correct scaffold, zero prompts (tested 2026-05-21)
 - [x] `-i` mode — all prompts fire, flags pre-fill defaults (tested 2026-05-21 — name "my-test-app" captured into config.yaml + PRD heading)
-- [ ] `--global` — skill lands in `~/.agents/` and `~/.claude/` (**blocked**: alters user home dir; defer to first real published install)
+- [x] `--global` — skill lands in `~/.agents/` and `~/.claude/` (tested 2026-05-23 with sandboxed `HOME=$(mktemp -d)` — both targets populated, symlink resolves correctly)
 - [x] Re-run idempotency — all files skipped, correct report (tested 2026-05-21 — all 10 files reported skipped)
-- [ ] `--update` — fetches new version, updates `skills.lock` (**blocked**: needs published tagged repo with multiple versions)
+- [x] `--update` — fetches new version, updates `skills.lock` (tested 2026-05-23 — downgrade lock to v1.0.0 → `--update` detects v1.0.0 → v1.0.1, fetches tarball, rewrites lock; re-run reports "already up to date (v1.0.1)")
 - [x] Network failure — exits non-zero, scaffold files intact
 - [x] `install.sh` — syntax-checked OK; full curl-install test **blocked** until repo published to GitHub
 - [x] Bash syntax check on `spectacular` binary — clean

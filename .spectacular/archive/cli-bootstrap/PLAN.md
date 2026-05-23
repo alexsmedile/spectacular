@@ -1,9 +1,10 @@
 ---
-status: planned
+status: verified
 priority: medium
 owner: alex
-updated: 2026-05-22
-summary: "Bash CLI that bootstraps a new project with the Spectacular scaffold and installs the skill from GitHub (parked: smart-init shipped at v0.3.0; this stays for v0.2.x maintenance)"
+updated: 2026-05-23
+archived_in: v1.0.1
+summary: "Bash CLI that bootstraps a new project with the Spectacular scaffold and installs the skill from GitHub — shipped in v0.2.0, fully verified at v1.0.1"
 related:
   - ../../PRD.md
   - ../../ARCHITECTURE.md

@@ -5,7 +5,7 @@ owner: alex
 updated: 2026-05-23
 summary: "v2: split monolithic packs into composable rule-category modules (naming/taxonomy/root-files/gitignore/file-placement/project-types as standalone files)"
 related:
-  - ../convention-pack-schema/PLAN.md
+  - ../../archive/convention-pack-schema/PLAN.md
   - ../../archive/convention-pack-fabricator/PLAN.md
   - ../../archive/convention-pack-application/PLAN.md
 ---

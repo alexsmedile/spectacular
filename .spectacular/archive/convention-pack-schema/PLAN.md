@@ -1,14 +1,15 @@
 ---
-status: verified
+status: archived
 priority: high
 owner: alex
-updated: 2026-05-23
+updated: 2026-05-24
 summary: "Define the convention-pack schema: folder shape, frontmatter contract, what a pack can declare. Ship a minimal bundled pack as the proof."
 related:
   - ../../../skills/spectacular/references/kits-contract.md
   - ../../archive/repo-conventions/PLAN.md
   - ../../archive/convention-pack-fabricator/PLAN.md
   - ../../archive/convention-pack-application/PLAN.md
+archived: 2026-05-24
 ---
 
 # Plan — Convention Pack Schema

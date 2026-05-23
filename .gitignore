@@ -21,3 +21,12 @@ releases/
 
 # local working notes
 TODO.md
+
+# research artifacts (NotebookLM exports, query logs, source dumps) — local only
+_research/
+
+# draft articles / launch posts — published elsewhere
+articles/
+
+# per-project skills not part of this repo
+.claude/skills/notebook-lm-cli

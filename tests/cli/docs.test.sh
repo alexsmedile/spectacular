@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
-# tests/cli/docs.test.sh — covers v0.6.0 public-docs surface.
+# tests/cli/docs.test.sh — spectacular's docs surface in v1.2.0+ (DEPRECATED state)
+#
+# Public-facing docs work moved to the pageworks skill in v1.2.0. Spectacular's
+# docs verbs still function for backward compatibility but emit a deprecation
+# banner. `doctor docs` is slimmed to discovery-only. Removal lands in v2.0.0.
 #
 # Scenarios:
-#   1. Fresh `docs init` scaffolds docs.yaml + index + 3 sections + placeholder pages
-#   2. `docs init --minimal` scaffolds only docs.yaml + index.md
-#   3. Repeat `docs init` is non-destructive
-#   4. `doctor docs` skips silently when no docs/ exists
-#   5. `doctor docs` passes on freshly-init'd tree
-#   6. `doctor docs` errors when a declared page file is missing
-#   7. `doctor docs` warns on orphan files (present on disk, not in docs.yaml)
-#   8. `doctor docs` errors on missing required frontmatter
-#   9. `doctor docs --fix` injects frontmatter stub for files missing the delimiter
-#  10. Flat-tree `extras:` resolution works (top-level pages, no section folder)
-#  11. `docs new` is a skill verb — CLI refuses cleanly
-#  12. `docs --help` shows usage
+#   1. `spectacular docs init` still scaffolds docs.yaml + index.md (backward compat)
+#   2. `spectacular docs init` emits deprecation banner on stderr
+#   3. `doctor docs` skips silently when no docs/ folder exists
+#   4. `doctor docs` reports docs/ folder + manifest presence (discovery-only)
+#   5. `doctor docs` info-level pageworks install hint when pageworks not in PATH
+#   6. `doctor docs` does NOT validate frontmatter / orphans / renderer-block (moved to pageworks)
+#   7. `spectacular docs new` / review / status emit deprecation + skill-verb message
+#   8. `spectacular docs --help` shows DEPRECATED banner
+#   9. `spectacular docs export` still works (covered fully in docs-export.test.sh — this is a smoke check)
 
 set -u
 
@@ -27,26 +28,18 @@ assert_file_exists() {
   if [[ -f "$1" ]]; then pass_count=$((pass_count + 1))
   else echo "    ✗ expected file: $1"; fail_count=$((fail_count + 1)); fi
 }
-assert_dir_exists() {
-  if [[ -d "$1" ]]; then pass_count=$((pass_count + 1))
-  else echo "    ✗ expected dir: $1"; fail_count=$((fail_count + 1)); fi
+assert_contains() {
+  if echo "$1" | grep -qF "$2"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ output missing: $2"; fail_count=$((fail_count + 1)); fi
 }
-assert_file_absent() {
-  if [[ ! -e "$1" ]]; then pass_count=$((pass_count + 1))
-  else echo "    ✗ expected absent: $1"; fail_count=$((fail_count + 1)); fi
-}
-assert_file_contains() {
-  if [[ -f "$1" ]] && grep -qF "$2" "$1"; then pass_count=$((pass_count + 1))
-  else echo "    ✗ expected '$1' to contain '$2'"; fail_count=$((fail_count + 1)); fi
+assert_not_contains() {
+  if ! echo "$1" | grep -qF "$2"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ output unexpectedly contains: $2"; fail_count=$((fail_count + 1)); fi
 }
 assert_exit() {
   local got="$1" want="$2" label="$3"
   if [[ "$got" -eq "$want" ]]; then pass_count=$((pass_count + 1))
   else echo "    ✗ $label: exit $got want $want"; fail_count=$((fail_count + 1)); fi
-}
-assert_contains() {
-  if echo "$1" | grep -qF "$2"; then pass_count=$((pass_count + 1))
-  else echo "    ✗ output missing: $2"; fail_count=$((fail_count + 1)); fi
 }
 
 run_cli() {
@@ -54,10 +47,8 @@ run_cli() {
   (cd "$dir" && "$CLI" "$@" 2>&1)
 }
 
-# ── scenarios ─────────────────────────────────────────────────────────────────
-
-scenario_1_init_default() {
-  echo "Scenario 1: docs init scaffolds docs.yaml + index + 3 sections + placeholder pages"
+scenario_1_init_still_works() {
+  echo "Scenario 1: 'spectacular docs init' still scaffolds (backward compat)"
   local dir="/tmp/spectacular-docs-test-1"
   rm -rf "$dir" && mkdir -p "$dir"
 
@@ -65,250 +56,155 @@ scenario_1_init_default() {
 
   assert_file_exists "$dir/docs/docs.yaml"
   assert_file_exists "$dir/docs/index.md"
-  assert_dir_exists "$dir/docs/getting-started"
-  assert_dir_exists "$dir/docs/guides"
-  assert_dir_exists "$dir/docs/reference"
   assert_file_exists "$dir/docs/getting-started/install.md"
-  assert_file_exists "$dir/docs/getting-started/quickstart.md"
-  assert_file_exists "$dir/docs/getting-started/concepts.md"
-  assert_file_contains "$dir/docs/docs.yaml" "sections:"
-  assert_file_contains "$dir/docs/docs.yaml" "getting-started"
-  assert_file_contains "$dir/docs/getting-started/install.md" "title: Install"
 
   rm -rf "$dir"
 }
 
-scenario_2_init_minimal() {
-  echo "Scenario 2: docs init --minimal scaffolds only docs.yaml + index.md"
+scenario_2_init_deprecation_banner() {
+  echo "Scenario 2: 'spectacular docs init' emits deprecation banner"
   local dir="/tmp/spectacular-docs-test-2"
   rm -rf "$dir" && mkdir -p "$dir"
 
-  run_cli "$dir" docs init --minimal >/dev/null
+  local output
+  output=$(run_cli "$dir" docs init 2>&1)
 
-  assert_file_exists "$dir/docs/docs.yaml"
-  assert_file_exists "$dir/docs/index.md"
-  assert_file_absent "$dir/docs/getting-started"
-  assert_file_absent "$dir/docs/guides"
+  assert_contains "$output" "deprecated in v1.2.0"
+  assert_contains "$output" "pageworks"
 
   rm -rf "$dir"
 }
 
-scenario_3_repeat_init_nondestructive() {
-  echo "Scenario 3: repeat docs init is non-destructive"
+scenario_3_doctor_docs_skips_when_absent() {
+  echo "Scenario 3: doctor docs skips silently when no docs/ folder"
   local dir="/tmp/spectacular-docs-test-3"
-  rm -rf "$dir" && mkdir -p "$dir"
-  run_cli "$dir" docs init >/dev/null
-
-  echo "USER CONTENT" >> "$dir/docs/index.md"
-  local sentinel
-  sentinel="$(md5sum "$dir/docs/index.md" 2>/dev/null | cut -d' ' -f1)"
-  [[ -z "$sentinel" ]] && sentinel="$(md5 -q "$dir/docs/index.md" 2>/dev/null)"
-
-  run_cli "$dir" docs init >/dev/null
-
-  local after
-  after="$(md5sum "$dir/docs/index.md" 2>/dev/null | cut -d' ' -f1)"
-  [[ -z "$after" ]] && after="$(md5 -q "$dir/docs/index.md" 2>/dev/null)"
-
-  if [[ "$sentinel" == "$after" ]]; then pass_count=$((pass_count + 1))
-  else echo "    ✗ index.md was overwritten"; fail_count=$((fail_count + 1)); fi
-
-  rm -rf "$dir"
-}
-
-scenario_4_doctor_docs_skips_when_absent() {
-  echo "Scenario 4: doctor docs skips silently when no docs/ exists"
-  local dir="/tmp/spectacular-docs-test-4"
-  rm -rf "$dir" && mkdir -p "$dir"
-
-  local output exit_code
-  output=$(run_cli "$dir" doctor docs)
-  exit_code=$?
-
-  assert_exit "$exit_code" 0 "doctor docs without docs/ exits 0"
-  if echo "$output" | grep -q "^docs"; then
-    echo "    ✗ expected no 'docs' findings"; fail_count=$((fail_count + 1))
-  else
-    pass_count=$((pass_count + 1))
-  fi
-
-  rm -rf "$dir"
-}
-
-scenario_5_doctor_clean() {
-  echo "Scenario 5: doctor docs passes on freshly-init'd tree"
-  local dir="/tmp/spectacular-docs-test-5"
-  rm -rf "$dir" && mkdir -p "$dir"
-  run_cli "$dir" docs init >/dev/null
-
-  local output exit_code
-  output=$(run_cli "$dir" doctor docs)
-  exit_code=$?
-
-  assert_exit "$exit_code" 0 "doctor docs on clean tree"
-  assert_contains "$output" "docs.yaml present"
-  assert_contains "$output" "declared page present"
-
-  rm -rf "$dir"
-}
-
-scenario_6_doctor_missing_declared() {
-  echo "Scenario 6: doctor errors when a declared page is missing"
-  local dir="/tmp/spectacular-docs-test-6"
-  rm -rf "$dir" && mkdir -p "$dir"
-  run_cli "$dir" docs init >/dev/null
-  rm "$dir/docs/getting-started/install.md"
-
-  local output exit_code
-  output=$(run_cli "$dir" doctor docs)
-  exit_code=$?
-
-  assert_exit "$exit_code" 2 "doctor exits 2 on missing declared page"
-  assert_contains "$output" "declared in docs.yaml but file missing"
-
-  rm -rf "$dir"
-}
-
-scenario_7_doctor_orphan_warn() {
-  echo "Scenario 7: doctor warns on orphan files"
-  local dir="/tmp/spectacular-docs-test-7"
-  rm -rf "$dir" && mkdir -p "$dir"
-  run_cli "$dir" docs init >/dev/null
-  cat > "$dir/docs/guides/orphan.md" <<EOF
----
-title: Orphan
-description: not declared
-section: guides
-status: draft
-updated: 2026-05-23
----
-# Orphan
-EOF
-
-  local output exit_code
-  output=$(run_cli "$dir" doctor docs)
-  exit_code=$?
-
-  assert_exit "$exit_code" 1 "doctor exits 1 (warning) on orphan"
-  assert_contains "$output" "orphan"
-
-  rm -rf "$dir"
-}
-
-scenario_8_doctor_missing_frontmatter() {
-  echo "Scenario 8: doctor errors on missing required frontmatter"
-  local dir="/tmp/spectacular-docs-test-8"
-  rm -rf "$dir" && mkdir -p "$dir"
-  run_cli "$dir" docs init >/dev/null
-  cat > "$dir/docs/getting-started/install.md" <<EOF
-# Install
-No frontmatter at all.
-EOF
-
-  local output exit_code
-  output=$(run_cli "$dir" doctor docs)
-  exit_code=$?
-
-  assert_exit "$exit_code" 2 "doctor exits 2 on missing frontmatter"
-  assert_contains "$output" "missing frontmatter delimiter"
-
-  rm -rf "$dir"
-}
-
-scenario_9_doctor_fix_injects_stub() {
-  echo "Scenario 9: doctor docs --fix injects frontmatter stub"
-  local dir="/tmp/spectacular-docs-test-9"
-  rm -rf "$dir" && mkdir -p "$dir"
-  run_cli "$dir" docs init >/dev/null
-  cat > "$dir/docs/getting-started/install.md" <<EOF
-# Install
-No frontmatter at all.
-EOF
-
-  run_cli "$dir" doctor docs --fix >/dev/null 2>&1 || true
-
-  if head -1 "$dir/docs/getting-started/install.md" | grep -q '^---$'; then
-    pass_count=$((pass_count + 1))
-  else
-    echo "    ✗ frontmatter stub not injected"; fail_count=$((fail_count + 1))
-  fi
-  assert_file_contains "$dir/docs/getting-started/install.md" "title: install"
-  assert_file_contains "$dir/docs/getting-started/install.md" "section: getting-started"
-  assert_file_contains "$dir/docs/getting-started/install.md" "status: draft"
-
-  rm -rf "$dir"
-}
-
-scenario_10_extras_flat_tree() {
-  echo "Scenario 10: flat-tree extras: resolution works"
-  local dir="/tmp/spectacular-docs-test-10"
-  rm -rf "$dir" && mkdir -p "$dir/docs"
-  cat > "$dir/docs/docs.yaml" <<EOF
-site:
-  name: Test
-sections: []
-extras:
-  - changelog
-EOF
-  cat > "$dir/docs/changelog.md" <<EOF
----
-title: Changelog
-description: Project changes
-section: ""
-status: stable
-updated: 2026-05-23
----
-# Changelog
-EOF
-
-  local output exit_code
-  output=$(run_cli "$dir" doctor docs)
-  exit_code=$?
-
-  assert_exit "$exit_code" 0 "doctor docs with extras"
-  assert_contains "$output" "declared extra present"
-
-  rm -rf "$dir"
-}
-
-scenario_11_skill_verbs_refused_by_cli() {
-  echo "Scenario 11: CLI refuses skill verbs cleanly"
-  local dir="/tmp/spectacular-docs-test-11"
   rm -rf "$dir" && mkdir -p "$dir"
 
   local output exit_code=0
-  if output=$(run_cli "$dir" docs new install 2>&1); then exit_code=0; else exit_code=$?; fi
+  if output=$(run_cli "$dir" doctor docs 2>&1); then exit_code=0; else exit_code=$?; fi
 
-  if [[ $exit_code -ne 0 ]]; then pass_count=$((pass_count + 1))
-  else echo "    ✗ expected non-zero exit (got $exit_code)"; fail_count=$((fail_count + 1)); fi
-  assert_contains "$output" "skill verb"
+  assert_exit "$exit_code" 0 "doctor docs (no docs/) exits 0"
+  assert_not_contains "$output" "docs/ folder present"
 
   rm -rf "$dir"
 }
 
-scenario_12_docs_help() {
-  echo "Scenario 12: docs --help shows usage"
+scenario_4_doctor_docs_discovery_only() {
+  echo "Scenario 4: doctor docs reports folder + manifest presence (discovery-only)"
+  local dir="/tmp/spectacular-docs-test-4"
+  rm -rf "$dir" && mkdir -p "$dir/docs"
+  touch "$dir/docs/docs.yaml"
+
   local output
-  output=$("$CLI" docs --help 2>&1)
-  assert_contains "$output" "Usage: spectacular docs"
-  assert_contains "$output" "init"
-  assert_contains "$output" "review"
+  output=$(run_cli "$dir" doctor docs 2>&1)
+
+  assert_contains "$output" "docs/ folder present"
+  assert_contains "$output" "docs.yaml manifest present"
+
+  rm -rf "$dir"
 }
 
-# ── run all ───────────────────────────────────────────────────────────────────
-echo "=== docs.test.sh ==="
-scenario_1_init_default
-scenario_2_init_minimal
-scenario_3_repeat_init_nondestructive
-scenario_4_doctor_docs_skips_when_absent
-scenario_5_doctor_clean
-scenario_6_doctor_missing_declared
-scenario_7_doctor_orphan_warn
-scenario_8_doctor_missing_frontmatter
-scenario_9_doctor_fix_injects_stub
-scenario_10_extras_flat_tree
-scenario_11_skill_verbs_refused_by_cli
-scenario_12_docs_help
+scenario_5_doctor_pageworks_hint() {
+  echo "Scenario 5: doctor docs info hint when pageworks not installed"
+  local dir="/tmp/spectacular-docs-test-5"
+  rm -rf "$dir" && mkdir -p "$dir/docs"
+  touch "$dir/docs/docs.yaml"
+
+  # Only assert the hint if pageworks isn't actually in PATH (CI/dev env varies)
+  if ! command -v pageworks >/dev/null 2>&1; then
+    local output
+    output=$(run_cli "$dir" doctor docs 2>&1)
+    assert_contains "$output" "pageworks not installed"
+    assert_contains "$output" "github.com/alexsmedile/pageworks"
+  else
+    echo "    ⊘ pageworks installed in PATH — skipping hint assertion"
+    pass_count=$((pass_count + 1))
+  fi
+
+  rm -rf "$dir"
+}
+
+scenario_6_doctor_no_deep_validation() {
+  echo "Scenario 6: doctor docs does NOT validate frontmatter/orphans/renderers"
+  local dir="/tmp/spectacular-docs-test-6"
+  rm -rf "$dir" && mkdir -p "$dir/docs/getting-started"
+  cat > "$dir/docs/docs.yaml" <<'YAML'
+site:
+  name: deep-test
+sections:
+  - id: getting-started
+    title: Getting Started
+    order: 1
+    pages: [install]
+renderers:
+  bogus-renderer:
+    foo: bar
+YAML
+  # install.md missing on disk + bogus renderer key — neither should be flagged
+  # by spectacular's slim doctor (both belong to pageworks now).
+  cat > "$dir/docs/getting-started/orphan.md" <<'EOF'
+no-frontmatter-here
+EOF
+
+  local output
+  output=$(run_cli "$dir" doctor docs 2>&1)
+
+  assert_not_contains "$output" "missing required frontmatter"
+  assert_not_contains "$output" "orphan"
+  assert_not_contains "$output" "not a recognized renderer"
+  assert_not_contains "$output" "declared in docs.yaml but file missing"
+
+  rm -rf "$dir"
+}
+
+scenario_7_skill_verbs_deprecation() {
+  echo "Scenario 7: skill verbs (new|review|status) emit deprecation + skill-verb message"
+  local dir="/tmp/spectacular-docs-test-7"
+  rm -rf "$dir" && mkdir -p "$dir"
+
+  for verb in new review status; do
+    local output exit_code=0
+    if output=$(run_cli "$dir" docs "$verb" 2>&1); then exit_code=0; else exit_code=$?; fi
+    if [[ $exit_code -ne 0 ]]; then pass_count=$((pass_count + 1))
+    else echo "    ✗ docs $verb: expected non-zero exit (got $exit_code)"; fail_count=$((fail_count + 1)); fi
+    assert_contains "$output" "deprecated in v1.2.0"
+    assert_contains "$output" "skill verb"
+  done
+
+  rm -rf "$dir"
+}
+
+scenario_8_docs_help_deprecation() {
+  echo "Scenario 8: 'spectacular docs --help' shows DEPRECATED banner"
+  local output
+  output=$("$CLI" docs --help 2>&1)
+  assert_contains "$output" "DEPRECATED"
+  assert_contains "$output" "pageworks"
+}
+
+scenario_9_export_still_works_smoke() {
+  echo "Scenario 9: 'spectacular docs export mkdocs' still works (smoke check)"
+  local dir="/tmp/spectacular-docs-test-9"
+  rm -rf "$dir" && mkdir -p "$dir"
+
+  run_cli "$dir" docs init >/dev/null
+  run_cli "$dir" docs export mkdocs --no-workflow >/dev/null
+
+  assert_file_exists "$dir/mkdocs.yml"
+
+  rm -rf "$dir"
+}
+
+echo "=== docs.test.sh (v1.2.0 deprecation state) ==="
+scenario_1_init_still_works
+scenario_2_init_deprecation_banner
+scenario_3_doctor_docs_skips_when_absent
+scenario_4_doctor_docs_discovery_only
+scenario_5_doctor_pageworks_hint
+scenario_6_doctor_no_deep_validation
+scenario_7_skill_verbs_deprecation
+scenario_8_docs_help_deprecation
+scenario_9_export_still_works_smoke
 
 echo ""
 echo "Results: ${pass_count} passed, ${fail_count} failed"

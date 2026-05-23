@@ -5,6 +5,40 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.2.0] — 2026-05-23
+
+### Deprecated
+- **Public-facing docs surface** moved to a new standalone skill: [pageworks](https://github.com/alexsmedile/pageworks). The verbs `spectacular docs init`, `spectacular docs export`, `spectacular docs new`, `spectacular docs review`, and `spectacular docs status` still work but now emit a deprecation banner to stderr pointing at the pageworks equivalent. Removal target: spectacular v2.0.0.
+- References `docs-contract.md`, `docs-overrides.md`, and `docs-renderer-adapters.md` gained a `> DEPRECATED in v1.2.0` banner at the top. They remain loaded for backward compatibility; canonical versions live in pageworks (`references/contract.md`, `references/authoring.md`, `references/renderers.md`).
+
+### Changed
+- `spectacular doctor docs` slimmed from ~190 lines of validation (schema + frontmatter + orphans + renderers) to ~25 lines of **discovery-only** checks: docs/ folder presence, docs.yaml manifest presence, and a pageworks-install hint when the pageworks CLI is not in PATH. Full validation lives in pageworks (`pageworks doctor`).
+- `spectacular docs --help` rewritten with the deprecation banner and per-verb migration hints.
+- Top-level usage (`spectacular --help`) marks `docs <...>` as DEPRECATED.
+- Skill SKILL.md: "Public-facing docs verbs" section rewritten to route to the new pageworks-handoff reference. References index updated to flag the deprecated docs-* files.
+- `.spectacular/AGENTS.md`: new "Don't write into docs/" rule + new "Skill boundary — spectacular vs pageworks" section.
+
+### Added
+- New reference: `skills/spectacular/references/pageworks-handoff.md` — when and how spectacular delegates public-doc work to pageworks. Canonical install hint phrasing, archive-time prompt mechanics, status-briefing reference, anti-patterns.
+- `spectacular archive <slug>` now prints a one-time hint after archive completion when:
+  - `docs/` folder exists in the project, AND
+  - the archived request's PLAN/TASKS/VERIFY references SPEC.md, specs/, ARCHITECTURE.md, or PRD.md
+  The hint suggests `pageworks audit` (when pageworks is installed) or surfaces the install URL (when not). Suppress per-call with `--no-docs-prompt` or per-project with `docs.prompt_on_archive: false` in `.spectacular/config.yaml`.
+- `--no-docs-prompt` flag for `spectacular archive`.
+- Tests: `tests/cli/archive-pageworks-prompt.test.sh` — 5 scenarios covering the prompt fires/suppresses correctly across docs/ presence + spec-reference detection + flag + config.
+
+### Test changes
+- `tests/cli/docs.test.sh` rewritten to assert the v1.2.0 deprecation state: verbs still work, banners emitted, doctor docs is discovery-only, skill verbs refused with deprecation. Previous deep-validation scenarios moved to pageworks's `tests/cli/doctor.test.sh`.
+- `tests/cli/docs-export.test.sh` scenarios 13–16 (doctor renderers validation) moved to pageworks's test suite. The remaining 12 scenarios (CLI export behavior) stay — `spectacular docs export` still works for backward compatibility.
+
+### Migration guide for users on spectacular v1.1.0
+Nothing breaks immediately. Three paths:
+1. **Keep using `spectacular docs ...`** — works through v1.x, removed in v2.0.0.
+2. **Migrate to pageworks** — `curl -fsSL https://raw.githubusercontent.com/alexsmedile/pageworks/main/cli/install.sh | bash`. Then use `pageworks <verb>` everywhere you used `spectacular docs <verb>`. Same schema, same behavior, plus new Diátaxis page templates, prose patterns reference, maintenance/drift detection groundwork.
+3. **Mute the deprecation banner project-wide** by setting `docs.prompt_on_archive: false` in `.spectacular/config.yaml` (only affects the archive-time prompt; per-verb banners still fire).
+
+---
+
 ## [1.1.0] — 2026-05-23
 
 ### Added

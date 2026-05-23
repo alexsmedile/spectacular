@@ -1,5 +1,7 @@
 # Docs Contract — schema for public-facing documentation
 
+> **⚠ DEPRECATED in spectacular v1.2.0** — public-facing docs work is now owned by the [pageworks](https://github.com/alexsmedile/pageworks) skill. This reference will be removed in spectacular v2.0.0. The schema documented here lives at `pageworks/skills/pageworks/references/contract.md`.
+
 Loaded when the orchestrator handles any `spectacular docs <verb>` command, or when doctor runs the `docs` area.
 
 ## Core principle

@@ -21,7 +21,7 @@ when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type registered in doc-registry.md.
-version: 1.1.0
+version: 1.2.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -86,20 +86,25 @@ Packs use a short alias and add a `new <name>` verb (since packs are user-scope,
 | `spectacular pack review <name>` | → `review.md` + `pack-overrides.md` |
 | `spectacular convention-pack <verb>` | full doc-id form — equivalent to `pack <verb>` but without the `<name>` argument convention |
 
-### Public-facing docs verbs (v0.6.0+)
+### Public-facing docs (DEPRECATED in v1.2.0 — owned by pageworks)
 
-The `docs/` tree is the consumer-facing surface (sibling to internal `specs/`). CLI handles mechanical scaffold; skill handles interactive verbs.
+> Public-facing docs work has moved to the dedicated [pageworks](https://github.com/alexsmedile/pageworks) skill. Spectacular keeps **discovery-only awareness** of `docs/` (folder + manifest presence). Schema, authoring, renderer adapters, and validation all live in pageworks now. The verbs below still work for backward compatibility but will be removed in spectacular v2.0.0.
 
 | User says | Route to | Handled by |
 |---|---|---|
-| `spectacular docs init` / `docs init --minimal` | CLI — scaffolds `docs/docs.yaml` + `index.md` + 3 sections | CLI binary |
-| `spectacular docs new <page>` | → `references/docs-overrides.md` § `docs new <page>` flow | Skill |
-| `spectacular docs new --section <name>` | → `references/docs-overrides.md` § `docs new --section <name>` flow | Skill |
-| `spectacular docs review` | → `references/docs-overrides.md` § `docs review` quality gate | Skill |
-| `spectacular docs status` | → `references/docs-overrides.md` § `docs status` briefing | Skill |
-| `spectacular doctor docs` | CLI — substrate validation (same checks as `docs review`) | CLI binary |
+| `spectacular docs init` / `docs init --minimal` | CLI (deprecated) — also prints deprecation banner | CLI binary |
+| `spectacular docs export <renderer>` | CLI (deprecated) — also prints deprecation banner | CLI binary |
+| `spectacular docs new\|review\|status` | Skill verb (deprecated) — also prints deprecation banner | Skill |
+| `spectacular doctor docs` | CLI — **slimmed to discovery only** (folder presence, manifest presence, pageworks install hint) | CLI binary |
+| User asks "write docs", "create a docs page", "add a tutorial" | → `references/pageworks-handoff.md` § install hint | Skill |
+| After `spectacular archive <slug>` with SPEC changes | → CLI prints pageworks-audit hint (suppress with `--no-docs-prompt`) | CLI binary |
 
-Schema: [[docs-contract]] § folder shape + manifest + page frontmatter. Audience is folder-level (`docs/` = consumers; `specs/` = builders) — never per-page.
+When delegating to pageworks, surface the canonical install hint from `references/pageworks-handoff.md`. Never auto-install.
+
+Pre-v1.2.0 references (still loaded for backward compatibility but show deprecation banners):
+- [[docs-contract]] — schema (deprecated; canonical at `pageworks/references/contract.md`)
+- [[docs-overrides]] — authoring rules (deprecated; canonical at `pageworks/references/authoring.md`)
+- [[docs-renderer-adapters]] — renderer adapters (deprecated; canonical at `pageworks/references/renderers.md`)
 
 ### Verification routing (when writing PLAN.md or moving requests to review)
 
@@ -213,8 +218,10 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs; single-kit-only in v1 |
 | `references/packs-contract.md` | Convention pack schema: pack folder shape + 6 rule categories (naming/taxonomy/root-files/gitignore/file-placement/project-types) |
 | `references/pack-overrides.md` | Pack-specific grill rules: slot prompts, mini-refine patterns, source-ingestion (`--from`), reserved pack-ids, review gate checks 4-12 |
-| `references/docs-contract.md` | Public docs surface — folder shape, `docs.yaml` schema, page frontmatter, validation rules (v0.6.0+) |
-| `references/docs-overrides.md` | Docs-specific engine rules: `docs new` flow, section prompts, `docs review` gate, `docs status` briefing (v0.6.0+) |
+| `references/pageworks-handoff.md` | **v1.2.0+** — when/how spectacular delegates public-doc work to pageworks; canonical install hint; archive-time prompt mechanics |
+| `references/docs-contract.md` | **DEPRECATED v1.2.0** — public docs schema; canonical at `pageworks/references/contract.md`. Removed in v2.0.0 |
+| `references/docs-overrides.md` | **DEPRECATED v1.2.0** — docs-specific engine rules; canonical at `pageworks/references/authoring.md`. Removed in v2.0.0 |
+| `references/docs-renderer-adapters.md` | **DEPRECATED v1.2.0** — renderer adapters (MkDocs + Docusaurus); canonical at `pageworks/references/renderers.md`. Removed in v2.0.0 |
 | **Legacy PRD references (deprecated, kept for backwards compat)** | |
 | `references/prd-grill.md` | Legacy — superseded by `grill.md` + `prd-overrides.md` |
 | `references/prd-refine.md` | Legacy — superseded by `refine.md` + `prd-overrides.md` |

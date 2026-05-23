@@ -1,10 +1,11 @@
 ---
-status: planned
+status: verified
 priority: high
 owner: alex
 updated: 2026-05-23
+archived_in: spectacular v1.2.0 + pageworks v0.1.0
 target_version: spectacular v1.2.0 (deprecation) + pageworks v0.1.0 (first ship)
-summary: "Extract public-facing documentation work into a new standalone skill `pageworks`; deprecate docs verbs in spectacular without removing them"
+summary: "Extract public-facing documentation work into a new standalone skill `pageworks`; deprecate docs verbs in spectacular without removing them. Shipped: spectacular v1.2.0 + pageworks v0.1.0."
 related:
   - ../../archive/public-docs-advanced/PLAN.md
   - ../../archive/public-docs-foundation/PLAN.md

@@ -1,5 +1,7 @@
 # Docs Renderer Adapters — MkDocs + Docusaurus
 
+> **⚠ DEPRECATED in spectacular v1.2.0** — renderer adapters moved to the [pageworks](https://github.com/alexsmedile/pageworks) skill. This reference will be removed in spectacular v2.0.0. The equivalent (pageworks-native) lives at `pageworks/skills/pageworks/references/renderers.md`. The CLI verb `spectacular docs export <renderer>` still works for backward compatibility; use `pageworks export <renderer>` for new projects.
+
 Loaded when the orchestrator handles `spectacular docs export <renderer>`, or when authoring renderer-aware `docs.yaml` blocks.
 
 Pairs with [[docs-contract]] (the canonical schema). This file documents how that schema translates to two concrete OSS renderers and how the generated `.github/workflows/docs.yml` deploys the result to GitHub Pages.

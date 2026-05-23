@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.1.0"
+SPECTACULAR_VERSION="1.2.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_REPO="alexsmedile/spectacular"
 GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
@@ -44,6 +44,20 @@ skip() { echo "  ⊘  $*"; }
 created() { echo "  ✓  $*"; }
 filled() { echo "  ✓  $* (filled empty stub)"; }
 diag()  { echo "  ⊘  $* (issues detected — run \`spectacular doctor frontmatter\` for details)"; }
+
+# Deprecation banner (v1.2.0+). The public docs surface (docs init/export/new/
+# review/status, docs-* references) was extracted to the pageworks skill in
+# v1.2.0 and will be removed in spectacular v2.0.0. Prints to stderr so it
+# doesn't pollute stdout-consuming pipelines; runs once per command.
+deprecation_notice() {
+  local verb="$1"
+  cat >&2 <<EOF
+⚠ 'spectacular ${verb}' is deprecated in v1.2.0 and will be removed in v2.0.0.
+  Public-facing docs work has its own skill: pageworks.
+  Install: https://github.com/alexsmedile/pageworks
+  Equivalent verb: 'pageworks ${verb#docs }'
+EOF
+}
 
 # Validate that a flag has a usable value (non-empty, not another flag).
 # Usage: require_value "$flag_name" "${2:-}"
@@ -164,7 +178,7 @@ CLI verbs (mutate workspace):
   init [opts]            Scaffold .spectacular/ in the current project
   doctor [area] [--fix]  Substrate self-check (10 areas); --fix applies mechanical repairs
   pack <list|install|show|remove>      Manage convention packs
-  docs <init|export|new|status>        Public docs surface (docs/) — export: mkdocs|docusaurus
+  docs <init|export|new|status>        DEPRECATED in v1.2.0 — use 'pageworks' instead
   migrate [--to|--from|--list|--dry-run]   Apply workspace schema migrations
   new <slug>             Scaffold a new request
   promote <slug> [--to <state>]        Advance request lifecycle
@@ -781,14 +795,15 @@ config_workspace_schema() {
 # sets status: archived + archived: <today>. Refuses if not in verified/review
 # without --force.
 cmd_archive() {
-  local slug="" opt_force=false opt_skip_doctor=false
+  local slug="" opt_force=false opt_skip_doctor=false opt_no_docs_prompt=false
   while (( $# > 0 )); do
     case "$1" in
-      --force)       opt_force=true; shift ;;
-      --skip-doctor) opt_skip_doctor=true; shift ;;
+      --force)           opt_force=true; shift ;;
+      --skip-doctor)     opt_skip_doctor=true; shift ;;
+      --no-docs-prompt)  opt_no_docs_prompt=true; shift ;;
       --help|-h)
         cat <<EOF
-Usage: spectacular archive <slug> [--force] [--skip-doctor]
+Usage: spectacular archive <slug> [--force] [--skip-doctor] [--no-docs-prompt]
 
 Move a request from .spectacular/requests/<slug>/ to .spectacular/archive/<slug>/
 and rewrite inbound related: links in other request files to point at the new
@@ -797,10 +812,16 @@ location.
 Refuses unless status is 'verified' or 'review'. Use --force to override.
 Refuses if doctor finds workspace/specs/links errors. Use --skip-doctor to bypass.
 
+If the archived request touched SPEC.md / specs/ / ARCHITECTURE.md / PRD.md AND
+docs/ exists, prints a hint suggesting 'pageworks audit'. Suppress per-call with
+--no-docs-prompt, or per-project with 'docs.prompt_on_archive: false' in
+.spectacular/config.yaml. See: skills/spectacular/references/pageworks-handoff.md
+
 Options:
-  --force         Skip status-gate check (allow archiving planned/active requests)
-  --skip-doctor   Bypass the doctor precondition (use with caution)
-  -h, --help      Show this help
+  --force            Skip status-gate check (allow archiving planned/active requests)
+  --skip-doctor      Bypass the doctor precondition (use with caution)
+  --no-docs-prompt   Suppress the post-archive pageworks suggestion this run
+  -h, --help         Show this help
 EOF
         exit 0 ;;
       -*) die "Unknown flag for archive: $1" ;;
@@ -874,6 +895,56 @@ EOF
 
   if [[ "$rewrite_count" -eq 0 ]]; then
     echo "  • no inbound related: links found to rewrite"
+  fi
+
+  # ── pageworks handoff prompt (v1.2.0+) ─────────────────────────────────────
+  # If the archived request touched SPEC.md, specs/, ARCHITECTURE.md, or PRD.md
+  # AND docs/ exists in the project, surface a hint about pageworks. The user
+  # decides whether to act. See: skills/spectacular/references/pageworks-handoff.md
+  if ! $opt_no_docs_prompt && [[ -d "docs" ]]; then
+    # Per-project suppression via config.yaml
+    local prompt_setting
+    prompt_setting="$(awk '
+      /^docs:/ { in_docs=1; next }
+      in_docs && /^[a-zA-Z]/ && !/^  / { in_docs=0 }
+      in_docs && /^[[:space:]]+prompt_on_archive:/ {
+        sub(/^[[:space:]]+prompt_on_archive:[[:space:]]*/, "")
+        sub(/[[:space:]]*#.*$/, "")
+        sub(/[[:space:]]*$/, "")
+        print; exit
+      }
+    ' .spectacular/config.yaml 2>/dev/null)"
+
+    if [[ "$prompt_setting" != "false" ]]; then
+      # Detect spec-touching changes in the archived request's tracked content
+      local touched_spec=false
+      for sentinel in PLAN.md TASKS.md VERIFY.md; do
+        if [[ -f "$dest/$sentinel" ]]; then
+          if grep -qE '(SPEC\.md|specs/|ARCHITECTURE\.md|PRD\.md)' "$dest/$sentinel" 2>/dev/null; then
+            touched_spec=true
+            break
+          fi
+        fi
+      done
+
+      if $touched_spec; then
+        echo ""
+        echo "ℹ This request referenced internal specs. Public docs/ may need updates."
+        echo ""
+        if command -v pageworks >/dev/null 2>&1; then
+          echo "  Suggested next steps:"
+          echo "    pageworks audit           # find pages whose synced_from: matches the changed spec"
+          echo "    pageworks review <page>   # work through each flagged page"
+        else
+          echo "  Public docs work has moved to a dedicated skill: pageworks."
+          echo "  Install: https://github.com/alexsmedile/pageworks"
+        fi
+        echo ""
+        echo "  Skip future prompts:"
+        echo "    spectacular archive <slug> --no-docs-prompt"
+        echo "    or set 'docs.prompt_on_archive: false' in .spectacular/config.yaml"
+      fi
+    fi
   fi
 }
 
@@ -3213,9 +3284,11 @@ check_specs() {
   shopt -u nullglob
 }
 
-# ── area: docs (v0.6.0+) ──────────────────────────────────────────────────────
-# Validate the public-docs surface — see docs-contract.md for full schema.
-# Skipped silently if no docs/ tree exists (docs are opt-in, not always-set).
+# ── area: docs (slim discovery — v1.2.0+) ────────────────────────────────────
+# Schema validation, frontmatter checks, orphan detection, and renderer config
+# all moved to pageworks. Spectacular now reports only what it observes about
+# docs/: folder presence, manifest presence, and whether pageworks is installed.
+# Anyone needing the full validation surface should run `pageworks doctor`.
 check_docs() {
   local docs_dir="docs"
   local manifest="${docs_dir}/docs.yaml"
@@ -3225,186 +3298,23 @@ check_docs() {
     return 0
   fi
 
-  # docs/ exists but no manifest → error
-  if [[ ! -f "$manifest" ]]; then
-    doc_add "docs" "error" "$manifest" "docs.yaml missing but docs/ exists" \
-      "run 'spectacular docs init' to scaffold it" "judgment"
-    return
+  doc_add "docs" "pass" "$docs_dir" "docs/ folder present"
+
+  # Manifest discovery — pageworks handles its absence as an init prompt.
+  if [[ -f "$manifest" ]]; then
+    doc_add "docs" "pass" "$manifest" "docs.yaml manifest present"
+  else
+    doc_add "docs" "info" "$manifest" "docs.yaml not found — run 'pageworks init' to scaffold one" \
+      "pageworks owns docs/ schema and authoring" "judgment"
   fi
 
-  doc_add "docs" "pass" "$manifest" "docs.yaml present"
-
-  # Validate optional `renderers:` block (v1.1.0+).
-  # Schema: top-level map; keys are renderer names; recognized: mkdocs, docusaurus.
-  # Unknown renderer keys are warned (typo guard + signals unregistered adapters).
-  if grep -qE '^renderers:' "$manifest"; then
-    # Scalar form: `renderers: <something>` — anything after the colon on the same line
-    if grep -qE '^renderers:[[:space:]]+[^[:space:]#]' "$manifest"; then
-      doc_add "docs" "error" "$manifest" "renderers: must be a map, got a scalar value" \
-        "convert to a map: 'renderers:\\n  mkdocs:\\n    theme: material'" "judgment"
-    # List form: first non-blank line after `renderers:` starts with `-`
-    elif awk '
-      /^renderers:/ { found=1; next }
-      found && /^[a-zA-Z]/ && !/^[[:space:]]/ { exit }
-      found && /^[[:space:]]*$/ { next }
-      found && /^[[:space:]]*-[[:space:]]/ { print "list"; exit }
-      found && /^[[:space:]]+[a-zA-Z]/ { exit }
-    ' "$manifest" | grep -q list; then
-      doc_add "docs" "error" "$manifest" "renderers: must be a map, got a list" \
-        "convert list items to map keys: 'renderers:\\n  mkdocs: ...'" "judgment"
-    else
-      doc_add "docs" "pass" "$manifest" "renderers: block present (valid map)"
-      local known_renderers="mkdocs docusaurus"
-      local renderer_keys
-      renderer_keys=$(awk '
-        /^renderers:/ { in_block=1; next }
-        in_block && /^[a-zA-Z]/ && !/^  / { in_block=0 }
-        in_block && /^  [a-zA-Z_][a-zA-Z0-9_-]*:/ {
-          key=$0
-          sub(/^[[:space:]]+/, "", key)
-          sub(/:.*$/, "", key)
-          print key
-        }
-      ' "$manifest")
-      while IFS= read -r rkey; do
-        [[ -z "$rkey" ]] && continue
-        if in_list "$rkey" "$known_renderers"; then
-          doc_add "docs" "pass" "$manifest" "renderers.${rkey} recognized"
-        else
-          doc_add "docs" "warning" "$manifest" "renderers.${rkey} is not a recognized renderer name" \
-            "remove the block, fix the typo, or document it in docs-renderer-adapters.md (community adapter)" "judgment"
-        fi
-      done <<< "$renderer_keys"
-    fi
+  # Pageworks install discovery — non-blocking; install hint only.
+  if command -v pageworks >/dev/null 2>&1; then
+    doc_add "docs" "pass" "pageworks" "pageworks CLI available — run 'pageworks doctor' for full validation"
+  else
+    doc_add "docs" "info" "pageworks" "pageworks not installed — public-doc validation moved to pageworks in v1.2.0" \
+      "install: https://github.com/alexsmedile/pageworks" "judgment"
   fi
-
-  # Extract declared section ids + page slugs
-  local declared_sections declared_pages
-  declared_sections=$(awk '
-    /^sections:/ { in_sec=1; next }
-    in_sec && /^[a-zA-Z]/ && !/^  / { in_sec=0 }
-    in_sec && /^  - id:/ {
-      sub(/^  - id:[[:space:]]*/, "")
-      sub(/[[:space:]]*#.*$/, "")
-      sub(/[[:space:]]*$/, "")
-      print
-    }
-  ' "$manifest")
-
-  # For each declared section, collect declared pages (one line per section's pages: list)
-  # Strip inline # comments before parsing, and only accept content between [ and ]
-  declared_pages=$(awk '
-    /^sections:/ { in_sec=1; next }
-    in_sec && /^[a-zA-Z]/ && !/^  / { in_sec=0 }
-    in_sec && /^  - id:/ {
-      section=$0
-      sub(/^  - id:[[:space:]]*/, "", section)
-      sub(/[[:space:]]*#.*$/, "", section)
-      sub(/[[:space:]]*$/, "", section)
-    }
-    in_sec && /^[[:space:]]*pages:[[:space:]]*\[/ {
-      pages=$0
-      # Extract only what is between [ and ] on this line
-      if (match(pages, /\[[^\]]*\]/) > 0) {
-        pages=substr(pages, RSTART+1, RLENGTH-2)
-      } else {
-        pages=""
-      }
-      gsub(/[[:space:]]/, "", pages)
-      n=split(pages, arr, ",")
-      for (i=1; i<=n; i++) if (arr[i] != "") print section "/" arr[i]
-    }
-  ' "$manifest")
-
-  # Extract extras: list (top-level pages with no section, e.g. troubleshooting at docs/troubleshooting.md)
-  local declared_extras
-  declared_extras=$(awk '
-    /^extras:/ { in_ex=1; next }
-    in_ex && /^[a-zA-Z]/ && !/^  / && !/^[[:space:]]*-/ { in_ex=0 }
-    in_ex && /^[[:space:]]*-[[:space:]]+/ {
-      slug=$0; sub(/^[[:space:]]*-[[:space:]]+/, "", slug); sub(/[[:space:]]*$/, "", slug)
-      gsub(/^["'\'']|["'\'']$/, "", slug)
-      if (slug != "") print slug
-    }
-  ' "$manifest")
-
-  # Check: each declared page exists on disk
-  local missing=0 page section_id file_path
-  while IFS= read -r entry; do
-    [[ -z "$entry" ]] && continue
-    section_id="${entry%/*}"
-    page="${entry##*/}"
-    file_path="${docs_dir}/${section_id}/${page}.md"
-    if [[ -f "$file_path" ]]; then
-      doc_add "docs" "pass" "$file_path" "declared page present"
-    else
-      doc_add "docs" "error" "$file_path" "page '${page}' declared in docs.yaml but file missing" \
-        "create the file or remove the entry from docs.yaml" "judgment"
-      missing=$((missing + 1))
-    fi
-  done <<< "$declared_pages"
-
-  # Check: each declared extra exists at docs/<slug>.md (top-level, no section folder)
-  local extra_slug extra_path
-  while IFS= read -r extra_slug; do
-    [[ -z "$extra_slug" ]] && continue
-    extra_path="${docs_dir}/${extra_slug}.md"
-    if [[ -f "$extra_path" ]]; then
-      doc_add "docs" "pass" "$extra_path" "declared extra present"
-    else
-      doc_add "docs" "error" "$extra_path" "extra '${extra_slug}' declared in docs.yaml but file missing" \
-        "create the file or remove the entry from docs.yaml extras:" "judgment"
-    fi
-  done <<< "$declared_extras"
-
-  # Check: each .md file in docs/ subdirs is declared in docs.yaml sections
-  shopt -s nullglob
-  for section_dir in "$docs_dir"/*/; do
-    local sec_id="${section_dir%/}"
-    sec_id="${sec_id##*/}"
-    [[ "$sec_id" == "."* ]] && continue
-    for page_file in "$section_dir"*.md; do
-      local page_slug
-      page_slug=$(basename "$page_file" .md)
-      if ! echo "$declared_pages" | grep -qxF "${sec_id}/${page_slug}"; then
-        doc_add "docs" "warning" "$page_file" "page exists on disk but not declared in docs.yaml (orphan)" \
-          "add to docs.yaml ${sec_id}.pages or delete the file" "judgment"
-      fi
-    done
-  done
-  # Check: top-level .md files (except index.md) are either in extras or warned as orphans
-  for page_file in "$docs_dir"/*.md; do
-    [[ -f "$page_file" ]] || continue
-    local page_slug
-    page_slug=$(basename "$page_file" .md)
-    [[ "$page_slug" == "index" ]] && continue
-    if ! echo "$declared_extras" | grep -qxF "$page_slug"; then
-      doc_add "docs" "warning" "$page_file" "top-level page exists on disk but not in docs.yaml extras: (orphan)" \
-        "add to docs.yaml extras: or move into a section folder" "judgment"
-    fi
-  done
-  shopt -u nullglob
-
-  # Per-page frontmatter validation
-  local required_fields="title description section status updated"
-  shopt -s nullglob
-  for page_file in "$docs_dir"/*.md "$docs_dir"/*/*.md; do
-    [[ -f "$page_file" ]] || continue
-    if ! head -1 "$page_file" | grep -q '^---$'; then
-      doc_add "docs" "error" "$page_file" "missing frontmatter delimiter" \
-        "add proper frontmatter block (or run 'doctor docs --fix')" "mechanical"
-      continue
-    fi
-    local fm
-    fm=$(awk '/^---$/ { count++; if (count == 2) exit; next } count == 1' "$page_file")
-    for field in $required_fields; do
-      if ! echo "$fm" | grep -qE "^${field}:"; then
-        doc_add "docs" "error" "$page_file" "missing required frontmatter field: ${field}" \
-          "add '${field}:' to frontmatter (or run 'doctor docs --fix')" "mechanical"
-      fi
-    done
-  done
-  shopt -u nullglob
 }
 
 # ── doctor orchestrator ───────────────────────────────────────────────────────
@@ -3976,28 +3886,36 @@ docs_usage() {
   cat <<EOF
 Usage: spectacular docs <verb> [options]
 
-Verbs:
+⚠ DEPRECATED in v1.2.0 — public docs work has its own skill: pageworks.
+  Install pageworks: https://github.com/alexsmedile/pageworks
+  These verbs still work for backward compatibility but will be removed in
+  spectacular v2.0.0. The equivalents are 'pageworks <verb>'.
+
+Verbs (deprecated):
   init [--minimal]              Scaffold docs/ — docs.yaml + index.md + 3 default sections
                                 (--minimal: docs.yaml + index.md only, no default sections)
+                                → use 'pageworks init' instead
   export <renderer> [options]   Write renderer config from docs.yaml (v1.1.0+)
                                 Renderers: mkdocs | docusaurus
                                 Options:
                                   --out <path>   Override default output location
                                   --force        Overwrite existing files
                                   --no-workflow  Skip GitHub Pages workflow generation
+                                → use 'pageworks export <renderer>' instead
 
-Interactive verbs (run inside an AI agent with the spectacular skill):
-  new <page>            Scaffold a new page with frontmatter stub
-  new --section <name>  Declare a new section in docs.yaml
-  review                Run the docs quality gate
-  status                Briefing scoped to docs/
+Interactive verbs (run inside an AI agent — deprecated):
+  new <page>            Scaffold a new page with frontmatter stub  → 'pageworks new'
+  new --section <name>  Declare a new section in docs.yaml          → 'pageworks new --section'
+  review                Run the docs quality gate                   → 'pageworks review'
+  status                Briefing scoped to docs/                    → 'pageworks status'
 
 Options:
   -h, --help            Show this help
 
-See: skills/spectacular/references/docs-contract.md           for schema
-     skills/spectacular/references/docs-overrides.md          for engine rules
-     skills/spectacular/references/docs-renderer-adapters.md  for export adapters
+See: skills/spectacular/references/docs-contract.md           for schema (deprecated)
+     skills/spectacular/references/docs-overrides.md          for engine rules (deprecated)
+     skills/spectacular/references/docs-renderer-adapters.md  for export adapters (deprecated)
+     skills/spectacular/references/pageworks-handoff.md       for the migration path
 EOF
 }
 
@@ -4010,6 +3928,8 @@ docs_init() {
       *) die "Unknown docs init option: '$1'" ;;
     esac
   done
+
+  deprecation_notice "docs init"
 
   local project_name
   project_name="${OPT_NAME:-$(slug_from_dir)}"
@@ -4586,6 +4506,8 @@ docs_export() {
 
   [[ -z "$renderer" ]] && die "docs export requires a renderer. Usage: spectacular docs export <mkdocs|docusaurus> [--out path] [--force]"
 
+  deprecation_notice "docs export"
+
   local manifest="docs/docs.yaml"
   [[ -f "$manifest" ]] || die "docs/docs.yaml not found. Run 'spectacular docs init' first."
 
@@ -4638,6 +4560,7 @@ docs() {
     init)   docs_init   "$@" ;;
     export) docs_export "$@" ;;
     new|review|status)
+      deprecation_notice "docs $verb"
       die "'spectacular docs $verb' is a skill verb — run it inside your AI agent (Claude Code, Codex). The CLI only handles 'docs init', 'docs export', and 'doctor docs'."
       ;;
     *) die "Unknown docs verb: '$verb'. Run 'spectacular docs --help' for usage." ;;

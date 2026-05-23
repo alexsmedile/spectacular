@@ -102,6 +102,22 @@ Anti-pattern: copying every line from `TASKS.md` into the harness one-for-one. T
 - **Don't create `requests/<slug>/PRD.md`.** It's an explicit anti-pattern.
 - **Don't load `.spectacular/` wholesale.** Read frontmatter; load bodies on demand.
 - **Don't trigger Claude Code's auto-memory** when writing to `.spectacular/memory/` — they're separate systems and double-capture is a bug.
+- **Don't write into `docs/`.** That's [pageworks](https://github.com/alexsmedile/pageworks)' surface — spectacular's awareness ends at "does docs/ exist?" + "is a manifest present?". For schema, page authoring, renderer adapters, or maintenance: install pageworks and delegate. See `skills/spectacular/references/pageworks-handoff.md`.
+
+---
+
+## Skill boundary — spectacular vs pageworks (v1.2.0+)
+
+Two skills, one workspace:
+
+| Skill | Owns | Examples |
+|---|---|---|
+| **spectacular** | `.spectacular/` (internal workspace) | PRD, SPEC, specs/, plans, tasks, requests lifecycle, archive, doctor (workspace areas), memory |
+| **pageworks** | `docs/` (public-facing) | docs.yaml schema, page authoring (Diátaxis), renderer export, doctor (docs validation), drift detection |
+
+Spectacular's CLI keeps the `docs init`/`docs export`/etc. verbs working for backward compatibility (deprecated in v1.2.0, removed in v2.0.0). New work goes through pageworks.
+
+After `spectacular archive <slug>` where the request touched SPEC.md, specs/, ARCHITECTURE.md, or PRD.md, spectacular prints a hint suggesting `pageworks audit` (suppress with `--no-docs-prompt` or per-project `docs.prompt_on_archive: false` in config.yaml).
 
 ---
 

@@ -279,95 +279,9 @@ YAML
   rm -rf "$dir"
 }
 
-scenario_13_doctor_renderers_valid() {
-  echo "Scenario 13: doctor docs passes recognized renderer keys"
-  local dir="/tmp/spectacular-export-test-13"
-  setup_docs "$dir"
-
-  cat >> "$dir/docs/docs.yaml" <<'YAML'
-
-renderers:
-  mkdocs:
-    theme: material
-  docusaurus:
-    preset: classic
-YAML
-
-  local output
-  output=$(run_cli "$dir" doctor docs 2>&1)
-  assert_contains "$output" "renderers: block present (valid map)"
-  assert_contains "$output" "renderers.mkdocs recognized"
-  assert_contains "$output" "renderers.docusaurus recognized"
-
-  rm -rf "$dir"
-}
-
-scenario_14_doctor_renderers_unknown_key() {
-  echo "Scenario 14: doctor docs warns on unknown renderer key"
-  local dir="/tmp/spectacular-export-test-14"
-  setup_docs "$dir"
-
-  cat >> "$dir/docs/docs.yaml" <<'YAML'
-
-renderers:
-  mkdoc:
-    theme: material
-YAML
-
-  local output
-  output=$(run_cli "$dir" doctor docs 2>&1)
-  assert_contains "$output" "renderers.mkdoc is not a recognized"
-
-  rm -rf "$dir"
-}
-
-scenario_15_doctor_renderers_scalar_error() {
-  echo "Scenario 15: doctor docs errors on renderers: as scalar"
-  local dir="/tmp/spectacular-export-test-15"
-  setup_docs "$dir"
-
-  cat > "$dir/docs/docs.yaml" <<'YAML'
-site:
-  name: scalar-test
-sections:
-  - id: foo
-    title: Foo
-    order: 1
-    pages: []
-renderers: oops
-YAML
-
-  local output
-  output=$(run_cli "$dir" doctor docs 2>&1)
-  assert_contains "$output" "renderers: must be a map, got a scalar"
-
-  rm -rf "$dir"
-}
-
-scenario_16_doctor_renderers_list_error() {
-  echo "Scenario 16: doctor docs errors on renderers: as list"
-  local dir="/tmp/spectacular-export-test-16"
-  setup_docs "$dir"
-
-  cat > "$dir/docs/docs.yaml" <<'YAML'
-site:
-  name: list-test
-sections:
-  - id: foo
-    title: Foo
-    order: 1
-    pages: []
-renderers:
-  - mkdocs
-  - docusaurus
-YAML
-
-  local output
-  output=$(run_cli "$dir" doctor docs 2>&1)
-  assert_contains "$output" "renderers: must be a map, got a list"
-
-  rm -rf "$dir"
-}
+# Scenarios 13-16 (doctor renderers: validation) moved to pageworks's
+# tests/cli/doctor.test.sh in v1.2.0. Spectacular's doctor docs is now
+# discovery-only; renderer-block validation lives in pageworks doctor.
 
 # ── run all ───────────────────────────────────────────────────────────────────
 echo "=== docs-export.test.sh ==="
@@ -383,10 +297,6 @@ scenario_9_missing_manifest
 scenario_10_mkdocs_drops_empty_sections
 scenario_11_docusaurus_drops_empty_sections
 scenario_12_renderers_block_consumed
-scenario_13_doctor_renderers_valid
-scenario_14_doctor_renderers_unknown_key
-scenario_15_doctor_renderers_scalar_error
-scenario_16_doctor_renderers_list_error
 
 echo ""
 echo "Results: ${pass_count} passed, ${fail_count} failed"

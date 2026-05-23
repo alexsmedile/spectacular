@@ -1,5 +1,7 @@
 # Docs Overrides — engine rules for `spectacular docs <verb>`
 
+> **⚠ DEPRECATED in spectacular v1.2.0** — public-facing docs authoring is now owned by the [pageworks](https://github.com/alexsmedile/pageworks) skill. This reference will be removed in spectacular v2.0.0. The equivalent (pageworks-native) lives at `pageworks/skills/pageworks/references/authoring.md`.
+
 Consumed by the generic engine (`grill.md` / `refine.md` / `review.md`) when the active doc-id is `docs-page` or `docs-manifest`. Schema and folder contract live in [[docs-contract]].
 
 ## Scope

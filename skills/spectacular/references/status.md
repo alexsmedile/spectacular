@@ -19,7 +19,7 @@ See [[doctor]] § Skill-invoked checks for the full list of scoped checks.
 
 1. Read `.spectacular/config.yaml` for project name and config.
 2. Read frontmatter from all root layer files: `PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `AGENTS.md`, `STACK.md`, `DECISIONS.md`. Older workspaces may only have `PRD.md` + `STACK.md` + `DECISIONS.md` + `AGENTS.md` — treat the four newer docs as optional.
-3. Read frontmatter from all `current/<capability>.md` files (or `current/**/` subdirs — read the top-level index if present).
+3. Read `.spectacular/SPEC.md` (top-level index) and any `specs/<capability>/SPEC.md` files (per-capability, optional).
 4. Read frontmatter from all `requests/*/PLAN.md` files.
 5. Read `.spectacular/memory/` file list and rough counts (not full content).
 
@@ -57,7 +57,7 @@ While reading state, flag any of the following:
 | Status is `review`, VERIFY.md exists | Prompt to run VERIFY checklist |
 | Status is `review`, no VERIFY.md | Offer to create VERIFY.md |
 | Request `updated` date > 14 days ago, status `active` | Flag as potentially stale |
-| `current/` capability is `draft`, no active request | Suggest creating a request or promoting to stable |
+| `specs/` capability is `draft`, no active request | Suggest creating a request or promoting to stable |
 | `requests/` has slug collision potential | Warn |
 
 Only surface the highest-signal item in the briefing. Offer to show full details.

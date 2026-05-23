@@ -54,9 +54,9 @@ If a request's `updated` date is >14 days old and `status` is `active`:
 
 ### Draft capability with no active request
 
-If a `current/` spec has `status: draft` and no `requests/` item references it:
+If a `specs/` capability has `status: draft` and no `requests/` item references it:
 
-> "`current/<capability>` is still draft. Want to create a request to finish it, or mark it deprecated?"
+> "`specs/<capability>` is still draft. Want to create a request to finish it, or mark it deprecated?"
 
 ---
 
@@ -72,10 +72,10 @@ User can explicitly say:
 
 ## Capability spec states
 
-`current/<capability>.md` frontmatter tracks its own state: `status: stable | draft | deprecated`
+`specs/<capability>/SPEC.md` frontmatter tracks its own state: `status: stable | draft | deprecated`
 
 - `draft` — capability spec exists but is being developed (often tied to an active request)
 - `stable` — current canonical truth, no active changes
 - `deprecated` — no longer in use, kept for reference
 
-Skill proposes `current/` updates when a request is archived (see `current-sync.md`).
+Skill proposes `specs/` updates (and a bullet edit to `SPEC.md` index) when a request is archived (see `spec-sync.md`).

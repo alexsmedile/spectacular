@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Spectacular is a Bash CLI plus an agent skill. `cli/spectacular` is the executable used by `spectacular init`; `cli/install.sh` installs it into `~/.local/bin`. The skill lives in `skills/spectacular/`: keep `SKILL.md` as the lean orchestrator and place detailed workflows in `skills/spectacular/references/`. Plugin metadata is under `.claude-plugin/` and `.codex-plugin/`. Hook definitions live in `hooks/`, with the implementation in `scripts/hooks/pre-commit`. Documentation and visual assets are in `docs/`. This repository also uses its own `.spectacular/` workspace for planning and project state.
+Spectacular is a Bash CLI plus an agent skill. `cli/spectacular` is the executable used by `spectacular init`; `cli/install.sh` installs it into `~/.local/bin`. The skill lives in `skills/spectacular/`: keep `SKILL.md` as the lean orchestrator and place detailed workflows in `skills/spectacular/references/`. Plugin metadata is under `.claude-plugin/` and `.codex-plugin/`. Hook definitions live in `hooks/`, with the implementation in `scripts/hooks/pre-commit`. Documentation and visual assets are in `docs/`. This repository also uses its own `.spectacular/` workspace for planning and project state — read `.spectacular/SPEC.md` for a one-page index of what's built right now (introduced in v0.5.0; replaces the legacy `.spectacular/current/` folder).
 
 ## Build, Test, and Development Commands
 
@@ -37,4 +37,4 @@ The git history uses Conventional Commit prefixes such as `feat:`, `fix:`, and `
 
 ## Agent-Specific Instructions
 
-When changing canonical Spectacular docs or skill behavior, consult `.spectacular/` for current project intent before editing. Keep `.spectacular.local/` personal and uncommitted. Do not overwrite versioned skill snapshots in `skills/spectacular/versions/`; add a new snapshot when intentionally releasing a new skill version.
+When changing canonical Spectacular docs or skill behavior, consult `.spectacular/` for current project intent before editing — start with `.spectacular/AGENTS.md` (operating rules), `.spectacular/PRD.md` (intent), and `.spectacular/SPEC.md` (what's built). Keep `.spectacular.local/` personal and uncommitted. Do not overwrite versioned skill snapshots in `skills/spectacular/versions/`; add a new snapshot when intentionally releasing a new skill version. When working on a request inside `.spectacular/requests/<slug>/`, load that folder's `PLAN.md` and `TASKS.md`, plus any `specs/<capability>/SPEC.md` it references — not the whole `specs/` tree.

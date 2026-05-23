@@ -63,7 +63,7 @@ updated: <today>
 summary: "<one-line description>"
 related:
   - ../../PRD.md
-  - current/<capability>
+  - specs/<capability>/SPEC.md
 ---
 
 # <Request title>

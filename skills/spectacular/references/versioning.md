@@ -7,7 +7,7 @@ Canonical documents are **never overwritten in place**. Always snapshot first.
 ## What counts as canonical
 
 - Root layer files: `PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `AGENTS.md`, `STACK.md`, `DECISIONS.md`
-- `current/` capability specs
+- `SPEC.md` (always-on index) + `specs/<capability>/SPEC.md` (per-capability)
 - `config.yaml`
 
 Requests files (`PLAN.md`, `TASKS.md`, `SESSION.md`) are operational/temporary — no snapshot required.

@@ -49,7 +49,7 @@ Exit codes: 0 (clean), 1 (warnings only), 2 (errors present).
 | Check | Severity | Detects |
 |---|---|---|
 | `.spectacular/` exists | ❌ if missing | Project's workspace directory |
-| Always-set present | ❌ per missing file | `PRD.md`, `config.yaml`, `<agents-file>`, `requests/`, `current/` |
+| Always-set present | ❌ per missing file | `PRD.md`, `SPEC.md`, `config.yaml`, `<agents-file>`, `requests/`, `specs/` |
 | `config.yaml` parses | ❌ if malformed | YAML well-formed |
 | `<agents-file>` matches `config.yaml`'s `agents.file:` field | ⚠️ if mismatch | Frontmatter declaration vs reality |
 
@@ -184,7 +184,7 @@ The CLI can directly apply these without human judgment because they're content-
 | Fix | When | Action |
 |---|---|---|
 | `.gitignore` append | Entry missing | Append `.spectacular.local/` to existing `.gitignore` (or create the file) |
-| Missing dir | `.spectacular/requests/` or `.spectacular/current/` absent | `mkdir -p` |
+| Missing dir | `.spectacular/requests/` or `.spectacular/specs/` absent | `mkdir -p` |
 | Dangling symlink | `.claude/skills/spectacular` broken but `.agents/skills/spectacular/` exists | Recreate symlink to existing target |
 | Missing always-set stub | `PRD.md` / `config.yaml` / `<agents-file>` entirely absent | Re-scaffold using init's templates (only if file is *missing*, never overwrites existing content) |
 

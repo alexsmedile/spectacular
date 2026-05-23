@@ -258,7 +258,8 @@ Canonical docs should be snapshotted before edits:
 - `.spectacular/DECISIONS.md`
 - `.spectacular/AGENTS.md`
 - `.spectacular/config.yaml`
-- `.spectacular/current/**`
+- `.spectacular/SPEC.md`
+- `.spectacular/specs/**`
 
 Use the skill trigger:
 

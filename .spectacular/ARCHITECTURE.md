@@ -436,7 +436,7 @@ archived  → moved to archive/, current/ updated, memory proposed
 
 **State storage:**
 - `status:` in `PLAN.md` frontmatter = request lifecycle state
-- `status:` in `current/<capability>.md` = capability state (`stable | draft | deprecated`)
+- `status:` in `specs/<capability>/SPEC.md` = capability state (`stable | draft | deprecated`); top-level `SPEC.md` carries no per-capability status — it's the index
 - `status:` in `requests/<slug>/specs/` = individual spec development state
 
 **Transition rules:**
@@ -456,7 +456,7 @@ Canonical documents are **never overwritten in place**.
 - version tracked in frontmatter: `version: 1.0`
 - the unversioned filename (`PRD.md`) always points to the current version
 - snapshots live alongside the current file
-- applies to: root layer files, `current/` capability specs, `config.yaml`
+- applies to: root layer files, `SPEC.md`, `specs/<capability>/SPEC.md` capability specs, `config.yaml`
 - this is **default behavior** — not opt-in
 
 ---
@@ -469,12 +469,15 @@ Canonical documents are **never overwritten in place**.
 
 As of v0.3.0, init scaffolds **only what the project needs**, not all root docs.
 
-**Always-set** (5 files + 2 dirs, scaffolded unconditionally):
+**Always-set** (6 files + 2 dirs, scaffolded unconditionally — v0.5.0+):
 - `.spectacular/PRD.md` — anchor doc; every other doc references it
+- `.spectacular/SPEC.md` — system spec index (what's built right now, present tense)
 - `.spectacular/config.yaml` — project name, kit identity, naming rules
 - `.spectacular/<agents-file>` — onboarding doc (defaults to `AGENTS.md`)
 - `.spectacular/requests/` — request folders
-- `.spectacular/current/` — capability specs
+- `.spectacular/specs/` — per-capability specs (optional content; only when a capability outgrows a one-liner in SPEC.md)
+
+> v0.4.0 and earlier scaffolded `.spectacular/current/` instead of `SPEC.md` + `specs/`. The legacy folder is auto-migrated via `spectacular doctor specs --fix`.
 
 **Kit-driven additions** (see [[kits-contract]]):
 - The user picks a kit (`blank`, `coding`, `content`, `product`, `research`)

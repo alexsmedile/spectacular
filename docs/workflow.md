@@ -148,18 +148,19 @@ The skill can propose transitions, but the human should confirm them.
 
 ---
 
-## 7. Update current truth after completion
+## 7. Update system truth after completion
 
-`current/` describes what the system does now. It should be updated after a request changes real behavior.
+`SPEC.md` (and any per-capability `specs/<capability>/SPEC.md` files) describe what the system does now. They should be updated after a request changes real behavior.
 
 When archiving a completed request, the skill should propose updates such as:
 
-- create a new `current/<capability>.md`
+- add or update a bullet in `SPEC.md`
+- create a new `specs/<capability>/SPEC.md` (only when the bullet outgrows one line)
 - update an existing capability spec
 - change a capability status from `draft` to `stable`
 - leave unaffected specs unchanged
 
-Canonical docs and `current/` specs should be snapshotted before edits:
+Canonical docs and `specs/` files should be snapshotted before edits:
 
 ```text
 current/billing/plans.md

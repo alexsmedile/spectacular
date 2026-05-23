@@ -313,7 +313,7 @@ Project-local lookup → user lookup → app-store lookup → bundled fallback. 
 - Run arbitrary code at install time (no `pack.json` with scripts; pack is data + markdown)
 - Modify files outside the conventions they declare (no `post-install` hooks)
 - Apply two packs simultaneously to one repo (v1: single-pack only — see Composition)
-- Override the always-set (`PRD.md`, `requests/`, `current/`, `config.yaml`, `<agents-file>`) — packs only *add*
+- Override the always-set (`PRD.md`, `SPEC.md`, `requests/`, `specs/`, `config.yaml`, `<agents-file>`) — packs only *add*
 
 ## Composition (v1: single-pack only)
 

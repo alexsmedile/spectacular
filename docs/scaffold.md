@@ -223,8 +223,8 @@ Standard sections:
 |---|---|
 | Planning / design | PRD.md, PRINCIPLES.md, DECISIONS.md |
 | Refining intent / PRD work | PRD.md, skill refs prd-grill.md / prd-refine.md / prd-review.md |
-| Implementing a request | STACK.md, requests/<slug>/PLAN.md, TASKS.md, relevant current/<capability>/ |
-| Reviewing / QA | requests/<slug>/VERIFY.md, relevant current/<capability>/, RISKS.md |
+| Implementing a request | STACK.md, requests/<slug>/PLAN.md, TASKS.md, SPEC.md, relevant specs/<capability>/SPEC.md |
+| Reviewing / QA | requests/<slug>/VERIFY.md, relevant specs/<capability>/SPEC.md, RISKS.md |
 | Onboarding cold | PRD.md, ARCHITECTURE.md, this file |
 
 ## Available skills

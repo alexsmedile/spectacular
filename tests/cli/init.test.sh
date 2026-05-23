@@ -91,7 +91,8 @@ scenario_1_bare_init() {
   assert_file_exists "$dir/.spectacular/config.yaml"
   assert_file_exists "$dir/.spectacular/AGENTS.md"
   assert_dir_exists "$dir/.spectacular/requests"
-  assert_dir_exists "$dir/.spectacular/current"
+  assert_dir_exists "$dir/.spectacular/specs"
+  assert_file_exists "$dir/.spectacular/SPEC.md"
 
   assert_file_absent "$dir/.spectacular/PRINCIPLES.md"
   assert_file_absent "$dir/.spectacular/ARCHITECTURE.md"

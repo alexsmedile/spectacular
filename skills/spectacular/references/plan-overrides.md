@@ -9,7 +9,7 @@ Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `plan` (
 >
 > Compress the request's intent into a single line. Should align with PRD's Vision or Goals — this is a slice, not a restatement.
 >
-> *Example:* "Add a CLI command that scaffolds the minimal `.spectacular/` set, defaulting to PRD + requests/ + current/ + config.yaml + AGENTS.md only."
+> *Example:* "Add a CLI command that scaffolds the minimal `.spectacular/` set, defaulting to PRD + SPEC + requests/ + specs/ + config.yaml + AGENTS.md only."
 
 **Slot 2 — Constraints**
 > What's fixed before you start? Inherited from PRD/STACK/PRINCIPLES + request-specific limits.

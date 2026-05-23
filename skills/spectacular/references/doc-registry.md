@@ -93,6 +93,14 @@ architecture:
   snapshot-on-edit: true
   description: ".spectacular/ structure, frontmatter, lifecycle, versioning"
 
+spec:
+  template: templates/spec/base.md
+  mode: freeform
+  location: .spectacular/SPEC.md
+  scope: project-wide
+  snapshot-on-edit: true
+  description: "System spec — index of what the system actually is and how it behaves right now (capability list, link out to specs/<capability>/SPEC.md only when needed)"
+
 roadmap:
   template: templates/roadmap/base.md
   mode: freeform

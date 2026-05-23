@@ -20,11 +20,12 @@ Created on every init regardless of kit or flags:
 |---|---|
 | `.spectacular/PRD.md` | Product intent — the project's anchor doc |
 | `.spectacular/config.yaml` | Machine-readable config (project name, naming rules, kit identity) |
+| `.spectacular/SPEC.md` | System spec index — what's built, present tense |
 | `.spectacular/<agents-file>` | Onboarding doc for agents; defaults to `AGENTS.md`, configurable via `--agents-file` |
 | `.spectacular/requests/` | Request folders live here |
-| `.spectacular/current/` | Capability specs (canonical truth) live here |
+| `.spectacular/specs/` | Per-capability specs (optional; only when a capability outgrows a one-liner in SPEC.md) |
 
-**Rationale:** PRD is the anchor every other doc references. config.yaml is how the skill discovers project state. AGENTS.md is the cold-start onboarding doc. requests/ and current/ are the working surfaces. Without these five, the workspace is unusable.
+**Rationale:** PRD is the anchor every other doc references. SPEC.md is the always-on index of what's built. config.yaml is how the skill discovers project state. AGENTS.md is the cold-start onboarding doc. requests/ and specs/ are the working surfaces. Without these six, the workspace is unusable.
 
 Everything else (`PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`) is opt-in via kit or `--with` flag. Empty stubs of unused docs create *stub fatigue* — the skill still reads them during briefings, diluting signal.
 
@@ -97,7 +98,7 @@ Init is **always idempotent + non-destructive**. Re-running on an initialized wo
 1. Parse flags + validate (`--kit` known, `--with` doc IDs known)
 2. If `-i`: run interactive prompts (name, summary, agents-file, scope, kit, per-suggested-doc y/n)
 3. Resolve doc-set: `always-set + (kit's always-docs unless --minimal) + --with entries`
-4. Scaffold directories (`current/`, `requests/`)
+4. Scaffold directories (`specs/`, `requests/`)
 5. Scaffold each resolved doc via `write_if_missing` (pre-flight rules apply per file)
 6. Update `.gitignore` (append `.spectacular.local/` if absent)
 7. **Pack consultation** — if `.spectacular/config.yaml` declares `convention_pack:` with `mode: scaffold` or `mode: enforce`, append the pack's `gitignore.always-add` entries (deduplicated). Pack source resolved via scope precedence (project-local → user → app-store → bundled). Always-set always wins on conflicts; pack never overwrites existing lines.

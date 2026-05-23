@@ -21,12 +21,12 @@ OPT_KIT="blank"
 OPT_WITH=""
 OPT_MINIMAL=false
 
-# Always-set: scaffolded regardless of kit. The 5-file minimum.
-#   PRD.md, config.yaml, AGENTS.md (file name varies per --agents-file), requests/, current/
-ALWAYS_SET="prd config agents"
+# Always-set: scaffolded regardless of kit. The 6-file minimum.
+#   PRD.md, SPEC.md, config.yaml, AGENTS.md (file name varies per --agents-file), requests/, specs/
+ALWAYS_SET="prd spec config agents"
 
 # Known doc IDs (kit triggers-docs entries and --with values must match these)
-KNOWN_DOCS="prd principles architecture roadmap stack decisions agents config"
+KNOWN_DOCS="prd spec principles architecture roadmap stack decisions agents config"
 
 # Bundled kits (must exist as templates/prd/kits/<id>.md in installed skill)
 KNOWN_KITS="blank coding content product research"
@@ -99,13 +99,13 @@ Options:
                             One of: blank, coding, content, product, research
       --with <a,b,c>        Comma-separated extra root docs to scaffold beyond always-set
                             Doc IDs: principles, architecture, roadmap, stack, decisions
-      --minimal             Scaffold the 5-file always-set only; ignore kit triggers-docs
+      --minimal             Scaffold the 6-file always-set only; ignore kit triggers-docs
       --global              Install skill to ~/.agents/skills/ and ~/.claude/skills/
       --update              Re-download latest skill release and update skills.lock
   -h, --help                Show this help
 
 Always-set (scaffolded regardless of kit/flags):
-  PRD.md, config.yaml, <agents-file>, requests/, current/
+  PRD.md, SPEC.md, config.yaml, <agents-file>, requests/, specs/
 
 Examples:
   spectacular init                              # always-set + blank kit (no extras)
@@ -501,7 +501,11 @@ update_skill() {
 
 doc_dirs() {
   # Report creation only when the dir genuinely didn't exist before
-  [[ -d ".spectacular/current" ]] || { mkdir -p .spectacular/current; created ".spectacular/current/"; }
+  if [[ ! -d ".spectacular/specs" ]]; then
+    mkdir -p .spectacular/specs
+    touch .spectacular/specs/.gitkeep
+    created ".spectacular/specs/"
+  fi
   [[ -d ".spectacular/requests" ]] || { mkdir -p .spectacular/requests; created ".spectacular/requests/"; }
 }
 
@@ -707,6 +711,49 @@ related:
 "
 }
 
+doc_spec() {
+  local name="$1"
+  write_if_missing ".spectacular/SPEC.md" "---
+version: 1.0
+updated: ${TODAY}
+summary: \"Index of what this system actually is and how it behaves right now\"
+related:
+  - PRD.md
+  - ARCHITECTURE.md
+---
+
+# ${name} — System Spec
+
+<!--
+  SPEC.md is the always-on index of system truth.
+  PRD says what we want. ARCHITECTURE says how the workspace is shaped.
+  This file says what's actually built and how it actually behaves right now.
+
+  Keep it short. For small projects, one bullet list is enough.
+  For complex projects, break out per-capability files at specs/<capability>/SPEC.md
+  and reference them from here.
+-->
+
+## What this system is
+
+<One paragraph — what the thing is today, in present tense. Skip vision, skip roadmap.
+\"X is a CLI that does Y, built in Z, distributed via W.\" Five sentences max.>
+
+## Capabilities
+
+<Bullet list. One line each. Each bullet is something the system can do right now.
+Link out to \`specs/<capability>/SPEC.md\` only when a capability needs more than one line.>
+
+- _no capabilities yet — write the first one when the first request ships_
+
+## How to extend this file
+
+- Add a bullet when a new capability ships (request → verified)
+- Promote a bullet to \`specs/<capability>/SPEC.md\` when it grows past one line
+- Snapshot before major rewrites: \`spectacular snapshot .spectacular/SPEC.md\`
+"
+}
+
 doc_roadmap() {
   local name="$1"
   write_if_missing ".spectacular/ROADMAP.md" "---
@@ -770,48 +817,82 @@ updated: ${TODAY}
 summary: \"Onboarding doc for any agent or human landing inside .spectacular/\"
 related:
   - PRD.md
+  - SPEC.md
   - PRINCIPLES.md
   - ARCHITECTURE.md
 ---
 
-# AGENTS.md — Working in \`.spectacular/\`
+# Working in \`.spectacular/\`
+
+This is the onboarding doc for any agent or human landing inside this workspace. Read this first.
 
 ## What this folder is
-\`.spectacular/\` is an AI-native operational workspace for ${name}. Read \`PRD.md\` before planning, \`ARCHITECTURE.md\` for structure, \`PRINCIPLES.md\` for rules.
+
+\`.spectacular/\` is an AI-native operational workspace for **${name}**. It separates four things deliberately:
+
+| Layer | Files | Purpose |
+|---|---|---|
+| Intent | \`PRD.md\` | What we want and why |
+| Truth | \`SPEC.md\` + \`specs/\` | What's built right now (SPEC.md is the always-on index) |
+| Work | \`requests/<slug>/\` | What's changing next (PLAN.md owns lifecycle state) |
+| Memory | \`memory/\` | What we learned, kept across sessions |
+
+Optional canonical docs (\`PRINCIPLES.md\`, \`ARCHITECTURE.md\`, \`ROADMAP.md\`, \`STACK.md\`, \`DECISIONS.md\`) are scaffolded by kits — not every project needs them.
 
 ## How to operate
-1. Read frontmatter first, file bodies second
-2. Load progressively — don't pre-load \`current/\` or \`requests/\` wholesale
-3. Snapshot before overwrite on any canonical doc (\`FILE@vN.md\`)
-4. Propose, don't act, on irreversibles
-5. Never read \`archive/\` during normal operation
-6. Write to \`memory/\` only on confirmation
+
+1. **Read frontmatter first**, file bodies second. \`status:\`, \`summary:\`, \`version:\`, \`updated:\`, \`related:\` are the navigation layer.
+2. **Load progressively.** The top-level \`SPEC.md\` is cheap and always relevant. Don't pre-load all of \`specs/\` or \`requests/\` — load only what the current task needs (see Context loading below).
+3. **Snapshot before overwrite** on any canonical doc — root layer, \`SPEC.md\`, \`specs/<capability>/SPEC.md\`, \`config.yaml\`. Naming: \`<FILE>@vN.md\`. The unversioned filename always points to current. Use \`spectacular snapshot <file>\` to do it.
+4. **Propose, don't act** on irreversibles — archives, lifecycle promotions, memory writes, bulk edits >5 files. Confirm with the human first.
+5. **Never read \`archive/\`** during normal operation. It's write-only from your perspective.
+6. **Write to \`memory/\` only on explicit confirmation** via \`spectacular remember this\`. Never autonomously.
 
 ## Context loading by task
 
+Load the minimum needed for the task — don't slurp the whole workspace.
+
 | Task type | Load |
 |---|---|
-| Planning / design | \`PRD.md\`, \`PRINCIPLES.md\`, \`DECISIONS.md\` |
-| Refining intent / PRD work | \`PRD.md\`, skill refs \`prd-grill.md\` / \`prd-refine.md\` / \`prd-review.md\` |
-| Implementing a request | \`STACK.md\`, \`requests/<slug>/PLAN.md\`, \`TASKS.md\`, relevant \`current/<capability>/\` |
-| Reviewing / QA | \`requests/<slug>/VERIFY.md\`, relevant \`current/<capability>/\`, \`RISKS.md\` |
-| Onboarding cold | \`PRD.md\`, \`ARCHITECTURE.md\`, this file |
+| Cold onboarding | \`PRD.md\`, \`SPEC.md\`, this file |
+| Planning a new request | \`PRD.md\`, \`SPEC.md\`, \`PRINCIPLES.md\` (if present), \`DECISIONS.md\` (if present) |
+| Refining intent / PRD work | \`PRD.md\` + relevant skill refs |
+| Implementing a request | \`STACK.md\` (if present), \`requests/<slug>/PLAN.md\`, \`TASKS.md\`, \`SPEC.md\`, the specific \`specs/<capability>/SPEC.md\` files the work touches |
+| Reviewing / QA | \`requests/<slug>/VERIFY.md\` (if present), affected \`specs/<capability>/SPEC.md\`, \`RISKS.md\` (if present) |
+| Structural questions | \`ARCHITECTURE.md\` only (if present) |
+
+## Task tracking — two layers
+
+| Layer | Tool | Use for |
+|---|---|---|
+| Session micro-steps | Harness \`TaskCreate\` / \`TaskUpdate\` | Ephemeral per-session steps — drives the CLI live progress UI |
+| Persistent milestones | On-disk \`requests/<slug>/TASKS.md\` | Stable milestone blocks that survive across sessions |
+
+Anti-pattern: 1:1 duplication between the two layers. Use the harness for the granular checklist *within* a milestone block; use TASKS.md for the milestones themselves.
 
 ## Available skills
 
-- \`spectacular\` — workspace management
+- \`/spectacular\` — workspace orchestration (briefings, requests, lifecycle, archive, memory, doc verbs)
+
+Add other project skills here as they're installed.
 
 ## Creating requests
 
-Use \`spectacular new <description>\`. Never create \`requests/<slug>/PRD.md\` — anti-pattern; product intent is project-wide.
+\`\`\`bash
+spectacular new <description>
+\`\`\`
+
+The skill derives a kebab-case slug, applies the verification 2-of-6 rule to decide whether to scaffold a \`VERIFY.md\`, and asks for confirmation before writing.
+
+> **Anti-pattern:** never create \`requests/<slug>/PRD.md\`. Product intent is project-wide and lives at \`.spectacular/PRD.md\`. Per-request \`PLAN.md\` references it.
 
 ## Don'ts
 
-- Don't touch \`archive/\`
-- Don't duplicate truth
-- Don't overwrite canonical docs in place
+- Don't touch \`archive/\` during normal operation
+- Don't overwrite canonical docs in place — snapshot first
 - Don't write to \`memory/\` autonomously
 - Don't create per-request PRDs
+- Don't commit \`.spectacular.local/\` (it's personal + gitignored)
 "
 }
 
@@ -900,6 +981,7 @@ scaffold() {
     case "$doc" in
       config)        doc_config "$name" "$summary" "$agents_file" "$kit_id" ;;
       prd)           doc_prd "$name" "$kit_id" ;;
+      spec)          doc_spec "$name" ;;
       principles)    doc_principles "$name" ;;
       architecture)  doc_architecture "$name" ;;
       roadmap)       doc_roadmap "$name" ;;
@@ -952,7 +1034,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -980,6 +1062,7 @@ Areas (run all if omitted):
   lifecycle     request status vs required verification artifacts
   kits          bundled + project-local kit files parse cleanly
   conventions   active convention_pack resolves; gitignore drift in scaffold/enforce modes
+  specs         SPEC.md present + parseable; specs/ dir present; legacy current/ migration
 
 Options:
   --fix              Apply mechanical fixes (gitignore append, missing dirs,
@@ -1005,7 +1088,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs)
         DOC_OPT_AREA="$1"; shift ;;
       *) die "Unknown doctor option: $1. Run 'spectacular doctor --help'." ;;
     esac
@@ -1102,7 +1185,7 @@ check_workspace() {
     [[ -n "$cfg_agents" ]] && agents_file="$cfg_agents"
   fi
 
-  local always_set=("PRD.md" "config.yaml" "$agents_file")
+  local always_set=("PRD.md" "SPEC.md" "config.yaml" "$agents_file")
   for f in "${always_set[@]}"; do
     if [[ -f ".spectacular/$f" ]]; then
       doc_add "workspace" "pass" ".spectacular/$f" "always-set file present"
@@ -1113,7 +1196,7 @@ check_workspace() {
   done
 
   # Always-set directories
-  for d in "requests" "current"; do
+  for d in "requests" "specs"; do
     if [[ -d ".spectacular/$d" ]]; then
       doc_add "workspace" "pass" ".spectacular/$d/" "always-set directory present"
     else
@@ -1562,6 +1645,72 @@ check_conventions() {
   fi
 }
 
+# ── area: specs ───────────────────────────────────────────────────────────────
+# Validate the system-spec surface: SPEC.md index + specs/ dir + legacy current/ migration.
+# Per-capability files under specs/<capability>/SPEC.md are optional (only for complex work).
+check_specs() {
+  [[ -d ".spectacular" ]] || return 0
+
+  local spec_file=".spectacular/SPEC.md"
+  local specs_dir=".spectacular/specs"
+  local legacy_dir=".spectacular/current"
+
+  # Conflict: both current/ and specs/ present → manual merge required
+  if [[ -d "$legacy_dir" && -d "$specs_dir" ]]; then
+    doc_add "specs" "error" "$legacy_dir" \
+      "both .spectacular/current/ and .spectacular/specs/ exist — manual merge required (no auto-fix)" \
+      "move contents of current/ into specs/, then 'rmdir .spectacular/current'" "judgment"
+    return
+  fi
+
+  # Legacy: current/ present without specs/ → mechanical rename available
+  if [[ -d "$legacy_dir" && ! -d "$specs_dir" ]]; then
+    doc_add "specs" "warning" "$legacy_dir" \
+      "legacy current/ folder found — rename to specs/ (current/ deprecated in v0.5.0)" \
+      "mv .spectacular/current .spectacular/specs" "mechanical"
+    return
+  fi
+
+  # specs/ dir present
+  if [[ -d "$specs_dir" ]]; then
+    doc_add "specs" "pass" "$specs_dir/" "specs/ directory present"
+  else
+    doc_add "specs" "error" "$specs_dir/" "specs/ directory missing" \
+      "mkdir -p .spectacular/specs (mechanical fix available)" "mechanical"
+  fi
+
+  # SPEC.md present + parseable
+  if [[ -f "$spec_file" ]]; then
+    if head -1 "$spec_file" | grep -q '^---$'; then
+      doc_add "specs" "pass" "$spec_file" "SPEC.md present with frontmatter"
+    else
+      doc_add "specs" "error" "$spec_file" "SPEC.md missing frontmatter delimiter" \
+        "add proper frontmatter block" "judgment"
+    fi
+  else
+    doc_add "specs" "error" "$spec_file" "SPEC.md missing" \
+      "re-scaffold via 'spectacular doctor --fix' or 'spectacular init'" "mechanical"
+  fi
+
+  # Per-capability subfolders: optional; if present, each must hold a SPEC.md
+  shopt -s nullglob
+  for subdir in "$specs_dir"/*/; do
+    local cap_spec="${subdir}SPEC.md"
+    if [[ -f "$cap_spec" ]]; then
+      if head -1 "$cap_spec" | grep -q '^---$'; then
+        doc_add "specs" "pass" "$cap_spec" "capability spec present"
+      else
+        doc_add "specs" "warning" "$cap_spec" "capability spec missing frontmatter delimiter" \
+          "add proper frontmatter block" "judgment"
+      fi
+    else
+      doc_add "specs" "warning" "$subdir" "capability folder missing SPEC.md" \
+        "create ${cap_spec} or remove the empty folder" "judgment"
+    fi
+  done
+  shopt -u nullglob
+}
+
 # ── doctor orchestrator ───────────────────────────────────────────────────────
 doctor() {
   doctor_parse_args "$@"
@@ -1585,6 +1734,7 @@ doctor() {
       lifecycle)   check_lifecycle ;;
       kits)        check_kits ;;
       conventions) check_conventions ;;
+      specs)       check_specs ;;
     esac
   done
 
@@ -1602,6 +1752,8 @@ doctor() {
         links)       check_links ;;
         lifecycle)   check_lifecycle ;;
         kits)        check_kits ;;
+        conventions) check_conventions ;;
+        specs)       check_specs ;;
       esac
     done
   fi
@@ -1663,10 +1815,21 @@ doctor_apply_mechanical_fixes() {
     fi
 
     # Missing dir
-    if [[ "$file" == ".spectacular/requests/" || "$file" == ".spectacular/current/" ]]; then
+    if [[ "$file" == ".spectacular/requests/" || "$file" == ".spectacular/specs/" ]]; then
       mkdir -p "$file"
+      [[ "$file" == ".spectacular/specs/" ]] && touch "${file}.gitkeep"
       echo "  ✓ fixed [workspace]: created $file"
       applied=$((applied + 1))
+      continue
+    fi
+
+    # Legacy current/ → specs/ migration (specs area, mechanical)
+    if [[ "$area" == "specs" && "$msg" == *"legacy current/ folder"* ]]; then
+      if [[ -d ".spectacular/current" && ! -d ".spectacular/specs" ]]; then
+        mv .spectacular/current .spectacular/specs
+        echo "  ✓ fixed [specs]: renamed .spectacular/current/ → .spectacular/specs/"
+        applied=$((applied + 1))
+      fi
       continue
     fi
 
@@ -1685,12 +1848,13 @@ doctor_apply_mechanical_fixes() {
     fi
 
     # Missing always-set file → re-scaffold using doc_<id>
-    if [[ "$file" == ".spectacular/PRD.md" || "$file" == ".spectacular/config.yaml" || "$file" == ".spectacular/AGENTS.md" || "$file" == ".spectacular/CLAUDE.md" ]]; then
+    if [[ "$file" == ".spectacular/PRD.md" || "$file" == ".spectacular/SPEC.md" || "$file" == ".spectacular/config.yaml" || "$file" == ".spectacular/AGENTS.md" || "$file" == ".spectacular/CLAUDE.md" ]]; then
       local fname
       fname=$(basename "$file")
       local name="${OPT_NAME:-$(slug_from_dir)}"
       case "$fname" in
         PRD.md)        doc_prd "$name" "blank" ;;
+        SPEC.md)       doc_spec "$name" ;;
         config.yaml)   doc_config "$name" "" "AGENTS.md" "blank" ;;
         AGENTS.md|CLAUDE.md) doc_agents "$name" "$fname" ;;
       esac

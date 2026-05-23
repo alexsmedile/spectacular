@@ -7,11 +7,11 @@ Triggered by: `spectacular archive <slug>`, or skill proposing archive after req
 ## Archive sequence
 
 1. **Verify state** — confirm request is `verified` (or ask user to confirm if skipping verification)
-2. **Propose current/ sync** — see `current-sync.md` for what to update
+2. **Propose spec sync** — see `spec-sync.md` for what to update in `SPEC.md` + `specs/`
 3. **Propose memory entries** — review the request for lessons worth keeping (see `memory.md`)
-4. **Human confirms** both current/ and memory proposals before any writes
+4. **Human confirms** both spec and memory proposals before any writes
 5. **Move the request directory** — `requests/<slug>/` → `archive/<slug>/`
-6. Update any `current/` capability specs that reference this request
+6. Update any `specs/<capability>/SPEC.md` files (and a bullet in `SPEC.md`) that reference this request
 
 ---
 
@@ -41,8 +41,9 @@ Propose concrete, specific entries. Avoid vague lessons. If nothing notable happ
 
 > "Ready to archive `add-team-billing`. Before I move it:
 >
-> **current/ sync proposed:**
-> - Update `current/billing/plans.md` to reflect the new team tier (status: draft → stable)
+> **Spec sync proposed:**
+> - `.spectacular/SPEC.md` — add bullet for team-billing capability
+> - `specs/billing/SPEC.md` — update to reflect new team tier (status: draft → stable)
 >
 > **Memory entries proposed:**
 > - The Stripe webhook idempotency issue we hit — worth noting in `memory/failures.md`

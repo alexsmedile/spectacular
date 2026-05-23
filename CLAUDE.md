@@ -19,16 +19,18 @@ spectacular/
 ├── .spectacular/              # Live workspace (this project uses its own system)
 │   ├── config.yaml            # Project config, naming rules, agents.file + tool_overrides
 │   ├── PRD.md                 # Product intent — what & why & for whom
+│   ├── SPEC.md                # System spec — index of what's built right now (v0.5.0+)
 │   ├── PRINCIPLES.md          # Operating principles + runtime enforcement hooks
 │   ├── ARCHITECTURE.md        # .spectacular/ structure, frontmatter, lifecycle, versioning
 │   ├── ROADMAP.md             # Time-ordered "what's next"
 │   ├── AGENTS.md              # Onboarding doc for agents working in .spectacular/
 │   ├── STACK.md               # Host project's tech choices
 │   ├── DECISIONS.md           # ADR-style decision log
+│   ├── specs/                 # Per-capability specs (optional; SPEC.md is the index)
 │   └── requests/              # Active and planned work
-│       ├── canonical-docs-rework/ # PRD split (status: verified)
-│       ├── cli-bootstrap/         # CLI tool (status: active)
-│       └── prd-craft/             # /prd skill flow (status: active)
+│       ├── spec-rename/             # SPEC.md + specs/ rename (status: active, v0.5.0)
+│       ├── public-docs-foundation/  # docs/ first-class surface (status: planned)
+│       └── public-docs-advanced/    # v2 docs surface (status: planned)
 ├── cli/                       # CLI implementation
 │   ├── spectacular            # Bash binary — spectacular init
 │   └── install.sh             # curl-installable installer
@@ -42,6 +44,9 @@ spectacular/
 
 | Slug | Status | Summary |
 |---|---|---|
+| `spec-rename` | active | `SPEC.md` + `specs/` replace legacy `current/` — shipping v0.5.0 |
+| `public-docs-foundation` | planned | First-class `docs/` surface — `docs.yaml` manifest + doc verbs |
+| `public-docs-advanced` | planned | v2 docs — renderer adapters + versioning + spec→doc sync (gated on real demand) |
 | `convention-pack-schema` | verified | Pack schema + bundled `minimal` pack + app-store folder (shipped v0.4.0) |
 | `convention-pack-fabricator` | review | `pack-overrides.md` grill + `alex-default` dogfood — live grill scenarios pending |
 | `convention-pack-application` | review | CLI `pack` subcommand + `convention_pack:` config + init/doctor wiring — live three-mode scenarios pending |
@@ -62,6 +67,7 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 | `active-request.md` | Actively working on a request |
 | `lifecycle.md` | Lifecycle transitions |
 | `archive.md` | `spectacular archive <slug>` |
+| `spec-sync.md` | Proposing `SPEC.md` + `specs/` updates during archive (was `current-sync.md` pre-v0.5.0) |
 | `memory.md` | `spectacular remember this` |
 | `versioning.md` | `spectacular snapshot <file>` |
 | `init-workflow.md` | `spectacular init` (CLI context) |
@@ -100,19 +106,19 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 |---|---|
 | Planning / design | PRD.md, PRINCIPLES.md, DECISIONS.md |
 | Refining intent / PRD work | PRD.md, skill refs prd-grill.md / prd-refine.md / prd-review.md |
-| Skill implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, current/skill/ |
-| CLI implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, current/cli/ |
-| Review / QA | VERIFY.md, current/<capability>, RISKS.md |
-| Onboarding cold | PRD.md, ARCHITECTURE.md, .spectacular/AGENTS.md |
+| Skill implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, SPEC.md, specs/skill/SPEC.md |
+| CLI implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, SPEC.md, specs/cli/SPEC.md |
+| Review / QA | VERIFY.md, SPEC.md, specs/<capability>/SPEC.md, RISKS.md |
+| Onboarding cold | PRD.md, SPEC.md, ARCHITECTURE.md, .spectacular/AGENTS.md |
 
-Load only the capability spec relevant to the current task, not all of `current/`. Never read `archive/` during normal operation. The authoritative loading table is `.spectacular/AGENTS.md`.
+Load only the capability spec relevant to the current task, not all of `specs/`. The top-level `SPEC.md` is cheap and always relevant. Never read `archive/` during normal operation. The authoritative loading table is `.spectacular/AGENTS.md`.
 
 ## CLI
 
 `cli/spectacular` — Bash binary, installed to `~/.local/bin/spectacular` via `cli/install.sh`.
 
 ```
-spectacular init                    # zero prompts, always-set (5 files) + blank kit
+spectacular init                    # zero prompts, always-set (6 files) + blank kit
 spectacular init -i                 # interactive: kit menu + per-doc prompts
 spectacular init --kit coding       # adds STACK + ARCHITECTURE (coding kit triggers)
 spectacular init --with principles,roadmap   # additive: extras on top of always-set

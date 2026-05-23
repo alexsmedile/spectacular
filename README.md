@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
 ![Platform](https://img.shields.io/badge/platform-Claude%20%7C%20Codex%20%7C%20Cursor-lightgrey)
-![Version](https://img.shields.io/badge/version-0.4.0-green)
+![Version](https://img.shields.io/badge/version-0.5.0-green)
 
 </div>
 
@@ -96,10 +96,11 @@ State lives in `PLAN.md` frontmatter. The skill reads it on every invocation and
 .spectacular/
 │   ── always-set (created by every init) ─────────────────────────────
 ├── PRD.md              # product intent — what & why & for whom
+├── SPEC.md             # system spec — index of what's built right now (present tense)
 ├── config.yaml         # naming, kit identity, agent file overrides
 ├── AGENTS.md           # onboarding doc for agents working in this folder
 ├── requests/           # active and planned work
-└── current/            # canonical system truth (capability specs)
+└── specs/              # per-capability specs (optional; SPEC.md is the index)
 
 │   ── opt-in (scaffolded by kit declaration or --with flag) ──────────
 ├── PRINCIPLES.md       # operating principles + enforcement hooks
@@ -182,7 +183,7 @@ convention_pack:
 Full schema in [`skills/spectacular/references/packs-contract.md`](skills/spectacular/references/packs-contract.md). App-store packs live in [`packs/`](packs/).
 
 > [!TIP]
-> Init scaffolds the **5-file always-set** by default (`PRD.md`, `config.yaml`, `<agents-file>`, `requests/`, `current/`). Kits add docs they need. Use `--with` for explicit extras. Use `--minimal` to ignore the kit's defaults.
+> Init scaffolds the **6-file always-set** by default (`PRD.md`, `SPEC.md`, `config.yaml`, `<agents-file>`, `requests/`, `specs/`). Kits add docs they need. Use `--with` for explicit extras. Use `--minimal` to ignore the kit's defaults. (v0.4.x scaffolded `current/` instead of `SPEC.md` + `specs/` — see [CHANGELOG](CHANGELOG.md) for the migration.)
 
 > [!TIP]
 > Claude-only team? Use `--agents-file CLAUDE.md`. Multi-tool team? Keep `AGENTS.md` as primary and add `tool_overrides.claude: CLAUDE.md` to `config.yaml` — the skill will surface both.

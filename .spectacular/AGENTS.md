@@ -32,8 +32,8 @@ Read [PRD.md](PRD.md) before planning anything. Read [ARCHITECTURE.md](ARCHITECT
 ## How to operate
 
 1. **Read frontmatter first**, file bodies second. Status, summary, version, related — these are the navigation layer.
-2. **Load progressively.** Don't pre-load `current/` or `requests/` wholesale; load only what the current task needs (see Context loading below).
-3. **Snapshot before overwrite** on any canonical doc (root layer + `current/`). The snapshot name is `FILE@vN.md`. This is non-optional.
+2. **Load progressively.** Don't pre-load `specs/` or `requests/` wholesale; load only what the current task needs (see Context loading below). The top-level `SPEC.md` is cheap and always relevant.
+3. **Snapshot before overwrite** on any canonical doc (root layer + `SPEC.md` + `specs/`). The snapshot name is `FILE@vN.md`. This is non-optional.
 4. **Propose, don't act**, on irreversibles: archive, lifecycle promote, memory writes, bulk edits >5 files. Confirm with the human first.
 5. **Never read `archive/`** during normal operation. It's write-only from your perspective.
 6. **Write to `memory/` only on confirmation.** Never autonomously.
@@ -48,8 +48,8 @@ Load only what the task needs. Don't load the entire repository.
 |---|---|
 | Planning / design | `PRD.md`, `PRINCIPLES.md`, `DECISIONS.md` |
 | Refining intent / writing a PRD | `PRD.md`, skill references `prd-grill.md` / `prd-refine.md` / `prd-review.md` |
-| Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `requests/<slug>/TASKS.md`, relevant `current/<capability>/` |
-| Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `current/<capability>/`, `requests/<slug>/RISKS.md` |
+| Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `requests/<slug>/TASKS.md`, `SPEC.md`, relevant `specs/<capability>/SPEC.md` |
+| Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `specs/<capability>/SPEC.md`, `requests/<slug>/RISKS.md` |
 | Onboarding cold | `PRD.md`, `ARCHITECTURE.md`, this file |
 | Structural questions | `ARCHITECTURE.md` only |
 | Principles questions | `PRINCIPLES.md` only |

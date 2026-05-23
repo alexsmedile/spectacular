@@ -20,7 +20,7 @@ spectacular doctor [<area>] [options]
 
 ### `spectacular init`
 
-Scaffolds `.spectacular/` and installs the skill. As of v0.3.0, init scaffolds the **5-file always-set** by default — `PRD.md`, `config.yaml`, `<agents-file>` (default `AGENTS.md`), `requests/`, `current/`. Extra docs come from the selected kit or explicit `--with` flag.
+Scaffolds `.spectacular/` and installs the skill. As of v0.5.0, init scaffolds the **6-file always-set** by default — `PRD.md`, `SPEC.md`, `config.yaml`, `<agents-file>` (default `AGENTS.md`), `requests/`, `specs/`. Extra docs come from the selected kit or explicit `--with` flag. (v0.3.0–v0.4.x scaffolded `current/` instead of `SPEC.md` + `specs/`; legacy workspaces are auto-migrated by `spectacular doctor specs --fix`.)
 
 ```bash
 spectacular init                              # always-set + blank kit
@@ -56,7 +56,7 @@ spectacular doctor --fix                  # apply mechanical fixes interactively
 spectacular doctor --format json          # JSON report for skill/tool consumption
 ```
 
-Available areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions` *(v0.4.0+)*.
+Available areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions` *(v0.4.0+)*, `specs` *(v0.5.0+)*.
 
 Exit codes:
 - `0` clean (no warnings, no errors)

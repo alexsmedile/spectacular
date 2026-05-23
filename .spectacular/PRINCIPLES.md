@@ -149,9 +149,9 @@ These are the maintenance rules that keep the workspace from rotting:
 
 You are not designing a documentation system. You are designing a **temporal operational model**.
 
-The names should express time and state. `current/` and `requests/` do that — `current` is what is true *now*; `requests` is what is changing *next*.
+The names should express what's there. `SPEC.md` / `specs/` is what is true *now*; `requests/` is what is changing *next*; `memory/` is what was learned *before*.
 
-- Current truth → `load current/auth/`
+- System truth → `load SPEC.md` (always) → drill into `specs/auth/SPEC.md` only if needed
 - Active work → `load requests/add-team-billing/`
 - Past learning → `load memory/lessons.md`
 

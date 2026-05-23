@@ -69,7 +69,8 @@ assert_file_contains() {
 seed_clean() {
   local dir="$1"
   rm -rf "$dir"
-  mkdir -p "$dir/.spectacular/requests" "$dir/.spectacular/current" "$dir/.agents/skills"
+  mkdir -p "$dir/.spectacular/requests" "$dir/.spectacular/specs" "$dir/.agents/skills"
+  touch "$dir/.spectacular/specs/.gitkeep"
   ln -s "$LOCAL_SKILL" "$dir/.agents/skills/spectacular"
   cat > "$dir/.spectacular/PRD.md" <<EOF
 ---
@@ -79,6 +80,14 @@ summary: "test workspace"
 kit: blank
 ---
 # Test
+EOF
+  cat > "$dir/.spectacular/SPEC.md" <<EOF
+---
+version: 1.0
+updated: 2026-05-22
+summary: "Index of what this system actually is right now"
+---
+# Test — System Spec
 EOF
   cat > "$dir/.spectacular/config.yaml" <<EOF
 project:

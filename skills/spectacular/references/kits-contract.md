@@ -151,7 +151,7 @@ triggers-docs:
 
 Each entry must be a valid `<doc-id>` from `doc-registry.md`. smart-init errors on unknown doc IDs.
 
-The always-set (`PRD.md`, `requests/`, `current/`, `config.yaml`, `AGENTS.md`) is scaffolded by smart-init regardless of kit. Kits add to this set; they never subtract.
+The always-set (`PRD.md`, `SPEC.md`, `requests/`, `specs/`, `config.yaml`, `AGENTS.md`) is scaffolded by smart-init regardless of kit. Kits add to this set; they never subtract.
 
 ## Override path (project-local kits)
 

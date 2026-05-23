@@ -18,7 +18,7 @@ Orient quickly. Don't overwhelm. Load the minimum needed to give an intelligent 
 2. Read `AGENTS.md` — context-loading rules per task type (the authoritative table)
 3. Read root canonical docs (frontmatter + summary only): `PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`
 4. Read all `requests/*/PLAN.md` frontmatter — understand active/planned work
-5. Read `current/` file list and frontmatter summaries — understand system state
+5. Read `SPEC.md` (always-on index) + any `specs/<capability>/SPEC.md` frontmatter summaries — understand system state
 6. Check `memory/` file list — note if anything exists
 7. Produce a briefing (same format as status.md)
 
@@ -31,7 +31,7 @@ Orient quickly. Don't overwhelm. Load the minimum needed to give an intelligent 
 | Observation | Action |
 |---|---|
 | No `requests/` directory or empty | Note it — project may be pre-work |
-| `current/` has draft specs with no active request | Surface them |
+| `specs/` has draft capability specs with no active request | Surface them |
 | Root files missing frontmatter | Note it, offer to add |
 | `config.yaml` missing | Offer to create from template |
 | `AGENTS.md` missing | Offer to create from template |
@@ -53,11 +53,11 @@ Example first briefing:
 >
 > | Layer    | Items                                          |
 > |----------|------------------------------------------------|
-> | Current  | auth (stable), billing (draft)                 |
+> | Specs    | auth (stable), billing (draft)                 |
 > | Requests | add-team-billing (active), dark-mode (planned) |
 > | Memory   | 1 lesson                                       |
 >
 > `add-team-billing` is active with a SESSION.md — looks like billing implementation is in progress.
-> `current/billing` is still `draft`.
+> `specs/billing/SPEC.md` is still `draft`.
 >
 > Want to pick up where billing left off, or start something new?"

@@ -12,14 +12,15 @@ description: |
   Triggers: /spectacular, spectacular status, spectacular new, spectacular archive, spectacular
   remember this, spectacular snapshot, spectacular promote, spectacular init,
   spectacular <doc>, spectacular <doc> grill, spectacular <doc> refine, spectacular <doc> review,
-  spectacular prd, spectacular plan, spectacular tasks, spectacular decisions, spectacular
-  principles, spectacular architecture, spectacular roadmap, spectacular stack, spectacular agents,
-  spectacular pack new, spectacular pack grill, spectacular pack refine, spectacular pack review.
+  spectacular prd, spectacular spec, spectacular plan, spectacular tasks, spectacular decisions,
+  spectacular principles, spectacular architecture, spectacular roadmap, spectacular stack,
+  spectacular agents, spectacular pack new, spectacular pack grill, spectacular pack refine,
+  spectacular pack review.
 when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type registered in doc-registry.md.
-version: 0.4.0
+version: 0.5.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -61,7 +62,7 @@ The generalized handler matches `spectacular <doc> [<verb>]` where `<doc>` is an
 | `spectacular <doc> refine` | → `references/refine.md` (with registry context) |
 | `spectacular <doc> review` | → `references/review.md` (with registry context) |
 
-**Doc IDs registered (v0.4.0):** `prd`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `convention-pack`.
+**Doc IDs registered (v0.5.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `convention-pack`.
 
 ### Pack-specific aliases (convenience over `spectacular convention-pack <verb>`)
 
@@ -115,10 +116,10 @@ Before any action, read frontmatter from:
 1. `.spectacular/config.yaml` — project config, naming rules
 2. `.spectacular/AGENTS.md` — **authoritative** context-loading rules per task type; follow its table over guessing
 3. Root canonical docs — `PRD.md` (intent), `PRINCIPLES.md` (rules), `ARCHITECTURE.md` (structure), `ROADMAP.md` (time), `STACK.md` (host tech), `DECISIONS.md` (ADR log)
-4. `current/` — canonical capability specs (read summaries/status only unless task requires depth)
+4. `SPEC.md` (top-level system spec index) + any `specs/<capability>/SPEC.md` (read frontmatter only unless task needs depth)
 5. `requests/*/PLAN.md` — active work (read all frontmatter for status briefing)
 
-Load **only** what the task needs (principle 6 — progressive disclosure). For planning, PRD + PRINCIPLES + DECISIONS. For implementation, STACK + PLAN + TASKS + relevant `current/`. For review, VERIFY + RISKS + capability specs. AGENTS.md owns the full table.
+Load **only** what the task needs (principle 6 — progressive disclosure). For planning, PRD + PRINCIPLES + DECISIONS. For implementation, STACK + PLAN + TASKS + SPEC + relevant `specs/<capability>/`. For review, VERIFY + RISKS + capability specs. AGENTS.md owns the full table.
 
 Never read `archive/` during normal operation.
 
@@ -128,7 +129,7 @@ Never read `archive/` during normal operation.
 
 - **Never overwrite canonical documents in place** — snapshot first (`PRD@v1.0.md`). See `references/versioning.md`.
 - **Lifecycle state** lives in `PLAN.md` frontmatter (`status: planned | active | review | verified`).
-- **Capability state** lives in `current/<capability>.md` frontmatter (`status: stable | draft | deprecated`).
+- **Capability state** lives in `specs/<capability>/SPEC.md` frontmatter (`status: stable | draft | deprecated`); the top-level `.spectacular/SPEC.md` is the always-on index.
 - **Slugs** are kebab-case, skill-derived, user-overridable, uniqueness enforced.
 - **Memory** (`spectacular remember this`) writes to `.spectacular/memory/` — git-committed, team-visible. Never to `.claude/` memory.
 - Be proactive: surface stale state, propose lifecycle transitions, flag blocked requests.
@@ -165,10 +166,10 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/lifecycle.md` | State transitions, signal detection, proactive proposals |
 | `references/verification.md` | When VERIFY.md is needed (2-of-6 rule) vs folded into PLAN § Validation or TASKS § Verification |
 | `references/doctor.md` | Environment/infrastructure self-check (CLI detects, skill repairs); judgment-fix repair flow |
-| `references/archive.md` | Archive a request, propose current/ sync + memory entries |
+| `references/archive.md` | Archive a request, propose spec sync + memory entries |
 | `references/memory.md` | `remember this` command, write triggers, anti-collision rules |
 | `references/versioning.md` | Snapshot-before-edit rules, naming convention |
-| `references/current-sync.md` | Proposing current/ updates when archiving |
+| `references/spec-sync.md` | Proposing `SPEC.md` + `specs/` updates when archiving (renamed from current-sync.md in v0.5.0) |
 | `references/scaffold-reference.md` | Canonical file templates with frontmatter stubs |
 | `references/onboarding.md` | First invocation on an existing project |
 | `references/init-workflow.md` | CLI init + first-time project setup |
@@ -204,6 +205,7 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `templates/tasks/base.md` | TASKS checklist template (per-request) |
 | `templates/principles/base.md` | Operating principles + enforcement hooks |
 | `templates/architecture/base.md` | `.spectacular/` structure spec |
+| `templates/spec/base.md` | System spec — index of what's built right now |
 | `templates/roadmap/base.md` | Time-ordered roadmap |
 | `templates/stack/base.md` | Host project tech choices |
 | `templates/agents/base.md` | Onboarding doc for `.spectacular/` agents |

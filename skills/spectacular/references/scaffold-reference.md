@@ -200,7 +200,7 @@ related:
 
 ## How to operate
 1. Read frontmatter first, file bodies second
-2. Load progressively — don't pre-load `current/` or `requests/` wholesale
+2. Load progressively — don't pre-load `specs/` or `requests/` wholesale (the top-level `SPEC.md` is cheap)
 3. Snapshot before overwrite on any canonical doc (`FILE@vN.md`)
 4. Propose, don't act, on irreversibles
 5. Never read `archive/` during normal operation
@@ -212,8 +212,8 @@ related:
 |---|---|
 | Planning / design | `PRD.md`, `PRINCIPLES.md`, `DECISIONS.md` |
 | Refining intent / PRD work | `PRD.md`, skill refs `prd-grill.md` / `prd-refine.md` / `prd-review.md` |
-| Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `TASKS.md`, relevant `current/<capability>/` |
-| Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `current/<capability>/`, `RISKS.md` |
+| Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `TASKS.md`, `SPEC.md`, relevant `specs/<capability>/SPEC.md` |
+| Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `specs/<capability>/SPEC.md`, `RISKS.md` |
 | Onboarding cold | `PRD.md`, `ARCHITECTURE.md`, this file |
 
 ## Available skills
@@ -269,7 +269,7 @@ updated: <today>
 summary: "<one-line description>"
 related:
   - ../../PRD.md
-  - current/<capability>
+  - specs/<capability>
 ---
 
 # <Request title>
@@ -390,9 +390,31 @@ updated: <today>
 
 ---
 
-## Current layer
+## Specs layer (system truth)
 
-### current/<capability>.md
+### .spectacular/SPEC.md (always-on index)
+```md
+---
+version: 1.0
+updated: <today>
+summary: "Index of what this system actually is and how it behaves right now"
+related:
+  - PRD.md
+  - ARCHITECTURE.md
+---
+
+# <Project> — System Spec
+
+## What this system is
+<One paragraph, present tense.>
+
+## Capabilities
+- <one bullet per capability; link out to specs/<capability>/SPEC.md only when needed>
+```
+
+### Per-capability layer (optional)
+
+### specs/<capability>/SPEC.md
 ```md
 ---
 status: draft

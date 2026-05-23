@@ -5,6 +5,47 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [0.5.0] — 2026-05-23
+
+### Breaking — `current/` folder renamed to `specs/` + new `SPEC.md` index
+
+The legacy `.spectacular/current/` folder convention is replaced by a two-part surface: `.spectacular/SPEC.md` (always-on, present-tense index of what's built) plus an optional `.spectacular/specs/` folder for per-capability detail when a SPEC.md bullet outgrows one line.
+
+- **Why:** "current" is a temporal word, not a content word — agents kept mis-routing it as recency state. "spec" is the industry term and ties cleanly to what the layer actually holds. The TODO had this flagged since v0.3.0; v0.5.0 ships the migration.
+- **`SPEC.md` is always-on**, scaffolded by every init. Per-capability `specs/<capability>/SPEC.md` files are **optional** — only break out when the bullet in SPEC.md outgrows one line. Small projects ship with one file.
+- **Mechanical migration via doctor**: `spectacular doctor specs --fix` renames any legacy `current/` → `specs/`, preserving contents. Conflict case (both dirs present) raises an error and refuses auto-fix.
+
+### Added
+
+- **`SPEC.md` doc type** registered in `doc-registry.md` — uses the generic engine, mode `freeform`, snapshot-on-edit, scope `project-wide`.
+- **`templates/spec/base.md`** — index-style template with "What this system is" + "Capabilities" sections.
+- **`doc_spec()` writer** in `cli/spectacular` — scaffolds SPEC.md as part of the always-set.
+- **Doctor `specs` area** — validates SPEC.md presence/parseability, specs/ dir presence, per-capability SPEC.md frontmatter, legacy current/ migration detection, conflict detection.
+- **`spectacular spec` skill verb** (via existing registry-driven engine — `grill`, `refine`, `review`).
+- **`references/spec-sync.md`** — renamed from `current-sync.md`, updated to drive SPEC.md bullet edits + specs/ creation during archive flow.
+- **`tests/cli/specs.test.sh`** — 8 scenarios, 25 asserts covering fresh init, kit init, doctor on clean v0.5.0 workspace, legacy detection, mechanical migration, conflict refusal, per-capability validation, re-init non-destructive.
+
+### Changed
+
+- **Always-set bumped from 5 → 6 files**: PRD.md, **SPEC.md**, config.yaml, `<agents-file>`, requests/, **specs/** (replacing `current/`).
+- **`doc_agents()` template rewrite** — new build's `.spectacular/AGENTS.md` now leads with the four-layer model (Intent/Truth/Work/Memory), documents two-layer task tracking, and consistently uses `SPEC.md` + `specs/<capability>/SPEC.md` references throughout. Mirrors landed in `templates/agents/base.md`.
+- **Doctor re-run dispatcher fix** — `conventions` area was missing from the `--fix` re-run loop, causing pack-driven gitignore fixes to not refresh detection state. Both `conventions` and the new `specs` area are now in both dispatcher loops.
+- All `current/<capability>` references swept through skill references, `.spectacular/` live workspace, `docs/`, `README.md`, `CLAUDE.md` — replaced with `specs/<capability>/SPEC.md` per the new convention. Migration callouts retained where users upgrading from v0.4.x need them.
+- Root `AGENTS.md` updated to point at `.spectacular/SPEC.md` for system-truth queries and clarify per-request loading discipline.
+- **codex-plugin `longDescription`** — replaced "current truth" framing with "system spec" framing to match the new convention.
+
+### Migration from v0.4.x
+
+```bash
+spectacular doctor specs        # detect legacy current/
+spectacular doctor specs --fix  # rename current/ → specs/, preserve contents
+spectacular init                # fills in SPEC.md if missing
+```
+
+Workspaces with both `current/` and `specs/` present require manual merge — doctor refuses auto-fix.
+
+---
+
 ## [0.4.0] — 2026-05-23
 
 ### Added — Convention Pack system

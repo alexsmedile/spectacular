@@ -2,6 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
+SPECTACULAR_VERSION="1.0.1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_REPO="alexsmedile/spectacular"
 GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
@@ -150,6 +151,37 @@ Examples:
   spectacular init --name my-app --agents-file CLAUDE.md
   spectacular init --global
   spectacular init --update
+EOF
+}
+
+top_usage() {
+  cat <<EOF
+spectacular v${SPECTACULAR_VERSION} — AI-native operational workspace
+
+Usage: spectacular <command> [options]
+
+CLI verbs (mutate workspace):
+  init [opts]            Scaffold .spectacular/ in the current project
+  doctor [area] [--fix]  Substrate self-check (10 areas); --fix applies mechanical repairs
+  pack <list|install|show|remove>      Manage convention packs
+  docs <init|new|status>               Public docs surface (docs/)
+  migrate [--to|--from|--list|--dry-run]   Apply workspace schema migrations
+  new <slug>             Scaffold a new request
+  promote <slug> [--to <state>]        Advance request lifecycle
+  snapshot <file>        Versioned copy of a canonical doc (<FILE>@vN.md)
+  archive <slug>         Move request to .spectacular/archive/ + rewrite inbound links
+  touch <file>           Bump frontmatter 'updated:' to today
+
+Skill verbs (run via /spectacular in your AI agent):
+  status [--against-latest|--since <date>]    Briefing of project state
+  remember               Write an operational lesson to .spectacular/memory/
+
+Top-level:
+  -v, --version          Print version and exit
+  -h, --help             Show this help
+
+Run 'spectacular init --help' for the init-specific flag reference.
+Full docs: https://github.com/alexsmedile/spectacular
 EOF
 }
 
@@ -4076,9 +4108,15 @@ EOF
 main() {
   local subcmd="${1:-}"
 
-  if [[ "$subcmd" == "--help" || "$subcmd" == "-h" ]]; then
-    usage; exit 0
-  fi
+  case "$subcmd" in
+    --version|-v|version)
+      echo "spectacular ${SPECTACULAR_VERSION}"
+      exit 0
+      ;;
+    ""|--help|-h|help)
+      top_usage; exit 0
+      ;;
+  esac
 
   # Skill-owned interactive verbs — explain and exit, don't pretend to dispatch.
   # Exception: `status --against-latest` is a CLI-mechanical flag (no skill needed).

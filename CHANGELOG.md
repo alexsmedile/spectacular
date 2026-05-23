@@ -5,6 +5,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.0.1] — 2026-05-23
+
+### Added
+- `spectacular --version` / `-v` / `version` prints the CLI version.
+- `spectacular` / `spectacular help` / `spectacular --help` / `-h` (no subcommand) prints a top-level usage with the full verb list. `spectacular init --help` still prints the init-specific flag reference.
+
+### Fixed
+- `.codex-plugin/plugin.json` version drifted to `0.6.0` during the v1.0.0 cut; realigned to match the Claude plugin manifest.
+
+---
+
 ## [1.0.0] — 2026-05-23 — first stable release
 
 **Spectacular reaches v1.** The surface developed across v0.6.0 → v0.7.5 is now frozen as the stable contract. Future changes follow strict semver: breaking changes require a major bump; new capabilities require a minor; fixes ship as patch releases.

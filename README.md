@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
 ![Platform](https://img.shields.io/badge/platform-Claude%20%7C%20Codex%20%7C%20Cursor-lightgrey)
-![Version](https://img.shields.io/badge/version-0.6.0-green)
+![Version](https://img.shields.io/badge/version-1.2.0-green)
 
 </div>
 
@@ -125,12 +125,16 @@ A typical coding project (`spectacular init --kit coding`) scaffolds the always-
 | Command | What happens |
 |---|---|
 | `/spectacular` | Project briefing — active requests, draft capabilities, next action |
-| `spectacular new <description>` | Scaffold a new request with PLAN.md + TASKS.md |
-| `spectacular archive <slug>` | Archive a completed request, propose `current/` sync + memory entries |
-| `spectacular remember this` | Write an insight to `memory/` immediately |
-| `spectacular snapshot <file>` | Snapshot a canonical document before editing |
-| `spectacular promote <idea>` | Promote an idea file to a full request |
 | `spectacular status` | Same as no-arg invocation |
+| `spectacular new <slug>` | Scaffold a new request (PLAN.md + TASKS.md) |
+| `spectacular promote <slug>` | Advance lifecycle: `planned → active → review → verified` |
+| `spectacular snapshot <file>` | Snapshot a canonical document before editing |
+| `spectacular touch <file>` | Bump `updated:` on a canonical doc |
+| `spectacular archive <slug>` | Archive a completed request; propose `SPEC.md`/`specs/` sync + memory entries |
+| `spectacular remember this` | Write an insight to `memory/` immediately |
+
+> [!WARNING]
+> **`spectacular docs *` verbs are deprecated as of v1.2.0** — public-facing documentation work moved to the standalone [pageworks](https://github.com/alexsmedile/pageworks) skill. The verbs still work and emit a deprecation banner pointing to the equivalent pageworks command; they will be removed in v2.0.0. Install pageworks via its own one-liner.
 
 ---
 
@@ -148,9 +152,13 @@ spectacular init --global                     # install skill to ~/.agents/ and 
 spectacular init --update                     # re-download latest skill release
 
 spectacular doctor                            # substrate self-check (all areas)
-spectacular doctor <area>                     # scoped: skill | workspace | frontmatter | snapshots | links | lifecycle | kits | conventions
-spectacular doctor --fix                      # apply mechanical fixes (gitignore, missing dirs, dangling symlinks, pack drift)
+spectacular doctor <area>                     # scoped: skill | workspace | frontmatter | snapshots | links | lifecycle | kits | conventions | specs | docs
+spectacular doctor --fix                      # apply mechanical fixes (gitignore, missing dirs, dangling symlinks, pack drift, legacy current/ migration)
 spectacular doctor --format json              # JSON report for the skill or other tools
+
+spectacular migrate                           # apply pending workspace schema migrations
+spectacular migrate --dry-run                 # preview the migration plan
+spectacular migrate --list                    # show all available migrations + current schema version
 
 spectacular pack list                         # show installed packs (bundled + app-store + user + project-local)
 spectacular pack install <name>               # install pack to ~/.spectacular/packs/<name>/
@@ -187,6 +195,20 @@ Full schema in [`skills/spectacular/references/packs-contract.md`](skills/specta
 
 > [!TIP]
 > Claude-only team? Use `--agents-file CLAUDE.md`. Multi-tool team? Keep `AGENTS.md` as primary and add `tool_overrides.claude: CLAUDE.md` to `config.yaml` — the skill will surface both.
+
+---
+
+## Pairing with pageworks
+
+Spectacular owns `.spectacular/` — strategy, current truth, active work. **Public-facing documentation (the `docs/` surface) is owned by [pageworks](https://github.com/alexsmedile/pageworks)**, a sibling skill extracted in v1.2.0.
+
+The two compose: when a SPEC-touching request archives, spectacular asks whether `docs/` should be updated and hands off to pageworks if you confirm. `spectacular doctor docs` reports discovery only (folder + manifest presence; install hint if pageworks missing) — never validates schema. There is no automatic invocation across the boundary.
+
+Install pageworks separately when you need a public docs surface:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/alexsmedile/pageworks/main/cli/install.sh | bash
+```
 
 ---
 

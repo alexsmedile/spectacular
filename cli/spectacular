@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.0.1"
+SPECTACULAR_VERSION="1.1.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_REPO="alexsmedile/spectacular"
 GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
@@ -164,7 +164,7 @@ CLI verbs (mutate workspace):
   init [opts]            Scaffold .spectacular/ in the current project
   doctor [area] [--fix]  Substrate self-check (10 areas); --fix applies mechanical repairs
   pack <list|install|show|remove>      Manage convention packs
-  docs <init|new|status>               Public docs surface (docs/)
+  docs <init|export|new|status>        Public docs surface (docs/) — export: mkdocs|docusaurus
   migrate [--to|--from|--list|--dry-run]   Apply workspace schema migrations
   new <slug>             Scaffold a new request
   promote <slug> [--to <state>]        Advance request lifecycle
@@ -3234,6 +3234,50 @@ check_docs() {
 
   doc_add "docs" "pass" "$manifest" "docs.yaml present"
 
+  # Validate optional `renderers:` block (v1.1.0+).
+  # Schema: top-level map; keys are renderer names; recognized: mkdocs, docusaurus.
+  # Unknown renderer keys are warned (typo guard + signals unregistered adapters).
+  if grep -qE '^renderers:' "$manifest"; then
+    # Scalar form: `renderers: <something>` — anything after the colon on the same line
+    if grep -qE '^renderers:[[:space:]]+[^[:space:]#]' "$manifest"; then
+      doc_add "docs" "error" "$manifest" "renderers: must be a map, got a scalar value" \
+        "convert to a map: 'renderers:\\n  mkdocs:\\n    theme: material'" "judgment"
+    # List form: first non-blank line after `renderers:` starts with `-`
+    elif awk '
+      /^renderers:/ { found=1; next }
+      found && /^[a-zA-Z]/ && !/^[[:space:]]/ { exit }
+      found && /^[[:space:]]*$/ { next }
+      found && /^[[:space:]]*-[[:space:]]/ { print "list"; exit }
+      found && /^[[:space:]]+[a-zA-Z]/ { exit }
+    ' "$manifest" | grep -q list; then
+      doc_add "docs" "error" "$manifest" "renderers: must be a map, got a list" \
+        "convert list items to map keys: 'renderers:\\n  mkdocs: ...'" "judgment"
+    else
+      doc_add "docs" "pass" "$manifest" "renderers: block present (valid map)"
+      local known_renderers="mkdocs docusaurus"
+      local renderer_keys
+      renderer_keys=$(awk '
+        /^renderers:/ { in_block=1; next }
+        in_block && /^[a-zA-Z]/ && !/^  / { in_block=0 }
+        in_block && /^  [a-zA-Z_][a-zA-Z0-9_-]*:/ {
+          key=$0
+          sub(/^[[:space:]]+/, "", key)
+          sub(/:.*$/, "", key)
+          print key
+        }
+      ' "$manifest")
+      while IFS= read -r rkey; do
+        [[ -z "$rkey" ]] && continue
+        if in_list "$rkey" "$known_renderers"; then
+          doc_add "docs" "pass" "$manifest" "renderers.${rkey} recognized"
+        else
+          doc_add "docs" "warning" "$manifest" "renderers.${rkey} is not a recognized renderer name" \
+            "remove the block, fix the typo, or document it in docs-renderer-adapters.md (community adapter)" "judgment"
+        fi
+      done <<< "$renderer_keys"
+    fi
+  fi
+
   # Extract declared section ids + page slugs
   local declared_sections declared_pages
   declared_sections=$(awk '
@@ -3933,8 +3977,14 @@ docs_usage() {
 Usage: spectacular docs <verb> [options]
 
 Verbs:
-  init [--minimal]      Scaffold docs/ — docs.yaml + index.md + 3 default sections
-                        (--minimal: docs.yaml + index.md only, no default sections)
+  init [--minimal]              Scaffold docs/ — docs.yaml + index.md + 3 default sections
+                                (--minimal: docs.yaml + index.md only, no default sections)
+  export <renderer> [options]   Write renderer config from docs.yaml (v1.1.0+)
+                                Renderers: mkdocs | docusaurus
+                                Options:
+                                  --out <path>   Override default output location
+                                  --force        Overwrite existing files
+                                  --no-workflow  Skip GitHub Pages workflow generation
 
 Interactive verbs (run inside an AI agent with the spectacular skill):
   new <page>            Scaffold a new page with frontmatter stub
@@ -3945,8 +3995,9 @@ Interactive verbs (run inside an AI agent with the spectacular skill):
 Options:
   -h, --help            Show this help
 
-See: skills/spectacular/references/docs-contract.md for schema
-     skills/spectacular/references/docs-overrides.md for engine rules
+See: skills/spectacular/references/docs-contract.md           for schema
+     skills/spectacular/references/docs-overrides.md          for engine rules
+     skills/spectacular/references/docs-renderer-adapters.md  for export adapters
 EOF
 }
 
@@ -3999,6 +4050,20 @@ sections:
 # extras:
 #   - changelog       # symlinks to ../CHANGELOG.md
 #   - troubleshooting
+
+# Optional per-renderer hints, consumed by 'spectacular docs export <renderer>'.
+# Each adapter falls back to its built-in defaults if a key is absent.
+# Full schema: skills/spectacular/references/docs-renderer-adapters.md
+# renderers:
+#   mkdocs:
+#     theme: material
+#     primary: indigo
+#     repo_url: https://github.com/org/${project_name}
+#     edit_uri: edit/main/docs/
+#   docusaurus:
+#     preset: classic
+#     organizationName: org
+#     projectName: ${project_name}
 "
 
   write_if_missing "docs/index.md" "---
@@ -4070,6 +4135,499 @@ updated: ${TODAY}
   echo "  spectacular docs review              # run quality gate"
 }
 
+# ── docs export adapters (v1.1.0+) ────────────────────────────────────────────
+# Read docs/docs.yaml and write renderer-specific configs. Pure transformation;
+# no rendering, no build. See docs-renderer-adapters.md.
+
+# Read a top-level scalar from docs.yaml (e.g. site.name). Returns "" if absent.
+docs_yaml_scalar() {
+  local manifest="$1" path="$2"
+  # path is dotted like "site.name" — supports one-level nesting (root.key)
+  local root="${path%%.*}" key="${path#*.}"
+  awk -v root="$root" -v key="$key" '
+    $0 ~ "^"root":" { in_block=1; next }
+    in_block && /^[a-zA-Z]/ && !/^  / { in_block=0 }
+    in_block && $0 ~ "^[[:space:]]+"key":" {
+      sub(/^[[:space:]]+[a-zA-Z_]+:[[:space:]]*/, "")
+      sub(/[[:space:]]*#.*$/, "")
+      sub(/^["'\'']/, ""); sub(/["'\'']$/, "")
+      print
+      exit
+    }
+  ' "$manifest"
+}
+
+# Read a per-renderer scalar from renderers.<name>.<key> (one-level deep value).
+docs_yaml_renderer_scalar() {
+  local manifest="$1" renderer="$2" key="$3"
+  awk -v renderer="$renderer" -v key="$key" '
+    /^renderers:/ { in_renderers=1; next }
+    in_renderers && /^[a-zA-Z]/ && !/^  / { in_renderers=0 }
+    in_renderers && $0 ~ "^  "renderer":" { in_block=1; next }
+    in_block && /^  [a-zA-Z]/ { in_block=0 }
+    in_block && $0 ~ "^    "key":" {
+      sub(/^[[:space:]]+[a-zA-Z_]+:[[:space:]]*/, "")
+      sub(/[[:space:]]*#.*$/, "")
+      sub(/^["'\'']/, ""); sub(/["'\'']$/, "")
+      print
+      exit
+    }
+  ' "$manifest"
+}
+
+# Emit "<id>\t<title>\t<order>\t<pages-comma-sep>" lines for each section, sorted by order.
+docs_yaml_sections() {
+  local manifest="$1"
+  awk '
+    /^sections:/ { in_sec=1; next }
+    in_sec && /^[a-zA-Z]/ && !/^  / { in_sec=0 }
+    in_sec && /^  - id:/ {
+      if (id != "") print id "\t" title "\t" order "\t" pages
+      id=""; title=""; order="999"; pages=""
+      id=$0; sub(/^  - id:[[:space:]]*/, "", id); sub(/[[:space:]]*#.*$/, "", id); sub(/[[:space:]]*$/, "", id)
+    }
+    in_sec && /^[[:space:]]+title:/ {
+      title=$0; sub(/^[[:space:]]+title:[[:space:]]*/, "", title); sub(/[[:space:]]*#.*$/, "", title)
+      sub(/^["'\'']/, "", title); sub(/["'\'']$/, "", title)
+    }
+    in_sec && /^[[:space:]]+order:/ {
+      order=$0; sub(/^[[:space:]]+order:[[:space:]]*/, "", order); sub(/[[:space:]]*#.*$/, "", order)
+    }
+    in_sec && /^[[:space:]]+pages:[[:space:]]*\[/ {
+      p=$0
+      if (match(p, /\[[^\]]*\]/) > 0) { p=substr(p, RSTART+1, RLENGTH-2) } else { p="" }
+      gsub(/[[:space:]]/, "", p)
+      pages=p
+    }
+    END {
+      if (id != "") print id "\t" title "\t" order "\t" pages
+    }
+  ' "$manifest" | sort -t$'\t' -k3,3n
+}
+
+docs_yaml_extras() {
+  local manifest="$1"
+  awk '
+    /^extras:/ { in_ex=1; next }
+    in_ex && /^[a-zA-Z]/ && !/^  / && !/^[[:space:]]*-/ { in_ex=0 }
+    in_ex && /^[[:space:]]*-[[:space:]]+/ {
+      slug=$0; sub(/^[[:space:]]*-[[:space:]]+/, "", slug); sub(/[[:space:]]*#.*$/, "", slug); sub(/[[:space:]]*$/, "", slug)
+      gsub(/^["'\'']|["'\'']$/, "", slug)
+      if (slug != "") print slug
+    }
+  ' "$manifest"
+}
+
+# Read a page's frontmatter title; falls back to first H1, then to humanized slug.
+docs_page_title() {
+  local file="$1" fallback_slug="$2"
+  if [[ -f "$file" ]]; then
+    local fm_title
+    fm_title=$(awk '/^---$/ { c++; if (c==2) exit; next } c==1 && /^title:/ { sub(/^title:[[:space:]]*/, ""); sub(/[[:space:]]*$/, ""); gsub(/^["'\'']|["'\'']$/, ""); print; exit }' "$file")
+    if [[ -n "$fm_title" ]]; then
+      printf '%s' "$fm_title"
+      return
+    fi
+    local h1
+    h1=$(grep -m1 '^# ' "$file" | sed 's/^# *//')
+    if [[ -n "$h1" ]]; then
+      printf '%s' "$h1"
+      return
+    fi
+  fi
+  # Humanize slug: dashes → spaces, capitalize each word.
+  printf '%s' "$fallback_slug" | awk '{
+    n=split($0, parts, "-")
+    for (i=1; i<=n; i++) { parts[i]=toupper(substr(parts[i],1,1)) tolower(substr(parts[i],2)) }
+    out=parts[1]; for (i=2; i<=n; i++) out=out " " parts[i]; print out
+  }'
+}
+
+# Detect "spectacular: do-not-overwrite" magic comment in the first line.
+docs_is_pinned() {
+  local file="$1"
+  [[ -f "$file" ]] || return 1
+  head -1 "$file" 2>/dev/null | grep -qE '^(//|#)[[:space:]]*spectacular:[[:space:]]*do-not-overwrite'
+}
+
+# Write file with adapter idempotency: skip if exists, respect pin, --force overwrites.
+# Sets DOCS_EXPORT_WROTE/SKIPPED counters via globals.
+docs_write_adapter_file() {
+  local path="$1" content="$2"
+  if docs_is_pinned "$path"; then
+    echo "  ⊘  ${path}  (pinned — manual)"
+    DOCS_EXPORT_PINNED=$((DOCS_EXPORT_PINNED + 1))
+    return 0
+  fi
+  if [[ -e "$path" ]] && ! $DOCS_EXPORT_FORCE; then
+    echo "  ⊘  ${path}  (skipped — use --force)"
+    DOCS_EXPORT_SKIPPED=$((DOCS_EXPORT_SKIPPED + 1))
+    return 0
+  fi
+  mkdir -p "$(dirname "$path")"
+  printf '%s' "$content" > "$path"
+  if [[ -e "$path" ]] && $DOCS_EXPORT_FORCE; then
+    echo "  ✓  ${path}  (overwritten)"
+  else
+    echo "  ✓  ${path}"
+  fi
+  DOCS_EXPORT_WROTE=$((DOCS_EXPORT_WROTE + 1))
+}
+
+# ── adapter: mkdocs ──
+docs_export_mkdocs() {
+  local manifest="$1" out_dir="$2"
+  local site_name site_tagline site_url
+  site_name="$(docs_yaml_scalar "$manifest" "site.name")"
+  site_tagline="$(docs_yaml_scalar "$manifest" "site.tagline")"
+  site_url="$(docs_yaml_scalar "$manifest" "site.base_url")"
+
+  local theme palette_primary palette_scheme repo_url edit_uri
+  theme="$(docs_yaml_renderer_scalar "$manifest" "mkdocs" "theme")"
+  [[ -z "$theme" ]] && theme="material"
+  palette_primary="$(docs_yaml_renderer_scalar "$manifest" "mkdocs" "primary")"
+  palette_scheme="$(docs_yaml_renderer_scalar "$manifest" "mkdocs" "scheme")"
+  repo_url="$(docs_yaml_renderer_scalar "$manifest" "mkdocs" "repo_url")"
+  edit_uri="$(docs_yaml_renderer_scalar "$manifest" "mkdocs" "edit_uri")"
+
+  # Build nav block
+  local nav_lines=""
+  # Index page if present
+  if [[ -f "docs/index.md" ]]; then
+    nav_lines+="  - Home: index.md
+"
+  fi
+
+  while IFS=$'\t' read -r sec_id sec_title sec_order sec_pages; do
+    [[ -z "$sec_id" ]] && continue
+    # Skip empty sections — MkDocs nav rejects a section with no entries.
+    [[ -z "$sec_pages" ]] && continue
+    nav_lines+="  - ${sec_title}:
+"
+    IFS=',' read -r -a page_arr <<< "$sec_pages"
+    for page in "${page_arr[@]}"; do
+      [[ -z "$page" ]] && continue
+      local page_file="docs/${sec_id}/${page}.md"
+      local page_title
+      page_title="$(docs_page_title "$page_file" "$page")"
+      nav_lines+="      - ${page_title}: ${sec_id}/${page}.md
+"
+    done
+  done < <(docs_yaml_sections "$manifest")
+
+  # Extras
+  while IFS= read -r extra; do
+    [[ -z "$extra" ]] && continue
+    local extra_file="docs/${extra}.md"
+    local extra_title
+    extra_title="$(docs_page_title "$extra_file" "$extra")"
+    nav_lines+="  - ${extra_title}: ${extra}.md
+"
+  done < <(docs_yaml_extras "$manifest")
+
+  # Compose mkdocs.yml
+  local out_file="${out_dir%/}/mkdocs.yml"
+  local content="# Generated by spectacular docs export mkdocs — edits will be preserved unless --force.
+# To pin manual edits, add as the first line: # spectacular: do-not-overwrite
+site_name: ${site_name:-Documentation}
+"
+  [[ -n "$site_tagline" ]] && content+="site_description: ${site_tagline}
+"
+  [[ -n "$site_url" ]] && content+="site_url: ${site_url}
+"
+  [[ -n "$repo_url" ]] && content+="repo_url: ${repo_url}
+"
+  [[ -n "$edit_uri" ]] && content+="edit_uri: ${edit_uri}
+"
+  content+="docs_dir: docs
+
+theme:
+  name: ${theme}
+"
+  if [[ -n "$palette_scheme" || -n "$palette_primary" ]]; then
+    content+="  palette:
+"
+    [[ -n "$palette_scheme" ]] && content+="    - scheme: ${palette_scheme}
+"
+    [[ -n "$palette_primary" ]] && content+="      primary: ${palette_primary}
+"
+  fi
+  content+="
+plugins:
+  - search
+
+nav:
+${nav_lines}"
+
+  docs_write_adapter_file "$out_file" "$content"
+}
+
+# ── adapter: docusaurus ──
+docs_export_docusaurus() {
+  local manifest="$1" out_dir="$2"
+  local site_name site_tagline site_url
+  site_name="$(docs_yaml_scalar "$manifest" "site.name")"
+  site_tagline="$(docs_yaml_scalar "$manifest" "site.tagline")"
+  site_url="$(docs_yaml_scalar "$manifest" "site.base_url")"
+
+  local org_name proj_name preset
+  org_name="$(docs_yaml_renderer_scalar "$manifest" "docusaurus" "organizationName")"
+  proj_name="$(docs_yaml_renderer_scalar "$manifest" "docusaurus" "projectName")"
+  preset="$(docs_yaml_renderer_scalar "$manifest" "docusaurus" "preset")"
+  [[ -z "$preset" ]] && preset="classic"
+
+  # Split site_url into url + baseUrl
+  local du_url="https://example.com" du_base="/"
+  if [[ -n "$site_url" ]]; then
+    # extract scheme+host
+    du_url="$(printf '%s' "$site_url" | awk -F/ '{print $1"//"$3}')"
+    # extract path (everything after host); ensure trailing slash
+    du_base="$(printf '%s' "$site_url" | sed -E "s#^https?://[^/]+##")"
+    [[ -z "$du_base" ]] && du_base="/"
+    [[ "${du_base: -1}" != "/" ]] && du_base+="/"
+  fi
+
+  # Build sidebars items
+  local sidebar_items=""
+  if [[ -f "docs/index.md" ]]; then
+    sidebar_items+="    'index',
+"
+  fi
+
+  while IFS=$'\t' read -r sec_id sec_title sec_order sec_pages; do
+    [[ -z "$sec_id" ]] && continue
+    # Skip empty sections for parity with mkdocs adapter.
+    [[ -z "$sec_pages" ]] && continue
+    sidebar_items+="    {
+      type: 'category',
+      label: '${sec_title//\'/\\\'}',
+      items: ["
+    IFS=',' read -r -a page_arr <<< "$sec_pages"
+    local first=true
+    for page in "${page_arr[@]}"; do
+      [[ -z "$page" ]] && continue
+      if $first; then first=false; else sidebar_items+=", "; fi
+      sidebar_items+="'${sec_id}/${page}'"
+    done
+    sidebar_items+="],
+    },
+"
+  done < <(docs_yaml_sections "$manifest")
+
+  while IFS= read -r extra; do
+    [[ -z "$extra" ]] && continue
+    sidebar_items+="    '${extra}',
+"
+  done < <(docs_yaml_extras "$manifest")
+
+  # docusaurus.config.js
+  local config_file="${out_dir%/}/docusaurus.config.js"
+  local config_content="// Generated by spectacular docs export docusaurus — edits will be preserved unless --force.
+// To pin manual edits, add as the first line: // spectacular: do-not-overwrite
+module.exports = {
+  title: '${site_name//\'/\\\'}',
+  tagline: '${site_tagline//\'/\\\'}',
+  url: '${du_url}',
+  baseUrl: '${du_base}',
+"
+  [[ -n "$org_name" ]] && config_content+="  organizationName: '${org_name}',
+"
+  [[ -n "$proj_name" ]] && config_content+="  projectName: '${proj_name}',
+"
+  config_content+="  presets: [
+    ['${preset}', {
+      docs: {
+        sidebarPath: require.resolve('./sidebars.js'),
+      },
+    }],
+  ],
+  themeConfig: {
+    navbar: {
+      title: '${site_name//\'/\\\'}',
+    },
+  },
+};
+"
+  docs_write_adapter_file "$config_file" "$config_content"
+
+  # sidebars.js
+  local sidebars_file="${out_dir%/}/sidebars.js"
+  local sidebars_content="// Generated by spectacular docs export docusaurus — edits will be preserved unless --force.
+// To pin manual edits, add as the first line: // spectacular: do-not-overwrite
+module.exports = {
+  docs: [
+${sidebar_items}  ],
+};
+"
+  docs_write_adapter_file "$sidebars_file" "$sidebars_content"
+}
+
+# ── GitHub Pages workflow writer ──
+docs_export_workflow() {
+  local renderer="$1" out_dir="$2"
+  local wf_file="${out_dir%/}/.github/workflows/docs.yml"
+
+  local wf_content
+  if [[ "$renderer" == "mkdocs" ]]; then
+    wf_content="# Generated by spectacular docs export mkdocs
+name: Deploy docs (MkDocs)
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**', 'mkdocs.yml', '.github/workflows/docs.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install mkdocs mkdocs-material
+      - run: mkdocs build --strict --site-dir _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+"
+  else
+    wf_content="# Generated by spectacular docs export docusaurus
+name: Deploy docs (Docusaurus)
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**', 'docusaurus.config.js', 'sidebars.js', '.github/workflows/docs.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npx docusaurus build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+"
+  fi
+  docs_write_adapter_file "$wf_file" "$wf_content"
+}
+
+# ── docs export orchestrator ──
+docs_export() {
+  local renderer=""
+  local out_dir="."
+  DOCS_EXPORT_FORCE=false
+  local no_workflow=false
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h|--help) docs_usage; exit 0 ;;
+      --out)
+        require_value "--out" "${2:-}"
+        out_dir="$2"; shift 2 ;;
+      --out=*)
+        out_dir="${1#--out=}"; shift ;;
+      --force)       DOCS_EXPORT_FORCE=true; shift ;;
+      --no-workflow) no_workflow=true; shift ;;
+      mkdocs|docusaurus)
+        [[ -n "$renderer" ]] && die "Multiple renderers given: '$renderer' and '$1'. Run one at a time."
+        renderer="$1"; shift ;;
+      mintlify|fumadocs)
+        die "Renderer '$1' is not shipped — community contributions welcome. See skills/spectacular/references/docs-renderer-adapters.md § Contributing a renderer."
+        ;;
+      -*) die "Unknown docs export option: '$1'" ;;
+      *)  die "Unknown renderer: '$1'. Supported: mkdocs, docusaurus." ;;
+    esac
+  done
+
+  [[ -z "$renderer" ]] && die "docs export requires a renderer. Usage: spectacular docs export <mkdocs|docusaurus> [--out path] [--force]"
+
+  local manifest="docs/docs.yaml"
+  [[ -f "$manifest" ]] || die "docs/docs.yaml not found. Run 'spectacular docs init' first."
+
+  DOCS_EXPORT_WROTE=0
+  DOCS_EXPORT_SKIPPED=0
+  DOCS_EXPORT_PINNED=0
+
+  echo "Spectacular docs export → ${renderer}"
+  echo ""
+  echo "Generated:"
+
+  case "$renderer" in
+    mkdocs)     docs_export_mkdocs     "$manifest" "$out_dir" ;;
+    docusaurus) docs_export_docusaurus "$manifest" "$out_dir" ;;
+  esac
+
+  if ! $no_workflow; then
+    docs_export_workflow "$renderer" "$out_dir"
+  fi
+
+  echo ""
+  echo "Summary: ${DOCS_EXPORT_WROTE} written, ${DOCS_EXPORT_SKIPPED} skipped, ${DOCS_EXPORT_PINNED} pinned"
+  echo ""
+
+  if (( DOCS_EXPORT_WROTE > 0 )); then
+    echo "Next steps:"
+    if [[ "$renderer" == "mkdocs" ]]; then
+      echo "  1. pip install mkdocs mkdocs-material"
+      echo "  2. mkdocs serve                      # local preview at http://127.0.0.1:8000"
+    else
+      echo "  1. npm init -y && npm install @docusaurus/core @docusaurus/preset-classic react react-dom"
+      echo "  2. npx docusaurus start              # local preview at http://localhost:3000"
+    fi
+    if ! $no_workflow; then
+      echo "  3. Settings → Pages → Source = GitHub Actions"
+      echo "  4. Commit + push to main — the workflow deploys automatically"
+    fi
+  elif (( DOCS_EXPORT_SKIPPED > 0 || DOCS_EXPORT_PINNED > 0 )); then
+    echo "All targets up to date. Use --force to overwrite non-pinned files."
+  fi
+}
+
 docs() {
   local verb="${1:-}"
   if [[ -z "$verb" || "$verb" == "-h" || "$verb" == "--help" ]]; then
@@ -4077,9 +4635,10 @@ docs() {
   fi
   shift
   case "$verb" in
-    init) docs_init "$@" ;;
+    init)   docs_init   "$@" ;;
+    export) docs_export "$@" ;;
     new|review|status)
-      die "'spectacular docs $verb' is a skill verb — run it inside your AI agent (Claude Code, Codex). The CLI only handles 'docs init' and 'doctor docs'."
+      die "'spectacular docs $verb' is a skill verb — run it inside your AI agent (Claude Code, Codex). The CLI only handles 'docs init', 'docs export', and 'doctor docs'."
       ;;
     *) die "Unknown docs verb: '$verb'. Run 'spectacular docs --help' for usage." ;;
   esac

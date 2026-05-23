@@ -1,7 +1,7 @@
 site:
   name: <PROJECT NAME>
   tagline: ""
-  # base_url: https://example.com   # optional — used by renderer adapters (v2)
+  # base_url: https://example.com   # optional — used by renderer adapters
 
 sections:
   - id: getting-started
@@ -23,3 +23,17 @@ sections:
 # extras:
 #   - changelog       # symlinks to ../CHANGELOG.md
 #   - troubleshooting
+
+# Optional per-renderer hints, consumed by 'spectacular docs export <renderer>'.
+# Each adapter falls back to its built-in defaults if a key is absent.
+# Full schema: skills/spectacular/references/docs-renderer-adapters.md
+# renderers:
+#   mkdocs:
+#     theme: material
+#     primary: indigo
+#     repo_url: https://github.com/org/<PROJECT NAME>
+#     edit_uri: edit/main/docs/
+#   docusaurus:
+#     preset: classic
+#     organizationName: org
+#     projectName: <PROJECT NAME>

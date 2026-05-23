@@ -44,10 +44,9 @@ spectacular/
 
 | Slug | Status | Summary |
 |---|---|---|
-| `public-docs-advanced` | planned | v2 docs — renderer adapters + versioning + spec→doc sync (gated on real demand) |
 | `convention-pack-modules` | planned | v2 modular packs — stays planned until composition pain surfaces from v1 use |
 
-**Archived (shipped):** `cli-bootstrap` (v0.2.0, verified v1.0.1), `roadmap-richness-v2` (v0.7.2), `roadmap-richness` (v0.7.1), `convention-pack-fabricator` (v0.4.0), `cli-mutator-verbs` (v0.7.0), `workspace-migrations` (Stage 1: v0.6.1; Stage 2: v0.6.2), `doctor` (v0.3.1), `spec-rename` (v0.5.0), `public-docs-foundation` (v0.6.0), `convention-pack-application` (v0.4.0), plus pre-v0.4 work (`repo-conventions` superseded by pack system in v0.4.0). See `.spectacular/archive/`.
+**Archived (shipped):** `public-docs-advanced` (v1.1.0 — narrowed scope: MkDocs + Docusaurus adapters only, dogfood deferred to future docs-writer-driven request), `cli-bootstrap` (v0.2.0, verified v1.0.1), `roadmap-richness-v2` (v0.7.2), `roadmap-richness` (v0.7.1), `convention-pack-fabricator` (v0.4.0), `cli-mutator-verbs` (v0.7.0), `workspace-migrations` (Stage 1: v0.6.1; Stage 2: v0.6.2), `doctor` (v0.3.1), `spec-rename` (v0.5.0), `public-docs-foundation` (v0.6.0), `convention-pack-application` (v0.4.0), plus pre-v0.4 work (`repo-conventions` superseded by pack system in v0.4.0). See `.spectacular/archive/`.
 
 ## Skill Architecture
 

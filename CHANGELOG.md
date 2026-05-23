@@ -5,6 +5,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.1.0] — 2026-05-23
+
+### Added
+- `spectacular docs export <renderer>` — generates renderer configs from `docs/docs.yaml`. Two adapters ship: `mkdocs` (writes `mkdocs.yml`, Material theme defaults) and `docusaurus` (writes `docusaurus.config.js` + `sidebars.js`).
+- Both adapters also write `.github/workflows/docs.yml` for GitHub Pages deployment (idempotent, opt out with `--no-workflow`).
+- `--force` overwrites generated files; default re-runs are safe and report skipped targets.
+- `// spectacular: do-not-overwrite` magic comment pins manual edits — respected even with `--force`.
+- `--out <path>` overrides default output location (default: alongside `docs/` at repo root).
+- Optional `renderers:` block in `docs.yaml` carries per-renderer hints (`theme`, `primary`, `scheme`, `repo_url`, `edit_uri`, `organizationName`, `projectName`, `preset`).
+- Doctor `docs` area validates the `renderers:` block: pass on recognized renderer keys (`mkdocs`, `docusaurus`), warning on unknown keys (typo guard), error on scalar or list shapes.
+- Reference doc: `skills/spectacular/references/docs-renderer-adapters.md` — mapping tables, frontmatter translation, GitHub Pages boilerplate, contributing-a-renderer contract.
+- `tests/cli/docs-export.test.sh` — 16 scenarios covering both adapters, idempotency, `--force`, pinning, error paths, doctor checks.
+
+### Changed
+- `spectacular docs --help` and top-level usage now list `export` and the two shipped renderers.
+- `docs init` scaffolds a commented `renderers:` example in the generated `docs.yaml` (and template).
+- `docs-contract.md` extended with the full `renderers:` block schema, recognized renderer table, and doctor validation rules.
+
+### Notes
+- Mintlify and Fumadocs adapters are not shipped — community-contributable via the contract in `docs-renderer-adapters.md` § Contributing a renderer.
+- Empty sections (declared with `pages: []`) are dropped from generated nav for both adapters — keeps `mkdocs.yml` valid and Docusaurus sidebars uncluttered.
+
+---
+
 ## [1.0.1] — 2026-05-23
 
 ### Added

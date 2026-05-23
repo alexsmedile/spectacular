@@ -118,12 +118,54 @@ Judgment fixes (delete orphan files, rename sections, merge pages) require skill
 ## Renderer-agnostic by design
 
 `docs.yaml` + page frontmatter are designed to map cleanly to:
-- Mintlify `mint.json` (sections → groups, pages → entries)
-- Docusaurus `sidebars.js` + per-page frontmatter
-- Fumadocs `meta.json` per folder
-- MkDocs `mkdocs.yml` `nav:` block
+- MkDocs `mkdocs.yml` `nav:` block — **shipped (v1.1.0)**, see [[docs-renderer-adapters]]
+- Docusaurus `sidebars.js` + per-page frontmatter — **shipped (v1.1.0)**, see [[docs-renderer-adapters]]
+- Mintlify `mint.json` (sections → groups, pages → entries) — community-contributable
+- Fumadocs `meta.json` per folder — community-contributable
 
-The export adapters themselves are deferred to [[public-docs-advanced]] (v2). v1 ships a structure that's portable; the user picks any renderer or stays renderer-less.
+v1 shipped a structure that's portable; the user picks any renderer or stays renderer-less. v1.1.0 added two adapters via `spectacular docs export <renderer>`. Other renderers are documented as a contribution path in [[docs-renderer-adapters]] § Contributing a renderer.
+
+### `renderers:` block (v1.1.0+)
+
+`docs.yaml` accepts an optional top-level `renderers:` map for renderer-specific hints. Each top-level key under `renderers:` is a renderer name; its value is a map of adapter-specific settings. Adapters consume their own sub-key; unknown sub-keys within a known renderer are ignored.
+
+```yaml
+renderers:                              # optional, additive — base schema works without it
+  mkdocs:
+    theme: material                     # default if omitted
+    primary: indigo                     # palette primary color
+    scheme: slate                       # light | slate | default
+    repo_url: https://github.com/org/repo
+    edit_uri: edit/main/docs/
+  docusaurus:
+    preset: classic                     # default if omitted
+    organizationName: org
+    projectName: repo
+```
+
+#### Recognized renderer names
+
+| Renderer | Adapter ships at | Status |
+|---|---|---|
+| `mkdocs` | `spectacular docs export mkdocs` | shipped (v1.1.0) |
+| `docusaurus` | `spectacular docs export docusaurus` | shipped (v1.1.0) |
+| `mintlify` | — | not shipped (community-contributable) |
+| `fumadocs` | — | not shipped (community-contributable) |
+
+Any other top-level key under `renderers:` is **unknown** and triggers a doctor warning (it's allowed — packs or community adapters may register their own — but the warning surfaces typos like `mkdoc:` vs `mkdocs:`).
+
+#### Per-renderer key reference
+
+The full mapping of `docs.yaml` source → renderer config target lives in [[docs-renderer-adapters]]. That doc is authoritative for which keys each adapter consumes.
+
+#### Validation (doctor `docs` area)
+
+| Severity | Check |
+|---|---|
+| info | `renderers:` block absent (every adapter falls back to its built-in defaults) |
+| pass | `renderers:` parses, all top-level keys are recognized renderer names |
+| warning | Top-level key under `renderers:` is not a recognized renderer name (typo or unknown adapter) |
+| error | `renderers:` value is not a map (e.g., a bare scalar or list) |
 
 ## Anti-patterns
 

@@ -5,6 +5,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.2.1] — 2026-05-24
+
+### Changed
+- `.spectacular/SPEC.md`: "Public docs surface" capability bullet rewritten to reflect v1.2.0 deprecation and pageworks handoff; summary line bumped to v1.2.0.
+- `.spectacular/ROADMAP.md`: prepended 6 missing "Recently shipped" entries (v0.7.1, v0.7.2, v1.0.0, v1.0.1, v1.1.0, v1.2.0).
+- `README.md`: version badge bumped; skill commands table refreshed (added `promote`, `touch`; archive description references SPEC.md/specs/ sync instead of legacy `current/`); deprecation banner for `docs *` verbs added; doctor area list now includes `specs` and `docs`; CLI reference now lists `spectacular migrate`; new "Pairing with pageworks" section.
+
+### Notes
+- Docs-only patch. No behavioral changes to CLI or skill.
+
+---
+
 ## [1.2.0] — 2026-05-23
 
 ### Deprecated

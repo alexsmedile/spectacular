@@ -1,5 +1,5 @@
 ---
-status: review
+status: archived
 priority: medium
 owner: alex
 updated: 2026-05-23
@@ -7,7 +7,8 @@ summary: "Skill flow that interviews the user and produces a convention pack —
 related:
   - ../../../skills/spectacular/references/grill.md
   - ../convention-pack-schema/PLAN.md
-  - ../convention-pack-application/PLAN.md
+  - ../../archive/convention-pack-application/PLAN.md
+archived: 2026-05-23
 ---
 
 # Plan — Convention Pack Fabricator

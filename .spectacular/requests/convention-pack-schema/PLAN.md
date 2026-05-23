@@ -7,8 +7,8 @@ summary: "Define the convention-pack schema: folder shape, frontmatter contract,
 related:
   - ../../../skills/spectacular/references/kits-contract.md
   - ../../archive/repo-conventions/PLAN.md
-  - ../convention-pack-fabricator/PLAN.md
-  - ../convention-pack-application/PLAN.md
+  - ../../archive/convention-pack-fabricator/PLAN.md
+  - ../../archive/convention-pack-application/PLAN.md
 ---
 
 # Plan — Convention Pack Schema

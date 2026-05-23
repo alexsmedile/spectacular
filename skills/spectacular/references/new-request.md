@@ -28,7 +28,22 @@ Example: "add team billing" → `add-team-billing`
 
 ## Scaffold sequence
 
-On confirmation, create:
+**Mutation principle (v0.7.0+):** scaffolding goes through `spectacular new <slug>`. The CLI:
+- Validates the slug (kebab-case, max 64 chars; respects pack naming rules if active)
+- Refuses if slug already exists in `requests/` OR `archive/`
+- Reads PLAN.md and TASKS.md from the bundled templates
+- Prefills frontmatter via shared helpers (status, priority, owner from config, updated, summary)
+- Writes both files atomically
+
+Skill flow:
+
+1. Derive the slug from the user's description (kebab-case, 2–4 words)
+2. Apply slug rules + check for collisions (see below)
+3. Confirm slug + summary with user
+4. Run: `spectacular new <slug> --summary "<desc>" [--priority high|low]`
+5. Inspect the scaffolded PLAN.md; edit slot bodies as needed (slots are skill territory; the *files* are CLI territory)
+
+On confirmation, the verb creates:
 
 ```
 requests/<slug>/

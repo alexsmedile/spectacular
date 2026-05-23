@@ -1,13 +1,14 @@
 ---
-status: review
+status: archived
+shipped_in: v0.4.0
+archived: 2026-05-23
 priority: medium
 owner: alex
 updated: 2026-05-23
 summary: "Wire packs into init/new-request/doctor; add pack install/list/remove CLI commands; per-repo mode (suggest/scaffold/enforce)"
 related:
-  - ../convention-pack-schema/PLAN.md
   - ../convention-pack-fabricator/PLAN.md
-  - ../doctor/PLAN.md
+  - ../../archive/doctor/PLAN.md
 ---
 
 # Plan — Convention Pack Application

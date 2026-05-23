@@ -16,37 +16,33 @@ Requests files (`PLAN.md`, `TASKS.md`, `SESSION.md`) are operational/temporary �
 
 ## Snapshot naming
 
-`<filename>@v<version>.<ext>`
+`<filename>@v<N>.<ext>` where `<N>` is a monotonically increasing integer.
 
 Examples:
-- `PRD.md` → snapshot as `PRD@v1.0.md`
-- `STACK.md` → snapshot as `STACK@v1.2.md`
-- `current/auth/login.md` → snapshot as `current/auth/login@v1.0.md`
+- `PRD.md` → snapshot as `PRD@v1.md`, then `PRD@v2.md`, ...
+- `STACK.md` → snapshot as `STACK@v1.md`
+- `specs/auth/SPEC.md` → snapshot as `specs/auth/SPEC@v1.md`
 
 Snapshots live **alongside** the current file (same directory).
 
 The unversioned filename (`PRD.md`) always points to the **latest** version.
 
----
-
-## Snapshot sequence
-
-1. Read the current file's frontmatter to get the current `version`
-2. Copy file to `<name>@v<version>.<ext>` — do not modify the snapshot
-3. Edit the new version of the unversioned file
-4. Increment `version` in frontmatter (patch for small edits, minor for meaningful changes)
-5. Update `updated` date in frontmatter
+> **Note (v0.7.0+):** older snapshots in the repo use dotted version naming (`PRD@v1.0.md`) — that was the v0.7.x convention. The v0.7.0 CLI verb uses integer naming (`PRD@v1.md`). Both coexist; the CLI scans for any numeric suffix when picking the next N.
 
 ---
 
-## Manual snapshot
+## Snapshot sequence (v0.7.0+ via CLI verb)
 
-User can run: `spectacular snapshot <file>`
+Use **`spectacular snapshot <file>`** — never do this by hand. The CLI verb:
 
-Skill will:
-1. Read current version from frontmatter
-2. Create snapshot
-3. Confirm to user: "Snapshotted `PRD.md` as `PRD@v1.1.md`. Ready to edit."
+1. Validates `<file>` is a registered canonical doc; refuses otherwise
+2. Scans for existing `<base>@v*.md` snapshots; picks next N
+3. Compares current file body to latest snapshot — if unchanged, exits cleanly (idempotent)
+4. Copies current state to `<base>@v<N>.md`
+5. Bumps `version:` field in the unversioned file (minor by default: `X.Y` → `X.(Y+1)`; `--major` for `(X+1).0`)
+6. Sets `updated:` to today
+
+Manual snapshotting (cp + sed) is fragile and gets the version bump wrong. The verb has tests; ad-hoc shell doesn't.
 
 ---
 

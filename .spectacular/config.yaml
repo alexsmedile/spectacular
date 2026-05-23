@@ -2,6 +2,10 @@ project:
   name: spectacular
   summary: "AI-native operational workspace — directory convention, skill, and CLI bootstrap for software projects"
 
+# Structural version of .spectacular/ layout. Migrations bump this.
+# Run `spectacular migrate` if your skill expects a newer schema.
+workspace_schema: "0.6"
+
 naming:
   requests: kebab-case
   prefix: ""

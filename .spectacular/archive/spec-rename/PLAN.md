@@ -1,11 +1,12 @@
 ---
-status: planned
+status: verified
 priority: medium
 owner: alex
 updated: 2026-05-23
+shipped_in: v0.5.0
 summary: "Rename current/ → specs/, introduce .spectacular/SPEC.md as the always-on index; per-capability files become optional and only for complex work"
 related:
-  - ../../SPEC.md   # created by this request
+  - ../../SPEC.md
   - ../public-docs-foundation/PLAN.md
   - ../../ARCHITECTURE.md
 ---

@@ -21,7 +21,7 @@ when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type registered in doc-registry.md.
-version: 0.6.0
+version: 1.0.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -37,19 +37,26 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 
 ### Workspace lifecycle
 
+**Mutation principle (v0.7.0+):** lifecycle mutations go through CLI verbs — never free-form file edits. The CLI is the deterministic mutator; the skill orchestrates, reads, decides, communicates. Manual edits remain available for edge cases the verbs don't cover, but should be the exception. See [[lifecycle]] and individual reference docs for the verb each flow uses.
+
 | User says / context | Route to |
 |---|---|
 | `/spectacular` with no args | → `references/status.md` |
 | `spectacular status` | → `references/status.md` |
-| `spectacular new <description>` | → `references/new-request.md` |
-| `spectacular archive <slug>` | → `references/archive.md` |
+| `spectacular new <description>` | → `references/new-request.md` (then run `spectacular new <slug>`) |
+| `spectacular archive <slug>` | → CLI verb (no skill flow); see [[archive]] for context |
 | `spectacular remember this` | → `references/memory.md` |
-| `spectacular promote <idea>` | → `references/new-request.md` |
-| `spectacular snapshot <file>` | → `references/versioning.md` |
+| `spectacular promote <slug>` | → CLI verb (no skill flow); see [[lifecycle]] for state machine |
+| `spectacular snapshot <file>` | → CLI verb (no skill flow); see [[versioning]] for snapshot rules |
+| `spectacular touch <file>` | → CLI verb; trivial — just bumps `updated:` |
 | First invocation on existing `.spectacular/` project | → `references/onboarding.md` |
 | `spectacular init` (CLI context) | → `references/init-workflow.md` |
-| `spectacular doctor` / `spectacular doctor <area>` / `spectacular doctor --fix` | → `references/doctor.md` |
-| Skill operation hits substrate failure (registry won't parse, kit malformed, etc.) | → `references/doctor.md` § Skill-invoked checks (scoped) |
+| `spectacular doctor` / `spectacular doctor <area>` | → `references/doctor.md` (lean entry) |
+| `/spectacular doctor --fix` (judgment walk) | → `references/doctor-repair.md` |
+| Explain a finding or area check | → `references/doctor-areas.md` |
+| Skill operation hits substrate failure (registry won't parse, kit malformed, etc.) | → `references/doctor-substrate.md` |
+| `/spectacular migrate` (walk judgment migrations) | → `references/migrate.md` |
+| Explain a migration spec or contract | → `references/migrations-contract.md` |
 | Actively working on a request | → `references/active-request.md` |
 
 ### Doc-writing (generalized — works for any registered doc)
@@ -181,7 +188,13 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/active-request.md` | Continue work, session state, task tracking |
 | `references/lifecycle.md` | State transitions, signal detection, proactive proposals |
 | `references/verification.md` | When VERIFY.md is needed (2-of-6 rule) vs folded into PLAN § Validation or TASKS § Verification |
-| `references/doctor.md` | Environment/infrastructure self-check (CLI detects, skill repairs); judgment-fix repair flow |
+| `references/verify-tests.md` | When to author `tests/verify/<slug>.test.sh` scripts vs leave scenarios in VERIFY.md as manual checklists |
+| `references/doctor.md` | Doctor entry point — severity model, report format, mechanical fixes |
+| `references/doctor-areas.md` | Per-area check tables (load when explaining/implementing a check) |
+| `references/doctor-repair.md` | Judgment-fix repair flow — y/n/q walk, snapshot-before-edit, examples |
+| `references/doctor-substrate.md` | Auto-invocation spec for status/grill/onboarding/lifecycle |
+| `references/migrate.md` | `/spectacular migrate` skill walk — judgment migrations with snapshot + y/n/q |
+| `references/migrations-contract.md` | Schema contract for migration .md files under `migrations/` |
 | `references/archive.md` | Archive a request, propose spec sync + memory entries |
 | `references/memory.md` | `remember this` command, write triggers, anti-collision rules |
 | `references/versioning.md` | Snapshot-before-edit rules, naming convention |

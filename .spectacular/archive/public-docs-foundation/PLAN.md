@@ -1,8 +1,9 @@
 ---
-status: review
+status: verified
 priority: medium
 owner: alex
 updated: 2026-05-23
+shipped_in: v0.6.0
 summary: "Public-facing docs/ as a first-class Spectacular surface — flat tree, single docs.yaml manifest, page frontmatter, doc verbs (init/new/review), doctor docs area. Renderer-agnostic."
 related:
   - ../spec-rename/PLAN.md

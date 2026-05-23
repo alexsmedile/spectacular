@@ -5,8 +5,8 @@ owner: alex
 updated: 2026-05-23
 summary: "v2 docs surface — renderer adapters (Mintlify/Docusaurus/Fumadocs/MkDocs), docs versioning, spec→doc sync, convention-pack docs-layout category"
 related:
-  - ../public-docs-foundation/PLAN.md
-  - ../spec-rename/PLAN.md
+  - ../../archive/public-docs-foundation/PLAN.md
+  - ../../archive/spec-rename/PLAN.md
   - ../convention-pack-modules/PLAN.md
 ---
 

@@ -1,5 +1,6 @@
 ---
-status: review
+status: verified
+shipped_in: v0.3.1
 priority: medium
 owner: alex
 updated: 2026-05-23

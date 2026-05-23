@@ -236,6 +236,57 @@ EOF
   rm -rf "$dir"
 }
 
+scenario_9_flat_contract_docs_valid() {
+  echo "Scenario 9: flat contract docs (top-level .md in specs/) are valid alongside subfolders"
+  local dir="/tmp/spectacular-specs-test-9"
+  seed_workspace "$dir"
+  run_cli "$dir" init >/dev/null
+
+  # Octopus-shape: flat SCHEMA-*.md files
+  cat > "$dir/.spectacular/specs/SCHEMA-TASK.md" <<'EOF'
+---
+name: schema-task
+version: 1.0
+---
+# Task schema
+EOF
+  cat > "$dir/.spectacular/specs/AXIS-MODEL.md" <<'EOF'
+---
+name: axis-model
+---
+# Axis model
+EOF
+  # Bad: missing frontmatter — should warn
+  cat > "$dir/.spectacular/specs/BROKEN.md" <<'EOF'
+# no frontmatter
+EOF
+  # Mixed: also add a capability subfolder
+  mkdir -p "$dir/.spectacular/specs/task-management"
+  cat > "$dir/.spectacular/specs/task-management/SPEC.md" <<'EOF'
+---
+name: task-management
+---
+# Task management
+EOF
+
+  local output
+  output=$(run_cli "$dir" doctor specs)
+
+  if echo "$output" | grep -q "SCHEMA-TASK.md.*contract doc present"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected SCHEMA-TASK.md to be a passing contract doc"; fail_count=$((fail_count + 1)); fi
+
+  if echo "$output" | grep -q "AXIS-MODEL.md.*contract doc present"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected AXIS-MODEL.md to be a passing contract doc"; fail_count=$((fail_count + 1)); fi
+
+  if echo "$output" | grep -q "BROKEN.md.*missing frontmatter"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected BROKEN.md to warn about frontmatter"; fail_count=$((fail_count + 1)); fi
+
+  if echo "$output" | grep -q "task-management/SPEC.md.*capability spec present"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected mixed-mode capability spec to validate"; fail_count=$((fail_count + 1)); fi
+
+  rm -rf "$dir"
+}
+
 scenario_8_repeat_init_nondestructive() {
   echo "Scenario 8: repeat init is non-destructive (SPEC.md not overwritten)"
   local dir="/tmp/spectacular-specs-test-8"
@@ -267,6 +318,7 @@ scenario_5_fix_migrates_current_to_specs
 scenario_6_conflict_both_dirs_no_autofix
 scenario_7_per_capability_spec_validated
 scenario_8_repeat_init_nondestructive
+scenario_9_flat_contract_docs_valid
 
 echo ""
 echo "Results: ${pass_count} passed, ${fail_count} failed"

@@ -1,7 +1,7 @@
 ---
-version: 2.1
+version: 2.0
 updated: 2026-05-23
-summary: "Per-version scope, phase, and exit criteria. Active line is v0.7.1. Long-term gets fuzzier on purpose."
+summary: "Per-version scope, phase, and exit criteria. Active line is v0.9.0. Long-term gets fuzzier on purpose."
 related:
   - PRD.md
   - ARCHITECTURE.md
@@ -16,23 +16,20 @@ Phase chain: `intent → discover → prototype → spec-refine → mvp → iter
 
 ---
 
-## v0.7.1 — Structured ROADMAP + roadmap-richness
+## v0.9.0 — Structured ROADMAP + roadmap-richness
 
 **Tier:** full
 **Status:** active
 **Phase:** mvp (skipped: discover, prototype)
-
-**Outcome:**
-Spectacular maintainers can plan, review, and ship versions through a single structured ROADMAP that captures intent (Outcome), scope (in + out), and verification (Exit criteria) consistently across every release — replacing the prior freeform shape that made cross-version comparison and "what's in scope for v1?" answerable only by reading the bullets and guessing.
 
 **Scope (in):**
 - `roadmap-overrides.md` reference doc (slot prompts, mini-refine, vibe→spec, tier-aware gate)
 - `templates/roadmap/base.md` rewrite to structured per-version shape with tier examples
 - `doc-registry.md` switch: ROADMAP `mode: freeform` → `mode: structured`
 - Live `.spectacular/ROADMAP.md` rewritten against new shape (this file) with tier gradient
-- Doctor extension: `check_workspace` info line for pre-v0.7.1 ROADMAP shape
+- Doctor extension: `check_workspace` info line for pre-v0.9 ROADMAP shape
 - `--target-version <ver>` flag added to `spectacular new` (M5 dependency, shipped)
-- Precision tiers: `full | themed | vision` per version block + `## Icebox` section
+- Precision tiers: `full | themed | vision` per version block + `## Bucket list` section
 
 **Scope (out):**
 - Cross-doc enforcement ("every active request must link to a version") — needs inverse-link registry first
@@ -40,31 +37,28 @@ Spectacular maintainers can plan, review, and ship versions through a single str
 - Burndown / progress visualization
 - Multi-product roadmaps (one ROADMAP per product line in monorepo)
 - Time-based release predictions
-- `spectacular roadmap grill --icebox` CLI wiring (deferred; flow defined in roadmap-overrides.md but not shipped as a separate verb)
+- `spectacular roadmap grill --bucket` CLI wiring (deferred; flow defined in roadmap-overrides.md but not shipped as a separate verb)
 
 **Exit criteria:**
 - [ ] `roadmap-overrides.md` ships with tier-aware grill + tier-aware review gate
-- [ ] Template rewrite shows all 3 tiers + Icebox as examples
+- [ ] Template rewrite shows all 3 tiers + bucket list as examples
 - [ ] Live `.spectacular/ROADMAP.md` migrated with correct tier per version; doctor passes
 - [ ] `spectacular roadmap review` would exit clean on the migrated file (manual review since no grill yet)
 - [ ] `--target-version` flag wired into `cmd_new` (shipped this milestone)
-- [ ] CHANGELOG entry + plugin bump to v0.7.1
+- [ ] CHANGELOG entry + plugin bump to v0.9.0
 - [ ] 7 test files still green; new asserts cover `--target-version` + ROADMAP shape detection
 
 **Linked requests:**
 <!-- autopopulated; backfill via target_version: in request frontmatter -->
-- roadmap-richness (active, target_version: 0.7.1)
+- roadmap-richness (active, target_version: 0.9.0)
 
 ---
 
-## v0.7.x — Workflows layer
+## v0.10.x — Workflows layer
 
 **Tier:** themed
 **Status:** planned
 **Phase:** intent
-
-**Outcome:**
-Spectacular projects can capture their procedural sequences (release cycle, hotfix protocol, migration runbook) as first-class registered docs that the skill walks step-by-step — reducing release-mistake rate and onboarding time for new maintainers who today have to reconstruct the procedure from CHANGELOG entries.
 
 **Themes:**
 - `spectacular workflows` — project-specific procedural sequences (release cycles, hotfix flows, migration procedures)
@@ -87,9 +81,6 @@ Spectacular projects can capture their procedural sequences (release cycle, hotf
 **Status:** planned
 **Phase:** intent
 
-**Outcome:**
-Convention pack authors can compose packs from smaller building blocks (inherit `minimal` + override specific rules) instead of copying the entire `alex-default` to make minor variants — making pack maintenance practical at scale and lowering the bar for sharing project-shape opinions across teams.
-
 **Themes:**
 - Pack composition (inherit + override) — gated on real composition pain surfacing from v1 use
 - Pack diff/merge for resolving conflicts between inherited packs
@@ -110,9 +101,6 @@ Convention pack authors can compose packs from smaller building blocks (inherit 
 **Tier:** themed
 **Status:** planned
 **Phase:** intent
-
-**Outcome:**
-External users (not just the maintainer) can adopt Spectacular knowing the v1 surface is frozen and changes will follow semver discipline — turning Spectacular from a maintainer-facing experiment into a tool consumer projects can depend on without being on the upgrade treadmill.
 
 **Themes:**
 - Freeze v0.x capabilities as the v1 surface
@@ -153,29 +141,25 @@ Spectacular as the substrate for coordinated agent teams operating on long-runni
 
 ---
 
-## Icebox
+## Bucket list
 
-Ideas worth capturing but not yet tied to any version. Promoting an item via the 4-step ritual (see `roadmap-overrides.md`): pick item → choose target version → choose tier (default vision) → fill tier-appropriate slots → delete from Icebox.
+Ideas worth capturing but not yet tied to any version. Promoting an item: pick a version label + add a `Tier: vision` block (or higher precision).
 
 - Hook-driven automation (auto-update SESSION.md on commit, auto-archive on merge to main, auto-propose lifecycle transitions on CI/PR/deploy signals)
 - Multi-agent orchestration (subagent handoff conventions, parallel execution patterns, agent contracts) — deferred until a real complex request exercises the need
 - Schema-first request validation (parse YAML schemas declared in PLAN frontmatter, validate against contract docs)
 - Multi-language convention packs (Python, Go, TypeScript variants of alex-default)
 - Time-tracking integration (auto-log session duration to memory)
-- `spectacular roadmap grill --icebox` CLI flow (currently defined in roadmap-overrides.md but no separate verb)
+- `spectacular roadmap grill --bucket` CLI flow (currently defined in roadmap-overrides.md but no separate verb)
 - ROADMAP burndown / progress visualization (renders exit-criteria checkbox percentages per version)
 - ROADMAP-as-source-of-truth enforcement (every active request must link to a roadmap version) — needs inverse-link registry first
-- Confidence rating per row (GIST/ProductBoard pattern) — overlaps tier; revisit if disagreements about tier promotion become common
-- Audience field on ROADMAP (internal vs external view, per Pichler) — needed only when ROADMAP gets published publicly
-- Opportunity-Solution-Tree as separate registered doc-type (Torres methodology) — heavyweight; only worth it for product-discovery-heavy teams
-- ICE/RICE scoring for icebox items (GIST signature) — too prescriptive for core; convention-pack territory
 
 ---
 
 ## Recently shipped
 
-- **v0.7.0** (2026-05-23) — CLI mutator verbs (new, promote, snapshot, archive, touch); skill orchestrates, CLI mutates
-- **v0.6.2** (2026-05-23) — Workspace migrations Stage 2: registry pattern + judgment skill walk + chain validation
+- **v0.8.0** (2026-05-23) — CLI mutator verbs (new, promote, snapshot, archive, touch); skill orchestrates, CLI mutates
+- **v0.7.0** (2026-05-23) — Workspace migrations Stage 2: registry pattern + judgment skill walk + chain validation
 - **v0.6.1** (2026-05-23) — Workspace migrations Stage 1: workspace_schema + migrate verb + flat contract docs + scaffold suggestion
 - **v0.6.0** (2026-05-23) — Public `docs/` as first-class surface; `docs.yaml` + page frontmatter + doctor docs area
 - **v0.5.0** (2026-05-23) — SPEC.md + `specs/` replace legacy `current/`; per-capability subfolder support

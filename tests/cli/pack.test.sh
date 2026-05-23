@@ -292,6 +292,47 @@ scenario_12_pack_help() {
   assert_stdout_contains "$out" "Pack scopes"
 }
 
+scenario_13_unknown_mode_fallback() {
+  echo "Scenario 13: unknown convention_pack.mode value falls back to suggest + emits info note"
+  local dir="/tmp/spectacular-pack-test-13"
+  seed_workspace "$dir"
+  reset_fake_home
+
+  (cd "$dir" && HOME="$FAKE_HOME" "$CLI" init --name pt13 --kit blank --minimal >/dev/null 2>&1)
+  (cd "$dir" && HOME="$FAKE_HOME" "$CLI" pack install minimal >/dev/null 2>&1)
+
+  # Unknown mode 'strict'
+  cat >> "$dir/.spectacular/config.yaml" <<EOF
+
+convention_pack:
+  source: minimal
+  mode: strict
+EOF
+
+  local out
+  out=$(cd "$dir" && HOME="$FAKE_HOME" "$CLI" doctor conventions 2>&1)
+
+  # Info line surfaces the unknown value + the fallback
+  assert_stdout_contains "$out" "unknown convention_pack.mode 'strict'"
+  assert_stdout_contains "$out" "falling back to 'suggest'"
+  # Pack still resolves and reports as suggest mode
+  assert_stdout_contains "$out" "active pack 'minimal' (suggest)"
+
+  # Valid mode 'enforce' → no fallback info line
+  sed -i.bak 's/mode: strict/mode: enforce/' "$dir/.spectacular/config.yaml"
+  rm -f "$dir/.spectacular/config.yaml.bak"
+  local out_valid
+  out_valid=$(cd "$dir" && HOME="$FAKE_HOME" "$CLI" doctor conventions 2>&1)
+  if echo "$out_valid" | grep -qF "unknown convention_pack.mode"; then
+    echo "    ✗ valid 'enforce' mode should not trigger unknown-mode info"
+    fail_count=$((fail_count + 1))
+  else
+    pass_count=$((pass_count + 1))
+  fi
+
+  rm -rf "$dir"
+}
+
 # ── run ───────────────────────────────────────────────────────────────────────
 scenario_1_pack_list_shows_bundled_and_appstore
 scenario_2_pack_install_minimal
@@ -305,6 +346,7 @@ scenario_9_doctor_enforce_mode_flags_errors
 scenario_10_doctor_fix_repairs_pack_drift
 scenario_11_pack_install_from_local_path
 scenario_12_pack_help
+scenario_13_unknown_mode_fallback
 
 # Cleanup fake HOME
 rm -rf "$FAKE_HOME"

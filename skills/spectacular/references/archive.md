@@ -10,8 +10,17 @@ Triggered by: `spectacular archive <slug>`, or skill proposing archive after req
 2. **Propose spec sync** — see `spec-sync.md` for what to update in `SPEC.md` + `specs/`
 3. **Propose memory entries** — review the request for lessons worth keeping (see `memory.md`)
 4. **Human confirms** both spec and memory proposals before any writes
-5. **Move the request directory** — `requests/<slug>/` → `archive/<slug>/`
+5. **Run `spectacular archive <slug>`** — the CLI verb (v0.7.0+) does the move + frontmatter bump + inbound link rewriting atomically. Do NOT manually `git mv` and then sed link paths — that's fragile and easy to leave half-broken.
 6. Update any `specs/<capability>/SPEC.md` files (and a bullet in `SPEC.md`) that reference this request
+
+### What `spectacular archive <slug>` does
+
+- Refuses unless `status:` is `verified` or `review` (use `--force` to override — rare; usually a sign of a wrong call)
+- Sets PLAN.md frontmatter: `status: archived`, `archived: <today>`, `updated: <today>`
+- Moves `.spectacular/requests/<slug>/` → `.spectacular/archive/<slug>/` (via `git mv` if in a repo)
+- Rewrites every inbound `related:` link in other request files from `../<slug>/...` to `../../archive/<slug>/...`
+
+The CLI is the canonical mutator. Manual editing is for unusual cases the verb doesn't cover.
 
 ---
 
@@ -34,6 +43,7 @@ Propose concrete, specific entries. Avoid vague lessons. If nothing notable happ
 - Never modify archived content after moving
 - Skill does not read `archive/` during normal operation
 - Promoted idea files go to `archive/ideas/<filename>.md`
+- Use `spectacular archive <slug>` — never manual `git mv` + sed (v0.7.0+)
 
 ---
 

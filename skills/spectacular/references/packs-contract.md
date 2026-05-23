@@ -121,6 +121,9 @@ naming:
   date-formats:                    # optional, restricted scopes for dates-in-names
     sandbox: "-YYYYMM"
     archive: "-YYYY-MM"
+  language-exceptions:             # optional, per-language naming overrides
+    python: snake_case             # Python package dirs are imported — must be snake
+    go: lowercase                  # Go convention
 ```
 
 **Doctor enforcement (when mode=enforce):** scan folder + file names in repo root; warning per violation; error on forbidden words.

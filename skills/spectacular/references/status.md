@@ -13,7 +13,7 @@ If any of the steps below fail to read or parse — `config.yaml` malformed, roo
 3. Suggest `spectacular doctor --fix` (mechanical) and/or `/spectacular doctor --fix` (judgment)
 4. If errors block reading enough state to brief, abort with the doctor report; don't fabricate
 
-See [[doctor]] § Skill-invoked checks for the full list of scoped checks.
+See [[doctor-substrate]] for the full auto-invocation table.
 
 ## Steps
 

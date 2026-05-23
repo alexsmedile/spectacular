@@ -281,6 +281,25 @@ scenario_8_scoped_area() {
   rm -rf "$dir"
 }
 
+scenario_8b_multi_area() {
+  echo "Scenario 8b: multiple scoped areas run together (regression for status.md substrate trigger)"
+  local dir="/tmp/doctor-test-8b"
+  seed_clean "$dir"
+  # Break frontmatter on PRD so frontmatter area would fire
+  echo "no frontmatter here" > "$dir/.spectacular/PRD.md"
+
+  local out
+  out=$(cd "$dir" && "$CLI" doctor workspace frontmatter kits 2>&1)
+
+  # All three areas should have run — output should mention each
+  assert_output_contains "$out" "workspace" "workspace area ran"
+  assert_output_contains "$out" "frontmatter" "frontmatter area ran"
+  assert_output_contains "$out" "kits" "kits area ran"
+  assert_output_contains "$out" "missing frontmatter delimiter" "frontmatter error surfaced when paired with other areas"
+
+  rm -rf "$dir"
+}
+
 scenario_9_json_output() {
   echo "Scenario 9: --format json emits parseable JSON"
   local dir="/tmp/doctor-test-9"
@@ -331,6 +350,191 @@ scenario_10_mechanical_gitignore() {
   rm -rf "$dir"
 }
 
+scenario_16_roadmap_icebox_rename() {
+  echo "Scenario 16: doctor workspace flags pre-v0.10 Bucket-list ROADMAP; silent on Icebox"
+  local dir="/tmp/doctor-test-16"
+  seed_clean "$dir"
+
+  # ROADMAP with old "Bucket list" heading (otherwise structured-shape so check 15 stays silent)
+  cat > "$dir/.spectacular/ROADMAP.md" <<'EOF'
+---
+version: 2.0
+updated: 2026-05-23
+summary: "test"
+related: []
+---
+
+# Test — Roadmap
+
+## v1 — first
+
+**Tier:** full
+**Status:** active
+**Phase:** mvp
+
+**Scope (in):**
+- a
+
+## Bucket list
+
+- something
+EOF
+
+  local out_bucket
+  out_bucket=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
+  assert_output_contains "$out_bucket" "Bucket list" \
+    "pre-v0.10 Bucket-list ROADMAP triggers info"
+  assert_output_contains "$out_bucket" "Icebox" \
+    "info line names the convergent idiom 'Icebox'"
+
+  # After rename → silent on the Bucket/Icebox check
+  sed -i.bak 's/^## Bucket list/## Icebox/' "$dir/.spectacular/ROADMAP.md"
+  rm -f "$dir/.spectacular/ROADMAP.md.bak"
+  local out_icebox
+  out_icebox=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
+  assert_output_lacks "$out_icebox" "Bucket list" \
+    "renamed ROADMAP no longer triggers Bucket-list info"
+
+  rm -rf "$dir"
+}
+
+scenario_15_roadmap_shape_detection() {
+  echo "Scenario 15: doctor workspace flags pre-v0.9 freeform ROADMAP; silent on structured"
+  local dir="/tmp/doctor-test-15"
+  seed_clean "$dir"
+
+  # Old-shape ROADMAP: has ## v headings but no **Phase:** markers
+  cat > "$dir/.spectacular/ROADMAP.md" <<'EOF'
+---
+version: 1.0
+updated: 2026-01-01
+summary: "old"
+related: []
+---
+
+# Test — Roadmap
+
+## v1 — old
+
+**Status:** planned
+
+- bullet
+EOF
+
+  local out_old
+  out_old=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
+  assert_output_contains "$out_old" "pre-v0.9 freeform shape" \
+    "old-shape ROADMAP triggers info line"
+
+  # New-shape ROADMAP: has **Phase:** markers
+  cat > "$dir/.spectacular/ROADMAP.md" <<'EOF'
+---
+version: 2.0
+updated: 2026-05-23
+summary: "new"
+related: []
+---
+
+# Test — Roadmap
+
+## v1 — new
+
+**Tier:** full
+**Status:** planned
+**Phase:** mvp
+
+**Scope (in):**
+- thing
+EOF
+
+  local out_new
+  out_new=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
+  assert_output_lacks "$out_new" "pre-v0.9 freeform shape" \
+    "new-shape ROADMAP triggers no info line"
+
+  rm -rf "$dir"
+}
+
+scenario_13_migration_chain_validates() {
+  echo "Scenario 13: kits area validates migration chain — clean chain passes"
+  local dir="/tmp/doctor-test-13"
+  seed_clean "$dir"
+
+  local out
+  out=$(cd "$dir" && "$CLI" doctor kits 2>&1)
+  assert_output_contains "$out" "migration chain validates" "clean registry passes"
+}
+
+scenario_14_migration_chain_gap() {
+  echo "Scenario 14: kits area detects chain gap in migration registry"
+  local dir="/tmp/doctor-test-14"
+  seed_clean "$dir"
+
+  # Inject a broken migration: from: "0.9" (no predecessor)
+  local target_skill="$dir/.agents/skills/spectacular"
+  # The symlink points to the real skill — we need a real copy to mutate
+  rm "$target_skill"
+  mkdir -p "$target_skill/references/migrations"
+  cp "$LOCAL_SKILL/references/migrations/v04-to-v05.md" "$target_skill/references/migrations/"
+  cp "$LOCAL_SKILL/references/migrations/v05-to-v06.md" "$target_skill/references/migrations/"
+  cat > "$target_skill/references/migrations/v09-to-v10.md" <<'EOF'
+---
+id: v09-to-v10
+from: "0.9"
+to: "1.0"
+description: "Bogus migration with no predecessor"
+mechanical: true
+reversible: false
+apply-fn: migration_apply_v09_to_v10
+affects: []
+---
+EOF
+  # Required: also a templates/prd/kits/ dir for check_kits not to bail early
+  mkdir -p "$target_skill/templates/prd/kits"
+  cp "$LOCAL_SKILL/templates/prd/kits/blank.md" "$target_skill/templates/prd/kits/" 2>/dev/null || true
+
+  local out code
+  out=$(cd "$dir" && "$CLI" doctor kits 2>&1) && code=0 || code=$?
+  assert_output_contains "$out" "chain gap" "gap detected"
+  # apply-fn not defined → also an error
+  assert_output_contains "$out" "not defined in cli/spectacular" "missing apply-fn detected"
+
+  rm -rf "$dir"
+}
+
+scenario_12_v06_scaffold_suggestion() {
+  echo "Scenario 12: v0.6+ scaffold suggestion surfaces missing PRINCIPLES/ARCHITECTURE/ROADMAP as one info line"
+  local dir="/tmp/doctor-test-12"
+  seed_clean "$dir"
+
+  # blank kit → all three missing
+  local out_all
+  out_all=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
+  assert_output_contains "$out_all" "v0.6+ conventional files missing: PRINCIPLES, ARCHITECTURE, ROADMAP" \
+    "all three missing → single info line lists all three"
+  assert_output_contains "$out_all" "spectacular init --with principles,architecture,roadmap" \
+    "info line suggests init --with command"
+
+  # Only ROADMAP missing → list just ROADMAP
+  echo "---" > "$dir/.spectacular/PRINCIPLES.md"
+  echo "---" > "$dir/.spectacular/ARCHITECTURE.md"
+  local out_one
+  out_one=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
+  assert_output_contains "$out_one" "v0.6+ conventional files missing: ROADMAP" \
+    "only ROADMAP missing → info line lists just ROADMAP"
+  assert_output_lacks "$out_one" "PRINCIPLES, ARCHITECTURE" \
+    "info line does not list files that exist"
+
+  # All three present → silent
+  echo "---" > "$dir/.spectacular/ROADMAP.md"
+  local out_none
+  out_none=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
+  assert_output_lacks "$out_none" "v0.6+ conventional files missing" \
+    "all three present → no v0.6 info line"
+
+  rm -rf "$dir"
+}
+
 scenario_11_help_flag() {
   echo "Scenario 11: doctor --help shows usage"
   local out
@@ -353,9 +557,15 @@ scenario_5_snapshot_gap
 scenario_6_dangling_link
 scenario_7_lifecycle_active_without_session
 scenario_8_scoped_area
+scenario_8b_multi_area
 scenario_9_json_output
 scenario_10_mechanical_gitignore
 scenario_11_help_flag
+scenario_12_v06_scaffold_suggestion
+scenario_13_migration_chain_validates
+scenario_14_migration_chain_gap
+scenario_15_roadmap_shape_detection
+scenario_16_roadmap_icebox_rename
 
 echo ""
 echo "  Asserts: $pass_count passed, $fail_count failed"

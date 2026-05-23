@@ -102,6 +102,7 @@ scenario_1_bare_init() {
 
   assert_file_contains "$dir/.spectacular/PRD.md" "kit: blank"
   assert_file_contains "$dir/.spectacular/config.yaml" "kit: blank"
+  assert_file_contains "$dir/.spectacular/config.yaml" 'workspace_schema: "0.6"'
   assert_file_contains "$dir/.gitignore" ".spectacular.local/"
 
   rm -rf "$dir"
@@ -275,6 +276,87 @@ EOF
   rm -rf "$fake_home"
 }
 
+scenario_9_flag_eat() {
+  echo "Scenario 9: value-flags reject another flag as their value"
+  local dir="/tmp/spectacular-test-9"
+  rm -rf "$dir"; mkdir -p "$dir"
+  local out
+  out=$(cd "$dir" && "$CLI" init --name --kit coding 2>&1) || true
+  if echo "$out" | grep -q "requires a value"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ expected 'requires a value' error, got: $out"
+    fail_count=$((fail_count + 1))
+  fi
+  out=$(cd "$dir" && "$CLI" doctor --format 2>&1) || true
+  if echo "$out" | grep -q "format requires a value"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ expected --format guard, got: $out"
+    fail_count=$((fail_count + 1))
+  fi
+  rm -rf "$dir"
+}
+
+scenario_10_skill_verb_stubs() {
+  echo "Scenario 10: remaining skill-only verbs print interactive-flow message"
+  # As of v0.8.0, archive/new/snapshot/promote moved to CLI mutator verbs.
+  # Only status + remember remain as skill stubs.
+  local out code
+  for verb in status remember; do
+    out=$("$CLI" "$verb" 2>&1) && code=0 || code=$?
+    if [[ "$code" -ne 0 ]] && echo "$out" | grep -q "interactive skill flow"; then
+      pass_count=$((pass_count + 1))
+    else
+      echo "    ✗ verb '$verb' did not produce expected stub message"
+      fail_count=$((fail_count + 1))
+    fi
+  done
+}
+
+scenario_11_status_against_latest() {
+  echo "Scenario 11: status --against-latest reports workspace_schema verdict"
+  local dir="/tmp/spectacular-test-11"
+  seed_workspace "$dir"
+  run_cli "$dir" --kit blank >/dev/null
+
+  # Fresh init → up to date
+  local out_fresh code_fresh
+  out_fresh=$(cd "$dir" && "$CLI" status --against-latest 2>&1)
+  code_fresh=$?
+  if [[ "$code_fresh" -eq 0 ]] && echo "$out_fresh" | grep -q "up to date"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ fresh init: expected 'up to date', got: $out_fresh"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # Simulated older workspace (strip the field) → behind
+  sed -i.bak '/^workspace_schema:/d' "$dir/.spectacular/config.yaml"
+  rm -f "$dir/.spectacular/config.yaml.bak"
+  local out_old code_old
+  out_old=$(cd "$dir" && "$CLI" status --against-latest 2>&1)
+  code_old=$?
+  if [[ "$code_old" -eq 0 ]] && echo "$out_old" | grep -q "behind CLI" && echo "$out_old" | grep -q "spectacular migrate"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ stripped field: expected 'behind CLI' + migrate suggestion, got: $out_old"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # Outside a workspace → exit 1
+  local out_outside code_outside
+  out_outside=$(cd /tmp && "$CLI" status --against-latest 2>&1) && code_outside=0 || code_outside=$?
+  if [[ "$code_outside" -eq 1 ]] && echo "$out_outside" | grep -q "Not inside"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ outside workspace: expected exit 1 + 'Not inside', got: $out_outside (exit $code_outside)"
+    fail_count=$((fail_count + 1))
+  fi
+
+  rm -rf "$dir"
+}
+
 # ── run ───────────────────────────────────────────────────────────────────────
 
 scenario_1_bare_init
@@ -285,6 +367,100 @@ scenario_5_with_flag
 scenario_6_minimal_overrides_kit
 scenario_7_interactive_abort
 scenario_8_global_flag
+scenario_9_flag_eat
+scenario_10_skill_verb_stubs
+scenario_11_status_against_latest
+
+scenario_12_status_since() {
+  echo "Scenario 12: status --since filters by frontmatter updated: field"
+  local dir="/tmp/spectacular-test-12"
+  seed_workspace "$dir"
+  run_cli "$dir" --kit blank >/dev/null
+
+  # Create requests with controlled updated: dates
+  (cd "$dir" && "$CLI" new req-old --summary "old" >/dev/null)
+  (cd "$dir" && "$CLI" new req-recent --summary "recent" >/dev/null)
+  (cd "$dir" && "$CLI" promote req-recent --to active >/dev/null)
+
+  # Backdate req-old's PLAN to long ago
+  sed -i.bak 's/^updated:.*/updated: 2025-01-01/' "$dir/.spectacular/requests/req-old/PLAN.md"
+  rm -f "$dir/.spectacular/requests/req-old/PLAN.md.bak"
+
+  # YYYY-MM-DD form should include only req-recent (today >= 2026-01-01 > 2025-01-01)
+  local out_abs code_abs
+  out_abs=$(cd "$dir" && "$CLI" status --since 2026-01-01 2>&1)
+  code_abs=$?
+  if [[ "$code_abs" -eq 0 ]] && echo "$out_abs" | grep -q "req-recent" && ! echo "$out_abs" | grep -q "req-old"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ --since 2026-01-01: expected req-recent only, got: $out_abs"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # Relative form 7d should also include recent but not 2025-vintage
+  local out_rel
+  out_rel=$(cd "$dir" && "$CLI" status --since 7d 2>&1)
+  if echo "$out_rel" | grep -q "req-recent" && ! echo "$out_rel" | grep -q "req-old"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ --since 7d: expected req-recent only"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # --since= form
+  local out_eq
+  out_eq=$(cd "$dir" && "$CLI" status --since=2026-01-01 2>&1)
+  if echo "$out_eq" | grep -q "req-recent"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ --since= form failed"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # Empty bucket: future date returns 0 requests + 0 docs
+  local out_empty
+  out_empty=$(cd "$dir" && "$CLI" status --since 9999-01-01 2>&1)
+  if echo "$out_empty" | grep -q "Requests (0)" && echo "$out_empty" | grep -q "Canonical docs (0)"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ future date should yield empty buckets, got: $out_empty"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # Missing arg -> exit 2
+  local out_no code_no
+  out_no=$(cd "$dir" && "$CLI" status --since 2>&1) && code_no=0 || code_no=$?
+  if [[ "$code_no" -eq 2 ]] && echo "$out_no" | grep -q "argument required"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ missing arg: expected exit 2 + 'argument required', got: $out_no (exit $code_no)"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # Bad format -> exit 2
+  local out_bad code_bad
+  out_bad=$(cd "$dir" && "$CLI" status --since "notadate" 2>&1) && code_bad=0 || code_bad=$?
+  if [[ "$code_bad" -eq 2 ]] && echo "$out_bad" | grep -q "cannot parse"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ bad format: expected exit 2 + 'cannot parse', got: $out_bad (exit $code_bad)"
+    fail_count=$((fail_count + 1))
+  fi
+
+  # Outside workspace -> exit 1
+  local out_outside code_outside
+  out_outside=$(cd /tmp && "$CLI" status --since 7d 2>&1) && code_outside=0 || code_outside=$?
+  if [[ "$code_outside" -eq 1 ]] && echo "$out_outside" | grep -q "Not inside"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ outside workspace: expected exit 1, got: $out_outside (exit $code_outside)"
+    fail_count=$((fail_count + 1))
+  fi
+
+  rm -rf "$dir"
+}
+
+scenario_12_status_since
 
 echo ""
 echo "  Asserts: $pass_count passed, $fail_count failed"

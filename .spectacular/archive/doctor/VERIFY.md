@@ -1,7 +1,7 @@
 ---
-status: review
-updated: 2026-05-22
-review_via: "Automated tests (tests/cli/doctor.test.sh — 33/33 asserts across 11 scenarios) + dogfood against this workspace (5 real findings surfaced, 4 of 5 fixed by user-driven action)"
+status: verified
+updated: 2026-05-23
+review_via: "Automated tests (tests/cli/doctor.test.sh — 37/37 asserts across 12 scenarios; +regression for multi-area arg parsing) + dogfood against this workspace + live skill-substrate scenarios 16/17/18 walked in throwaway workspace 2026-05-23"
 related:
   - PLAN.md
   - TASKS.md
@@ -97,17 +97,18 @@ These scenarios cannot be automated — they require an LLM agent to walk findin
 - [x] `versions/` and `.spectacular/*@v*.md` files remain immutable
 
 ### 16. Per-finding y/n/q model
-- [ ] **Not yet exercised end-to-end** — depends on running `/spectacular doctor --fix` as a skill invocation. Documented in doctor.md § Repair flow. Will be exercised on next workspace with real drift; manually verified by reading references/doctor.md step-by-step.
+- [x] Exercised 2026-05-23 in throwaway workspace `/tmp/spec-verify-doctor`. Induced 5 judgment findings (1 frontmatter, 4 links). Walked the prescribed flow (group by area, errors-before-warnings, per-finding y/n/q). Simulated `y/y/n/q` sequence: 2 fixes applied (snapshot-skipped where no prior version existed), 1 skipped, 1 quit. Re-running detect went 5→3 findings — exactly matches the expected `(applied=2) + (skipped=1) + (quit=1, leaving 1 unwalked)` state machine.
 
 ## Skill-invoked subset — manual / agent-driven
 
 ### 17. status.md substrate check
 - [x] Added to status.md head: "if config.yaml or root docs won't parse, auto-run doctor workspace/frontmatter/kits"
-- [ ] **Not yet end-to-end-tested** — requires deliberately breaking config.yaml mid-session
+- [x] **Live-tested 2026-05-23.** Broke PRD.md frontmatter (removed delimiter). Ran the exact CLI command status.md instructs the skill to auto-fire: `spectacular doctor workspace frontmatter kits`. CLI surfaced `❌ missing frontmatter delimiter`, exit 2.
+  - **Bug found and fixed:** original multi-area arg parser at `cli/spectacular:1093` overwrote `DOC_OPT_AREA` per arg, so only the last area ran. The exact substrate-trigger pattern status.md depends on was silently broken. Patched to accumulate, added regression scenario 8b to `tests/cli/doctor.test.sh` (33→37 asserts).
 
 ### 18. grill.md substrate check
 - [x] Added to grill.md § 1: "if doc-registry.md / overrides / active kit file won't parse, auto-run doctor kits frontmatter"
-- [ ] **Not yet end-to-end-tested** — requires deliberately breaking a kit file
+- [x] **Live-tested 2026-05-23.** Corrupted bundled `blank.md` kit (removed frontmatter). Ran `spectacular doctor kits` — surfaced `❌ kit 'blank' has no frontmatter`, exit 2. Restored kit, re-ran clean. The CLI mechanism grill.md depends on works correctly.
 
 ### 19. lifecycle.md substrate check
 - [x] Added to lifecycle.md § Verification artifact detection: "auto-run doctor lifecycle scoped to that request when proposing verified"
@@ -145,6 +146,6 @@ Doctor has multiple safety layers:
 
 ## Outstanding for next iteration
 
-Two scenarios remain unchecked (16, 17, 18) because they require deliberate workspace corruption to test end-to-end. Documented in doctor.md and noted here. Will exercise during the next workspace that surfaces such drift naturally.
+All scenarios checked 2026-05-23 in throwaway workspace dogfood.
 
-**Not blockers for `verified`** — the core CLI detect + mechanical fix + skill repair flow documentation is in place and individually exercised. The scenarios above are integration tests that depend on naturally-occurring drift.
+**Carry-forward (pre-existing scope gap, not a blocker):** workspace area's "config.yaml parses" check (per doctor.md spec table) is implemented as a single `grep -q "^project:"` — it does not validate actual YAML well-formedness. A `config.yaml` that retains a `project:` line but is otherwise malformed will pass. Worth tightening when shell-only YAML validation is acceptable (perhaps via a strict-mode flag), but outside doctor v1 scope.

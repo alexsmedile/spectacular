@@ -5,6 +5,349 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.0.0] — 2026-05-23 — first stable release
+
+**Spectacular reaches v1.** The surface developed across v0.6.0 → v0.7.5 is now frozen as the stable contract. Future changes follow strict semver: breaking changes require a major bump; new capabilities require a minor; fixes ship as patch releases.
+
+This release is a **tag, not new code** — it captures the dev arc's endpoint. All capabilities below are inherited from the v0.x lineage; per-version detail lives in the entries that follow.
+
+### v1 surface (what's stable)
+
+**Workspace foundation**
+- `.spectacular/` directory contract: PRD, SPEC, config, AGENTS, requests/, specs/ as always-set
+- Frontmatter as the signal layer — skill reads frontmatter, never full file bodies, for briefings
+- 5-state lifecycle (planned → active → review → verified → archived) stored in PLAN.md frontmatter
+- Convention packs (4-tier scope: project-local → user → app-store → bundled; 3 modes: suggest / scaffold / enforce; 6 rule categories)
+- Snapshot-before-edit on canonical docs (`<FILE>@vN.md`)
+- Memory (`spectacular remember this`) writes to `.spectacular/memory/`, git-committed
+- Workspace schema versioning (`workspace_schema:` field) + migration registry + `spectacular migrate` verb
+
+**Doc-writing engine**
+- One generic grill / refine / review engine + registry-driven doc types
+- 13 registered docs: prd, spec, plan, tasks, principles, architecture, roadmap, stack, agents, decisions, convention-pack, docs-manifest, docs-page
+- Kit system: PRD has 5 kits (blank, coding, content, product, research) with extension contract
+- Structured ROADMAP with 3 precision tiers (full / themed / vision), 9-phase chain, Icebox section
+- 2-of-6 verification rule (when VERIFY.md is required vs. folded into PLAN/TASKS)
+
+**CLI surface** (`spectacular`)
+- `init` (kit + flags + interactive mode + --update for skill refresh)
+- `doctor` (10 areas: skill, workspace, frontmatter, snapshots, links, lifecycle, kits, conventions, specs, docs; --fix for mechanical repairs; precondition for destructive verbs)
+- `pack` (list, install, show, remove, with 4-tier scope resolution)
+- `docs` (init, doctor passes)
+- `migrate` (--dry-run, --to, --from, --list; registry-driven)
+- **Mutator verbs**: `new`, `promote`, `snapshot`, `archive`, `touch` — CLI mutates atomically; skill orchestrates
+- `status --against-latest` (workspace-schema verdict)
+- `status --since <date>` (activity report; YYYY-MM-DD / 7d / 2w / 1m / yesterday)
+
+**Skill surface** (`/spectacular`)
+- Lean orchestrator (~120 lines) + on-demand reference loading
+- Routing for status, new, archive, doctor, migrate, doc verbs, memory, snapshot, lifecycle transitions
+- Skill walks judgment-requiring flows; CLI handles mechanical mutations
+
+**Distribution**
+- Claude Code plugin marketplace (`alexsmedile/spectacular`)
+- Codex plugin marketplace
+- CLI via curl one-liner installer
+
+### Testing
+
+- 7 test files, 216 asserts
+- `init.test.sh`: 66 asserts
+- `doctor.test.sh`: 48 asserts
+- `migrate.test.sh`: 39 asserts
+- `mutator.test.sh`: 59 asserts
+- `pack.test.sh`: 48 asserts
+- `conventions.test.sh`: 18 asserts
+- `specs.test.sh`: 29 asserts
+
+### Semver discipline starts here
+
+- Patch (1.0.x): bug fixes, doc clarifications, internal refactors that preserve all public contracts
+- Minor (1.x.0): new CLI verbs, new doctor areas, new registered doc types, new kits, new convention-pack rule categories
+- Major (2.0.0): any change that breaks an existing workspace's ability to load, validate, or migrate
+
+The `workspace_schema:` field tracks structural shape independently of CLI version. A v2.0.0 CLI with `workspace_schema: "1.0"` workspaces will run the migration chain on first invocation.
+
+### Migration from v0.x
+
+Nothing to do. Anyone on any v0.6.0+ CLI keeps working — v1.0.0 is the same surface with a fresh version label. If you're on a pre-v0.6.0 workspace, run `spectacular migrate` to bring your workspace schema forward.
+
+### Pre-1.0 development arc
+
+The history that produced v1.0.0 is preserved below as per-version entries. Each entry documents the capability that shipped in that version and is the place to look for "when did X land?" questions. Future releases (v1.0.1+, v1.1.0+) will continue this entry pattern.
+
+---
+
+## [0.7.5] — 2026-05-23
+
+### Added — `spectacular status --since <date>` activity report
+
+Closes task #57. Lists requests + canonical doc changes since a cutoff date.
+
+- **Frontmatter-only scan** — reads `updated:` fields from `requests/*/PLAN.md`, `archive/*/PLAN.md`, and `.spectacular/*.md` (skipping snapshot files). Lexicographic YYYY-MM-DD compare against cutoff. No git involvement (matches Spectacular's "frontmatter is the signal layer" principle).
+- **Date input formats**:
+  - `--since 2026-05-20` — absolute YYYY-MM-DD
+  - `--since 7d` / `--since 2w` / `--since 1m` — relative (days / weeks / months-approx-30d)
+  - `--since yesterday` — keyword
+  - `--since=<date>` — equals form also accepted
+- **BSD + GNU date compatibility** — uses macOS `date -v-Nd` when available, falls back to GNU `date -d "N days ago"`.
+- **Output groups requests by status** — archived / verified / review / active / planned, in lifecycle order. Each group only renders if non-empty. Empty bucket renders `(none)`.
+- **Canonical docs section** lists `.spectacular/*.md` files (excluding snapshot @v* files) with their `updated:` date.
+
+Exit codes: `0` success (including empty buckets); `1` outside a workspace; `2` missing or unparseable `--since` argument.
+
+### Implementation note
+
+Intercepts `--since` in the same `status` dispatch path as `--against-latest` (introduced v0.6.1). Both are CLI-mechanical flags on the otherwise-skill-owned `status` verb. Plain `spectacular status` (no flags) still routes to the skill stub for AI-driven briefing.
+
+### Testing
+
+- 7 test files, all green
+- `init.test.sh` +1 scenario (status --since: 7 asserts covering absolute/relative/equals/empty/missing-arg/bad-format/outside-workspace) — 66 asserts (was 59)
+- Plugin bumped 0.7.4 → 0.7.5
+
+### Closes
+
+- Task #57 — `spectacular status --since <date>`
+
+---
+
+## [0.7.4] — 2026-05-23
+
+### Added — Doctor precondition for destructive verbs + VERIFY-as-tests convention
+
+Two safety/process improvements that close out long-standing pending tasks (#55, #56).
+
+**Doctor precondition on `archive` + `migrate` + `promote --archive`:**
+- Before running destructive ops, CLI runs a scoped doctor check. Errors block (exit 1); warnings/info pass through silently.
+- `archive` runs `workspace + specs + links` — full structural validation. Refuses if any errors found.
+- `migrate` runs `links` only — workspace/specs would self-trigger on the v0.4-shape drift migrate is designed to repair. Dry-run skips the check entirely.
+- `promote --archive` chain passes `--skip-doctor` through to the chained `cmd_archive`.
+- Bypass: `--skip-doctor` flag on each verb. Caller responsibility to know what they're skipping.
+- Shared helper `_doctor_precondition` for consistent behavior; thin wrappers `require_doctor_clean` (3-area) and `require_doctor_clean_links` (links-only).
+
+**VERIFY-as-tests convention (documentation-only):**
+- New `skills/spectacular/references/verify-tests.md` documents the `tests/verify/<slug>.test.sh` pattern: when to author one (multi-verb workflows not covered by `tests/cli/` suites), template, naming convention.
+- No backfill: existing 7 `tests/cli/` suites already cover most of what archived VERIFY.md files would script. Pattern reserved for new requests that ship behavior not already in an area-level test suite.
+- New VERIFY-tagging convention: `[x] mechanically verified` (auto-checkable) vs `[x] manually verified` (interactive UX, judgment calls). Lets future-agents grep to know which scenarios have a safety net.
+- Wired into SKILL.md routing.
+
+### Testing
+
+- 7 test files, all green
+- `mutator.test.sh` +2 scenarios (doctor precondition + clean passes through) — 59 asserts (was 49)
+- Plugin bumped 0.7.3 → 0.7.4
+
+### Closes
+
+- Task #55 — Promote VERIFY scenarios → tests/verify/<slug>.sh (convention-doc only per scope cut)
+- Task #56 — Doctor-as-precondition for destructive ops (archive + migrate + promote --archive)
+
+---
+
+## [0.7.3] — 2026-05-23
+
+### Fixed — Unknown `convention_pack.mode` values fall back to `suggest` with info note
+
+Previously, unrecognized `mode:` values in `config.yaml` (e.g. `strict`) silently passed through and were treated as scaffold-equivalent (warnings, not errors). Behavior diverged from the spec, which says: validate against `{suggest, scaffold, enforce}`, fall back to `suggest` if invalid, emit info note.
+
+- New helper `config_pack_mode_raw()` returns the raw config value verbatim
+- `config_pack_mode()` now validates and falls back to `suggest` for unknown values
+- `check_conventions` emits info line when the raw value doesn't match the allow-list: "unknown convention_pack.mode 'strict' (valid: suggest / scaffold / enforce) — falling back to 'suggest'"
+- Valid modes (`suggest`, `scaffold`, `enforce`) and absent `mode:` field both stay silent (latter defaults to `suggest`)
+
+Found during S18 verification in `convention-pack-application` (task #62).
+
+### Testing
+
+- 7 test files, all green
+- `pack.test.sh` +1 scenario (unknown mode fallback) — 48 asserts (was 44)
+- Plugin bumped 0.7.2 → 0.7.3
+
+---
+
+## [0.7.2] — 2026-05-23
+
+### Added — Roadmap-research findings applied (Outcome slot, Icebox, gate guardrails)
+
+Tightens the v0.7.1 structured ROADMAP based on convergent advice from Pichler (GO Product Roadmap), Torres (Opportunity Solution Trees), Cagan (SVPG), Gilad (GIST), Productside, and beginner-tool onboarding patterns (GitHub Projects, Trello, Aha!). Closes the gap between v0.7.1 and what dominant roadmap frameworks recommend without ballooning the slot set.
+
+**Structural changes:**
+- **`Outcome:` slot added** between Phase and Scope-in. Required for `full` + `themed` tiers; absent for `vision` (Direction covers). One paragraph: "what business or product outcome does this version move?" Pichler/Torres/Cagan/Gilad convergent: the #1 missing slot in feature-list-shaped roadmaps. Forces goal-before-features discipline.
+- **"Bucket list" → "Icebox"** rename across template, overrides doc, and live ROADMAP. Convergent dev-tool idiom (GitHub Projects, Pivotal Tracker, Linear; GIST's "Idea Bank"). Distinguishes "unbound idea" from "planned but vague" (which is what `vision`-tier blocks are for).
+
+**Review gate additions** (all warnings/info — preserves recommend-not-enforce stance):
+- **Date guards extended to themed/vision blocks** (gate check 12) — Cagan's "#1 sin." Scans entire block for `YYYY-MM-DD`, `Q[1-4] YYYY`, `MMM YYYY`. Warning, not error.
+- **Outcome required by tier** (gate check 16) — full + themed must have Outcome; vision must not (Direction covers).
+- **Full-tier row count** (gate check 17) — tiered: silent ≤7 (sweet spot per Cagan), info 8-10 ("consider demoting older versions to themed"), warning 11+ ("roadmap-as-backlog anti-pattern").
+- **Scope-out push** (gate check 18) — when Scope-in has ≥4 items and Scope-out is empty, warning ("every item you add implies others you're not building" — Productside).
+
+**Phase taxonomy extension:**
+- **Meta-phase aliases** — `Phase:` field accepts both individual values (`mvp`, `release-prep`) AND coarser meta-phase values (`discover`, `build`, `release`). Coexist. Document the "start coarse, refine as work crystallizes" rule. Maps Cagan's discovery-vs-delivery split onto our 9-phase chain.
+
+**Documentation-only additions** (no automation):
+- **Beginner pattern** in `roadmap-overrides.md` — start at vision tier (one paragraph), graduate to themed when 2nd version exists, unlock full when first request links via `target_version:`. Mirrors GitHub Projects/Trello/Notion progressive-disclosure onboarding.
+- **Icebox-promotion ritual** — explicit 4-step walk (pick item → choose version → choose tier → fill slots → delete from Icebox). Skill executes on `/spectacular roadmap` invocation. No new CLI verb; manual ritual is the point.
+
+**Doctor extension:**
+- `check_workspace` flags pre-v0.7.2 "Bucket list" heading in ROADMAP, suggests Icebox rename. Mechanical fix tag (sed substitution). Silent once renamed.
+
+**Dogfood:** live `.spectacular/ROADMAP.md` snapshotted (`ROADMAP@v2.md`) then updated with Outcome paragraphs on v0.7.1 + v0.7.x + v0.11.x + v1.0.0, renamed Bucket list → Icebox, and added the 4 deferred research items to the Icebox.
+
+### Out of scope (deferred per interview)
+
+- Confidence rating per row (GIST/ProductBoard) — overlaps tier
+- Audience field (Pichler internal-vs-external) — over-engineered for solo/small-team
+- Opportunity-Solution-Tree as separate doc type (Torres) — heavyweight
+- ICE/RICE scoring for icebox items (GIST signature) — convention-pack territory
+- CLI verb for icebox promotion — manual via skill is enough
+- `--beginner` flag — doc-only enough
+
+### Testing
+
+- 7 test files, all green
+- doctor.test.sh: +1 scenario (Bucket-list → Icebox info) — 48 asserts (was 47)
+- Plugin bumped 0.7.1 → 0.7.2
+
+---
+
+## [0.7.1] — 2026-05-23
+
+### Added — Structured ROADMAP with precision tiers + 9-phase chain
+
+ROADMAP graduates from `mode: freeform` to `mode: structured`. Each version block has a precision tier (`full | themed | vision`) that controls which slots are required, capturing the natural precision gradient — active work is detailed; long-term direction is intentionally fuzzy.
+
+- **9-phase chain** for version progression: `intent → discover → prototype → spec-refine → mvp → iterate → test → release-prep → release`. Skill recommends the next phase; user can skip with reason. Skips recorded explicitly in `Phase:` field (e.g. `Phase: spec-refine (skipped: discover, prototype)`).
+- **Prototype phase broadened** — any artifact produced to validate a decision against real tooling or against the user counts: data/schema drafts run through parsers, fake datasets tested against downstream scripts, mock API responses, ASCII wireframes, interactive mocks, sample CLI output. The artifact isn't the deliverable; the decision it informs is.
+- **Three precision tiers**:
+  - `full` — Status, Phase, Scope (in), Scope (out), Exit criteria, Linked requests. Use for active + near-term planned versions.
+  - `themed` — Status, Phase, Themes (list), Exit criteria (directional). Use for mid-term (2-3 versions out).
+  - `vision` — Status, Direction (free-text paragraph). Use for long-term + speculative.
+- **Bucket list section** at the end of `ROADMAP.md` for ideas not yet tied to any version. Promoting an item: pick a version label + `Tier: vision` minimum.
+- **`spectacular new --target-version <ver>`** flag — adds `target_version:` to PLAN.md frontmatter. Used by `spectacular roadmap refine` to autopopulate Linked requests in matching version blocks.
+- **Doctor extension** — `check_workspace` flags pre-v0.7.1 freeform ROADMAP shape with info line (never error). Skill walk to migrate available via `spectacular roadmap grill`.
+
+### Reference + template
+
+- `skills/spectacular/references/roadmap-overrides.md` — tier-aware slot prompts (full/themed/vision variants), mini-refine patterns, vibe→spec rewrite tables, 15-check review gate
+- `skills/spectacular/templates/roadmap/base.md` — structured template showing all 3 tiers + bucket list
+- `skills/spectacular/references/doc-registry.md` — ROADMAP entry switched `mode: freeform` → `mode: structured`; mode reference table extended with `structured` and `reference` modes
+
+### Dogfood
+
+`.spectacular/ROADMAP.md` rewritten against new shape (snapshotted as `ROADMAP@v1.md`). Current versions tiered as: v0.7.1 full, v0.7.x/v0.11.x/v1.0.0 themed, v2.x/v3+ vision. Bucket list populated with previously-roadmapped ideas that no longer fit a specific version (hook automation, multi-agent orchestration, burndown viz, etc.).
+
+### Testing
+
+- 7 test files, all green
+- mutator.test.sh: +1 scenario (target_version field) — 49 asserts (was 48)
+- doctor.test.sh: +1 scenario (ROADMAP shape detection: old triggers info, new is silent) — 47 asserts (was 45)
+- Plugin bumped 0.7.0 → 0.7.1
+
+---
+
+## [0.7.0] — 2026-05-23
+
+### Added — CLI mutator verbs (skill orchestrates, CLI mutates)
+
+Five CLI verbs replace skill-side manual file edits for the most common lifecycle mutations. Establishes the **mutation principle**: lifecycle changes go through CLI verbs; the skill orchestrates (reads, decides, communicates); the CLI mutates (atomically, deterministically, tested). Manual file edits remain available for edge cases but become the exception.
+
+- **`spectacular new <slug> [--summary ...] [--status planned|active|review] [--priority low|medium|high]`** — scaffolds `.spectacular/requests/<slug>/PLAN.md` + `TASKS.md` from templates with frontmatter prefilled. Validates slug (kebab-case, max 64 chars). Refuses duplicates in `requests/` or `archive/`.
+- **`spectacular promote <slug> [--to <state>] [--force] [--archive]`** — advances request through the lifecycle (planned → active → review → verified). Refuses backward transitions without `--force`. Mutates PLAN.md + TASKS.md `status:` + `updated:` atomically. `--archive` chains into archive after promoting to verified.
+- **`spectacular snapshot <file> [--major]`** — snapshots a canonical doc to `<base>@v<N>.md`, bumps `version:` field, sets `updated:`. Refuses non-canonical files. Idempotent: compares body (frontmatter-stripped) against latest snapshot; exits cleanly if unchanged.
+- **`spectacular archive <slug> [--force]`** — moves request to `.spectacular/archive/<slug>/`, rewrites every inbound `related:` link in other request files (`../<slug>/...` → `../../archive/<slug>/...`), sets PLAN frontmatter `status: archived` + `archived: <today>`. Refuses unless status is `verified` or `review`.
+- **`spectacular touch <file>`** — sets frontmatter `updated:` to today. Idempotent. Refuses files without frontmatter.
+
+### Shared infrastructure
+
+- New frontmatter helpers (`fm_get`, `fm_set`, `fm_touch`, `fm_add_to_list`) — single shared implementation used by all 5 verbs. Single-source-of-truth for YAML rewriting.
+- `is_canonical_doc` helper — gates `snapshot` to registered canonical files only.
+
+### Skill instruction sync
+
+To resist drift, both surfaces updated:
+
+- `SKILL.md` routing table: each verb points to its CLI verb (not a reference doc — the CLI is the runtime). Top-level **mutation principle** stated explicitly.
+- Reference docs rewritten to instruct CLI verb usage:
+  - `references/new-request.md` → `spectacular new <slug>`
+  - `references/archive.md` → `spectacular archive <slug>`
+  - `references/lifecycle.md` → `spectacular promote <slug>` (state transitions)
+  - `references/versioning.md` → `spectacular snapshot <file>`
+
+### Absorbs
+
+- Task #54 (archive --check / auto-rewrite related: paths) — same behavior shipped as the standard `archive` verb behavior.
+
+### Testing
+
+- 7 test files, all green; mutator.test.sh adds 48 asserts across 7 scenarios covering all 5 verbs + the promote-archive combo + --help flags
+- init.test.sh scenario_10 updated — only status + remember remain as skill stubs (archive/new/snapshot/promote no longer stubs)
+
+### Why this matters
+
+Before v0.7.0, lifecycle mutations happened via the skill writing free-form file edits. Two agents would do the same thing differently; frontmatter parsers drifted; archive link-rewriting was easy to forget. The CLI verbs collapse this: one implementation, deterministic output, tested. Skill instruction sync ensures the skill actually calls the verbs instead of falling back to manual edits.
+
+Remaining as skill flows (intentionally): `status` (briefing requires AI judgment), `remember` (memory entries require user-context distillation).
+
+---
+
+## [0.6.2] — 2026-05-23
+
+### Added — Workspace migrations: registry pattern + judgment skill walk
+
+Stage 2 of workspace-migrations (Stage 1 shipped in v0.6.1). Replaces the v0.6.1 hardcoded migration list with a proper registry + adds judgment-migration support via the skill.
+
+- **Migration registry** — migrations now live as .md files under `skills/spectacular/references/migrations/v<from>-to-v<to>.md`. Frontmatter declares `(id, from, to, mechanical, reversible, apply-fn, affects)`; body documents detection rule, steps, rollback, validation. Full schema: `skills/spectacular/references/migrations-contract.md`.
+- **CLI loader** — `cmd_migrate` now scans the registry, sorts by `from` semver, resolves `apply-fn` to bash functions in `cli/spectacular`. Adding a new migration = one .md file + one bash function (mechanical) OR one skill-walk section (judgment).
+- **`spectacular migrate --to <ver>`** — migrate up to a specific schema version (default: latest).
+- **`spectacular migrate --from <ver>`** — re-run starting from a specific schema (for repair).
+- **`spectacular migrate --list`** — show all registered migrations with descriptions.
+- **`/spectacular migrate` skill walk** — `skills/spectacular/references/migrate.md` defines the flow for judgment migrations: snapshot-before-edit on affected canonical docs, y/n/q per step, validation phase, audit-trail memory write. No judgment migrations ship in v0.6.2; the skill flow is scaffolding for future migrations that need it.
+- **Chain validation in doctor** — `check_kits` validates the migration registry: no gaps in the chain, no duplicate `(from, to)` edges, every `apply-fn` resolves to a defined bash function, reversible migrations have reverse functions. Reports as part of the `kits` area; no new doctor area needed.
+- **Downgrade refused** — `migrate --to <older-version>` exits non-zero. Bidirectional migration is explicitly out of scope.
+
+### Why this matters
+
+In v0.6.1 the migration logic was hardcoded directly in `cmd_migrate` with two if-branches. Easy to ship but doesn't scale: every new migration would have meant editing `cmd_migrate` plus the bash function. The registry pattern collapses this — maintainers add a .md spec + a bash function; the loader handles dispatch + ordering + chain validation automatically.
+
+### Migration
+
+For consumers, no action needed. v0.6.2 reads the same `workspace_schema:` field that v0.6.1 wrote. The behavior of `spectacular migrate` (no flags) is identical.
+
+### Testing
+
+- 6 test files, all green
+- migrate.test.sh: 39 asserts (+12 for `--list`, `--to`, downgrade refusal)
+- doctor.test.sh: 45 asserts (+3 for chain validation pass + gap detection)
+- specs.test.sh: 29 asserts (unchanged)
+- init.test.sh: 63 asserts (unchanged)
+- conventions.test.sh: 18 asserts (unchanged)
+- pack.test.sh: 44 asserts (unchanged)
+
+### What's still in v0.6.1 territory (no changes here)
+
+`workspace_schema:` field, `spectacular status --against-latest`, doctor flat-contract-docs support, v0.6+ scaffold suggestion — all from v0.6.1, unchanged. Stage 2 only touches the registry/loader/skill-walk surfaces.
+
+---
+
+## [0.6.1] — 2026-05-23
+
+### Added — Workspace migrations + scaffold discoverability
+
+Bridge the gap between Spectacular versions for already-scaffolded workspaces. Triggered by a real audit on the [Octopus](https://github.com/alexsmedile/octopus) repo where a v0.1.x-shape workspace had no discoverability path to v0.6 conventions.
+
+- **`spectacular migrate`** — applies pending workspace-schema migrations to bring `.spectacular/` to the shape this CLI expects. Idempotent.
+  - `--dry-run` lists planned migrations without writing
+  - Two backfilled migrations: **v0.4 → v0.5** (rename `current/` → `specs/`, preserve contents) + **v0.5 → v0.6** (ensure `specs/` exists as always-set)
+- **`workspace_schema:` field** — new top-level key in `config.yaml`. Records the structural version. `init` writes `"0.6"` on fresh workspaces; absent value treated as `"0.4"`.
+- **`spectacular status --against-latest`** — one-line discoverability check. CLI-mechanical (no skill); the rest of `status` stays in the skill.
+- **Flat contract docs in `specs/`** — top-level `.md` files in `specs/` are valid alongside per-capability subfolders. Pattern for projects whose primary truth is on-disk contracts (e.g. `SCHEMA-TASK.md`, `AXIS-MODEL.md`).
+- **v0.6+ scaffold suggestion** — `doctor workspace` surfaces missing PRINCIPLES/ARCH/ROADMAP as one info line with the exact `init --with` command. Silent when all present.
+
+Stage 2 (v0.6.2) will move the migration list from hardcoded into a `references/migrations/` registry, add `--to`/`--from` flags, and bring `/spectacular migrate` skill walk for judgment migrations.
+
+---
+
 ## [0.6.0] — 2026-05-23
 
 ### Added — Public docs as a first-class surface
@@ -31,7 +374,7 @@ The `docs/` tree is now a first-class Spectacular surface, sibling to `.spectacu
 
 - **This repo's own `docs/`** migrated to v0.6.0 shape: `docs.yaml` authored with three sections + 5 existing pages registered as `extras:` (flat-tree preservation — moving files would break README links). Each of `workflow.md`, `commands.md`, `configuration.md`, `scaffold.md`, `troubleshooting.md` got proper frontmatter (title, description, section, status, since, updated). Doctor `docs` clean — 0 errors / 0 warnings.
 
-### Out of scope (deferred to `public-docs-advanced` v0.7.0+)
+### Out of scope (deferred to `public-docs-advanced` v0.6.2+)
 
 - Renderer adapters (Mintlify / Docusaurus / Fumadocs / MkDocs export)
 - Versioned docs snapshots (`docs/versioned/v<x.y.z>/`)

@@ -12,15 +12,24 @@ The skill detects signals and **proposes** transitions. The user can also force 
 
 | From | To | Signal | Skill action |
 |---|---|---|---|
-| `planned` | `active` | User starts working on request | Create SESSION.md, update frontmatter |
-| `active` | `review` | All TASKS.md items checked | Propose move to review; also propose VERIFY.md if 2-of-6 rule triggers (see [[verification]]) |
-| `active` | `review` | User says "done" / "ready to review" | Propose move to review |
-| `review` | `verified` | All `- [x]` in VERIFY.md (when present) | Propose verified status |
-| `review` | `verified` | All TASKS § Verification + PLAN § Validation items confirmed (when no VERIFY.md) | Propose verified status |
-| `review` | `verified` | User confirms everything works | Update frontmatter |
-| `verified` | `archived` | User runs `spectacular archive <slug>` | See `archive.md` |
+| `planned` | `active` | User starts working on request | Run `spectacular promote <slug>`; create SESSION.md |
+| `active` | `review` | All TASKS.md items checked | Propose `spectacular promote <slug>`; also propose VERIFY.md if 2-of-6 rule triggers (see [[verification]]) |
+| `active` | `review` | User says "done" / "ready to review" | Run `spectacular promote <slug>` |
+| `review` | `verified` | All `- [x]` in VERIFY.md (when present) | Propose `spectacular promote <slug>` |
+| `review` | `verified` | All TASKS § Verification + PLAN § Validation items confirmed (when no VERIFY.md) | Propose `spectacular promote <slug>` |
+| `review` | `verified` | User confirms everything works | Run `spectacular promote <slug>` |
+| `verified` | `archived` | User confirms archive | Run `spectacular archive <slug>`; see [[archive]] |
 
-**Never auto-transition.** Always propose and wait for user confirmation.
+**Mutation principle (v0.7.0+):** state changes use `spectacular promote <slug>`. The CLI:
+- Reads current status from PLAN.md frontmatter
+- Refuses backward transitions without `--force`
+- Sets `status:` + `updated:` atomically in PLAN.md AND TASKS.md
+- Optional `--to <state>` for explicit jumps (e.g. `--to verified`)
+- Optional `--archive` chains into `spectacular archive` after promoting to verified
+
+Never hand-edit `status:` in PLAN.md frontmatter when the CLI verb covers it. Manual edits are for edge cases the verb doesn't handle.
+
+**Never auto-transition.** Always propose and wait for user confirmation before running the verb.
 
 ---
 
@@ -63,10 +72,15 @@ If a `specs/` capability has `status: draft` and no `requests/` item references 
 ## Forcing transitions
 
 User can explicitly say:
-- "mark `<slug>` as active" → update frontmatter, create SESSION.md
-- "move `<slug>` to review" → update frontmatter
-- "mark `<slug>` as verified" → update frontmatter
-- "archive `<slug>`" → route to `archive.md`
+- "mark `<slug>` as active" → `spectacular promote <slug> --to active`; create SESSION.md
+- "move `<slug>` to review" → `spectacular promote <slug> --to review`
+- "mark `<slug>` as verified" → `spectacular promote <slug> --to verified`
+- "archive `<slug>`" → `spectacular archive <slug>` (also see [[archive]])
+
+Backward transitions (e.g. `verified → active` because verification failed) require `--force`:
+- `spectacular promote <slug> --to active --force`
+
+The `--force` flag is intentionally awkward — backward moves should be rare and deliberate.
 
 ---
 

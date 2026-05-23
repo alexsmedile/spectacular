@@ -10,6 +10,11 @@ GITHUB_MAIN_TARBALL="https://github.com/${GITHUB_REPO}/archive/refs/heads/main.t
 SKILL_PATH_IN_TARBALL="skills/spectacular"
 TODAY="$(date +%Y-%m-%d)"
 
+# Workspace schema version — bumped only when .spectacular/ structure changes.
+# Decoupled from CLI/skill version. Migrations advance workspace_schema through
+# the chain (v0.4 → v0.5 → v0.6 → ...). See requests/workspace-migrations/PLAN.md.
+CURRENT_SCHEMA="0.6"
+
 # ── defaults ─────────────────────────────────────────────────────────────────
 OPT_NAME=""
 OPT_SUMMARY=""
@@ -38,6 +43,35 @@ skip() { echo "  ⊘  $*"; }
 created() { echo "  ✓  $*"; }
 filled() { echo "  ✓  $* (filled empty stub)"; }
 diag()  { echo "  ⊘  $* (issues detected — run \`spectacular doctor frontmatter\` for details)"; }
+
+# Validate that a flag has a usable value (non-empty, not another flag).
+# Usage: require_value "$flag_name" "${2:-}"
+require_value() {
+  local flag="$1"
+  local val="${2:-}"
+  [[ -n "$val" ]] || die "$flag requires a value"
+  [[ "$val" != -* ]] || die "$flag requires a value (got '$val' — looks like another flag)"
+}
+
+# Replace an existing claude_dir entry (symlink or directory) with a fresh symlink.
+# Refuses to clobber a non-empty real directory — that's likely user content, not our managed link.
+reset_claude_symlink() {
+  local claude_dir="$1"
+  local target="$2"
+  if [[ -L "$claude_dir" ]]; then
+    rm -f "$claude_dir"
+  elif [[ -d "$claude_dir" ]]; then
+    if [[ -z "$(ls -A "$claude_dir" 2>/dev/null)" ]]; then
+      rmdir "$claude_dir"
+    else
+      die "Refusing to replace non-empty directory: $claude_dir (expected a symlink). Move it aside and retry."
+    fi
+  elif [[ -e "$claude_dir" ]]; then
+    rm -f "$claude_dir"
+  fi
+  mkdir -p "$(dirname "$claude_dir")"
+  ln -s "$target" "$claude_dir"
+}
 
 # Returns 0 if file is "effectively empty" (0 bytes or only whitespace)
 is_empty_file() {
@@ -125,11 +159,11 @@ parse_args() {
     case "$1" in
       init) shift ;;
       -i|--interactive) OPT_INTERACTIVE=true; shift ;;
-      --name) OPT_NAME="$2"; shift 2 ;;
-      --summary) OPT_SUMMARY="$2"; shift 2 ;;
-      --agents-file) OPT_AGENTS_FILE="$2"; shift 2 ;;
-      --kit) OPT_KIT="$2"; shift 2 ;;
-      --with) OPT_WITH="$2"; shift 2 ;;
+      --name) require_value "--name" "${2:-}"; OPT_NAME="$2"; shift 2 ;;
+      --summary) require_value "--summary" "${2:-}"; OPT_SUMMARY="$2"; shift 2 ;;
+      --agents-file) require_value "--agents-file" "${2:-}"; OPT_AGENTS_FILE="$2"; shift 2 ;;
+      --kit) require_value "--kit" "${2:-}"; OPT_KIT="$2"; shift 2 ;;
+      --with) require_value "--with" "${2:-}"; OPT_WITH="$2"; shift 2 ;;
       --minimal) OPT_MINIMAL=true; shift ;;
       --global) OPT_GLOBAL=true; shift ;;
       --update) OPT_UPDATE=true; shift ;;
@@ -453,9 +487,7 @@ install_skill() {
   url="$(echo "$result" | cut -d'|' -f3)"
 
   # symlink .claude/skills/spectacular → .agents/skills/spectacular
-  mkdir -p "$(dirname "$claude_dir")"
-  rm -f "$claude_dir"
-  ln -s "$agents_dir" "$claude_dir"
+  reset_claude_symlink "$claude_dir" "$agents_dir"
 
   write_skills_lock "$ref" "$sha" "$url"
 
@@ -486,9 +518,7 @@ update_skill() {
   sha="$(echo "$result" | cut -d'|' -f2)"
   url="$(echo "$result" | cut -d'|' -f3)"
 
-  mkdir -p "$(dirname "$claude_dir")"
-  rm -f "$claude_dir"
-  ln -s "$agents_dir" "$claude_dir"
+  reset_claude_symlink "$claude_dir" "$agents_dir"
 
   write_skills_lock "$ref" "$sha" "$url"
   info "Skill updated to ${ref}."
@@ -515,6 +545,10 @@ doc_config() {
   name: ${name}
   summary: \"${summary}\"
   kit: ${kit_id}
+
+# Structural version of .spectacular/ layout. Migrations bump this.
+# Run \`spectacular migrate\` if your skill expects a newer schema.
+workspace_schema: \"${CURRENT_SCHEMA}\"
 
 naming:
   requests: kebab-case
@@ -546,7 +580,1235 @@ skills:
 "
 }
 
+# ── frontmatter helpers (v0.7.0+) ─────────────────────────────────────────────
+# Shared by all mutator verbs (promote, archive, snapshot, new, touch). Each
+# helper assumes YAML frontmatter delimited by --- at lines 1 and N.
+
+# Read a top-level scalar frontmatter field. Stdout: value (trimmed, unquoted);
+# empty if file missing, no frontmatter, or field absent.
+fm_get() {
+  local file="$1" field="$2"
+  [[ -f "$file" ]] || return 0
+  awk -v fld="$field" '
+    /^---$/ { fm++; if (fm > 1) exit; next }
+    fm == 1 && $0 ~ "^"fld":" {
+      val = $0
+      sub("^"fld":[[:space:]]*", "", val)
+      gsub(/^"|"$/, "", val)
+      gsub(/[[:space:]]+$/, "", val)
+      print val
+      exit
+    }
+  ' "$file"
+}
+
+# Write or replace a top-level scalar frontmatter field. Adds the field if
+# missing (inserts just before the closing --- delimiter). Preserves
+# surrounding YAML formatting. Quotes value with double quotes if it contains
+# special characters.
+#
+# Usage: fm_set <file> <field> <value>
+fm_set() {
+  local file="$1" field="$2" value="$3"
+  [[ -f "$file" ]] || die "fm_set: file not found: $file"
+
+  # Quote if value contains a colon, leading dash, or wraps in special chars
+  local quoted_value="$value"
+  if [[ "$value" =~ [\":#] ]] || [[ "$value" =~ ^[[:space:]]*- ]]; then
+    quoted_value="\"${value//\"/\\\"}\""
+  fi
+
+  local tmp
+  tmp=$(mktemp)
+  awk -v fld="$field" -v val="$quoted_value" '
+    BEGIN { fm=0; replaced=0 }
+    /^---$/ {
+      fm++
+      if (fm == 2 && !replaced) {
+        # Insert field just before closing delimiter
+        print fld ": " val
+      }
+      print
+      next
+    }
+    fm == 1 && $0 ~ "^"fld":" {
+      print fld ": " val
+      replaced=1
+      next
+    }
+    { print }
+  ' "$file" > "$tmp" && mv "$tmp" "$file"
+}
+
+# Set updated: to today.
+fm_touch() {
+  fm_set "$1" "updated" "$TODAY"
+}
+
+# Append item to a YAML list field. Creates the list (as inline `field: [item]`)
+# if absent. Skips silently if item already present in list.
+#
+# Usage: fm_add_to_list <file> <field> <item>
+fm_add_to_list() {
+  local file="$1" field="$2" item="$3"
+  [[ -f "$file" ]] || die "fm_add_to_list: file not found: $file"
+
+  # Check if item already in list (handles both block and inline styles)
+  if awk -v fld="$field" -v itm="$item" '
+    /^---$/ { fm++; if (fm > 1) exit; next }
+    fm == 1 && $0 ~ "^"fld":" { in_list=1; line=$0 }
+    in_list && /- / {
+      val = $0
+      sub(/^[[:space:]]*-[[:space:]]*/, "", val)
+      gsub(/^"|"$/, "", val)
+      if (val == itm) { found=1; exit }
+    }
+    in_list && !/^[[:space:]]/ && !/^---$/ { in_list=0 }
+    END { exit (found ? 0 : 1) }
+  ' "$file"; then
+    return 0  # already present
+  fi
+
+  # Detect list style + append. Simple case: block list (one - per line).
+  local tmp
+  tmp=$(mktemp)
+  awk -v fld="$field" -v itm="$item" '
+    BEGIN { fm=0; inserted=0; in_list=0 }
+    /^---$/ {
+      fm++
+      if (fm == 2 && !inserted) {
+        # Field absent entirely; insert before closing delim
+        print fld ":\n  - " itm
+        inserted=1
+      }
+      print
+      next
+    }
+    fm == 1 && $0 ~ "^"fld":" {
+      print
+      in_list=1
+      next
+    }
+    in_list && /^[[:space:]]*-[[:space:]]+/ {
+      print
+      next
+    }
+    in_list && !/^[[:space:]]/ {
+      # End of list — insert before this line
+      print "  - " itm
+      inserted=1
+      in_list=0
+      print
+      next
+    }
+    { print }
+  ' "$file" > "$tmp" && mv "$tmp" "$file"
+}
+
+# Return 0 if file is a registered canonical doc (eligible for snapshot).
+# Per ARCHITECTURE.md § Versioning + versioning.md.
+is_canonical_doc() {
+  local file="$1"
+  local base
+  base=$(basename "$file")
+  case "$base" in
+    PRD.md|SPEC.md|ARCHITECTURE.md|PRINCIPLES.md|ROADMAP.md|STACK.md|DECISIONS.md|AGENTS.md|config.yaml)
+      [[ "$file" == ".spectacular/$base" ]] || [[ "$file" == "./.spectacular/$base" ]]
+      ;;
+    SPEC.md)
+      # specs/<capability>/SPEC.md is also canonical
+      [[ "$file" == .spectacular/specs/*/SPEC.md ]] || [[ "$file" == ./.spectacular/specs/*/SPEC.md ]]
+      ;;
+    *) return 1 ;;
+  esac
+}
+
 # ── config.yaml parsers ───────────────────────────────────────────────────────
+# Read workspace_schema: top-level key from .spectacular/config.yaml.
+# Stdout: declared schema (e.g. "0.6"); defaults to "0.4" if field absent
+# (that's the schema before the first registered migration).
+config_workspace_schema() {
+  local cfg=".spectacular/config.yaml"
+  [[ -f "$cfg" ]] || { echo "0.4"; return 0; }
+  local schema
+  schema=$(awk -F: '
+    /^workspace_schema:/ {
+      val=$2
+      gsub(/^[[:space:]]*"?/, "", val)
+      gsub(/"?[[:space:]]*$/, "", val)
+      print val
+      exit
+    }
+  ' "$cfg")
+  echo "${schema:-0.4}"
+}
+
+# ── archive ──────────────────────────────────────────────────────────────────
+# `spectacular archive <slug> [--force]`
+# Moves request to .spectacular/archive/, rewrites inbound related: links,
+# sets status: archived + archived: <today>. Refuses if not in verified/review
+# without --force.
+cmd_archive() {
+  local slug="" opt_force=false opt_skip_doctor=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --force)       opt_force=true; shift ;;
+      --skip-doctor) opt_skip_doctor=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular archive <slug> [--force] [--skip-doctor]
+
+Move a request from .spectacular/requests/<slug>/ to .spectacular/archive/<slug>/
+and rewrite inbound related: links in other request files to point at the new
+location.
+
+Refuses unless status is 'verified' or 'review'. Use --force to override.
+Refuses if doctor finds workspace/specs/links errors. Use --skip-doctor to bypass.
+
+Options:
+  --force         Skip status-gate check (allow archiving planned/active requests)
+  --skip-doctor   Bypass the doctor precondition (use with caution)
+  -h, --help      Show this help
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for archive: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "archive takes one <slug> argument; got: $slug and $1"
+        slug="$1"
+        shift
+        ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "archive: <slug> argument required."
+  [[ -d ".spectacular" ]] || die "archive: not inside a Spectacular workspace."
+
+  require_doctor_clean "archive" "skip-doctor" "$opt_skip_doctor"
+
+  local src=".spectacular/requests/$slug"
+  if [[ ! -d "$src" ]]; then
+    if [[ -d ".spectacular/archive/$slug" ]]; then
+      die "archive: '$slug' is already archived (.spectacular/archive/$slug)"
+    fi
+    die "archive: request '$slug' not found at $src"
+  fi
+
+  local plan="$src/PLAN.md"
+  if [[ ! -f "$plan" ]]; then
+    die "archive: $plan not found — refuse to archive a request without PLAN.md"
+  fi
+
+  # Lifecycle gate
+  local status
+  status="$(fm_get "$plan" "status")"
+  case "$status" in
+    verified|review) ;;
+    *)
+      if ! $opt_force; then
+        die "archive: refusing to archive '$slug' (status: ${status:-missing}). Promote to verified or use --force."
+      fi
+      ;;
+  esac
+
+  # Bump PLAN frontmatter BEFORE the move (avoids losing the change)
+  fm_set "$plan" "status" "archived"
+  fm_set "$plan" "archived" "$TODAY"
+  fm_touch "$plan"
+
+  # Move dir
+  mkdir -p .spectacular/archive
+  local dest=".spectacular/archive/$slug"
+  if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git mv "$src" "$dest" 2>/dev/null || mv "$src" "$dest"
+  else
+    mv "$src" "$dest"
+  fi
+  echo "  ✓ moved: $src → $dest"
+
+  # Rewrite inbound related: links across all remaining request files.
+  # Pattern: '../<slug>/' → '../../archive/<slug>/'
+  # Also catches: '../<slug>/PLAN.md', '../<slug>/TASKS.md', etc.
+  local rewrite_count=0
+  shopt -s nullglob
+  for target_file in .spectacular/requests/*/PLAN.md .spectacular/requests/*/TASKS.md .spectacular/requests/*/VERIFY.md; do
+    if grep -q "\.\./${slug}/" "$target_file" 2>/dev/null; then
+      sed -i.bak "s|\\.\\./${slug}/|../../archive/${slug}/|g" "$target_file"
+      rm -f "$target_file.bak"
+      rewrite_count=$((rewrite_count + 1))
+      echo "  ✓ rewrote inbound link in: $target_file"
+    fi
+  done
+  shopt -u nullglob
+
+  if [[ "$rewrite_count" -eq 0 ]]; then
+    echo "  • no inbound related: links found to rewrite"
+  fi
+}
+
+# ── snapshot ─────────────────────────────────────────────────────────────────
+# `spectacular snapshot <file> [--major]`
+# Copies a canonical doc to <FILE>@v<N>.md (next N inferred), bumps version
+# field in the unversioned file. Idempotent: no-op if content unchanged since
+# last snapshot.
+cmd_snapshot() {
+  local file="" opt_major=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --major) opt_major=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular snapshot <file> [--major]
+
+Snapshot a canonical doc as <FILE>@v<N>.md, bump version field, set updated.
+Idempotent: re-running with no content changes since last snapshot is a no-op.
+
+Canonical docs are: PRD, SPEC, ARCHITECTURE, PRINCIPLES, ROADMAP, STACK,
+DECISIONS, AGENTS, and specs/<capability>/SPEC.md files. Non-canonical files
+are refused — manual snapshots for those use plain cp.
+
+Options:
+  --major    Bump major version (X.Y → (X+1).0). Default is minor bump (X.Y → X.(Y+1)).
+  -h, --help Show this help
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for snapshot: $1" ;;
+      *)
+        [[ -n "$file" ]] && die "snapshot takes one file argument; got: $file and $1"
+        file="$1"
+        shift
+        ;;
+    esac
+  done
+
+  [[ -z "$file" ]] && die "snapshot: <file> argument required. See: spectacular snapshot --help"
+  [[ -f "$file" ]] || die "snapshot: file not found: $file"
+
+  if ! is_canonical_doc "$file"; then
+    die "snapshot: $file is not a registered canonical doc. Use plain cp for other files."
+  fi
+
+  if ! head -1 "$file" | grep -q '^---$'; then
+    die "snapshot: $file has no frontmatter delimiter"
+  fi
+
+  # Determine next snapshot number
+  local dir base ext base_no_ext
+  dir=$(dirname "$file")
+  base=$(basename "$file")
+  ext="${base##*.}"
+  base_no_ext="${base%.*}"
+
+  local max_n=0
+  shopt -s nullglob
+  for existing in "$dir/${base_no_ext}@v"*.${ext}; do
+    local n
+    n=$(echo "$existing" | sed -E "s|.*@v([0-9]+)\.${ext}\$|\1|")
+    if [[ "$n" =~ ^[0-9]+$ ]] && (( n > max_n )); then
+      max_n=$n
+    fi
+  done
+  shopt -u nullglob
+
+  local next_n=$((max_n + 1))
+  local snapshot_path="$dir/${base_no_ext}@v${next_n}.${ext}"
+
+  # Idempotence: compare BODY (everything after the frontmatter block) only.
+  # Frontmatter fields like `version:` and `updated:` change every snapshot,
+  # so they'd cause false-positive "changes" if compared.
+  if (( max_n > 0 )); then
+    local latest="$dir/${base_no_ext}@v${max_n}.${ext}"
+    local cur_body snap_body
+    cur_body=$(awk '/^---$/{c++; if(c<=2) next} c>=2' "$file" | md5 2>/dev/null || awk '/^---$/{c++; if(c<=2) next} c>=2' "$file" | md5sum | cut -d' ' -f1)
+    snap_body=$(awk '/^---$/{c++; if(c<=2) next} c>=2' "$latest" | md5 2>/dev/null || awk '/^---$/{c++; if(c<=2) next} c>=2' "$latest" | md5sum | cut -d' ' -f1)
+    if [[ -n "$cur_body" && "$cur_body" == "$snap_body" ]]; then
+      echo "  • $file: no body changes since ${base_no_ext}@v${max_n}.${ext} (no snapshot taken)"
+      return 0
+    fi
+  fi
+
+  # Compute new version field
+  local current_ver new_ver
+  current_ver="$(fm_get "$file" "version")"
+  if [[ -z "$current_ver" ]]; then
+    new_ver="1.0"
+  elif [[ "$current_ver" =~ ^([0-9]+)\.([0-9]+)$ ]]; then
+    local major="${BASH_REMATCH[1]}" minor="${BASH_REMATCH[2]}"
+    if $opt_major; then
+      new_ver="$((major + 1)).0"
+    else
+      new_ver="${major}.$((minor + 1))"
+    fi
+  else
+    die "snapshot: cannot parse version '$current_ver' as MAJOR.MINOR. Set version: field manually first."
+  fi
+
+  # Write snapshot, then bump
+  cp "$file" "$snapshot_path"
+  fm_set "$file" "version" "$new_ver"
+  fm_touch "$file"
+
+  echo "  ✓ snapshot: $snapshot_path"
+  echo "  ✓ version: ${current_ver:-(none)} → $new_ver"
+}
+
+# ── promote ──────────────────────────────────────────────────────────────────
+# `spectacular promote <slug> [--to <state>] [--force]`
+# State machine: planned → active → review → verified (linear).
+# Default --to: advances one step. Refuses backward without --force.
+cmd_promote() {
+  local slug="" opt_to="" opt_force=false opt_archive=false opt_skip_doctor=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --to)           require_value "--to" "${2:-}"; opt_to="$2"; shift 2 ;;
+      --force)        opt_force=true; shift ;;
+      --archive)      opt_archive=true; shift ;;
+      --skip-doctor)  opt_skip_doctor=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular promote <slug> [--to <state>] [--force] [--archive] [--skip-doctor]
+
+Advance a request through the lifecycle. State machine:
+  planned → active → review → verified
+
+Default behavior promotes one step (e.g. planned → active). Use --to to
+jump (e.g. --to verified). Backward transitions refused without --force.
+
+Promote alone is non-destructive (frontmatter edit only). When --archive is
+passed, the chain into archive runs the doctor precondition; --skip-doctor
+bypasses it.
+
+Options:
+  --to <state>    Target state explicitly (planned | active | review | verified)
+  --force         Allow backward or non-adjacent transitions
+  --archive       After promoting to verified, also archive the request
+  --skip-doctor   Bypass doctor precondition on the --archive chain (caution)
+  -h, --help      Show this help
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for promote: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "promote takes one <slug> argument; got: $slug and $1"
+        slug="$1"
+        shift
+        ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "promote: <slug> argument required. See: spectacular promote --help"
+  [[ -d ".spectacular" ]] || die "promote: not inside a Spectacular workspace."
+
+  local plan=".spectacular/requests/$slug/PLAN.md"
+  if [[ ! -f "$plan" ]]; then
+    if [[ -f ".spectacular/archive/$slug/PLAN.md" ]]; then
+      die "promote: '$slug' is archived. Restore from .spectacular/archive/ first."
+    fi
+    die "promote: request '$slug' not found at .spectacular/requests/$slug/"
+  fi
+
+  local current
+  current="$(fm_get "$plan" "status")"
+  [[ -z "$current" ]] && die "promote: PLAN.md has no status: field"
+
+  # Compute target if --to omitted
+  local target
+  if [[ -n "$opt_to" ]]; then
+    target="$opt_to"
+  else
+    case "$current" in
+      planned)  target="active" ;;
+      active)   target="review" ;;
+      review)   target="verified" ;;
+      verified) die "promote: '$slug' is already verified. Use 'spectacular archive $slug' to archive it." ;;
+      archived) die "promote: '$slug' is archived (status: archived). Cannot promote further." ;;
+      *) die "promote: unknown current status '$current' in PLAN.md" ;;
+    esac
+  fi
+
+  # Validate target
+  case "$target" in
+    planned|active|review|verified) ;;
+    *) die "promote: invalid --to '$target'. Must be: planned | active | review | verified" ;;
+  esac
+
+  # Refuse backward unless --force
+  if [[ "$current" == "$target" ]]; then
+    echo "  • $slug: already $current (no change)"
+    return 0
+  fi
+
+  local order="planned active review verified"
+  local cur_idx tgt_idx i=0
+  for s in $order; do
+    [[ "$s" == "$current" ]] && cur_idx=$i
+    [[ "$s" == "$target" ]] && tgt_idx=$i
+    i=$((i + 1))
+  done
+  if (( tgt_idx < cur_idx )) && ! $opt_force; then
+    die "promote: backward transition $current → $target refused. Use --force to override."
+  fi
+
+  fm_set "$plan" "status" "$target"
+  fm_touch "$plan"
+  # Also bump TASKS.md status: to stay in sync
+  local tasks=".spectacular/requests/$slug/TASKS.md"
+  if [[ -f "$tasks" ]]; then
+    fm_set "$tasks" "status" "$target"
+    fm_touch "$tasks"
+  fi
+  echo "  ✓ $slug: $current → $target"
+
+  # --archive: chain into cmd_archive (pass --skip-doctor through if set)
+  if $opt_archive && [[ "$target" == "verified" ]]; then
+    echo ""
+    if $opt_skip_doctor; then
+      cmd_archive "$slug" --skip-doctor
+    else
+      cmd_archive "$slug"
+    fi
+  fi
+}
+
+# ── new ──────────────────────────────────────────────────────────────────────
+# `spectacular new <slug> [--summary "..."] [--status planned|active|review] [--priority low|medium|high]`
+# Scaffolds .spectacular/requests/<slug>/PLAN.md + TASKS.md from templates with
+# frontmatter prefilled. Refuses if <slug> exists in requests/ OR archive/.
+cmd_new() {
+  local slug="" opt_summary="" opt_status="planned" opt_priority="medium" opt_target_version=""
+  while (( $# > 0 )); do
+    case "$1" in
+      --summary)        require_value "--summary" "${2:-}"; opt_summary="$2"; shift 2 ;;
+      --status)         require_value "--status" "${2:-}"; opt_status="$2"; shift 2 ;;
+      --priority)       require_value "--priority" "${2:-}"; opt_priority="$2"; shift 2 ;;
+      --target-version) require_value "--target-version" "${2:-}"; opt_target_version="$2"; shift 2 ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular new <slug> [--summary "..."] [--status <state>] [--priority <level>] [--target-version <ver>]
+
+Scaffold a new request at .spectacular/requests/<slug>/ with PLAN.md and
+TASKS.md prefilled from templates.
+
+Arguments:
+  <slug>                  Kebab-case identifier (e.g. user-auth, fix-race-cond)
+
+Options:
+  --summary "..."         One-sentence description (default: empty placeholder)
+  --status <state>        planned | active | review  (default: planned)
+  --priority <level>      low | medium | high       (default: medium)
+  --target-version <ver>  Roadmap version this request targets (e.g. 0.7.1)
+                          Populates target_version: in PLAN frontmatter; used by
+                          \`spectacular roadmap refine\` to auto-link in ROADMAP.md.
+  -h, --help              Show this help
+
+Refuses if <slug> already exists in .spectacular/requests/ or
+.spectacular/archive/.
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for new: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "new takes one <slug> argument; got: $slug and $1"
+        slug="$1"
+        shift
+        ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "new: <slug> argument required. See: spectacular new --help"
+
+  # Slug validation: kebab-case, max 64 chars, no dots/slashes
+  if [[ ! "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]]; then
+    die "new: invalid slug '$slug'. Must be kebab-case, lowercase alnum + hyphens, max 64 chars, starting with letter or digit."
+  fi
+  # Status + priority validation
+  case "$opt_status" in
+    planned|active|review) ;;
+    *) die "new: invalid --status '$opt_status'. Must be: planned | active | review" ;;
+  esac
+  case "$opt_priority" in
+    low|medium|high) ;;
+    *) die "new: invalid --priority '$opt_priority'. Must be: low | medium | high" ;;
+  esac
+
+  [[ -d ".spectacular" ]] || die "new: not inside a Spectacular workspace. Run 'spectacular init' first."
+
+  local target=".spectacular/requests/$slug"
+  if [[ -d "$target" ]]; then
+    die "new: slug '$slug' already exists at $target"
+  fi
+  if [[ -d ".spectacular/archive/$slug" ]]; then
+    die "new: slug '$slug' exists in archive (.spectacular/archive/$slug). Pick a different slug or restore the archived request."
+  fi
+
+  # Read owner from config.yaml if present
+  local owner=""
+  if [[ -f ".spectacular/config.yaml" ]]; then
+    owner=$(awk '/^  owner:/ { sub(/^  owner:[[:space:]]*/, ""); print; exit }' .spectacular/config.yaml)
+  fi
+  [[ -z "$owner" ]] && owner="$(whoami 2>/dev/null || echo unknown)"
+
+  mkdir -p "$target"
+
+  # PLAN.md from template
+  local plan_template
+  plan_template="$(agents_skill_dir)/templates/plan/base.md"
+  if [[ ! -f "$plan_template" ]]; then
+    plan_template="${SCRIPT_DIR}/../skills/spectacular/templates/plan/base.md"
+  fi
+  if [[ -f "$plan_template" ]]; then
+    sed -e "s|<OWNER>|${owner}|g" \
+        -e "s|<DATE>|${TODAY}|g" \
+        -e "s|<one-sentence description of what this request changes>|${opt_summary:-<one-sentence description of what this request changes>}|" \
+        -e "s|<Request Title>|${slug}|g" \
+        "$plan_template" > "$target/PLAN.md"
+    # Override frontmatter status + priority via fm_set
+    fm_set "$target/PLAN.md" "status" "$opt_status"
+    fm_set "$target/PLAN.md" "priority" "$opt_priority"
+    [[ -n "$opt_target_version" ]] && fm_set "$target/PLAN.md" "target_version" "$opt_target_version"
+  else
+    # Fallback minimal scaffold
+    cat > "$target/PLAN.md" <<EOF
+---
+status: $opt_status
+priority: $opt_priority
+owner: $owner
+updated: $TODAY
+summary: "${opt_summary}"
+related: []
+---
+
+# Plan — $slug
+
+## 1. Goal
+
+<one sentence>
+
+## 2. Constraints
+
+## 3. Milestones
+
+## 4. Tasks
+
+See TASKS.md.
+
+## 5. Dependencies
+
+## 6. Validation
+
+## 7. Deliverables
+EOF
+  fi
+
+  # TASKS.md from template
+  local tasks_template
+  tasks_template="$(agents_skill_dir)/templates/tasks/base.md"
+  if [[ ! -f "$tasks_template" ]]; then
+    tasks_template="${SCRIPT_DIR}/../skills/spectacular/templates/tasks/base.md"
+  fi
+  if [[ -f "$tasks_template" ]]; then
+    sed -e "s|<DATE>|${TODAY}|g" \
+        -e "s|<Request Title>|${slug}|g" \
+        "$tasks_template" > "$target/TASKS.md"
+    fm_set "$target/TASKS.md" "status" "$opt_status"
+  else
+    cat > "$target/TASKS.md" <<EOF
+---
+status: $opt_status
+updated: $TODAY
+related:
+  - PLAN.md
+---
+
+# Tasks — $slug
+
+## v1
+
+### M1 — <Milestone name>
+- [ ] <Task>
+EOF
+  fi
+
+  echo "  ✓ scaffolded: $target/PLAN.md"
+  echo "  ✓ scaffolded: $target/TASKS.md"
+  echo ""
+  echo "Next: edit $target/PLAN.md to flesh out the 7 slots."
+}
+
+# ── touch ────────────────────────────────────────────────────────────────────
+# `spectacular touch <file>` — update frontmatter `updated:` to today.
+# Idempotent: no-op if already today. Refuses files without frontmatter.
+cmd_touch() {
+  local file=""
+  while (( $# > 0 )); do
+    case "$1" in
+      --help|-h)
+        cat <<EOF
+Usage: spectacular touch <file>
+
+Update the frontmatter \`updated:\` field of <file> to today (${TODAY}).
+Idempotent — re-running on a file already current is a clean no-op.
+Refuses files without a YAML frontmatter block.
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for touch: $1" ;;
+      *)
+        [[ -n "$file" ]] && die "touch takes one file argument; got: $file and $1"
+        file="$1"
+        shift
+        ;;
+    esac
+  done
+
+  [[ -z "$file" ]] && die "touch: <file> argument required. See: spectacular touch --help"
+  [[ -f "$file" ]] || die "touch: file not found: $file"
+  if ! head -1 "$file" | grep -q '^---$'; then
+    die "touch: $file has no frontmatter delimiter"
+  fi
+
+  local current
+  current="$(fm_get "$file" "updated")"
+  if [[ "$current" == "$TODAY" ]]; then
+    echo "  • $file: updated already $TODAY (no change)"
+    return 0
+  fi
+
+  fm_touch "$file"
+  echo "  ✓ $file: updated ${current:-(missing)} → $TODAY"
+}
+
+# ── doctor precondition (v0.7.4+) ────────────────────────────────────────────
+# Run a scoped doctor check before destructive verbs (migrate, archive,
+# promote --archive). Errors block (exit 1); warnings and info pass through.
+# Bypass via --skip-doctor on the calling verb.
+#
+# Areas scoped: workspace, specs, links — the three most likely to surface
+# structural problems that would make a destructive op unsafe. We don't run
+# the full doctor (~10 areas) to keep precondition latency low and avoid
+# blocking on unrelated drift (e.g. ROADMAP pre-v0.7.2 naming).
+#
+# Usage:  require_doctor_clean "<verb-name>" "<skip-doctor-flag-name>" $opt_skip_doctor
+#         <verb-name>: human-readable verb (for error message)
+#         <flag>: the bypass flag name (for error message)
+#         $opt_skip_doctor: true|false — caller's parsed flag value
+#
+# Returns: 0 if clean (or skipped), exits 1 if errors found.
+# Used by: archive (and promote --archive chain). For migrate, see
+# require_doctor_clean_links — migrate would self-trigger on schema drift it's
+# designed to fix.
+require_doctor_clean() {
+  _doctor_precondition "$1" "$2" "$3" "workspace specs links"
+}
+
+# Narrower precondition: only the links area. Used by migrate, which would
+# self-trigger if it ran the workspace/specs checks (v0.4-shape workspaces
+# have current/ which check_specs intentionally flags).
+require_doctor_clean_links() {
+  _doctor_precondition "$1" "$2" "$3" "links"
+}
+
+# Internal: run doctor on the named areas, count errors, refuse if any.
+_doctor_precondition() {
+  local verb="$1" flag="$2" skip="$3" areas="$4"
+  if [[ "$skip" == "true" ]]; then
+    return 0
+  fi
+  if [[ ! -d ".spectacular" ]]; then
+    return 0  # outside-workspace check is the caller's job; don't double-error
+  fi
+
+  # JSON renders with `"severity": "error"` (space after colon) — match either spacing.
+  local out err_count=0
+  for area in $areas; do
+    out=$("$0" doctor "$area" --format json 2>/dev/null) || true
+    local n
+    n=$(echo "$out" | grep -c '"severity":[[:space:]]*"error"' || true)
+    err_count=$((err_count + n))
+  done
+
+  if (( err_count > 0 )); then
+    local areas_display
+    areas_display=$(echo "$areas" | tr ' ' '/')
+    cat >&2 <<EOF
+
+Refusing '$verb' — doctor found $err_count error(s) in $areas_display.
+
+Run 'spectacular doctor' for details, fix the errors, then re-run.
+To bypass (use with caution): pass --$flag
+
+EOF
+    exit 1
+  fi
+}
+
+# ── migrate ──────────────────────────────────────────────────────────────────
+# `spectacular migrate` — apply pending workspace-schema migrations.
+#
+# v0.6.2+: migrations live as .md files under skills/spectacular/references/
+# migrations/. Each file declares (id, from, to, mechanical, reversible,
+# apply-fn, affects) in frontmatter. The loader scans + sorts by `from` semver,
+# resolves the chain from current_schema → target_schema, and dispatches each:
+#   - mechanical: true  → calls the bash function named in apply-fn
+#   - mechanical: false → prints "run /spectacular migrate in your AI agent",
+#                         exits non-zero; the skill walks judgment migrations
+#                         (see references/migrate.md)
+#
+# Schema contract: skills/spectacular/references/migrations-contract.md
+#
+# Idempotence: every migration self-detects whether it needs to run. Running
+# `migrate` on an up-to-date workspace is a clean no-op.
+
+# Resolve the directory where migration .md files live. Tries in order:
+#   1. .agents/skills/spectacular/references/migrations/  (project-installed)
+#   2. ~/.agents/skills/spectacular/references/migrations/ (global install)
+#   3. ${SCRIPT_DIR}/../skills/spectacular/references/migrations/ (dev / source-tree run)
+# Stdout: resolved absolute path, or empty string if none found.
+migrations_dir() {
+  local project_path="$(pwd)/.agents/skills/spectacular/references/migrations"
+  local global_path="$HOME/.agents/skills/spectacular/references/migrations"
+  local dev_path="${SCRIPT_DIR}/../skills/spectacular/references/migrations"
+  for candidate in "$project_path" "$global_path" "$dev_path"; do
+    if [[ -d "$candidate" ]]; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Extract a single frontmatter field value from a migration .md file.
+# Usage: migration_field <path> <field-name>
+# Stdout: field value (trimmed, quotes stripped); empty if not found.
+migration_field() {
+  local path="$1" field="$2"
+  awk -v fld="$field" '
+    /^---$/ { fm = !fm; next }
+    fm && $0 ~ "^"fld":" {
+      val = $0
+      sub("^"fld":[[:space:]]*", "", val)
+      gsub(/^"|"$/, "", val)
+      gsub(/[[:space:]]+$/, "", val)
+      print val
+      exit
+    }
+  ' "$path"
+}
+
+# Bump workspace_schema in config.yaml to the given version.
+# Used internally by migration apply functions.
+bump_workspace_schema() {
+  local new_schema="$1"
+  local cfg=".spectacular/config.yaml"
+  if [[ ! -f "$cfg" ]]; then
+    echo "  ✗ cannot bump workspace_schema — config.yaml not found" >&2
+    return 1
+  fi
+  if grep -q "^workspace_schema:" "$cfg"; then
+    # In-place update (portable sed: use a tmp file)
+    sed "s/^workspace_schema:.*/workspace_schema: \"${new_schema}\"/" "$cfg" > "$cfg.tmp"
+    mv "$cfg.tmp" "$cfg"
+  else
+    # Insert after the `project:` block (between line ending with ^summary: and the next blank line)
+    # Simpler: append at end of file with a header comment
+    cat >> "$cfg" <<EOF
+
+# Structural version of .spectacular/ layout. Migrations bump this.
+workspace_schema: "${new_schema}"
+EOF
+  fi
+}
+
+# v0.4 → v0.5: rename .spectacular/current/ → .spectacular/specs/ if present.
+# Preserves contents verbatim (flat .md files OR per-capability subfolders).
+# Idempotent: no-op when current/ absent.
+migration_apply_v04_to_v05() {
+  local dry="$1"
+  local current_dir=".spectacular/current"
+  local specs_dir=".spectacular/specs"
+
+  if [[ ! -d "$current_dir" ]]; then
+    echo "  • v0.4→v0.5: no .spectacular/current/ found — nothing to rename"
+    [[ "$dry" == "true" ]] || bump_workspace_schema "0.5"
+    return 0
+  fi
+
+  if [[ -d "$specs_dir" ]]; then
+    echo "  ✗ v0.4→v0.5: both .spectacular/current/ AND .spectacular/specs/ exist" >&2
+    echo "    Manual merge required. Run 'spectacular doctor specs' for guidance." >&2
+    return 1
+  fi
+
+  if [[ "$dry" == "true" ]]; then
+    echo "  • v0.4→v0.5: would rename .spectacular/current/ → .spectacular/specs/ (preserve contents)"
+    return 0
+  fi
+
+  mv "$current_dir" "$specs_dir"
+  echo "  ✓ v0.4→v0.5: renamed .spectacular/current/ → .spectacular/specs/"
+  bump_workspace_schema "0.5"
+}
+
+# v0.5 → v0.6: ensure .spectacular/specs/ exists (mkdir + .gitkeep if empty).
+# Idempotent: no-op when specs/ already present.
+migration_apply_v05_to_v06() {
+  local dry="$1"
+  local specs_dir=".spectacular/specs"
+
+  if [[ -d "$specs_dir" ]]; then
+    # specs/ exists — just ensure schema is bumped
+    if [[ "$dry" == "true" ]]; then
+      echo "  • v0.5→v0.6: .spectacular/specs/ already present — would bump schema only"
+    else
+      echo "  • v0.5→v0.6: .spectacular/specs/ already present — bumping schema only"
+      bump_workspace_schema "0.6"
+    fi
+    return 0
+  fi
+
+  if [[ "$dry" == "true" ]]; then
+    echo "  • v0.5→v0.6: would create .spectacular/specs/ with .gitkeep"
+    return 0
+  fi
+
+  mkdir -p "$specs_dir"
+  touch "$specs_dir/.gitkeep"
+  echo "  ✓ v0.5→v0.6: created .spectacular/specs/ with .gitkeep"
+  bump_workspace_schema "0.6"
+}
+
+# Compare two schema versions (e.g. "0.4", "0.5"). Returns 0 if $1 < $2, else 1.
+# Simple lexicographic comparison via sort -V.
+schema_lt() {
+  local a="$1" b="$2"
+  [[ "$a" == "$b" ]] && return 1
+  local first
+  first=$(printf '%s\n%s\n' "$a" "$b" | sort -V | head -n1)
+  [[ "$first" == "$a" ]]
+}
+
+cmd_migrate() {
+  local dry_run=false
+  local opt_to="" opt_from="" opt_list=false opt_skip_doctor=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --dry-run)      dry_run=true; shift ;;
+      --list)         opt_list=true; shift ;;
+      --to)           require_value "--to" "${2:-}"; opt_to="$2"; shift 2 ;;
+      --from)         require_value "--from" "${2:-}"; opt_from="$2"; shift 2 ;;
+      --skip-doctor)  opt_skip_doctor=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular migrate [--dry-run] [--to <ver>] [--from <ver>] [--list] [--skip-doctor]
+
+Apply pending workspace-schema migrations to bring .spectacular/ to the latest
+shape expected by this CLI (schema ${CURRENT_SCHEMA}).
+
+Options:
+  --dry-run       List planned migrations without writing
+  --to <ver>      Migrate up to a specific schema version (default: latest)
+  --from <ver>    Re-run starting from a specific schema (for repair)
+  --list          List all known migrations from the registry; exit
+  --skip-doctor   Bypass the doctor precondition (use with caution)
+  -h, --help      Show this help
+
+Migrations live as .md files in skills/spectacular/references/migrations/.
+Each declares frontmatter (id, from, to, mechanical, reversible, apply-fn).
+Mechanical migrations are applied by this CLI. Judgment migrations route
+to '/spectacular migrate' in your AI agent.
+
+A workspace with no workspace_schema: field is treated as "0.4".
+Each migration is idempotent; running migrate on an up-to-date workspace
+is a clean no-op.
+EOF
+        exit 0 ;;
+      *) die "Unknown flag for migrate: $1" ;;
+    esac
+  done
+
+  local reg_dir
+  if ! reg_dir="$(migrations_dir)"; then
+    die "Migration registry not found. Run \`spectacular init --update\` or check skill installation."
+  fi
+
+  # Build sorted list of migrations: "<from>|<to>|<id>|<mechanical>|<apply-fn>|<path>"
+  local -a registry=()
+  shopt -s nullglob
+  for path in "$reg_dir"/v*.md; do
+    local id from to mech applyfn
+    id="$(migration_field "$path" "id")"
+    from="$(migration_field "$path" "from")"
+    to="$(migration_field "$path" "to")"
+    mech="$(migration_field "$path" "mechanical")"
+    applyfn="$(migration_field "$path" "apply-fn")"
+    [[ -z "$id" || -z "$from" || -z "$to" ]] && continue
+    registry+=("${from}|${to}|${id}|${mech}|${applyfn}|${path}")
+  done
+  shopt -u nullglob
+
+  # Sort by `from` semver
+  IFS=$'\n' read -r -d '' -a registry < <(printf '%s\n' "${registry[@]}" | sort -t'|' -V -k1,1; printf '\0')
+
+  if $opt_list; then
+    echo "Registered migrations (${#registry[@]} total):"
+    echo ""
+    local entry
+    for entry in "${registry[@]}"; do
+      IFS='|' read -r from to id mech _ path <<< "$entry"
+      # description: prefer the first non-empty paragraph from the body's <H1>
+      # if frontmatter description is a YAML literal block (|), parse the
+      # indented continuation lines instead of the | marker
+      local desc
+      desc=$(awk '
+        /^---$/ { fm = !fm; next }
+        fm && /^description:[[:space:]]*\|/ { in_desc=1; next }
+        fm && /^description:[[:space:]]*/ {
+          val = $0
+          sub(/^description:[[:space:]]*/, "", val)
+          gsub(/^"|"$/, "", val)
+          print val
+          exit
+        }
+        fm && in_desc && /^  / {
+          val = $0
+          sub(/^[[:space:]]+/, "", val)
+          print val
+          exit
+        }
+      ' "$path")
+      printf "  %-18s  %s → %s  (%s)  %s\n" "$id" "$from" "$to" "$mech" "$desc"
+    done
+    return 0
+  fi
+
+  if [[ ! -d ".spectacular" ]]; then
+    die "Not inside a Spectacular workspace (no .spectacular/ here)."
+  fi
+
+  local current target
+  current="${opt_from:-$(config_workspace_schema)}"
+  target="${opt_to:-$CURRENT_SCHEMA}"
+
+  if [[ "$current" == "$target" ]]; then
+    echo "Workspace is up to date (schema ${current})."
+    return 0
+  fi
+
+  # Doctor precondition (v0.7.4+): for migrate, only check links — workspace/specs
+  # checks would fire on the very drift migrate is designed to repair (e.g. v0.4
+  # shape has current/ which trips check_specs). Links remain valid signal: a
+  # workspace with broken cross-doc references is unsafe to mutate further.
+  # Dry-run skips entirely since no mutation will occur.
+  if ! $dry_run; then
+    require_doctor_clean_links "migrate" "skip-doctor" "$opt_skip_doctor"
+  fi
+
+  if schema_lt "$target" "$current"; then
+    die "Downgrade not supported: --to ${target} is older than current schema ${current}. Bidirectional migrations are out of scope."
+  fi
+
+  if $dry_run; then
+    echo "Dry-run: would migrate workspace_schema ${current} → ${target}"
+  else
+    echo "Migrating workspace_schema ${current} → ${target}"
+  fi
+  echo ""
+
+  # Apply chain — for each registry entry where from >= current AND to <= target.
+  local entry from to id mech applyfn path
+  for entry in "${registry[@]}"; do
+    IFS='|' read -r from to id mech applyfn path <<< "$entry"
+    # Skip migrations whose `from` is older than current (already applied)
+    schema_lt "$from" "$current" && continue
+    # Skip migrations whose `to` exceeds target
+    schema_lt "$target" "$to" && continue
+
+    if [[ "$mech" != "true" ]]; then
+      echo "  ⚠ ${id}: this migration requires judgment (mechanical: false)"
+      echo ""
+      echo "    Run '/spectacular migrate' in your AI agent (Claude Code, Codex, etc.)"
+      echo "    to walk this migration with snapshot-before-edit + per-step confirmation."
+      echo ""
+      echo "    See: skills/spectacular/references/migrate.md"
+      return 1
+    fi
+
+    if [[ -z "$applyfn" ]]; then
+      die "${id}: mechanical: true but apply-fn is empty in frontmatter"
+    fi
+    if ! declare -F "$applyfn" >/dev/null; then
+      die "${id}: apply-fn '${applyfn}' is not defined in cli/spectacular"
+    fi
+
+    "$applyfn" "$dry_run" || return $?
+    [[ "$dry_run" == "false" ]] && current="$to"
+  done
+
+  echo ""
+  if $dry_run; then
+    echo "Dry-run complete. Run without --dry-run to apply."
+  else
+    echo "Migration complete. workspace_schema is now ${current}."
+  fi
+}
+
+# `spectacular status --against-latest` — one-line workspace-schema verdict.
+# Prints whether the workspace is up-to-date or behind the CLI's CURRENT_SCHEMA,
+# plus the suggested verb to catch up. Always exits 0 (informational), unless
+# the user is not inside a Spectacular workspace at all (exits 1).
+cmd_status_against_latest() {
+  if [[ ! -d ".spectacular" ]]; then
+    echo "Not inside a Spectacular workspace (no .spectacular/ here)." >&2
+    return 1
+  fi
+  local declared
+  declared="$(config_workspace_schema)"
+  if [[ "$declared" == "$CURRENT_SCHEMA" ]]; then
+    echo "workspace_schema: ${declared}  ✓  up to date (CLI expects ${CURRENT_SCHEMA})"
+    return 0
+  fi
+  # Behind: tell user what to run.
+  echo "workspace_schema: ${declared}  ⚠  behind CLI (expects ${CURRENT_SCHEMA})"
+  echo ""
+  echo "  Run:  spectacular migrate            # apply pending migrations"
+  echo "        spectacular migrate --dry-run  # preview without writing"
+  return 0
+}
+
+# `spectacular status --since <date>` — activity report since a cutoff.
+# Lists requests + canonical docs whose frontmatter `updated:` is >= <date>.
+#
+# Accepts: YYYY-MM-DD, relative ("7d", "2w", "1m"), or "yesterday".
+# Frontmatter-only scan — no git involved. Always exits 0 unless outside a
+# workspace (exits 1) or date can't be parsed (exits 2).
+cmd_status_since() {
+  local since_input="${1:-}"
+  if [[ -z "$since_input" ]]; then
+    echo "status --since: <date> argument required (YYYY-MM-DD | 7d | 2w | 1m | yesterday)" >&2
+    return 2
+  fi
+  if [[ ! -d ".spectacular" ]]; then
+    echo "Not inside a Spectacular workspace (no .spectacular/ here)." >&2
+    return 1
+  fi
+
+  local cutoff
+  cutoff="$(status_since_resolve_date "$since_input")" || {
+    echo "status --since: cannot parse '$since_input' (expected YYYY-MM-DD | <N>d | <N>w | <N>m | yesterday)" >&2
+    return 2
+  }
+
+  echo "Activity since ${cutoff}:"
+  echo ""
+
+  # Requests, grouped by status. Scan both requests/ and archive/.
+  local -a archived=() verified=() review=() active=() planned=()
+  local dir slug updated status
+  shopt -s nullglob
+  for dir in .spectacular/requests/*/ .spectacular/archive/*/; do
+    [[ -f "$dir/PLAN.md" ]] || continue
+    updated="$(fm_get "$dir/PLAN.md" "updated")"
+    [[ -z "$updated" ]] && continue
+    # Lexicographic compare works for YYYY-MM-DD; cutoff must be in same shape.
+    [[ "$updated" < "$cutoff" ]] && continue
+    slug="$(basename "$dir")"
+    status="$(fm_get "$dir/PLAN.md" "status")"
+    case "$status" in
+      archived) archived+=("$slug") ;;
+      verified) verified+=("$slug") ;;
+      review)   review+=("$slug") ;;
+      active)   active+=("$slug") ;;
+      planned)  planned+=("$slug") ;;
+    esac
+  done
+  shopt -u nullglob
+
+  local req_total=$(( ${#archived[@]} + ${#verified[@]} + ${#review[@]} + ${#active[@]} + ${#planned[@]} ))
+  echo "Requests (${req_total}):"
+  status_since_print_group "archived" "${archived[@]+"${archived[@]}"}"
+  status_since_print_group "verified" "${verified[@]+"${verified[@]}"}"
+  status_since_print_group "review"   "${review[@]+"${review[@]}"}"
+  status_since_print_group "active"   "${active[@]+"${active[@]}"}"
+  status_since_print_group "planned"  "${planned[@]+"${planned[@]}"}"
+  [[ $req_total -eq 0 ]] && echo "  (none)"
+
+  # Canonical docs at .spectacular/ root.
+  echo ""
+  local -a docs=()
+  local doc_file doc_base
+  shopt -s nullglob
+  for doc_file in .spectacular/*.md; do
+    doc_base="$(basename "$doc_file")"
+    # Skip snapshot files (@v in name)
+    [[ "$doc_base" =~ @v ]] && continue
+    updated="$(fm_get "$doc_file" "updated")"
+    [[ -z "$updated" ]] && continue
+    [[ "$updated" < "$cutoff" ]] && continue
+    docs+=("$doc_base ($updated)")
+  done
+  shopt -u nullglob
+
+  echo "Canonical docs (${#docs[@]}):"
+  if (( ${#docs[@]} > 0 )); then
+    local d
+    for d in "${docs[@]}"; do
+      echo "  $d"
+    done
+  else
+    echo "  (none)"
+  fi
+
+  return 0
+}
+
+# Resolve a --since <date> input to an absolute YYYY-MM-DD cutoff.
+# Accepts: YYYY-MM-DD, <N>d / <N>w / <N>m, "yesterday".
+# Stdout: resolved date. Return 1 if unparseable.
+status_since_resolve_date() {
+  local input="$1"
+  # Already YYYY-MM-DD
+  if [[ "$input" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+    echo "$input"
+    return 0
+  fi
+  # Relative: <N>d, <N>w, <N>m
+  if [[ "$input" =~ ^([0-9]+)(d|w|m)$ ]]; then
+    local n="${BASH_REMATCH[1]}" unit="${BASH_REMATCH[2]}"
+    local days
+    case "$unit" in
+      d) days="$n" ;;
+      w) days=$((n * 7)) ;;
+      m) days=$((n * 30)) ;;  # approximate; good enough for activity reports
+    esac
+    # BSD date (macOS): -v-Nd. GNU date (Linux): -d "N days ago".
+    if date -v-1d >/dev/null 2>&1; then
+      date -v-"${days}"d +%Y-%m-%d
+    else
+      date -d "${days} days ago" +%Y-%m-%d
+    fi
+    return 0
+  fi
+  # Special keywords
+  if [[ "$input" == "yesterday" ]]; then
+    if date -v-1d >/dev/null 2>&1; then
+      date -v-1d +%Y-%m-%d
+    else
+      date -d "1 day ago" +%Y-%m-%d
+    fi
+    return 0
+  fi
+  return 1
+}
+
+# Print one status group, indented under "Requests (N):".
+# Args: <status-name> <item1> <item2> ... (pass array elements inline)
+status_since_print_group() {
+  local name="$1"
+  shift
+  (( $# == 0 )) && return 0
+  echo "  ${name} ($#):"
+  local item
+  for item in "$@"; do
+    echo "    $item"
+  done
+}
+
 # Read convention_pack: stanza values from .spectacular/config.yaml
 # Stdout: pack source name (empty if no convention_pack block or commented out)
 config_pack_source() {
@@ -559,20 +1821,32 @@ config_pack_source() {
   ' "$cfg"
 }
 
-# Stdout: pack mode (suggest|scaffold|enforce); default "suggest" if convention_pack present without mode
+# Stdout: pack mode (suggest|scaffold|enforce); default "suggest" if convention_pack present without mode.
+# Unknown values (e.g. "strict") silently fall back to "suggest" — call config_pack_mode_raw if you
+# need to detect the discrepancy (used by check_conventions to emit an info note).
 config_pack_mode() {
+  local raw
+  raw="$(config_pack_mode_raw)"
+  case "$raw" in
+    suggest|scaffold|enforce) echo "$raw" ;;
+    *)                        echo "suggest" ;;  # unknown / empty → fallback
+  esac
+}
+
+# Stdout: raw mode value as written in config.yaml (whatever string the user typed).
+# Empty if convention_pack absent or mode: field omitted. Used by check_conventions
+# to detect unknown-mode drift and emit an info note before silently falling back.
+config_pack_mode_raw() {
   local cfg=".spectacular/config.yaml"
   [[ -f "$cfg" ]] || return 0
   local src
   src="$(config_pack_source)"
   [[ -z "$src" ]] && return 0
-  local mode
-  mode=$(awk '
+  awk '
     /^convention_pack:/ { in_block=1; next }
     in_block && /^[^[:space:]]/ { in_block=0 }
     in_block && /^  mode:/ { gsub(/^  mode:[[:space:]]*/, ""); gsub(/[[:space:]]*$/, ""); print; exit }
-  ' "$cfg")
-  echo "${mode:-suggest}"
+  ' "$cfg"
 }
 
 doc_prd() {
@@ -1087,10 +2361,15 @@ doctor_parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --fix) DOC_OPT_FIX=true; shift ;;
-      --format) DOC_OPT_FORMAT="$2"; shift 2 ;;
+      --format) require_value "--format" "${2:-}"; DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
       skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs)
-        DOC_OPT_AREA="$1"; shift ;;
+        if [[ -z "$DOC_OPT_AREA" ]]; then
+          DOC_OPT_AREA="$1"
+        else
+          DOC_OPT_AREA="$DOC_OPT_AREA $1"
+        fi
+        shift ;;
       *) die "Unknown doctor option: $1. Run 'spectacular doctor --help'." ;;
     esac
   done
@@ -1206,13 +2485,31 @@ check_workspace() {
     fi
   done
 
-  # config.yaml parses
+  # config.yaml parses + has project: stanza
   if [[ -f ".spectacular/config.yaml" ]]; then
-    if grep -q "^project:" ".spectacular/config.yaml" 2>/dev/null; then
-      doc_add "workspace" "pass" ".spectacular/config.yaml" "config.yaml has project: stanza"
-    else
+    # Real YAML parse via Python if available (PyYAML is stdlib-adjacent; degrade if absent)
+    local yaml_ok=true
+    local yaml_err=""
+    if command -v python3 >/dev/null 2>&1; then
+      # Print only the YAMLError class name + message; drop traceback noise
+      yaml_err=$(python3 -c '
+import sys, yaml
+try:
+    yaml.safe_load(open(sys.argv[1]))
+except yaml.YAMLError as e:
+    msg = str(e).replace("\n", " ").strip()
+    print(msg[:200])
+    sys.exit(1)
+' ".spectacular/config.yaml" 2>&1) || yaml_ok=false
+    fi
+    if ! $yaml_ok; then
+      doc_add "workspace" "error" ".spectacular/config.yaml" "config.yaml is not valid YAML: ${yaml_err:-parse failed}" \
+        "fix YAML syntax in config.yaml" "judgment"
+    elif ! grep -q "^project:" ".spectacular/config.yaml" 2>/dev/null; then
       doc_add "workspace" "error" ".spectacular/config.yaml" "config.yaml missing project: stanza" \
         "rewrite config.yaml with project name/summary/kit" "judgment"
+    else
+      doc_add "workspace" "pass" ".spectacular/config.yaml" "config.yaml parses + has project: stanza"
     fi
   fi
 
@@ -1228,6 +2525,44 @@ check_workspace() {
   else
     doc_add "workspace" "warning" ".gitignore" ".gitignore not found; .spectacular.local/ unprotected" \
       "create .gitignore with .spectacular.local/" "mechanical"
+  fi
+
+  # v0.6+ scaffold suggestion: surface optional canonical files conventionally
+  # added by `coding` / `product` kits. Single info line, listing whichever are
+  # missing. Silent when all three are present. These files are opt-in — no
+  # error, no warning, just discoverability for projects scaffolded against
+  # older kits or that initialized with --kit blank.
+  local missing_v06=()
+  for v06_file in PRINCIPLES.md ARCHITECTURE.md ROADMAP.md; do
+    [[ -f ".spectacular/$v06_file" ]] || missing_v06+=("${v06_file%.md}")
+  done
+  if (( ${#missing_v06[@]} > 0 )); then
+    local v06_list with_arg
+    v06_list=$(printf '%s, ' "${missing_v06[@]}" | sed 's/, $//')
+    # Bash 3-compatible lowercase via tr (macOS default is bash 3.2)
+    with_arg=$(printf '%s,' "${missing_v06[@]}" | sed 's/,$//' | tr '[:upper:]' '[:lower:]')
+    doc_add "workspace" "info" ".spectacular/" \
+      "v0.6+ conventional files missing: ${v06_list} (optional)" \
+      "spectacular init --with ${with_arg}" "judgment"
+  fi
+
+  # v0.9+ ROADMAP shape detection: structured roadmaps have `**Phase:**` markers
+  # and `**Scope (in):**` slots. Pre-v0.9 freeform roadmaps have only `**Status:**`
+  # plus loose bullet lists. Surface as info — never error.
+  local roadmap=".spectacular/ROADMAP.md"
+  if [[ -f "$roadmap" ]]; then
+    if grep -q "^## v" "$roadmap" 2>/dev/null && ! grep -q "^\*\*Phase:\*\*" "$roadmap" 2>/dev/null; then
+      doc_add "workspace" "info" "$roadmap" \
+        "ROADMAP uses pre-v0.7.1 freeform shape — structured grill available" \
+        "spectacular roadmap grill (or: re-scaffold from templates/roadmap/base.md)" "judgment"
+    fi
+    # v0.10+ Icebox naming: convergent dev-tool idiom; flag pre-v0.7.2 'Bucket list'
+    # heading when no Icebox heading is present yet. Mechanical fix = sed rename.
+    if grep -q "^## Bucket list" "$roadmap" 2>/dev/null && ! grep -q "^## Icebox" "$roadmap" 2>/dev/null; then
+      doc_add "workspace" "info" "$roadmap" \
+        "ROADMAP uses pre-v0.7.2 'Bucket list' section name — convergent dev-tool idiom is 'Icebox'" \
+        "rename: sed -i '' 's/^## Bucket list/## Icebox/' $roadmap" "mechanical"
+    fi
   fi
 }
 
@@ -1588,6 +2923,103 @@ check_kits() {
   if [[ $bad -eq 0 && $ok -gt 0 ]]; then
     doc_add "kits" "pass" "$kits_dir" "$ok bundled kits parse cleanly"
   fi
+
+  # Migration chain validation (v0.6.2+)
+  # Validates skill-internal registry under references/migrations/.
+  # See: skills/spectacular/references/migrations-contract.md § Chain validation
+  local mig_dir
+  if mig_dir="$(migrations_dir 2>/dev/null)"; then
+    check_migration_chain "$mig_dir"
+  fi
+}
+
+# Validate the migration registry chain. Called from check_kits.
+# Reports gaps, duplicates, broken apply-fn references, and id/filename drift.
+check_migration_chain() {
+  local mig_dir="$1"
+  shopt -s nullglob
+  local files=("$mig_dir"/v*.md)
+  shopt -u nullglob
+
+  if [[ ${#files[@]} -eq 0 ]]; then
+    doc_add "kits" "info" "$mig_dir" "no migrations registered (registry is empty)"
+    return 0
+  fi
+
+  # Build a sorted list of (from, to, id, mech, apply-fn, filename, path)
+  local -a entries=()
+  local f
+  for f in "${files[@]}"; do
+    local basename id from to mech applyfn rev
+    basename=$(basename "$f" .md)
+    id="$(migration_field "$f" "id")"
+    from="$(migration_field "$f" "from")"
+    to="$(migration_field "$f" "to")"
+    mech="$(migration_field "$f" "mechanical")"
+    applyfn="$(migration_field "$f" "apply-fn")"
+    rev="$(migration_field "$f" "reversible")"
+
+    # id must match filename
+    if [[ "$id" != "$basename" ]]; then
+      doc_add "kits" "warning" "$f" "migration id '$id' does not match filename '$basename'" \
+        "rename file or update id: field" "judgment"
+    fi
+    # Required fields
+    if [[ -z "$from" || -z "$to" ]]; then
+      doc_add "kits" "error" "$f" "migration missing required from: or to: field" \
+        "add from + to in frontmatter" "judgment"
+      continue
+    fi
+    # Mechanical → apply-fn required + must be a defined bash function
+    if [[ "$mech" == "true" ]]; then
+      if [[ -z "$applyfn" ]]; then
+        doc_add "kits" "error" "$f" "mechanical: true but apply-fn is empty" \
+          "add apply-fn: <bash function name> or set mechanical: false" "judgment"
+      elif ! declare -F "$applyfn" >/dev/null; then
+        doc_add "kits" "error" "$f" "apply-fn '$applyfn' is not defined in cli/spectacular" \
+          "define migration_apply_<id>() in cli/spectacular or fix apply-fn field" "judgment"
+      fi
+    fi
+    # Reversible → reverse function must exist if declared
+    if [[ "$rev" == "true" ]]; then
+      local revfn="migration_revert_${id//-/_}"
+      if ! declare -F "$revfn" >/dev/null; then
+        doc_add "kits" "warning" "$f" "reversible: true but no reverse function '$revfn' defined" \
+          "either define $revfn() or set reversible: false" "judgment"
+      fi
+    fi
+    entries+=("${from}|${to}|${id}")
+  done
+
+  # Sort entries by from-version
+  IFS=$'\n' read -r -d '' -a entries < <(printf '%s\n' "${entries[@]}" | sort -t'|' -V -k1,1; printf '\0')
+
+  # Chain integrity: every from: must be either "0.4" (baseline) or match a previous to:.
+  # Bash 3.2 compat: indexed-array tracking, linear search via in_list helper.
+  local seen_to="0.4"          # space-separated list of reachable schema versions
+  local seen_edges=""          # space-separated list of "from->to" pairs already seen
+  local entry
+  for entry in "${entries[@]}"; do
+    IFS='|' read -r from to id <<< "$entry"
+    local edge_key="${from}->${to}"
+    if in_list "$edge_key" "$seen_edges"; then
+      doc_add "kits" "error" "$mig_dir" "duplicate migration edge: ${edge_key} (multiple migrations declare from=${from} to=${to})" \
+        "remove or merge duplicate migrations" "judgment"
+    else
+      seen_edges="$seen_edges $edge_key"
+    fi
+    if ! in_list "$from" "$seen_to"; then
+      doc_add "kits" "error" "$mig_dir" "migration '${id}' has from: ${from} but no previous migration targets that version (chain gap)" \
+        "add a migration whose to: is ${from}, or correct from: to a reachable version" "judgment"
+    fi
+    seen_to="$seen_to $to"
+  done
+
+  # Summary line on clean chain
+  local chain_count=${#entries[@]}
+  if [[ $chain_count -gt 0 ]]; then
+    doc_add "kits" "pass" "$mig_dir" "migration chain validates (${chain_count} entries)"
+  fi
 }
 
 # check_conventions — validates the active convention pack and (when mode=enforce)
@@ -1603,6 +3035,23 @@ check_conventions() {
   fi
 
   pack_mode="$(config_pack_mode)"
+
+  # Detect unknown-mode drift: raw value present but doesn't match allow-list.
+  # config_pack_mode silently fell back to suggest; surface the original here
+  # so the user knows their value was ignored.
+  local pack_mode_raw
+  pack_mode_raw="$(config_pack_mode_raw)"
+  if [[ -n "$pack_mode_raw" ]]; then
+    case "$pack_mode_raw" in
+      suggest|scaffold|enforce) ;;
+      *)
+        doc_add "conventions" "info" ".spectacular/config.yaml" \
+          "unknown convention_pack.mode '$pack_mode_raw' (valid: suggest / scaffold / enforce) — falling back to 'suggest'" \
+          "set mode to one of: suggest, scaffold, enforce" "judgment"
+        ;;
+    esac
+  fi
+
   local pack_resolved
   if ! pack_resolved="$(pack_resolve "$pack_src_name")"; then
     doc_add "conventions" "error" ".spectacular/config.yaml" \
@@ -1707,6 +3156,26 @@ check_specs() {
     else
       doc_add "specs" "warning" "$subdir" "capability folder missing SPEC.md" \
         "create ${cap_spec} or remove the empty folder" "judgment"
+    fi
+  done
+
+  # Flat contract docs (v0.6.1+): top-level .md files in specs/ are valid alongside
+  # capability subfolders. Convention: kebab-case names (e.g. SCHEMA-TASK.md,
+  # AXIS-MODEL.md), not "SPEC.md" (which lives one level up at .spectacular/).
+  for contract_doc in "$specs_dir"/*.md; do
+    local basename
+    basename="$(basename "$contract_doc")"
+    # SPEC.md doesn't belong at specs/ root (it's at .spectacular/SPEC.md). Flag it.
+    if [[ "$basename" == "SPEC.md" ]]; then
+      doc_add "specs" "warning" "$contract_doc" "SPEC.md belongs at .spectacular/SPEC.md, not under specs/" \
+        "move to .spectacular/SPEC.md or rename if intended as a contract doc" "judgment"
+      continue
+    fi
+    if head -1 "$contract_doc" 2>/dev/null | grep -q '^---$'; then
+      doc_add "specs" "pass" "$contract_doc" "contract doc present (top-level .md in specs/)"
+    else
+      doc_add "specs" "warning" "$contract_doc" "contract doc missing frontmatter delimiter" \
+        "add proper frontmatter block" "judgment"
     fi
   done
   shopt -u nullglob
@@ -1863,6 +3332,26 @@ check_docs() {
 }
 
 # ── doctor orchestrator ───────────────────────────────────────────────────────
+# Dispatch a list of area names to their check_<area> functions.
+# Single source of truth — adding a new area only requires touching this one case.
+run_areas() {
+  for area in "$@"; do
+    case "$area" in
+      skill)       check_skill ;;
+      workspace)   check_workspace ;;
+      frontmatter) check_frontmatter ;;
+      snapshots)   check_snapshots ;;
+      links)       check_links ;;
+      lifecycle)   check_lifecycle ;;
+      kits)        check_kits ;;
+      conventions) check_conventions ;;
+      specs)       check_specs ;;
+      docs)        check_docs ;;
+      *)           die "Unknown doctor area: '$area'" ;;
+    esac
+  done
+}
+
 doctor() {
   doctor_parse_args "$@"
 
@@ -1875,40 +3364,14 @@ doctor() {
     areas_to_run="$DOC_AREAS"
   fi
 
-  for area in $areas_to_run; do
-    case "$area" in
-      skill)       check_skill ;;
-      workspace)   check_workspace ;;
-      frontmatter) check_frontmatter ;;
-      snapshots)   check_snapshots ;;
-      links)       check_links ;;
-      lifecycle)   check_lifecycle ;;
-      kits)        check_kits ;;
-      conventions) check_conventions ;;
-      specs)       check_specs ;;
-      docs)        check_docs ;;
-    esac
-  done
+  run_areas $areas_to_run
 
   # Apply mechanical fixes if --fix flag set
   if $DOC_OPT_FIX; then
     doctor_apply_mechanical_fixes
     # Re-run detection to refresh state
     DOC_FINDINGS=""
-    for area in $areas_to_run; do
-      case "$area" in
-        skill)       check_skill ;;
-        workspace)   check_workspace ;;
-        frontmatter) check_frontmatter ;;
-        snapshots)   check_snapshots ;;
-        links)       check_links ;;
-        lifecycle)   check_lifecycle ;;
-        kits)        check_kits ;;
-        conventions) check_conventions ;;
-        specs)       check_specs ;;
-        docs)        check_docs ;;
-      esac
-    done
+    run_areas $areas_to_run
   fi
 
   if [[ "$DOC_OPT_FORMAT" == "json" ]]; then
@@ -2394,11 +3857,12 @@ pack() {
     install)
       shift
       local name="${1:-}"
+      [[ -n "$name" && "$name" != -* ]] || die "pack install: missing pack name. Usage: spectacular pack install <name> [--from <path>]"
       shift || true
       local from_path=""
       while [[ $# -gt 0 ]]; do
         case "$1" in
-          --from) from_path="$2"; shift 2 ;;
+          --from) require_value "--from" "${2:-}"; from_path="$2"; shift 2 ;;
           *) die "pack install: unknown option: $1" ;;
         esac
       done
@@ -2407,6 +3871,7 @@ pack() {
     remove)
       shift
       local name="${1:-}"
+      [[ -n "$name" && "$name" != -* ]] || die "pack remove: missing pack name. Usage: spectacular pack remove <name> [--force]"
       shift || true
       local force="false"
       while [[ $# -gt 0 ]]; do
@@ -2588,12 +4053,64 @@ docs() {
   esac
 }
 
+# ── skill-verb stubs ──────────────────────────────────────────────────────────
+# These verbs are interactive flows owned by the skill (not the CLI). Their
+# references in docs/SKILL/refs use the `spectacular <verb>` form, so when a
+# user types one directly we explain rather than emit "Unknown command".
+
+skill_verb_message() {
+  local verb="$1"; shift
+  local description="$1"; shift
+  cat >&2 <<EOF
+'spectacular $verb' is an interactive skill flow — it must run inside your AI agent.
+
+  ${description}
+
+Run it as:  /spectacular $verb${1:+ }$*
+
+(Inside Claude Code, Codex, etc. with the spectacular skill installed.)
+EOF
+  exit 1
+}
+
 main() {
   local subcmd="${1:-}"
 
   if [[ "$subcmd" == "--help" || "$subcmd" == "-h" ]]; then
     usage; exit 0
   fi
+
+  # Skill-owned interactive verbs — explain and exit, don't pretend to dispatch.
+  # Exception: `status --against-latest` is a CLI-mechanical flag (no skill needed).
+  case "$subcmd" in
+    archive)  shift; cmd_archive "$@"; exit $? ;;
+    status)
+      shift
+      # Intercept CLI-mechanical flags before falling through to the skill stub.
+      local _i=0
+      while (( _i < $# )); do
+        _i=$((_i + 1))
+        local arg="${!_i}"
+        case "$arg" in
+          --against-latest) cmd_status_against_latest; exit $? ;;
+          --since)
+            local _next=$((_i + 1))
+            cmd_status_since "${!_next:-}"
+            exit $?
+            ;;
+          --since=*)
+            cmd_status_since "${arg#--since=}"
+            exit $?
+            ;;
+        esac
+      done
+      skill_verb_message "status" "Briefing of project state — frontmatter only, no full-file reads." "$@"
+      ;;
+    new)      shift; cmd_new "$@"; exit $? ;;
+    snapshot) shift; cmd_snapshot "$@"; exit $? ;;
+    remember) shift; skill_verb_message "remember" "Write an operational lesson to .spectacular/memory/." "$@" ;;
+    promote)  shift; cmd_promote "$@"; exit $? ;;
+  esac
 
   if [[ "$subcmd" == "doctor" ]]; then
     shift
@@ -2614,8 +4131,22 @@ main() {
     exit 0
   fi
 
+  if [[ "$subcmd" == "migrate" ]]; then
+    shift
+    cmd_migrate "$@"
+    exit $?
+  fi
+
+  if [[ "$subcmd" == "touch" ]]; then
+    shift
+    cmd_touch "$@"
+    exit $?
+  fi
+
   if [[ "$subcmd" != "init" ]]; then
-    die "Unknown command: '${subcmd}'. Did you mean 'spectacular init', 'spectacular doctor', 'spectacular pack', or 'spectacular docs'?"
+    die "Unknown command: '${subcmd}'.
+CLI verbs:   init | doctor | pack | docs | migrate | new | promote | snapshot | archive | touch
+Skill verbs (run via /spectacular in your AI agent): status | remember"
   fi
 
   shift

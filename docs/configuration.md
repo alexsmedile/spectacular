@@ -1,3 +1,12 @@
+---
+title: Configuration
+description: config.yaml, agent files, tool overrides, request naming, and .spectacular.local/.
+section: ""
+status: stable
+since: 0.1.0
+updated: 2026-05-23
+---
+
 # Configuration
 
 Spectacular configuration lives in `.spectacular/config.yaml`. The file tells the skill how to name requests, which agent context file to treat as primary, and which root documents are default context.

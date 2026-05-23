@@ -165,7 +165,31 @@ convention-pack:
   snapshot-on-edit: false
   overrides: references/pack-overrides.md
   description: "Repo-shape convention pack — naming + taxonomy + gitignore + file-placement rules"
+
+# ─── Public-facing docs (v0.6.0+) ─────────────────────────────────────────
+
+docs-manifest:
+  template: templates/docs/docs.yaml.tmpl
+  mode: freeform
+  location: docs/docs.yaml
+  scope: project-wide
+  snapshot-on-edit: false
+  overrides: references/docs-overrides.md
+  description: "Nav manifest for docs/ — sections + page order + site metadata"
+
+docs-page:
+  template: templates/docs/page.md.tmpl
+  mode: freeform
+  location: docs/<section>/<slug>.md
+  scope: per-request
+  snapshot-on-edit: false
+  overrides: references/docs-overrides.md
+  description: "Single user-facing docs page — driven by `spectacular docs new <page>`"
 ```
+
+> **`docs-manifest`** is project-wide (one per repo). `docs-page` is conceptually per-page but uses `per-request` scope since the engine treats `<slug>` interpolation identically. The skill's `docs new` flow supplies both `<section>` and `<slug>`.
+
+> **No `audience` in docs-page frontmatter** — see [[docs-contract]] § Core principle. Audience is folder-level (`docs/` vs `specs/`), never per-page.
 
 > **`scope: user`** — packs live under `$HOME` by default, not per-project. Per-project override at `<project>/.spectacular/packs/<name>/` is allowed (precedence rules: see [[packs-contract]]). This differs from the rest of the registry, which uses `project-wide` / `per-request`.
 

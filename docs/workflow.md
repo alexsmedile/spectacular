@@ -1,3 +1,12 @@
+---
+title: Workflow
+description: The normal Spectacular loop after installation — init, briefing, requests, lifecycle, archive.
+section: ""
+status: stable
+since: 0.1.0
+updated: 2026-05-23
+---
+
 # Workflow Guide
 
 This guide shows the normal Spectacular loop after installation. The CLI creates the workspace once. The skill operates it during day-to-day work.

@@ -15,12 +15,13 @@ description: |
   spectacular prd, spectacular spec, spectacular plan, spectacular tasks, spectacular decisions,
   spectacular principles, spectacular architecture, spectacular roadmap, spectacular stack,
   spectacular agents, spectacular pack new, spectacular pack grill, spectacular pack refine,
-  spectacular pack review.
+  spectacular pack review, spectacular docs init, spectacular docs new, spectacular docs review,
+  spectacular docs status.
 when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type registered in doc-registry.md.
-version: 0.5.0
+version: 0.6.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -62,7 +63,7 @@ The generalized handler matches `spectacular <doc> [<verb>]` where `<doc>` is an
 | `spectacular <doc> refine` | → `references/refine.md` (with registry context) |
 | `spectacular <doc> review` | → `references/review.md` (with registry context) |
 
-**Doc IDs registered (v0.5.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `convention-pack`.
+**Doc IDs registered (v0.6.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `convention-pack`, `docs-manifest`, `docs-page`.
 
 ### Pack-specific aliases (convenience over `spectacular convention-pack <verb>`)
 
@@ -77,6 +78,21 @@ Packs use a short alias and add a `new <name>` verb (since packs are user-scope,
 | `spectacular pack refine <name>` | → `refine.md` + `pack-overrides.md` |
 | `spectacular pack review <name>` | → `review.md` + `pack-overrides.md` |
 | `spectacular convention-pack <verb>` | full doc-id form — equivalent to `pack <verb>` but without the `<name>` argument convention |
+
+### Public-facing docs verbs (v0.6.0+)
+
+The `docs/` tree is the consumer-facing surface (sibling to internal `specs/`). CLI handles mechanical scaffold; skill handles interactive verbs.
+
+| User says | Route to | Handled by |
+|---|---|---|
+| `spectacular docs init` / `docs init --minimal` | CLI — scaffolds `docs/docs.yaml` + `index.md` + 3 sections | CLI binary |
+| `spectacular docs new <page>` | → `references/docs-overrides.md` § `docs new <page>` flow | Skill |
+| `spectacular docs new --section <name>` | → `references/docs-overrides.md` § `docs new --section <name>` flow | Skill |
+| `spectacular docs review` | → `references/docs-overrides.md` § `docs review` quality gate | Skill |
+| `spectacular docs status` | → `references/docs-overrides.md` § `docs status` briefing | Skill |
+| `spectacular doctor docs` | CLI — substrate validation (same checks as `docs review`) | CLI binary |
+
+Schema: [[docs-contract]] § folder shape + manifest + page frontmatter. Audience is folder-level (`docs/` = consumers; `specs/` = builders) — never per-page.
 
 ### Verification routing (when writing PLAN.md or moving requests to review)
 
@@ -184,6 +200,8 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs; single-kit-only in v1 |
 | `references/packs-contract.md` | Convention pack schema: pack folder shape + 6 rule categories (naming/taxonomy/root-files/gitignore/file-placement/project-types) |
 | `references/pack-overrides.md` | Pack-specific grill rules: slot prompts, mini-refine patterns, source-ingestion (`--from`), reserved pack-ids, review gate checks 4-12 |
+| `references/docs-contract.md` | Public docs surface — folder shape, `docs.yaml` schema, page frontmatter, validation rules (v0.6.0+) |
+| `references/docs-overrides.md` | Docs-specific engine rules: `docs new` flow, section prompts, `docs review` gate, `docs status` briefing (v0.6.0+) |
 | **Legacy PRD references (deprecated, kept for backwards compat)** | |
 | `references/prd-grill.md` | Legacy — superseded by `grill.md` + `prd-overrides.md` |
 | `references/prd-refine.md` | Legacy — superseded by `refine.md` + `prd-overrides.md` |
@@ -211,5 +229,8 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `templates/agents/base.md` | Onboarding doc for `.spectacular/` agents |
 | `templates/decisions/entry.md` | Single ADR entry (append-mode template) |
 | `templates/packs/minimal/` | Bundled convention pack — `.gitignore` + README contract only (see [[packs-contract]]) |
+| `templates/docs/docs.yaml.tmpl` | Public-docs nav manifest template (v0.6.0+) |
+| `templates/docs/index.md.tmpl` | Public-docs landing page template (v0.6.0+) |
+| `templates/docs/page.md.tmpl` | Public-docs page template with frontmatter stub (v0.6.0+) |
 
 Project may override by placing files at `.spectacular/templates/<doc>/...` — same filenames, project-local takes precedence.

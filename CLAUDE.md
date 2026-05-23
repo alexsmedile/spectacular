@@ -44,8 +44,8 @@ spectacular/
 
 | Slug | Status | Summary |
 |---|---|---|
-| `spec-rename` | active | `SPEC.md` + `specs/` replace legacy `current/` — shipping v0.5.0 |
-| `public-docs-foundation` | planned | First-class `docs/` surface — `docs.yaml` manifest + doc verbs |
+| `spec-rename` | verified | `SPEC.md` + `specs/` replaced legacy `current/` (shipped v0.5.0) |
+| `public-docs-foundation` | review | First-class `docs/` surface — `docs.yaml` + doc verbs + doctor area (shipping v0.6.0) |
 | `public-docs-advanced` | planned | v2 docs — renderer adapters + versioning + spec→doc sync (gated on real demand) |
 | `convention-pack-schema` | verified | Pack schema + bundled `minimal` pack + app-store folder (shipped v0.4.0) |
 | `convention-pack-fabricator` | review | `pack-overrides.md` grill + `alex-default` dogfood — live grill scenarios pending |

@@ -5,6 +5,49 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [0.6.0] — 2026-05-23
+
+### Added — Public docs as a first-class surface
+
+The `docs/` tree is now a first-class Spectacular surface, sibling to `.spectacular/` (workspace) and `specs/` (system truth). Flat, opinionated, renderer-agnostic — single `docs.yaml` nav manifest, page-level frontmatter, CLI scaffold + doctor validation + skill verbs for interactive authoring.
+
+**Audience clarification:** the spec/doc boundary lives at the *folder* level, not the page level. `docs/` is for users + agents consuming the product; `specs/` is for devs + coding agents building it. Per-page `audience` would be ceremony — no such field.
+
+- **`spectacular docs init [--minimal]`** — CLI subcommand. Scaffolds `docs/docs.yaml` + `index.md` + 3 default sections (`getting-started`, `guides`, `reference`) with placeholder pages. `--minimal` skips the sections and ships just docs.yaml + index. Idempotent; re-running fills empty stubs without overwriting content.
+- **`spectacular doctor docs`** — substrate validation: docs.yaml parseable, declared pages exist, no orphan files, required frontmatter present (`title`, `description`, `section`, `status`, `updated`). Supports both sectioned trees (`docs/<section>/<page>.md`) and flat-tree extras (`docs/<slug>.md` registered via `docs.yaml extras:`).
+- **`doctor docs --fix`** — mechanical: injects frontmatter stubs into pages missing them (delimiter or individual fields). Title defaults to slug, status to `draft`, updated to today.
+- **Skill verbs** (registry-driven via the existing engine):
+  - `spectacular docs new <page>` — scaffolds a page, prompts for section if omitted, updates docs.yaml
+  - `spectacular docs new --section <name>` — declares a new section + scaffolds the dir
+  - `spectacular docs review` — quality gate (same checks as doctor)
+  - `spectacular docs status` — briefing scoped to docs/
+- **`references/docs-contract.md`** — schema spec: folder shape, docs.yaml manifest, page frontmatter contract, validation rules, anti-patterns. Documents the spec-vs-doc boundary at folder level.
+- **`references/docs-overrides.md`** — engine rules: `docs new` flow with section-prompt UX, `docs review` gate checks, `docs status` briefing format. Vibe→spec patterns for future `docs refine` (deferred to v2).
+- **Doc registry** — `docs-manifest` and `docs-page` entries registered. Doc IDs registered count rises from 11 to 13.
+- **`templates/docs/`** — `docs.yaml.tmpl`, `index.md.tmpl`, `page.md.tmpl` for the engine + CLI.
+- **`tests/cli/docs.test.sh`** — 12 scenarios, 38 asserts covering init (default + minimal + idempotent), doctor (skip / clean / missing-declared / orphan / missing-frontmatter / --fix injection / extras), skill-verb refusal by CLI, help text.
+
+### Dogfood
+
+- **This repo's own `docs/`** migrated to v0.6.0 shape: `docs.yaml` authored with three sections + 5 existing pages registered as `extras:` (flat-tree preservation — moving files would break README links). Each of `workflow.md`, `commands.md`, `configuration.md`, `scaffold.md`, `troubleshooting.md` got proper frontmatter (title, description, section, status, since, updated). Doctor `docs` clean — 0 errors / 0 warnings.
+
+### Out of scope (deferred to `public-docs-advanced` v0.7.0+)
+
+- Renderer adapters (Mintlify / Docusaurus / Fumadocs / MkDocs export)
+- Versioned docs snapshots (`docs/versioned/v<x.y.z>/`)
+- `docs sync-from-spec` (spec ↔ doc sync flow)
+- Convention-pack `docs-layout` rule category
+
+These ship only when real-world demand surfaces (per the same activation-trigger pattern as `convention-pack-modules`).
+
+### Quality
+
+- 191 asserts pass across 5 test files (init, doctor, pack, specs, docs)
+- Pre-commit version-consistency check green across 7 sources
+- Doctor on this repo: 0 errors / 0 warnings on all 10 areas
+
+---
+
 ## [0.5.0] — 2026-05-23
 
 ### Breaking — `current/` folder renamed to `specs/` + new `SPEC.md` index

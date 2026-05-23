@@ -1,5 +1,5 @@
 ---
-status: planned
+status: review
 priority: medium
 owner: alex
 updated: 2026-05-23
@@ -37,7 +37,7 @@ The spec/doc distinction also matters: today `docs/configuration.md` mixes user-
 
 - Convention: `docs/` lives at repo root (not `.spectacular/docs/`) — it's a public artifact
 - Single manifest: `docs/docs.yaml` (nav + site metadata) — no per-folder `_section.yaml` files
-- Page frontmatter contract: `title`, `description`, `section`, `order`, `audience`, `status`, `since`, `updated`
+- Page frontmatter contract: `title`, `description`, `section`, `order` (optional), `status`, `since` (optional), `updated`. **No `audience` field** — audience is folder-level (`docs/` = users + agents consuming the product; `specs/` = devs + coding agents building it).
 - Flat preferred file tree:
   ```
   docs/
@@ -53,12 +53,14 @@ The spec/doc distinction also matters: today `docs/configuration.md` mixes user-
       └── ...
   ```
 - No required subfolder beyond what `docs.yaml` declares; sections grow as needed
-- Doc verbs in the skill:
-  - `spectacular docs init` — scaffold skeleton (`docs.yaml` + index.md + 3 default sections)
-  - `spectacular docs new <page>` — create a page with frontmatter stub, ask for section, update nav
-  - `spectacular docs new --section <name>` — declare a new section in `docs.yaml`, scaffold dir
-  - `spectacular docs review` — quality gate (frontmatter complete, nav ↔ fs consistent, no orphans, no broken cross-refs, every page has audience+status)
-- Doctor `docs` area — same validation as review, run as substrate check
+- **CLI surface** (`cli/spectacular`):
+  - `spectacular docs init [--minimal]` — scaffold `docs/docs.yaml` + index.md + 3 default sections (or `--minimal` for just docs.yaml + index)
+  - `spectacular doctor docs` — substrate validation (same checks as skill review verb)
+- **Skill verbs** (driven by registry + `docs-overrides.md`):
+  - `spectacular docs new <page>` — create a page; if `--section` omitted, prompt with section list from docs.yaml + "create new"; updates nav
+  - `spectacular docs new --section <name>` — declare a new section in `docs.yaml`, scaffold dir + placeholder page
+  - `spectacular docs review` — quality gate (frontmatter complete, nav ↔ fs consistent, no orphans, status field present)
+  - `spectacular docs status` — briefing scoped to docs/ (page count by section, draft pages, stale `updated` dates)
 - Doc-registry entries for `docs-page` and `docs-manifest` doc types
 - Dogfood: migrate this repo's existing `docs/` (5 files) into the new shape — give each a frontmatter stub, populate `docs.yaml`, run review
 
@@ -78,8 +80,10 @@ The spec/doc distinction also matters: today `docs/configuration.md` mixes user-
 - **Renderer-agnostic in v1** — `docs.yaml` schema + page frontmatter are portable across Mintlify/Docusaurus/Fumadocs/MkDocs. Pick a renderer downstream; Spectacular does not render.
 - **Flat tree, sections as folders** — section = folder = group in nav. Pages live one level deep. Subsubsections only via explicit nav nesting in `docs.yaml`. Most projects never need more.
 - **`docs/` at repo root, not `.spectacular/docs/`** — public artifact; downstream renderers expect repo-root paths; matches Mintlify/Docusaurus/Fumadocs/Docus conventions.
-- **`audience` is required frontmatter** — forces every page to declare who it's for (`user`, `agent`, or both). Drives the spec/doc clarity TODO.md asks for. Spec pages = `[agent, builder]`; doc pages = `[user]` or `[user, agent]`.
+- **No `audience` field** — the folder is the audience boundary. `docs/` = users + agents consuming the product (audience is universal there); `specs/` = devs + coding agents building it. Per-page audience would be ceremony. Saves one required field.
 - **Three default sections on init** — `getting-started`, `guides`, `reference`. Industry-standard triad; users delete or extend.
+- **CLI handles `init` + doctor; skill handles `new` + `review` + `status`** — mirrors how `pack` works. CLI scaffolds mechanically; skill drives interactive/judgment work.
+- **`docs new` without `--section` prompts** — never silently places pages. Section list comes from docs.yaml; "create new section" is always an option.
 
 ## Schemas
 
@@ -119,7 +123,6 @@ title: Install
 description: Get Spectacular running in two minutes.
 section: getting-started
 order: 1
-audience: [user, agent]
 status: stable                 # stable | draft | deprecated
 since: 0.1.0
 updated: 2026-05-23
@@ -132,7 +135,6 @@ updated: 2026-05-23
 | `description` | yes | One sentence; used in nav previews and SEO |
 | `section` | yes | Must match a section id in docs.yaml |
 | `order` | no | Defaults to position in docs.yaml `pages` array |
-| `audience` | yes | `[user]`, `[agent]`, or `[user, agent]` |
 | `status` | yes | `stable` / `draft` / `deprecated` |
 | `since` | no | First version this page applied to |
 | `updated` | yes | ISO date; doctor flags if older than file mtime |

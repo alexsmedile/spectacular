@@ -1,3 +1,12 @@
+---
+title: Scaffold Reference
+description: Complete .spectacular/ directory spec — every file, frontmatter schema, creation rules, versioning.
+section: ""
+status: stable
+since: 0.1.0
+updated: 2026-05-23
+---
+
 # Scaffold Reference
 
 The `.spectacular/` directory is the operational workspace for a project. This document specifies every file and directory — what it is, what goes in it, when it is created, and what rules govern it.

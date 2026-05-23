@@ -25,7 +25,7 @@ Examples:
 
 Snapshots live **alongside** the current file (same directory).
 
-The unversioned filename (`PRD.md`) always points to the **current/latest** version.
+The unversioned filename (`PRD.md`) always points to the **latest** version.
 
 ---
 

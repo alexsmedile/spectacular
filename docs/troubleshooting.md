@@ -1,3 +1,12 @@
+---
+title: Troubleshooting
+description: Common setup, install, skill discovery, update, symlink, and workspace state issues.
+section: ""
+status: stable
+since: 0.1.0
+updated: 2026-05-23
+---
+
 # Troubleshooting
 
 This guide covers common setup and usage problems.

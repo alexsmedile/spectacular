@@ -1034,7 +1034,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -1063,6 +1063,7 @@ Areas (run all if omitted):
   kits          bundled + project-local kit files parse cleanly
   conventions   active convention_pack resolves; gitignore drift in scaffold/enforce modes
   specs         SPEC.md present + parseable; specs/ dir present; legacy current/ migration
+  docs          docs.yaml + frontmatter validation across the docs/ tree (v0.6.0+)
 
 Options:
   --fix              Apply mechanical fixes (gitignore append, missing dirs,
@@ -1088,7 +1089,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs)
         DOC_OPT_AREA="$1"; shift ;;
       *) die "Unknown doctor option: $1. Run 'spectacular doctor --help'." ;;
     esac
@@ -1711,6 +1712,156 @@ check_specs() {
   shopt -u nullglob
 }
 
+# ── area: docs (v0.6.0+) ──────────────────────────────────────────────────────
+# Validate the public-docs surface — see docs-contract.md for full schema.
+# Skipped silently if no docs/ tree exists (docs are opt-in, not always-set).
+check_docs() {
+  local docs_dir="docs"
+  local manifest="${docs_dir}/docs.yaml"
+
+  # No docs/ at all → skip silently (docs are opt-in)
+  if [[ ! -d "$docs_dir" ]]; then
+    return 0
+  fi
+
+  # docs/ exists but no manifest → error
+  if [[ ! -f "$manifest" ]]; then
+    doc_add "docs" "error" "$manifest" "docs.yaml missing but docs/ exists" \
+      "run 'spectacular docs init' to scaffold it" "judgment"
+    return
+  fi
+
+  doc_add "docs" "pass" "$manifest" "docs.yaml present"
+
+  # Extract declared section ids + page slugs
+  local declared_sections declared_pages
+  declared_sections=$(awk '
+    /^sections:/ { in_sec=1; next }
+    in_sec && /^[a-zA-Z]/ && !/^  / { in_sec=0 }
+    in_sec && /^  - id:/ {
+      sub(/^  - id:[[:space:]]*/, "")
+      sub(/[[:space:]]*#.*$/, "")
+      sub(/[[:space:]]*$/, "")
+      print
+    }
+  ' "$manifest")
+
+  # For each declared section, collect declared pages (one line per section's pages: list)
+  # Strip inline # comments before parsing, and only accept content between [ and ]
+  declared_pages=$(awk '
+    /^sections:/ { in_sec=1; next }
+    in_sec && /^[a-zA-Z]/ && !/^  / { in_sec=0 }
+    in_sec && /^  - id:/ {
+      section=$0
+      sub(/^  - id:[[:space:]]*/, "", section)
+      sub(/[[:space:]]*#.*$/, "", section)
+      sub(/[[:space:]]*$/, "", section)
+    }
+    in_sec && /^[[:space:]]*pages:[[:space:]]*\[/ {
+      pages=$0
+      # Extract only what is between [ and ] on this line
+      if (match(pages, /\[[^\]]*\]/) > 0) {
+        pages=substr(pages, RSTART+1, RLENGTH-2)
+      } else {
+        pages=""
+      }
+      gsub(/[[:space:]]/, "", pages)
+      n=split(pages, arr, ",")
+      for (i=1; i<=n; i++) if (arr[i] != "") print section "/" arr[i]
+    }
+  ' "$manifest")
+
+  # Extract extras: list (top-level pages with no section, e.g. troubleshooting at docs/troubleshooting.md)
+  local declared_extras
+  declared_extras=$(awk '
+    /^extras:/ { in_ex=1; next }
+    in_ex && /^[a-zA-Z]/ && !/^  / && !/^[[:space:]]*-/ { in_ex=0 }
+    in_ex && /^[[:space:]]*-[[:space:]]+/ {
+      slug=$0; sub(/^[[:space:]]*-[[:space:]]+/, "", slug); sub(/[[:space:]]*$/, "", slug)
+      gsub(/^["'\'']|["'\'']$/, "", slug)
+      if (slug != "") print slug
+    }
+  ' "$manifest")
+
+  # Check: each declared page exists on disk
+  local missing=0 page section_id file_path
+  while IFS= read -r entry; do
+    [[ -z "$entry" ]] && continue
+    section_id="${entry%/*}"
+    page="${entry##*/}"
+    file_path="${docs_dir}/${section_id}/${page}.md"
+    if [[ -f "$file_path" ]]; then
+      doc_add "docs" "pass" "$file_path" "declared page present"
+    else
+      doc_add "docs" "error" "$file_path" "page '${page}' declared in docs.yaml but file missing" \
+        "create the file or remove the entry from docs.yaml" "judgment"
+      missing=$((missing + 1))
+    fi
+  done <<< "$declared_pages"
+
+  # Check: each declared extra exists at docs/<slug>.md (top-level, no section folder)
+  local extra_slug extra_path
+  while IFS= read -r extra_slug; do
+    [[ -z "$extra_slug" ]] && continue
+    extra_path="${docs_dir}/${extra_slug}.md"
+    if [[ -f "$extra_path" ]]; then
+      doc_add "docs" "pass" "$extra_path" "declared extra present"
+    else
+      doc_add "docs" "error" "$extra_path" "extra '${extra_slug}' declared in docs.yaml but file missing" \
+        "create the file or remove the entry from docs.yaml extras:" "judgment"
+    fi
+  done <<< "$declared_extras"
+
+  # Check: each .md file in docs/ subdirs is declared in docs.yaml sections
+  shopt -s nullglob
+  for section_dir in "$docs_dir"/*/; do
+    local sec_id="${section_dir%/}"
+    sec_id="${sec_id##*/}"
+    [[ "$sec_id" == "."* ]] && continue
+    for page_file in "$section_dir"*.md; do
+      local page_slug
+      page_slug=$(basename "$page_file" .md)
+      if ! echo "$declared_pages" | grep -qxF "${sec_id}/${page_slug}"; then
+        doc_add "docs" "warning" "$page_file" "page exists on disk but not declared in docs.yaml (orphan)" \
+          "add to docs.yaml ${sec_id}.pages or delete the file" "judgment"
+      fi
+    done
+  done
+  # Check: top-level .md files (except index.md) are either in extras or warned as orphans
+  for page_file in "$docs_dir"/*.md; do
+    [[ -f "$page_file" ]] || continue
+    local page_slug
+    page_slug=$(basename "$page_file" .md)
+    [[ "$page_slug" == "index" ]] && continue
+    if ! echo "$declared_extras" | grep -qxF "$page_slug"; then
+      doc_add "docs" "warning" "$page_file" "top-level page exists on disk but not in docs.yaml extras: (orphan)" \
+        "add to docs.yaml extras: or move into a section folder" "judgment"
+    fi
+  done
+  shopt -u nullglob
+
+  # Per-page frontmatter validation
+  local required_fields="title description section status updated"
+  shopt -s nullglob
+  for page_file in "$docs_dir"/*.md "$docs_dir"/*/*.md; do
+    [[ -f "$page_file" ]] || continue
+    if ! head -1 "$page_file" | grep -q '^---$'; then
+      doc_add "docs" "error" "$page_file" "missing frontmatter delimiter" \
+        "add proper frontmatter block (or run 'doctor docs --fix')" "mechanical"
+      continue
+    fi
+    local fm
+    fm=$(awk '/^---$/ { count++; if (count == 2) exit; next } count == 1' "$page_file")
+    for field in $required_fields; do
+      if ! echo "$fm" | grep -qE "^${field}:"; then
+        doc_add "docs" "error" "$page_file" "missing required frontmatter field: ${field}" \
+          "add '${field}:' to frontmatter (or run 'doctor docs --fix')" "mechanical"
+      fi
+    done
+  done
+  shopt -u nullglob
+}
+
 # ── doctor orchestrator ───────────────────────────────────────────────────────
 doctor() {
   doctor_parse_args "$@"
@@ -1735,6 +1886,7 @@ doctor() {
       kits)        check_kits ;;
       conventions) check_conventions ;;
       specs)       check_specs ;;
+      docs)        check_docs ;;
     esac
   done
 
@@ -1754,6 +1906,7 @@ doctor() {
         kits)        check_kits ;;
         conventions) check_conventions ;;
         specs)       check_specs ;;
+        docs)        check_docs ;;
       esac
     done
   fi
@@ -1780,6 +1933,61 @@ doctor_apply_mechanical_fixes() {
     case "$file" in
       *.gitignore*) ;;  # handled below
     esac
+
+    # Docs frontmatter stub injection (from check_docs)
+    # Either missing delimiter OR missing required field.
+    if [[ "$area" == "docs" && "$file" == docs/*.md ]]; then
+      if [[ "$msg" == *"missing frontmatter delimiter"* ]]; then
+        # Prepend a minimal stub; don't try to infer title from H1, leave that to the user
+        if [[ -f "$file" ]] && ! head -1 "$file" | grep -q '^---$'; then
+          local section_id
+          section_id="$(basename "$(dirname "$file")")"
+          [[ "$section_id" == "docs" ]] && section_id=""
+          local slug
+          slug="$(basename "$file" .md)"
+          local tmp="${file}.tmp.$$"
+          {
+            echo "---"
+            echo "title: ${slug}"
+            echo "description: TODO — one-sentence description"
+            echo "section: ${section_id}"
+            echo "status: draft"
+            echo "updated: ${TODAY}"
+            echo "---"
+            echo ""
+            cat "$file"
+          } > "$tmp" && mv "$tmp" "$file"
+          echo "  ✓ fixed [docs]: injected frontmatter stub into $file"
+          applied=$((applied + 1))
+        fi
+        continue
+      fi
+      if [[ "$msg" == *"missing required frontmatter field:"* ]]; then
+        # Extract the field name from the message
+        local field
+        field=$(echo "$msg" | sed -n 's/.*missing required frontmatter field: \([a-z]*\).*/\1/p')
+        if [[ -n "$field" && -f "$file" ]]; then
+          # Insert "<field>: TODO" after the opening --- line (right at top of frontmatter)
+          # Skip if field somehow already present
+          local fm
+          fm=$(awk '/^---$/ { count++; if (count == 2) exit; next } count == 1' "$file")
+          if ! echo "$fm" | grep -qE "^${field}:"; then
+            local default_val="TODO"
+            [[ "$field" == "status" ]] && default_val="draft"
+            [[ "$field" == "updated" ]] && default_val="$TODAY"
+            local tmp="${file}.tmp.$$"
+            awk -v field="$field" -v val="$default_val" '
+              BEGIN { inserted=0; count=0 }
+              /^---$/ { count++; print; if (count == 1 && !inserted) { print field ": " val; inserted=1 }; next }
+              { print }
+            ' "$file" > "$tmp" && mv "$tmp" "$file"
+            echo "  ✓ fixed [docs]: injected '${field}: ${default_val}' into $file"
+            applied=$((applied + 1))
+          fi
+        fi
+        continue
+      fi
+    fi
 
     # Pack-driven gitignore drift (from check_conventions in scaffold/enforce modes)
     # Findings have area=conventions and msg containing "requires gitignore entry: 'X'"
@@ -2219,6 +2427,167 @@ pack() {
   esac
 }
 
+# ── docs subcommand (v0.6.0+) ─────────────────────────────────────────────────
+# Mechanical scaffold for public-facing docs/ tree. Interactive doc-writing
+# verbs (new, review, status) live in the skill — see docs-overrides.md.
+
+docs_usage() {
+  cat <<EOF
+Usage: spectacular docs <verb> [options]
+
+Verbs:
+  init [--minimal]      Scaffold docs/ — docs.yaml + index.md + 3 default sections
+                        (--minimal: docs.yaml + index.md only, no default sections)
+
+Interactive verbs (run inside an AI agent with the spectacular skill):
+  new <page>            Scaffold a new page with frontmatter stub
+  new --section <name>  Declare a new section in docs.yaml
+  review                Run the docs quality gate
+  status                Briefing scoped to docs/
+
+Options:
+  -h, --help            Show this help
+
+See: skills/spectacular/references/docs-contract.md for schema
+     skills/spectacular/references/docs-overrides.md for engine rules
+EOF
+}
+
+docs_init() {
+  local minimal=false
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --minimal) minimal=true; shift ;;
+      -h|--help) docs_usage; exit 0 ;;
+      *) die "Unknown docs init option: '$1'" ;;
+    esac
+  done
+
+  local project_name
+  project_name="${OPT_NAME:-$(slug_from_dir)}"
+
+  echo "Spectacular docs init"
+  echo ""
+
+  # docs/ root + manifest
+  if [[ ! -d "docs" ]]; then
+    mkdir -p docs
+    created "docs/"
+  else
+    skip "docs/ (already exists)"
+  fi
+
+  write_if_missing "docs/docs.yaml" "site:
+  name: ${project_name}
+  tagline: \"\"
+  # base_url: https://example.com   # optional — used by renderer adapters (v2)
+
+sections:
+  - id: getting-started
+    title: Getting Started
+    order: 1
+    pages: [install, quickstart, concepts]
+
+  - id: guides
+    title: Guides
+    order: 2
+    pages: []
+
+  - id: reference
+    title: Reference
+    order: 3
+    pages: []
+
+# Optional top-level entries with no section grouping
+# extras:
+#   - changelog       # symlinks to ../CHANGELOG.md
+#   - troubleshooting
+"
+
+  write_if_missing "docs/index.md" "---
+title: ${project_name}
+description: User-facing documentation for ${project_name}.
+section: \"\"
+order: 0
+status: draft
+updated: ${TODAY}
+---
+
+# ${project_name}
+
+Welcome to the documentation. Start here, then drill into the sections below.
+
+## Sections
+
+- **Getting Started** — install + quickstart + core concepts
+- **Guides** — task-oriented walkthroughs
+- **Reference** — CLI, configuration, schema details
+"
+
+  if $minimal; then
+    echo ""
+    echo "Docs initialized (minimal — no default sections)."
+    return 0
+  fi
+
+  # Three default sections with placeholder pages
+  for entry in "getting-started:install:Install:Get up and running in two minutes." \
+               "getting-started:quickstart:Quickstart:A guided walk through the basics." \
+               "getting-started:concepts:Concepts:Core ideas you need to know."; do
+    local section page title desc
+    IFS=':' read -r section page title desc <<< "$entry"
+    [[ -d "docs/$section" ]] || { mkdir -p "docs/$section"; created "docs/$section/"; }
+    write_if_missing "docs/${section}/${page}.md" "---
+title: ${title}
+description: ${desc}
+section: ${section}
+status: draft
+updated: ${TODAY}
+---
+
+# ${title}
+
+<First paragraph — what this page is for. One sentence is fine.>
+
+## <First subhead>
+
+<Content.>
+"
+  done
+
+  # Empty guides/ and reference/ dirs (with .gitkeep so they survive git)
+  for d in guides reference; do
+    if [[ ! -d "docs/$d" ]]; then
+      mkdir -p "docs/$d"
+      touch "docs/$d/.gitkeep"
+      created "docs/$d/"
+    fi
+  done
+
+  echo ""
+  echo "Docs initialized."
+  echo ""
+  echo "Next:"
+  echo "  spectacular docs new <page>          # add a page (asks for section)"
+  echo "  spectacular docs new --section <id>  # add a new section"
+  echo "  spectacular docs review              # run quality gate"
+}
+
+docs() {
+  local verb="${1:-}"
+  if [[ -z "$verb" || "$verb" == "-h" || "$verb" == "--help" ]]; then
+    docs_usage; exit 0
+  fi
+  shift
+  case "$verb" in
+    init) docs_init "$@" ;;
+    new|review|status)
+      die "'spectacular docs $verb' is a skill verb — run it inside your AI agent (Claude Code, Codex). The CLI only handles 'docs init' and 'doctor docs'."
+      ;;
+    *) die "Unknown docs verb: '$verb'. Run 'spectacular docs --help' for usage." ;;
+  esac
+}
+
 main() {
   local subcmd="${1:-}"
 
@@ -2239,8 +2608,14 @@ main() {
     exit 0
   fi
 
+  if [[ "$subcmd" == "docs" ]]; then
+    shift
+    docs "$@"
+    exit 0
+  fi
+
   if [[ "$subcmd" != "init" ]]; then
-    die "Unknown command: '${subcmd}'. Did you mean 'spectacular init', 'spectacular doctor', or 'spectacular pack'?"
+    die "Unknown command: '${subcmd}'. Did you mean 'spectacular init', 'spectacular doctor', 'spectacular pack', or 'spectacular docs'?"
   fi
 
   shift

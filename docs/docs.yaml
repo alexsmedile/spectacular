@@ -1,0 +1,31 @@
+site:
+  name: Spectacular
+  tagline: "AI-native operational workspace for software projects"
+  # base_url: https://spectacular.dev   # reserved for v2 renderer adapters
+
+sections:
+  - id: getting-started
+    title: Getting Started
+    order: 1
+    pages: []      # to populate as install / quickstart / concepts get authored
+
+  - id: guides
+    title: Guides
+    order: 2
+    pages: []      # workflow.md and troubleshooting.md sit in extras for now;
+                   # move into guides/ when content's been re-cut into walkthroughs
+
+  - id: reference
+    title: Reference
+    order: 3
+    pages: []      # commands.md / configuration.md / scaffold.md sit in extras for now;
+                   # move into reference/ when content's been split per-topic
+
+# Top-level entries (current flat-tree state — pages live at docs/<slug>.md, no section folder)
+# These get sorted into sections as content matures.
+extras:
+  - workflow
+  - commands
+  - configuration
+  - scaffold
+  - troubleshooting

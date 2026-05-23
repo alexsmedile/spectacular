@@ -1,3 +1,12 @@
+---
+title: Commands
+description: CLI subcommands and agent skill triggers, including the boundary between shell and skill.
+section: ""
+status: stable
+since: 0.1.0
+updated: 2026-05-23
+---
+
 # Commands
 
 Spectacular has two command surfaces:

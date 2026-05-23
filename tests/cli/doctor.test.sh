@@ -351,7 +351,7 @@ scenario_10_mechanical_gitignore() {
 }
 
 scenario_16_roadmap_icebox_rename() {
-  echo "Scenario 16: doctor workspace flags pre-v0.10 Bucket-list ROADMAP; silent on Icebox"
+  echo "Scenario 16: doctor workspace flags pre-v0.7.2 Bucket-list ROADMAP; silent on Icebox"
   local dir="/tmp/doctor-test-16"
   seed_clean "$dir"
 
@@ -383,7 +383,7 @@ EOF
   local out_bucket
   out_bucket=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
   assert_output_contains "$out_bucket" "Bucket list" \
-    "pre-v0.10 Bucket-list ROADMAP triggers info"
+    "pre-v0.7.2 Bucket-list ROADMAP triggers info"
   assert_output_contains "$out_bucket" "Icebox" \
     "info line names the convergent idiom 'Icebox'"
 
@@ -399,7 +399,7 @@ EOF
 }
 
 scenario_15_roadmap_shape_detection() {
-  echo "Scenario 15: doctor workspace flags pre-v0.9 freeform ROADMAP; silent on structured"
+  echo "Scenario 15: doctor workspace flags pre-v0.7.1 freeform ROADMAP; silent on structured"
   local dir="/tmp/doctor-test-15"
   seed_clean "$dir"
 
@@ -423,7 +423,7 @@ EOF
 
   local out_old
   out_old=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
-  assert_output_contains "$out_old" "pre-v0.9 freeform shape" \
+  assert_output_contains "$out_old" "pre-v0.7.1 freeform shape" \
     "old-shape ROADMAP triggers info line"
 
   # New-shape ROADMAP: has **Phase:** markers
@@ -449,7 +449,7 @@ EOF
 
   local out_new
   out_new=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
-  assert_output_lacks "$out_new" "pre-v0.9 freeform shape" \
+  assert_output_lacks "$out_new" "pre-v0.7.1 freeform shape" \
     "new-shape ROADMAP triggers no info line"
 
   rm -rf "$dir"

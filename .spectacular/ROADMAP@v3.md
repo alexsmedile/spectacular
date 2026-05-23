@@ -1,6 +1,6 @@
 ---
-version: 2.2
-updated: 2026-05-24
+version: 2.1
+updated: 2026-05-23
 summary: "Per-version scope, phase, and exit criteria. Active line is v0.7.1. Long-term gets fuzzier on purpose."
 related:
   - PRD.md
@@ -174,12 +174,6 @@ Ideas worth capturing but not yet tied to any version. Promoting an item via the
 
 ## Recently shipped
 
-- **v1.2.0** (2026-05-24) — Deprecate public-docs surface; extracted to standalone [pageworks](https://github.com/alexsmedile/pageworks) skill. `doctor docs` becomes discovery-only; archive-time handoff prompt; `docs *` verbs banner + scheduled for removal in v2.0.0
-- **v1.1.0** (2026-05-23) — `docs export` adapters: MkDocs Material + Docusaurus renderers (later moved to pageworks)
-- **v1.0.1** (2026-05-23) — `spectacular --version` + top-level usage on CLI
-- **v1.0.0** (2026-05-23) — First stable release; CLI + skill + 13 registered doc-types frozen for v1.x
-- **v0.7.2** (2026-05-23) — ROADMAP refinement v2: required `outcome:` slot, `icebox` renaming (was "Bucket list"), tier-aware grill/review polish
-- **v0.7.1** (2026-05-23) — Structured ROADMAP: per-version blocks, precision tiers, 9-phase chain, 18-check review gate
 - **v0.7.0** (2026-05-23) — CLI mutator verbs (new, promote, snapshot, archive, touch); skill orchestrates, CLI mutates
 - **v0.6.2** (2026-05-23) — Workspace migrations Stage 2: registry pattern + judgment skill walk + chain validation
 - **v0.6.1** (2026-05-23) — Workspace migrations Stage 1: workspace_schema + migrate verb + flat contract docs + scaffold suggestion

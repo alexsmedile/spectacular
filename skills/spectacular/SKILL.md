@@ -21,7 +21,7 @@ when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type registered in doc-registry.md.
-version: 1.2.1
+version: 1.3.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -70,7 +70,7 @@ The generalized handler matches `spectacular <doc> [<verb>]` where `<doc>` is an
 | `spectacular <doc> refine` | → `references/refine.md` (with registry context) |
 | `spectacular <doc> review` | → `references/review.md` (with registry context) |
 
-**Doc IDs registered (v0.6.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `convention-pack`, `docs-manifest`, `docs-page`.
+**Doc IDs registered (v1.3.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `personas`, `convention-pack`, `docs-manifest`, `docs-page`.
 
 ### Pack-specific aliases (convenience over `spectacular convention-pack <verb>`)
 
@@ -78,12 +78,12 @@ Packs use a short alias and add a `new <name>` verb (since packs are user-scope,
 
 | User says | Route to |
 |---|---|
-| `spectacular pack new <name>` | → `references/grill.md` + `pack-overrides.md` — pre-flight resolves target `~/.spectacular/packs/<name>/` |
+| `spectacular pack new <name>` | → `references/grill.md` + `pack-rules.md` — pre-flight resolves target `~/.spectacular/packs/<name>/` |
 | `spectacular pack new <name> --from <p1>,<p2>` | same + source-ingestion mode active |
 | `spectacular pack new <name> --scope project` | same + target `<project>/.spectacular/packs/<name>/` |
-| `spectacular pack grill <name>` | → `grill.md` + `pack-overrides.md` — resume grill on an existing pack |
-| `spectacular pack refine <name>` | → `refine.md` + `pack-overrides.md` |
-| `spectacular pack review <name>` | → `review.md` + `pack-overrides.md` |
+| `spectacular pack grill <name>` | → `grill.md` + `pack-rules.md` — resume grill on an existing pack |
+| `spectacular pack refine <name>` | → `refine.md` + `pack-rules.md` |
+| `spectacular pack review <name>` | → `review.md` + `pack-rules.md` |
 | `spectacular convention-pack <verb>` | full doc-id form — equivalent to `pack <verb>` but without the `<name>` argument convention |
 
 ### Public-facing docs (DEPRECATED in v1.2.0 — owned by pageworks)
@@ -103,7 +103,7 @@ When delegating to pageworks, surface the canonical install hint from `reference
 
 Pre-v1.2.0 references (still loaded for backward compatibility but show deprecation banners):
 - [[docs-contract]] — schema (deprecated; canonical at `pageworks/references/contract.md`)
-- [[docs-overrides]] — authoring rules (deprecated; canonical at `pageworks/references/authoring.md`)
+- [[docs-rules]] — authoring rules (deprecated; canonical at `pageworks/references/authoring.md`)
 - [[docs-renderer-adapters]] — renderer adapters (deprecated; canonical at `pageworks/references/renderers.md`)
 
 ### Verification routing (when writing PLAN.md or moving requests to review)
@@ -130,11 +130,11 @@ These map to the generalized handler with `<doc> = prd`. Behavior is identical.
 | Legacy trigger | Equivalent | Routes via |
 |---|---|---|
 | `spectacular prd` | `spectacular prd grill` (if empty) or `spectacular prd review` (if filled) | registry → grill or review |
-| `spectacular prd grill` | same | registry → `grill.md` + `prd-overrides.md` |
-| `spectacular prd refine` | same | registry → `refine.md` + `prd-overrides.md` |
-| `spectacular prd review` | same | registry → `review.md` + `prd-overrides.md` |
+| `spectacular prd grill` | same | registry → `grill.md` + `prd-rules.md` |
+| `spectacular prd refine` | same | registry → `refine.md` + `prd-rules.md` |
+| `spectacular prd review` | same | registry → `review.md` + `prd-rules.md` |
 
-The legacy `prd-grill.md` / `prd-refine.md` / `prd-review.md` references are kept for backwards compatibility but new behavior lives in the generic engine + `prd-overrides.md`.
+The legacy `prd-grill.md` / `prd-refine.md` / `prd-review.md` references are kept for backwards compatibility but new behavior lives in the generic engine + `prd-rules.md`.
 
 ---
 
@@ -208,24 +208,26 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/onboarding.md` | First invocation on an existing project |
 | `references/init-workflow.md` | CLI init + first-time project setup |
 | **Doc-writing engine (v0.3.0+)** | |
-| `references/doc-registry.md` | Registry: doc-type → template + slots + mode + location + overrides |
-| `references/grill.md` | Generic interactive slot-filler (consumes registry + overrides) |
+| `references/doc-registry.md` | Registry: doc-type → template + slots + mode + location + rules |
+| `references/grill.md` | Generic interactive slot-filler (consumes registry + rules) |
 | `references/refine.md` | Generic vibe→spec rewriter + append-mode handler |
 | `references/review.md` | Generic quality gate runner |
-| `references/prd-overrides.md` | PRD-specific rules: kit selection, slot prompts, vague-word list, gate checks |
-| `references/plan-overrides.md` | PLAN-specific rules: milestone ordering, dependency-link validation |
-| `references/tasks-overrides.md` | TASKS-specific rules: checklist format, frontmatter sync |
+| `references/prd-rules.md` | PRD-specific rules: kit selection, slot prompts, vague-word list, gate checks |
+| `references/plan-rules.md` | PLAN-specific rules: milestone ordering, dependency-link validation |
+| `references/tasks-rules.md` | TASKS-specific rules: checklist format, frontmatter sync |
+| `references/roadmap-rules.md` | ROADMAP-specific rules: precision tiers, 9-phase chain, 18-check review gate |
+| `references/personas-rules.md` | **v1.3.0+** — PERSONAS-specific rules: per-persona slot walks (Who/Wants to/Pain/Stories/Not for), gate checks |
 | `references/kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs; single-kit-only in v1 |
 | `references/packs-contract.md` | Convention pack schema: pack folder shape + 6 rule categories (naming/taxonomy/root-files/gitignore/file-placement/project-types) |
-| `references/pack-overrides.md` | Pack-specific grill rules: slot prompts, mini-refine patterns, source-ingestion (`--from`), reserved pack-ids, review gate checks 4-12 |
+| `references/pack-rules.md` | Pack-specific grill rules: slot prompts, mini-refine patterns, source-ingestion (`--from`), reserved pack-ids, review gate checks 4-12 |
 | `references/pageworks-handoff.md` | **v1.2.0+** — when/how spectacular delegates public-doc work to pageworks; canonical install hint; archive-time prompt mechanics |
 | `references/docs-contract.md` | **DEPRECATED v1.2.0** — public docs schema; canonical at `pageworks/references/contract.md`. Removed in v2.0.0 |
-| `references/docs-overrides.md` | **DEPRECATED v1.2.0** — docs-specific engine rules; canonical at `pageworks/references/authoring.md`. Removed in v2.0.0 |
+| `references/docs-rules.md` | **DEPRECATED v1.2.0** — docs-specific engine rules; canonical at `pageworks/references/authoring.md`. Removed in v2.0.0 |
 | `references/docs-renderer-adapters.md` | **DEPRECATED v1.2.0** — renderer adapters (MkDocs + Docusaurus); canonical at `pageworks/references/renderers.md`. Removed in v2.0.0 |
 | **Legacy PRD references (deprecated, kept for backwards compat)** | |
-| `references/prd-grill.md` | Legacy — superseded by `grill.md` + `prd-overrides.md` |
-| `references/prd-refine.md` | Legacy — superseded by `refine.md` + `prd-overrides.md` |
-| `references/prd-review.md` | Legacy — superseded by `review.md` + `prd-overrides.md` |
+| `references/prd-grill.md` | Legacy — superseded by `grill.md` + `prd-rules.md` |
+| `references/prd-refine.md` | Legacy — superseded by `refine.md` + `prd-rules.md` |
+| `references/prd-review.md` | Legacy — superseded by `review.md` + `prd-rules.md` |
 
 ---
 

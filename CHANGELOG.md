@@ -5,6 +5,40 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.3.0] — 2026-05-24
+
+### Added
+- **PERSONAS.md as opt-in canonical doc** — proto-audience profiles + user stories. Each persona is ~6-10 lines (Who / Wants to / Pain / Stories / Not for). Grill walks the 5 slots per persona, then asks "add another?" — same shape as ROADMAP version blocks. Triggered by `product` + `content` PRD kits via `triggers-docs.always`, or opt in on any kit with `spectacular init --with personas`.
+- **New `personas` doctor area** — validates frontmatter, counts persona blocks, per-persona story counts, soft-warns at >5 personas. Absent → info note (one-time skip).
+- **`personas-rules.md` reference** — slot definitions, grill prompts, vague-word lists, anti-patterns (no JTBD framework, no demographics, no >5 personas), gate checks. JTBD framework apparatus explicitly out of scope.
+- **`templates/personas/base.md`** — template with 5 slots.
+- **`.spectacular/PERSONAS.md`** — dogfood example for this repo (3 personas: Solo OSS maintainer, Small-team tech lead, Tool builder using AI agents to build AI tools).
+
+### Changed (breaking — naming-only, no schema removal)
+- **Mode renames in doc-registry:**
+  - `structured` → `reps` (grill walk repeats per block; ROADMAP, PERSONAS)
+  - `freeform` → `stub` (scaffold + exit, no walk; STACK, AGENTS, PRINCIPLES, ARCHITECTURE, SPEC)
+  - New `freeform` reserved for "agent has full creative liberty over structure" (no template, no slots) — no docs in v1 use this mode
+- **Per-doc rules file rename:** `*-overrides.md` → `*-rules.md` (7 files: prd, plan, tasks, roadmap, docs, pack, personas). The registry field renamed from `overrides:` to `rules:`. Rationale: these files don't override anything — they're per-doc rules (grill prompts, vague-word lists, gate checks). "Generic engine + per-doc rules" is the accurate model.
+- **`doc-registry.md` schema docstring + Adding-a-new-doc-type section** updated for new names.
+- **`SKILL.md` v1.3.0:** doc IDs registered list now includes `personas` (14 total); references index lists `personas-rules.md` + `roadmap-rules.md`; schema field text updated.
+
+### Fixed (from codex adversarial review)
+- **Personas template `<DATE>` → `<today>`** placeholder consistency with PRD template convention.
+- **Doctor per-persona story counting** — was project-wide grep; now awk walks blocks and reports which personas have zero stories.
+
+### Migration notes
+Existing projects do not need a migration. The renames are agent-facing only:
+- Existing `.spectacular/` workspaces continue working unchanged (no override-named files exist in user projects)
+- Existing PRD/PLAN/TASKS/ROADMAP workflows continue working — only the underlying registry mode strings changed
+- If you've authored project-local kit files or rules files, rename `<id>-overrides.md` → `<id>-rules.md` and update `overrides:` → `rules:` in any referenced YAML
+
+### Test changes
+- All 9 existing test files continue passing (no test file required renaming)
+- Personas doctor wiring validated via repo's own PERSONAS.md (3 personas, 10 stories, 0 errors)
+
+---
+
 ## [1.2.1] — 2026-05-24
 
 ### Changed

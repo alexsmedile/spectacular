@@ -115,7 +115,7 @@ User can always override either way.
 ## Examples from this project's history
 
 - `prd-craft v1.1` — doc-only, dogfooded via /tmp simulation. **No VERIFY.md.** PLAN Validation was enough.
-- `doc-writer` — internal spec + engine. **No VERIFY.md.** Dogfood test in TASKS.
+- `doc-writer` — internal spec + skill. **No VERIFY.md.** Dogfood test in TASKS.
 - `kits-as-plugins` — spec + templates. **No VERIFY.md.** Validation in PLAN.
 - `smart-init` (planned) — user-visible CLI behavior + overwrite risk + external contract (flags). **Will need VERIFY.md.** Manual QA on fresh dir + existing workspace + idempotency.
 - `doctor` (planned) — user-visible behavior + opt-in repairs (reversibility matters). **Will need VERIFY.md.**

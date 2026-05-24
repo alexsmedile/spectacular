@@ -15,7 +15,7 @@ related:
   long-term are vision (just direction). Icebox at the end for ideas not yet
   tied to any version.
 
-  Mode: reps (v0.7.1+; renamed from "structured" in v1.3.0). Use `spectacular roadmap grill <version>` to walk
+  Mode: grill-each (v1.4.0+; was `reps` in v1.3.x, `structured` pre-v0.7.1). Use `spectacular roadmap grill <version>` to walk
   the slots interactively. Use `spectacular roadmap refine` to apply vibe→spec
   rewrites + autopopulate Linked requests. Use `spectacular roadmap review` to
   check the gate.

@@ -1,8 +1,21 @@
-# PRD Overrides — PRD-specific rules consumed by the generic engine
+---
+doc-id: prd
+mode: grill
+location: .spectacular/PRD.md
+scope: project-wide
+template: templates/prd/base.md
+slots: [Vision, Problem, Target users, Deliverable, Goals & success criteria, Non-goals, Constraints, First milestone]
+snapshot-on-edit: true
+kit-support: true
+summary: "Product Requirements Document — what & why & for whom (8 slots)"
+status: active
+---
 
-Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `prd` (per registry).
+# PRD Rules — PRD-specific rules consumed by the skill
 
-This file declares everything PRD-specific. The generic engine handles the rest.
+Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `prd` (per doc-index).
+
+This file declares everything PRD-specific. The skill handles the rest.
 
 ## Kit selection (grill pre-flight only)
 
@@ -33,7 +46,7 @@ After selection:
 
 ## Slot prompts
 
-The engine uses these in the slot loop. One question per slot, short, with one good/bad example to anchor expectations.
+The skill uses these in the slot loop. One question per slot, short, with one good/bad example to anchor expectations.
 
 **Slot 1 — Vision**
 > One paragraph. What is this, philosophically? Why does it exist in the world?
@@ -177,7 +190,7 @@ Applied inline by the grill after each answer.
 
 ### Kit-aware gate
 
-After base + checks 4-9 run, the engine reads the PRD's frontmatter for `kit: <name>`:
+After base + checks 4-9 run, the skill reads the PRD's frontmatter for `kit: <name>`:
 
 - **No kit declared** — gate stops here. Base-only PRDs are valid; no kit checks run.
 - **Kit declared** — load `templates/prd/kits/<name>.md` (project-local override wins). For each entry in the kit's `adds-slots`:
@@ -246,7 +259,7 @@ Fails only if Vision is a single short sentence under 30 words and not split int
 
 ## Related
 
-- [[doc-registry]] — registry entry referencing this file
+- [[doc-index]] — registry entry referencing this file
 - [[grill]] — consumes the slot prompts + mini-refine patterns from this file
 - [[refine]] — consumes the vibe→spec tables for full refine passes
 - [[review]] — consumes the gate checks from this file

@@ -67,6 +67,7 @@ spectacular/
 |---|---|---|---|
 | `convention-pack-modules` | planned (gated) | tbd | v2 modular packs — stays planned until composition pain surfaces from v1 use |
 | `spec-refactor` | planned | v1.3.0 | Audit SPEC.md, promote 1-2 dense capabilities to `specs/<capability>/SPEC.md` |
+| `substrate-clarity` | active (M3-M7 done) | v1.4.0 | Demoted doc-registry → doc-index; modes collapsed (`reps` → `grill-each`); grill sub-modes (`grill-wide` / `grill-each` / `grill-loop`); CLI redirect for agentic verbs; rules-file frontmatter schema. Awaits M8 ship. |
 
 **Archived (shipped):** `convention-pack-schema` (foundation pre-v0.4.0), `pageworks-migration` (v1.2.0 — public-facing docs extracted to standalone `pageworks` skill; spectacular kept discovery-only awareness, verbs deprecated, removal target v2.0.0), `public-docs-advanced` (v1.1.0 — narrowed scope: MkDocs + Docusaurus adapters only, dogfood deferred to future docs-writer-driven request), `cli-bootstrap` (v0.2.0, verified v1.0.1), `roadmap-richness-v2` (v0.7.2), `roadmap-richness` (v0.7.1), `convention-pack-fabricator` (v0.4.0), `cli-mutator-verbs` (v0.7.0), `workspace-migrations` (Stage 1: v0.6.1; Stage 2: v0.6.2), `doctor` (v0.3.1), `spec-rename` (v0.5.0), `public-docs-foundation` (v0.6.0), `convention-pack-application` (v0.4.0), plus pre-v0.4 work (`repo-conventions` superseded by pack system in v0.4.0). See `.spectacular/archive/`.
 
@@ -89,7 +90,7 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 | `init-workflow.md` | `spectacular init` (CLI context) |
 | `onboarding.md` | First invocation on existing `.spectacular/` project |
 | `scaffold-reference.md` | File template reference — frontmatter stubs for all file types |
-| `doc-registry.md` | Doc-type registry: template + slots + mode + location + overrides for every registered doc |
+| `doc-index.md` | Human-readable catalog of every doc type. Dispatch lives in each `<doc>-rules.md` frontmatter (since v1.4.0; was `doc-registry.md` pre-v1.4.0) |
 | `grill.md` / `refine.md` / `review.md` | Generic engine for any registered doc (driven by registry + per-doc overrides) |
 | `prd-overrides.md` | PRD-specific rules: kit selection, slot prompts, vague-word list, gate checks |
 | `plan-overrides.md` / `tasks-overrides.md` | PLAN/TASKS-specific rules consumed by the same engine |

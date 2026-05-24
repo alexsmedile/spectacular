@@ -4,7 +4,7 @@ Loaded when the user runs:
 - `prd refine` — full-document refine pass on an existing PRD.md
 - Implicitly by `prd-grill` during the slot loop (mini-refine, one slot at a time)
 
-Refine is the **transformation engine** that turns conversational/vague language into specific, measurable, actionable PRD content.
+Refine is the **transformation skill** that turns conversational/vague language into specific, measurable, actionable PRD content.
 
 ## Core principle
 

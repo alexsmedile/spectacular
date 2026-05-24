@@ -19,7 +19,7 @@ Loaded when the skill is invoked as `/spectacular doctor --fix`. Entry point: [[
 
 ## Snapshot-before-edit is mandatory
 
-For every fix touching a **canonical doc** (per `doc-registry.md`'s `snapshot-on-edit: true`):
+For every fix touching a **canonical doc** (per `doc-index.md`'s `snapshot-on-edit: true`):
 1. Read current `version:` from frontmatter
 2. Copy file to `<doc>@v<current>.md` if that snapshot doesn't already exist
 3. Apply the edit

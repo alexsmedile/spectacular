@@ -144,5 +144,5 @@ The CLI loader (in `cmd_migrate`):
 - [[doctor]] — chain validation lives in `check_kits` (per design lock 2026-05-23)
 - [[doctor-areas]] — kits area row documents the chain check
 - [[migrate]] — skill walk for judgment migrations
-- [[doc-registry]] — `migrations-contract` registered alongside other contract docs
+- [[doc-index]] — `migrations-contract` registered alongside other contract docs
 - [[packs-contract]] — sibling registry pattern (registry + scope precedence + lifecycle)

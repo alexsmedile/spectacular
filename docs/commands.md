@@ -186,7 +186,7 @@ Skill side of the doctor command. Reads the CLI's JSON report and walks each jud
 
 ### Doc-writing verbs
 
-Spectacular's registry-driven engine treats every canonical doc the same way. For any registered doc type:
+Spectacular treats every canonical doc the same way — each doc has a rules file (`skills/spectacular/references/<doc-id>-rules.md`) declaring its mode, slots, and template. For any known doc type:
 
 ```text
 spectacular <doc>               # grill if empty, review if filled
@@ -195,7 +195,29 @@ spectacular <doc> refine        # vibe → spec rewrite
 spectacular <doc> review        # quality gate (pass/fail)
 ```
 
-Doc IDs in v0.3.x: `prd`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`.
+**Agentic vs mechanical verbs** *(v1.4.0+)*
+
+| Verb | Runs in | Why |
+|---|---|---|
+| `grill`, `refine` | **Skill only** | Require an LLM to interview, mini-refine, vibe→spec rewrite |
+| `review` | **Mixed** | Structural checks run in CLI (`doctor`); semantic checks need the skill |
+| `new`, `archive`, `snapshot`, `init`, `doctor`, `pack`, `migrate` | **CLI primarily** | Mechanical scaffolding, file moves, integrity checks |
+
+If you type `spectacular <doc> grill` at terminal, the CLI prints a friendly redirect telling you to run `/spectacular <doc> grill` inside Claude Code or Codex. This is by design — the agentic verbs need an LLM that the CLI doesn't have.
+
+**Grill sub-modes** *(v1.4.0+)*
+
+Each doc declares its grill style in `mode:`. User can override per session:
+
+| Mode | Behavior | Example doc |
+|---|---|---|
+| `grill` / `grill-wide` | Walk all slots once | PRD, PLAN |
+| `grill-each` | Per-block walk; "add another?" loop | ROADMAP, PERSONAS |
+| `grill-loop` | Wide pass, then deep on vague slots | (opt-in via `--loop`) |
+
+Flag override: `spectacular roadmap grill --wide` forces the wide style regardless of the doc's declared mode.
+
+Doc IDs in v1.4.0: `prd`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `personas`, `spec`, `convention-pack`. See [`doc-index.md`](../skills/spectacular/references/doc-index.md) for the full catalog.
 
 Legacy aliases (backwards-compatible from v0.2.x): `spectacular prd`, `spectacular prd grill`, `spectacular prd refine`, `spectacular prd review`.
 

@@ -95,7 +95,7 @@ skill explicitly surfaces this pack's docs to the user — not parsed.>
 
 ## Rule categories (the 6)
 
-Each rule category is a small structured block. The engine reads only the fields it understands; unknown fields are preserved but ignored. This keeps the schema forward-compatible.
+Each rule category is a small structured block. The skill reads only the fields it understands; unknown fields are preserved but ignored. This keeps the schema forward-compatible.
 
 ### 1. `naming`
 
@@ -290,7 +290,7 @@ project-types:
 
 ## Override / inheritance layering
 
-A pack can be loaded from one of four scope locations. When the same pack-id exists in multiple scopes, **project-local wins, then user, then app-store, then bundled** — same precedence the engine uses for kit overrides.
+A pack can be loaded from one of four scope locations. When the same pack-id exists in multiple scopes, **project-local wins, then user, then app-store, then bundled** — same precedence the skill uses for kit overrides.
 
 | Scope | Path | Notes |
 |---|---|---|
@@ -348,7 +348,7 @@ Walking the 10 conventions from `archive/repo-conventions/PLAN.md` to confirm th
 
 **Result: 10 / 10 expressible.** Conventions 1, 2, 3, 4, 5, 7, 8, 9, 10 fully schema-encoded. Convention 6's "most-specific AGENTS.md wins" rule is a runtime behavior, not a pack rule — it lives in `references/why-<pack>.md` narrative.
 
-## Engine integration
+## Skill integration
 
 ### Pack loading (consumed by init / new-request / doctor — requests 2 & 3)
 
@@ -375,11 +375,11 @@ Walking the 10 conventions from `archive/repo-conventions/PLAN.md` to confirm th
 5. Validate with `spectacular pack review` (request 2)
 6. Activate per repo via `config.yaml`'s `convention_pack` block (request 3)
 
-No engine changes. No code edits to the skill. Pack discovery is path-based.
+No code changes. No code edits to the skill. Pack discovery is path-based.
 
 ## Related
 
-- [[doc-registry]] — declares the `convention-pack` doc type; pack registration entry
+- [[doc-index]] — declares the `convention-pack` doc type; pack registration entry
 - [[kits-contract]] — sibling pattern for single-doc kit extensions
 - [[pack-rules]] — (request 2) pack-specific grill prompts the fabricator will consume
 - [[init-workflow]] — (request 3) where pack consumption wires into init

@@ -23,7 +23,7 @@ Tests live in `tests/cli/` — one file per major area (init, doctor, mutator ve
 
 - **Bug fixes** with a failing test scenario reproducing the bug
 - **New convention packs** — add to `packs/<name>/` following the `alex-default` shape
-- **New doc-types** for the doc-writing engine — see `skills/spectacular/references/doc-registry.md`
+- **New doc-types** for the doc-writing skill — create `skills/spectacular/references/<doc-id>-rules.md` (frontmatter declares mode + slots + template path), add a template under `skills/spectacular/templates/<doc-id>/`, and a row in `skills/spectacular/references/doc-index.md`. See [doc-index.md](skills/spectacular/references/doc-index.md) for the human catalog.
 - **CLI verb additions** that fit the **mutation principle** (CLI mutates state, skill orchestrates judgment)
 - **Reference doc clarifications** in `skills/spectacular/references/`
 - **Migration entries** for workspace-schema upgrades — see `skills/spectacular/references/migrations/`

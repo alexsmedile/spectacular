@@ -60,7 +60,7 @@ description: |
 - `name` — slot heading text (becomes `## N. <name>` in scaffolded file, where N is computed by insertion order)
 - `after` — name of the base slot this should immediately follow. Use `last` to append after all base slots.
 - `required` — `true` means review gate flags missing/empty; `false` means optional (skipped if user leaves blank)
-- `prompt` — grill question text (engine surfaces this verbatim)
+- `prompt` — grill question text (skill surfaces this verbatim)
 - `example` — optional good-answer example shown to user
 
 **`modifies-slots`** (optional, list) — kit-specific guidance layered onto a base slot's prompt. Never changes the slot's name, position, or required status. Each entry has:
@@ -119,15 +119,15 @@ Each PRD has exactly one kit declared in frontmatter. Multi-kit composition is *
 - Slot insertion: error if two kits target the same `after:` value without explicit ordering hints
 - Frontmatter: `kits: [coding, content]` (array) instead of `kit: coding`
 
-## Engine integration
+## Skill integration
 
 ### Grill flow (kit-aware)
 
-1. **Kit selection** (pre-flight) — engine shows registry-discovered kits + descriptions; user picks one (or `blank`)
-2. **Slot resolution** — engine merges base slots + kit's `adds-slots` in declared order
-3. **Prompt resolution** — for each slot, engine uses (in priority): kit `prompt` (for added slots) > base prompt + kit `modifies-slots.note` (for layered slots) > base prompt alone
+1. **Kit selection** (pre-flight) — skill shows discovered kits + descriptions; user picks one (or `blank`)
+2. **Slot resolution** — skill merges base slots + kit's `adds-slots` in declared order
+3. **Prompt resolution** — for each slot, skill uses (in priority): kit `prompt` (for added slots) > base prompt + kit `modifies-slots.note` (for layered slots) > base prompt alone
 4. **Grill loop** — walks merged slot list normally; mini-refine applies to base slots only unless kit declares slot-specific patterns
-5. **Frontmatter write** — engine sets `kit: <kit-id>` in the resulting PRD.md frontmatter
+5. **Frontmatter write** — skill sets `kit: <kit-id>` in the resulting PRD.md frontmatter
 
 ### Review gate (kit-aware)
 
@@ -135,7 +135,7 @@ Each PRD has exactly one kit declared in frontmatter. Multi-kit composition is *
 2. **Read PRD frontmatter** — if `kit: <name>` present, load that kit file
 3. **Kit-required slots checked** — every `adds-slots` entry with `required: true` must be filled
 4. **Kit-optional slots ignored** — `required: false` slots may be empty without failing the gate
-5. **Engine ignores kit additions if no kit declared** — base-only PRDs still pass without ever knowing about kit slots
+5. **Skill ignores kit additions if no kit declared** — base-only PRDs still pass without ever knowing about kit slots
 
 ## Triggered-docs contract (consumed by smart-init)
 
@@ -149,7 +149,7 @@ triggers-docs:
     - roadmap
 ```
 
-Each entry must be a valid `<doc-id>` from `doc-registry.md`. smart-init errors on unknown doc IDs.
+Each entry must be a valid `<doc-id>` from `doc-index.md`. smart-init errors on unknown doc IDs.
 
 The always-set (`PRD.md`, `SPEC.md`, `requests/`, `specs/`, `config.yaml`, `AGENTS.md`) is scaffolded by smart-init regardless of kit. Kits add to this set; they never subtract.
 
@@ -157,7 +157,7 @@ The always-set (`PRD.md`, `SPEC.md`, `requests/`, `specs/`, `config.yaml`, `AGEN
 
 A project can override a bundled kit by placing a same-named kit file at `.spectacular/templates/prd/kits/<kit-id>.md`. Project-local takes precedence over the skill's bundled kit. Used for customizing kit defaults per project.
 
-Rules file must conform to the same kits-contract schema; the engine validates frontmatter on load.
+Rules file must conform to the same kits-contract schema; the skill validates frontmatter on load.
 
 ## Worked example: coding kit
 
@@ -218,11 +218,11 @@ When applied during grill:
 1. Pick a kit-id (e.g. `mobile-app`)
 2. Create `templates/prd/kits/<kit-id>.md` with full frontmatter per schema
 3. (Optional) Document in kit-selection menu via SKILL.md or scaffold-reference.md
-4. No engine changes needed — discovery is automatic
+4. No code changes needed — discovery is automatic
 
 ## Related
 
-- [[doc-registry]] — declares which docs support kits (currently only `prd: kit-support: true`)
+- [[doc-index]] — declares which docs support kits (currently only `prd: kit-support: true`)
 - [[grill]] — consumes kit's `adds-slots` and `modifies-slots`
 - [[review]] — runs base checks always, kit checks only when kit declared
 - [[prd-rules]] — base PRD slot prompts that kits layer onto

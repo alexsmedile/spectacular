@@ -1,10 +1,21 @@
-# TASKS Overrides — TASKS-specific rules consumed by the generic engine
+---
+doc-id: tasks
+mode: stub
+location: .spectacular/requests/<slug>/TASKS.md
+scope: per-request
+template: templates/tasks/base.md
+snapshot-on-edit: false
+summary: "Executable checklist for one request"
+status: active
+---
 
-Loaded by `refine.md` / `review.md` when the active doc is `tasks` (per registry). TASKS.md is `mode: stub` — no grill loop, but the engine still validates structure on review.
+# TASKS Rules — TASKS-specific rules consumed by the skill
+
+Loaded by `refine.md` / `review.md` when the active doc is `tasks` (per doc-index). TASKS.md is `mode: stub` — no grill loop, but the skill still validates structure on review.
 
 ## Behavior
 
-TASKS.md is created when a request is scaffolded (via `spectacular new`). The engine pre-populates it from `templates/tasks/base.md`. Users edit directly; the engine only intervenes when `spectacular tasks review` is called.
+TASKS.md is created when a request is scaffolded (via `spectacular new`). The skill pre-populates it from `templates/tasks/base.md`. Users edit directly; the skill only intervenes when `spectacular tasks review` is called.
 
 ## Review gate checks (in addition to base)
 
@@ -35,6 +46,6 @@ TASKS.md is created when a request is scaffolded (via `spectacular new`). The en
 
 ## Related
 
-- [[doc-registry]] — registry entry referencing this file
-- [[refine]], [[review]] — engines that consume this
+- [[doc-index]] — registry entry referencing this file
+- [[refine]], [[review]] — skill flows that consume this
 - [[plan-rules]] — companion override for PLAN.md

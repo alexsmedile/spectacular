@@ -2,7 +2,7 @@
 
 Loaded when the user runs `spectacular <doc> review` or implicitly at the end of `grill.md`.
 
-This is the **doc-agnostic** engine. Per-doc gate checks live in rules files (`prd-rules.md`, `plan-rules.md`, etc.).
+This is the **doc-agnostic** skill. Per-doc gate checks live in rules files (`prd-rules.md`, `plan-rules.md`, etc.).
 
 Review is a **pass/fail quality gate**. It produces a punch list, not a rewrite. The user decides what to fix.
 
@@ -125,7 +125,7 @@ Missing required field → fails. Punch list says exactly which field.
 
 ## Related
 
-- [[doc-registry]] — the registry the engine consumes
+- [[doc-index]] — the registry the skill consumes
 - [[grill]] — runs review as its stop condition
 - [[refine]] — produces the rewrites that fix review findings
 - [[prd-rules]], [[plan-rules]], [[tasks-rules]] — per-doc check sources

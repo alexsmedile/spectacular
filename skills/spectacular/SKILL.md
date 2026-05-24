@@ -5,7 +5,7 @@ description: |
   Manages the full lifecycle of a .spectacular/ workspace: reads project state, proposes actions,
   scaffolds requests, manages lifecycle transitions, writes memory, archives completed work,
   and grills/refines/reviews any structured doc (PRD, PLAN, TASKS, PRINCIPLES, ARCHITECTURE,
-  ROADMAP, STACK, AGENTS, DECISIONS) via a single registry-driven engine.
+  ROADMAP, STACK, AGENTS, DECISIONS, PERSONAS) via rules files that declare each doc's mode + slots.
   Use when: opening /spectacular on any project, scaffolding a new request, archiving completed
   work, capturing a memory, snapshotting a canonical doc, onboarding to an existing workspace,
   or building any canonical doc from scratch.
@@ -20,8 +20,8 @@ description: |
 when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
-  generalized doc verbs (grill/refine/review) apply to any doc type registered in doc-registry.md.
-version: 1.3.0
+  generalized doc verbs (grill/refine/review) apply to any doc type listed in doc-index.md.
+version: 1.4.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -54,23 +54,25 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular doctor` / `spectacular doctor <area>` | → `references/doctor.md` (lean entry) |
 | `/spectacular doctor --fix` (judgment walk) | → `references/doctor-repair.md` |
 | Explain a finding or area check | → `references/doctor-areas.md` |
-| Skill operation hits substrate failure (registry won't parse, kit malformed, etc.) | → `references/doctor-substrate.md` |
+| Skill operation hits substrate failure (rules file won't parse, kit malformed, etc.) | → `references/doctor-substrate.md` |
 | `/spectacular migrate` (walk judgment migrations) | → `references/migrate.md` |
 | Explain a migration spec or contract | → `references/migrations-contract.md` |
 | Actively working on a request | → `references/active-request.md` |
 
 ### Doc-writing (generalized — works for any registered doc)
 
-The generalized handler matches `spectacular <doc> [<verb>]` where `<doc>` is any entry in `references/doc-registry.md`. The verb defaults based on the doc's mode and current state.
+The generalized handler matches `spectacular <doc> [<verb>]` where `<doc>` is any doc listed in `references/doc-index.md`. The verb defaults based on the doc's mode and current state.
+
+Each doc is described by a rules file at `references/<doc-id>-rules.md`. The rules file's **frontmatter** declares dispatch (mode, slots, template, location, scope, snapshot-on-edit, kit-support). The rules file's **body** declares per-doc prompts and gate checks.
 
 | User says | Route to |
 |---|---|
-| `spectacular <doc>` (no verb) | → `references/doc-registry.md` to resolve mode, then to appropriate engine |
-| `spectacular <doc> grill` | → `references/grill.md` (with registry context) |
-| `spectacular <doc> refine` | → `references/refine.md` (with registry context) |
-| `spectacular <doc> review` | → `references/review.md` (with registry context) |
+| `spectacular <doc>` (no verb) | → load `references/<doc-id>-rules.md`, resolve mode, dispatch |
+| `spectacular <doc> grill` | → `references/grill.md` (with `<doc-id>-rules.md` context) |
+| `spectacular <doc> refine` | → `references/refine.md` (with `<doc-id>-rules.md` context) |
+| `spectacular <doc> review` | → `references/review.md` (with `<doc-id>-rules.md` context) |
 
-**Doc IDs registered (v1.3.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `personas`, `convention-pack`, `docs-manifest`, `docs-page`.
+**Doc IDs registered (v1.4.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `personas`, `convention-pack`, `docs-manifest`, `docs-page`. Each has a `references/<doc-id>-rules.md` file declaring its dispatch + behavior. See `doc-index.md` for the catalog.
 
 ### Pack-specific aliases (convenience over `spectacular convention-pack <verb>`)
 
@@ -119,7 +121,7 @@ When grilling, scaffolding, or finalizing a PLAN.md for any request, **also rout
 
 **Critical:** "VERIFY.md is opt-in" refers to *creating the file*, not *performing verification*. Verification always runs against *some* artifact. When VERIFY.md exists it is load-bearing; do not bypass it because it's "optional."
 
-The doc-writer engine never auto-scaffolds VERIFY.md. It is created only when:
+The skill never auto-scaffolds VERIFY.md. It is created only when:
 - The 2-of-6 rule triggers during request scaffolding, AND
 - The user confirms.
 
@@ -129,12 +131,12 @@ These map to the generalized handler with `<doc> = prd`. Behavior is identical.
 
 | Legacy trigger | Equivalent | Routes via |
 |---|---|---|
-| `spectacular prd` | `spectacular prd grill` (if empty) or `spectacular prd review` (if filled) | registry → grill or review |
-| `spectacular prd grill` | same | registry → `grill.md` + `prd-rules.md` |
-| `spectacular prd refine` | same | registry → `refine.md` + `prd-rules.md` |
-| `spectacular prd review` | same | registry → `review.md` + `prd-rules.md` |
+| `spectacular prd` | `spectacular prd grill` (if empty) or `spectacular prd review` (if filled) | rules file → grill or review |
+| `spectacular prd grill` | same | `prd-rules.md` → `grill.md` |
+| `spectacular prd refine` | same | `prd-rules.md` → `refine.md` |
+| `spectacular prd review` | same | `prd-rules.md` → `review.md` |
 
-The legacy `prd-grill.md` / `prd-refine.md` / `prd-review.md` references are kept for backwards compatibility but new behavior lives in the generic engine + `prd-rules.md`.
+The legacy `prd-grill.md` / `prd-refine.md` / `prd-review.md` references are kept for backwards compatibility but new behavior lives in `grill.md` / `refine.md` / `review.md` + `prd-rules.md`.
 
 ---
 
@@ -207,22 +209,28 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/scaffold-reference.md` | Canonical file templates with frontmatter stubs |
 | `references/onboarding.md` | First invocation on an existing project |
 | `references/init-workflow.md` | CLI init + first-time project setup |
-| **Doc-writing engine (v0.3.0+)** | |
-| `references/doc-registry.md` | Registry: doc-type → template + slots + mode + location + rules |
-| `references/grill.md` | Generic interactive slot-filler (consumes registry + rules) |
-| `references/refine.md` | Generic vibe→spec rewriter + append-mode handler |
-| `references/review.md` | Generic quality gate runner |
-| `references/prd-rules.md` | PRD-specific rules: kit selection, slot prompts, vague-word list, gate checks |
-| `references/plan-rules.md` | PLAN-specific rules: milestone ordering, dependency-link validation |
-| `references/tasks-rules.md` | TASKS-specific rules: checklist format, frontmatter sync |
-| `references/roadmap-rules.md` | ROADMAP-specific rules: precision tiers, 9-phase chain, 18-check review gate |
-| `references/personas-rules.md` | **v1.3.0+** — PERSONAS-specific rules: per-persona slot walks (Who/Wants to/Pain/Stories/Not for), gate checks |
+| **Doc-writing (v0.3.0+; rules-driven v1.4.0+)** | |
+| `references/doc-index.md` | Human catalog of doc types. Dispatch lives in each `<doc-id>-rules.md` frontmatter |
+| `references/grill.md` | Interactive slot-filler (consumes per-doc rules; honors mode `grill` / `grill-wide` / `grill-each` / `grill-loop`) |
+| `references/refine.md` | Vibe→spec rewriter + append-mode handler |
+| `references/review.md` | Quality gate runner (structural in CLI; semantic in skill) |
+| `references/prd-rules.md` | PRD: 8 slots, kit selection, vague-word list, gate checks |
+| `references/plan-rules.md` | PLAN: milestone ordering, dependency-link validation |
+| `references/tasks-rules.md` | TASKS: checklist format, frontmatter sync (stub mode) |
+| `references/roadmap-rules.md` | ROADMAP: per-version blocks (grill-each), 9-phase chain, 18-check review gate |
+| `references/personas-rules.md` | **v1.3.0+** — PERSONAS: per-persona blocks (grill-each), gate checks |
+| `references/principles-rules.md` | **v1.4.0+** — PRINCIPLES (stub) |
+| `references/architecture-rules.md` | **v1.4.0+** — ARCHITECTURE (stub) |
+| `references/stack-rules.md` | **v1.4.0+** — STACK (stub) |
+| `references/agents-rules.md` | **v1.4.0+** — AGENTS (stub) |
+| `references/spec-rules.md` | **v1.4.0+** — SPEC (stub) |
+| `references/decisions-rules.md` | **v1.4.0+** — DECISIONS (append, one ADR entry per decision) |
 | `references/kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs; single-kit-only in v1 |
 | `references/packs-contract.md` | Convention pack schema: pack folder shape + 6 rule categories (naming/taxonomy/root-files/gitignore/file-placement/project-types) |
 | `references/pack-rules.md` | Pack-specific grill rules: slot prompts, mini-refine patterns, source-ingestion (`--from`), reserved pack-ids, review gate checks 4-12 |
 | `references/pageworks-handoff.md` | **v1.2.0+** — when/how spectacular delegates public-doc work to pageworks; canonical install hint; archive-time prompt mechanics |
 | `references/docs-contract.md` | **DEPRECATED v1.2.0** — public docs schema; canonical at `pageworks/references/contract.md`. Removed in v2.0.0 |
-| `references/docs-rules.md` | **DEPRECATED v1.2.0** — docs-specific engine rules; canonical at `pageworks/references/authoring.md`. Removed in v2.0.0 |
+| `references/docs-rules.md` | **DEPRECATED v1.2.0** — docs-specific skill rules; canonical at `pageworks/references/authoring.md`. Removed in v2.0.0 |
 | `references/docs-renderer-adapters.md` | **DEPRECATED v1.2.0** — renderer adapters (MkDocs + Docusaurus); canonical at `pageworks/references/renderers.md`. Removed in v2.0.0 |
 | **Legacy PRD references (deprecated, kept for backwards compat)** | |
 | `references/prd-grill.md` | Legacy — superseded by `grill.md` + `prd-rules.md` |

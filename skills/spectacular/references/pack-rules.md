@@ -1,8 +1,20 @@
-# Pack Overrides — convention-pack-specific rules consumed by the generic engine
+---
+doc-id: convention-pack
+mode: grill
+location: ~/.spectacular/packs/<name>/pack.md
+scope: user
+template: templates/packs/minimal/pack.md
+slots: [Name & scope, Naming, Taxonomy, Root files & README, Gitignore, File placement, Project types]
+snapshot-on-edit: false
+summary: "Repo-shape convention pack — naming + taxonomy + gitignore + file-placement rules"
+status: active
+---
 
-Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `convention-pack` (per registry).
+# Pack Rules — convention-pack-specific rules consumed by the skill
 
-This file declares everything pack-specific. The generic engine handles the rest.
+Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `convention-pack` (per doc-index).
+
+This file declares everything pack-specific. The skill handles the rest.
 
 ## What this doc produces
 
@@ -17,7 +29,7 @@ A `pack.md` manifest at `~/.spectacular/packs/<pack-id>/pack.md` plus the surrou
 
 ## Slot prompts
 
-The engine uses these in the slot loop. One question per slot, short, with concrete guidance. **Each slot maps to one rule category** from [[packs-contract]] (except slot 1 which is metadata).
+The skill uses these in the slot loop. One question per slot, short, with concrete guidance. **Each slot maps to one rule category** from [[packs-contract]] (except slot 1 which is metadata).
 
 **Slot 1 — Name & scope**
 > What's this pack called and what kind of projects is it for?
@@ -81,7 +93,7 @@ The engine uses these in the slot loop. One question per slot, short, with concr
 
 ## Source ingestion (`--from`)
 
-If `--from <path1>,<path2>,...` is passed at grill start, the engine reads each file and uses heuristics to pre-populate slot answers. The user reviews and confirms (default `y`, edit on `n`).
+If `--from <path1>,<path2>,...` is passed at grill start, the skill reads each file and uses heuristics to pre-populate slot answers. The user reviews and confirms (default `y`, edit on `n`).
 
 | Source file pattern | Slots pre-populated |
 |---|---|
@@ -204,7 +216,7 @@ User packs must pick a distinct id. Recommended: `<owner>-default` (e.g. `alex-d
 ## Related
 
 - [[packs-contract]] — schema spec this grill produces against
-- [[doc-registry]] — registry entry pointing here as `rules:`
+- [[doc-index]] — registry entry pointing here as `rules:`
 - [[grill]] — consumes the slot prompts + mini-refine patterns from this file
 - [[refine]] — consumes the vibe→spec tables for full refine passes
 - [[review]] — consumes the gate checks from this file

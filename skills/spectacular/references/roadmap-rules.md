@@ -1,8 +1,20 @@
-# ROADMAP Overrides — roadmap-specific rules consumed by the generic engine
+---
+doc-id: roadmap
+mode: grill-each
+location: .spectacular/ROADMAP.md
+scope: project-wide
+template: templates/roadmap/base.md
+slots: [Status, Phase, Scope (in), Scope (out), Exit criteria, Linked requests]
+snapshot-on-edit: true
+summary: "Per-version scope + phase + exit criteria (per-block grill; 9-phase chain)"
+status: active
+---
 
-Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `roadmap` (per registry).
+# ROADMAP Rules — roadmap-specific rules consumed by the skill
 
-This file declares everything roadmap-specific. The generic engine handles the rest.
+Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `roadmap` (per doc-index).
+
+This file declares everything roadmap-specific. The skill handles the rest.
 
 ## What this doc produces
 
@@ -55,7 +67,7 @@ Inspired by GitHub Projects, Trello, Notion onboarding patterns and GIST methodo
 
 ## Per-version slot prompts
 
-The engine uses these in the slot loop. One question per slot. Each version block is grilled independently. **Slots required depend on the version's tier** — see the tier table above.
+The skill uses these in the slot loop. One question per slot. Each version block is grilled independently. **Slots required depend on the version's tier** — see the tier table above.
 
 ### Tier 0 prompt (always asked first)
 > What tier of precision can you commit to for this version?
@@ -141,7 +153,7 @@ The engine uses these in the slot loop. One question per slot. Each version bloc
 > ```
 
 **Slot 6 — Linked requests (autopopulated)**
-> NOT a grilled slot — the engine fills this automatically by scanning `requests/<slug>/PLAN.md` and `archive/<slug>/PLAN.md` for `target_version:` fields matching this version label.
+> NOT a grilled slot — the skill fills this automatically by scanning `requests/<slug>/PLAN.md` and `archive/<slug>/PLAN.md` for `target_version:` fields matching this version label.
 >
 > Read-only render. To add a request to a version, set `target_version: <label>` in that request's PLAN.md frontmatter. To remove, unset.
 >
@@ -385,7 +397,7 @@ The bundled default chain is the 9-phase software chain. Most users never overri
 
 ## Related
 
-- [[doc-registry]] — registry entry referencing this file (`roadmap:` with `mode: reps`)
+- [[doc-index]] — catalog entry pointing to this file (`mode: grill-each` declared in frontmatter above)
 - [[grill]] — consumes the slot prompts + mini-refine patterns from this file
 - [[refine]] — consumes the vibe→spec tables for full refine passes
 - [[review]] — consumes the gate checks from this file

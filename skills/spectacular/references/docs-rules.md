@@ -1,8 +1,22 @@
-# Docs Overrides — engine rules for `spectacular docs <verb>`
+---
+doc-id: docs-page
+mode: stub
+location: docs/<section>/<slug>.md
+scope: per-request
+template: templates/docs/page.md.tmpl
+snapshot-on-edit: false
+summary: "Single user-facing docs page (deprecated v1.2.0 — see pageworks)"
+status: deprecated
+covers-additional-doc-ids: [docs-manifest]
+---
+
+# Docs Rules — skill rules for `spectacular docs <verb>`
 
 > **⚠ DEPRECATED in spectacular v1.2.0** — public-facing docs authoring is now owned by the [pageworks](https://github.com/alexsmedile/pageworks) skill. This reference will be removed in spectacular v2.0.0. The equivalent (pageworks-native) lives at `pageworks/skills/pageworks/references/authoring.md`.
 
-Consumed by the generic engine (`grill.md` / `refine.md` / `review.md`) when the active doc-id is `docs-page` or `docs-manifest`. Schema and folder contract live in [[docs-contract]].
+Consumed by `grill.md` / `refine.md` / `review.md` when the active doc-id is `docs-page` or `docs-manifest`. Schema and folder contract live in [[docs-contract]].
+
+> **Note on shared rules file:** this file declares dispatch for two doc-ids (`docs-page` as primary, `docs-manifest` via `covers-additional-doc-ids`). Special-case for the deprecated docs surface. New docs should follow the one-doc-one-rules-file pattern.
 
 ## Scope
 

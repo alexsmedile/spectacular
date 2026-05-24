@@ -5,6 +5,46 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.4.0] — 2026-05-24
+
+### Breaking
+- **`mode: reps` removed** from the substrate. Migrated to `mode: grill-each` (per-block grill walk). Existing rules files in `skills/spectacular/references/` are auto-migrated. Custom packs declaring `mode: reps` need a one-line update.
+- **`doc-registry.md` renamed to `doc-index.md`** and reframed as a human-readable catalog. Dispatch (mode, slots, template, location, scope, snapshot-on-edit, kit-support) now lives in each `<doc-id>-rules.md` file's **frontmatter**, not in the index. Snapshot preserved at `doc-registry@v1.md`.
+- **Top-level "engine" terminology dropped** across the skill (~37 architectural occurrences). The shared verbs are now described as skill flows (grill / refine / review) — not "the engine".
+
+### Added
+- **Grill sub-modes** — `mode: grill` is now an alias for `grill-wide` (single broad pass); new values `grill-wide` / `grill-each` / `grill-loop` describe interaction shape. `grill-loop` is a new wide-then-deep style (fast pass with short answers, then revisit slots flagged vague/incomplete via the heuristic: length < 30, vague-word match, placeholder string, or gate-check fail).
+- **Flag override** — `spectacular <doc> grill --wide | --each | --loop` forces a sub-mode for this session, overriding the doc's declared mode.
+- **Per-doc rules files for the 6 implicit docs** — `principles-rules.md`, `architecture-rules.md`, `stack-rules.md`, `agents-rules.md`, `spec-rules.md`, `decisions-rules.md`. Every registered doc now has a rules file (consistency over brevity).
+- **Frontmatter schema on every rules file** — 4 required fields (`doc-id`, `mode`, `location`, `scope`) + mode-conditional (`template`, `slots`, `kit-support`, `snapshot-on-edit`) + 3 optional (`summary`, `version`, `status`). Strict — `doctor frontmatter` will validate.
+- **CLI agentic-verb redirect** — typing `spectacular <doc> grill | refine | review` at terminal prints a friendly redirect to run inside Claude Code or Codex. Agentic verbs require an LLM; mechanical verbs (`new`, `archive`, `snapshot`, `init`, `doctor`, `pack`, `migrate`) continue to run in CLI.
+- **Verb × mode matrix** documented in `doc-index.md` — defines behavior for every cell including the previously undefined ones: `grill × stub` (polite hint + optional `--wide` override), `grill × freeform` (open-ended prompt; skill infers slot list on the fly), `refine × append` (user picks scope: latest / all / pick).
+- **PLAN.md `phase:` axis** — Phase (lifecycle), Verb (action), Mode (doc shape) are now treated as three orthogonal axes, never collapsed. Phase taxonomy: `discover / spec-refine / mvp / iterate / test / release-prep / release`.
+- **`KNOWN_DOCS` extended** — CLI now recognizes `plan` and `tasks` for doc-verb dispatch and redirect.
+
+### Changed
+- **`grill.md` rewritten** — mode resolution section, sub-mode dispatch logic, flag-override behavior, grill-loop algorithm + vagueness heuristic, 7 worked examples (PRD wide, PLAN wide, ROADMAP each, PERSONAS each, PRD loop override, DECISIONS append, AGENTS stub).
+- **Rules-file H1s standardized** — "X Overrides" → "X Rules" across prd, plan, tasks, roadmap, pack, docs. The word "overrides" was misleading: rules files don't override anything, they declare per-doc behavior consumed by the shared skill flows.
+- **SKILL.md routing table + references index** — updated for v1.4.0 (15 reference rows for the doc-writing layer; doc-id list bumped to 14; references-table groups rules files together).
+- **`doc-index.md`** is now a human catalog, not a dispatch contract. Sections: project-wide / per-request / user-scope / public-facing (deprecated) / skill-internal. Mode taxonomy table + verb × mode matrix included.
+- **`docs/commands.md`** — added agentic vs mechanical verb table; grill sub-modes section; v1.4.0 doc list.
+- **`.spectacular/SPEC.md`** — Doc-writing capability bullet rewritten for v1.4.0 (rules-files-as-dispatch, verb taxonomy, agentic/mechanical split).
+- **`CONTRIBUTING.md`** — new-doc-type contribution guide updated to point at rules-file + template + catalog row pattern.
+
+### Fixed (from substrate audit — codex G1 + G2 findings)
+- **G1: registry's "no code changes" claim is now honest.** Pre-v1.4.0 `doc-registry.md` claimed adding a new doc required no code changes, but the CLI's `KNOWN_DOCS` constant and dispatch logic needed editing. Now: CLI reads only catalog fields (doc-id, location, mode) for `init` / `doctor`; agentic dispatch lives entirely in the skill and reads rules-file frontmatter. New doc = rules file + template + catalog row. No CLI edits.
+- **G2: "generic engine" overclaim removed.** The skill flows (grill / refine / review) aren't one unified engine — they're verb-specific behaviors that dispatch on mode. Docs now describe them honestly.
+
+### Migration notes
+- **No user action required for in-repo workspaces.** Rules files in `.spectacular/` are bundled by the skill, not user-authored. They migrate transparently when the user updates the skill.
+- **Custom packs / project-local rules files** using `mode: reps` should update to `mode: grill-each`. `doctor packs` will warn.
+- **External tooling reading `doc-registry.md`** by path needs to point at `doc-index.md`. A snapshot is preserved at `references/doc-registry@v1.md`.
+
+### Process
+- substrate-clarity request shipped via M1 discovery grill + M2 spec-refine + M3-M8 build. 7 decisions locked during the discovery session (see `.spectacular/archive/substrate-clarity-v1.4.0/discovery.md` post-archive).
+
+---
+
 ## [1.3.0] — 2026-05-24
 
 ### Added

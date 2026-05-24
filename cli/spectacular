@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.3.0"
+SPECTACULAR_VERSION="1.4.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_REPO="alexsmedile/spectacular"
 GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
@@ -32,7 +32,7 @@ OPT_MINIMAL=false
 ALWAYS_SET="prd spec config agents"
 
 # Known doc IDs (kit triggers-docs entries and --with values must match these)
-KNOWN_DOCS="prd spec principles architecture roadmap stack decisions agents config personas"
+KNOWN_DOCS="prd spec principles architecture roadmap stack decisions agents config personas plan tasks"
 
 # Bundled kits (must exist as templates/prd/kits/<id>.md in installed skill)
 KNOWN_KITS="blank coding content product research"
@@ -4783,10 +4783,41 @@ main() {
     exit $?
   fi
 
+  # ── doc-verb pre-check (agentic verbs are skill-only) ──
+  # Matches `spectacular <doc> grill|refine|review` and redirects when called
+  # from terminal. Grill + refine require an LLM (slot interview, vibe→spec
+  # rewrite). Review is mixed — structural part runs in `doctor`, semantic
+  # part requires the skill.
+  if in_list "$subcmd" "$KNOWN_DOCS"; then
+    local doc_verb="${2:-}"
+    case "$doc_verb" in
+      grill|refine|review)
+        local doc="$subcmd"
+        shift 2
+        skill_verb_message "$doc $doc_verb" \
+          "Agentic verb — requires an LLM to interview, rewrite, or gate-check ${doc}." \
+          "$@"
+        ;;
+      "")
+        # `spectacular <doc>` with no verb — let the skill infer (grill if empty, review if filled)
+        local doc="$subcmd"
+        shift
+        skill_verb_message "$doc" \
+          "Agentic dispatch — the skill resolves the right verb from ${doc}'s current state." \
+          "$@"
+        ;;
+      *)
+        die "Unknown verb '$doc_verb' for doc '$subcmd'.
+Agentic verbs (skill-only):  grill | refine | review
+Run inside Claude Code or Codex:  /spectacular $subcmd <verb>"
+        ;;
+    esac
+  fi
+
   if [[ "$subcmd" != "init" ]]; then
     die "Unknown command: '${subcmd}'.
 CLI verbs:   init | doctor | pack | docs | migrate | new | promote | snapshot | archive | touch
-Skill verbs (run via /spectacular in your AI agent): status | remember"
+Skill verbs (run via /spectacular in your AI agent): status | remember | <doc> grill | <doc> refine | <doc> review"
   fi
 
   shift

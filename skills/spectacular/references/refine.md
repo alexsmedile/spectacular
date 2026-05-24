@@ -2,7 +2,7 @@
 
 Loaded when the user runs `spectacular <doc> refine` (full-document refine pass) or implicitly by `grill.md` (mini-refine during slot loop) or when `<doc>` has `mode: append` in the registry.
 
-This is the **doc-agnostic** engine. Per-doc patterns live in rules files (`prd-rules.md`, `plan-rules.md`, etc.).
+This is the **doc-agnostic** skill. Per-doc patterns live in rules files (`prd-rules.md`, `plan-rules.md`, etc.).
 
 ## Core principle
 
@@ -65,7 +65,7 @@ Append mode never grills slots and never runs the review gate — the unit of ch
 
 ## Pattern sources
 
-The engine combines two pattern sources:
+The skill combines two pattern sources:
 
 ### Base patterns (universal)
 
@@ -86,7 +86,7 @@ Loaded from the rules file referenced in the registry. Examples:
 - PLAN's "milestone before tasks" ordering rule
 - PLAN's "dependency link validation" (frontmatter `related:` targets must exist)
 
-Rules files declare which slots their patterns apply to. The engine never blindly applies a pattern to the wrong slot.
+Rules files declare which slots their patterns apply to. The skill never blindly applies a pattern to the wrong slot.
 
 ## The `[NEEDS CLARIFICATION]` convention
 
@@ -167,7 +167,7 @@ spectacular decisions
 
 ## Related
 
-- [[doc-registry]] — the registry the engine consumes
+- [[doc-index]] — the registry the skill consumes
 - [[grill]] — calls mini-refine inline during slot loop
 - [[review]] — gate that depends on these patterns being resolved
 - [[prd-rules]], [[plan-rules]], [[tasks-rules]] — per-doc pattern sources

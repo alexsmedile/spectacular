@@ -1,8 +1,20 @@
+---
+doc-id: personas
+mode: grill-each
+location: .spectacular/PERSONAS.md
+scope: project-wide
+template: templates/personas/base.md
+slots: [Who, Wants to, Pain, Stories, Not for]
+snapshot-on-edit: true
+summary: "Opt-in audience profiles + user stories — Who / Wants to / Pain / Stories / Not for"
+status: active
+---
+
 # PERSONAS Rules
 
-Per-doc rules consumed by the generic grill/refine/review engine when the user invokes `spectacular personas <verb>`.
+Per-doc rules consumed by `grill.md` / `refine.md` / `review.md` when the user invokes `spectacular personas <verb>`.
 
-PERSONAS.md is an **opt-in, `reps`-mode** doc. The agent walks all 5 slots once per persona block, then asks "add another persona? [y/n]" and repeats until done. Same shape as ROADMAP (per-version-block slot walks).
+PERSONAS.md is an **opt-in, `grill-each`-mode** doc. The agent walks all 5 slots once per persona block, then asks "add another persona? [y/n]" and repeats until done. Same shape as ROADMAP (per-version-block slot walks).
 
 ## Slot definitions (per persona block)
 
@@ -16,7 +28,7 @@ PERSONAS.md is an **opt-in, `reps`-mode** doc. The agent walks all 5 slots once 
 
 ## Grill prompts
 
-When grilling PERSONAS.md, the engine walks each persona block and asks:
+When grilling PERSONAS.md, the skill walks each persona block and asks:
 
 ### For each persona block
 
@@ -89,6 +101,6 @@ A PERSONAS.md with 3 personas, each fully filled, ~80 lines total:
 
 - [[grill]] — generic interactive slot-filler
 - [[review]] — generic quality gate runner
-- [[doc-registry]] — registry entry for `personas`
+- [[doc-index]] — registry entry for `personas`
 - [[prd-rules]] — reference example of rules file shape
 - [[scaffold-reference]] § PERSONAS.md — template stub

@@ -72,7 +72,7 @@ Spectacular projects can capture their procedural sequences (release cycle, hotf
 - Workflow as registered doc-type with its own grill (similar shape to PLAN.md)
 
 **Exit criteria:**
-- Workflow file format defined and registered in `doc-registry.md`
+- Workflow file format defined and registered (rules file at `references/workflow-rules.md`, catalog entry in `doc-index.md`)
 - 2-3 example workflows shipped (release-checklist, hotfix-procedure)
 - Skill flow exercises a workflow end-to-end on a real release
 

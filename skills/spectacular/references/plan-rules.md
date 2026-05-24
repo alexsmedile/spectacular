@@ -1,6 +1,18 @@
-# PLAN Overrides — PLAN-specific rules consumed by the generic engine
+---
+doc-id: plan
+mode: grill
+location: .spectacular/requests/<slug>/PLAN.md
+scope: per-request
+template: templates/plan/base.md
+slots: [Goal, Constraints, Milestones, Tasks, Dependencies, Validation, Deliverables]
+snapshot-on-edit: false
+summary: "Request-scoped plan — 7-slot decomposition (owns lifecycle state)"
+status: active
+---
 
-Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `plan` (per registry).
+# PLAN Rules — PLAN-specific rules consumed by the skill
+
+Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `plan` (per doc-index).
 
 ## Slot prompts
 
@@ -88,13 +100,13 @@ Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `plan` (
 
 ### Milestone-before-tasks ordering
 
-PLAN structure check: milestones (slot 3) must logically precede tasks (slot 4 / TASKS.md). The engine doesn't enforce this beyond confirming both slots are present — the human ordering check happens during refine.
+PLAN structure check: milestones (slot 3) must logically precede tasks (slot 4 / TASKS.md). The skill doesn't enforce this beyond confirming both slots are present — the human ordering check happens during refine.
 
 If TASKS.md has groupings, those groupings should reference the slot-3 milestones by name or number.
 
 ## Related
 
-- [[doc-registry]] — registry entry referencing this file
-- [[grill]], [[refine]], [[review]] — engines that consume this
+- [[doc-index]] — registry entry referencing this file
+- [[grill]], [[refine]], [[review]] — skill flows that consume this
 - [[tasks-rules]] — companion override for TASKS.md
 - [[prd-rules]] — reference example with kit-support

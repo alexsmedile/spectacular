@@ -108,7 +108,7 @@ Stdout per fix: `✓ fixed <area>: <action>`. After all mechanical fixes apply, 
 - [[doctor-areas]] — per-area check tables (load when explaining/implementing a check)
 - [[doctor-repair]] — judgment-fix repair flow (load on `--fix` invocations)
 - [[doctor-substrate]] — auto-invocation spec (load from status/grill/onboarding/lifecycle)
-- [[doc-registry]] — source of truth for "what should each doc look like"
+- [[doc-index]] — source of truth for "what should each doc look like"
 - [[kits-contract]] — schema doctor validates kit files against
 - [[verification]] — convention doctor's lifecycle check enforces
 - [[versioning]] — snapshot-before-edit rule every doctor judgment fix follows

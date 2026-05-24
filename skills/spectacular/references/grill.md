@@ -1,24 +1,45 @@
-# Grill — generic interactive slot-filling engine
+# Grill — interactive slot-filling skill
 
-Loaded when the user runs `spectacular <doc> grill` (or `spectacular <doc>` when the doc is empty and `mode: grill`).
+Loaded when the user runs `spectacular <doc> grill` (or `spectacular <doc>` when the doc is empty and the doc's `mode:` is grill-family).
 
-This is the **doc-agnostic** engine. PRD-specific behavior lives in `prd-rules.md`; PLAN-specific behavior in `plan-rules.md`; etc. The engine reads the registry entry for the requested doc to know which template, slots, location, and rules file to use.
+This is the **doc-agnostic** skill. PRD-specific behavior lives in `prd-rules.md`; PLAN-specific behavior in `plan-rules.md`; etc. The skill reads the requested doc's **rules file frontmatter** to know which template, slots, location, sub-mode, and per-doc rules to use.
+
+> **Skill-only.** The `grill` verb requires an LLM to reason about answers, ask follow-ups, and run mini-refine. The CLI (`cli/spectacular`) does not dispatch grill — when called at terminal, it prints a friendly redirect to run inside Claude Code or Codex.
 
 ## Core principle
 
-**One question at a time. Strict slot order. Stop when ready.**
+**One question at a time. Slot order respects the sub-mode. Stop when ready.**
 
-No upfront interview. No multi-step research. The grill walks the slots declared in the registry, in order, runs an inline mini-refine on each answer using the doc's override patterns (if any), writes to disk immediately, and exits to a review gate at the end.
+No upfront interview. No multi-step research. The skill walks the slots declared in the rules file, runs an inline mini-refine on each answer using the doc's per-doc patterns (if any), writes to disk immediately, and exits to a review gate at the end.
 
 ## Behavior
 
-### 1. Resolve the registry entry
+### 0. Mode resolution
 
-1. Read `references/doc-registry.md`, look up the requested `<doc>`.
-2. If `mode != grill`, route accordingly: `append` → `refine` engine in append mode; `freeform` → just scaffold the template and exit.
-3. Load: `template`, `slots`, `location`, `snapshot-on-edit`, `rules`.
+Each doc declares a `mode:` in its rules-file frontmatter. The `grill-*` family has four values:
 
-**Substrate check (auto-invoked on failure):** if `doc-registry.md` won't parse, or the requested doc's `rules:` file is malformed, or the active `kit:` file fails to load — auto-run `spectacular doctor kits frontmatter` and surface findings before refusing to grill. See [[doctor-substrate]] for the full table.
+| `mode:` | Behavior |
+|---|---|
+| `grill` | Alias for `grill-wide` (default style). |
+| `grill-wide` | Walk all slots once, in order. One pass. (PRD, PLAN, convention-pack.) |
+| `grill-each` | Per-block walk — same slots repeated for each block. Agent asks "add another?" after each completed block. (ROADMAP per-version, PERSONAS per-person.) |
+| `grill-loop` | Wide pass first (fast, short answers ok), then deep pass over slots flagged as vague/incomplete. |
+
+**Flag override.** If the user passes `--wide` / `--each` / `--loop`, the flag wins over the declared mode for this invocation. The rules-file mode is the default; the flag is a per-session override.
+
+If `mode:` is **not** grill-family (i.e. `append` / `stub` / `freeform` / `reference`), route accordingly:
+- `append` → `refine` skill in append mode (`refine.md` § append)
+- `stub` → polite no-op: "`<doc>` is a stub doc. Open in editor, or pass `--wide` to grill it ad-hoc for this session."
+- `freeform` → open-ended prompt: "What do you want to capture here?" Skill infers a slot list from the answer and walks it.
+- `reference` → error: "`<doc>` is skill-internal, not user-facing."
+
+### 1. Load rules file
+
+1. Read `references/<doc-id>-rules.md`, parse frontmatter.
+2. Load: `template`, `slots`, `location`, `scope`, `snapshot-on-edit`, `kit-support`, `mode`.
+3. Body of the rules file contains slot prompts, vague-word lists, mini-refine patterns, gate checks.
+
+**Substrate check (auto-invoked on failure):** if the rules file won't parse or is missing, or the active `kit:` file fails to load — auto-run `spectacular doctor kits frontmatter` and surface findings before refusing to grill. See [[doctor-substrate]].
 
 ### 2. Pre-flight
 
@@ -41,9 +62,11 @@ After scaffolding the base template, apply the kit's deltas:
 4. **Set frontmatter** — write `kit: <kit-id>` to the file's frontmatter so the review gate knows which kit checks to apply.
 5. **(Smart-init only)** — `triggers-docs.always` is consumed downstream by the init flow; the grill itself does not scaffold sibling docs.
 
-### 3. The slot loop (strict order)
+### 3. The slot loop
 
-For each slot in the **resolved slot list** (registry's `slots:` list + active kit's `adds-slots` inserted at declared positions), in order:
+For each slot in the **resolved slot list** (rules file's `slots:` + active kit's `adds-slots` inserted at declared positions), the slot loop respects the resolved sub-mode:
+
+**Inner loop (always the same):**
 
 ```
 Ask the slot's question
@@ -61,11 +84,31 @@ On "edit" → re-ask with the user's nudge
 On "y"   → advance
 ```
 
-After the last slot: run the review gate (`review.md`). If it passes, exit. If not, show the punch list and loop on flagged items (out-of-order revisit is allowed here — strict order applies only during initial grill).
+**Outer loop, per sub-mode:**
+
+| Sub-mode | Outer loop |
+|---|---|
+| `grill-wide` | Walk slots 1..N once. After slot N: run review gate. If it passes, exit. If not, show punch list and revisit flagged slots (out-of-order revisit allowed here). |
+| `grill-each` | Walk slots 1..N for one block. After slot N: ask "review this block? (y/skip)". On review pass, ask "add another block?". Repeat until user declines. Each block gets independent slot walks. |
+| `grill-loop` | **Pass 1 (wide):** walk slots 1..N fast — accept one-line / short answers, mini-refine relaxed. Mark each slot as needs-deepening if it matches the [grill-loop heuristic](#grill-loop-heuristic). **Pass 2 (deep):** revisit only flagged slots; run full grill-wide quality on each. Exit on review gate pass. |
+| `grill` (= `grill-wide`) | Same as grill-wide. |
+
+### 3a. grill-loop heuristic
+
+In pass 1 of `grill-loop`, mark a slot as **needs-deepening** if **any of:**
+
+1. Answer length < 30 characters
+2. Answer matches any word from the rules file's vague-word list (scoped to that slot)
+3. Answer contains placeholder strings: `<…>`, `TODO`, `tbd`
+4. Slot has an explicit gate-check (in the rules file) that fails on this answer
+
+In pass 2, walk only flagged slots with full grill-wide quality (mini-refine, confirmation step, etc.).
+
+If the user explicitly asks to skip pass 2, accept it and exit to the review gate.
 
 ### 4. Slot prompts
 
-The engine needs a question per slot. Sources, in order of preference:
+The skill needs a question per slot. Sources, in order of preference:
 
 1. **Kit-added slot** — if the slot comes from the active kit's `adds-slots`, use the kit's `prompt:` (and `example:` if present)
 2. **Rules file** — if `rules:` is set, look for a `## Slot prompts` section listing per-slot prompts for base slots
@@ -88,7 +131,7 @@ Skip silently if the user declines.
 
 ## Mini-refine (inline)
 
-After every answer, the engine scans for vague-language patterns. If hit, *propose* a tighter version and ask the user to accept or override.
+After every answer, the skill scans for vague-language patterns. If hit, *propose* a tighter version and ask the user to accept or override.
 
 Pattern sources:
 - **Base patterns** (universal): vague adjectives applied to slots not exempted by the rules file.
@@ -123,31 +166,55 @@ If the user wants to bail mid-grill, accept it — save what's filled, leave `<P
 
 ## Examples
 
-### PRD grill
+### PRD grill (mode: grill = grill-wide)
 
-Registry says: `mode: grill`, `slots: [Vision, Problem, Target users, Deliverable, Goals & success criteria, Non-goals, Constraints, First milestone]`, `overrides: references/prd-rules.md`.
+`prd-rules.md` frontmatter: `mode: grill`, 8 slots, `kit-support: true`.
 
-Engine: scaffolds from `templates/prd/base.md`, walks 8 slots, runs PRD-specific mini-refine (kit-aware, Vision-exempt), exits on review gate pass.
+Skill: scaffolds from `templates/prd/base.md`, runs kit selection, walks 8 slots once, applies PRD-specific mini-refine (Vision-exempt, plural-user → singular, etc.), exits on review gate pass.
 
-### PLAN grill
+### PLAN grill (mode: grill)
 
-Registry says: `mode: grill`, `slots: [Goal, Constraints, Milestones, Tasks, Dependencies, Validation, Deliverables]`, `overrides: references/plan-rules.md`.
+`plan-rules.md` frontmatter: `mode: grill`, 7 slots.
 
-Engine: scaffolds from `templates/plan/base.md`, walks 7 slots, runs PLAN-specific mini-refine (milestone ordering, dependency-link validation), exits on review gate pass.
+Skill: scaffolds from `templates/plan/base.md`, walks 7 slots once, applies PLAN mini-refine (milestone ordering, dependency-link validation), exits on review gate pass.
+
+### ROADMAP grill-each
+
+`roadmap-rules.md` frontmatter: `mode: grill-each`, 6 slots per version block.
+
+Skill: scaffolds from `templates/roadmap/base.md`, walks 6 slots for the current version block, runs per-block review gate, then asks "add another version block?". Each version is independent.
+
+### PERSONAS grill-each
+
+`personas-rules.md` frontmatter: `mode: grill-each`, 5 slots per persona.
+
+Skill: scaffolds from `templates/personas/base.md`, walks 5 slots for one persona block, asks "add another persona?". User can stop at 1-5 personas (review gate warns if >5).
+
+### PRD grill-loop (flag override)
+
+User runs `spectacular prd grill --loop`. Override forces `grill-loop` regardless of declared mode.
+
+Skill: pass 1 walks all 8 slots fast accepting short answers, flags slots that match the heuristic (e.g. "users love it" hits vague-word list for slot 5). Pass 2 revisits flagged slots with full grill-wide quality.
 
 ### DECISIONS append
 
-Registry says: `mode: append`. Engine does **not** invoke grill — routes to `refine` engine's append mode, which asks for a one-line title + decision + reasoning + tradeoffs, then appends a single entry to DECISIONS.md.
+`decisions-rules.md` frontmatter: `mode: append`. Skill does **not** invoke the slot loop — routes to `refine.md` § append, which asks for title + context + decision + consequences, then appends one entry.
 
-### ROADMAP freeform
+### AGENTS stub (grill called)
 
-Registry says: `mode: stub`. Engine does **not** invoke grill — just scaffolds the template and exits. The user edits the file directly.
+User runs `spectacular agents grill`. `agents-rules.md` frontmatter: `mode: stub`.
+
+Skill prints: *"AGENTS.md is a stub doc. Open in editor, or pass `--wide` to grill it ad-hoc for this session."* Exits.
+
+If `--wide` was passed: skill generates a slot list on the fly from the existing AGENTS.md sections, then walks them with grill-wide behavior. The stub mode is unchanged — this is a one-off session.
 
 ## Related
 
-- [[doc-registry]] — the registry the engine consumes
+- [[doc-index]] — human catalog of doc types
 - [[refine]] — vibe→spec rewriter, also handles append mode
 - [[review]] — quality gate run at the end
 - [[prd-rules]] — per-doc rules (reference example)
 - [[plan-rules]] — per-doc rules
-- [[scaffold-reference]] — what templates look like (separate concern)
+- [[roadmap-rules]] — grill-each example
+- [[personas-rules]] — grill-each example
+- [[scaffold-reference]] — what templates look like

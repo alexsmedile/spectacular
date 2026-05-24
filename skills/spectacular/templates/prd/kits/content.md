@@ -52,6 +52,7 @@ modifies-slots:
 triggers-docs:
   always:
     - roadmap
+    - personas
   suggested:
     - principles
     - decisions

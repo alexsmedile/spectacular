@@ -32,7 +32,7 @@ OPT_MINIMAL=false
 ALWAYS_SET="prd spec config agents"
 
 # Known doc IDs (kit triggers-docs entries and --with values must match these)
-KNOWN_DOCS="prd spec principles architecture roadmap stack decisions agents config"
+KNOWN_DOCS="prd spec principles architecture roadmap stack decisions agents config personas"
 
 # Bundled kits (must exist as templates/prd/kits/<id>.md in installed skill)
 KNOWN_KITS="blank coding content product research"
@@ -2186,6 +2186,35 @@ summary: \"Architectural and product decisions log\"
 "
 }
 
+doc_personas() {
+  write_if_missing ".spectacular/PERSONAS.md" "---
+version: 1.0
+updated: ${TODAY}
+summary: \"Audience profiles and the user stories that drive build decisions\"
+related:
+  - PRD.md
+---
+
+# Personas
+
+> Opt-in canonical doc. Lightweight — each persona stays 6-10 lines. Stories live attached to the persona that uses them. Aim for 2-5 personas total.
+
+## <Persona name>
+
+**Who** — One sentence. Role + context.
+
+**Wants to** — One sentence. The outcome they're trying to reach.
+
+**Pain** — 1-2 bullets.
+-
+
+**Stories** — \"As X, I want Y, so Z.\"
+-
+
+**Not for** — *(optional)* Who this is explicitly NOT serving.
+"
+}
+
 doc_agents() {
   local name="$1" agents_file="$2"
   write_if_missing ".spectacular/${agents_file}" "---
@@ -2365,6 +2394,7 @@ scaffold() {
       stack)         doc_stack ;;
       decisions)     doc_decisions ;;
       agents)        doc_agents "$name" "$agents_file" ;;
+      personas)      doc_personas ;;
       *) die "Unknown doc ID in resolved set: '$doc'" ;;
     esac
   done
@@ -2411,7 +2441,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -2441,6 +2471,7 @@ Areas (run all if omitted):
   conventions   active convention_pack resolves; gitignore drift in scaffold/enforce modes
   specs         SPEC.md present + parseable; specs/ dir present; legacy current/ migration
   docs          docs.yaml + frontmatter validation across the docs/ tree (v0.6.0+)
+  personas      PERSONAS.md frontmatter + persona blocks + stories (v1.3.0+; opt-in)
 
 Options:
   --fix              Apply mechanical fixes (gitignore append, missing dirs,
@@ -2466,7 +2497,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) require_value "--format" "${2:-}"; DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas)
         if [[ -z "$DOC_OPT_AREA" ]]; then
           DOC_OPT_AREA="$1"
         else
@@ -3317,6 +3348,94 @@ check_docs() {
   fi
 }
 
+# ── area: personas (v1.3.0+ — opt-in) ────────────────────────────────────────
+# PERSONAS.md is an opt-in canonical doc. Absent → skip with info. Present →
+# validate frontmatter + at least one persona block + at least one story per
+# persona. Never errors on absence.
+check_personas() {
+  [[ -d ".spectacular" ]] || return 0
+
+  local pf=".spectacular/PERSONAS.md"
+
+  if [[ ! -f "$pf" ]]; then
+    doc_add "personas" "info" "$pf" "PERSONAS.md not scaffolded — opt-in via 'spectacular init --with personas' or product/content kits" \
+      "skip" "judgment"
+    return 0
+  fi
+
+  # Frontmatter present
+  if head -1 "$pf" | grep -q '^---$'; then
+    doc_add "personas" "pass" "$pf" "PERSONAS.md present with frontmatter"
+  else
+    doc_add "personas" "error" "$pf" "PERSONAS.md missing frontmatter delimiter" \
+      "add proper frontmatter block" "judgment"
+    return 0
+  fi
+
+  # Count persona blocks (lines starting with "## " in body, skipping placeholder).
+  # Only the first two `---` lines are frontmatter delimiters; later `---` are
+  # visual separators between persona blocks and must not toggle the fm state.
+  local persona_count
+  persona_count=$(awk '
+    /^---$/ && fm_seen < 2 { fm = !fm; fm_seen++; next }
+    !fm && /^## / && !/^## <Persona/ { count++ }
+    END { print count + 0 }
+  ' "$pf")
+
+  if [[ "$persona_count" -eq 0 ]]; then
+    doc_add "personas" "warning" "$pf" "PERSONAS.md has no filled persona blocks (only placeholders)" \
+      "replace '## <Persona name>' placeholders with real persona blocks" "judgment"
+    return 0
+  fi
+
+  doc_add "personas" "pass" "$pf" "${persona_count} persona block(s) found"
+
+  # Soft warn: >5 personas
+  if [[ "$persona_count" -gt 5 ]]; then
+    doc_add "personas" "warning" "$pf" "${persona_count} personas — >5 typically signals decoration; consider merging or cutting" \
+      "ask: would removing one change a build decision? if no, cut it" "judgment"
+  fi
+
+  # Per-persona story count: each persona block (## heading) must contain ≥1
+  # story line ("- As ..."). Awk walks blocks and reports any block with zero.
+  local empty_personas
+  empty_personas=$(awk '
+    /^---$/ && fm_seen < 2 { fm = !fm; fm_seen++; next }
+    !fm && /^## / && !/^## <Persona/ {
+      if (in_block && story_count_in_block == 0) {
+        empty_names = empty_names ? empty_names ", " current : current
+      }
+      current = $0
+      sub(/^## /, "", current)
+      in_block = 1
+      story_count_in_block = 0
+      next
+    }
+    !fm && in_block && /^- As / { story_count_in_block++ }
+    END {
+      if (in_block && story_count_in_block == 0) {
+        empty_names = empty_names ? empty_names ", " current : current
+      }
+      print empty_names
+    }
+  ' "$pf")
+
+  local total_story_count
+  total_story_count=$(grep -c '^- As ' "$pf" || true)
+
+  if [[ -n "$empty_personas" ]]; then
+    doc_add "personas" "warning" "$pf" "persona(s) without stories: ${empty_personas}" \
+      "each persona needs ≥1 'As X, I want Y, so Z' story; persona without stories is decoration" "judgment"
+  fi
+
+  if [[ "$total_story_count" -gt 0 ]]; then
+    doc_add "personas" "pass" "$pf" "${total_story_count} user story line(s) across ${persona_count} persona(s)"
+  else
+    doc_add "personas" "warning" "$pf" "no user stories found (expected 'As X, I want Y, so Z' format)" \
+      "add stories to each persona" "judgment"
+  fi
+}
+
 # ── doctor orchestrator ───────────────────────────────────────────────────────
 # Dispatch a list of area names to their check_<area> functions.
 # Single source of truth — adding a new area only requires touching this one case.
@@ -3333,6 +3452,7 @@ run_areas() {
       conventions) check_conventions ;;
       specs)       check_specs ;;
       docs)        check_docs ;;
+      personas)    check_personas ;;
       *)           die "Unknown doctor area: '$area'" ;;
     esac
   done
@@ -3880,7 +4000,7 @@ pack() {
 
 # ── docs subcommand (v0.6.0+) ─────────────────────────────────────────────────
 # Mechanical scaffold for public-facing docs/ tree. Interactive doc-writing
-# verbs (new, review, status) live in the skill — see docs-overrides.md.
+# verbs (new, review, status) live in the skill — see docs-rules.md.
 
 docs_usage() {
   cat <<EOF
@@ -3913,7 +4033,7 @@ Options:
   -h, --help            Show this help
 
 See: skills/spectacular/references/docs-contract.md           for schema (deprecated)
-     skills/spectacular/references/docs-overrides.md          for engine rules (deprecated)
+     skills/spectacular/references/docs-rules.md          for engine rules (deprecated)
      skills/spectacular/references/docs-renderer-adapters.md  for export adapters (deprecated)
      skills/spectacular/references/pageworks-handoff.md       for the migration path
 EOF

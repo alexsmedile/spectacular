@@ -230,6 +230,33 @@ Use `spectacular new <description>` — never create `requests/<slug>/PRD.md` (a
 - Don't create per-request PRDs
 ```
 
+### PERSONAS.md (opt-in)
+```md
+---
+version: 1.0
+updated: <today>
+summary: "Audience profiles and the user stories that drive build decisions"
+related:
+  - PRD.md
+---
+
+# Personas
+
+> Opt-in. Lightweight — each persona 6-10 lines. Stories live with the persona.
+
+## <Persona name>
+
+**Who** — One sentence. Role + context.
+**Wants to** — One sentence. The outcome they're trying to reach.
+**Pain** — 1-2 bullets.
+- <pain>
+**Stories** — "As X, I want Y, so Z."
+- As <persona>, I want <action>, so that <outcome>
+**Not for** — *(optional)* Who this is explicitly NOT serving.
+```
+
+Scaffolded only when `product` or `content` kit is selected, or via `spectacular init --with personas`. Validated by `spectacular doctor personas` when present; absence is never an error.
+
 ### config.yaml
 ```yaml
 project:

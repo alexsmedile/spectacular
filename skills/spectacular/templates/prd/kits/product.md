@@ -39,6 +39,7 @@ modifies-slots:
 triggers-docs:
   always:
     - roadmap
+    - personas
   suggested:
     - stack
     - architecture

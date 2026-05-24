@@ -7,7 +7,8 @@ sections:
   - id: getting-started
     title: Getting Started
     order: 1
-    pages: []      # to populate as install / quickstart / concepts get authored
+    pages:
+      - installation
 
   - id: guides
     title: Guides

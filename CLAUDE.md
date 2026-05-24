@@ -27,26 +27,48 @@ spectacular/
 │   ├── STACK.md               # Host project's tech choices
 │   ├── DECISIONS.md           # ADR-style decision log
 │   ├── specs/                 # Per-capability specs (optional; SPEC.md is the index)
-│   └── requests/              # Active and planned work
-│       ├── spec-rename/             # SPEC.md + specs/ rename (status: active, v0.5.0)
-│       ├── public-docs-foundation/  # docs/ first-class surface (status: planned)
-│       └── public-docs-advanced/    # v2 docs surface (status: planned)
+│   ├── requests/              # Active and planned work
+│   └── archive/               # Completed requests (never deleted)
+├── .claude-plugin/            # Claude Code plugin manifest + marketplace.json
+├── .codex-plugin/             # Codex plugin manifest
 ├── cli/                       # CLI implementation
-│   ├── spectacular            # Bash binary — spectacular init
+│   ├── spectacular            # Bash binary
 │   └── install.sh             # curl-installable installer
-└── skills/spectacular/        # The skill itself
-    ├── SKILL.md               # Lean orchestrator — triggers + routing table
-    ├── references/            # Reference docs loaded on demand by the skill
-    └── templates/             # Canonical templates (PRD kits, base)
+├── skills/spectacular/        # The skill itself
+│   ├── SKILL.md               # Lean orchestrator — triggers + routing table
+│   ├── references/            # Reference docs loaded on demand by the skill
+│   ├── templates/             # Canonical templates (PRD kits, base)
+│   └── versions/              # Historical SKILL.md snapshots
+├── packs/                     # App-store convention packs (alex-default)
+├── hooks/                     # ⚠ Claude Code / Codex PLUGIN event handlers
+│                              #   (loaded by the plugin runtime when installed)
+├── scripts/                   # Repo-local automation
+│   └── hooks/                 # ⚠ GIT hooks (pre-commit, etc.) — managed by git-guard
+├── tests/                     # Bash test suite (9 areas)
+├── docs/                      # User-facing docs (commands, configuration, install…)
+├── CHANGELOG.md
+├── README.md
+├── CONTRIBUTING.md
+├── LICENSE
+├── CLAUDE.md                  # This file
+└── AGENTS.md                  # Agent onboarding pointer
 ```
+
+> **Note on the two `hooks/` directories:** `hooks/` at repo root contains
+> **Claude/Codex plugin hooks** (`hooks.json`, `hooks-codex.json`) — these
+> are read by the plugin runtime *after* a user installs spectacular as a
+> plugin. `scripts/hooks/` contains **git hooks** (e.g. `pre-commit`) that
+> run locally during development of *this* repo, managed by the git-guard
+> skill. Same word, different runtimes. Don't conflate.
 
 ## Active Requests
 
-| Slug | Status | Summary |
-|---|---|---|
-| `convention-pack-modules` | planned | v2 modular packs — stays planned until composition pain surfaces from v1 use |
+| Slug | Status | Target | Summary |
+|---|---|---|---|
+| `convention-pack-modules` | planned (gated) | tbd | v2 modular packs — stays planned until composition pain surfaces from v1 use |
+| `spec-refactor` | planned | v1.3.0 | Audit SPEC.md, promote 1-2 dense capabilities to `specs/<capability>/SPEC.md` |
 
-**Archived (shipped):** `pageworks-migration` (v1.2.0 — public-facing docs extracted to standalone `pageworks` skill; spectacular kept discovery-only awareness, verbs deprecated, removal target v2.0.0), `public-docs-advanced` (v1.1.0 — narrowed scope: MkDocs + Docusaurus adapters only, dogfood deferred to future docs-writer-driven request), `cli-bootstrap` (v0.2.0, verified v1.0.1), `roadmap-richness-v2` (v0.7.2), `roadmap-richness` (v0.7.1), `convention-pack-fabricator` (v0.4.0), `cli-mutator-verbs` (v0.7.0), `workspace-migrations` (Stage 1: v0.6.1; Stage 2: v0.6.2), `doctor` (v0.3.1), `spec-rename` (v0.5.0), `public-docs-foundation` (v0.6.0), `convention-pack-application` (v0.4.0), plus pre-v0.4 work (`repo-conventions` superseded by pack system in v0.4.0). See `.spectacular/archive/`.
+**Archived (shipped):** `convention-pack-schema` (foundation pre-v0.4.0), `pageworks-migration` (v1.2.0 — public-facing docs extracted to standalone `pageworks` skill; spectacular kept discovery-only awareness, verbs deprecated, removal target v2.0.0), `public-docs-advanced` (v1.1.0 — narrowed scope: MkDocs + Docusaurus adapters only, dogfood deferred to future docs-writer-driven request), `cli-bootstrap` (v0.2.0, verified v1.0.1), `roadmap-richness-v2` (v0.7.2), `roadmap-richness` (v0.7.1), `convention-pack-fabricator` (v0.4.0), `cli-mutator-verbs` (v0.7.0), `workspace-migrations` (Stage 1: v0.6.1; Stage 2: v0.6.2), `doctor` (v0.3.1), `spec-rename` (v0.5.0), `public-docs-foundation` (v0.6.0), `convention-pack-application` (v0.4.0), plus pre-v0.4 work (`repo-conventions` superseded by pack system in v0.4.0). See `.spectacular/archive/`.
 
 ## Skill Architecture
 

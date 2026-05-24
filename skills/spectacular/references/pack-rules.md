@@ -204,8 +204,8 @@ User packs must pick a distinct id. Recommended: `<owner>-default` (e.g. `alex-d
 ## Related
 
 - [[packs-contract]] — schema spec this grill produces against
-- [[doc-registry]] — registry entry pointing here as `overrides:`
+- [[doc-registry]] — registry entry pointing here as `rules:`
 - [[grill]] — consumes the slot prompts + mini-refine patterns from this file
 - [[refine]] — consumes the vibe→spec tables for full refine passes
 - [[review]] — consumes the gate checks from this file
-- [[prd-overrides]] — sibling override file (reference for shape)
+- [[prd-rules]] — sibling rules file (reference for shape)

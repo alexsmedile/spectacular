@@ -16,7 +16,7 @@ This is the onboarding doc for any agent or human landing inside this workspace.
 <!--
   AGENTS.md governs THIS folder (.spectacular/).
   Repo-root AGENTS.md / CLAUDE.md govern the whole repository.
-  This file is mode: freeform — edit directly, no slot grill.
+  This file is mode: stub — edit directly, no slot grill.
 -->
 
 ## What this folder is

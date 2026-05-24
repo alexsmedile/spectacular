@@ -2,7 +2,7 @@
 
 Loaded when the user runs `spectacular <doc> refine` (full-document refine pass) or implicitly by `grill.md` (mini-refine during slot loop) or when `<doc>` has `mode: append` in the registry.
 
-This is the **doc-agnostic** engine. Per-doc patterns live in override files (`prd-overrides.md`, `plan-overrides.md`, etc.).
+This is the **doc-agnostic** engine. Per-doc patterns live in rules files (`prd-rules.md`, `plan-rules.md`, etc.).
 
 ## Core principle
 
@@ -18,7 +18,7 @@ The user is always in the driver's seat.
 
 ### Inline mini-refine
 
-Called by `grill.md` after each slot answer. Fast, targeted, **one slot only**. Reads patterns from the doc's override file (if present) plus base patterns.
+Called by `grill.md` after each slot answer. Fast, targeted, **one slot only**. Reads patterns from the doc's rules file (if present) plus base patterns.
 
 ### Full-document refine
 
@@ -69,7 +69,7 @@ The engine combines two pattern sources:
 
 ### Base patterns (universal)
 
-Apply to any doc unless explicitly exempted by the override file.
+Apply to any doc unless explicitly exempted by the rules file.
 
 - **Vague adjectives** — words like `fast`, `simple`, `intuitive`, `scalable`, `seamless`, `great`, `flexible`, `robust` → propose measurable replacement
 - **Empty lists** — list slots with zero or one item, where context implies multiple → propose "add more"
@@ -77,16 +77,16 @@ Apply to any doc unless explicitly exempted by the override file.
 
 **Tokenization rule** (applies to all word-based pattern matching) — preserve hyphenated compounds as single tokens. Use `[a-z]+(?:-[a-z]+)*` (or equivalent) instead of `\b\w+\b`. This prevents false positives where a vague word appears inside a compound identifier (e.g. `smart-init`, `doc-writer`, `kits-as-plugins` should not match the vague-word list even though they contain `smart`, `doc`, `kits`). Compound identifiers are almost always slugs, package names, or hyphenated technical terms — preserving them dramatically reduces false-positive rate.
 
-### Per-doc patterns (override file)
+### Per-doc patterns (rules file)
 
-Loaded from the override file referenced in the registry. Examples:
+Loaded from the rules file referenced in the registry. Examples:
 
 - PRD's "plural-user → singular" rule (only valid for the Target users slot)
 - PRD's "no number+verb+date in success" check (only valid for Goals slot)
 - PLAN's "milestone before tasks" ordering rule
 - PLAN's "dependency link validation" (frontmatter `related:` targets must exist)
 
-Override files declare which slots their patterns apply to. The engine never blindly applies a pattern to the wrong slot.
+Rules files declare which slots their patterns apply to. The engine never blindly applies a pattern to the wrong slot.
 
 ## The `[NEEDS CLARIFICATION]` convention
 
@@ -170,5 +170,5 @@ spectacular decisions
 - [[doc-registry]] — the registry the engine consumes
 - [[grill]] — calls mini-refine inline during slot loop
 - [[review]] — gate that depends on these patterns being resolved
-- [[prd-overrides]], [[plan-overrides]], [[tasks-overrides]] — per-doc pattern sources
+- [[prd-rules]], [[plan-rules]], [[tasks-rules]] — per-doc pattern sources
 - [[versioning]] — full refine snapshots prior version when `snapshot-on-edit: true`

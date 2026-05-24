@@ -96,5 +96,5 @@ If TASKS.md has groupings, those groupings should reference the slot-3 milestone
 
 - [[doc-registry]] — registry entry referencing this file
 - [[grill]], [[refine]], [[review]] — engines that consume this
-- [[tasks-overrides]] — companion override for TASKS.md
-- [[prd-overrides]] — reference example with kit-support
+- [[tasks-rules]] — companion override for TASKS.md
+- [[prd-rules]] — reference example with kit-support

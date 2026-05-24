@@ -13,7 +13,7 @@ The skill does **not** run a full doctor sweep. It runs the relevant area(s) and
 | Invoking flow | Doctor subset | Auto-trigger condition |
 |---|---|---|
 | `references/status.md` briefing | `workspace frontmatter kits` | If `config.yaml`, root doc frontmatter, or `doc-registry.md` won't parse |
-| `references/grill.md` pre-flight | `kits frontmatter` | If `doc-registry.md`, the requested doc's `<doc>-overrides.md`, or the active kit file won't parse |
+| `references/grill.md` pre-flight | `kits frontmatter` | If `doc-registry.md`, the requested doc's `<doc>-rules.md`, or the active kit file won't parse |
 | `references/onboarding.md` first-invocation | `workspace frontmatter` | First time the skill sees a workspace |
 | `references/lifecycle.md` transition to `verified` | `lifecycle` (scoped to that request) | Always — verifies the verification artifact exists per [[verification]] |
 

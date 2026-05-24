@@ -15,7 +15,7 @@ related:
   long-term are vision (just direction). Icebox at the end for ideas not yet
   tied to any version.
 
-  Mode: structured (v0.7.1+). Use `spectacular roadmap grill <version>` to walk
+  Mode: reps (v0.7.1+; renamed from "structured" in v1.3.0). Use `spectacular roadmap grill <version>` to walk
   the slots interactively. Use `spectacular roadmap refine` to apply vibe→spec
   rewrites + autopopulate Linked requests. Use `spectacular roadmap review` to
   check the gate.
@@ -41,9 +41,9 @@ related:
 
   Beginner pattern: start at vision tier (one paragraph), graduate to themed
   when 2nd version exists, unlock full when first request links via
-  target_version: in PLAN frontmatter. See roadmap-overrides.md.
+  target_version: in PLAN frontmatter. See roadmap-rules.md.
 
-  See `references/roadmap-overrides.md` for the full spec.
+  See `references/roadmap-rules.md` for the full spec.
 -->
 
 ## v<X.Y.Z> — <Active or near-term theme>
@@ -126,7 +126,7 @@ Free text. No commitments. No dates. No specifics. Just enough to anchor
        4. Fill tier-appropriate slots
        5. Delete from Icebox (only after the version block is complete)
 
-     See roadmap-overrides.md § Icebox-promotion ritual for details.
+     See roadmap-rules.md § Icebox-promotion ritual for details.
 
      Why "Icebox": convergent dev-tool idiom (GitHub Projects, Pivotal, Linear,
      GIST's Idea Bank). Distinguishes "unbound idea" from "planned but vague"

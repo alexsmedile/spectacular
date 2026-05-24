@@ -13,7 +13,7 @@ related:
 <!--
   Architecture describes the project's own structural conventions.
   Distinct from STACK.md (which describes the host project's tech choices).
-  This file is mode: freeform — no slot grill, edit directly.
+  This file is mode: stub — no slot grill, edit directly.
 -->
 
 This document defines the **structure of `.spectacular/`** — what each folder and file is for, how they relate, and the conventions every file must follow.

@@ -13,7 +13,7 @@ related:
   STACK describes the *host project's* tech choices (Next.js, Postgres, etc.).
   Distinct from ARCHITECTURE.md (which describes .spectacular/'s own layout).
   Replaced per project — for a Next.js app it lists Next.js; for a Bash CLI it lists Bash.
-  This file is mode: freeform — no slot grill, edit directly.
+  This file is mode: stub — no slot grill, edit directly.
 -->
 
 ## Language(s)

@@ -12,7 +12,7 @@ related:
 <!--
   Principles guide every decision in this project. Keep concise — small files over giant documents.
   Each principle has a one-line statement + a "How this is enforced" sub-bullet.
-  This file is mode: freeform — no slot grill, edit directly.
+  This file is mode: stub — no slot grill, edit directly.
 -->
 
 ## 1. <Principle title>

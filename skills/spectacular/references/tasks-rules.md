@@ -1,6 +1,6 @@
 # TASKS Overrides — TASKS-specific rules consumed by the generic engine
 
-Loaded by `refine.md` / `review.md` when the active doc is `tasks` (per registry). TASKS.md is `mode: freeform` — no grill loop, but the engine still validates structure on review.
+Loaded by `refine.md` / `review.md` when the active doc is `tasks` (per registry). TASKS.md is `mode: stub` — no grill loop, but the engine still validates structure on review.
 
 ## Behavior
 
@@ -37,4 +37,4 @@ TASKS.md is created when a request is scaffolded (via `spectacular new`). The en
 
 - [[doc-registry]] — registry entry referencing this file
 - [[refine]], [[review]] — engines that consume this
-- [[plan-overrides]] — companion override for PLAN.md
+- [[plan-rules]] — companion override for PLAN.md

@@ -75,7 +75,7 @@ description: |
 
 ## Base slot list (the contract)
 
-PRD base slots, in canonical order (from `prd-overrides.md` slot prompts):
+PRD base slots, in canonical order (from `prd-rules.md` slot prompts):
 
 1. Vision
 2. Problem
@@ -157,7 +157,7 @@ The always-set (`PRD.md`, `SPEC.md`, `requests/`, `specs/`, `config.yaml`, `AGEN
 
 A project can override a bundled kit by placing a same-named kit file at `.spectacular/templates/prd/kits/<kit-id>.md`. Project-local takes precedence over the skill's bundled kit. Used for customizing kit defaults per project.
 
-Override file must conform to the same kits-contract schema; the engine validates frontmatter on load.
+Rules file must conform to the same kits-contract schema; the engine validates frontmatter on load.
 
 ## Worked example: coding kit
 
@@ -225,5 +225,5 @@ When applied during grill:
 - [[doc-registry]] — declares which docs support kits (currently only `prd: kit-support: true`)
 - [[grill]] — consumes kit's `adds-slots` and `modifies-slots`
 - [[review]] — runs base checks always, kit checks only when kit declared
-- [[prd-overrides]] — base PRD slot prompts that kits layer onto
+- [[prd-rules]] — base PRD slot prompts that kits layer onto
 - [[smart-init]] (planned) — consumes `triggers-docs` to drive scaffolding

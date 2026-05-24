@@ -2,7 +2,7 @@
 
 Loaded when the user runs `spectacular <doc> grill` (or `spectacular <doc>` when the doc is empty and `mode: grill`).
 
-This is the **doc-agnostic** engine. PRD-specific behavior lives in `prd-overrides.md`; PLAN-specific behavior in `plan-overrides.md`; etc. The engine reads the registry entry for the requested doc to know which template, slots, location, and override file to use.
+This is the **doc-agnostic** engine. PRD-specific behavior lives in `prd-rules.md`; PLAN-specific behavior in `plan-rules.md`; etc. The engine reads the registry entry for the requested doc to know which template, slots, location, and rules file to use.
 
 ## Core principle
 
@@ -16,9 +16,9 @@ No upfront interview. No multi-step research. The grill walks the slots declared
 
 1. Read `references/doc-registry.md`, look up the requested `<doc>`.
 2. If `mode != grill`, route accordingly: `append` → `refine` engine in append mode; `freeform` → just scaffold the template and exit.
-3. Load: `template`, `slots`, `location`, `snapshot-on-edit`, `overrides`.
+3. Load: `template`, `slots`, `location`, `snapshot-on-edit`, `rules`.
 
-**Substrate check (auto-invoked on failure):** if `doc-registry.md` won't parse, or the requested doc's `overrides:` file is malformed, or the active `kit:` file fails to load — auto-run `spectacular doctor kits frontmatter` and surface findings before refusing to grill. See [[doctor-substrate]] for the full table.
+**Substrate check (auto-invoked on failure):** if `doc-registry.md` won't parse, or the requested doc's `rules:` file is malformed, or the active `kit:` file fails to load — auto-run `spectacular doctor kits frontmatter` and surface findings before refusing to grill. See [[doctor-substrate]] for the full table.
 
 ### 2. Pre-flight
 
@@ -28,7 +28,7 @@ Before asking anything:
    - If yes and not empty: ask "There's an existing <doc>. Refine it (`<doc> refine`) or start over (creates `<DOC>@vN.md` snapshot first if `snapshot-on-edit: true`)?"
    - If yes and effectively empty (only template placeholders): proceed to grill directly.
    - If no: scaffold from `template`. For per-request docs, supply `<slug>` from context (either the user provided it, or this was invoked via `spectacular new`).
-2. If the doc supports kits (`kit-support: true`) and no kit is set in frontmatter, run kit selection per the doc's override file (see `prd-overrides.md` § Kit selection for PRD's flow; contract is documented in [[kits-contract]]).
+2. If the doc supports kits (`kit-support: true`) and no kit is set in frontmatter, run kit selection per the doc's rules file (see `prd-rules.md` § Kit selection for PRD's flow; contract is documented in [[kits-contract]]).
 3. Confirm or infer project name + per-doc context (e.g. PLAN.md needs a request slug).
 
 ### 2a. Kit application (only when kit-support: true and a kit was selected)
@@ -50,7 +50,7 @@ Ask the slot's question
   ↓
 Receive answer
   ↓
-Run mini-refine inline (load patterns from overrides file if present)
+Run mini-refine inline (load patterns from rules file if present)
   ↓
 Write/update file immediately (replace <PLACEHOLDER> for that slot)
   ↓
@@ -68,7 +68,7 @@ After the last slot: run the review gate (`review.md`). If it passes, exit. If n
 The engine needs a question per slot. Sources, in order of preference:
 
 1. **Kit-added slot** — if the slot comes from the active kit's `adds-slots`, use the kit's `prompt:` (and `example:` if present)
-2. **Override file** — if `overrides:` is set, look for a `## Slot prompts` section listing per-slot prompts for base slots
+2. **Rules file** — if `rules:` is set, look for a `## Slot prompts` section listing per-slot prompts for base slots
 3. **Template inline comments** — `<!-- ... -->` comments at the top of each slot section in the template
 4. **Generic fallback** — `"Fill in the <Slot Name> section."`
 
@@ -91,12 +91,12 @@ Skip silently if the user declines.
 After every answer, the engine scans for vague-language patterns. If hit, *propose* a tighter version and ask the user to accept or override.
 
 Pattern sources:
-- **Base patterns** (universal): vague adjectives applied to slots not exempted by the override file.
-- **Per-doc patterns** (override file): doc-specific rules like PRD's "plural-user → singular" or PLAN's "unbounded milestone → dated".
+- **Base patterns** (universal): vague adjectives applied to slots not exempted by the rules file.
+- **Per-doc patterns** (rules file): doc-specific rules like PRD's "plural-user → singular" or PLAN's "unbounded milestone → dated".
 
 If the user can't resolve a flag right now, insert `[NEEDS CLARIFICATION: <specific gap>]` inline and continue. The review gate will catch it later.
 
-Slots can be exempted from mini-refine via the override file's `## Mini-refine exemptions` section. (Example: PRD's Vision slot is exempt because narrative abstraction is expected.)
+Slots can be exempted from mini-refine via the rules file's `## Mini-refine exemptions` section. (Example: PRD's Vision slot is exempt because narrative abstraction is expected.)
 
 ## Stop condition
 
@@ -125,13 +125,13 @@ If the user wants to bail mid-grill, accept it — save what's filled, leave `<P
 
 ### PRD grill
 
-Registry says: `mode: grill`, `slots: [Vision, Problem, Target users, Deliverable, Goals & success criteria, Non-goals, Constraints, First milestone]`, `overrides: references/prd-overrides.md`.
+Registry says: `mode: grill`, `slots: [Vision, Problem, Target users, Deliverable, Goals & success criteria, Non-goals, Constraints, First milestone]`, `overrides: references/prd-rules.md`.
 
 Engine: scaffolds from `templates/prd/base.md`, walks 8 slots, runs PRD-specific mini-refine (kit-aware, Vision-exempt), exits on review gate pass.
 
 ### PLAN grill
 
-Registry says: `mode: grill`, `slots: [Goal, Constraints, Milestones, Tasks, Dependencies, Validation, Deliverables]`, `overrides: references/plan-overrides.md`.
+Registry says: `mode: grill`, `slots: [Goal, Constraints, Milestones, Tasks, Dependencies, Validation, Deliverables]`, `overrides: references/plan-rules.md`.
 
 Engine: scaffolds from `templates/plan/base.md`, walks 7 slots, runs PLAN-specific mini-refine (milestone ordering, dependency-link validation), exits on review gate pass.
 
@@ -141,13 +141,13 @@ Registry says: `mode: append`. Engine does **not** invoke grill — routes to `r
 
 ### ROADMAP freeform
 
-Registry says: `mode: freeform`. Engine does **not** invoke grill — just scaffolds the template and exits. The user edits the file directly.
+Registry says: `mode: stub`. Engine does **not** invoke grill — just scaffolds the template and exits. The user edits the file directly.
 
 ## Related
 
 - [[doc-registry]] — the registry the engine consumes
 - [[refine]] — vibe→spec rewriter, also handles append mode
 - [[review]] — quality gate run at the end
-- [[prd-overrides]] — per-doc rules (reference example)
-- [[plan-overrides]] — per-doc rules
+- [[prd-rules]] — per-doc rules (reference example)
+- [[plan-rules]] — per-doc rules
 - [[scaffold-reference]] — what templates look like (separate concern)

@@ -381,6 +381,6 @@ No engine changes. No code edits to the skill. Pack discovery is path-based.
 
 - [[doc-registry]] — declares the `convention-pack` doc type; pack registration entry
 - [[kits-contract]] — sibling pattern for single-doc kit extensions
-- [[pack-overrides]] — (request 2) pack-specific grill prompts the fabricator will consume
+- [[pack-rules]] — (request 2) pack-specific grill prompts the fabricator will consume
 - [[init-workflow]] — (request 3) where pack consumption wires into init
 - [[doctor]] — (request 3) where pack enforce-mode lands as a check area

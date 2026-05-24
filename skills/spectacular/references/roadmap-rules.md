@@ -364,7 +364,7 @@ Placeholder check (no `<TODO>`, `<TBD>`, `???` in any slot), clarification check
 
 These describe categories of work, not what concretely changes. Push for the specific capability.
 
-**Tokenization rule** — same as prd-overrides: hyphenated compounds count as single tokens. `bug-fixes-for-edge-cases` is one token (not vague); "bug fixes for edge cases" is multi-token and hits the blocklist on `bug fixes`.
+**Tokenization rule** — same as prd-rules: hyphenated compounds count as single tokens. `bug-fixes-for-edge-cases` is one token (not vague); "bug fixes for edge cases" is multi-token and hits the blocklist on `bug fixes`.
 
 ## Phase taxonomy override
 
@@ -385,10 +385,10 @@ The bundled default chain is the 9-phase software chain. Most users never overri
 
 ## Related
 
-- [[doc-registry]] — registry entry referencing this file (`roadmap:` with `mode: structured`)
+- [[doc-registry]] — registry entry referencing this file (`roadmap:` with `mode: reps`)
 - [[grill]] — consumes the slot prompts + mini-refine patterns from this file
 - [[refine]] — consumes the vibe→spec tables for full refine passes
 - [[review]] — consumes the gate checks from this file
-- [[prd-overrides]] — sibling override file (structural model)
+- [[prd-rules]] — sibling rules file (structural model)
 - [[packs-contract]] — convention packs that can override the phase chain
 - [[verification]] — 2-of-6 rule that gates whether a version's `test` phase needs a separate VERIFY.md

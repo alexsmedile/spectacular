@@ -111,6 +111,7 @@ State lives in `PLAN.md` frontmatter. The skill reads it on every invocation and
 
 │   ── created on demand ─────────────────────────────────────────────
 ├── memory/             # long-term operational learning (git-committed)
+├── feedback/           # prototyping-mode feedback entries (v1.6.0+)
 └── archive/            # completed requests (never deleted)
 ```
 
@@ -132,6 +133,7 @@ A typical coding project (`spectacular init --kit coding`) scaffolds the always-
 | `spectacular touch <file>` | Bump `updated:` on a canonical doc |
 | `spectacular archive <slug>` | Archive a completed request; propose `SPEC.md`/`specs/` sync + memory entries |
 | `spectacular remember this` | Write an insight to `memory/` immediately |
+| `spectacular feedback-loop` | Prototyping-mode human-feedback loop — pick target, craft proposal, ask user, capture, decide (v1.6.0+) |
 
 > [!WARNING]
 > **`spectacular docs *` verbs are deprecated as of v1.2.0** — public-facing documentation work moved to the standalone [pageworks](https://github.com/alexsmedile/pageworks) skill. The verbs still work and emit a deprecation banner pointing to the equivalent pageworks command; they will be removed in v2.0.0. Install pageworks via its own one-liner.
@@ -152,9 +154,14 @@ spectacular init --global                     # install skill to ~/.agents/ and 
 spectacular init --update                     # re-download latest skill release
 
 spectacular doctor                            # substrate self-check (all areas)
-spectacular doctor <area>                     # scoped: skill | workspace | frontmatter | snapshots | links | lifecycle | kits | conventions | specs | docs
+spectacular doctor <area>                     # scoped: skill | workspace | frontmatter | snapshots | links | lifecycle | kits | conventions | specs | docs | personas | memory | sessions | feedback
 spectacular doctor --fix                      # apply mechanical fixes (gitignore, missing dirs, dangling symlinks, pack drift, legacy current/ migration)
 spectacular doctor --format json              # JSON report for the skill or other tools
+
+spectacular feedback-loop new <target>        # scaffold a feedback entry (status: open); --request <slug> to scope
+spectacular feedback-loop list                # list entries across .spectacular/feedback/ + per-request folders
+spectacular feedback-loop resolve <slug> --next-action <a>   # close with a decision (required flag)
+spectacular feedback-loop archive <slug>      # move to .spectacular/archive/feedback/<year>/
 
 spectacular migrate                           # apply pending workspace schema migrations
 spectacular migrate --dry-run                 # preview the migration plan

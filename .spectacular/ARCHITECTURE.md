@@ -35,6 +35,7 @@ This is distinct from `STACK.md` — STACK describes the **host project's** tech
 ├── requests/           # active and planned work
 ├── skills/             # project-specific reusable skills
 ├── memory/             # long-term operational learning
+├── feedback/           # prototyping-mode feedback entries (v1.6.0+; system-level)
 ├── snapshots/          # versioned snapshots of canonical docs (v1.6.0+)
 │   ├── PRD/            # one folder per canonical doc, uppercase preserved
 │   │   └── @v1.2.md
@@ -245,6 +246,7 @@ requests/add-team-billing/
 ├── SESSION.md          # created when request moves to active
 ├── RISKS.md            # proposed by skill for high-risk requests
 ├── VERIFY.md           # proposed by skill for user-visible or high-stakes changes
+├── feedback/           # request-scoped feedback-loop entries (v1.6.0+; see references/feedback-loop.md)
 ├── specs/              # per-request capability specs (track own frontmatter state)
 └── artifacts/
     ├── screenshots/

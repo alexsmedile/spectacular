@@ -21,7 +21,7 @@ when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type listed in doc-index.md.
-version: 1.5.0
+version: 1.6.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -75,7 +75,31 @@ Each doc is described by a rules file at `references/<doc-id>-rules.md`. The rul
 | `spectacular <doc> refine` | → `references/refine.md` (with `<doc-id>-rules.md` context) |
 | `spectacular <doc> review` | → `references/review.md` (with `<doc-id>-rules.md` context) |
 
-**Doc IDs registered (v1.5.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `memory`, `sessions`, `personas`, `convention-pack`, `docs-manifest`, `docs-page`. Each has a `references/<doc-id>-rules.md` file declaring its dispatch + behavior. See `doc-index.md` for the catalog.
+**Doc IDs registered (v1.6.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `memory`, `sessions`, `personas`, `feedback`, `convention-pack`, `docs-manifest`, `docs-page`. Each has a `references/<doc-id>-rules.md` file declaring its dispatch + behavior. See `doc-index.md` for the catalog.
+
+### Feedback-loop mode (v1.6.0+)
+
+`feedback-loop` is a distinct skill mode for prototyping-stage human-feedback acquisition. **Not** a benchmark or verification pass. See [[feedback-loop]] for the full spec.
+
+| User says / context | Route to |
+|---|---|
+| `spectacular feedback-loop` (no args) | → `references/feedback-loop.md` — list open entries, offer to start one |
+| `spectacular feedback-loop <target>` | → `references/feedback-loop.md` — run the 5-step loop |
+| `spectacular feedback-loop new <target>` | → CLI verb (scaffold one entry, status `open`); see [[feedback-rules]] |
+| `spectacular feedback-loop list` | → CLI verb |
+| `spectacular feedback-loop resolve <slug>` | → CLI verb (close entry, optional auto-promote to memory) |
+| `spectacular feedback-loop archive <slug>` | → CLI verb |
+| `spectacular feedback grill\|refine\|review` | → generic engine via [[feedback-rules]] (works like any registered doc) |
+| Aliases: `iterate`, `experiment`, `test`, `probe`, `try` | → same as `feedback-loop` (hidden — not shown in help) |
+
+**Proactive surfacing — three checkpoints only:**
+1. **Milestone tick in TASKS.md** — after acknowledging the milestone, may offer: "Want to feedback-loop M<N> before moving on?"
+2. **Request status → `review`** — same single-prompt offer scoped to the request as a whole.
+3. **End of `spectacular archive <slug>` flow** — may offer: "Anything worth feedback-looping before this leaves the active set?"
+
+Never mid-flow. Never unsolicited. Single short prompt; user accepts or declines.
+
+**Auto-promotion to memory:** when a feedback resolution captures a durable preference signal ("I always want X", "Y is the right default"), the skill must explicitly confirm before writing a memory entry. No silent promotions. Sets `promoted_to:` on the feedback file.
 
 ### Pack-specific aliases (convenience over `spectacular convention-pack <verb>`)
 

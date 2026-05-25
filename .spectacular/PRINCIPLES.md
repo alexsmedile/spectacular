@@ -118,6 +118,24 @@ Irreversible or canonical-state-changing actions require human confirmation. Rev
 
 ---
 
+## 9. Feedback ≠ verification ≠ benchmark
+
+Three distinct activities, often conflated, must stay separate:
+
+- **Verification** — "did we ship what PLAN said?" Request-scoped, confirmatory, closed-ended. Lives in `VERIFY.md`. Terminates at `verified`.
+- **Feedback loop** — "was that the right thing to ship?" System-scoped, exploratory, open-ended. Lives in `.spectacular/feedback/` or `requests/<slug>/feedback/`. Compounds over time. Never terminates.
+- **Benchmark** — quantitative grading against a fixed task suite. Spectacular has no benchmarks and ships none. The word "evals" is intentionally avoided — it carries HumanEval/MMLU/accuracy-% baggage and pulls the wrong way.
+
+A feature can be `verified` while feedback reveals we built the wrong thing. Feedback can be glowing while VERIFY fails on one missed assertion. The axes are orthogonal — both must be exercised on user-visible changes.
+
+**How the skill enforces this:**
+- `feedback-loop` is a distinct mode; never auto-runs as part of `verify` or `review`
+- Skill surfaces feedback-loop offers at three checkpoints only (milestone complete, request → review, archive flow) — never mid-flow
+- Feedback files use the word "feedback" — never "eval", "benchmark", "score", or grading language
+- `doctor feedback` is judgment-only (no `--fix`); feedback is never auto-resolved
+
+---
+
 # Agent Principles
 
 Agents operating in a Spectacular workspace should:

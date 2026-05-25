@@ -5,6 +5,35 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.6.0] — 2026-05-25
+
+### Added
+- **New mode: `feedback-loop`** — prototyping-stage human-feedback acquisition. A 5-step interaction (pick target → craft proposal → ask user → capture response → decide next action) for probing system fitness. Not a benchmark, not verification, not `review` — a distinct axis orthogonal to all three. Full spec in `skills/spectacular/references/feedback-loop.md`.
+- **New doc-type `feedback`** registered as `mode: index`. Lives at two locations: system-level (`.spectacular/feedback/`) and request-scoped (`.spectacular/requests/<slug>/feedback/`). Dispatch via `feedback-rules.md`. No top-level `FEEDBACK.md` index file — folder listing is canonical.
+- **CLI verbs: `spectacular feedback-loop new|list|resolve|archive`** — scaffold an entry, list across both locations, close with a decision, manually curate to archive. `--request <slug>` scopes to a request; `--next-action` is required on resolve (no silent `tbd` resolutions).
+- **Hidden alias routing** — `iterate`, `experiment`, `test`, `probe`, `try` all route to `cmd_feedback_loop`. Not shown in `--help` per the contract — only `feedback-loop` is documented as the official mode name. Hidden aliases give ergonomic short forms without cluttering discovery.
+- **Doctor area: `feedback`** (judgment-only, no `--fix`). Scans both feedback locations. Flags: required frontmatter missing, `status: open` entries older than 30 days, orphan back-refs (`request:` field pointing to a missing request folder). `DOC_AREAS` count grows from 13 to 14.
+- **PRINCIPLES.md §9 — "Feedback ≠ verification ≠ benchmark"** — codifies the three-axis distinction so future work doesn't conflate them. Explicit guard against the word "evals" (carries HumanEval/MMLU baggage that pulls the wrong way).
+- **Proactive-surfacing contract** — the skill may offer a feedback-loop session at exactly three checkpoints (milestone tick, request status → `review`, end of archive flow). Never mid-flow. Never unsolicited. Single short prompt; user accepts or declines.
+- **Bidirectional back-refs** — feedback entries scoped to a request carry `request: <slug>` in frontmatter; the request's PLAN.md gets a `feedback:` list. When a feedback resolution spawns a new request, the spawned request's PLAN.md gets `spawned_by_feedback:` pointing back.
+- **Auto-promotion to memory contract** — when a feedback resolution captures a durable preference, the skill explicitly confirms before writing a memory entry. CLI flag `--promote-hint` prints the suggested `spectacular remember` command rather than silently writing (memory promotion is a judgment call that needs an LLM in the loop).
+- **New template: `templates/feedback/entry.md`** — frontmatter stub + 7 required body sections (Target / Hypothesis / Proposal / Question asked / User response / Insight / Decision).
+
+### Changed
+- `SKILL.md` routing table adds the feedback-loop mode block + alias routing + three-checkpoint surfacing rules. Doc IDs registered string bumped to v1.6.0 (`feedback` added).
+- `doc-index.md` adds the `feedback` catalog row.
+- `ARCHITECTURE.md` documents both feedback folder locations (system-level and per-request) in the directory trees.
+- `doctor-areas.md` documents the new `feedback` area with check matrix.
+- `top_usage` lists `feedback-loop <sub>` under CLI verbs; help-string area count bumped from "10 areas" to "14 areas" (matches actual `DOC_AREAS`).
+- `doctor_parse_args` recognizes `feedback` as a scoped area.
+
+### Notes
+- **Dogfooded the mode on itself before shipping.** A request-scoped feedback-loop session on the feedback-loop CLI surfaced 4 ergonomic issues — all fixed in the same release: `list` drops the redundant DATE column and truncates slugs >32 chars to 29+`...`; `--promote` renamed `--promote-hint` (honest about advisory behavior); `resolve` requires `--next-action` (clear error guides to `park` if undecided). See `.spectacular/requests/feedback-loop/feedback/2026-05-25-feedback-loop-cli-ergonomics-after-m0-m4.md`.
+- The mode is explicitly **prototyping infrastructure** — not a benchmark, not automated grading. Feedback compounds across sessions as durable insight; promotion to memory is the way feedback graduates into preferences.
+- Composes cleanly with `memory-protocols` (planned v1.6.x+) — auto-promotion will get smarter as memory protocols formalize.
+
+---
+
 ## [1.5.0] — 2026-05-25
 
 ### Added

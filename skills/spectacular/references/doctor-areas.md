@@ -100,6 +100,18 @@ Mechanical fix: missing gitignore entries are appended by `spectacular doctor --
 | Required frontmatter (per page) | ❌ per missing | `title`, `description`, `section`, `status`, `updated` |
 | Frontmatter delimiter | ❌ if missing | Mechanical fix injects stub |
 
+## `feedback` (v1.6.0+)
+
+Judgment-only area — no `--fix`. Scans `.spectacular/feedback/*.md` and `.spectacular/requests/*/feedback/*.md`.
+
+| Check | Severity | Detects |
+|---|---|---|
+| Required frontmatter present | ⚠️ per entry | `type: feedback`, `status`, `opened`, `target` all set |
+| Stale open entries | ⚠️ per entry | `status: open` with `opened` > 30 days ago |
+| Orphan back-refs | ⚠️ per entry | `request:` field points to a missing request folder |
+
+See [[feedback-rules]] and [[feedback-loop]] for the full mode spec.
+
 ## Related
 
 - [[doctor]] — entry point, severity model, report format

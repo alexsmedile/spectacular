@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.5.0"
+SPECTACULAR_VERSION="1.6.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_REPO="alexsmedile/spectacular"
 GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
@@ -176,7 +176,7 @@ Usage: spectacular <command> [options]
 
 CLI verbs (mutate workspace):
   init [opts]            Scaffold .spectacular/ in the current project
-  doctor [area] [--fix]  Substrate self-check (10 areas); --fix applies mechanical repairs
+  doctor [area] [--fix]  Substrate self-check (14 areas); --fix applies mechanical repairs
   pack <list|install|show|remove>      Manage convention packs
   docs <init|export|new|status>        DEPRECATED in v1.2.0 — use 'pageworks' instead
   migrate [--to|--from|--list|--dry-run]   Apply workspace schema migrations
@@ -185,6 +185,7 @@ CLI verbs (mutate workspace):
   snapshot <file>        Versioned copy of a canonical doc (<FILE>@vN.md)
   archive <slug>         Move request to .spectacular/archive/ + rewrite inbound links
   touch <file>           Bump frontmatter 'updated:' to today
+  feedback-loop <sub>    Prototyping-mode human-feedback acquisition (new|list|resolve|archive)
 
 Skill verbs (run via /spectacular in your AI agent):
   status [--against-latest|--since <date>]    Briefing of project state
@@ -1278,6 +1279,330 @@ config_workspace_schema() {
     }
   ' "$cfg")
   echo "${schema:-0.4}"
+}
+
+# ── feedback-loop (v1.6.0+) ──────────────────────────────────────────────────
+# `spectacular feedback-loop <subverb> ...` — prototyping-mode human-feedback
+# acquisition. NOT a benchmark/eval harness. See references/feedback-loop.md.
+#
+# Subverbs:
+#   new <target>           Scaffold a new feedback entry (status: open)
+#   list [--status <s>]    List entries (default: all)
+#   resolve <slug>         Close an entry with a decision
+#   archive <slug>         Move entry to .spectacular/archive/feedback/<year>/
+#
+# Hidden aliases (top-level dispatch routes them here): iterate, experiment,
+# test, probe, try. Not documented in --help.
+cmd_feedback_loop() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    new)     cmd_feedback_loop_new "$@" ;;
+    list)    cmd_feedback_loop_list "$@" ;;
+    resolve) cmd_feedback_loop_resolve "$@" ;;
+    archive) cmd_feedback_loop_archive "$@" ;;
+    ""|--help|-h)
+      cat <<EOF
+Usage: spectacular feedback-loop <subcommand> [options]
+
+Subcommands:
+  new <target>              Scaffold a feedback entry (status: open). Optional:
+                              --request <slug>   Scope to a request
+                              --scope <s>        skill|substrate|convention|doc-type|request
+                              --proposal <text>  One-line proposal summary
+  list [--status <s>]       List feedback entries (open|resolved|parked|all)
+  resolve <slug>            Close entry. Options:
+                              --next-action <a>  ship-as-is|new-request:<slug>|park|memory:<entry>
+                              --promote-hint     Print the `spectacular remember` command to promote
+  archive <slug>            Move entry to .spectacular/archive/feedback/<year>/
+
+Feedback files live at:
+  .spectacular/feedback/<YYYY-MM-DD>-<slug>.md          (system-level)
+  .spectacular/requests/<slug>/feedback/<...>.md        (request-scoped, when --request used)
+
+This is a prototyping-mode feedback loop — not a benchmark or verification pass.
+See references/feedback-loop.md for the full mode spec.
+EOF
+      [[ -z "$sub" ]] && exit 1 || exit 0 ;;
+    *) die "feedback-loop: unknown subcommand '$sub'. Use: new | list | resolve | archive" ;;
+  esac
+}
+
+# Resolve the feedback directory for a given (optional) request slug
+_feedback_dir() {
+  local request="${1:-}"
+  if [[ -n "$request" ]]; then
+    echo ".spectacular/requests/$request/feedback"
+  else
+    echo ".spectacular/feedback"
+  fi
+}
+
+# Walk all feedback locations and emit one path per line
+_feedback_iter_all() {
+  local f
+  if [[ -d ".spectacular/feedback" ]]; then
+    for f in .spectacular/feedback/*.md; do
+      [[ -f "$f" ]] && echo "$f"
+    done
+  fi
+  if [[ -d ".spectacular/requests" ]]; then
+    local d
+    for d in .spectacular/requests/*/feedback; do
+      [[ -d "$d" ]] || continue
+      for f in "$d"/*.md; do
+        [[ -f "$f" ]] && echo "$f"
+      done
+    done
+  fi
+}
+
+# Find a feedback entry by slug across all locations. Echoes path or empty.
+_feedback_find() {
+  local slug="$1" f
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    if [[ "$(basename "$f" .md)" == "$slug" ]]; then
+      echo "$f"
+      return 0
+    fi
+  done < <(_feedback_iter_all)
+  return 1
+}
+
+cmd_feedback_loop_new() {
+  local target="" request="" scope="skill" proposal="" dry_run=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --request)  require_value "--request" "${2:-}"; request="$2"; shift 2 ;;
+      --scope)    require_value "--scope" "${2:-}"; scope="$2"; shift 2 ;;
+      --proposal) require_value "--proposal" "${2:-}"; proposal="$2"; shift 2 ;;
+      --dry-run)  dry_run=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular feedback-loop new <target> [options]
+
+Options:
+  --request <slug>     Scope to a request (file lands under requests/<slug>/feedback/)
+  --scope <s>          skill|substrate|convention|doc-type|request  (default: skill)
+  --proposal <text>    One-line proposal summary (frontmatter)
+  --dry-run            Print the rendered entry, don't write
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for feedback-loop new: $1" ;;
+      *)
+        if [[ -z "$target" ]]; then target="$1"
+        else target="$target $1"
+        fi
+        shift ;;
+    esac
+  done
+
+  [[ -z "$target" ]] && die "feedback-loop new: <target> argument required"
+  [[ -d ".spectacular" ]] || die "feedback-loop new: not inside a Spectacular workspace"
+
+  if [[ -n "$request" ]]; then
+    [[ -d ".spectacular/requests/$request" ]] || die "feedback-loop new: request '$request' not found"
+  fi
+
+  local valid_scopes="skill substrate convention doc-type request"
+  in_list "$scope" "$valid_scopes" || die "feedback-loop new: invalid scope '$scope'. Use: $valid_scopes"
+
+  local entry_dir base_slug slug entry_path
+  entry_dir=$(_feedback_dir "$request")
+  mkdir -p "$entry_dir"
+
+  local target_slug
+  target_slug=$(_slug_from_text "$target")
+  [[ -z "$target_slug" ]] && die "feedback-loop new: could not derive slug from target"
+  base_slug="${TODAY}-${target_slug}"
+  slug=$(_resolve_slug_collision "$entry_dir" "$base_slug" "md")
+  entry_path="$entry_dir/$slug.md"
+
+  local request_yaml="null"
+  [[ -n "$request" ]] && request_yaml="$request"
+
+  local proposal_text="${proposal:-<one-line summary of the proposal shown to the user>}"
+
+  local template rendered
+  template=$(_resolve_template "feedback/entry.md") || die "feedback-loop new: feedback entry template not found"
+  rendered=$(_render_template "$template" \
+    TARGET "$target" \
+    SCOPE "$scope" \
+    DATE "$TODAY" \
+    PROPOSAL_SUMMARY "$proposal_text" \
+    REQUEST "$request_yaml" \
+    HUNCH "_(starting hypothesis — fill during loop)_" \
+    PROPOSAL "_(scenario, variants, artifacts shown to user — fill during loop)_" \
+    QUESTION "_(exact question put to user — fill during loop)_" \
+    RESPONSE "_(verbatim or tight paraphrase — fill during loop)_" \
+    INSIGHT "_(durable lesson — fill during loop)_" \
+    DECISION "_(next_action explained — fill during loop)_")
+
+  if $dry_run; then
+    echo "── would write $entry_path ──"
+    echo "$rendered"
+    return 0
+  fi
+
+  echo "$rendered" > "$entry_path"
+  created "$entry_path"
+  info "  → status: open"
+  [[ -n "$request" ]] && info "  → scoped to request: $request"
+  info "  ↳ run the 5-step loop in /spectacular, then 'spectacular feedback-loop resolve $slug'"
+}
+
+cmd_feedback_loop_list() {
+  local status_filter="all"
+  while (( $# > 0 )); do
+    case "$1" in
+      --status) require_value "--status" "${2:-}"; status_filter="$2"; shift 2 ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular feedback-loop list [--status open|resolved|parked|all]
+
+Lists all feedback entries across .spectacular/feedback/ and
+.spectacular/requests/*/feedback/.
+EOF
+        exit 0 ;;
+      *) die "Unknown flag for feedback-loop list: $1" ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "feedback-loop list: not inside a Spectacular workspace"
+
+  # Slug carries the date prefix; we drop the DATE column to avoid duplication.
+  # Slugs over 32 chars truncate to 29 + "..." to keep columns aligned.
+  local count=0 f status target request
+  printf "%-32s  %-9s  %-10s  %s\n" "SLUG" "STATUS" "SCOPE" "TARGET"
+  printf "%-32s  %-9s  %-10s  %s\n" "----" "------" "-----" "------"
+
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    status=$(fm_get "$f" "status")
+    [[ -z "$status" ]] && status="?"
+    if [[ "$status_filter" != "all" && "$status" != "$status_filter" ]]; then
+      continue
+    fi
+    target=$(fm_get "$f" "target")
+    local scope_val
+    scope_val=$(fm_get "$f" "scope")
+    local slug slug_display
+    slug=$(basename "$f" .md)
+    if (( ${#slug} > 32 )); then
+      slug_display="${slug:0:29}..."
+    else
+      slug_display="$slug"
+    fi
+    request=$(fm_get "$f" "request")
+    local loc_marker=""
+    [[ "$request" != "null" && -n "$request" ]] && loc_marker=" [req:$request]"
+    printf "%-32s  %-9s  %-10s  %s%s\n" "$slug_display" "$status" "${scope_val:-?}" "${target:-?}" "$loc_marker"
+    count=$((count + 1))
+  done < <(_feedback_iter_all)
+
+  if [[ $count -eq 0 ]]; then
+    if [[ "$status_filter" == "all" ]]; then
+      info "(no feedback entries yet — start one with 'spectacular feedback-loop new <target>')"
+    else
+      info "(no feedback entries with status: $status_filter)"
+    fi
+  fi
+}
+
+cmd_feedback_loop_resolve() {
+  local slug="" next_action="" promote_hint=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --next-action) require_value "--next-action" "${2:-}"; next_action="$2"; shift 2 ;;
+      --promote-hint) promote_hint=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular feedback-loop resolve <slug> [options]
+
+Options:
+  --next-action <a>    ship-as-is | new-request:<slug> | park | memory:<entry>
+  --promote-hint       Print the `spectacular remember` command to promote this
+                       resolution to memory. Does NOT auto-write — promotion is
+                       a judgment call that requires user-confirmed text. Run
+                       the printed command manually after confirming.
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for feedback-loop resolve: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "feedback-loop resolve: only one <slug> argument allowed"
+        slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "feedback-loop resolve: <slug> argument required"
+  [[ -z "$next_action" ]] && die "feedback-loop resolve: --next-action required (ship-as-is | new-request:<slug> | park | memory:<entry>)
+Resolving without an explicit decision leaves next_action: tbd — that's a smell.
+Use 'feedback-loop list' to inspect, or set --next-action park to defer."
+  [[ -d ".spectacular" ]] || die "feedback-loop resolve: not inside a Spectacular workspace"
+
+  local entry_path
+  entry_path=$(_feedback_find "$slug") || die "feedback-loop resolve: feedback entry '$slug' not found"
+
+  local current_status
+  current_status=$(fm_get "$entry_path" "status")
+  [[ "$current_status" == "resolved" ]] && info "  ℹ already resolved — updating frontmatter anyway"
+
+  fm_set "$entry_path" "status" "resolved"
+  fm_set "$entry_path" "resolved" "$TODAY"
+  fm_set "$entry_path" "next_action" "$next_action"
+
+  created "$entry_path"
+  info "  → status: resolved"
+  info "  → next_action: $next_action"
+
+  if $promote_hint; then
+    info "  ↳ memory promotion: distill the preference and run:"
+    info "      spectacular remember \"<preference>\" --tag feedback,$(fm_get "$entry_path" "scope")"
+    info "      then: fm_set $entry_path promoted_to memory/<slug>.md"
+    # We deliberately do NOT auto-write memory here — promotion requires explicit
+    # user-confirmed text per the contract in PRINCIPLES.md § 9.
+  fi
+}
+
+cmd_feedback_loop_archive() {
+  local slug=""
+  while (( $# > 0 )); do
+    case "$1" in
+      --help|-h)
+        cat <<EOF
+Usage: spectacular feedback-loop archive <slug>
+
+Move a feedback entry to .spectacular/archive/feedback/<year>/<slug>.md.
+Use when an entry is no longer actively relevant. Resolved entries do NOT
+auto-archive — this is a manual curation verb.
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for feedback-loop archive: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "feedback-loop archive: only one <slug> argument allowed"
+        slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "feedback-loop archive: <slug> argument required"
+  [[ -d ".spectacular" ]] || die "feedback-loop archive: not inside a Spectacular workspace"
+
+  local src
+  src=$(_feedback_find "$slug") || die "feedback-loop archive: feedback entry '$slug' not found"
+
+  local year archive_dir target
+  year=$(date +%Y)
+  archive_dir=".spectacular/archive/feedback/$year"
+  mkdir -p "$archive_dir"
+  target="$archive_dir/$(basename "$src")"
+
+  if [[ -e "$target" ]]; then
+    die "feedback-loop archive: target already exists: $target"
+  fi
+
+  mv "$src" "$target"
+  created "$target"
+  info "  → archived from $src"
 }
 
 # ── archive ──────────────────────────────────────────────────────────────────
@@ -2995,7 +3320,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -3053,7 +3378,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) require_value "--format" "${2:-}"; DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback)
         if [[ -z "$DOC_OPT_AREA" ]]; then
           DOC_OPT_AREA="$1"
         else
@@ -4163,6 +4488,96 @@ check_sessions() {
   fi
 }
 
+# ── check_feedback (v1.6.0+) ─────────────────────────────────────────────────
+# Judgment-only area (no --fix). Flags:
+#   - open entries older than 30 days
+#   - missing required frontmatter fields
+#   - orphan back-refs (PLAN feedback: list mentions a missing file, or
+#     entry's request: field points to a missing request)
+check_feedback() {
+  [[ -d ".spectacular" ]] || return 0
+
+  local top_dir=".spectacular/feedback"
+  local has_any=false
+
+  if [[ -d "$top_dir" ]] || ls -d .spectacular/requests/*/feedback >/dev/null 2>&1; then
+    has_any=true
+  fi
+
+  if ! $has_any; then
+    doc_add "feedback" "info" ".spectacular/feedback/" "no feedback entries yet — start one with 'spectacular feedback-loop new <target>'" \
+      "skip" "judgment"
+    return 0
+  fi
+
+  local entry_count=0 open_count=0 stale_count=0 malformed_count=0 orphan_count=0
+  local stale_slugs="" malformed_files="" orphan_files=""
+  local now_epoch threshold_epoch
+  now_epoch=$(date "+%s")
+  # 30 days = 2592000 seconds
+  threshold_epoch=$((now_epoch - 2592000))
+
+  local f
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    entry_count=$((entry_count + 1))
+
+    # Required fields
+    local type_v status_v opened_v target_v request_v
+    type_v=$(fm_get "$f" "type")
+    status_v=$(fm_get "$f" "status")
+    opened_v=$(fm_get "$f" "opened")
+    target_v=$(fm_get "$f" "target")
+    request_v=$(fm_get "$f" "request")
+
+    if [[ "$type_v" != "feedback" ]] || [[ -z "$status_v" ]] || [[ -z "$opened_v" ]] || [[ -z "$target_v" ]]; then
+      malformed_count=$((malformed_count + 1))
+      malformed_files="${malformed_files:+$malformed_files, }$(basename "$f")"
+      continue
+    fi
+
+    if [[ "$status_v" == "open" ]]; then
+      open_count=$((open_count + 1))
+      local opened_epoch
+      opened_epoch=$(date -j -f "%Y-%m-%d" "$opened_v" "+%s" 2>/dev/null || echo 0)
+      if [[ $opened_epoch -gt 0 && $opened_epoch -lt $threshold_epoch ]]; then
+        stale_count=$((stale_count + 1))
+        stale_slugs="${stale_slugs:+$stale_slugs, }$(basename "$f" .md)"
+      fi
+    fi
+
+    # Orphan back-ref: request: field set but request folder missing
+    if [[ -n "$request_v" && "$request_v" != "null" ]]; then
+      if [[ ! -d ".spectacular/requests/$request_v" ]]; then
+        orphan_count=$((orphan_count + 1))
+        orphan_files="${orphan_files:+$orphan_files, }$(basename "$f" .md)→$request_v"
+      fi
+    fi
+  done < <(_feedback_iter_all)
+
+  if [[ $entry_count -eq 0 ]]; then
+    doc_add "feedback" "info" "$top_dir" "no feedback entries yet"
+    return 0
+  fi
+
+  doc_add "feedback" "pass" "$top_dir" "$entry_count feedback entries ($open_count open)"
+
+  if [[ $malformed_count -gt 0 ]]; then
+    doc_add "feedback" "warning" "$top_dir" "$malformed_count entries missing required frontmatter ($malformed_files)" \
+      "ensure type, status, opened, and target fields are set; see references/feedback-rules.md" "judgment"
+  fi
+
+  if [[ $stale_count -gt 0 ]]; then
+    doc_add "feedback" "warning" "$top_dir" "$stale_count open entries stale (>30 days): $stale_slugs" \
+      "resolve with 'spectacular feedback-loop resolve <slug>' or mark parked" "judgment"
+  fi
+
+  if [[ $orphan_count -gt 0 ]]; then
+    doc_add "feedback" "warning" "$top_dir" "$orphan_count entries reference a missing request: $orphan_files" \
+      "unset request: field or restore the request folder" "judgment"
+  fi
+}
+
 # ── doctor orchestrator ───────────────────────────────────────────────────────
 # Dispatch a list of area names to their check_<area> functions.
 # Single source of truth — adding a new area only requires touching this one case.
@@ -4182,6 +4597,7 @@ run_areas() {
       personas)    check_personas ;;
       memory)      check_memory ;;
       sessions)    check_sessions ;;
+      feedback)    check_feedback ;;
       *)           die "Unknown doctor area: '$area'" ;;
     esac
   done
@@ -5517,6 +5933,10 @@ main() {
     decide)   shift; cmd_decide "$@"; exit $? ;;
     session)  shift; cmd_session "$@"; exit $? ;;
     promote)  shift; cmd_promote "$@"; exit $? ;;
+    # Feedback-loop (v1.6.0+): canonical name + hidden aliases.
+    # Aliases are dispatched but NOT documented in --help per the contract.
+    feedback-loop|iterate|experiment|test|probe|try)
+      shift; cmd_feedback_loop "$@"; exit $? ;;
   esac
 
   if [[ "$subcmd" == "doctor" ]]; then
@@ -5583,7 +6003,7 @@ Run inside Claude Code or Codex:  /spectacular $subcmd <verb>"
 
   if [[ "$subcmd" != "init" ]]; then
     die "Unknown command: '${subcmd}'.
-CLI verbs:   init | doctor | pack | docs | migrate | new | promote | snapshot | archive | touch | decide | remember | session
+CLI verbs:   init | doctor | pack | docs | migrate | new | promote | snapshot | archive | touch | decide | remember | session | feedback-loop
 Skill verbs (run via /spectacular in your AI agent): status | remember this | <doc> grill | <doc> refine | <doc> review"
   fi
 

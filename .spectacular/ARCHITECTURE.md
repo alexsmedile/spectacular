@@ -35,6 +35,11 @@ This is distinct from `STACK.md` — STACK describes the **host project's** tech
 ├── requests/           # active and planned work
 ├── skills/             # project-specific reusable skills
 ├── memory/             # long-term operational learning
+├── snapshots/          # versioned snapshots of canonical docs (v1.6.0+)
+│   ├── PRD/            # one folder per canonical doc, uppercase preserved
+│   │   └── @v1.2.md
+│   └── ROADMAP/
+│       └── @v4.md
 └── archive/            # completed requests, historical snapshots
 ```
 
@@ -452,12 +457,13 @@ Canonical documents are **never overwritten in place**.
 
 **Rules:**
 - skill always proposes a snapshot before editing any canonical document
-- snapshot naming: `PRD@v1.0.md`, `STACK@v1.2.md` — `@version` suffix
+- snapshot location (v1.6.0+): `snapshots/<DOC>/@v<N>.md` — folder per canonical doc, uppercase preserved
+- sub-doc snapshots mirror their path: `specs/cli/SPEC.md` → `snapshots/specs/cli/SPEC/@v1.0.md`
 - version tracked in frontmatter: `version: 1.0`
-- the unversioned filename (`PRD.md`) always points to the current version
-- snapshots live alongside the current file
+- the unversioned filename at root (`PRD.md`) always points to the current version
 - applies to: root layer files, `SPEC.md`, `specs/<capability>/SPEC.md` capability specs, `config.yaml`
 - this is **default behavior** — not opt-in
+- legacy snapshots at root (`PRD@v1.0.md`) continue to be read; `spectacular doctor snapshots` warns until migrated via `--fix` (warn until v1.7, then info)
 
 ---
 

@@ -78,27 +78,20 @@ related:
 - [x] CLAUDE.md request-status updated to "active (M3-M7 done)"
 - [x] Verb × mode matrix lives in doc-index.md (decided during M3)
 
-## M8 — Doctor + tests + ship
+## M8 — Doctor + tests + ship ✅ DONE (2026-05-24)
 
-- [ ] `bash cli/spectacular doctor` exits 0
-- [ ] `bash cli/spectacular doctor frontmatter` validates all new rules-file frontmatter
-- [ ] `bash cli/spectacular doctor links` finds no broken references to `doc-registry.md`
-- [ ] Update tests
-  - [ ] Any test referencing `doc-registry.md` path
-  - [ ] Any test asserting `mode: reps`
-  - [ ] Any test asserting "generic engine" wording
-- [ ] CHANGELOG entry under [1.4.0]
-  - [ ] Breaking: `mode: reps` removed (auto-migrated to `mode: grill` + `default-sub-mode: grill-each`)
-  - [ ] Changed: doc-registry.md → doc-index.md
-  - [ ] Added: grill sub-modes (wide/each/loop), CLI redirect for agentic verbs, rules files for stub/append docs
-  - [ ] Migration notes: existing rules files auto-rewritten; no user action required
-- [ ] Bump manifests via git-guard `bump-manifests.sh 1.4.0`
-- [ ] `bump-manifests.sh` + manual: CLI binary version, SKILL.md version
-- [ ] Verify alignment via `check-manifests.sh`
-- [ ] Commit, tag `v1.4.0`, push
-- [ ] `gh release create v1.4.0 --generate-notes`
-- [ ] User-triggered: `/plugin marketplace update spectacular`
-- [ ] Archive request (snapshot PLAN + TASKS + discovery + spec)
+- [x] `cli/spectacular doctor` exits 0 errors / 0 warnings / 8 info
+- [x] `cli/spectacular --version` reports 1.4.0
+- [x] Agentic-verb redirect verified: `spectacular roadmap grill` prints friendly redirect
+- [x] CHANGELOG [1.4.0] entry written: Breaking (3) / Added (8) / Changed (7) / Fixed (2 — codex G1+G2) / Migration / Process
+- [x] Manifests bumped: `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` (metadata + plugins[]), `.codex-plugin/plugin.json`, README badge → all 1.4.0
+- [x] Manual bumps: `cli/spectacular` SPECTACULAR_VERSION → 1.4.0, SKILL.md frontmatter → 1.4.0
+- [x] `check-manifests.sh`: project-level versions aligned (6 locations at 1.4.0)
+- [x] Commit `3ca8ec9` — chore: release v1.4.0 — substrate-clarity (46 files, +1554 / -135)
+- [x] Tag `v1.4.0` created + pushed
+- [x] GitHub release: https://github.com/alexsmedile/spectacular/releases/tag/v1.4.0
+- [ ] User-triggered: `/plugin marketplace update spectacular` (can't be done remotely)
+- [ ] Archive request (separate step — typically next session)
 
 ## Deferred / Open
 

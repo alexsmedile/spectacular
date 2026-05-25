@@ -23,6 +23,8 @@ Append-only ADR log. Each new decision is one entry, appended to the bottom. Ent
 
 **Snapshot-on-edit: false** — the file itself is the append log; per-entry snapshots add no value. If a wholesale rewrite is ever needed, the user can snapshot manually first.
 
+**Mutator verb (CLI, v1.5.0+):** `spectacular decide "<text>"` appends a new entry. Auto-derives a title slug from the first ~6 words. If a session is open, the entry includes a `Session:` link to the active session (see [[sessions-rules]] D9).
+
 **Entry format:**
 
 ```markdown
@@ -31,4 +33,7 @@ Append-only ADR log. Each new decision is one entry, appended to the bottom. Ent
 **Context:** What's the situation that forced a decision?
 **Decision:** What did we choose?
 **Consequences:** What does this enable, foreclose, or imply?
+**Session:** [[sessions/2026-05-24-foo]]   <!-- optional, set if session open -->
 ```
+
+> v1.6.x will introduce optional migration to a soft-folder shape (`decisions/<slug>.md` + `DECISIONS.md` index), unlocking query verbs (`spectacular decisions --7d`). v1.5.0 leaves the flat format intact.

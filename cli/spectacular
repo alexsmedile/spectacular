@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.4.0"
+SPECTACULAR_VERSION="1.5.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_REPO="alexsmedile/spectacular"
 GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
@@ -32,7 +32,7 @@ OPT_MINIMAL=false
 ALWAYS_SET="prd spec config agents"
 
 # Known doc IDs (kit triggers-docs entries and --with values must match these)
-KNOWN_DOCS="prd spec principles architecture roadmap stack decisions agents config personas plan tasks"
+KNOWN_DOCS="prd spec principles architecture roadmap stack decisions memory sessions agents config personas plan tasks"
 
 # Bundled kits (must exist as templates/prd/kits/<id>.md in installed skill)
 KNOWN_KITS="blank coding content product research"
@@ -751,6 +751,497 @@ fm_add_to_list() {
   ' "$file" > "$tmp" && mv "$tmp" "$file"
 }
 
+# ── soft-DB helpers (v1.5.0 — decide / remember / session) ──────────────────
+
+# Derive a kebab-case slug from arbitrary text. Takes first ~6 words.
+# Usage: _slug_from_text "use bash for the cli implementation"
+#        → use-bash-for-the-cli-implementation
+_slug_from_text() {
+  local text="$1"
+  local words
+  words=$(echo "$text" | awk '{ for (i=1;i<=NF && i<=6;i++) printf "%s ", $i; print "" }')
+  echo "$words" | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[^a-z0-9 ]+/ /g; s/[[:space:]]+/-/g; s/-+/-/g; s/^-//; s/-$//' \
+    | cut -c1-64
+}
+
+# Resolve slug collisions by appending -2, -3, etc. Warns on collision.
+# Usage: _resolve_slug_collision <dir> <base-slug> <ext>
+#        echoes the final slug (no extension)
+_resolve_slug_collision() {
+  local dir="$1" base="$2" ext="$3"
+  local candidate="$base" n=2
+  while [[ -e "$dir/$candidate.$ext" ]]; do
+    candidate="${base}-${n}"
+    n=$((n + 1))
+  done
+  if [[ "$candidate" != "$base" ]]; then
+    echo "  ⚠  slug collision: '$base' → '$candidate'" >&2
+  fi
+  echo "$candidate"
+}
+
+# Derive a 1-line summary from the first sentence of text.
+# Usage: _summary_from_text "long text. with multiple sentences."
+# Note: uses sed (multibyte-safe) instead of awk char-iteration which chokes
+# on em-dashes and other 3-byte UTF-8 chars on macOS.
+_summary_from_text() {
+  local text="$1"
+  # Replace newlines with spaces, take first sentence (split on period/!/? + space),
+  # strip trailing punctuation, trim, cap at 120 chars.
+  local summary
+  summary=$(printf '%s' "$text" \
+    | tr '\n' ' ' \
+    | sed -E 's/([.!?])[[:space:]].*$/\1/' \
+    | sed -E 's/[[:space:]]+/ /g; s/^[[:space:]]+|[[:space:]]+$//g; s/[.!?]+$//' \
+    | cut -c1-120)
+  echo "$summary"
+}
+
+# Return the slug of the currently-open session, or empty if none.
+# Scans .spectacular/sessions/*.md for status: open.
+_active_session_slug() {
+  local sessions_dir=".spectacular/sessions"
+  [[ -d "$sessions_dir" ]] || return 0
+  local file status
+  for file in "$sessions_dir"/*.md; do
+    [[ -f "$file" ]] || continue
+    status=$(fm_get "$file" "status")
+    if [[ "$status" == "open" ]]; then
+      basename "$file" .md
+      return 0
+    fi
+  done
+}
+
+# Resolve a template path. Looks in project-local override first, then bundled.
+# Usage: _resolve_template <relative-path-under-templates>
+#        e.g. "memory/entry.md" → /path/to/templates/memory/entry.md
+_resolve_template() {
+  local rel="$1"
+  local project_override=".spectacular/templates/$rel"
+  if [[ -f "$project_override" ]]; then
+    echo "$project_override"; return 0
+  fi
+  local bundled
+  bundled="$(agents_skill_dir)/templates/$rel"
+  if [[ -f "$bundled" ]]; then
+    echo "$bundled"; return 0
+  fi
+  bundled="${SCRIPT_DIR}/../skills/spectacular/templates/$rel"
+  if [[ -f "$bundled" ]]; then
+    echo "$bundled"; return 0
+  fi
+  return 1
+}
+
+# Render a template by substituting <PLACEHOLDER> tokens.
+# Usage: _render_template <template-path> <KEY1> <VAL1> <KEY2> <VAL2> ...
+#        Emits rendered content to stdout.
+_render_template() {
+  local template="$1"; shift
+  local content
+  content=$(cat "$template")
+  # Strip leading <!-- ... --> comment block (template hints not meant for output)
+  content=$(echo "$content" | awk 'BEGIN{skip=0} /^<!--$/||/^<!--/{skip=1} skip && /-->$/{skip=0;next} !skip{print}')
+  # Trim leading blank lines
+  content=$(echo "$content" | awk 'BEGIN{started=0} /./{started=1} started{print}')
+  while (( $# >= 2 )); do
+    local key="$1" val="$2"; shift 2
+    # Escape forward slashes + ampersands for sed replacement
+    local esc_val
+    esc_val=$(printf '%s' "$val" | sed 's/[\/&]/\\&/g')
+    content=$(echo "$content" | sed "s/<${key}>/${esc_val}/g")
+  done
+  echo "$content"
+}
+
+# Regenerate MEMORY.md index from .spectacular/memory/*.md entries.
+# Newest first by date in frontmatter.
+_regen_memory_index() {
+  local index=".spectacular/MEMORY.md"
+  local entries_dir=".spectacular/memory"
+  [[ -d "$entries_dir" ]] || return 0
+
+  {
+    cat <<EOF
+---
+type: index
+doc: memory
+version: 1.0
+updated: $TODAY
+summary: "Operational memory index — auto-regenerated by spectacular remember"
+---
+
+# Memory
+
+| Date | Slug | Tags | Summary |
+|------|------|------|---------|
+EOF
+    # Collect rows: date<TAB>slug<TAB>tags<TAB>summary, sort by date desc
+    local file slug date tags summary tags_inline
+    for file in "$entries_dir"/*.md; do
+      [[ -f "$file" ]] || continue
+      slug=$(basename "$file" .md)
+      date=$(fm_get "$file" "date")
+      summary=$(fm_get "$file" "summary")
+      # tags: read inline list; fall back to empty
+      tags_inline=$(awk '/^---$/{fm++;if(fm>1)exit;next} fm==1 && /^tags:/{
+        val=$0; sub(/^tags:[[:space:]]*/,"",val); print val; exit }' "$file")
+      tags="${tags_inline:-[]}"
+      printf '%s\t%s\t%s\t%s\n' "${date:-0000-00-00}" "$slug" "$tags" "$summary"
+    done | sort -r | awk -F'\t' '{printf "| %s | [[memory/%s]] | %s | %s |\n", $1, $2, $3, $4}'
+  } > "$index"
+}
+
+# Regenerate SESSIONS.md index from .spectacular/sessions/*.md entries.
+# Newest first by start_date. Status column shows open|closed.
+_regen_sessions_index() {
+  local index=".spectacular/SESSIONS.md"
+  local entries_dir=".spectacular/sessions"
+  [[ -d "$entries_dir" ]] || return 0
+
+  {
+    cat <<EOF
+---
+type: index
+doc: sessions
+version: 1.0
+updated: $TODAY
+summary: "Sessions index — auto-regenerated by spectacular session start|end"
+---
+
+# Sessions
+
+| Start | Slug | Status | Decisions | Memories | Tags |
+|-------|------|--------|-----------|----------|------|
+EOF
+    local file slug start status dcount mcount tags_inline
+    for file in "$entries_dir"/*.md; do
+      [[ -f "$file" ]] || continue
+      slug=$(basename "$file" .md)
+      start=$(fm_get "$file" "start_date")
+      status=$(fm_get "$file" "status")
+      dcount=$(fm_get "$file" "decisions_count")
+      mcount=$(fm_get "$file" "memories_count")
+      tags_inline=$(awk '/^---$/{fm++;if(fm>1)exit;next} fm==1 && /^tags:/{
+        val=$0; sub(/^tags:[[:space:]]*/,"",val); print val; exit }' "$file")
+      printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "${start:-0000-00-00}" "$slug" "${status:-?}" "${dcount:-0}" "${mcount:-0}" "${tags_inline:-[]}"
+    done | sort -r | awk -F'\t' '{printf "| %s | [[sessions/%s]] | %s | %s | %s | %s |\n", $1, $2, $3, $4, $5, $6}'
+  } > "$index"
+}
+
+# ── cmd_remember: spectacular remember "<text>" [--tag a,b] ─────────────────
+cmd_remember() {
+  local text="" tags_csv="" dry_run=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --tag|--tags) require_value "--tag" "${2:-}"; tags_csv="$2"; shift 2 ;;
+      --dry-run)    dry_run=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular remember "<text>" [--tag a,b] [--dry-run]
+
+Write one memory entry to .spectacular/memory/<slug>.md and regenerate
+MEMORY.md index. Auto-derives slug + summary. If a session is open,
+the entry links to it via frontmatter session: field.
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for remember: $1" ;;
+      *)
+        [[ -n "$text" ]] && die "remember: only one <text> argument allowed"
+        text="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$text" ]] && die "remember: <text> argument required. See: spectacular remember --help"
+  [[ -d ".spectacular" ]] || die "remember: not inside a Spectacular workspace"
+
+  local base_slug slug entry_dir entry_path summary tags_yaml session
+  base_slug=$(_slug_from_text "$text")
+  [[ -z "$base_slug" ]] && die "remember: could not derive slug from text"
+  entry_dir=".spectacular/memory"
+  mkdir -p "$entry_dir"
+  slug=$(_resolve_slug_collision "$entry_dir" "$base_slug" "md")
+  entry_path="$entry_dir/$slug.md"
+  summary=$(_summary_from_text "$text")
+
+  # Build tags YAML inline list
+  if [[ -n "$tags_csv" ]]; then
+    tags_yaml="[$(echo "$tags_csv" | sed 's/,/, /g')]"
+  else
+    tags_yaml="[]"
+  fi
+
+  session=$(_active_session_slug)
+  local session_yaml="null"
+  [[ -n "$session" ]] && session_yaml="$session"
+
+  local template rendered
+  template=$(_resolve_template "memory/entry.md") || die "remember: memory entry template not found"
+  rendered=$(_render_template "$template" \
+    DATE "$TODAY" \
+    TAGS "$tags_yaml" \
+    SUMMARY "$summary" \
+    SESSION "$session_yaml" \
+    TEXT "$text")
+
+  if $dry_run; then
+    echo "── would write $entry_path ──"
+    echo "$rendered"
+    echo "── would regenerate MEMORY.md ──"
+    return 0
+  fi
+
+  echo "$rendered" > "$entry_path"
+  created "$entry_path"
+  _regen_memory_index
+  info "  ✓  MEMORY.md regenerated"
+  if [[ -n "$session" ]]; then
+    info "  ↳ linked to session: $session"
+  fi
+}
+
+# ── cmd_decide: spectacular decide "<text>" ─────────────────────────────────
+# v1.5.0: appends to flat DECISIONS.md (folder migration deferred to v1.6.x).
+cmd_decide() {
+  local text="" dry_run=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --dry-run) dry_run=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular decide "<decision text>" [--dry-run]
+
+Append one ADR-style entry to .spectacular/DECISIONS.md. Auto-derives
+a title slug from the first ~6 words. If a session is open, the entry
+includes a Session: link to the active session.
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for decide: $1" ;;
+      *)
+        [[ -n "$text" ]] && die "decide: only one <text> argument allowed"
+        text="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$text" ]] && die "decide: <text> argument required. See: spectacular decide --help"
+  [[ -d ".spectacular" ]] || die "decide: not inside a Spectacular workspace"
+
+  local title summary session
+  title=$(_summary_from_text "$text")
+  session=$(_active_session_slug)
+
+  # Bootstrap DECISIONS.md if absent
+  local decisions=".spectacular/DECISIONS.md"
+  if [[ ! -f "$decisions" ]]; then
+    cat > "$decisions" <<EOF
+---
+type: decisions
+doc: decisions
+updated: $TODAY
+---
+
+# Decisions
+
+EOF
+    created "$decisions"
+  fi
+
+  local entry
+  entry=$(printf '\n## %s — %s\n\n**Decision:**\n%s\n\n**Why:**\n\n\n**Tradeoffs:**\n\n' \
+    "$TODAY" "$title" "$text")
+  if [[ -n "$session" ]]; then
+    entry+="$(printf '\n**Session:** [[sessions/%s]]\n' "$session")"
+  fi
+
+  if $dry_run; then
+    echo "── would append to $decisions ──"
+    echo "$entry"
+    return 0
+  fi
+
+  printf '%s' "$entry" >> "$decisions"
+  fm_touch "$decisions"
+  info "  ✓  appended decision: $title"
+  if [[ -n "$session" ]]; then
+    info "  ↳ linked to session: $session"
+  fi
+}
+
+# ── cmd_session: spectacular session start|end ──────────────────────────────
+cmd_session() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    start) cmd_session_start "$@" ;;
+    end)   cmd_session_end "$@" ;;
+    ""|--help|-h)
+      cat <<EOF
+Usage: spectacular session <subcommand> [options]
+
+Subcommands:
+  start [--tag a,b]    Open a new session entry in .spectacular/sessions/
+  end                  Close the currently-open session; recompute linked counts
+
+At most one session can be open at a time.
+EOF
+      [[ -z "$sub" ]] && exit 1 || exit 0 ;;
+    *) die "session: unknown subcommand '$sub'. Use: start | end" ;;
+  esac
+}
+
+cmd_session_start() {
+  local tags_csv="" dry_run=false notes=""
+  while (( $# > 0 )); do
+    case "$1" in
+      --tag|--tags) require_value "--tag" "${2:-}"; tags_csv="$2"; shift 2 ;;
+      --notes)      require_value "--notes" "${2:-}"; notes="$2"; shift 2 ;;
+      --dry-run)    dry_run=true; shift ;;
+      *) die "Unknown flag for session start: $1" ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "session start: not inside a Spectacular workspace"
+
+  local existing
+  existing=$(_active_session_slug)
+  if [[ -n "$existing" ]]; then
+    die "session start: a session is already open ($existing). Run 'spectacular session end' first."
+  fi
+
+  local first_tag base_slug slug entry_dir entry_path
+  first_tag=$(echo "$tags_csv" | cut -d',' -f1 | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')
+  base_slug="${TODAY}-${first_tag:-work}"
+  # Sanitize the tag part
+  base_slug=$(echo "$base_slug" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/-+/-/g; s/-$//')
+  entry_dir=".spectacular/sessions"
+  mkdir -p "$entry_dir"
+  slug=$(_resolve_slug_collision "$entry_dir" "$base_slug" "md")
+  entry_path="$entry_dir/$slug.md"
+
+  local tags_yaml="[]"
+  [[ -n "$tags_csv" ]] && tags_yaml="[$(echo "$tags_csv" | sed 's/,/, /g')]"
+
+  local start_ts summary
+  start_ts=$(date +%Y-%m-%dT%H:%M:%S)
+  summary="${notes:-Session $slug}"
+
+  local template rendered
+  template=$(_resolve_template "sessions/entry.md") || die "session start: template not found"
+  rendered=$(_render_template "$template" \
+    START_DATE "$start_ts" \
+    TAGS "$tags_yaml" \
+    SUMMARY "$summary" \
+    SLUG "$slug" \
+    NOTES "${notes:-_(session in progress)_}")
+
+  if $dry_run; then
+    echo "── would write $entry_path ──"
+    echo "$rendered"
+    return 0
+  fi
+
+  echo "$rendered" > "$entry_path"
+  created "$entry_path"
+  _regen_sessions_index
+  info "  ✓  SESSIONS.md regenerated"
+  info "  → session open: $slug"
+}
+
+cmd_session_end() {
+  local dry_run=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --dry-run) dry_run=true; shift ;;
+      *) die "Unknown flag for session end: $1" ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "session end: not inside a Spectacular workspace"
+
+  local slug entry_path
+  slug=$(_active_session_slug)
+  [[ -z "$slug" ]] && die "session end: no open session found"
+  entry_path=".spectacular/sessions/$slug.md"
+
+  # Count linked decisions: scan flat DECISIONS.md for matching session reference
+  # (v1.5.0 — flat decisions; folder shape lands in v1.6.x)
+  local decisions_count=0
+  if [[ -f ".spectacular/DECISIONS.md" ]]; then
+    decisions_count=$(grep -c "\[\[sessions/$slug\]\]" .spectacular/DECISIONS.md || true)
+  fi
+
+  # Count linked memories: scan memory/*.md frontmatter for session: $slug
+  local memories_count=0
+  local mfile msession
+  if [[ -d ".spectacular/memory" ]]; then
+    for mfile in .spectacular/memory/*.md; do
+      [[ -f "$mfile" ]] || continue
+      msession=$(fm_get "$mfile" "session")
+      [[ "$msession" == "$slug" ]] && memories_count=$((memories_count + 1))
+    done
+  fi
+
+  local end_ts
+  end_ts=$(date +%Y-%m-%dT%H:%M:%S)
+
+  if $dry_run; then
+    echo "── would close $entry_path ──"
+    echo "   status: open → closed"
+    echo "   end_date: $end_ts"
+    echo "   decisions_count: $decisions_count"
+    echo "   memories_count: $memories_count"
+    return 0
+  fi
+
+  fm_set "$entry_path" "status" "closed"
+  fm_set "$entry_path" "end_date" "$end_ts"
+  fm_set "$entry_path" "decisions_count" "$decisions_count"
+  fm_set "$entry_path" "memories_count" "$memories_count"
+
+  # Append "Linked decisions" + "Linked memories" lists to the body.
+  # grep pipelines are wrapped with `|| true` so empty matches don't trip pipefail.
+  {
+    echo ""
+    echo "## Linked decisions"
+    echo ""
+    if [[ $decisions_count -gt 0 ]]; then
+      # Scan DECISIONS.md for ADR blocks (## headers) containing the session
+      # reference anywhere in their body, emit each matched title as a bullet.
+      awk -v slug="$slug" '
+        /^## / {
+          if (matched && title != "") print "- " title
+          title = $0
+          sub(/^## /, "", title)
+          matched = 0
+          next
+        }
+        index($0, "[[sessions/" slug "]]") { matched = 1 }
+        END { if (matched && title != "") print "- " title }
+      ' .spectacular/DECISIONS.md
+    else
+      echo "_(none)_"
+    fi
+    echo ""
+    echo "## Linked memories"
+    echo ""
+    if [[ $memories_count -gt 0 ]]; then
+      for mfile in .spectacular/memory/*.md; do
+        [[ -f "$mfile" ]] || continue
+        msession=$(fm_get "$mfile" "session")
+        [[ "$msession" == "$slug" ]] || continue
+        echo "- [[memory/$(basename "$mfile" .md)]]"
+      done
+    else
+      echo "_(none)_"
+    fi
+  } >> "$entry_path"
+
+  _regen_sessions_index
+  info "  ✓  session closed: $slug (${decisions_count} decisions, ${memories_count} memories)"
+}
+
 # Return 0 if file is a registered canonical doc (eligible for snapshot).
 # Per ARCHITECTURE.md § Versioning + versioning.md.
 is_canonical_doc() {
@@ -1001,30 +1492,56 @@ EOF
   ext="${base##*.}"
   base_no_ext="${base%.*}"
 
-  local max_n=0
+  # v1.5.0+ snapshot layout: snapshots/<DOC>/@v<N>.<ext>, mirroring sub-paths.
+  # The canonical doc at .spectacular/PRD.md → .spectacular/snapshots/PRD/@v<N>.md
+  # The capability spec at .spectacular/specs/cli/SPEC.md → .spectacular/snapshots/specs/cli/SPEC/@v<N>.md
+  local snap_dir rel_dir
+  rel_dir="${dir#.spectacular/}"
+  if [[ "$rel_dir" == ".spectacular" || "$rel_dir" == "$dir" ]]; then
+    # File is at .spectacular root (rel_dir collapses), or not under .spectacular at all
+    snap_dir=".spectacular/snapshots/${base_no_ext}"
+  else
+    snap_dir=".spectacular/snapshots/${rel_dir}/${base_no_ext}"
+  fi
+
+  local max_n=0 latest_path=""
   shopt -s nullglob
+  # Scan NEW location: snapshots/<DOC>/@v<N>.<ext>
+  for existing in "$snap_dir/@v"*.${ext}; do
+    local n
+    n=$(echo "$existing" | sed -E "s|.*@v([0-9]+(\.[0-9]+)?)\.${ext}\$|\1|")
+    # Reduce X.Y to X for max comparison; keep full string for latest_path
+    local nint="${n%.*}"
+    if [[ "$nint" =~ ^[0-9]+$ ]] && (( nint > max_n )); then
+      max_n=$nint
+      latest_path="$existing"
+    fi
+  done
+  # Also scan LEGACY location: <dir>/<base>@v<N>.<ext> for back-compat
   for existing in "$dir/${base_no_ext}@v"*.${ext}; do
     local n
-    n=$(echo "$existing" | sed -E "s|.*@v([0-9]+)\.${ext}\$|\1|")
-    if [[ "$n" =~ ^[0-9]+$ ]] && (( n > max_n )); then
-      max_n=$n
+    n=$(echo "$existing" | sed -E "s|.*@v([0-9]+(\.[0-9]+)?)\.${ext}\$|\1|")
+    local nint="${n%.*}"
+    if [[ "$nint" =~ ^[0-9]+$ ]] && (( nint > max_n )); then
+      max_n=$nint
+      latest_path="$existing"
     fi
   done
   shopt -u nullglob
 
   local next_n=$((max_n + 1))
-  local snapshot_path="$dir/${base_no_ext}@v${next_n}.${ext}"
+  local snapshot_path="$snap_dir/@v${next_n}.${ext}"
 
   # Idempotence: compare BODY (everything after the frontmatter block) only.
   # Frontmatter fields like `version:` and `updated:` change every snapshot,
   # so they'd cause false-positive "changes" if compared.
-  if (( max_n > 0 )); then
-    local latest="$dir/${base_no_ext}@v${max_n}.${ext}"
+  if (( max_n > 0 )) && [[ -n "$latest_path" ]]; then
+    local latest="$latest_path"
     local cur_body snap_body
     cur_body=$(awk '/^---$/{c++; if(c<=2) next} c>=2' "$file" | md5 2>/dev/null || awk '/^---$/{c++; if(c<=2) next} c>=2' "$file" | md5sum | cut -d' ' -f1)
     snap_body=$(awk '/^---$/{c++; if(c<=2) next} c>=2' "$latest" | md5 2>/dev/null || awk '/^---$/{c++; if(c<=2) next} c>=2' "$latest" | md5sum | cut -d' ' -f1)
     if [[ -n "$cur_body" && "$cur_body" == "$snap_body" ]]; then
-      echo "  • $file: no body changes since ${base_no_ext}@v${max_n}.${ext} (no snapshot taken)"
+      echo "  • $file: no body changes since $latest (no snapshot taken)"
       return 0
     fi
   fi
@@ -1045,7 +1562,8 @@ EOF
     die "snapshot: cannot parse version '$current_ver' as MAJOR.MINOR. Set version: field manually first."
   fi
 
-  # Write snapshot, then bump
+  # Write snapshot (creating dir if needed), then bump
+  mkdir -p "$snap_dir"
   cp "$file" "$snapshot_path"
   fm_set "$file" "version" "$new_ver"
   fm_touch "$file"
@@ -2186,6 +2704,40 @@ summary: \"Architectural and product decisions log\"
 "
 }
 
+doc_memory() {
+  mkdir -p ".spectacular/memory"
+  write_if_missing ".spectacular/MEMORY.md" "---
+type: index
+doc: memory
+version: 1.0
+updated: ${TODAY}
+summary: \"Operational memory index — auto-regenerated by spectacular remember\"
+---
+
+# Memory
+
+| Date | Slug | Tags | Summary |
+|------|------|------|---------|
+"
+}
+
+doc_sessions() {
+  mkdir -p ".spectacular/sessions"
+  write_if_missing ".spectacular/SESSIONS.md" "---
+type: index
+doc: sessions
+version: 1.0
+updated: ${TODAY}
+summary: \"Sessions index — auto-regenerated by spectacular session start|end\"
+---
+
+# Sessions
+
+| Start | Slug | Status | Decisions | Memories | Tags |
+|-------|------|--------|-----------|----------|------|
+"
+}
+
 doc_personas() {
   write_if_missing ".spectacular/PERSONAS.md" "---
 version: 1.0
@@ -2393,6 +2945,8 @@ scaffold() {
       roadmap)       doc_roadmap "$name" ;;
       stack)         doc_stack ;;
       decisions)     doc_decisions ;;
+      memory)        doc_memory ;;
+      sessions)      doc_sessions ;;
       agents)        doc_agents "$name" "$agents_file" ;;
       personas)      doc_personas ;;
       *) die "Unknown doc ID in resolved set: '$doc'" ;;
@@ -2441,7 +2995,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -2472,6 +3026,8 @@ Areas (run all if omitted):
   specs         SPEC.md present + parseable; specs/ dir present; legacy current/ migration
   docs          docs.yaml + frontmatter validation across the docs/ tree (v0.6.0+)
   personas      PERSONAS.md frontmatter + persona blocks + stories (v1.3.0+; opt-in)
+  memory        MEMORY.md frontmatter + index ↔ entries drift (v1.5.0+; opt-in)
+  sessions      SESSIONS.md frontmatter + open-session invariant + 4h stale warning (v1.5.0+; opt-in)
 
 Options:
   --fix              Apply mechanical fixes (gitignore append, missing dirs,
@@ -2497,7 +3053,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) require_value "--format" "${2:-}"; DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions)
         if [[ -z "$DOC_OPT_AREA" ]]; then
           DOC_OPT_AREA="$1"
         else
@@ -2750,41 +3306,74 @@ check_frontmatter() {
 }
 
 # ── area: snapshots ───────────────────────────────────────────────────────────
-# For each <doc>@v<N>.<M>.md, group by doc and detect gaps in version sequence.
+# v1.5.0+ canonical layout: .spectacular/snapshots/<DOC>/@v<N>.md
+# Legacy layout (pre-v1.5): .spectacular/<DOC>@v<N>.md at root, alongside canonical
+# Two checks:
+#   1. Flag legacy root-level snapshots as warnings with --fix migration path
+#   2. Detect version-sequence gaps in the new snapshots/ tree
 check_snapshots() {
   if [[ ! -d ".spectacular" ]]; then
     return
   fi
 
-  # Group snapshots by canonical doc name (the prefix before @v)
+  # ── 1. Legacy root-level snapshot detection (migration warning) ─────────────
   shopt -s nullglob
-  local snapshots=(.spectacular/*@v*.md)
+  local legacy=(.spectacular/*@v*.md)
   shopt -u nullglob
+  if [[ ${#legacy[@]} -gt 0 ]]; then
+    for s in "${legacy[@]}"; do
+      local b doc_prefix ver_part target
+      b=$(basename "$s")
+      doc_prefix="${b%@v*}"
+      ver_part="@v${b#*@v}"
+      target=".spectacular/snapshots/${doc_prefix}/${ver_part}"
+      doc_add "snapshots" "warning" "$s" \
+        "legacy root-level snapshot (v1.5.0+ layout is snapshots/<DOC>/@v<N>.md)" \
+        "spectacular doctor --fix snapshots  # moves to $target" \
+        "mechanical"
+    done
+  fi
 
-  if [[ ${#snapshots[@]} -eq 0 ]]; then
+  # ── 2. New-layout gap detection ─────────────────────────────────────────────
+  shopt -s nullglob
+  local snapshots=(.spectacular/snapshots/**/@v*.md .spectacular/snapshots/*/@v*.md)
+  shopt -u nullglob
+  # Deduplicate (the two globs overlap on direct children)
+  local seen="" dedup=()
+  for s in "${snapshots[@]}"; do
+    if ! in_list "$s" "$seen"; then
+      seen+="$s "
+      dedup+=("$s")
+    fi
+  done
+  snapshots=("${dedup[@]}")
+
+  if [[ ${#snapshots[@]} -eq 0 && ${#legacy[@]} -eq 0 ]]; then
     return  # No snapshots is fine — many workspaces have none yet
   fi
 
-  # Collect unique doc bases
-  local doc_bases=""
+  # Collect unique doc paths (the snapshots/<...>/ container, identifies the doc)
+  local doc_dirs=""
   for s in "${snapshots[@]}"; do
-    local base
-    base=$(basename "$s")
-    local prefix="${base%@v*}"
-    if ! in_list "$prefix" "$doc_bases"; then
-      doc_bases+="$prefix "
+    local d
+    d=$(dirname "$s")
+    if ! in_list "$d" "$doc_dirs"; then
+      doc_dirs+="$d "
     fi
   done
 
-  # For each base, collect versions and check continuity
-  for base in $doc_bases; do
+  # For each doc dir, collect versions and check continuity
+  for doc_dir in $doc_dirs; do
+    # Derive the doc-base name (last segment of doc_dir, used for error labeling)
+    local base
+    base=$(basename "$doc_dir")
     local versions=""
     for s in "${snapshots[@]}"; do
+      [[ "$(dirname "$s")" == "$doc_dir" ]] || continue
       local b
       b=$(basename "$s")
-      [[ "$b" == "${base}@v"* ]] || continue
-      # Extract X.Y from <base>@vX.Y.md
-      local ver="${b#${base}@v}"
+      # Extract X.Y from @vX.Y.md
+      local ver="${b#@v}"
       ver="${ver%.md}"
       versions+="$ver "
     done
@@ -2804,7 +3393,7 @@ check_snapshots() {
         local expected=$((prev_minor + 1))
         while [[ $expected -lt $minor ]]; do
           local missing="${major}.${expected}"
-          doc_add "snapshots" "warning" ".spectacular/${base}@v${missing}.md" \
+          doc_add "snapshots" "warning" "${doc_dir}/@v${missing}.md" \
             "version-sequence gap (have v${prev_major}.${prev_minor} and v${major}.${minor})" \
             "backfill from git log if possible, or document the skip in DECISIONS.md" \
             "judgment"
@@ -2816,7 +3405,7 @@ check_snapshots() {
     done
 
     if [[ -z "$sorted" ]]; then continue; fi
-    doc_add "snapshots" "info" ".spectacular/${base}@v*.md" \
+    doc_add "snapshots" "info" "${doc_dir}/@v*.md" \
       "$(echo "$sorted" | wc -w | tr -d ' ') snapshot(s) found for $base"
   done
 }
@@ -3436,6 +4025,144 @@ check_personas() {
   fi
 }
 
+# ── check_memory (v1.5.0+) ───────────────────────────────────────────────────
+# Soft-DB self-check: index ↔ entries drift, frontmatter shape.
+check_memory() {
+  [[ -d ".spectacular" ]] || return 0
+  local idx=".spectacular/MEMORY.md" dir=".spectacular/memory"
+
+  if [[ ! -f "$idx" ]] && [[ ! -d "$dir" ]]; then
+    doc_add "memory" "info" "$idx" "MEMORY.md not scaffolded — opt-in via 'spectacular init --with memory' or coding kit" \
+      "skip" "judgment"
+    return 0
+  fi
+
+  if [[ ! -f "$idx" ]]; then
+    doc_add "memory" "warning" "$idx" "memory/ directory exists but MEMORY.md index is missing" \
+      "run 'spectacular remember \"...\"' to regenerate the index, or scaffold MEMORY.md manually" "judgment"
+    return 0
+  fi
+
+  if head -1 "$idx" | grep -q '^---$'; then
+    doc_add "memory" "pass" "$idx" "MEMORY.md present with frontmatter"
+  else
+    doc_add "memory" "warning" "$idx" "MEMORY.md missing frontmatter delimiter" \
+      "add proper frontmatter block (type: index, doc: memory, updated: <date>)" "judgment"
+  fi
+
+  # Count entries
+  local entry_count=0 file
+  if [[ -d "$dir" ]]; then
+    for file in "$dir"/*.md; do
+      [[ -f "$file" ]] || continue
+      entry_count=$((entry_count + 1))
+    done
+  fi
+
+  if [[ $entry_count -eq 0 ]]; then
+    doc_add "memory" "info" "$dir" "no memory entries yet"
+    return 0
+  fi
+
+  # Detect index ↔ entries drift
+  local index_links
+  index_links=$(grep -oE '\[\[memory/[^]]+\]\]' "$idx" 2>/dev/null | sed 's/\[\[memory\///; s/\]\]//' | sort -u || true)
+  local index_link_count
+  index_link_count=$(echo "$index_links" | grep -c . || true)
+
+  if [[ $entry_count -ne $index_link_count ]]; then
+    doc_add "memory" "warning" "$idx" "drift: ${entry_count} entries on disk vs ${index_link_count} links in MEMORY.md" \
+      "regenerate by writing or removing an entry — any 'spectacular remember' call rebuilds the index" "judgment"
+  else
+    doc_add "memory" "pass" "$dir" "${entry_count} memory entries; index ↔ entries in sync"
+  fi
+}
+
+# ── check_sessions (v1.5.0+) ─────────────────────────────────────────────────
+# Soft-DB + lifecycle: at most one open, 4h stale-open warning.
+check_sessions() {
+  [[ -d ".spectacular" ]] || return 0
+  local idx=".spectacular/SESSIONS.md" dir=".spectacular/sessions"
+
+  if [[ ! -f "$idx" ]] && [[ ! -d "$dir" ]]; then
+    doc_add "sessions" "info" "$idx" "SESSIONS.md not scaffolded — opt-in via 'spectacular init --with sessions' or coding kit" \
+      "skip" "judgment"
+    return 0
+  fi
+
+  if [[ ! -f "$idx" ]]; then
+    doc_add "sessions" "warning" "$idx" "sessions/ directory exists but SESSIONS.md index is missing" \
+      "run 'spectacular session start' to regenerate the index" "judgment"
+    return 0
+  fi
+
+  if head -1 "$idx" | grep -q '^---$'; then
+    doc_add "sessions" "pass" "$idx" "SESSIONS.md present with frontmatter"
+  else
+    doc_add "sessions" "warning" "$idx" "SESSIONS.md missing frontmatter delimiter" \
+      "add proper frontmatter block (type: index, doc: sessions, updated: <date>)" "judgment"
+  fi
+
+  # Count entries + open sessions
+  local entry_count=0 open_count=0 open_slugs="" stale_slugs="" file status start
+  if [[ -d "$dir" ]]; then
+    for file in "$dir"/*.md; do
+      [[ -f "$file" ]] || continue
+      entry_count=$((entry_count + 1))
+      status=$(fm_get "$file" "status")
+      if [[ "$status" == "open" ]]; then
+        open_count=$((open_count + 1))
+        local slug
+        slug=$(basename "$file" .md)
+        open_slugs="${open_slugs:+$open_slugs, }$slug"
+        # 4h staleness check (per D7)
+        start=$(fm_get "$file" "start_date")
+        if [[ -n "$start" ]]; then
+          local start_epoch now_epoch age_seconds
+          start_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$start" "+%s" 2>/dev/null || echo 0)
+          now_epoch=$(date "+%s")
+          age_seconds=$((now_epoch - start_epoch))
+          if [[ $start_epoch -gt 0 ]] && [[ $age_seconds -gt 14400 ]]; then
+            stale_slugs="${stale_slugs:+$stale_slugs, }$slug"
+          fi
+        fi
+      fi
+    done
+  fi
+
+  if [[ $entry_count -eq 0 ]]; then
+    doc_add "sessions" "info" "$dir" "no session entries yet"
+    return 0
+  fi
+
+  # Lifecycle invariant: ≤1 open
+  if [[ $open_count -gt 1 ]]; then
+    doc_add "sessions" "error" "$dir" "lifecycle violation: ${open_count} sessions open simultaneously ($open_slugs)" \
+      "close all but one with 'spectacular session end' (manually edit the others if needed)" "judgment"
+  elif [[ $open_count -eq 1 ]]; then
+    doc_add "sessions" "info" "$dir" "1 session open: $open_slugs"
+  fi
+
+  # Stale-open warning (>4h)
+  if [[ -n "$stale_slugs" ]]; then
+    doc_add "sessions" "warning" "$dir" "open session(s) >4h old: $stale_slugs" \
+      "close with 'spectacular session end' if work is done; otherwise --ignore-stale (TBD)" "judgment"
+  fi
+
+  # Drift check (entries vs index rows)
+  local index_links
+  index_links=$(grep -oE '\[\[sessions/[^]]+\]\]' "$idx" 2>/dev/null | sed 's/\[\[sessions\///; s/\]\]//' | sort -u || true)
+  local index_link_count
+  index_link_count=$(echo "$index_links" | grep -c . || true)
+
+  if [[ $entry_count -ne $index_link_count ]]; then
+    doc_add "sessions" "warning" "$idx" "drift: ${entry_count} entries on disk vs ${index_link_count} links in SESSIONS.md" \
+      "regenerate by running any 'spectacular session start' or 'session end' — both rebuild the index" "judgment"
+  else
+    doc_add "sessions" "pass" "$dir" "${entry_count} session entries; index ↔ entries in sync"
+  fi
+}
+
 # ── doctor orchestrator ───────────────────────────────────────────────────────
 # Dispatch a list of area names to their check_<area> functions.
 # Single source of truth — adding a new area only requires touching this one case.
@@ -3453,6 +4180,8 @@ run_areas() {
       specs)       check_specs ;;
       docs)        check_docs ;;
       personas)    check_personas ;;
+      memory)      check_memory ;;
+      sessions)    check_sessions ;;
       *)           die "Unknown doctor area: '$area'" ;;
     esac
   done
@@ -3606,6 +4335,33 @@ doctor_apply_mechanical_fixes() {
         mv .spectacular/current .spectacular/specs
         echo "  ✓ fixed [specs]: renamed .spectacular/current/ → .spectacular/specs/"
         applied=$((applied + 1))
+      fi
+      continue
+    fi
+
+    # Legacy snapshot migration (snapshots area, mechanical)
+    # Pattern: .spectacular/<DOC>@v<N>.md → .spectacular/snapshots/<DOC>/@v<N>.md
+    if [[ "$area" == "snapshots" && "$msg" == *"legacy root-level snapshot"* ]]; then
+      if [[ -f "$file" ]]; then
+        local b doc_prefix ver_part target_dir target
+        b=$(basename "$file")
+        doc_prefix="${b%@v*}"
+        ver_part="@v${b#*@v}"
+        target_dir=".spectacular/snapshots/${doc_prefix}"
+        target="${target_dir}/${ver_part}"
+        mkdir -p "$target_dir"
+        # Prefer git mv when the file is tracked; fall back to plain mv
+        if git ls-files --error-unmatch "$file" >/dev/null 2>&1; then
+          git mv "$file" "$target" 2>/dev/null && {
+            echo "  ✓ fixed [snapshots]: git mv $file → $target"
+            applied=$((applied + 1))
+          }
+        else
+          mv "$file" "$target" && {
+            echo "  ✓ fixed [snapshots]: mv $file → $target"
+            applied=$((applied + 1))
+          }
+        fi
       fi
       continue
     fi
@@ -4748,7 +5504,18 @@ main() {
       ;;
     new)      shift; cmd_new "$@"; exit $? ;;
     snapshot) shift; cmd_snapshot "$@"; exit $? ;;
-    remember) shift; skill_verb_message "remember" "Write an operational lesson to .spectacular/memory/." "$@" ;;
+    remember)
+      shift
+      # v1.5.0: if invoked with text argument, route to CLI writer.
+      # Bare `spectacular remember` (or `remember this`) remains a skill verb.
+      if [[ $# -eq 0 ]] || [[ "$1" == "this" && $# -eq 1 ]]; then
+        skill_verb_message "remember" "Write an operational lesson to .spectacular/memory/." "$@"
+      else
+        cmd_remember "$@"; exit $?
+      fi
+      ;;
+    decide)   shift; cmd_decide "$@"; exit $? ;;
+    session)  shift; cmd_session "$@"; exit $? ;;
     promote)  shift; cmd_promote "$@"; exit $? ;;
   esac
 
@@ -4816,8 +5583,8 @@ Run inside Claude Code or Codex:  /spectacular $subcmd <verb>"
 
   if [[ "$subcmd" != "init" ]]; then
     die "Unknown command: '${subcmd}'.
-CLI verbs:   init | doctor | pack | docs | migrate | new | promote | snapshot | archive | touch
-Skill verbs (run via /spectacular in your AI agent): status | remember | <doc> grill | <doc> refine | <doc> review"
+CLI verbs:   init | doctor | pack | docs | migrate | new | promote | snapshot | archive | touch | decide | remember | session
+Skill verbs (run via /spectacular in your AI agent): status | remember this | <doc> grill | <doc> refine | <doc> review"
   fi
 
   shift

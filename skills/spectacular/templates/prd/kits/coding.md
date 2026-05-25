@@ -30,6 +30,8 @@ triggers-docs:
     - principles
     - roadmap
     - decisions
+    - memory
+    - sessions
 description: |
   Coding projects: CLIs, libraries, apps, services, SDKs.
   Adds Stack + Interfaces slots. Triggers STACK.md + ARCHITECTURE.md scaffolding.

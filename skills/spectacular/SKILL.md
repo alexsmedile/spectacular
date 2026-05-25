@@ -21,7 +21,7 @@ when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type listed in doc-index.md.
-version: 1.4.0
+version: 1.5.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -45,7 +45,10 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular status` | → `references/status.md` |
 | `spectacular new <description>` | → `references/new-request.md` (then run `spectacular new <slug>`) |
 | `spectacular archive <slug>` | → CLI verb (no skill flow); see [[archive]] for context |
-| `spectacular remember this` | → `references/memory.md` |
+| `spectacular remember this` | → `references/memory.md` (legacy free-text capture) |
+| `spectacular remember "<text>"` | → CLI verb (v1.5.0+); see [[memory-rules]] for entry shape |
+| `spectacular decide "<text>"` | → CLI verb (v1.5.0+); see [[decisions-rules]] |
+| `spectacular session start\|end` | → CLI verb (v1.5.0+); see [[sessions-rules]] |
 | `spectacular promote <slug>` | → CLI verb (no skill flow); see [[lifecycle]] for state machine |
 | `spectacular snapshot <file>` | → CLI verb (no skill flow); see [[versioning]] for snapshot rules |
 | `spectacular touch <file>` | → CLI verb; trivial — just bumps `updated:` |
@@ -72,7 +75,7 @@ Each doc is described by a rules file at `references/<doc-id>-rules.md`. The rul
 | `spectacular <doc> refine` | → `references/refine.md` (with `<doc-id>-rules.md` context) |
 | `spectacular <doc> review` | → `references/review.md` (with `<doc-id>-rules.md` context) |
 
-**Doc IDs registered (v1.4.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `personas`, `convention-pack`, `docs-manifest`, `docs-page`. Each has a `references/<doc-id>-rules.md` file declaring its dispatch + behavior. See `doc-index.md` for the catalog.
+**Doc IDs registered (v1.5.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `memory`, `sessions`, `personas`, `convention-pack`, `docs-manifest`, `docs-page`. Each has a `references/<doc-id>-rules.md` file declaring its dispatch + behavior. See `doc-index.md` for the catalog.
 
 ### Pack-specific aliases (convenience over `spectacular convention-pack <verb>`)
 
@@ -225,6 +228,8 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/agents-rules.md` | **v1.4.0+** — AGENTS (stub) |
 | `references/spec-rules.md` | **v1.4.0+** — SPEC (stub) |
 | `references/decisions-rules.md` | **v1.4.0+** — DECISIONS (append, one ADR entry per decision) |
+| `references/memory-rules.md` | **v1.5.0+** — MEMORY (index, soft-folder DB with entries in `memory/`) |
+| `references/sessions-rules.md` | **v1.5.0+** — SESSIONS (index, soft-folder DB with entries in `sessions/`, auto-links decisions+memories) |
 | `references/kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs; single-kit-only in v1 |
 | `references/packs-contract.md` | Convention pack schema: pack folder shape + 6 rule categories (naming/taxonomy/root-files/gitignore/file-placement/project-types) |
 | `references/pack-rules.md` | Pack-specific grill rules: slot prompts, mini-refine patterns, source-ingestion (`--from`), reserved pack-ids, review gate checks 4-12 |
@@ -258,6 +263,8 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `templates/stack/base.md` | Host project tech choices |
 | `templates/agents/base.md` | Onboarding doc for `.spectacular/` agents |
 | `templates/decisions/entry.md` | Single ADR entry (append-mode template) |
+| `templates/memory/entry.md` | **v1.5.0+** — Single memory entry written by `spectacular remember` |
+| `templates/sessions/entry.md` | **v1.5.0+** — Single session entry written by `spectacular session start` |
 | `templates/packs/minimal/` | Bundled convention pack — `.gitignore` + README contract only (see [[packs-contract]]) |
 | `templates/docs/docs.yaml.tmpl` | Public-docs nav manifest template (v0.6.0+) |
 | `templates/docs/index.md.tmpl` | Public-docs landing page template (v0.6.0+) |

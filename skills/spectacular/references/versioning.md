@@ -14,20 +14,26 @@ Requests files (`PLAN.md`, `TASKS.md`, `SESSION.md`) are operational/temporary �
 
 ---
 
-## Snapshot naming
+## Snapshot location (v1.6.0+)
 
-`<filename>@v<N>.<ext>` where `<N>` is a monotonically increasing integer.
+Snapshots live in a dedicated tree: `.spectacular/snapshots/<DOC>/@v<N>.md`.
+
+- Folder name **matches the canonical filename stem** (uppercase preserved): `snapshots/PRD/`, `snapshots/ROADMAP/`.
+- Filename keeps the `@` prefix: `@v1.0.md`, `@v1.2.md`, `@v2.md`. Mixed integer + dotted versions coexist (the CLI scans any numeric suffix to pick the next N).
+- Sub-doc snapshots **mirror their path**: `specs/cli/SPEC.md` → `snapshots/specs/cli/SPEC/@v1.0.md`. Avoids slug collisions.
 
 Examples:
-- `PRD.md` → snapshot as `PRD@v1.md`, then `PRD@v2.md`, ...
-- `STACK.md` → snapshot as `STACK@v1.md`
-- `specs/auth/SPEC.md` → snapshot as `specs/auth/SPEC@v1.md`
+- `PRD.md` → `snapshots/PRD/@v1.md`, then `snapshots/PRD/@v2.md`, ...
+- `STACK.md` → `snapshots/STACK/@v1.md`
+- `specs/auth/SPEC.md` → `snapshots/specs/auth/SPEC/@v1.md`
 
-Snapshots live **alongside** the current file (same directory).
+The unversioned filename at root (`PRD.md`) always points to the **latest** version.
 
-The unversioned filename (`PRD.md`) always points to the **latest** version.
+### Migration from pre-v1.6 layout
 
-> **Note (v0.7.0+):** older snapshots in the repo use dotted version naming (`PRD@v1.0.md`) — that was the v0.7.x convention. The v0.7.0 CLI verb uses integer naming (`PRD@v1.md`). Both coexist; the CLI scans for any numeric suffix when picking the next N.
+Before v1.6.0, snapshots lived alongside the canonical file as `PRD@v1.2.md`. Those still work — the CLI reads both locations — but `spectacular doctor snapshots` warns on root-level `*@v*.md` files until you migrate. Run `spectacular doctor --fix snapshots` to `git mv` them into the new tree.
+
+The warning demotes to info in v1.7.0.
 
 ---
 
@@ -36,11 +42,12 @@ The unversioned filename (`PRD.md`) always points to the **latest** version.
 Use **`spectacular snapshot <file>`** — never do this by hand. The CLI verb:
 
 1. Validates `<file>` is a registered canonical doc; refuses otherwise
-2. Scans for existing `<base>@v*.md` snapshots; picks next N
+2. Scans for existing snapshots in **both** `snapshots/<DOC>/@v*.md` (v1.6+) and `<base>@v*.md` (legacy); picks next N from the union
 3. Compares current file body to latest snapshot — if unchanged, exits cleanly (idempotent)
-4. Copies current state to `<base>@v<N>.md`
-5. Bumps `version:` field in the unversioned file (minor by default: `X.Y` → `X.(Y+1)`; `--major` for `(X+1).0`)
-6. Sets `updated:` to today
+4. Auto-creates `.spectacular/snapshots/<DOC>/` if missing
+5. Copies current state to `snapshots/<DOC>/@v<N>.md`
+6. Bumps `version:` field in the unversioned file (minor by default: `X.Y` → `X.(Y+1)`; `--major` for `(X+1).0`)
+7. Sets `updated:` to today
 
 Manual snapshotting (cp + sed) is fragile and gets the version bump wrong. The verb has tests; ad-hoc shell doesn't.
 

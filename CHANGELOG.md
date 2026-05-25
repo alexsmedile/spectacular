@@ -5,6 +5,40 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.5.0] — 2026-05-25
+
+### Added
+- **Two new doc-types: `memory` and `sessions`** registered as `mode: index` — soft-folder databases with an index file (`MEMORY.md` / `SESSIONS.md`) regenerated from per-entry markdown files in `memory/` / `sessions/`. Frontmatter-driven dispatch via `memory-rules.md` and `sessions-rules.md` plugs into the v1.4.0 doc-writing substrate with no special-casing.
+- **CLI mutator: `spectacular remember "<text>" [--tag a,b] [--dry-run]`** — writes one memory entry with auto-derived slug + summary, regenerates `MEMORY.md` index. Bare `spectacular remember` / `remember this` still routes to the skill flow (backwards-compatible).
+- **CLI mutator: `spectacular decide "<text>" [--dry-run]`** — appends one ADR-style entry to `DECISIONS.md`. Auto-derives a title from the first ~6 words.
+- **CLI mutator: `spectacular session start|end`** — opens/closes a working session entry. Lifecycle invariant enforced: at most one session can be open at a time.
+- **Auto-session linkage** — when a session is open, `decide` and `remember` set `session: <slug>` in the new entry's frontmatter. At `session end`, the writer scans `DECISIONS.md` + `memory/*.md` for matching `session:` fields and appends "Linked decisions" / "Linked memories" sections to the session body, plus recomputes `decisions_count` / `memories_count`.
+- **New `mode: index`** taxonomy entry in `doc-index.md`. The index file is regenerated from `entries-dir/`; CLI mutators write entries; agentic verbs (grill/refine/review) operate on the collection.
+- **Doctor areas: `memory` and `sessions`** — index ↔ entries drift detection, frontmatter validation, lifecycle-invariant check (≤1 open), 4h stale-open-session warning.
+- **Coding kit triggers** — `--kit coding` now scaffolds `MEMORY.md` + `SESSIONS.md` alongside the existing `DECISIONS.md` + `STACK.md` + `ARCHITECTURE.md`.
+- **New templates: `templates/memory/entry.md`, `templates/sessions/entry.md`** — frontmatter schemas with `type`, `summary`, `tags`, `session` (memory) and `type`, `status`, `start_date`, `end_date`, `decisions_count`, `memories_count` (sessions).
+- **Snapshot tidy (M1–M3 of the `snapshot-tidy` request)** — versioned snapshots now live in a dedicated `.spectacular/snapshots/<DOC>/@v<N>.md` tree (one folder per canonical doc, uppercase preserved, `@v` retained in filename). Sub-doc snapshots mirror their path: `specs/cli/SPEC.md` → `snapshots/specs/cli/SPEC/@v1.0.md`.
+- **Doctor `snapshots` area extended** — warns on legacy root-level `*@v*.md` files with the target path in the fix hint. `spectacular doctor --fix snapshots` migrates them via `git mv` (or plain `mv` when untracked).
+
+### Changed
+- `decisions-rules.md` documents the new `spectacular decide` CLI verb and the optional `Session:` link field appended to entries when a session is open.
+- `SKILL.md` routing table adds the three CLI mutators; Doc IDs registered string bumped to v1.5.0 (`memory`, `sessions` added).
+- `doc-index.md` adds two catalog rows + new `index` row in the mode taxonomy + a new column in the verb × mode matrix.
+- **`spectacular snapshot <file>`** writes to the new `snapshots/<DOC>/@v<N>.md` location; reads from both new and legacy locations when computing the next N (back-compat preserved). Auto-creates the target directory.
+- **`versioning.md` + `ARCHITECTURE.md`** updated for the new snapshot layout; migration notes inline.
+- Dogfood: 11 snapshots in this repo (PRD ×4, ROADMAP ×4, AGENTS, ARCHITECTURE, SPEC) migrated from `.spectacular/` root to `.spectacular/snapshots/<DOC>/`.
+
+### Fixed
+- `_summary_from_text` helper no longer crashes on UTF-8 multibyte chars (em-dash, etc.) — switched from awk char-iteration to sed-based extraction.
+- Session-end body builder no longer silently exits under `set -o pipefail` when no matching `## ` headers found — grep chain wrapped in `|| true` and switched to awk for the ADR scan.
+
+### Notes
+- **Migration of flat `DECISIONS.md` → `decisions/<slug>.md` folder shape is deferred to v1.6.x** alongside query verbs (`spectacular decisions --7d`, `spectacular recall`, `spectacular sessions`). v1.5.0 leaves `DECISIONS.md` in its existing flat format.
+- The frontmatter schema (`type`, `tags`, `summary`, `related`, `session`) is **RAG-ready** — future embedding/retrieval layers can read these fields without a schema change.
+- This is the foundation block for the planned v1.5.x → v1.7.x memory line on the roadmap. Research synthesis lives in `_research/agent-memory/REPORT.md` (NotebookLM + scrapekit consolidation of mem0, Letta/MemGPT, Graphiti/Zep, Cognee, Anthropic Memory Tool, Cline Memory Bank, Cursor Rules patterns).
+
+---
+
 ## [1.4.0] — 2026-05-24
 
 ### Breaking

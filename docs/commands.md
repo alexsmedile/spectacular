@@ -159,7 +159,35 @@ spectacular archive add-team-billing
 
 ### `spectacular remember this`
 
-Writes an operational lesson to `.spectacular/memory/` after human confirmation. Team-visible — not for personal notes or secrets.
+Writes an operational lesson to `.spectacular/memory/` after human confirmation. Team-visible — not for personal notes or secrets. **Skill flow** — runs inside Claude Code/Codex.
+
+### `spectacular remember "<text>" [--tag a,b]` (v1.5.0+)
+
+CLI mutator. Writes one memory entry to `.spectacular/memory/<slug>.md` and regenerates `MEMORY.md` index. Auto-derives slug + summary. If a session is open, the entry frontmatter gets `session: <slug>` automatically.
+
+```text
+spectacular remember "haiku is fast enough for slug generation" --tag perf,cli
+spectacular remember "..." --dry-run    # preview without writing
+```
+
+### `spectacular decide "<text>"` (v1.5.0+)
+
+CLI mutator. Appends one ADR-style entry to `.spectacular/DECISIONS.md`. Auto-derives a title slug from the first ~6 words. If a session is open, the entry includes a `Session:` link.
+
+```text
+spectacular decide "use bash for the CLI to keep install footprint zero"
+```
+
+### `spectacular session start|end` (v1.5.0+)
+
+CLI mutator. Opens or closes a working session entry in `.spectacular/sessions/`.
+
+```text
+spectacular session start --tag substrate-work     # open
+spectacular session end                            # close, recompute linked counts
+```
+
+At most **one** session can be open at a time. At `end`, the writer scans `DECISIONS.md` + `memory/*.md` for entries with matching `session: <slug>` and appends Linked-decisions / Linked-memories sections to the session body. `spectacular doctor sessions` warns on sessions open >4h.
 
 ### `spectacular snapshot <file>`
 

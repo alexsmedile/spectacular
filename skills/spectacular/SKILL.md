@@ -21,7 +21,7 @@ when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type listed in doc-index.md.
-version: 1.7.0
+version: 1.8.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -61,9 +61,33 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `/spectacular doctor --fix` (judgment walk) | → `references/doctor-repair.md` |
 | Explain a finding or area check | → `references/doctor-areas.md` |
 | Skill operation hits substrate failure (rules file won't parse, kit malformed, etc.) | → `references/doctor-substrate.md` |
+| `spectacular migrate [--dry-run\|--list]` | → CLI verb. Mechanical apply of pending schema migrations. |
 | `/spectacular migrate` (walk judgment migrations) | → `references/migrate.md` |
 | Explain a migration spec or contract | → `references/migrations-contract.md` |
 | Actively working on a request | → `references/active-request.md` |
+
+### Read verbs (v1.8.0+) — collapse multi-step inspection to one CLI call
+
+These are read-only — no skill flow needed, no mutation. Always prefer these over walking the filesystem or reading multiple PLAN.md/TASKS.md files manually.
+
+| User says / context | Route to |
+|---|---|
+| `spectacular requests [--active\|--status\|--since\|--json]` | → CLI verb. Lists requests with frontmatter view. |
+| `spectacular request <slug>` | → CLI verb. Skim view of one request (frontmatter + outline + milestone progress). `--full` for raw. |
+| `spectacular decisions [--tag\|--since\|--json]` | → CLI verb. Lists decisions. |
+| `spectacular decision <slug>` | → CLI verb. Skim view of one decision. |
+| `spectacular memories [--tag\|--since\|--json]` | → CLI verb. Lists memory entries. |
+| `spectacular memory <slug>` | → CLI verb. Skim view of one memory. |
+| `spectacular sessions [--status\|--since\|--json]` | → CLI verb. Lists sessions (read-only — distinct from `session start\|end` mutators). |
+| `spectacular sessions show <slug>` | → CLI verb. Skim view of one session. |
+| `spectacular show <doctype>` | → CLI verb. Dumps a canonical doc (prd/spec/principles/...). `--section <name>` filters to one H2. |
+| `spectacular summary` | → CLI verb. One-page workspace overview (counts + active requests). Cheap cold-start. |
+| `spectacular progress <slug>` | → CLI verb. Milestone tick rate parsed from TASKS.md. |
+| `spectacular paths` | → CLI verb. JSON map of conventional paths. Use when locating files programmatically. |
+
+**Universal flags:** `--status <s>`, `--since <Nd\|Nh\|Nw>`, `--limit N` (default 20), `--all`, `--json`. Detail verbs add `--full` to bypass skim mode.
+
+**Cold-start pattern:** prefer `spectacular summary` first → `spectacular requests --active` for context → `spectacular request <slug>` for the one you'll work on. Three CLI calls beats walking the filesystem.
 
 ### Doc-writing (generalized — works for any registered doc)
 

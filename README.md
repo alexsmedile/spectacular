@@ -136,6 +136,15 @@ A typical coding project (`spectacular init --kit coding`) scaffolds the always-
 | `spectacular remember this` | Write an insight to `memory/` immediately |
 | `spectacular feedback-loop` | Prototyping-mode human-feedback loop — pick target, craft proposal, ask user, capture, decide (v1.6.0+) |
 | `spectacular idea` | Thinking-scratchpad ideas — `new\|list\|promote`. Promotion scaffolds a request + archives the idea (v1.7.0+) |
+| `spectacular summary` | One-page workspace overview: counts of requests/decisions/memories/sessions/ideas/feedback (v1.8.0+) |
+| `spectacular requests` | List requests; filter with `--status`, `--active`, `--since`; `--json` for agents (v1.8.0+) |
+| `spectacular request <slug>` | Skim view of one request (frontmatter + outline + milestone progress); `--full` for raw (v1.8.0+) |
+| `spectacular decisions` / `decision <slug>` | List/inspect decisions (v1.8.0+) |
+| `spectacular memories` / `memory <slug>` | List/inspect memories (v1.8.0+) |
+| `spectacular sessions` / `sessions show <slug>` | List/inspect sessions read-only (v1.8.0+) |
+| `spectacular show <doctype>` | Dump canonical doc (`prd\|spec\|principles\|...`); `--section <h2>` filters (v1.8.0+) |
+| `spectacular progress <slug>` | Milestone tick rate from TASKS.md (v1.8.0+) |
+| `spectacular paths` | JSON map of conventional workspace paths (v1.8.0+) |
 
 > [!WARNING]
 > **`spectacular docs *` verbs are deprecated as of v1.2.0** — public-facing documentation work moved to the standalone [pageworks](https://github.com/alexsmedile/pageworks) skill. The verbs still work and emit a deprecation banner pointing to the equivalent pageworks command; they will be removed in v2.0.0. Install pageworks via its own one-liner.
@@ -168,6 +177,21 @@ spectacular feedback-loop archive <slug>      # move to .spectacular/archive/fee
 spectacular idea new <slug>                   # scaffold idea entry (status: parked); --hypothesis, --origin, --priority
 spectacular idea list                         # list ideas; --status parked|exploring|promoted|all
 spectacular idea promote <slug>               # scaffold request from idea + move source to archive/ideas/
+
+spectacular summary                           # one-page workspace overview (v1.8.0+)
+spectacular requests --active                 # list active requests (table + --json)
+spectacular requests --status review --since 7d --limit 10
+spectacular request <slug>                    # skim view (frontmatter + outline + progress); --full for raw
+spectacular decisions [--tag t] [--since 30d] [--json]
+spectacular decision <slug>                   # skim view of one decision
+spectacular memories [--tag t] [--since 7d] [--json]
+spectacular memory <slug>                     # skim view of one memory
+spectacular sessions [--status open|closed|all] [--since 24h]
+spectacular sessions show <slug>              # detail subverb (avoids `session start|end` collision)
+spectacular show <doctype>                    # prd|spec|principles|architecture|roadmap|stack|agents|...
+spectacular show <doctype> --section <name>   # filter to one H2 section
+spectacular progress <slug>                   # M1: 8/8 ✓, M2: 3/5, ... (parses TASKS.md ticks)
+spectacular paths                             # JSON map of workspace paths
 
 spectacular migrate                           # apply pending workspace schema migrations
 spectacular migrate --dry-run                 # preview the migration plan

@@ -5,6 +5,36 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.8.0] — 2026-05-26
+
+### Added
+- **Read-verb family (11 new top-level CLI verbs)** designed to collapse multi-step agent reads into single deterministic calls. Read-only — no state mutation.
+- **`spectacular requests`** — list requests with `--status <s>`, `--active` (alias for `--status active`), `--since <Nd|Nh|Nw>`, `--limit N` (default 20), `--all`, `--json`. Default table view shows slug/status/priority/target/updated/summary.
+- **`spectacular request <slug>`** — detail view (skim by default: frontmatter + section outline + milestone progress; `--full` for raw PLAN.md). Falls back to `archive/<slug>/PLAN.md` if not in `requests/`.
+- **`spectacular decisions`** / **`spectacular decision <slug>`** — list and inspect entries from `.spectacular/decisions/`. Filters: `--tag`, `--since`. Detail view shows frontmatter + outline.
+- **`spectacular memories`** / **`spectacular memory <slug>`** — same pattern for `.spectacular/memory/`.
+- **`spectacular sessions`** / **`spectacular sessions show <slug>`** — read sessions; `show <slug>` is the detail subverb (avoids collision with the existing `session start|end` mutators). `--status open|closed|all`.
+- **`spectacular show <doctype>`** — dump a canonical doc (`prd|spec|principles|architecture|roadmap|stack|agents|decisions|memory|sessions|personas`). `--section <name>` filters to one H2; `--json` returns `{path, content}`.
+- **`spectacular summary`** — one-page workspace overview: project name + request counts by status + decisions/memories/sessions/ideas/feedback counts. `--json` for machine. Aggregates by calling the list verbs internally.
+- **`spectacular progress <slug>`** — milestone tick rate parsed from TASKS.md. Returns `M1: 8/8 ✓, M2: 3/5, ...`. `--json` for machine.
+- **`spectacular paths`** — JSON map of conventional workspace paths (PRD, SPEC, requests_dir, memory_dir, etc.). Default JSON; `--text` for human. Lets tools locate files without hardcoding.
+- **Universal flags across all list verbs:** `--status`, `--since`, `--limit` (default 20), `--all`, `--json`. Default limit prevents context overflow; `--all` overrides.
+- **Skim-by-default detail views** — single short prompt instead of full file content. `--full` always available for raw dumps.
+- **Internal helpers:** `_parse_since` (duration parser), `_date_to_epoch`, `_json_escape`, `_request_iter_all`, `_decision_iter_all`, `_memory_iter_all`, `_session_iter_all`, `_skim_file`, `_progress_text`, `_progress_json`.
+
+### Changed
+- `skills/spectacular/SKILL.md` — new "Read verbs (v1.8.0+)" routing block with 12 trigger rows + cold-start pattern guidance. Version frontmatter to 1.8.0.
+- `cli/spectacular` top-level `--help` adds a "Read verbs" section.
+- `README.md` CLI reference adds all new verbs.
+
+### Notes
+- **Grammar locked (2026-05-26):** plural noun = list; singular noun + slug = detail; bare verb = high-frequency action on implicit object (`new`, `archive`, `promote`, etc.); noun + subcommand = multi-verb lifecycle (`session start|end`, `idea new|list|promote`, ...). Zero breaking changes — every existing verb stays. The new read verbs codify the pragmatic mixed grammar that was already emerging.
+- **Pure verb-first was considered and rejected**: `spectacular new request|idea|session|feedback|...` would overload `new` across unrelated lifecycles, the same trap `git` solves with `git <object> <verb>`. The current mixed grammar matches real-world CLI conventions (git/gh/kubectl all blend bare verbs with noun-namespaces).
+- **`spectacular summary` as cold-start primitive**: agents should prefer `summary → requests --active → request <slug>` (three calls) over walking the filesystem. Documented in SKILL.md.
+- **Why hardcoded doctype list in `show`**: doc-types are rare additions; dynamic registry dispatch adds parsing cost on every call. The hardcoded switch is faster and the v1.7.0 doc-index.md already serves as the catalog.
+
+---
+
 ## [1.7.0] — 2026-05-26
 
 ### Added

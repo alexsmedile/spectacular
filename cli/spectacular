@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.7.0"
+SPECTACULAR_VERSION="1.8.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_REPO="alexsmedile/spectacular"
 GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
@@ -187,6 +187,19 @@ CLI verbs (mutate workspace):
   touch <file>           Bump frontmatter 'updated:' to today
   feedback-loop <sub>    Prototyping-mode human-feedback acquisition (new|list|resolve|archive)
   idea <sub>             Thinking-scratchpad idea management (new|list|promote)
+
+Read verbs (v1.8.0+ — collapse multi-step inspection to one call):
+  requests [--active]    List requests (--status, --since, --limit, --json)
+  decisions              List decisions (--tag, --since, --limit, --json)
+  memories               List memories (--tag, --since, --limit, --json)
+  sessions [show <slug>] List sessions; subverb show for detail
+  request <slug>         Detail view for one request (skim; --full for raw)
+  decision <slug>        Detail view for one decision
+  memory <slug>          Detail view for one memory
+  show <doctype>         Dump canonical doc (prd|spec|principles|...)
+  summary                One-page workspace overview
+  progress <slug>        Milestone tick rate for a request
+  paths                  Conventional paths as JSON
 
 Skill verbs (run via /spectacular in your AI agent):
   status [--against-latest|--since <date>]    Briefing of project state
@@ -1889,6 +1902,1011 @@ EOF
 }
 
 # ── archive ──────────────────────────────────────────────────────────────────
+# ── read verbs (v1.8.0+) ─────────────────────────────────────────────────────
+# Read-only listing + detail + workspace verbs. Collapse multi-step agent
+# workflows into single deterministic CLI calls.
+#
+# Grammar:
+#   plural noun       = list (requests, decisions, memories, sessions)
+#   singular + slug   = detail (request <slug>, decision <slug>, memory <slug>)
+#   show <doctype>    = dump canonical doc
+#   summary           = workspace overview
+#   progress <slug>   = milestone tick rate for a request
+#   paths             = JSON path map
+#
+# Universal flags: --status, --since, --limit (default 20), --all, --json
+# Detail verbs add: --full (bypass skim mode)
+
+# Parse a duration string like "7d", "24h", "2w" → epoch threshold.
+# Returns 0 (epoch start) if input is empty or unparseable.
+_parse_since() {
+  local input="$1"
+  [[ -z "$input" ]] && { echo 0; return 0; }
+  local num unit seconds
+  if [[ "$input" =~ ^([0-9]+)([dhw])$ ]]; then
+    num="${BASH_REMATCH[1]}"
+    unit="${BASH_REMATCH[2]}"
+    case "$unit" in
+      h) seconds=$((num * 3600)) ;;
+      d) seconds=$((num * 86400)) ;;
+      w) seconds=$((num * 604800)) ;;
+    esac
+    echo $(( $(date +%s) - seconds ))
+    return 0
+  fi
+  die "Invalid --since value: '$input'. Use Nh, Nd, or Nw (e.g. 24h, 7d, 2w)."
+}
+
+# Convert a YYYY-MM-DD date string to epoch. Returns 0 on parse failure.
+_date_to_epoch() {
+  local d="$1"
+  [[ -z "$d" ]] && { echo 0; return 0; }
+  date -j -f "%Y-%m-%d" "$d" "+%s" 2>/dev/null || echo 0
+}
+
+# Escape a string for JSON. Handles backslashes, quotes, newlines, tabs.
+_json_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\t'/\\t}"
+  s="${s//$'\r'/\\r}"
+  printf '%s' "$s"
+}
+
+# Iterate over all request directories. Emits one path per request (PLAN.md).
+_request_iter_all() {
+  local d
+  [[ -d ".spectacular/requests" ]] || return 0
+  for d in .spectacular/requests/*/; do
+    [[ -d "$d" ]] || continue
+    [[ -f "$d/PLAN.md" ]] && echo "$d/PLAN.md"
+  done
+}
+
+# Iterate over all decision entries. Emits one path per entry.
+_decision_iter_all() {
+  local f
+  if [[ -d ".spectacular/decisions" ]]; then
+    for f in .spectacular/decisions/*.md; do
+      [[ -f "$f" ]] && echo "$f"
+    done
+  fi
+}
+
+# Iterate over all memory entries.
+_memory_iter_all() {
+  local f
+  [[ -d ".spectacular/memory" ]] || return 0
+  for f in .spectacular/memory/*.md; do
+    [[ -f "$f" ]] && echo "$f"
+  done
+}
+
+# Iterate over all session entries.
+_session_iter_all() {
+  local f
+  [[ -d ".spectacular/sessions" ]] || return 0
+  for f in .spectacular/sessions/*.md; do
+    [[ -f "$f" ]] && echo "$f"
+  done
+}
+
+# ── cmd_requests (list) ──────────────────────────────────────────────────────
+cmd_requests() {
+  local status_filter="all" since="" limit=20 show_all=false json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --status) require_value "--status" "${2:-}"; status_filter="$2"; shift 2 ;;
+      --active) status_filter="active"; shift ;;
+      --since)  require_value "--since" "${2:-}"; since="$2"; shift 2 ;;
+      --limit)  require_value "--limit" "${2:-}"; limit="$2"; shift 2 ;;
+      --all)    show_all=true; shift ;;
+      --json)   json=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular requests [options]
+
+List requests with their lifecycle state.
+
+Options:
+  --status <s>    planned | active | review | verified | all  (default: all)
+  --active        Alias for --status active
+  --since <dur>   Filter to requests updated within duration (e.g. 7d, 24h, 2w)
+  --limit <n>     Cap output at n rows (default: 20)
+  --all           No limit
+  --json          JSON output (array of objects)
+
+Examples:
+  spectacular requests --active
+  spectacular requests --status review --json
+  spectacular requests --since 30d
+EOF
+        exit 0 ;;
+      *) die "Unknown flag for requests: $1" ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "requests: not inside a Spectacular workspace"
+  [[ "$limit" =~ ^[0-9]+$ ]] || die "requests: --limit must be a positive integer"
+  (( limit > 0 )) || die "requests: --limit must be > 0"
+
+  local since_epoch
+  since_epoch=$(_parse_since "$since")
+
+  # Collect rows
+  local rows=() count=0
+  local f slug status priority updated target summary
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    slug=$(basename "$(dirname "$f")")
+    status=$(fm_get "$f" "status")
+    [[ -z "$status" ]] && status="?"
+    if [[ "$status_filter" != "all" && "$status" != "$status_filter" ]]; then
+      continue
+    fi
+    updated=$(fm_get "$f" "updated")
+    if (( since_epoch > 0 )); then
+      local upd_epoch
+      upd_epoch=$(_date_to_epoch "$updated")
+      (( upd_epoch < since_epoch )) && continue
+    fi
+    priority=$(fm_get "$f" "priority")
+    target=$(fm_get "$f" "target_version")
+    summary=$(fm_get "$f" "summary")
+    rows+=("$slug|${status}|${priority:-?}|${target:-—}|${updated:-?}|${summary:-}")
+    count=$((count + 1))
+  done < <(_request_iter_all)
+
+  # Apply limit unless --all
+  local effective_limit=$count
+  if ! $show_all && (( count > limit )); then
+    effective_limit=$limit
+  fi
+
+  if $json; then
+    printf '['
+    local i=0
+    for row in "${rows[@]:0:$effective_limit}"; do
+      IFS='|' read -r slug status priority target updated summary <<< "$row"
+      (( i > 0 )) && printf ','
+      printf '{"slug":"%s","status":"%s","priority":"%s","target_version":"%s","updated":"%s","summary":"%s"}' \
+        "$(_json_escape "$slug")" "$(_json_escape "$status")" "$(_json_escape "$priority")" \
+        "$(_json_escape "$target")" "$(_json_escape "$updated")" "$(_json_escape "$summary")"
+      i=$((i + 1))
+    done
+    printf ']\n'
+    return 0
+  fi
+
+  if (( count == 0 )); then
+    info "(no requests match)"
+    return 0
+  fi
+
+  printf "%-28s  %-10s  %-8s  %-8s  %-10s  %s\n" "SLUG" "STATUS" "PRIORITY" "TARGET" "UPDATED" "SUMMARY"
+  printf "%-28s  %-10s  %-8s  %-8s  %-10s  %s\n" "----" "------" "--------" "------" "-------" "-------"
+  local row
+  for row in "${rows[@]:0:$effective_limit}"; do
+    IFS='|' read -r slug status priority target updated summary <<< "$row"
+    local slug_disp="$slug" summary_disp="$summary"
+    (( ${#slug_disp} > 28 )) && slug_disp="${slug_disp:0:25}..."
+    (( ${#summary_disp} > 60 )) && summary_disp="${summary_disp:0:57}..."
+    printf "%-28s  %-10s  %-8s  %-8s  %-10s  %s\n" \
+      "$slug_disp" "$status" "$priority" "$target" "$updated" "$summary_disp"
+  done
+
+  if (( count > effective_limit )); then
+    info "(showing $effective_limit of $count — use --all for full list)"
+  fi
+}
+
+# ── cmd_decisions (list) ─────────────────────────────────────────────────────
+cmd_decisions() {
+  local tag_filter="" since="" limit=20 show_all=false json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --tag)   require_value "--tag" "${2:-}"; tag_filter="$2"; shift 2 ;;
+      --since) require_value "--since" "${2:-}"; since="$2"; shift 2 ;;
+      --limit) require_value "--limit" "${2:-}"; limit="$2"; shift 2 ;;
+      --all)   show_all=true; shift ;;
+      --json)  json=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular decisions [options]
+
+List decisions from .spectacular/decisions/.
+
+Options:
+  --tag <t>       Filter to entries tagged with <t>
+  --since <dur>   Filter to entries decided within duration (e.g. 7d, 24h, 2w)
+  --limit <n>     Cap output at n rows (default: 20)
+  --all           No limit
+  --json          JSON output (array of objects)
+EOF
+        exit 0 ;;
+      *) die "Unknown flag for decisions: $1" ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "decisions: not inside a Spectacular workspace"
+  [[ "$limit" =~ ^[0-9]+$ ]] || die "decisions: --limit must be a positive integer"
+  local since_epoch
+  since_epoch=$(_parse_since "$since")
+
+  local rows=() count=0
+  local f slug decided summary tags
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    slug=$(basename "$f" .md)
+    decided=$(fm_get "$f" "decided")
+    [[ -z "$decided" ]] && decided=$(fm_get "$f" "updated")
+    if (( since_epoch > 0 )); then
+      local d_epoch
+      d_epoch=$(_date_to_epoch "$decided")
+      (( d_epoch < since_epoch )) && continue
+    fi
+    tags=$(fm_get "$f" "tags")
+    if [[ -n "$tag_filter" ]]; then
+      [[ "$tags" == *"$tag_filter"* ]] || continue
+    fi
+    summary=$(fm_get "$f" "summary")
+    [[ -z "$summary" ]] && summary=$(fm_get "$f" "decision")
+    rows+=("$slug|${decided:-?}|${tags:-}|${summary:-}")
+    count=$((count + 1))
+  done < <(_decision_iter_all)
+
+  # Sort by decided date desc (we'll trust filesystem; if needed, can pipe through sort)
+  local effective_limit=$count
+  if ! $show_all && (( count > limit )); then
+    effective_limit=$limit
+  fi
+
+  if $json; then
+    printf '['
+    local i=0
+    for row in "${rows[@]:0:$effective_limit}"; do
+      IFS='|' read -r slug decided tags summary <<< "$row"
+      (( i > 0 )) && printf ','
+      printf '{"slug":"%s","decided":"%s","tags":"%s","summary":"%s"}' \
+        "$(_json_escape "$slug")" "$(_json_escape "$decided")" \
+        "$(_json_escape "$tags")" "$(_json_escape "$summary")"
+      i=$((i + 1))
+    done
+    printf ']\n'
+    return 0
+  fi
+
+  if (( count == 0 )); then
+    info "(no decisions match)"
+    return 0
+  fi
+
+  printf "%-36s  %-10s  %-20s  %s\n" "SLUG" "DECIDED" "TAGS" "SUMMARY"
+  printf "%-36s  %-10s  %-20s  %s\n" "----" "-------" "----" "-------"
+  local row
+  for row in "${rows[@]:0:$effective_limit}"; do
+    IFS='|' read -r slug decided tags summary <<< "$row"
+    local slug_disp="$slug" summary_disp="$summary" tags_disp="$tags"
+    (( ${#slug_disp} > 36 )) && slug_disp="${slug_disp:0:33}..."
+    (( ${#tags_disp} > 20 )) && tags_disp="${tags_disp:0:17}..."
+    (( ${#summary_disp} > 50 )) && summary_disp="${summary_disp:0:47}..."
+    printf "%-36s  %-10s  %-20s  %s\n" "$slug_disp" "$decided" "$tags_disp" "$summary_disp"
+  done
+
+  if (( count > effective_limit )); then
+    info "(showing $effective_limit of $count — use --all for full list)"
+  fi
+}
+
+# ── cmd_memories (list) ──────────────────────────────────────────────────────
+cmd_memories() {
+  local tag_filter="" since="" limit=20 show_all=false json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --tag)   require_value "--tag" "${2:-}"; tag_filter="$2"; shift 2 ;;
+      --since) require_value "--since" "${2:-}"; since="$2"; shift 2 ;;
+      --limit) require_value "--limit" "${2:-}"; limit="$2"; shift 2 ;;
+      --all)   show_all=true; shift ;;
+      --json)  json=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular memories [options]
+
+List memory entries from .spectacular/memory/.
+
+Options:
+  --tag <t>       Filter to entries tagged with <t>
+  --since <dur>   Filter to entries created within duration (e.g. 7d, 24h, 2w)
+  --limit <n>     Cap output at n rows (default: 20)
+  --all           No limit
+  --json          JSON output (array of objects)
+EOF
+        exit 0 ;;
+      *) die "Unknown flag for memories: $1" ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "memories: not inside a Spectacular workspace"
+  [[ "$limit" =~ ^[0-9]+$ ]] || die "memories: --limit must be a positive integer"
+  local since_epoch
+  since_epoch=$(_parse_since "$since")
+
+  local rows=() count=0
+  local f slug created summary tags
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    slug=$(basename "$f" .md)
+    created=$(fm_get "$f" "created")
+    [[ -z "$created" ]] && created=$(fm_get "$f" "updated")
+    if (( since_epoch > 0 )); then
+      local c_epoch
+      c_epoch=$(_date_to_epoch "$created")
+      (( c_epoch < since_epoch )) && continue
+    fi
+    tags=$(fm_get "$f" "tags")
+    if [[ -n "$tag_filter" ]]; then
+      [[ "$tags" == *"$tag_filter"* ]] || continue
+    fi
+    summary=$(fm_get "$f" "summary")
+    [[ -z "$summary" ]] && summary=$(fm_get "$f" "lesson")
+    rows+=("$slug|${created:-?}|${tags:-}|${summary:-}")
+    count=$((count + 1))
+  done < <(_memory_iter_all)
+
+  local effective_limit=$count
+  if ! $show_all && (( count > limit )); then
+    effective_limit=$limit
+  fi
+
+  if $json; then
+    printf '['
+    local i=0
+    for row in "${rows[@]:0:$effective_limit}"; do
+      IFS='|' read -r slug created tags summary <<< "$row"
+      (( i > 0 )) && printf ','
+      printf '{"slug":"%s","created":"%s","tags":"%s","summary":"%s"}' \
+        "$(_json_escape "$slug")" "$(_json_escape "$created")" \
+        "$(_json_escape "$tags")" "$(_json_escape "$summary")"
+      i=$((i + 1))
+    done
+    printf ']\n'
+    return 0
+  fi
+
+  if (( count == 0 )); then
+    info "(no memories match)"
+    return 0
+  fi
+
+  printf "%-36s  %-10s  %-20s  %s\n" "SLUG" "CREATED" "TAGS" "SUMMARY"
+  printf "%-36s  %-10s  %-20s  %s\n" "----" "-------" "----" "-------"
+  local row
+  for row in "${rows[@]:0:$effective_limit}"; do
+    IFS='|' read -r slug created tags summary <<< "$row"
+    local slug_disp="$slug" summary_disp="$summary" tags_disp="$tags"
+    (( ${#slug_disp} > 36 )) && slug_disp="${slug_disp:0:33}..."
+    (( ${#tags_disp} > 20 )) && tags_disp="${tags_disp:0:17}..."
+    (( ${#summary_disp} > 50 )) && summary_disp="${summary_disp:0:47}..."
+    printf "%-36s  %-10s  %-20s  %s\n" "$slug_disp" "$created" "$tags_disp" "$summary_disp"
+  done
+
+  if (( count > effective_limit )); then
+    info "(showing $effective_limit of $count — use --all for full list)"
+  fi
+}
+
+# ── cmd_sessions (list, + show subverb) ──────────────────────────────────────
+cmd_sessions() {
+  # Disambiguate: `sessions show <slug>` is the detail subverb
+  if [[ "${1:-}" == "show" ]]; then
+    shift
+    cmd_sessions_show "$@"
+    return $?
+  fi
+
+  local status_filter="all" since="" limit=20 show_all=false json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --status) require_value "--status" "${2:-}"; status_filter="$2"; shift 2 ;;
+      --since)  require_value "--since" "${2:-}"; since="$2"; shift 2 ;;
+      --limit)  require_value "--limit" "${2:-}"; limit="$2"; shift 2 ;;
+      --all)    show_all=true; shift ;;
+      --json)   json=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular sessions [options]
+       spectacular sessions show <slug>
+
+List or inspect sessions. Read-only (use 'spectacular session start|end' to mutate).
+
+List options:
+  --status <s>    open | closed | all  (default: all)
+  --since <dur>   Filter to sessions opened within duration
+  --limit <n>     Cap output at n rows (default: 20)
+  --all           No limit
+  --json          JSON output
+
+Detail:
+  spectacular sessions show <slug>   Print frontmatter + section outline
+EOF
+        exit 0 ;;
+      *) die "Unknown flag for sessions: $1. Use 'sessions show <slug>' for detail." ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "sessions: not inside a Spectacular workspace"
+  [[ "$limit" =~ ^[0-9]+$ ]] || die "sessions: --limit must be a positive integer"
+  local since_epoch
+  since_epoch=$(_parse_since "$since")
+
+  local rows=() count=0
+  local f slug status opened summary
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    slug=$(basename "$f" .md)
+    status=$(fm_get "$f" "status")
+    [[ -z "$status" ]] && status="?"
+    if [[ "$status_filter" != "all" && "$status" != "$status_filter" ]]; then
+      continue
+    fi
+    opened=$(fm_get "$f" "opened")
+    [[ -z "$opened" ]] && opened=$(fm_get "$f" "started")
+    if (( since_epoch > 0 )); then
+      local o_epoch
+      o_epoch=$(_date_to_epoch "${opened:0:10}")
+      (( o_epoch < since_epoch )) && continue
+    fi
+    summary=$(fm_get "$f" "summary")
+    [[ -z "$summary" ]] && summary=$(fm_get "$f" "focus")
+    rows+=("$slug|${status}|${opened:-?}|${summary:-}")
+    count=$((count + 1))
+  done < <(_session_iter_all)
+
+  local effective_limit=$count
+  if ! $show_all && (( count > limit )); then
+    effective_limit=$limit
+  fi
+
+  if $json; then
+    printf '['
+    local i=0
+    for row in "${rows[@]:0:$effective_limit}"; do
+      IFS='|' read -r slug status opened summary <<< "$row"
+      (( i > 0 )) && printf ','
+      printf '{"slug":"%s","status":"%s","opened":"%s","summary":"%s"}' \
+        "$(_json_escape "$slug")" "$(_json_escape "$status")" \
+        "$(_json_escape "$opened")" "$(_json_escape "$summary")"
+      i=$((i + 1))
+    done
+    printf ']\n'
+    return 0
+  fi
+
+  if (( count == 0 )); then
+    info "(no sessions match)"
+    return 0
+  fi
+
+  printf "%-36s  %-8s  %-20s  %s\n" "SLUG" "STATUS" "OPENED" "FOCUS"
+  printf "%-36s  %-8s  %-20s  %s\n" "----" "------" "------" "-----"
+  local row
+  for row in "${rows[@]:0:$effective_limit}"; do
+    IFS='|' read -r slug status opened summary <<< "$row"
+    local slug_disp="$slug" summary_disp="$summary"
+    (( ${#slug_disp} > 36 )) && slug_disp="${slug_disp:0:33}..."
+    (( ${#summary_disp} > 50 )) && summary_disp="${summary_disp:0:47}..."
+    printf "%-36s  %-8s  %-20s  %s\n" "$slug_disp" "$status" "$opened" "$summary_disp"
+  done
+
+  if (( count > effective_limit )); then
+    info "(showing $effective_limit of $count — use --all for full list)"
+  fi
+}
+
+# ── Detail verbs (singular noun + slug) ──────────────────────────────────────
+
+# Generic skim helper: print frontmatter (key: value pairs) + outline (H2 headings).
+_skim_file() {
+  local file="$1"
+  [[ -f "$file" ]] || { echo "(file not found: $file)"; return 1; }
+
+  echo "── $file ──"
+  echo ""
+  echo "Frontmatter:"
+  awk '/^---$/{c++; if(c==2)exit; next} c==1{print "  "$0}' "$file"
+  echo ""
+  echo "Outline:"
+  grep -nE "^## " "$file" | sed 's/^/  /' || echo "  (no H2 headings)"
+}
+
+_skim_file_json() {
+  local file="$1"
+  [[ -f "$file" ]] || { echo "{}"; return 1; }
+  local fm outline
+  fm=$(awk '/^---$/{c++; if(c==2)exit; next} c==1{print}' "$file" | _json_escape "$(cat)")
+  # Simpler: just include path + frontmatter raw + outline
+  printf '{"path":"%s","frontmatter":"%s","outline":[' "$(_json_escape "$file")" \
+    "$(awk '/^---$/{c++; if(c==2)exit; next} c==1{printf "%s\\n", $0}' "$file" | sed 's/"/\\"/g')"
+  local first=true line
+  while IFS= read -r line; do
+    $first && first=false || printf ','
+    printf '"%s"' "$(_json_escape "$line")"
+  done < <(grep -E "^## " "$file" 2>/dev/null || true)
+  printf ']}\n'
+}
+
+cmd_request() {
+  local slug="" full=false json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --full) full=true; shift ;;
+      --json) json=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular request <slug> [--full] [--json]
+
+Show one request: frontmatter + PLAN.md outline + milestone progress.
+
+Options:
+  --full   Dump PLAN.md raw instead of skim view
+  --json   JSON output ({path, frontmatter, outline, progress})
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for request: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "request: only one <slug> argument allowed"
+        slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "request: <slug> argument required"
+  [[ -d ".spectacular" ]] || die "request: not inside a Spectacular workspace"
+
+  local plan=".spectacular/requests/$slug/PLAN.md"
+  local archive_plan=".spectacular/archive/$slug/PLAN.md"
+  if [[ ! -f "$plan" ]]; then
+    if [[ -f "$archive_plan" ]]; then
+      plan="$archive_plan"
+      info "(showing archived request)"
+    else
+      die "request: '$slug' not found in requests/ or archive/"
+    fi
+  fi
+
+  if $full; then
+    cat "$plan"
+    return 0
+  fi
+
+  local tasks="${plan%/PLAN.md}/TASKS.md"
+
+  if $json; then
+    # JSON mode: include progress data
+    printf '{"slug":"%s","path":"%s","frontmatter":{' \
+      "$(_json_escape "$slug")" "$(_json_escape "$plan")"
+    local first=true key val
+    while IFS=':' read -r key val; do
+      [[ -z "$key" ]] && continue
+      key="${key// /}"
+      val="${val# }"
+      val="${val%\"}"
+      val="${val#\"}"
+      $first && first=false || printf ','
+      printf '"%s":"%s"' "$(_json_escape "$key")" "$(_json_escape "$val")"
+    done < <(awk '/^---$/{c++; if(c==2)exit; next} c==1 && /:/{print}' "$plan")
+    printf '},"progress":'
+    if [[ -f "$tasks" ]]; then
+      _progress_json "$tasks"
+    else
+      printf 'null'
+    fi
+    printf '}\n'
+    return 0
+  fi
+
+  _skim_file "$plan"
+  if [[ -f "$tasks" ]]; then
+    echo ""
+    echo "Progress:"
+    _progress_text "$tasks" | sed 's/^/  /'
+  fi
+}
+
+cmd_decision() {
+  local slug="" full=false json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --full) full=true; shift ;;
+      --json) json=true; shift ;;
+      --help|-h)
+        echo "Usage: spectacular decision <slug> [--full] [--json]"
+        exit 0 ;;
+      -*) die "Unknown flag for decision: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "decision: only one <slug> argument allowed"
+        slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "decision: <slug> argument required"
+  local f=".spectacular/decisions/$slug.md"
+  [[ -f "$f" ]] || die "decision: '$slug' not found at $f"
+
+  if $full; then cat "$f"; return 0; fi
+  if $json; then _skim_file_json "$f"; return 0; fi
+  _skim_file "$f"
+}
+
+cmd_memory() {
+  local slug="" full=false json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --full) full=true; shift ;;
+      --json) json=true; shift ;;
+      --help|-h)
+        echo "Usage: spectacular memory <slug> [--full] [--json]"
+        exit 0 ;;
+      -*) die "Unknown flag for memory: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "memory: only one <slug> argument allowed"
+        slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "memory: <slug> argument required"
+  local f=".spectacular/memory/$slug.md"
+  [[ -f "$f" ]] || die "memory: '$slug' not found at $f"
+
+  if $full; then cat "$f"; return 0; fi
+  if $json; then _skim_file_json "$f"; return 0; fi
+  _skim_file "$f"
+}
+
+cmd_sessions_show() {
+  local slug="" full=false json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --full) full=true; shift ;;
+      --json) json=true; shift ;;
+      --help|-h)
+        echo "Usage: spectacular sessions show <slug> [--full] [--json]"
+        exit 0 ;;
+      -*) die "Unknown flag for sessions show: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "sessions show: only one <slug> argument allowed"
+        slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "sessions show: <slug> argument required"
+  local f=".spectacular/sessions/$slug.md"
+  [[ -f "$f" ]] || die "sessions show: '$slug' not found at $f"
+
+  if $full; then cat "$f"; return 0; fi
+  if $json; then _skim_file_json "$f"; return 0; fi
+  _skim_file "$f"
+}
+
+# ── cmd_show (canonical doc dump) ────────────────────────────────────────────
+cmd_show() {
+  local doctype="" section="" json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --section) require_value "--section" "${2:-}"; section="$2"; shift 2 ;;
+      --json)    json=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular show <doctype> [--section <name>] [--json]
+
+Dump a canonical document. Doctype is one of:
+  prd | spec | principles | architecture | roadmap | stack | agents
+  decisions | memory | sessions | personas
+
+Options:
+  --section <name>   Print only the H2 section matching <name>
+  --json             JSON output: {path, content}
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for show: $1" ;;
+      *)
+        [[ -n "$doctype" ]] && die "show: only one <doctype> argument allowed"
+        doctype="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$doctype" ]] && die "show: <doctype> argument required"
+  [[ -d ".spectacular" ]] || die "show: not inside a Spectacular workspace"
+
+  local path
+  case "$doctype" in
+    prd)          path=".spectacular/PRD.md" ;;
+    spec)         path=".spectacular/SPEC.md" ;;
+    principles)   path=".spectacular/PRINCIPLES.md" ;;
+    architecture) path=".spectacular/ARCHITECTURE.md" ;;
+    roadmap)      path=".spectacular/ROADMAP.md" ;;
+    stack)        path=".spectacular/STACK.md" ;;
+    agents)       path=".spectacular/AGENTS.md" ;;
+    decisions)    path=".spectacular/DECISIONS.md" ;;
+    memory)       path=".spectacular/MEMORY.md" ;;
+    sessions)     path=".spectacular/SESSIONS.md" ;;
+    personas)     path=".spectacular/PERSONAS.md" ;;
+    *) die "show: unknown doctype '$doctype'. Run 'spectacular show --help' for the list." ;;
+  esac
+
+  [[ -f "$path" ]] || die "show: '$path' not found (doctype '$doctype' not scaffolded)"
+
+  local content
+  if [[ -n "$section" ]]; then
+    content=$(awk -v s="$section" '
+      /^## / {
+        if (in_section) exit
+        if (index(tolower($0), tolower(s)) > 0) { in_section=1 }
+      }
+      in_section { print }
+    ' "$path")
+    [[ -z "$content" ]] && die "show: section '$section' not found in $path"
+  else
+    content=$(cat "$path")
+  fi
+
+  if $json; then
+    printf '{"path":"%s","content":"%s"}\n' \
+      "$(_json_escape "$path")" "$(_json_escape "$content")"
+  else
+    printf '%s\n' "$content"
+  fi
+}
+
+# ── cmd_progress (TASKS milestone tick rate) ─────────────────────────────────
+_progress_text() {
+  local tasks="$1"
+  [[ -f "$tasks" ]] || { echo "(TASKS.md not found)"; return 1; }
+  awk '
+    /^## M[0-9]+/ {
+      if (milestone != "") print milestone ": " done "/" (done+todo) (todo==0 ? " ✓" : "")
+      milestone = $0
+      sub(/^## /, "", milestone)
+      done = 0; todo = 0
+      next
+    }
+    /^- \[x\]/ { done++ }
+    /^- \[ \]/ { todo++ }
+    END {
+      if (milestone != "") print milestone ": " done "/" (done+todo) (todo==0 ? " ✓" : "")
+    }
+  ' "$tasks"
+}
+
+_progress_json() {
+  local tasks="$1"
+  [[ -f "$tasks" ]] || { echo "null"; return 1; }
+  awk '
+    BEGIN { printf "[" }
+    /^## M[0-9]+/ {
+      if (milestone != "") {
+        if (started) printf ","
+        printf "{\"milestone\":\"%s\",\"done\":%d,\"total\":%d}", milestone, done, (done+todo)
+        started = 1
+      }
+      milestone = $0
+      sub(/^## /, "", milestone)
+      gsub(/"/, "\\\"", milestone)
+      done = 0; todo = 0
+      next
+    }
+    /^- \[x\]/ { done++ }
+    /^- \[ \]/ { todo++ }
+    END {
+      if (milestone != "") {
+        if (started) printf ","
+        printf "{\"milestone\":\"%s\",\"done\":%d,\"total\":%d}", milestone, done, (done+todo)
+      }
+      printf "]"
+    }
+  ' "$tasks"
+}
+
+cmd_progress() {
+  local slug="" json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --json) json=true; shift ;;
+      --help|-h)
+        echo "Usage: spectacular progress <slug> [--json]"
+        echo ""
+        echo "Show milestone tick rate for a request (parses TASKS.md)."
+        exit 0 ;;
+      -*) die "Unknown flag for progress: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "progress: only one <slug> argument allowed"
+        slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "progress: <slug> argument required"
+  local tasks=".spectacular/requests/$slug/TASKS.md"
+  [[ -f "$tasks" ]] || tasks=".spectacular/archive/$slug/TASKS.md"
+  [[ -f "$tasks" ]] || die "progress: TASKS.md not found for '$slug'"
+
+  if $json; then
+    _progress_json "$tasks"
+    echo ""
+  else
+    _progress_text "$tasks"
+  fi
+}
+
+# ── cmd_paths (JSON path map) ────────────────────────────────────────────────
+cmd_paths() {
+  local format="json"
+  while (( $# > 0 )); do
+    case "$1" in
+      --text) format="text"; shift ;;
+      --json) format="json"; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular paths [--text | --json]
+
+Emit the conventional paths for this workspace. Useful for tools that need
+to locate documents without hardcoding paths.
+
+Default output: JSON.
+EOF
+        exit 0 ;;
+      *) die "Unknown flag for paths: $1" ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "paths: not inside a Spectacular workspace"
+
+  # Canonical paths (always returned, even if file doesn't exist yet)
+  local -a keys=(
+    prd spec principles architecture roadmap stack agents personas
+    decisions_file decisions_dir
+    memory_index memory_dir
+    sessions_index sessions_dir
+    feedback_dir ideas_dir
+    requests_dir archive_dir snapshots_dir packs_dir
+    config skill_lock
+  )
+  local -a vals=(
+    ".spectacular/PRD.md"
+    ".spectacular/SPEC.md"
+    ".spectacular/PRINCIPLES.md"
+    ".spectacular/ARCHITECTURE.md"
+    ".spectacular/ROADMAP.md"
+    ".spectacular/STACK.md"
+    ".spectacular/AGENTS.md"
+    ".spectacular/PERSONAS.md"
+    ".spectacular/DECISIONS.md"
+    ".spectacular/decisions/"
+    ".spectacular/MEMORY.md"
+    ".spectacular/memory/"
+    ".spectacular/SESSIONS.md"
+    ".spectacular/sessions/"
+    ".spectacular/feedback/"
+    ".spectacular/ideas/"
+    ".spectacular/requests/"
+    ".spectacular/archive/"
+    ".spectacular/snapshots/"
+    ".spectacular/packs/"
+    ".spectacular/config.yaml"
+    ".spectacular/skills.lock"
+  )
+
+  if [[ "$format" == "text" ]]; then
+    local i
+    for ((i=0; i<${#keys[@]}; i++)); do
+      printf "%-22s  %s\n" "${keys[$i]}" "${vals[$i]}"
+    done
+    return 0
+  fi
+
+  # JSON
+  printf '{'
+  local i first=true
+  for ((i=0; i<${#keys[@]}; i++)); do
+    $first && first=false || printf ','
+    printf '"%s":"%s"' "${keys[$i]}" "${vals[$i]}"
+  done
+  printf '}\n'
+}
+
+# ── cmd_summary (aggregate workspace overview) ───────────────────────────────
+cmd_summary() {
+  local json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --json) json=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular summary [--json]
+
+One-page workspace overview: counts of requests by status, recent decisions,
+recent memories, open sessions. Aggregates by calling other read verbs.
+EOF
+        exit 0 ;;
+      *) die "Unknown flag for summary: $1" ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "summary: not inside a Spectacular workspace"
+
+  # Count requests by status
+  local total_requests=0 planned=0 active=0 review=0 verified=0
+  local f s
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    total_requests=$((total_requests + 1))
+    s=$(fm_get "$f" "status")
+    case "$s" in
+      planned)  planned=$((planned + 1)) ;;
+      active)   active=$((active + 1)) ;;
+      review)   review=$((review + 1)) ;;
+      verified) verified=$((verified + 1)) ;;
+    esac
+  done < <(_request_iter_all)
+
+  # Count decisions, memories
+  local total_decisions=0 total_memories=0
+  while IFS= read -r f; do [[ -n "$f" ]] && total_decisions=$((total_decisions + 1)); done < <(_decision_iter_all)
+  while IFS= read -r f; do [[ -n "$f" ]] && total_memories=$((total_memories + 1)); done < <(_memory_iter_all)
+
+  # Sessions: total + open
+  local total_sessions=0 open_sessions=0
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    total_sessions=$((total_sessions + 1))
+    s=$(fm_get "$f" "status")
+    [[ "$s" == "open" ]] && open_sessions=$((open_sessions + 1))
+  done < <(_session_iter_all)
+
+  # Ideas + feedback (light counts)
+  local total_ideas=0
+  if [[ -d ".spectacular/ideas" ]]; then
+    for f in .spectacular/ideas/*.md; do [[ -f "$f" ]] && total_ideas=$((total_ideas + 1)); done
+  fi
+  local total_feedback=0
+  if [[ -d ".spectacular/feedback" ]]; then
+    for f in .spectacular/feedback/*.md; do [[ -f "$f" ]] && total_feedback=$((total_feedback + 1)); done
+  fi
+
+  # Project name
+  local project="?"
+  if [[ -f ".spectacular/config.yaml" ]]; then
+    project=$(awk '/^  name:/ { sub(/^  name:[[:space:]]*/, ""); print; exit }' .spectacular/config.yaml)
+    [[ -z "$project" ]] && project="?"
+  fi
+
+  if $json; then
+    printf '{"project":"%s","requests":{"total":%d,"planned":%d,"active":%d,"review":%d,"verified":%d},' \
+      "$(_json_escape "$project")" "$total_requests" "$planned" "$active" "$review" "$verified"
+    printf '"decisions":%d,"memories":%d,"sessions":{"total":%d,"open":%d},"ideas":%d,"feedback":%d}\n' \
+      "$total_decisions" "$total_memories" "$total_sessions" "$open_sessions" "$total_ideas" "$total_feedback"
+    return 0
+  fi
+
+  echo "── Spectacular Workspace Summary ──"
+  echo ""
+  echo "Project:    $project"
+  echo ""
+  echo "Requests:   $total_requests total"
+  printf "            %d planned · %d active · %d review · %d verified\n" "$planned" "$active" "$review" "$verified"
+  echo ""
+  echo "Decisions:  $total_decisions"
+  echo "Memories:   $total_memories"
+  echo "Sessions:   $total_sessions ($open_sessions open)"
+  echo "Ideas:      $total_ideas"
+  echo "Feedback:   $total_feedback"
+  echo ""
+  if (( active > 0 )); then
+    echo "Active requests:"
+    spectacular_self_active_requests=true cmd_requests --active --limit 5 2>/dev/null | tail -n +3 | sed 's/^/  /'
+  fi
+}
+
 # `spectacular archive <slug> [--force]`
 # Moves request to .spectacular/archive/, rewrites inbound related: links,
 # sets status: archived + archived: <today>. Refuses if not in verified/review
@@ -6313,6 +7331,18 @@ main() {
     # Idea (v1.7.0+): thinking scratchpad.
     idea)
       shift; cmd_idea "$@"; exit $? ;;
+    # Read verbs (v1.8.0+): plural-noun = list, singular-noun = detail.
+    requests)   shift; cmd_requests "$@";   exit $? ;;
+    decisions)  shift; cmd_decisions "$@";  exit $? ;;
+    memories)   shift; cmd_memories "$@";   exit $? ;;
+    sessions)   shift; cmd_sessions "$@";   exit $? ;;
+    request)    shift; cmd_request "$@";    exit $? ;;
+    decision)   shift; cmd_decision "$@";   exit $? ;;
+    memory)     shift; cmd_memory "$@";     exit $? ;;
+    show)       shift; cmd_show "$@";       exit $? ;;
+    summary)    shift; cmd_summary "$@";    exit $? ;;
+    progress)   shift; cmd_progress "$@";   exit $? ;;
+    paths)      shift; cmd_paths "$@";      exit $? ;;
   esac
 
   if [[ "$subcmd" == "doctor" ]]; then
@@ -6379,7 +7409,8 @@ Run inside Claude Code or Codex:  /spectacular $subcmd <verb>"
 
   if [[ "$subcmd" != "init" ]]; then
     die "Unknown command: '${subcmd}'.
-CLI verbs:   init | doctor | pack | docs | migrate | new | promote | snapshot | archive | touch | decide | remember | session | feedback-loop
+CLI verbs:   init | doctor | pack | docs | migrate | new | promote | snapshot | archive | touch | decide | remember | session | feedback-loop | idea
+Read verbs:  summary | requests | request | decisions | decision | memories | memory | sessions | show | progress | paths (v1.8.0+)
 Skill verbs (run via /spectacular in your AI agent): status | remember this | <doc> grill | <doc> refine | <doc> review"
   fi
 

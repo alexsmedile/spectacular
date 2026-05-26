@@ -34,7 +34,7 @@ This document defines the **structure of `.spectacular/`** — what each folder 
 ├── config.yaml
 │
 ├── ideas/
-├── current/
+├── specs/
 ├── requests/
 ├── skills/
 ├── memory/

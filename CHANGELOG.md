@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.8.1] — 2026-05-26
+
+### Fixed
+- **Scaffold bug:** `templates/architecture/base.md` showed `current/` in the `.spectacular/` tree diagram instead of `specs/`, baking a stale (pre-v0.5) convention into every newly-initialized ARCHITECTURE.md. Now reflects the canonical `specs/` layout. Existing projects: `spectacular doctor` already flags legacy `current/` and `spectacular migrate` renames it — no action needed beyond editing the doc.
+
 ## [1.8.0] — 2026-05-26
 
 ### Added

@@ -200,6 +200,8 @@ ideas/
 
 **Promotion to request:** Ideas are not a required gate. A request can be created directly. When an idea is deliberately promoted, the skill scaffolds the request from the idea content and moves the idea file to `archive/ideas/`.
 
+**CLI verbs (v1.7.0+):** `spectacular idea new <slug>`, `spectacular idea list [--status <s>]`, `spectacular idea promote <slug>`. Status enum: `parked | exploring | promoted`. Full spec in [[idea-rules]]; doctor area: [[doctor-areas]] § ideas.
+
 ---
 
 # Current layer

@@ -20,6 +20,7 @@ Human catalog of every document type in a Spectacular workspace.
 | `sessions` | index | `.spectacular/SESSIONS.md` + `sessions/` | [sessions-rules](sessions-rules.md) |
 | `personas` | grill-each | `.spectacular/PERSONAS.md` | [personas-rules](personas-rules.md) |
 | `feedback` | index | `.spectacular/feedback/` (+ `requests/<slug>/feedback/`) | [feedback-rules](feedback-rules.md) |
+| `idea` | index | `.spectacular/ideas/` | [idea-rules](idea-rules.md) |
 
 ## Per-request docs
 

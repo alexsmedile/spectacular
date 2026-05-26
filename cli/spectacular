@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.6.0"
+SPECTACULAR_VERSION="1.7.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_REPO="alexsmedile/spectacular"
 GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
@@ -176,7 +176,7 @@ Usage: spectacular <command> [options]
 
 CLI verbs (mutate workspace):
   init [opts]            Scaffold .spectacular/ in the current project
-  doctor [area] [--fix]  Substrate self-check (14 areas); --fix applies mechanical repairs
+  doctor [area] [--fix]  Substrate self-check (15 areas); --fix applies mechanical repairs
   pack <list|install|show|remove>      Manage convention packs
   docs <init|export|new|status>        DEPRECATED in v1.2.0 — use 'pageworks' instead
   migrate [--to|--from|--list|--dry-run]   Apply workspace schema migrations
@@ -186,6 +186,7 @@ CLI verbs (mutate workspace):
   archive <slug>         Move request to .spectacular/archive/ + rewrite inbound links
   touch <file>           Bump frontmatter 'updated:' to today
   feedback-loop <sub>    Prototyping-mode human-feedback acquisition (new|list|resolve|archive)
+  idea <sub>             Thinking-scratchpad idea management (new|list|promote)
 
 Skill verbs (run via /spectacular in your AI agent):
   status [--against-latest|--since <date>]    Briefing of project state
@@ -1603,6 +1604,288 @@ EOF
   mv "$src" "$target"
   created "$target"
   info "  → archived from $src"
+}
+
+# ── idea (v1.7.0+) ───────────────────────────────────────────────────────────
+# `spectacular idea new|list|promote <slug>`
+# Thinking-scratchpad soft-folder DB. See references/idea-rules.md for spec.
+cmd_idea() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    new)     cmd_idea_new "$@" ;;
+    list)    cmd_idea_list "$@" ;;
+    promote) cmd_idea_promote "$@" ;;
+    ""|--help|-h)
+      cat <<EOF
+Usage: spectacular idea <subcommand> [options]
+
+Subcommands:
+  new <slug>                  Scaffold an idea entry at .spectacular/ideas/<slug>.md
+                                (status: parked). Optional:
+                                  --hypothesis <text>   One-line hypothesis
+                                  --origin <text>       Where it came from
+                                  --priority <level>    low|medium|high (default: medium)
+  list [--status <s>]         List idea entries (parked|exploring|promoted|all)
+  promote <slug>              Scaffold a request from the idea and move source
+                                to archive/ideas/. Options:
+                                  --request-slug <s>    Override request slug
+                                                        (default: idea's slug)
+                                  --target-version <v>  Target version for PLAN
+
+Idea files live at:
+  .spectacular/ideas/<slug>.md
+
+Ideas are a thinking scratchpad — nothing in ideas/ is acted on automatically.
+Promotion to a request is explicit and one-way. See references/idea-rules.md.
+EOF
+      [[ -z "$sub" ]] && exit 1 || exit 0 ;;
+    *) die "idea: unknown subcommand '$sub'. Use: new | list | promote" ;;
+  esac
+}
+
+# Walk all idea entries in .spectacular/ideas/*.md
+_idea_iter_all() {
+  local f
+  [[ -d ".spectacular/ideas" ]] || return 0
+  for f in .spectacular/ideas/*.md; do
+    [[ -f "$f" ]] && echo "$f"
+  done
+}
+
+# Find an idea by slug. Echoes path or empty.
+_idea_find() {
+  local slug="$1" f path
+  path=".spectacular/ideas/$slug.md"
+  [[ -f "$path" ]] && { echo "$path"; return 0; }
+  return 1
+}
+
+cmd_idea_new() {
+  local slug="" hypothesis="" origin="" priority="medium" dry_run=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --hypothesis) require_value "--hypothesis" "${2:-}"; hypothesis="$2"; shift 2 ;;
+      --origin)     require_value "--origin"     "${2:-}"; origin="$2"; shift 2 ;;
+      --priority)   require_value "--priority"   "${2:-}"; priority="$2"; shift 2 ;;
+      --dry-run)    dry_run=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular idea new <slug> [options]
+
+Options:
+  --hypothesis <text>  One-line hypothesis (body of idea)
+  --origin <text>      Free text — where the idea came from
+  --priority <level>   low|medium|high (default: medium)
+  --dry-run            Print the rendered entry, don't write
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for idea new: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "idea new: only one <slug> argument allowed"
+        slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "idea new: <slug> argument required"
+  [[ -d ".spectacular" ]] || die "idea new: not inside a Spectacular workspace"
+
+  # Validate slug shape (same as cmd_new)
+  if [[ ! "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]]; then
+    die "idea new: invalid slug '$slug'. Must be kebab-case, lowercase alnum + hyphens, max 64 chars."
+  fi
+
+  case "$priority" in
+    low|medium|high) ;;
+    *) die "idea new: invalid --priority '$priority'. Must be: low | medium | high" ;;
+  esac
+
+  local entries_dir=".spectacular/ideas"
+  mkdir -p "$entries_dir"
+
+  local entry_path="$entries_dir/$slug.md"
+  [[ -e "$entry_path" ]] && die "idea new: '$slug' already exists at $entry_path"
+
+  # Also refuse if already in archive (don't shadow promoted ideas)
+  if [[ -f ".spectacular/archive/ideas/$slug.md" ]]; then
+    die "idea new: '$slug' exists in archive (.spectacular/archive/ideas/$slug.md). Pick a different slug."
+  fi
+
+  local owner=""
+  if [[ -f ".spectacular/config.yaml" ]]; then
+    owner=$(awk '/^  owner:/ { sub(/^  owner:[[:space:]]*/, ""); print; exit }' .spectacular/config.yaml)
+  fi
+  [[ -z "$owner" ]] && owner="$(whoami 2>/dev/null || echo unknown)"
+
+  local origin_text="${origin:-(captured)}"
+  local hyp_text="${hypothesis:-_(fill in)_}"
+
+  local template rendered
+  template=$(_resolve_template "idea/base.md") || die "idea new: idea template not found"
+  rendered=$(_render_template "$template" \
+    OWNER "$owner" \
+    ORIGIN "$origin_text" \
+    DATE "$TODAY" \
+    SLUG "$slug" \
+    HYPOTHESIS "$hyp_text" \
+    CONTEXT "_(fill in)_" \
+    QUESTION "_(fill in)_")
+
+  # Set priority via fm_set if not the default
+  if $dry_run; then
+    echo "── would write $entry_path ──"
+    echo "$rendered"
+    return 0
+  fi
+
+  echo "$rendered" > "$entry_path"
+  if [[ "$priority" != "medium" ]]; then
+    fm_set "$entry_path" "priority" "$priority"
+  fi
+
+  created "$entry_path"
+  info "  → status: parked"
+  info "  ↳ shape it with: spectacular idea grill $slug"
+  info "  ↳ when ready: spectacular idea promote $slug"
+}
+
+cmd_idea_list() {
+  local status_filter="all"
+  while (( $# > 0 )); do
+    case "$1" in
+      --status) require_value "--status" "${2:-}"; status_filter="$2"; shift 2 ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular idea list [--status parked|exploring|promoted|all]
+
+Lists all ideas in .spectacular/ideas/.
+EOF
+        exit 0 ;;
+      *) die "Unknown flag for idea list: $1" ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "idea list: not inside a Spectacular workspace"
+
+  local count=0 f status updated priority slug slug_display
+  printf "%-32s  %-10s  %-8s  %-10s  %s\n" "SLUG" "STATUS" "PRIORITY" "UPDATED" "ORIGIN"
+  printf "%-32s  %-10s  %-8s  %-10s  %s\n" "----" "------" "--------" "-------" "------"
+
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    status=$(fm_get "$f" "status")
+    [[ -z "$status" ]] && status="?"
+    if [[ "$status_filter" != "all" && "$status" != "$status_filter" ]]; then
+      continue
+    fi
+    priority=$(fm_get "$f" "priority")
+    updated=$(fm_get "$f" "updated")
+    local origin
+    origin=$(fm_get "$f" "origin")
+    slug=$(basename "$f" .md)
+    if (( ${#slug} > 32 )); then
+      slug_display="${slug:0:29}..."
+    else
+      slug_display="$slug"
+    fi
+    printf "%-32s  %-10s  %-8s  %-10s  %s\n" "$slug_display" "$status" "${priority:-?}" "${updated:-?}" "${origin:-?}"
+    count=$((count + 1))
+  done < <(_idea_iter_all)
+
+  if [[ $count -eq 0 ]]; then
+    if [[ "$status_filter" == "all" ]]; then
+      info "(no ideas yet — start one with 'spectacular idea new <slug>')"
+    else
+      info "(no ideas with status: $status_filter)"
+    fi
+  fi
+}
+
+cmd_idea_promote() {
+  local slug="" request_slug="" target_version=""
+  while (( $# > 0 )); do
+    case "$1" in
+      --request-slug)   require_value "--request-slug"   "${2:-}"; request_slug="$2"; shift 2 ;;
+      --target-version) require_value "--target-version" "${2:-}"; target_version="$2"; shift 2 ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular idea promote <slug> [options]
+
+Options:
+  --request-slug <s>    Override request slug (default: idea's slug)
+  --target-version <v>  Target version for PLAN frontmatter
+
+Scaffolds a new request via 'spectacular new', then:
+  - Sets the idea's status to 'promoted'
+  - Sets the idea's promoted_to: requests/<slug>/
+  - Moves the idea file to .spectacular/archive/ideas/<slug>.md
+  - Notes the promotion source in the new PLAN.md
+
+This action is one-way. Manual file moves required to revert.
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for idea promote: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "idea promote: only one <slug> argument allowed"
+        slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "idea promote: <slug> argument required"
+  [[ -d ".spectacular" ]] || die "idea promote: not inside a Spectacular workspace"
+
+  local idea_path
+  idea_path=$(_idea_find "$slug") || die "idea promote: idea '$slug' not found in .spectacular/ideas/"
+
+  [[ -z "$request_slug" ]] && request_slug="$slug"
+
+  # Refuse if request slug already taken
+  if [[ -d ".spectacular/requests/$request_slug" ]] || [[ -d ".spectacular/archive/$request_slug" ]]; then
+    die "idea promote: request slug '$request_slug' already exists. Use --request-slug <other>."
+  fi
+
+  # Read idea metadata for the request scaffold
+  local idea_origin idea_priority
+  idea_origin=$(fm_get "$idea_path" "origin")
+  idea_priority=$(fm_get "$idea_path" "priority")
+  [[ -z "$idea_priority" ]] && idea_priority="medium"
+
+  local summary="Promoted from ideas/$slug.md (origin: ${idea_origin:-captured})"
+
+  # Scaffold the request
+  local new_args=(--summary "$summary" --priority "$idea_priority")
+  [[ -n "$target_version" ]] && new_args+=(--target-version "$target_version")
+  cmd_new "${new_args[@]}" "$request_slug" || die "idea promote: 'spectacular new $request_slug' failed"
+
+  # Append a promotion note to the new PLAN.md
+  local new_plan=".spectacular/requests/$request_slug/PLAN.md"
+  if [[ -f "$new_plan" ]]; then
+    # Add a note section just below the title
+    cat >> "$new_plan" <<EOF
+
+---
+
+> **Promoted from idea** \`ideas/$slug.md\` (now at \`archive/ideas/$slug.md\`).
+> Idea body content is preserved in the archive — review for hypotheses, context, and open questions that should fold into the slots above.
+EOF
+  fi
+
+  # Update idea frontmatter, then move
+  fm_set "$idea_path" "status" "promoted"
+  fm_set "$idea_path" "promoted_to" "requests/$request_slug/"
+  fm_set "$idea_path" "updated" "$TODAY"
+
+  local archive_dir=".spectacular/archive/ideas"
+  mkdir -p "$archive_dir"
+  local archived_path="$archive_dir/$slug.md"
+  if [[ -e "$archived_path" ]]; then
+    die "idea promote: archive target already exists: $archived_path (manual cleanup needed)"
+  fi
+  mv "$idea_path" "$archived_path"
+
+  created ".spectacular/requests/$request_slug/"
+  info "  → idea archived: $archived_path"
+  info "  → status: promoted"
+  info "  ↳ next: cd into the request and flesh out PLAN slots"
 }
 
 # ── archive ──────────────────────────────────────────────────────────────────
@@ -3320,7 +3603,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -3353,6 +3636,8 @@ Areas (run all if omitted):
   personas      PERSONAS.md frontmatter + persona blocks + stories (v1.3.0+; opt-in)
   memory        MEMORY.md frontmatter + index ↔ entries drift (v1.5.0+; opt-in)
   sessions      SESSIONS.md frontmatter + open-session invariant + 4h stale warning (v1.5.0+; opt-in)
+  feedback      feedback/ entries — frontmatter, stale-open (>30d), orphan back-refs (v1.6.0+)
+  ideas         ideas/ entries — frontmatter, stale-exploring (>90d), orphan promoted (v1.7.0+)
 
 Options:
   --fix              Apply mechanical fixes (gitignore append, missing dirs,
@@ -3378,7 +3663,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) require_value "--format" "${2:-}"; DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas)
         if [[ -z "$DOC_OPT_AREA" ]]; then
           DOC_OPT_AREA="$1"
         else
@@ -4578,6 +4863,93 @@ check_feedback() {
   fi
 }
 
+# ── check_ideas (v1.7.0+) ────────────────────────────────────────────────────
+# Judgment-only — no --fix. Flags stale exploring, orphan promoted, malformed.
+check_ideas() {
+  [[ -d ".spectacular" ]] || return 0
+
+  local top_dir=".spectacular/ideas"
+
+  if [[ ! -d "$top_dir" ]]; then
+    doc_add "ideas" "info" "$top_dir" "no ideas/ folder — opt-in via 'spectacular idea new <slug>'" \
+      "skip" "judgment"
+    return 0
+  fi
+
+  local entry_count=0 exploring_count=0 stale_count=0 malformed_count=0 orphan_count=0 unknown_status_count=0
+  local stale_slugs="" malformed_files="" orphan_files="" unknown_files=""
+  local now_epoch threshold_epoch
+  now_epoch=$(date "+%s")
+  # 90 days = 7776000 seconds
+  threshold_epoch=$((now_epoch - 7776000))
+
+  local f
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    entry_count=$((entry_count + 1))
+
+    local type_v status_v updated_v
+    type_v=$(fm_get "$f" "type")
+    status_v=$(fm_get "$f" "status")
+    updated_v=$(fm_get "$f" "updated")
+
+    if [[ "$type_v" != "idea" ]] || [[ -z "$status_v" ]] || [[ -z "$updated_v" ]]; then
+      malformed_count=$((malformed_count + 1))
+      malformed_files="${malformed_files:+$malformed_files, }$(basename "$f")"
+      continue
+    fi
+
+    case "$status_v" in
+      parked) ;;
+      exploring)
+        exploring_count=$((exploring_count + 1))
+        local updated_epoch
+        updated_epoch=$(date -j -f "%Y-%m-%d" "$updated_v" "+%s" 2>/dev/null || echo 0)
+        if [[ $updated_epoch -gt 0 && $updated_epoch -lt $threshold_epoch ]]; then
+          stale_count=$((stale_count + 1))
+          stale_slugs="${stale_slugs:+$stale_slugs, }$(basename "$f" .md)"
+        fi
+        ;;
+      promoted)
+        # Orphan: status: promoted but file is still in live ideas/ (should be in archive/ideas/)
+        orphan_count=$((orphan_count + 1))
+        orphan_files="${orphan_files:+$orphan_files, }$(basename "$f" .md)"
+        ;;
+      *)
+        unknown_status_count=$((unknown_status_count + 1))
+        unknown_files="${unknown_files:+$unknown_files, }$(basename "$f" .md)→$status_v"
+        ;;
+    esac
+  done < <(_idea_iter_all)
+
+  if [[ $entry_count -eq 0 ]]; then
+    doc_add "ideas" "info" "$top_dir" "no ideas yet — start one with 'spectacular idea new <slug>'"
+    return 0
+  fi
+
+  doc_add "ideas" "pass" "$top_dir" "$entry_count idea(s) ($exploring_count exploring)"
+
+  if [[ $malformed_count -gt 0 ]]; then
+    doc_add "ideas" "warning" "$top_dir" "$malformed_count entries missing required frontmatter ($malformed_files)" \
+      "ensure type, status, updated fields are set; see references/idea-rules.md" "judgment"
+  fi
+
+  if [[ $stale_count -gt 0 ]]; then
+    doc_add "ideas" "warning" "$top_dir" "$stale_count exploring idea(s) stale (>90 days): $stale_slugs" \
+      "decide: promote, demote to parked, or delete" "judgment"
+  fi
+
+  if [[ $orphan_count -gt 0 ]]; then
+    doc_add "ideas" "warning" "$top_dir" "$orphan_count promoted idea(s) still in ideas/ — should be in archive/ideas/ ($orphan_files)" \
+      "move file to .spectacular/archive/ideas/ or rerun 'spectacular idea promote'" "judgment"
+  fi
+
+  if [[ $unknown_status_count -gt 0 ]]; then
+    doc_add "ideas" "warning" "$top_dir" "$unknown_status_count entries with unknown status ($unknown_files)" \
+      "use one of: parked | exploring | promoted" "judgment"
+  fi
+}
+
 # ── doctor orchestrator ───────────────────────────────────────────────────────
 # Dispatch a list of area names to their check_<area> functions.
 # Single source of truth — adding a new area only requires touching this one case.
@@ -4598,6 +4970,7 @@ run_areas() {
       memory)      check_memory ;;
       sessions)    check_sessions ;;
       feedback)    check_feedback ;;
+      ideas)       check_ideas ;;
       *)           die "Unknown doctor area: '$area'" ;;
     esac
   done
@@ -5937,6 +6310,9 @@ main() {
     # Aliases are dispatched but NOT documented in --help per the contract.
     feedback-loop|iterate|experiment|test|probe|try)
       shift; cmd_feedback_loop "$@"; exit $? ;;
+    # Idea (v1.7.0+): thinking scratchpad.
+    idea)
+      shift; cmd_idea "$@"; exit $? ;;
   esac
 
   if [[ "$subcmd" == "doctor" ]]; then

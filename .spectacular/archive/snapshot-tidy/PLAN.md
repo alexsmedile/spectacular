@@ -1,5 +1,5 @@
 ---
-status: review
+status: archived
 priority: medium
 owner: alex
 updated: 2026-05-25
@@ -9,6 +9,7 @@ related:
   - ../../ROADMAP.md
   - ../../ARCHITECTURE.md
   - ../../SPEC.md
+archived: 2026-05-25
 ---
 
 # Plan — snapshot-tidy

@@ -21,7 +21,7 @@ when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type listed in doc-index.md.
-version: 1.6.0
+version: 1.7.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -49,6 +49,9 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular remember "<text>"` | → CLI verb (v1.5.0+); see [[memory-rules]] for entry shape |
 | `spectacular decide "<text>"` | → CLI verb (v1.5.0+); see [[decisions-rules]] |
 | `spectacular session start\|end` | → CLI verb (v1.5.0+); see [[sessions-rules]] |
+| `spectacular idea new <slug>` | → CLI verb (v1.7.0+); see [[idea-rules]] for entry shape |
+| `spectacular idea list` | → CLI verb (v1.7.0+) |
+| `spectacular idea promote <slug>` | → CLI verb (v1.7.0+); scaffolds request, moves source to `archive/ideas/` |
 | `spectacular promote <slug>` | → CLI verb (no skill flow); see [[lifecycle]] for state machine |
 | `spectacular snapshot <file>` | → CLI verb (no skill flow); see [[versioning]] for snapshot rules |
 | `spectacular touch <file>` | → CLI verb; trivial — just bumps `updated:` |
@@ -75,7 +78,7 @@ Each doc is described by a rules file at `references/<doc-id>-rules.md`. The rul
 | `spectacular <doc> refine` | → `references/refine.md` (with `<doc-id>-rules.md` context) |
 | `spectacular <doc> review` | → `references/review.md` (with `<doc-id>-rules.md` context) |
 
-**Doc IDs registered (v1.6.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `memory`, `sessions`, `personas`, `feedback`, `convention-pack`, `docs-manifest`, `docs-page`. Each has a `references/<doc-id>-rules.md` file declaring its dispatch + behavior. See `doc-index.md` for the catalog.
+**Doc IDs registered (v1.7.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `memory`, `sessions`, `personas`, `feedback`, `idea`, `convention-pack`, `docs-manifest`, `docs-page`. Each has a `references/<doc-id>-rules.md` file declaring its dispatch + behavior. See `doc-index.md` for the catalog.
 
 ### Feedback-loop mode (v1.6.0+)
 

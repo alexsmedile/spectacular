@@ -5,6 +5,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.7.0] — 2026-05-26
+
+### Added
+- **New doc-type `idea`** registered as `mode: index`. Lives at `.spectacular/ideas/`. Promotes the previously folder-only `ideas/` convention to a first-class doc-type with rules file, template, doctor area, and CLI verbs. Dispatch via `skills/spectacular/references/idea-rules.md`. No top-level `IDEAS.md` index file — folder listing is canonical.
+- **CLI verbs: `spectacular idea new|list|promote`** — scaffold an idea entry (status `parked`), list across the folder (with `--status` filter), promote to a full request (scaffolds via `cmd_new`, sets `promoted_to:`, moves source to `archive/ideas/`). Verb surface mirrors `feedback-loop`.
+- **Doctor area: `ideas`** (judgment-only, no `--fix`). Flags: required frontmatter missing, `status: exploring` entries older than 90 days, orphan `promoted` entries still living in `.spectacular/ideas/` instead of `archive/ideas/`, unknown status values. `DOC_AREAS` count grows from 14 to 15.
+- **Status lifecycle for ideas:** `parked` (captured, not actively shaping) → `exploring` (actively thinking) → `promoted` (became a request). Promotion is explicit and one-way via the CLI verb.
+- **New template: `templates/idea/base.md`** — frontmatter stub + 4 required body sections (Hypothesis / Context / Open questions / Promoted-to).
+- **`spectacular idea promote <slug>`** annotates the new request's PLAN.md with a banner pointing back at `archive/ideas/<slug>.md` so the original content stays discoverable.
+
+### Changed
+- `SKILL.md` routing table adds three idea trigger rows. Doc IDs registered string bumped to v1.7.0 (`idea` added). Version frontmatter to 1.7.0.
+- `doc-index.md` adds the `idea` catalog row under "Project-wide canonical docs".
+- `references/doctor-areas.md` documents the new `ideas` area (4 check types, judgment-only rationale).
+- `.spectacular/ARCHITECTURE.md` § Ideas layer adds CLI verb cross-references to `idea-rules` and `doctor-areas`.
+- `cli/spectacular` top-level `--help` adds `idea <sub>` row; doctor area list adds `feedback` + `ideas` rows previously missing from `doctor_usage`.
+
+### Notes
+- v1.7.0 closes the gap where `ideas/` existed in ARCHITECTURE.md as a documented convention but the skill couldn't create, list, doctor-check, or promote ideas — every interaction required manual file edits. The `feedback` doc-type (v1.6.0) served as the canonical pattern; the `idea` shape mirrors it deliberately.
+- Status enum was decided as `parked|exploring|promoted` (three states, locked design 2026-05-26). Two-state and free-form variants were considered and rejected — three states preserve a "currently shaping" signal that doctor can act on while keeping the surface narrow.
+- The "abandon a request into an idea" flow (used manually 2026-05-26 to convert the `memory-protocols` request into `.spectacular/ideas/memory-protocols.md`) is explicitly out of scope. It's a one-off corner case, not a recurring pattern worth verbifying.
+
+---
+
 ## [1.6.0] — 2026-05-25
 
 ### Added

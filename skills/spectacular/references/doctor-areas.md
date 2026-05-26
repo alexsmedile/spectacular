@@ -112,6 +112,19 @@ Judgment-only area — no `--fix`. Scans `.spectacular/feedback/*.md` and `.spec
 
 See [[feedback-rules]] and [[feedback-loop]] for the full mode spec.
 
+## `ideas` (v1.7.0+)
+
+Judgment-only area — no `--fix`. Scans `.spectacular/ideas/*.md`.
+
+| Check | Severity | Detects |
+|---|---|---|
+| Required frontmatter present | ⚠️ per entry | `type: idea`, `status`, `updated` all set |
+| Stale exploring | ⚠️ per entry | `status: exploring` with `updated` > 90 days ago |
+| Orphan promoted | ⚠️ per entry | `status: promoted` but file still in `.spectacular/ideas/` (should be in `archive/ideas/`) |
+| Unknown status | ⚠️ per entry | `status` not one of `parked\|exploring\|promoted` |
+
+No `--fix` because every finding requires a human decision (promote? demote? delete? move?). See [[idea-rules]] for the full mode spec.
+
 ## Related
 
 - [[doctor]] — entry point, severity model, report format

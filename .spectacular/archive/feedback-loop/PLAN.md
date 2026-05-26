@@ -1,5 +1,5 @@
 ---
-status: review
+status: archived
 priority: medium
 owner: alex
 updated: 2026-05-25
@@ -11,6 +11,7 @@ related:
   - ../../ROADMAP.md
 feedback:
   - feedback/2026-05-25-feedback-loop-cli-ergonomics-after-m0-m4.md
+archived: 2026-05-25
 ---
 
 # Plan — feedback-loop

@@ -1,13 +1,14 @@
 ---
-status: planned
+status: archived
 priority: medium
 owner: alex
-updated: 2026-05-24
+updated: 2026-05-26
 target_version: v1.3.0
 summary: "Add PERSONAS.md as an opt-in canonical doc for proto-audience profiles + user stories; register in doc-registry so grill/refine/review work."
 related:
   - ../../SPEC.md
   - ../../ARCHITECTURE.md
+archived: 2026-05-26
 ---
 
 # Plan — add-personas-doc

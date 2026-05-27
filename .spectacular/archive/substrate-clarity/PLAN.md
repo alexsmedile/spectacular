@@ -1,9 +1,9 @@
 ---
-status: planned
+status: archived
 phase: spec-refine
 priority: medium
 owner: alex
-updated: 2026-05-24
+updated: 2026-05-26
 target_version: v1.4.0
 summary: "Rename doc-registry → doc-index (human catalog), move dispatch into rules-file frontmatter, collapse `reps` mode into grill+sub-modes (wide/each/loop), lock agentic vs mechanical verb split"
 related:
@@ -11,6 +11,7 @@ related:
   - ../../ARCHITECTURE.md
   - ../../SPEC.md
   - ../../../skills/spectacular/references/doc-index.md
+archived: 2026-05-26
 ---
 
 # Plan — substrate-clarity

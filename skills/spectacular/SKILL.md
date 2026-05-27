@@ -9,14 +9,8 @@ description: |
   Use when: opening /spectacular on any project, scaffolding a new request, archiving completed
   work, capturing a memory, snapshotting a canonical doc, onboarding to an existing workspace,
   or building any canonical doc from scratch.
-  Triggers: /spectacular, spectacular status, spectacular new, spectacular archive, spectacular
-  remember this, spectacular snapshot, spectacular promote, spectacular init,
-  spectacular <doc>, spectacular <doc> grill, spectacular <doc> refine, spectacular <doc> review,
-  spectacular prd, spectacular spec, spectacular plan, spectacular tasks, spectacular decisions,
-  spectacular principles, spectacular architecture, spectacular roadmap, spectacular stack,
-  spectacular agents, spectacular pack new, spectacular pack grill, spectacular pack refine,
-  spectacular pack review, spectacular docs init, spectacular docs new, spectacular docs review,
-  spectacular docs status.
+  Triggers: /spectacular, spectacular status|new|archive|promote|init|snapshot|remember,
+  spectacular <doc> [grill|refine|review], spectacular pack [new|grill|refine|review].
 when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The

@@ -2,9 +2,9 @@
 status: planned
 priority: medium
 owner: alex
-updated: 2026-05-24
-target_version: v1.3.0
-summary: "Review SPEC.md, identify dense capabilities, and promote 1-2 to per-capability spec files under specs/<capability>/SPEC.md"
+updated: 2026-05-26
+target_version: v1.9.0
+summary: "Audit SPEC.md, promote 1-2 dense capability bullets to specs/<capability>/SPEC.md (target: v1.9.0)"
 related:
   - ../../SPEC.md
   - ../../ARCHITECTURE.md
@@ -29,7 +29,7 @@ related:
 - M2 — Pick 1-2 (per "Don't promote everything" constraint). Justify each pick against a real or hypothetical agent-load case.
 - M3 — Promote: scaffold `specs/<capability>/SPEC.md` for each, lift + expand the bullet, compress the SPEC.md entry to one-line + link, snapshot SPEC.md before edit.
 - M4 — Doctor green: `spectacular doctor specs` passes; the new spec files appear in the report.
-- M5 — Snapshot, CHANGELOG entry, release as v1.3.0 (or fold into next release).
+- M5 — Snapshot, CHANGELOG entry, release as v1.9.0.
 
 ## 4. Tasks
 
@@ -54,21 +54,34 @@ None. This is a pure cleanup pass; no upstream blockers.
 - Snapshot of pre-promotion SPEC.md
 - CHANGELOG entry under next release
 
-## Candidate list (starting hypothesis — to be revisited in M1)
+## Candidate list (refreshed for v1.8.1 SPEC.md — to be confirmed in M1)
 
-Strong promotion candidates surfaced during the v1.2.1 audit:
+Candidates re-assessed against current SPEC.md v1.4 (35 bullets, as of v1.8.1):
 
-| Capability | Current bullet length | Promotion rationale |
+| Capability | Approx. lines | Promotion rationale |
 |---|---|---|
-| `doctor` | 3 lines | 10 areas + severity model + --fix taxonomy is real spec material |
-| `migrations` | 5 lines | Contract + registry pattern + judgment-vs-mechanical distinction |
-| `convention-packs` | 4 lines | 6 categories × 4 scopes × 3 modes is a matrix that wants its own page |
-| `lifecycle` | 1 line in SPEC.md | Underspecified actually — could grow rather than promote |
-| `cli-mutators` | 3 lines | 5 verbs + mutation principle + frontmatter helpers |
-| `doc-engine` | 4 lines | grill/refine/review × 13 doc types |
-| `roadmap` | 6 lines | 9-phase chain + tiers + 18-check gate — the longest current bullet |
+| `roadmap` | 6 | 9-phase chain + tiers + 18-check gate + outcome slot — longest bullet, multi-axis |
+| `read-verbs` | 5 | 11 verbs + universal flags + skim/full semantics — dense enough to warrant own page |
+| `feedback-loop` | 5 | 5-step loop + substrate + auto-promotion + 3-checkpoint rule + PRINCIPLES §9 |
+| `doc-engine` | 4 | grill/refine/review × 18 doc types (was 13 at v1.2.1 — grown materially) |
+| `migrations` | 5 | Contract + registry pattern + judgment-vs-mechanical distinction |
+| `convention-packs` | 4 | 6 categories × 4 scopes × 3 modes |
+| `doctor` | 3 | 15 areas + severity model + --fix taxonomy |
 
-Pick from these in M2 based on actual usage signal, not just density.
+M1 re-scores these by actual line count in current SPEC.md and agent-load friction. Pick 1-2 in M2.
+
+## Resolved design questions
+
+These were open questions — resolved here so M3 has no ambiguity:
+
+**Q: Snapshot history per promoted spec?**
+A: Yes. Each new `specs/<capability>/SPEC.md` gets snapshotted before its first substantive edit, same as root-level canonical docs. Naming: `specs/<capability>/SPEC@v1.md` (or managed via `spectacular snapshot`).
+
+**Q: Bullet style when compressed — what vs that-it-exists?**
+A: Retain *what*. The compressed one-liner in SPEC.md should still convey the capability's core behavior (one clause), plus a link to the spec file. Example: `- **Read verbs (v1.8.0+)** — 11 read-only CLI verbs for cheap cold-start. See [[specs/read-verbs/SPEC]].`
+
+**Q: ARCHITECTURE.md update?**
+A: No change needed. ARCHITECTURE.md documents the `.spectacular/` directory structure and file contract — not individual capabilities. The new `specs/<capability>/` files already fit the documented pattern.
 
 ## Out of scope
 

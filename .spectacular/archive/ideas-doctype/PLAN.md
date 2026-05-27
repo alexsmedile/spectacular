@@ -1,5 +1,5 @@
 ---
-status: review
+status: archived
 priority: medium
 owner: alex
 updated: 2026-05-26
@@ -8,6 +8,7 @@ summary: "Register `ideas` as a first-class doc-type — SKILL triggers, idea-ru
 related:
   - ../../ARCHITECTURE.md
   - ../../ideas/memory-protocols.md
+archived: 2026-05-26
 ---
 
 # Plan — ideas-doctype

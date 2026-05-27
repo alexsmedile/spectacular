@@ -1,6 +1,6 @@
 ---
 status: planned
-updated: 2026-05-24
+updated: 2026-05-26
 related:
   - PLAN.md
 ---
@@ -40,15 +40,7 @@ related:
 
 ## M5 — Ship
 
-- [ ] CHANGELOG entry naming the promoted capabilities
-- [ ] Bump version (probably patch — this is restructuring without behavior change)
-- [ ] Manifest alignment via git-guard `bump-manifests.sh`
-- [ ] Tag + push + GitHub Release
-- [ ] `/plugin marketplace update spectacular` (user-triggered)
-- [ ] Snapshot PLAN + TASKS, archive request
-
-## Open questions
-
-- [ ] Does each promoted capability get its own snapshot history (`specs/<capability>/SPEC@v1.md`) or just the index?
-- [ ] Should ARCHITECTURE.md be updated to mention any promoted capabilities by name, or stay generic?
-- [ ] When SPEC.md drops a capability to one line + link, should the bullet still summarize *what* it does or just *that it exists*?
+- [ ] CHANGELOG entry naming the promoted capabilities (target: v1.9.0)
+- [ ] Verify: each compressed SPEC.md bullet is exactly 1 line + link (no multi-line survivors)
+- [ ] Verify: promoted `specs/<capability>/SPEC.md` files each have ≥3 sections beyond frontmatter
+- [ ] Standard release flow: bump-manifests → tag → push → GitHub Release → marketplace (user-triggered)

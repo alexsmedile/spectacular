@@ -1,5 +1,5 @@
 ---
-status: review
+status: archived
 priority: high
 owner: alex
 updated: 2026-05-26
@@ -8,6 +8,7 @@ summary: "Add read-only listing + detail verbs (requests, decisions, memories, s
 related:
   - ../../ARCHITECTURE.md
   - ../../SPEC.md
+archived: 2026-05-26
 ---
 
 # Plan — read-verbs

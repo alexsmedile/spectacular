@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.8.1"
+SPECTACULAR_VERSION="1.8.3"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_REPO="alexsmedile/spectacular"
 GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
@@ -26,6 +26,9 @@ OPT_INTERACTIVE=false
 OPT_KIT="blank"
 OPT_WITH=""
 OPT_MINIMAL=false
+# Skill install scope: project (./.agents) | global (~/.agents) | none (scaffold only).
+# Empty = unset → resolved at init time (auto: skip if already installed, else project).
+OPT_SKILL_SCOPE=""
 
 # Always-set: scaffolded regardless of kit. The 6-file minimum.
 #   PRD.md, SPEC.md, config.yaml, AGENTS.md (file name varies per --agents-file), requests/, specs/
@@ -149,7 +152,14 @@ Options:
       --with <a,b,c>        Comma-separated extra root docs to scaffold beyond always-set
                             Doc IDs: principles, architecture, roadmap, stack, decisions
       --minimal             Scaffold the 6-file always-set only; ignore kit triggers-docs
-      --global              Install skill to ~/.agents/skills/ and ~/.claude/skills/
+      --skill-scope <s>     Where to install the skill: project | global | none
+                            project = ./.agents + ./.claude (default)
+                            global   = ~/.agents + ~/.claude
+                            none     = scaffold .spectacular/ only, install no skill
+                            (default: auto — skips install if spectacular is already
+                             available upstream/globally/as a plugin, else project)
+      --no-skill            Alias for --skill-scope none
+      --global              DEPRECATED alias for --skill-scope global
       --update              Re-download latest skill release and update skills.lock
   -h, --help                Show this help
 
@@ -163,7 +173,8 @@ Examples:
   spectacular init --with principles,roadmap    # adds those two on top of always-set
   spectacular init --kit coding --minimal       # always-set only; kit identity recorded but no extras
   spectacular init --name my-app --agents-file CLAUDE.md
-  spectacular init --global
+  spectacular init --skill-scope global         # install to ~/.agents + ~/.claude
+  spectacular init --skill-scope none           # scaffold only; skill already installed elsewhere
   spectacular init --update
 EOF
 }
@@ -226,7 +237,15 @@ parse_args() {
       --kit) require_value "--kit" "${2:-}"; OPT_KIT="$2"; shift 2 ;;
       --with) require_value "--with" "${2:-}"; OPT_WITH="$2"; shift 2 ;;
       --minimal) OPT_MINIMAL=true; shift ;;
-      --global) OPT_GLOBAL=true; shift ;;
+      --skill-scope)
+        require_value "--skill-scope" "${2:-}"
+        case "$2" in
+          project|global|none) OPT_SKILL_SCOPE="$2" ;;
+          *) die "Unknown --skill-scope: '$2'. One of: project | global | none" ;;
+        esac
+        shift 2 ;;
+      --global) OPT_SKILL_SCOPE="global"; OPT_GLOBAL=true; shift ;;  # deprecated alias for --skill-scope global
+      --no-skill) OPT_SKILL_SCOPE="none"; shift ;;  # convenience alias for --skill-scope none
       --update) OPT_UPDATE=true; shift ;;
       -h|--help) usage; exit 0 ;;
       *) die "Unknown option: $1. Run 'spectacular --help' for usage." ;;
@@ -371,11 +390,15 @@ run_interactive() {
     OPT_AGENTS_FILE="$input"
   fi
 
-  printf "Install scope [project / global] (default: project): "
+  # Detection (run before run_interactive) may have already set scope to 'none'.
+  local scope_default="${OPT_SKILL_SCOPE:-project}"
+  printf "Skill scope [project / global / none] (default: %s): " "$scope_default"
   read -r input
-  if [[ "${input:-project}" == "global" ]]; then
-    OPT_GLOBAL=true
-  fi
+  case "${input:-$scope_default}" in
+    project|global|none) OPT_SKILL_SCOPE="${input:-$scope_default}" ;;
+    *) info "  (unrecognized; keeping '$scope_default')"; OPT_SKILL_SCOPE="$scope_default" ;;
+  esac
+  [[ "$OPT_SKILL_SCOPE" == "global" ]] && OPT_GLOBAL=true
 
   # Kit selection
   echo ""
@@ -429,7 +452,7 @@ run_interactive() {
 
 # ── skill install paths ───────────────────────────────────────────────────────
 agents_skill_dir() {
-  if $OPT_GLOBAL; then
+  if [[ "$OPT_SKILL_SCOPE" == "global" ]]; then
     echo "$HOME/.agents/skills/spectacular"
   else
     echo "$(pwd)/.agents/skills/spectacular"
@@ -437,11 +460,43 @@ agents_skill_dir() {
 }
 
 claude_skill_dir() {
-  if $OPT_GLOBAL; then
+  if [[ "$OPT_SKILL_SCOPE" == "global" ]]; then
     echo "$HOME/.claude/skills/spectacular"
   else
     echo "$(pwd)/.claude/skills/spectacular"
   fi
+}
+
+# ── detect existing spectacular installs ──────────────────────────────────────
+# Scans every place a skill/plugin could already provide spectacular, so init
+# can warn + skip a redundant install. Echoes one "label\tpath" line per find.
+detect_existing_installs() {
+  local cwd; cwd="$(pwd)"
+
+  # 1. Current project (the dir we're about to scaffold into)
+  [[ -e "$cwd/.agents/skills/spectacular" ]] && printf 'project (.agents)\t%s\n' "$cwd/.agents/skills/spectacular"
+  [[ -e "$cwd/.claude/skills/spectacular" ]] && printf 'project (.claude)\t%s\n' "$cwd/.claude/skills/spectacular"
+
+  # 2. Up the worktree — walk parents (skip cwd itself, handled above)
+  local dir; dir="$(dirname "$cwd")"
+  while [[ "$dir" != "/" && "$dir" != "$HOME" && -n "$dir" ]]; do
+    if [[ -e "$dir/.agents/skills/spectacular" ]]; then
+      printf 'upstream (%s)\t%s\n' "$dir" "$dir/.agents/skills/spectacular"
+    elif [[ -e "$dir/.claude/skills/spectacular" ]]; then
+      printf 'upstream (%s)\t%s\n' "$dir" "$dir/.claude/skills/spectacular"
+    fi
+    dir="$(dirname "$dir")"
+  done
+
+  # 3. Global user skill
+  [[ -e "$HOME/.agents/skills/spectacular" ]] && printf 'global (~/.agents)\t%s\n' "$HOME/.agents/skills/spectacular"
+  [[ -e "$HOME/.claude/skills/spectacular" ]] && printf 'global (~/.claude)\t%s\n' "$HOME/.claude/skills/spectacular"
+
+  # 4. Plugin installs (Claude Code / Codex / Gemini)
+  [[ -e "$HOME/.claude/plugins/cache/spectacular" ]] && printf 'claude plugin\t%s\n' "$HOME/.claude/plugins/cache/spectacular"
+  [[ -e "$HOME/.codex/plugins/cache/spectacular" ]]  && printf 'codex plugin\t%s\n' "$HOME/.codex/plugins/cache/spectacular"
+  [[ -e "$HOME/.gemini/extensions/spectacular" ]]    && printf 'gemini extension\t%s\n' "$HOME/.gemini/extensions/spectacular"
+  return 0  # last [[ ]] may be false; never let that fail the caller under set -e
 }
 
 skills_lock_path() {
@@ -1048,8 +1103,23 @@ EOF
   title=$(_summary_from_text "$text")
   session=$(_active_session_slug)
 
-  # Bootstrap DECISIONS.md if absent
   local decisions=".spectacular/DECISIONS.md"
+
+  local entry
+  entry=$(printf '\n## %s — %s\n\n**Decision:**\n%s\n\n**Why:**\n\n\n**Tradeoffs:**\n\n' \
+    "$TODAY" "$title" "$text")
+  if [[ -n "$session" ]]; then
+    entry+="$(printf '\n**Session:** [[sessions/%s]]\n' "$session")"
+  fi
+
+  if $dry_run; then
+    [[ -f "$decisions" ]] || echo "── would create $decisions ──"
+    echo "── would append to $decisions ──"
+    echo "$entry"
+    return 0
+  fi
+
+  # Bootstrap DECISIONS.md if absent
   if [[ ! -f "$decisions" ]]; then
     cat > "$decisions" <<EOF
 ---
@@ -1062,19 +1132,6 @@ updated: $TODAY
 
 EOF
     created "$decisions"
-  fi
-
-  local entry
-  entry=$(printf '\n## %s — %s\n\n**Decision:**\n%s\n\n**Why:**\n\n\n**Tradeoffs:**\n\n' \
-    "$TODAY" "$title" "$text")
-  if [[ -n "$session" ]]; then
-    entry+="$(printf '\n**Session:** [[sessions/%s]]\n' "$session")"
-  fi
-
-  if $dry_run; then
-    echo "── would append to $decisions ──"
-    echo "$entry"
-    return 0
   fi
 
   printf '%s' "$entry" >> "$decisions"
@@ -7417,6 +7474,33 @@ Skill verbs (run via /spectacular in your AI agent): status | remember this | <d
   shift
   parse_args "$@"
 
+  echo "Spectacular init"
+  echo ""
+
+  # ── Detect existing installs + resolve skill scope ──────────────────────────
+  # Warn if spectacular is already available (upstream / global / plugin), then
+  # decide whether to install. If the user did not pin a scope explicitly, an
+  # existing install means we default to 'none' (scaffold only, no redundant copy).
+  local existing_installs
+  existing_installs="$(detect_existing_installs)"
+
+  if [[ -n "$existing_installs" ]]; then
+    info "⚠ spectacular already available via:"
+    while IFS=$'\t' read -r label path; do
+      [[ -z "$label" ]] && continue
+      info "    • ${label}: ${path}"
+    done <<< "$existing_installs" || true
+
+    if [[ -z "$OPT_SKILL_SCOPE" ]]; then
+      OPT_SKILL_SCOPE="none"
+      info "  Skipping skill install. Use --skill-scope project (or global) to force a copy."
+    fi
+    echo ""
+  fi
+
+  # No explicit scope and nothing detected → default to a project-local install.
+  [[ -z "$OPT_SKILL_SCOPE" ]] && OPT_SKILL_SCOPE="project"
+
   if $OPT_UPDATE; then
     update_skill
   fi
@@ -7432,9 +7516,6 @@ Skill verbs (run via /spectacular in your AI agent): status | remember this | <d
   claude_dir="$(claude_skill_dir)"
   lock_ref="$(read_lock_ref)"
 
-  echo "Spectacular init"
-  echo ""
-
   # Interactive mode: show final summary, ask for confirmation before any writes
   if $OPT_INTERACTIVE; then
     local doc_set_preview
@@ -7444,7 +7525,7 @@ Skill verbs (run via /spectacular in your AI agent): status | remember this | <d
     echo "  summary:     ${OPT_SUMMARY:-(none)}"
     echo "  agents-file: $OPT_AGENTS_FILE"
     echo "  kit:         $OPT_KIT"
-    echo "  scope:       $($OPT_GLOBAL && echo global || echo project)"
+    echo "  skill-scope: $OPT_SKILL_SCOPE"
     echo "  docs:        $doc_set_preview"
     echo ""
     printf "Proceed? [Y/n]: "
@@ -7468,7 +7549,9 @@ Skill verbs (run via /spectacular in your AI agent): status | remember this | <d
   AGENTS_SKILL_INSTALLED=""
   CLAUDE_SKILL_INSTALLED=""
 
-  if [[ -n "$lock_ref" && -d "$agents_dir" ]]; then
+  if [[ "$OPT_SKILL_SCOPE" == "none" ]]; then
+    skip "skill install skipped (--skill-scope none)"
+  elif [[ -n "$lock_ref" && -d "$agents_dir" ]]; then
     skip "${agents_dir}  (${lock_ref}, already installed)"
     skip "${claude_dir}  → symlink"
   else

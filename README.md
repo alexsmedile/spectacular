@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
 ![Platform](https://img.shields.io/badge/platform-Claude%20%7C%20Codex%20%7C%20Cursor-lightgrey)
-![Version](https://img.shields.io/badge/version-1.8.1-green)
+![Version](https://img.shields.io/badge/version-1.8.3-green)
 
 </div>
 
@@ -55,7 +55,7 @@ spectacular init
 > `spectacular init` scaffolds the `.spectacular/` directory and installs the `/spectacular` skill into `.agents/skills/spectacular/` (source) and `.claude/skills/spectacular/` (symlink). After init, `/spectacular` is immediately available to Codex and Claude Code.
 
 > [!NOTE]
-> `spectacular init` is zero-prompt by default. It infers the project name from the folder slug and uses `AGENTS.md` as the primary agent context file. Pass `-i` for interactive setup, or use flags: `--name`, `--summary`, `--agents-file`, `--global`.
+> `spectacular init` is zero-prompt by default. It infers the project name from the folder slug and uses `AGENTS.md` as the primary agent context file. Pass `-i` for interactive setup, or use flags: `--name`, `--summary`, `--agents-file`, `--skill-scope <project\|global\|none>`. If spectacular is already installed (globally, upstream, or as a plugin) init detects it, warns, and skips the redundant skill install.
 
 ---
 
@@ -161,7 +161,8 @@ spectacular init --with principles,roadmap   # additive — those two on top of 
 spectacular init --kit coding --minimal       # always-set only; kit identity preserved
 spectacular init --name my-app
 spectacular init --agents-file CLAUDE.md      # use CLAUDE.md instead of AGENTS.md
-spectacular init --global                     # install skill to ~/.agents/ and ~/.claude/
+spectacular init --skill-scope global         # install skill to ~/.agents/ and ~/.claude/
+spectacular init --skill-scope none           # scaffold only; skip skill install (already installed elsewhere)
 spectacular init --update                     # re-download latest skill release
 
 spectacular doctor                            # substrate self-check (all areas)

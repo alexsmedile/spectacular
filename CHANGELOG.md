@@ -5,6 +5,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.8.3] — 2026-05-29
+
+### Added
+- **`spectacular init` now detects existing installs and skips redundant skill copies.** Before installing, init scans every place spectacular could already be available: the current project, parent directories up the worktree, the global user scope (`~/.agents` + `~/.claude`), and plugin installs (Claude Code `~/.claude/plugins/cache/`, Codex `~/.codex/plugins/cache/`, Gemini `~/.gemini/extensions/`). If any are found it warns, lists each location, and defaults to **not** installing a duplicate — the `.spectacular/` scaffold still proceeds.
+- **`--skill-scope <project|global|none>`** flag for `init` to control where (or whether) the skill is installed. `project` = `./.agents` + `./.claude` (the prior default), `global` = `~/.agents` + `~/.claude`, `none` = scaffold only. When unset, init auto-resolves: skip if already available, else project. `--no-skill` is an alias for `--skill-scope none`; `--global` is now a deprecated alias for `--skill-scope global`.
+- Interactive `init -i` gains a `none` option in the skill-scope prompt and defaults it to the detected value.
+
+### Fixed
+- **`spectacular decide "..." --dry-run` no longer creates `DECISIONS.md` as a side effect.** The bootstrap of a missing `DECISIONS.md` now runs only on a real write; the dry-run path previews `would create` + `would append` and writes nothing to disk.
+- **Stale version constant:** `SPECTACULAR_VERSION` still read `1.8.1` despite the existing `v1.8.2` tag (the constant wasn't bumped in the v1.8.2 chore commit). Now `1.8.3`.
+
 ## [1.8.1] — 2026-05-26
 
 ### Fixed

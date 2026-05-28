@@ -58,7 +58,9 @@ spectacular init --kit coding                 # always-set + coding's always-doc
 spectacular init --with principles,roadmap   # additive on top of kit defaults
 spectacular init --kit coding --minimal       # always-set only; kit identity preserved, extras skipped
 spectacular init --name my-app --agents-file CLAUDE.md
-spectacular init --global                     # install skill to ~/.agents/ and ~/.claude/
+spectacular init --skill-scope global         # install skill to ~/.agents/ and ~/.claude/
+spectacular init --skill-scope none           # scaffold only; install no skill
+spectacular init --no-skill                   # alias for --skill-scope none
 spectacular init --update                     # re-download latest skill release
 ```
 
@@ -66,7 +68,33 @@ spectacular init --update                     # re-download latest skill release
 - `--kit` (default `blank`) sets the kit identity and triggers its always-docs.
 - `--with <a,b,c>` adds explicit docs on top of kit always-docs (additive, deduplicated).
 - `--minimal` overrides kit always-docs — only always-set is scaffolded, regardless of kit. Kit identity is still recorded in PRD frontmatter.
-- Unknown kit or unknown doc-ID errors cleanly (non-zero exit, helpful message).
+- `--skill-scope <project|global|none>` (v1.8.3+) controls where (or whether) the skill is installed — see below. `--global` is a deprecated alias for `--skill-scope global`; `--no-skill` for `--skill-scope none`.
+- Unknown kit, unknown doc-ID, or unknown skill-scope value errors cleanly (non-zero exit, helpful message).
+
+---
+
+## Skill scope + existing-install detection (v1.8.3+)
+
+Init can install the skill in one of three scopes, controlled by `--skill-scope`:
+
+| Scope | Installs to | Use when |
+|---|---|---|
+| `project` | `./.agents/skills/spectacular` + `./.claude/skills/spectacular` symlink | The skill should travel with this repo (committed `.agents/`) |
+| `global` | `~/.agents/skills/spectacular` + `~/.claude/skills/spectacular` | One install shared across all your projects |
+| `none` | nothing | The skill is already available some other way (plugin / global / upstream) |
+
+**Before installing, init scans for an existing spectacular** in every location it could already be available:
+
+1. **Current project** — `./.agents/...` or `./.claude/...`
+2. **Up the worktree** — any parent directory between cwd and `$HOME`/`/` with `.agents/skills/spectacular` or `.claude/skills/spectacular`
+3. **Global user scope** — `~/.agents/skills/spectacular`, `~/.claude/skills/spectacular`
+4. **Plugin installs** — Claude Code (`~/.claude/plugins/cache/spectacular`), Codex (`~/.codex/plugins/cache/spectacular`), Gemini (`~/.gemini/extensions/spectacular`)
+
+**Resolution when `--skill-scope` is *not* passed:**
+- If any existing install is found → **warn (listing each location) and default to `none`** — scaffold proceeds, no redundant copy is installed. Force a copy with `--skill-scope project` (or `global`).
+- If nothing is found → default to `project` (the historical behavior).
+
+An explicit `--skill-scope` always wins over auto-detection — e.g. `--skill-scope project` installs a local copy even when a plugin install exists.
 
 ---
 
@@ -96,13 +124,13 @@ Init is **always idempotent + non-destructive**. Re-running on an initialized wo
 ## Init sequence (high-level)
 
 1. Parse flags + validate (`--kit` known, `--with` doc IDs known)
-2. If `-i`: run interactive prompts (name, summary, agents-file, scope, kit, per-suggested-doc y/n)
+2. Detect existing installs; if found and no `--skill-scope` given, warn + default scope to `none` (see "Skill scope" below). If `-i`: run interactive prompts (name, summary, agents-file, skill-scope, kit, per-suggested-doc y/n)
 3. Resolve doc-set: `always-set + (kit's always-docs unless --minimal) + --with entries`
 4. Scaffold directories (`specs/`, `requests/`)
 5. Scaffold each resolved doc via `write_if_missing` (pre-flight rules apply per file)
 6. Update `.gitignore` (append `.spectacular.local/` if absent)
 7. **Pack consultation** — if `.spectacular/config.yaml` declares `convention_pack:` with `mode: scaffold` or `mode: enforce`, append the pack's `gitignore.always-add` entries (deduplicated). Pack source resolved via scope precedence (project-local → user → app-store → bundled). Always-set always wins on conflicts; pack never overwrites existing lines.
-8. Install skill (or skip if already installed per `skills.lock`)
+8. Install skill into the resolved scope (or skip if `--skill-scope none`, if an existing install was detected, or if already installed per `skills.lock`)
 9. Print summary
 
 ## Convention packs (v0.4.0+)

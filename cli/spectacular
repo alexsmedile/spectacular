@@ -1094,27 +1094,35 @@ EOF
 # ── cmd_decide: spectacular decide "<text>" ─────────────────────────────────
 # v1.5.0: appends to flat DECISIONS.md (folder migration deferred to v1.6.x).
 cmd_decide() {
-  local text="" dry_run=false
+  local text="" context="" consequences="" dry_run=false
   while (( $# > 0 )); do
     case "$1" in
       --dry-run) dry_run=true; shift ;;
+      --context)      require_value "--context" "${2:-}";      context="$2";      shift 2 ;;
+      --consequences) require_value "--consequences" "${2:-}"; consequences="$2"; shift 2 ;;
       --help|-h)
         cat <<EOF
-Usage: spectacular decide "<decision text>" [--dry-run]
+Usage: spectacular decide "<decision>" [--context "..."] [--consequences "..."] [--dry-run]
 
-Append one ADR-style entry to .spectacular/DECISIONS.md. Auto-derives
-a title slug from the first ~6 words. If a session is open, the entry
-includes a Session: link to the active session.
+Append one ADR-style entry to .spectacular/DECISIONS.md (Context / Decision /
+Consequences). The positional argument fills **Decision:**. Auto-derives a
+title slug from the first ~6 words of the decision. If a session is open, the
+entry includes a Session: link to the active session.
+
+  --context "..."        fill the **Context:** section (situation forcing the decision)
+  --consequences "..."   fill the **Consequences:** section (what it enables/forecloses)
+
+Sections left without a flag are emitted as empty headers to fill in later.
 EOF
         exit 0 ;;
       -*) die "Unknown flag for decide: $1" ;;
       *)
-        [[ -n "$text" ]] && die "decide: only one <text> argument allowed"
+        [[ -n "$text" ]] && die "decide: only one <decision> argument allowed"
         text="$1"; shift ;;
     esac
   done
 
-  [[ -z "$text" ]] && die "decide: <text> argument required. See: spectacular decide --help"
+  [[ -z "$text" ]] && die "decide: <decision> argument required. See: spectacular decide --help"
   [[ -d ".spectacular" ]] || die "decide: not inside a Spectacular workspace"
 
   local title summary session
@@ -1123,9 +1131,12 @@ EOF
 
   local decisions=".spectacular/DECISIONS.md"
 
+  # ADR shape: Context / Decision / Consequences. Decision is always populated
+  # from the positional arg; Context/Consequences come from flags (empty header
+  # if the flag is omitted, so the entry stays fillable by hand or by the skill).
   local entry
-  entry=$(printf '\n## %s — %s\n\n**Decision:**\n%s\n\n**Why:**\n\n\n**Tradeoffs:**\n\n' \
-    "$TODAY" "$title" "$text")
+  entry=$(printf '\n## %s — %s\n\n**Context:**\n%s\n\n**Decision:**\n%s\n\n**Consequences:**\n%s\n' \
+    "$TODAY" "$title" "$context" "$text" "$consequences")
   if [[ -n "$session" ]]; then
     entry+="$(printf '\n**Session:** [[sessions/%s]]\n' "$session")"
   fi
@@ -4399,9 +4410,9 @@ summary: \"Architectural and product decisions log\"
 
 ## ${TODAY}
 
+**Context:**
 **Decision:**
-**Why:**
-**Tradeoffs:**
+**Consequences:**
 "
 }
 

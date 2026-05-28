@@ -1,18 +1,19 @@
 <!--
-  Single ADR-style entry. Appended to .spectacular/DECISIONS.md by `spectacular decisions`.
+  Single ADR-style entry. Appended to .spectacular/DECISIONS.md by `spectacular decide`.
   This is NOT a whole-file template — it's the shape of ONE entry.
 
-  The append flow prompts for: title, decision, why, tradeoffs.
-  Date is auto-filled from current date.
+  Schema: Context / Decision / Consequences (Michael Nygard ADR shape).
+  `spectacular decide "<decision>"` fills Decision from the positional arg;
+  --context and --consequences fill the other two. Date + title auto-derived.
 -->
 
 ## <DATE> — <TITLE>
 
+**Context:**
+<SITUATION FORCING THE DECISION>
+
 **Decision:**
 <WHAT WE DECIDED>
 
-**Why:**
-<REASONING>
-
-**Tradeoffs:**
-<WHAT WE GAVE UP>
+**Consequences:**
+<WHAT IT ENABLES, FORECLOSES, OR IMPLIES>

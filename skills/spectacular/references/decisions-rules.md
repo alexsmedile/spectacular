@@ -23,7 +23,17 @@ Append-only ADR log. Each new decision is one entry, appended to the bottom. Ent
 
 **Snapshot-on-edit: false** — the file itself is the append log; per-entry snapshots add no value. If a wholesale rewrite is ever needed, the user can snapshot manually first.
 
-**Mutator verb (CLI, v1.5.0+):** `spectacular decide "<text>"` appends a new entry. Auto-derives a title slug from the first ~6 words. If a session is open, the entry includes a `Session:` link to the active session (see [[sessions-rules]] D9). **If `DECISIONS.md` does not exist, the verb bootstraps it** (frontmatter + `# Decisions` heading) before appending — `decide` never fails on a missing file inside a valid workspace.
+**Mutator verb (CLI, v1.5.0+):** `spectacular decide "<decision>"` appends a new entry. The positional argument fills `**Decision:**`. Auto-derives a title slug from the first ~6 words of the decision. If a session is open, the entry includes a `Session:` link to the active session (see [[sessions-rules]] D9). **If `DECISIONS.md` does not exist, the verb bootstraps it** (frontmatter + `# Decisions` heading) before appending — `decide` never fails on a missing file inside a valid workspace.
+
+**Filling Context + Consequences (v1.8.4+):** pass `--context "..."` and `--consequences "..."` to populate those sections at write time:
+
+```
+spectacular decide "Use bash for the CLI" \
+  --context "team wants zero-install distribution; targets vary" \
+  --consequences "ships everywhere with no runtime; harder to unit-test, no static types"
+```
+
+Omitted sections are written as **empty headers** (not dropped) so the ADR shape stays visible and fillable by hand or by the skill's `grill`/`refine` flow. The verb never invents Context/Consequences from the decision text — blank means "not yet supplied", not "none".
 
 **Dry run:** `spectacular decide "<text>" --dry-run` previews the entry and writes nothing to disk (v1.8.3+). On a workspace with no `DECISIONS.md` yet, it prints `would create` + `would append` but does **not** bootstrap the file — the bootstrap only happens on a real write.
 

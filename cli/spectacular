@@ -53,6 +53,19 @@ KNOWN_KITS="blank coding content product research"
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 die()  { echo "Error: $*" >&2; exit 1; }
+# die_recover: a mutator failure that points at the manual equivalent so a
+# broken/deterministic verb is never a dead end. First arg = error message,
+# remaining args = recovery hint lines (printed under "→ Manual recovery:").
+die_recover() {
+  local msg="$1"; shift
+  echo "Error: $msg" >&2
+  if (( $# > 0 )); then
+    echo "  → Manual recovery:" >&2
+    local line
+    for line in "$@"; do echo "      $line" >&2; done
+  fi
+  exit 1
+}
 info() { echo "$*"; }
 skip() { echo "  ⊘  $*"; }
 created() { echo "  ✓  $*"; }
@@ -1067,7 +1080,12 @@ EOF
   [[ -n "$session" ]] && session_yaml="$session"
 
   local template rendered
-  template=$(_resolve_template "memory/entry.md") || die "remember: memory entry template not found"
+  template=$(_resolve_template "memory/entry.md") || die_recover \
+    "remember: memory entry template not found" \
+    "Create .spectacular/memory/${base_slug}.md with frontmatter:" \
+    "  type: memory / date: $TODAY / tags: [...] / summary: \"...\" / session: null" \
+    "then add the body text below the frontmatter." \
+    "It will appear in MEMORY.md on the next successful 'spectacular remember'."
   rendered=$(_render_template "$template" \
     DATE "$TODAY" \
     TAGS "$tags_yaml" \
@@ -1229,7 +1247,11 @@ cmd_session_start() {
   summary="${notes:-Session $slug}"
 
   local template rendered
-  template=$(_resolve_template "sessions/entry.md") || die "session start: template not found"
+  template=$(_resolve_template "sessions/entry.md") || die_recover \
+    "session start: template not found" \
+    "Create .spectacular/sessions/<YYYY-MM-DD-slug>.md with frontmatter:" \
+    "  type: session / status: open / started: $TODAY" \
+    "then 'spectacular session end' will close it as usual."
   rendered=$(_render_template "$template" \
     START_DATE "$start_ts" \
     TAGS "$tags_yaml" \

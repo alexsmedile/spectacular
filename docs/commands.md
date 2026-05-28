@@ -170,12 +170,18 @@ spectacular remember "haiku is fast enough for slug generation" --tag perf,cli
 spectacular remember "..." --dry-run    # preview without writing
 ```
 
-### `spectacular decide "<text>"` (v1.5.0+)
+### `spectacular decide "<decision>" [--context "..."] [--consequences "..."]` (v1.5.0+)
 
-CLI mutator. Appends one ADR-style entry to `.spectacular/DECISIONS.md`. Auto-derives a title slug from the first ~6 words. If a session is open, the entry includes a `Session:` link.
+CLI mutator. Appends one ADR-style entry (**Context / Decision / Consequences**) to `.spectacular/DECISIONS.md`. The positional argument fills `**Decision:**`; auto-derives a title slug from the first ~6 words of the decision. If a session is open, the entry includes a `Session:` link.
+
+`--context` and `--consequences` (v1.8.4+) populate those sections at write time. Omitted sections are emitted as empty headers to fill in later — never invented from the decision text.
 
 ```text
 spectacular decide "use bash for the CLI to keep install footprint zero"
+spectacular decide "use bash for the CLI" \
+  --context "want zero-install distribution across varied targets" \
+  --consequences "ships everywhere with no runtime; harder to unit-test"
+spectacular decide "..." --dry-run    # preview without writing
 ```
 
 ### `spectacular session start|end` (v1.5.0+)

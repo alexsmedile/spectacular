@@ -41,7 +41,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular archive <slug>` | → CLI verb (no skill flow); see [[archive]] for context |
 | `spectacular remember this` | → `references/memory.md` (legacy free-text capture) |
 | `spectacular remember "<text>"` | → CLI verb (v1.5.0+); see [[memory-rules]] for entry shape |
-| `spectacular decide "<text>"` | → CLI verb (v1.5.0+); see [[decisions-rules]] |
+| `spectacular decide "<decision>" [--context\|--consequences]` | → CLI verb (v1.5.0+; flags v1.8.4+); see [[decisions-rules]] |
 | `spectacular session start\|end` | → CLI verb (v1.5.0+); see [[sessions-rules]] |
 | `spectacular idea new <slug>` | → CLI verb (v1.7.0+); see [[idea-rules]] for entry shape |
 | `spectacular idea list` | → CLI verb (v1.7.0+) |

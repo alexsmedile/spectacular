@@ -1546,7 +1546,10 @@ EOF
   local proposal_text="${proposal:-<one-line summary of the proposal shown to the user>}"
 
   local template rendered
-  template=$(_resolve_template "feedback/entry.md") || die "feedback-loop new: feedback entry template not found"
+  template=$(_resolve_template "feedback/entry.md") || die_recover \
+    "feedback-loop new: feedback entry template not found" \
+    "Create the entry under .spectacular/feedback/ by hand using an existing" \
+    "entry as a shape reference, then re-run subsequent feedback-loop steps."
   rendered=$(_render_template "$template" \
     TARGET "$target" \
     SCOPE "$scope" \
@@ -1841,7 +1844,11 @@ EOF
   local hyp_text="${hypothesis:-_(fill in)_}"
 
   local template rendered
-  template=$(_resolve_template "idea/base.md") || die "idea new: idea template not found"
+  template=$(_resolve_template "idea/base.md") || die_recover \
+    "idea new: idea template not found" \
+    "Create .spectacular/ideas/<slug>.md by hand with frontmatter:" \
+    "  type: idea / status: exploring / owner: <you> / created: $TODAY" \
+    "then add the idea body below the frontmatter."
   rendered=$(_render_template "$template" \
     OWNER "$owner" \
     ORIGIN "$origin_text" \

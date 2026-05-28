@@ -3,7 +3,18 @@ set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
 SPECTACULAR_VERSION="1.8.3"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
+# binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
+# Without this, template resolution (_resolve_template Path 3) breaks for the
+# canonical symlinked install.
+_SPEC_SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$_SPEC_SOURCE" ]]; do
+  _SPEC_DIR="$(cd -P "$(dirname "$_SPEC_SOURCE")" && pwd)"
+  _SPEC_SOURCE="$(readlink "$_SPEC_SOURCE")"
+  [[ "$_SPEC_SOURCE" != /* ]] && _SPEC_SOURCE="$_SPEC_DIR/$_SPEC_SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$_SPEC_SOURCE")" && pwd)"
+unset _SPEC_SOURCE _SPEC_DIR
 GITHUB_REPO="alexsmedile/spectacular"
 GITHUB_RELEASES_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
 GITHUB_TAGS_API="https://api.github.com/repos/${GITHUB_REPO}/tags"
@@ -895,6 +906,13 @@ _resolve_template() {
   fi
   local bundled
   bundled="$(agents_skill_dir)/templates/$rel"
+  if [[ -f "$bundled" ]]; then
+    echo "$bundled"; return 0
+  fi
+  # Scope-independent global install fallback: a workspace may use a globally
+  # installed skill regardless of OPT_SKILL_SCOPE (which is only "global" at
+  # init time). Check the canonical global skill dir directly.
+  bundled="$HOME/.agents/skills/spectacular/templates/$rel"
   if [[ -f "$bundled" ]]; then
     echo "$bundled"; return 0
   fi

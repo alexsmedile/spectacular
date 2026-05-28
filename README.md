@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
 ![Platform](https://img.shields.io/badge/platform-Claude%20%7C%20Codex%20%7C%20Cursor-lightgrey)
-![Version](https://img.shields.io/badge/version-1.8.3-green)
+![Version](https://img.shields.io/badge/version-1.8.4-green)
 
 </div>
 
@@ -134,6 +134,7 @@ A typical coding project (`spectacular init --kit coding`) scaffolds the always-
 | `spectacular touch <file>` | Bump `updated:` on a canonical doc |
 | `spectacular archive <slug>` | Archive a completed request; propose `SPEC.md`/`specs/` sync + memory entries |
 | `spectacular remember this` | Write an insight to `memory/` immediately |
+| `spectacular decide "<decision>"` | Append an ADR entry; `--context`/`--consequences` fill the other sections (v1.8.4+) |
 | `spectacular feedback-loop` | Prototyping-mode human-feedback loop — pick target, craft proposal, ask user, capture, decide (v1.6.0+) |
 | `spectacular idea` | Thinking-scratchpad ideas — `new\|list\|promote`. Promotion scaffolds a request + archives the idea (v1.7.0+) |
 | `spectacular summary` | One-page workspace overview: counts of requests/decisions/memories/sessions/ideas/feedback (v1.8.0+) |

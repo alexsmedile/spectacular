@@ -5,6 +5,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.8.4] — 2026-05-29
+
+### Fixed
+- **`spectacular remember` (and every template-backed verb) failed with "memory entry template not found" on the canonical symlinked install.** `SCRIPT_DIR` was computed from the symlink path (`~/.local/bin`) instead of its target, so the bundled-template fallback looked in `~/.local/skills/` which never exists. `SCRIPT_DIR` now resolves symlinks, and `_resolve_template` gained a scope-independent `~/.agents/skills/spectacular/templates/` fallback.
+- **`spectacular new` silently scaffolded empty PLAN.md / TASKS.md** when run via the symlinked install — same `SCRIPT_DIR` root cause. Now renders full template content.
+- **`spectacular decide` wrote dead empty sections.** The verb dumped all text into `**Decision:**` and left the other ADR sections blank. Root cause was schema drift between the CLI/templates (`Decision/Why/Tradeoffs`) and the rules doc (`Context/Decision/Consequences`).
+
+### Added
+- **`spectacular decide --context "..." --consequences "..."`** — populate those ADR sections at write time. The positional argument fills `**Decision:**`; omitted sections are emitted as empty headers to fill in later, never invented from the decision text.
+- **Mutator failures now print a manual-recovery path.** A new `die_recover` helper emits the error plus a `→ Manual recovery:` hint (target file + frontmatter shape) so a broken template-backed verb is never a dead end. Wired into `remember`, `session start`, `idea new`, and `feedback-loop new`.
+
+### Changed
+- **Canonical ADR schema is now `Context / Decision / Consequences`** (Michael Nygard shape) across the CLI inline entry, `templates/decisions/entry.md`, and the embedded `doc_decisions` scaffold — reconciling the prior drift against `decisions-rules.md`.
+
 ## [1.8.3] — 2026-05-29
 
 ### Added

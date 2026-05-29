@@ -1,7 +1,7 @@
 ---
-version: 2.3
-updated: 2026-05-24
-summary: "Per-version scope, phase, and exit criteria. Active line is v0.7.1. v1.5.x–v1.8.x add soft-DB substrate, query verbs, cross-request links, and the verify walk. Long-term gets fuzzier on purpose."
+version: 3.0
+updated: 2026-05-29
+summary: "Per-version scope, phase, and exit criteria. Active line is v1.9.0 (current). v1.10–v1.17 are the runway to the v2.0.0 major; v2.0.0 is a single breaking concern — .spectacular/ file-contract evolution (CLI debt removal lands earlier as v1.13.0 MINOR; the v1.15→v1.17 ladder pre-stages the contract change). v1.18–v1.19 are open buffer. Long-term gets fuzzier on purpose. (v3.0 of this doc: reconciled the stale pre-convention version map against shipped reality.)"
 related:
   - PRD.md
   - ARCHITECTURE.md
@@ -14,134 +14,90 @@ Per-version planning artifact. Uses a precision gradient: active + near-term ver
 
 Phase chain: `intent → discover → prototype → spec-refine → mvp → iterate → test → release-prep → release`. See [[roadmap-overrides]] for the full spec.
 
+> **Versioning convention:** the number scheme follows [`docs/versioning.md`](../docs/versioning.md) — strict SemVer underneath, with this roadmap as the only place an optional marketing/arc narrative lives. **MAJOR is reserved for a breaking contract change** (here: the `.spectacular/` file-format break). The v1.10–v1.17 runway below is all backward-compatible MINOR work — including the v1.15→v1.17 ladder that *pre-stages* the contract change so **v2.0.0 is a near-mechanical flip, not a big-bang major.**
+>
+> *Reconciliation note (2026-05-29):* this map was rewritten to match shipped reality. The earlier version listed pre-convention bands (`v0.7.x`, `v1.5.x`–`v1.8.x`) as planned even though the soft-DB substrate, query/read verbs, and the v1.0 stable surface had already shipped (now in [Recently shipped](#recently-shipped)). Unshipped work was judged on substance — not its stale label — and re-targeted: kept items got real forward minors (v1.10–v1.12), non-urgent items moved to v2.x/vision.
+
 ---
 
-## v0.7.1 — Structured ROADMAP + roadmap-richness
+## v1.9.0 — Versioning convention (current)
 
 **Tier:** full
-**Status:** active
-**Phase:** mvp (skipped: discover, prototype)
+**Status:** shipped (2026-05-29)
+**Phase:** release
 
 **Outcome:**
-Spectacular maintainers can plan, review, and ship versions through a single structured ROADMAP that captures intent (Outcome), scope (in + out), and verification (Exit criteria) consistently across every release — replacing the prior freeform shape that made cross-version comparison and "what's in scope for v1?" answerable only by reading the bullets and guessing.
+Spectacular has a written, enforceable versioning convention — strict SemVer, a documented breaking-change trigger, a single-canonical-version-source rule, and an optional roadmap-only marketing/arc layer — so version numbers stop drifting from reality (the very drift this ROADMAP rewrite fixes) and MAJOR stays a deliberate, asked-first event.
 
-**Scope (in):**
-- `roadmap-overrides.md` reference doc (slot prompts, mini-refine, vibe→spec, tier-aware gate)
-- `templates/roadmap/base.md` rewrite to structured per-version shape with tier examples
-- `doc-registry.md` switch: ROADMAP `mode: freeform` → `mode: structured`
-- Live `.spectacular/ROADMAP.md` rewritten against new shape (this file) with tier gradient
-- Doctor extension: `check_workspace` info line for pre-v0.7.1 ROADMAP shape
-- `--target-version <ver>` flag added to `spectacular new` (M5 dependency, shipped)
-- Precision tiers: `full | themed | vision` per version block + `## Icebox` section
-
-**Scope (out):**
-- Cross-doc enforcement ("every active request must link to a version") — needs inverse-link registry first
-- Auto-detection of phase from request status (mapping verified → release-prep)
-- Burndown / progress visualization
-- Multi-product roadmaps (one ROADMAP per product line in monorepo)
-- Time-based release predictions
-- `spectacular roadmap grill --icebox` CLI wiring (deferred; flow defined in roadmap-overrides.md but not shipped as a separate verb)
-
-**Exit criteria:**
-- [ ] `roadmap-overrides.md` ships with tier-aware grill + tier-aware review gate
-- [ ] Template rewrite shows all 3 tiers + Icebox as examples
-- [ ] Live `.spectacular/ROADMAP.md` migrated with correct tier per version; doctor passes
-- [ ] `spectacular roadmap review` would exit clean on the migrated file (manual review since no grill yet)
-- [ ] `--target-version` flag wired into `cmd_new` (shipped this milestone)
-- [ ] CHANGELOG entry + plugin bump to v0.7.1
-- [ ] 7 test files still green; new asserts cover `--target-version` + ROADMAP shape detection
+**Shipped:**
+- `docs/versioning.md` — full convention (see intro note above)
+- Registered in `docs/docs.yaml`
+- Fixed long-stale `cli/spectacular` version constant (was `1.8.3`, predating v1.8.4) — the exact drift the doc warns about
 
 **Linked requests:**
-<!-- autopopulated; backfill via target_version: in request frontmatter -->
-- roadmap-richness (active, target_version: 0.7.1)
+- (none — shipped directly)
 
 ---
 
-## v0.7.x — Workflows layer
+> **Runway to v2.0.0.** The blocks below (v1.10 → v1.17) are all backward-compatible MINOR work, pinned in priority order: three ready capabilities (v1.10–v1.12), CLI debt removal (v1.13), the visual layer (v1.14), then the contract-prep ladder (v1.15–v1.17). v1.18–v1.19 are open buffer. Numbers can reorder if priority shifts, but each is a real, self-contained release with no contract-breaking risk — the break is isolated to v2.0.0.
 
-**Tier:** themed
+---
+
+## v1.10.0 — SPEC.md density refactor
+
+**Tier:** full
+**Status:** planned
+**Phase:** intent
+**Linked request:** `spec-refactor` (drafted, ready — retargeted from stale v1.9.0)
+
+**Outcome:**
+`.spectacular/SPEC.md`'s densest 1-2 capability bullets are promoted to focused `specs/<capability>/SPEC.md` files, so an agent loading capability detail reads a standalone spec instead of a cramped index line — without bloating the index or promoting prematurely.
+
+**Themes:**
+- Density audit of all SPEC.md bullets (line count + cross-ref frequency + agent-load friction)
+- Promote 1-2 (per "don't promote everything"): scaffold `specs/<capability>/SPEC.md`, lift + expand, compress index entry to one-line + link, snapshot first
+- `spectacular doctor specs` stays green
+
+**Exit criteria:**
+- 1-2 dense bullets promoted with full frontmatter + standalone narrative
+- SPEC.md index entries compressed to one-line + link; format otherwise unchanged
+- `doctor specs` passes; new spec files appear in the report
+- Snapshot + CHANGELOG entry; plugin bump to v1.10.0
+
+**Linked requests:**
+- spec-refactor (planned, retarget target_version: v1.10.0)
+
+---
+
+## v1.11.0 — Validation walk (`/spectacular verify`)
+
+**Tier:** full
 **Status:** planned
 **Phase:** intent
 
 **Outcome:**
-Spectacular projects can capture their procedural sequences (release cycle, hotfix protocol, migration runbook) as first-class registered docs that the skill walks step-by-step — reducing release-mistake rate and onboarding time for new maintainers who today have to reconstruct the procedure from CHANGELOG entries.
+The validation layer (Principle 7) gets a first-class skill-side walk: `/spectacular verify <slug>` reads VERIFY.md (or PLAN § Validation) and guides the user through each check interactively — turning verification from a static checklist into an executed ritual, without adding any CLI surface (verification is judgment work, not mechanical).
 
 **Themes:**
-- `spectacular workflows` — project-specific procedural sequences (release cycles, hotfix flows, migration procedures)
-- One file per workflow at `.spectacular/workflows/<name>.md`
-- Workflow as registered doc-type with its own grill (similar shape to PLAN.md)
+- New skill flow at `references/verify.md` — walks each VERIFY.md item, asks for evidence, captures result
+- Skill-only verb (no CLI counterpart — verification is judgment)
+- Outcome of the walk flips `status: review → verified` on success or records blockers
+- Optional retrospective prompt at end: "what surprised you vs the PRD/PLAN?" → captured to `memory/`
+- Ties into archive flow: `spectacular archive` warns if `verified` was never reached via the walk
 
 **Exit criteria:**
-- Workflow file format defined and registered (rules file at `references/workflow-rules.md`, catalog entry in `doc-index.md`)
-- 2-3 example workflows shipped (release-checklist, hotfix-procedure)
-- Skill flow exercises a workflow end-to-end on a real release
+- `references/verify.md` ships with walk algorithm + gate
+- Skill routing table updated
+- Documentation in `docs/commands.md` under agentic-verbs section
+- 1+ real request shipped via the verify walk before tagging
+- CHANGELOG entry; plugin bump to v1.11.0
 
 **Linked requests:**
 <!-- autopopulated -->
 
 ---
 
-## v1.5.x — Soft-DB substrate + write verbs
-
-**Tier:** themed
-**Status:** planned
-**Phase:** intent
-
-**Outcome:**
-Decisions, memory, and sessions become first-class soft-folder databases (mirroring the `SPEC.md` + `specs/` pattern) with mechanical CLI write verbs — so agents and humans capture operational signal as it happens, in retrievable per-entry files rather than ever-growing append-only logs that lose findability past month one.
-
-**Themes:**
-- `DECISIONS.md` index + `decisions/<slug>.md` per-entry files (existing `mode: append` doc gets a soft-DB sibling)
-- `MEMORY.md` index + `memory/<slug>.md` per-entry files (existing `.spectacular/memory/` folder formalized with index)
-- New `SESSION.md` index + `sessions/<date-slug>.md` per-entry files — each session captures what-happened / what-decided / what-next
-- `spectacular decide "<str>"` — mechanical CLI verb: appends to DECISIONS.md + scaffolds `decisions/<slug>.md` with frontmatter
-- `spectacular remember "<str>"` — promote skill stub to mechanical CLI verb (matches mutation principle)
-- `spectacular session start|end` — mechanical CLI verb: scaffolds `sessions/<date-slug>.md`, closes prior open session
-- Rules files + doc-index entries for `decisions`, `memory`, `session`
-- Doctor area: `doctor decisions` / `doctor memory` / `doctor sessions` validate index ↔ per-entry consistency
-- Frontmatter shape is RAG-ready (tags, related, timestamp) for v1.6.x retrieval layer
-
-**Exit criteria:**
-- Three new soft-DB doc-types registered with rules files + templates
-- Three new CLI verbs ship with `--help` + happy-path tests
-- Doctor extension validates each soft-DB's index ↔ subfolder consistency
-- Existing `.spectacular/memory/` content migrated to indexed shape (migration entry under `migrations/`)
-- SKILL.md + SPEC.md updated; CHANGELOG entry
-
-**Linked requests:**
-<!-- autopopulated -->
-
----
-
-## v1.6.x — Query verbs (recall + decisions + sessions)
-
-**Tier:** themed
-**Status:** planned
-**Phase:** intent
-
-**Outcome:**
-The soft-DB substrate from v1.5.x becomes *read-useful*: humans and agents can ask "what was decided last week" or "anything relevant to this request" and get a scoped answer from CLI in seconds — closing the PRD success-criterion gap where memory currently compounds on write but not on read.
-
-**Themes:**
-- `spectacular decisions [--7d|--30d|--since <date>|--tag <tag>]` — mechanical date/tag filter over `decisions/` frontmatter
-- `spectacular recall [<topic>] [--7d|--tag <tag>]` — same shape over `memory/`
-- `spectacular sessions [--7d|--since <date>]` — same shape over `sessions/`
-- All three are CLI mechanical (frontmatter scan + grep) in v1.6; identical surface stays when v3 swaps in RAG/semantic retrieval
-- Auto-surface hook: `spectacular status` and `spectacular new <slug>` show top-3 recent-or-related decisions + memory entries
-- Output format stable so tooling can pipe (`--format json`)
-
-**Exit criteria:**
-- Three query verbs ship with date + tag filters
-- `spectacular status` auto-surfaces top-N recent decisions / memory entries
-- `spectacular new` shows top-N related memory entries (matched on slug keywords) at scaffold time
-- Documented retrieval-evolution path: mechanical → embedded vectors → RAG (in `docs/`)
-
-**Linked requests:**
-<!-- autopopulated -->
-
----
-
-## v1.7.x — Cross-request awareness (advisory)
+## v1.12.0 — Cross-request awareness (advisory)
 
 **Tier:** themed
 **Status:** planned
@@ -169,87 +125,225 @@ A request can declare its relationships to other requests (`related:` / `depends
 - Inverse-link resolver implemented + tested
 - Doctor `links` area validates references
 - `status` surface shows advisory warnings
-- Two example projects demonstrate the link graph
+- CHANGELOG entry; plugin bump to v1.12.0
 
 **Linked requests:**
 <!-- autopopulated -->
 
 ---
 
-## v1.8.x — Validation walk (`/spectacular verify`)
+## v1.13.0 — CLI debt removal
 
 **Tier:** themed
 **Status:** planned
 **Phase:** intent
 
 **Outcome:**
-The validation layer (Principle 7) gets a first-class skill-side walk: `/spectacular verify <slug>` reads VERIFY.md (or PLAN § Validation) and guides the user through each check interactively — turning verification from a static checklist into an executed ritual, without adding any CLI surface (verification is judgment work, not mechanical).
+Spectacular sheds its accumulated deprecation debt — the `docs *` verbs (extracted to `pageworks` in v1.2.0) and the `--global` alias — in a clean MINOR rather than holding them for the major. These have shown deprecation banners pointing at removal for many releases, so removing them is the *fulfillment* of a long-telegraphed contract, not a surprise break. Pulling debt-removal out of v2.0.0 shrinks the major to a single breaking concern (the file contract) and de-risks it.
+
+> **Versioning note:** treating banner-warned, long-deprecated verb removal as MINOR is a deliberate call (per [`docs/versioning.md`](../docs/versioning.md) the strict reading would be MAJOR). The justification: the removal was announced in-product since v1.2.0, `pageworks` is the documented replacement, and no *current* documented surface changes behavior. The agent confirmed this framing rather than auto-classifying.
 
 **Themes:**
-- New skill flow at `references/verify.md` — walks each VERIFY.md item, asks for evidence, captures result
-- Skill-only verb (no CLI counterpart — verification is judgment)
-- Outcome of the walk flips `status: review → verified` on success or records blockers
-- Optional retrospective prompt at end: "what surprised you vs the PRD/PLAN?" → captured to `memory/`
-- Ties into archive flow: `spectacular archive` warns if `verified` was never reached via the walk
+- Remove `docs init|export|new|review|status` verbs + the `deprecation_notice()` banner machinery
+- Remove the `docs-contract` / `docs-rules` / `docs-renderer-adapters` reference docs + legacy back-compat PRD references
+- Remove the `--global` alias for `--skill-scope global`
+- Update `--help`, usage, tests for the removed surface; `doctor docs` stays (discovery-only)
+
+**Scope (out):**
+- Any `.spectacular/` file-format change (that's the v2.0.0 major)
+- Verb *renames* (fold into v2.0.0 if any surface genuinely — none currently identified)
 
 **Exit criteria:**
-- `references/verify.md` ships with walk algorithm + gate
-- Skill routing table updated
-- Documentation in `docs/commands.md` under agentic-verbs section
-- 1+ real request shipped via the verify walk before tagging
+- All deprecated verbs/refs/aliases removed; banner machinery gone
+- `--help` + usage reflect the trimmed surface; tests updated
+- `pageworks` install hint still surfaces where `docs *` used to
+- CHANGELOG entry (note: removal of already-deprecated surface, MINOR per the call above); plugin bump to v1.13.0
 
 **Linked requests:**
 <!-- autopopulated -->
 
 ---
 
-## v0.11.x — Convention pack v2 (modular)
+## v1.14.0 — Visual layer (ASCII rendering)
 
-**Tier:** themed
+**Tier:** full
 **Status:** planned
 **Phase:** intent
 
 **Outcome:**
-Convention pack authors can compose packs from smaller building blocks (inherit `minimal` + override specific rules) instead of copying the entire `alex-default` to make minor variants — making pack maintenance practical at scale and lowering the bar for sharing project-shape opinions across teams.
+Spectacular's read surfaces stop rendering as flat text and gain a scannable visual layer — progress bars, a roadmap render, a summary dashboard, and ASCII mockup blocks for app-UI requests — so a human (or agent) understands workspace state at a glance instead of parsing `M1 — …: 0/5` lines. The data already exists (`progress`, `summary`, the milestone parser); this is a **rendering layer** over it, not a new subsystem.
 
 **Themes:**
-- Pack composition (inherit + override) — gated on real composition pain surfacing from v1 use
-- Pack diff/merge for resolving conflicts between inherited packs
-- Multi-pack per project (currently single-pack only)
+- Shared `ascii-render` helper (bars `███░░ 60%`, box-drawing, alignment) — one helper, reused by every surface
+- `spectacular progress <slug>` → milestone bars + roll-up % (today: bare `0/5` counts)
+- `spectacular summary` → dashboard with request-state bars + substrate counts as a visual block
+- `spectacular roadmap` render — version arc / timeline view (runway → major → vision), tier-aware
+- **App-UI request mockups** — ASCII layout blocks the skill can drop into a request's PLAN/SPEC to sketch a UI (rendered, not just described) — pairs with the `AskUserQuestion` preview pattern
+- **Convention alignment:** respect the existing `--format text|json` family (visual = default `text`; `json` stays plain) and honor `NO_COLOR` / non-TTY (degrade to ASCII-only, no color) so piped output stays clean
+
+**Scope (out):**
+- TUI / interactive cursor UI (this is static rendered output, not a live terminal app)
+- Image/SVG export (ASCII only; graphical export is pageworks/renderer territory)
+- Color as the *only* signal (must read correctly monochrome — accessibility)
 
 **Exit criteria:**
-- `convention-pack-modules` request transitions from planned to active when composition pain surfaces
-- 2+ packs in the wild that would benefit from composition
+- `ascii-render` helper shipped + unit-tested (bar math, width clamping, NO_COLOR)
+- `progress`, `summary`, `roadmap` render visually; `--format json` unchanged; piped/non-TTY degrades cleanly
+- App-UI mockup block documented with 1+ example in a real request
+- `docs/` page for the visual conventions; CHANGELOG entry; plugin bump to v1.14.0
 
 **Linked requests:**
 <!-- autopopulated -->
-- convention-pack-modules (planned)
 
 ---
 
-## v1.0.0 — Stable surface
+> **Contract-prep ladder (v1.15 → v1.17).** Three non-breaking MINORs that stage the v2.0.0 file-contract change so the major becomes a near-trivial "flip the switch." Each is backward-compatible on its own: spec the design → soak the fields → stage the migration. All hang off the existing `workspace_schema:` field and the already-shipped `spectacular migrate` registry infra.
+
+---
+
+## v1.15.0 — Contract prep ①: v2 contract spec (doc only)
+
+**Tier:** full
+**Status:** planned
+**Phase:** intent
+
+**Outcome:**
+The v2 `.spectacular/` file format is fully *designed and frozen on paper* before any code changes — shipped as the first real per-capability spec under `specs/workspace-v2/SPEC.md` plus an ARCHITECTURE.md update — so the contract is reviewed and agreed before implementation, and v1.16/v1.17/v2.0.0 just execute against a fixed target.
+
+**Themes:**
+- `specs/workspace-v2/SPEC.md` — the v2 file-format contract (new/changed frontmatter fields, file layout, what breaks vs. what's additive)
+- ARCHITECTURE.md updated with the v2 layout + the v1→v2 delta
+- DECISIONS ADR per breaking element (what breaks, why, migration path) — written now, while it's a design discussion, not a code rush
+- No code change — this is the design-freeze milestone (also the first inhabitant of the now-empty `specs/`, dovetailing with v1.10's spec-promotion pattern)
+
+**Exit criteria:**
+- `specs/workspace-v2/SPEC.md` ships; `doctor specs` validates it (frontmatter + non-empty body)
+- ARCHITECTURE.md reflects the v2 contract + delta
+- 1 ADR per breaking change in DECISIONS.md
+- CHANGELOG entry; plugin bump to v1.15.0
+
+**Linked requests:**
+<!-- autopopulated -->
+
+---
+
+## v1.16.0 — Contract prep ②: v2 frontmatter fields (optional/additive)
 
 **Tier:** themed
 **Status:** planned
 **Phase:** intent
 
 **Outcome:**
-External users (not just the maintainer) can adopt Spectacular knowing the v1 surface is frozen and changes will follow semver discipline — turning Spectacular from a maintainer-facing experiment into a tool consumer projects can depend on without being on the upgrade treadmill.
+The new v2 frontmatter fields land as **optional, additive** in v1.16 — old workspaces keep reading and validating fine, new fields are written-when-present — so the schema soaks in real use (this repo's own `.spectacular/`) before v2.0.0 makes them load-bearing. Deprecation-in-reverse: introduce soft, harden later.
 
 **Themes:**
-- Freeze v0.x capabilities as the v1 surface
-- README + docs reorganized around user-facing capabilities (not the dev arc)
-- Pinned compatibility note: Claude Code / Codex versions supported
-- Semver discipline kicks in (no more breaking changes without major bump)
+- Add the v2 fields (from the v1.15 spec) to scaffolders + frontmatter helpers as optional
+- Doctor recognizes them when present, never *requires* them (no warning on absence)
+- Dogfood: this repo's workspace adopts the optional fields and runs on them through the rest of the runway
+- `workspace_schema:` stays at v1 (fields are additive, not a schema break yet)
 
 **Exit criteria:**
-- Every v0.x archive request still resolves cleanly via doctor
-- CHANGELOG v1.0.0 entry written as "first stable release" + capability index
-- README rewritten as user-facing intro
-- Compatibility matrix documented in `docs/`
+- New fields writable + readable; absence is silent (backward-compatible)
+- Doctor validates shape when present; tests cover both old + new shape
+- This repo's `.spectacular/` carries the optional fields and stays green
+- CHANGELOG entry; plugin bump to v1.16.0
 
 **Linked requests:**
 <!-- autopopulated -->
+
+---
+
+## v1.17.0 — Contract prep ③: v1→v2 migration scaffold (dry-run, no-op)
+
+**Tier:** themed
+**Status:** planned
+**Phase:** intent
+
+**Outcome:**
+The v1→v2 migration exists and is testable *before* the major — a registry entry under the already-shipped `spectacular migrate` infra whose `--dry-run` reports exactly what v2.0.0 will change, while the live apply is still effectively a no-op (fields already soaking from v1.16). So when v2.0.0 flips `workspace_schema`, the migration that runs is one that's already been exercised.
+
+**Themes:**
+- `references/migrations/v1-to-v2.md` registry entry (frontmatter contract: `id`, `from`, `to`, `mechanical`, `reversible`, `apply-fn`, `affects`)
+- `spectacular migrate --dry-run --to v2` reports the planned delta accurately
+- `doctor` recognizes the v2 shape as a valid target (alongside v1)
+- Judgment-walk path defined for any non-mechanical part (snapshot-before-edit + y/n/q)
+
+**Exit criteria:**
+- Migration registry entry ships; `--dry-run` output matches the v1.15 spec's delta
+- Apply path tested on a v1 fixture → produces valid v2 shape
+- Doctor accepts both v1 and v2 `workspace_schema`
+- CHANGELOG entry; plugin bump to v1.17.0
+
+**Linked requests:**
+<!-- autopopulated -->
+
+---
+
+> **v1.18 – v1.19 — open buffer.** Intentionally unallocated. Reserved for whatever surfaces as urgent during the runway (bug-driven patches roll as v1.x.Z; net-new capability claims a free minor here). Don't fill with speculative work — promote from Icebox only when a real need lands.
+
+---
+
+## v2.0.0 — The major: file-contract evolution
+
+**Tier:** themed
+**Status:** planned
+**Phase:** intent
+
+**Outcome:**
+Spectacular evolves the `.spectacular/` file-format contract in one deliberate, asked-first major — the **only** breaking release on the map. By the time it lands, the change is nearly mechanical: the design was frozen in v1.15, the new fields have been soaking since v1.16, and the v1→v2 migration has been dry-run-tested since v1.17. v2.0.0 is the **flip** — make the new fields load-bearing, remove the old layout, bump `workspace_schema`.
+
+Per [`docs/versioning.md`](../docs/versioning.md), MAJOR is reserved for exactly this kind of contract break — and the agent confirms the target before bumping into it. (CLI deprecation debt is *not* here — it ships earlier as the v1.13.0 MINOR, deliberately keeping this major to a single breaking concern.)
+
+**Themes (the flip — everything below was staged by the v1.15→v1.17 ladder):**
+- Make the v2 frontmatter fields **required / load-bearing** (additive + soaking since v1.16)
+- Remove the v1 file layout the new format supersedes (the actual break — old unmigrated workspaces stop validating)
+- `workspace_schema:` bump to v2; doctor's v2-shape recognition (added v1.17) becomes the default expectation
+- Promote the v1→v2 migration (scaffolded v1.17) from dry-run to live apply; exercise it on this repo's own `.spectacular/`
+
+**Scope (out) — explicitly NOT in this major (separate future lines):**
+- CLI debt removal → **already shipped in v1.13.0**
+- Multi/nested workspaces (vision, below)
+- Context-orchestration / semantic retrieval (vision, below)
+- Convention pack v2 / modular packs (gated, below)
+
+**Exit criteria:**
+- The v1.15 spec, v1.16 optional fields, and v1.17 migration scaffold are all shipped (hard dependency — v2.0.0 does not start until the ladder is complete)
+- New fields required; v1 layout removed; `workspace_schema` = v2; tests updated for the v2-only shape
+- v1→v2 migration flipped to live + exercised on this repo's `.spectacular/` with a clean doctor afterward
+- Optional `-rc.N` soak per the versioning ladder if the migration warrants real-world bake time
+- CHANGELOG `### Breaking` section; plugin bump to v2.0.0; agent-confirmed target
+
+**Depends on:** v1.15.0 (spec) → v1.16.0 (optional fields) → v1.17.0 (migration scaffold). This block cannot start until all three ship.
+
+**Linked requests:**
+<!-- autopopulated — backfill when v2-planning request is cut -->
+
+---
+
+> **Beyond the major.** Everything below is post-v2.0.0 and stays at vision tier — direction, not commitment. None of it is bundled into the v2 major (it's explicitly scoped out above). Numbers like `v2.x` mean "somewhere in the v2 line after the major," not a pinned target.
+
+---
+
+## Workflows layer
+
+**Tier:** vision
+**Status:** planned (retargeted off stale v0.7.x — never shipped; non-urgent)
+**Phase:** intent
+
+**Direction:**
+Projects capture procedural sequences (release cycle, hotfix protocol, migration runbook) as first-class registered docs the skill walks step-by-step — one file per workflow at `.spectacular/workflows/<name>.md`, workflow as a registered doc-type with its own grill (PLAN-shaped). Reduces release-mistake rate and onboarding time. Not needed for the v2 goal; lands when a real project feels the procedural-drift pain. (Originally deferred "to v2" in DECISIONS 2026-05-11 — that deferral predates the convention; re-homed here as vision, not pinned to the major.)
+
+---
+
+## Convention pack v2 — modular packs
+
+**Tier:** vision
+**Status:** planned (gated — retargeted off stale v0.11.x)
+**Phase:** intent
+**Linked request:** `convention-pack-modules` (planned, priority low, gated)
+
+**Direction:**
+Compose packs from smaller building blocks (inherit `minimal` + override specific rules) instead of forking the whole `alex-default`. Pack diff/merge; multi-pack per project. **Gated:** stays planned until real composition pain surfaces from v1 pack use (2+ packs in the wild that would benefit). Not part of the v2 major — it's a pack-system evolution, orthogonal to the CLI/contract cleanup.
 
 ---
 
@@ -260,7 +354,7 @@ External users (not just the maintainer) can adopt Spectacular knowing the v1 su
 **Phase:** intent
 
 **Direction:**
-Support multi-workspace setups: `.spectacular.<workspace>/` for named team workspaces alongside default `.spectacular/`, and nested workspaces (`apps/builder/.spectacular/`) for monorepos where separate teams own separate apps. Each workspace stays independent — no cross-workspace inheritance. Workspace discovery walks up from cwd to find the nearest `.spectacular/`. CLI verbs gain a `--workspace <name>` flag. Cross-workspace coordination is an explicit non-goal.
+Support multi-workspace setups: `.spectacular.<workspace>/` for named team workspaces alongside default `.spectacular/`, and nested workspaces (`apps/builder/.spectacular/`) for monorepos where separate teams own separate apps. Each workspace stays independent — no cross-workspace inheritance. Workspace discovery walks up from cwd to find the nearest `.spectacular/`. CLI verbs gain a `--workspace <name>` flag. Cross-workspace coordination is an explicit non-goal. *(Was labeled "the v2.x line" when v2 had no defined major; now the v2.0.0 major is CLI+contract cleanup, and this is a follow-on within the v2 line.)*
 
 ---
 
@@ -298,6 +392,14 @@ Ideas worth capturing but not yet tied to any version. Promoting an item via the
 
 ## Recently shipped
 
+- **v1.9.0** (2026-05-29) — Versioning convention (`docs/versioning.md`): SemVer + breaking-change trigger + single-canonical-version-source rule + optional roadmap-only marketing/arc layer. Fixed stale `cli/spectacular` version constant. *(This ROADMAP rewrite reconciles the version map against the convention — see intro note.)*
+- **v1.8.x** (2026-05) — Read verbs: 11 read-only CLI verbs collapsing multi-step agent workflows into single deterministic calls; skim-by-default + `--full`; universal `--status|--since|--limit|--all|--json`. *(This is the shipped form of the old "v1.6.x query verbs" theme.)*
+- **v1.7.0** (2026-05) — Ideas doc-type: `idea` registered as first-class doc-type; CLI `idea new|list|promote`; status `parked|exploring|promoted`; doctor `ideas` area
+- **v1.6.0** (2026-05) — Feedback-loop: prototyping-stage human-feedback acquisition; `.spectacular/feedback/` substrate; doctor `feedback` area; PRINCIPLES §9 (feedback ≠ verification ≠ benchmark)
+- **v1.5.0** (2026-05) — Soft-DB substrate: memory/sessions/decisions promoted to soft-folder DBs (`index.md` + `entries/`); CLI mutators `decide|remember|session start|end`; doctor `memory` + `sessions` areas. Also snapshot-tidy (snapshots under `snapshots/<DOC>/@v<N>.md`). *(This is the shipped form of the old "v1.5.x soft-DB" theme.)*
+- **v1.4.0** (2026-05) — Substrate clarity: doc-registry → doc-index, grill sub-modes (`grill-wide|grill-each|grill-loop`), rules-file frontmatter dispatch schema
+- **v1.3.0** (2026-05) — Personas: opt-in `PERSONAS.md` canonical doc with per-persona grill-each; triggered by product/content kits
+- **v1.2.1** (2026-05-24) — patch on the pageworks deprecation
 - **v1.2.0** (2026-05-24) — Deprecate public-docs surface; extracted to standalone [pageworks](https://github.com/alexsmedile/pageworks) skill. `doctor docs` becomes discovery-only; archive-time handoff prompt; `docs *` verbs banner + scheduled for removal in v2.0.0
 - **v1.1.0** (2026-05-23) — `docs export` adapters: MkDocs Material + Docusaurus renderers (later moved to pageworks)
 - **v1.0.1** (2026-05-23) — `spectacular --version` + top-level usage on CLI

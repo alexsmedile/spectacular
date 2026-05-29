@@ -2,9 +2,9 @@
 status: planned
 priority: medium
 owner: alex
-updated: 2026-05-26
-target_version: v1.9.0
-summary: "Audit SPEC.md, promote 1-2 dense capability bullets to specs/<capability>/SPEC.md (target: v1.9.0)"
+updated: 2026-05-29
+target_version: v1.10.0
+summary: "Audit SPEC.md, promote 1-2 dense capability bullets to specs/<capability>/SPEC.md (target: v1.10.0 — retargeted from v1.9.0, which shipped the versioning doc instead)"
 related:
   - ../../SPEC.md
   - ../../ARCHITECTURE.md
@@ -29,7 +29,7 @@ related:
 - M2 — Pick 1-2 (per "Don't promote everything" constraint). Justify each pick against a real or hypothetical agent-load case.
 - M3 — Promote: scaffold `specs/<capability>/SPEC.md` for each, lift + expand the bullet, compress the SPEC.md entry to one-line + link, snapshot SPEC.md before edit.
 - M4 — Doctor green: `spectacular doctor specs` passes; the new spec files appear in the report.
-- M5 — Snapshot, CHANGELOG entry, release as v1.9.0.
+- M5 — Snapshot, CHANGELOG entry, release as v1.10.0.
 
 ## 4. Tasks
 

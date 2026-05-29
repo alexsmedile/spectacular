@@ -7,6 +7,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.11.0] — 2026-05-30
+
+### Added
+- **Validation walk — `spectacular verify <slug>` (`references/verify.md`).** A skill-side interactive ritual that moves a request `review → verified` by *running* its checks, not just claiming them. Closes PRINCIPLES.md Principle 7 (the validation layer). Skill-only; the CLI redirects.
+- **Typed verification checks — verification is multi-authority, not one thing.** Five kinds along a deterministic → judgment → human spine, each verified by its own authority: `executable` (`` `run: <cmd>` `` → exit code), `assertable` (`{assert}` → agent checks a binary property), `judgable` (`{judge}` → LLM reasons over artifacts), `observable` (`{observable}`, the default → human looks), `manual` (`{manual}` → human acts then confirms). Tags work **inline per-line** or **section-grouped** (`## Title {kind}`, absolute); executable checks confirm-before-run with a batch-allow option.
+- **`VERIFY-LOG.md` — append-only walk audit trail.** Each walk records every check with the `[kind]` that confirmed it (evidence, reasoning, exit codes), so verification becomes a recorded event, not just a checkbox state. Stubs for VERIFY.md (typed) + VERIFY-LOG.md added to `scaffold-reference.md`.
+- **`spectacular verify` CLI redirect + docs.** `verify` dispatches as a skill-only verb (terminal prints a redirect); `docs/commands.md` documents the verb + the kind taxonomy.
+
+### Changed
+- **`spectacular archive` warns on verified-without-a-walk.** If a request is `verified` but has no `VERIFY-LOG.md`, archive emits an advisory (non-blocking) note — it was flipped verified without running the walk.
+- **Lifecycle routing updated.** SKILL.md routes `review → verified` through the verify walk; `verification.md` (where checks live) and `verify.md` (how they're walked) are cross-linked as the two halves of one system.
+
+> Dogfood: verify-walk was verified by its own mechanism — 10 typed checks across all five kinds, walked end-to-end, producing the first VERIFY-LOG. See `.spectacular/archive/verify-walk/`.
+
 ## [1.10.0] — 2026-05-29
 
 ### Added

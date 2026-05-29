@@ -1,5 +1,5 @@
 ---
-status: active
+status: verified
 updated: 2026-05-30
 related:
   - PLAN.md
@@ -38,7 +38,7 @@ related:
 
 ### M3 — Retrospective + archive tie-in
 - [x] End-of-walk optional "what surprised you?" prompt → `memory/` entry (defined in verify.md § 5)
-- [ ] `spectacular archive` warns when `verified` was reached with no VERIFY-LOG (CLI/archive.md change)
+- [x] `spectacular archive` warns when `verified` was reached with no VERIFY-LOG (cmd_archive advisory block)
 
 ### M4 — Surface + docs
 - [x] SKILL.md routing-table entry for `verify` (decision-point row + ref-loading row)
@@ -49,8 +49,8 @@ related:
 - [x] VERIFY-LOG.md stub added to `scaffold-reference.md`
 
 ### M5 — Dogfood + ship
-- [ ] Drive 1+ real request through the walk to `verified`
-- [ ] CHANGELOG [1.11.0] entry; plugin bump to v1.11.0
+- [x] Drive 1+ real request through the walk to `verified` — **self-dogfood**: verify-walk verified by its own mechanism (10 checks, all 5 kinds, VERIFY-LOG written, active→verified via promote)
+- [ ] CHANGELOG [1.11.0] entry; plugin bump to v1.11.0 — *next: /wrap-up 1.11.0*
 
 ## v2 (deferred)
 

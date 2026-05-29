@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.10.0"
+SPECTACULAR_VERSION="1.11.0"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -3094,6 +3094,14 @@ EOF
       fi
       ;;
   esac
+
+  # Verify-walk advisory (v1.11.0+): verified without ever being walked.
+  # If status is verified but no VERIFY-LOG.md exists, the request was flipped
+  # verified without running `spectacular verify <slug>`. Advisory, not blocking.
+  if [[ "$status" == "verified" && ! -f "$(dirname "$plan")/VERIFY-LOG.md" ]]; then
+    echo "  ⚠ '$slug' is verified but has no VERIFY-LOG.md — it was never run through the verify walk." >&2
+    echo "    Consider: /spectacular verify $slug  (records evidence + a walk log before archiving)" >&2
+  fi
 
   # Bump PLAN frontmatter BEFORE the move (avoids losing the change)
   fm_set "$plan" "status" "archived"

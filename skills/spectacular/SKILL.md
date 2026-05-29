@@ -5,7 +5,8 @@ description: |
   Manages the full lifecycle of a .spectacular/ workspace: reads project state, proposes actions,
   scaffolds requests, manages lifecycle transitions, writes memory, archives completed work,
   and grills/refines/reviews any structured doc (PRD, PLAN, TASKS, PRINCIPLES, ARCHITECTURE,
-  ROADMAP, STACK, AGENTS, DECISIONS, PERSONAS) via rules files that declare each doc's mode + slots.
+  ROADMAP, STACK, AGENTS, DECISIONS, PERSONAS) plus soft-DB collections (memory, sessions,
+  feedback, ideas) via rules files that declare each doc's mode + slots.
   Use when: opening /spectacular on any project, scaffolding a new request, archiving completed
   work, capturing a memory, snapshotting a canonical doc, onboarding to an existing workspace,
   or building any canonical doc from scratch.
@@ -96,7 +97,7 @@ Each doc is described by a rules file at `references/<doc-id>-rules.md`. The rul
 | `spectacular <doc> refine` | → `references/refine.md` (with `<doc-id>-rules.md` context) |
 | `spectacular <doc> review` | → `references/review.md` (with `<doc-id>-rules.md` context) |
 
-**Doc IDs registered (v1.7.0):** `prd`, `spec`, `plan`, `tasks`, `principles`, `architecture`, `roadmap`, `stack`, `agents`, `decisions`, `memory`, `sessions`, `personas`, `feedback`, `idea`, `convention-pack`, `docs-manifest`, `docs-page`. Each has a `references/<doc-id>-rules.md` file declaring its dispatch + behavior. See `doc-index.md` for the catalog.
+**Registered docs:** the live registry is the set of `references/<doc-id>-rules.md` files — each declares one doc's dispatch + behavior. The authoritative catalog (every doc-id, its mode, and location) is `references/doc-index.md`; the per-capability detail for the engine itself is in `.spectacular/specs/doc-engine/SPEC.md`. Don't maintain a hardcoded id list here — it drifts every time a doc ships.
 
 ### Feedback-loop mode (v1.6.0+)
 

@@ -28,5 +28,6 @@ extras:
   - workflow
   - commands
   - configuration
+  - versioning
   - scaffold
   - troubleshooting

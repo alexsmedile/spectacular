@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [1.9.0] — 2026-05-29
+
+### Added
+- **Versioning convention doc (`docs/versioning.md`).** Codifies how Spectacular versions itself: SemVer as the canonical scheme with a Spectacular-specific breaking-change trigger (renamed/removed verb or flag, changed invocation syntax, `.spectacular/` file-contract break = MAJOR); default-silent mechanical increments with an ask-first rule only for a probable MAJOR or a roadmap-pinned milestone; the single-canonical-version-source rule across all 7 version-bearing locations (flagging the `cli/spectacular` + `SKILL.md` manual-bump drift point); the standard `-alpha/-beta/-rc` pre-release ladder; and two opt-in, roadmap-only marketing layers — a pinned milestone number and a full Apple-style major-line **release arc** (`X.0` launch → staged `X.x` features → terminal stable before `X+1.0`). Registered in `docs/docs.yaml`.
+
 ## [1.8.4] — 2026-05-29
 
 ### Fixed

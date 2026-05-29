@@ -1,8 +1,8 @@
 ---
-status: planned
+status: active
 priority: high
 owner: alex
-updated: 2026-05-29
+updated: 2026-05-30
 summary: "Skill-side /spectacular verify <slug> walk — guides each VERIFY.md check interactively, flips review→verified, closes Principle 7"
 related:
   - PRD.md

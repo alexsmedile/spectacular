@@ -9,11 +9,14 @@ related:
 
 ## Design decisions (resolved 2026-05-30)
 
-- **Checks are TYPED — verification is multi-authority, not one thing.** Three kinds, each with its own judge:
-  - `executable` (`` `run: <cmd>` ``) → exit code is ground truth (deterministic / "mathematical").
-  - `observable` (`{observable}`, the untagged default) → human provides evidence; agent records.
-  - `judgable` (`{judge}`) → LLM reasons over named artifacts; uncertainty = blocker.
-- **Syntax:** inline tag + optional `run:` in plain markdown (human-readable, git-diffable). Untagged = observable.
+- **Checks are TYPED — verification is multi-authority, not one thing.** Five kinds along a spine (deterministic → judgment → human), each with its own authority + walk behavior:
+  - `executable` (`` `run: <cmd>` ``) → external command exit code (deterministic).
+  - `assertable` (`{assert}`) → agent checks a binary property of files/state (deterministic, no subprocess, no opinion).
+  - `judgable` (`{judge}`) → LLM reasons over named artifacts; fuzzy; uncertainty = blocker.
+  - `observable` (`{observable}`, untagged default) → human looks/confirms (passive).
+  - `manual` (`{manual}`) → human performs an action first, then confirms (active).
+  - No overlaps: exec=external-tool vs assert=agent-check; judge=fuzzy vs assert=binary; observe=passive vs manual=active.
+- **Syntax — two accepted shapes:** (a) **inline** per-line tag + optional `run:`; (b) **section-grouped** — `## Title {kind}` applies to all checks under it. **Section is absolute** (inline tags inside a tagged section are ignored). `## Title {run}` = executable section where each line IS the command; inline executable still uses per-line `run:`. Untagged line/section = observable. Tags stay literal in the file.
 - **Exec safety:** confirm-each `run:` command (show it, y/n/skip); batch-allow option at walk start. Never run an unshown command.
 - **All-pass outcome:** configurable, **default propose** (human confirms via `promote`); opt-in `verify.auto_promote` / `--auto` — the seam where [[policy-engine]] severity plugs in later.
 - **Blocker handling:** record + **keep walking**, report all at end, stay `review`. No fabricated passes (any kind).

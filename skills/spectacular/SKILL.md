@@ -166,7 +166,8 @@ When grilling, scaffolding, or finalizing a PLAN.md for any request, **also rout
 | Scaffolding a new request (`spectacular new`) | → `verification.md` — apply 2-of-6 rule. Default: no VERIFY.md. Add `### Verification` group to TASKS.md or fill PLAN § Validation instead. |
 | Grilling/refining a PLAN.md | → `verification.md` § Decision flow — confirm 2-of-6 rule result; ask user if VERIFY.md needed |
 | Moving request `active → review` | → `lifecycle.md` § Verification artifact detection — pick artifact (VERIFY.md > TASKS Verification > PLAN Validation) |
-| Moving request `review → verified` | → `verification.md` + `lifecycle.md` — verify every check item in the chosen artifact. **Never skip.** If VERIFY.md exists, every `- [ ]` blocks transition. |
+| Moving request `review → verified` | → **`verify.md`** — run the interactive validation walk: verify each check by its kind (executable / assertable / judgable / observable / manual), record to VERIFY-LOG, gate the transition. `verification.md` decides *where* checks live; `verify.md` *runs* them. **Never skip.** |
+| `spectacular verify <slug>` | → **`verify.md`** — the validation walk (skill-only; CLI redirects). |
 
 **Critical:** "VERIFY.md is opt-in" refers to *creating the file*, not *performing verification*. Verification always runs against *some* artifact. When VERIFY.md exists it is load-bearing; do not bypass it because it's "optional."
 
@@ -244,6 +245,7 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/active-request.md` | Continue work, session state, task tracking |
 | `references/lifecycle.md` | State transitions, signal detection, proactive proposals |
 | `references/verification.md` | When VERIFY.md is needed (2-of-6 rule) vs folded into PLAN § Validation or TASKS § Verification |
+| `references/verify.md` | The `spectacular verify <slug>` validation walk — typed checks (5 kinds), walk loop, VERIFY-LOG, gates review→verified |
 | `references/verify-tests.md` | When to author `tests/verify/<slug>.test.sh` scripts vs leave scenarios in VERIFY.md as manual checklists |
 | `references/doctor.md` | Doctor entry point — severity model, report format, mechanical fixes |
 | `references/doctor-areas.md` | Per-area check tables (load when explaining/implementing a check) |

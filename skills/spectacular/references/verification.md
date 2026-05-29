@@ -136,7 +136,8 @@ User can always override either way.
 
 ## Related
 
+- [[verify]] — the *execution* half: the `spectacular verify <slug>` walk that *runs* the checks (typed: executable / assertable / judgable / observable / manual), records to VERIFY-LOG, and gates the transition. This file = *where* checks live; verify.md = *how* they're walked.
 - [[lifecycle]] — `review → verified` transition rule
 - [[archive]] — verified is a precondition for archive
-- [[scaffold-reference]] — VERIFY.md inline stub (until `templates/verify/base.md` lands)
+- [[scaffold-reference]] — VERIFY.md inline stub (now with typed-check syntax)
 - [[principles]] — "small files over giant documents" + "humans decide, agents propose"

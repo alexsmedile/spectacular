@@ -7439,6 +7439,14 @@ main() {
     decide)   shift; cmd_decide "$@"; exit $? ;;
     session)  shift; cmd_session "$@"; exit $? ;;
     promote)  shift; cmd_promote "$@"; exit $? ;;
+    # Verify (v1.11.0+): skill-only validation walk. Needs an LLM to read each
+    # check, run/judge it by kind, and gate review→verified. No CLI dispatch.
+    verify)
+      shift
+      skill_verb_message "verify" \
+        "Validation walk — reads VERIFY.md (or PLAN § Validation), verifies each check by its kind (executable / assertable / judgable / observable / manual), records to VERIFY-LOG, and gates review→verified." \
+        "$@"
+      ;;
     # Feedback-loop (v1.6.0+): canonical name + hidden aliases.
     # Aliases are dispatched but NOT documented in --help per the contract.
     feedback-loop|iterate|experiment|test|probe|try)
@@ -7526,7 +7534,7 @@ Run inside Claude Code or Codex:  /spectacular $subcmd <verb>"
     die "Unknown command: '${subcmd}'.
 CLI verbs:   init | doctor | pack | docs | migrate | new | promote | snapshot | archive | touch | decide | remember | session | feedback-loop | idea
 Read verbs:  summary | requests | request | decisions | decision | memories | memory | sessions | show | progress | paths (v1.8.0+)
-Skill verbs (run via /spectacular in your AI agent): status | remember this | <doc> grill | <doc> refine | <doc> review"
+Skill verbs (run via /spectacular in your AI agent): status | remember this | verify <slug> | <doc> grill | <doc> refine | <doc> review"
   fi
 
   shift

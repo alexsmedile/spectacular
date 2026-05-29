@@ -255,6 +255,28 @@ Doc IDs in v1.4.0: `prd`, `plan`, `tasks`, `principles`, `architecture`, `roadma
 
 Legacy aliases (backwards-compatible from v0.2.x): `spectacular prd`, `spectacular prd grill`, `spectacular prd refine`, `spectacular prd review`.
 
+### `spectacular verify <slug>` *(v1.11.0+)*
+
+Runs the **validation walk** — the skill-side ritual that moves a request from `review` → `verified`. Reads the request's `VERIFY.md` (or falls back to `PLAN § Validation`) and walks every check, one at a time, verifying each by its **kind**:
+
+| Kind | Tag | Authority |
+|---|---|---|
+| executable | `` `run: <cmd>` `` | command exit code (deterministic) |
+| assertable | `{assert}` | agent checks a binary property of files/state |
+| judgable | `{judge}` | LLM reasons over named artifacts |
+| observable | `{observable}` (default) | human looks & confirms (passive) |
+| manual | `{manual}` | human performs an action, then confirms (active) |
+
+Checks can be tagged **inline** per line, or grouped under a `## Title {kind}` section (section is absolute). Executable checks confirm before running (batch-allow at walk start).
+
+The walk records to both `VERIFY.md` (ticks passed boxes) and an append-only `VERIFY-LOG.md` (timestamped, per-check evidence + the `[kind]` that confirmed it). On all-pass it proposes `verified` (configurable auto via `verify.auto_promote`); any blocker keeps the request at `review` with a punch list.
+
+```text
+spectacular verify add-team-billing
+```
+
+**Skill only** — needs an LLM to read each check and judge evidence. At the terminal the CLI prints a redirect to run `/spectacular verify <slug>` inside Claude Code or Codex. See [verify.md](../skills/spectacular/references/verify.md) (how it walks) and [verification.md](../skills/spectacular/references/verification.md) (where checks live).
+
 ### `spectacular prd` / `spectacular prd grill`
 
 Walks the user through the **8-slot canonical PRD** (Vision / Problem / Target users / Deliverable / Goals & success criteria / Non-goals / Constraints / First milestone), one question at a time, with kit-aware prompts.

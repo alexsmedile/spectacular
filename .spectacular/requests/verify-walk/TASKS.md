@@ -41,10 +41,12 @@ related:
 - [ ] `spectacular archive` warns when `verified` was reached with no VERIFY-LOG (CLI/archive.md change)
 
 ### M4 — Surface + docs
-- [ ] SKILL.md routing-table entry for `verify`
-- [ ] CLI redirect: `spectacular verify <slug>` → skill-only message
-- [ ] `docs/commands.md` agentic-verbs section covers `verify`
-- [ ] VERIFY-LOG.md stub added to `scaffold-reference.md`
+- [x] SKILL.md routing-table entry for `verify` (decision-point row + ref-loading row)
+- [x] CLI redirect: `spectacular verify <slug>` → skill-only message (dispatch case + help line)
+- [x] VERIFY.md typed-syntax stub in `scaffold-reference.md` (5 kinds + 2 shapes)
+- [x] `verification.md` ↔ `verify.md` cross-link (where ↔ how)
+- [x] `docs/commands.md` agentic-verbs section covers `verify` (kind table + skill-only note)
+- [x] VERIFY-LOG.md stub added to `scaffold-reference.md`
 
 ### M5 — Dogfood + ship
 - [ ] Drive 1+ real request through the walk to `verified`

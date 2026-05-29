@@ -401,23 +401,56 @@ updated: <today>
 # Verify — <slug>
 
 > VERIFY answers "did we build it correctly and safely?" (PLAN answers "did we build the right thing?")
+> Checks are TYPED — each is verified by its own authority. Walked by `spectacular verify <slug>` (see [[verify]]).
 
-## Manual QA checklist
+<!--
+Five check kinds (deterministic → judgment → human):
+  executable  `run: <cmd>`   exit 0 = pass (external command)
+  assertable  {assert}        agent checks a binary property of files/state
+  judgable    {judge}         LLM reasons over named artifacts
+  observable  {observable}    human looks & confirms (passive) — the default if untagged
+  manual      {manual}        human performs an action, then confirms (active)
 
+Two shapes (prefer section-grouping for uniform phases; inline for mixed):
+  Section: `## Title {kind}` applies to ALL checks under it (absolute).
+           `## Title {run}` → each line IS the command.
+  Inline:  tag per line; `run:` or {assert}/{judge}/{manual}/{observable}.
+-->
+
+## Automated {run}
 - [ ] 
+
+## Properties {assert}
 - [ ] 
 
-## Edge cases to verify
-
+## Manual QA {observable}
 - [ ] 
 
-## Regression checklist
-
+## Actions {manual}
 - [ ] 
+```
 
-## Rollback validation
+### VERIFY-LOG.md
+```md
+---
+updated: <today>
+---
 
-- [ ] 
+# Verify log — <slug>
+
+<!-- Append-only. One ## entry per `spectacular verify` walk. The [kind] tag
+     records which authority confirmed each check. Written by the walk; see [[verify]]. -->
+
+## <YYYY-MM-DD HH:MM> — walk (<P> passed, <B> blocked, <S> skipped)
+
+- ✓ [exec] <check> — `<cmd>` exit 0
+- ✓ [assert] <check> — property holds: <what was checked>
+- ✓ [judge] <check> — <agent reasoning + artifact seen>
+- ✓ [observe] <check> — <evidence the human gave>
+- ✓ [manual] <check> — performed <action>, result: <result>
+- ✗ [exec] <check> — BLOCKED: `<cmd>` exit 1 — <stderr tail>
+- ⊘ [observe] <check> — skipped
+**Outcome:** <verified | stayed in review — N blockers>
 ```
 
 ---

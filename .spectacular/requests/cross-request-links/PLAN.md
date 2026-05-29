@@ -3,7 +3,7 @@ status: planned
 priority: medium
 owner: alex
 updated: 2026-05-29
-summary: "Advisory cross-request awareness — related:/depends-on:/blocks: in PLAN frontmatter, inverse-link resolver, doctor links area"
+summary: "Advisory cross-request awareness — related:/depends-on:/blocks: in PLAN frontmatter, inverse-link resolver, doctor links area; carries a doctor-memory staleness side-rider from FEEDBACKS.md"
 related:
   - PRD.md
   - ../../ARCHITECTURE.md
@@ -28,7 +28,7 @@ Let a request declare its relationships to other requests (`related:` / `depends
 
 - M1 — Frontmatter schema extension: `depends-on:` / `blocks:` documented in ARCHITECTURE.md alongside existing `related:`.
 - M2 — Inverse-link resolver: given all PLAN frontmatter, compute the bidirectional graph (`blocks` ↔ `blocked-by`) at read time.
-- M3 — `doctor links` area: validates link integrity, flags dangling references to missing/archived slugs.
+- M3 — `doctor links` area: validates link integrity, flags dangling references to missing/archived slugs. **Side-rider (from FEEDBACKS.md 🟢):** add a staleness flag to `doctor memory` — mirror the existing `sessions`/`feedback`/`ideas` convention. Naive age-check is the v1 floor; the valuable contradiction-check (a memory referencing a blocker a later session/decision overturns) is deferred to v2.
 - M4 — `status` advisory surface: `spectacular status` shows "⚠ active request `<slug>` is related to active request `<other>`"; `spectacular new` prompts to declare relationships when slug keywords match existing requests.
 - M5 — Examples + ship: 2 example projects demonstrate the link graph; CHANGELOG entry; plugin bump to v1.12.0.
 
@@ -46,7 +46,7 @@ See `TASKS.md`.
 
 - M1 — ARCHITECTURE.md documents all three relationship fields + the computed-not-stored rule.
 - M2 — A fixture where A `blocks` B resolves to B showing `blocked-by: A` without B's file being edited.
-- M3 — `doctor links` flags a deliberately-dangling reference; passes clean on valid links.
+- M3 — `doctor links` flags a deliberately-dangling reference; passes clean on valid links. `doctor memory` flags a deliberately-aged entry; quiet on fresh entries.
 - M4 — Two related active requests trigger the `status` advisory; `new` on a keyword-matching slug prompts for relationships.
 - M5 — Example projects render a correct link graph; manifests at v1.12.0.
 

@@ -20,6 +20,7 @@ related:
 ### M3 — doctor links area
 - [ ] Validate link integrity across requests + archive
 - [ ] Flag dangling references (missing/archived slugs) as warnings
+- [ ] Side-rider (FEEDBACKS.md 🟢): `doctor memory` staleness flag — age-check mirroring sessions/feedback/ideas convention (pick threshold; memory is less time-sensitive so lean conservative)
 
 ### M4 — status + new surfaces
 - [ ] `spectacular status` advisory: related active requests
@@ -33,3 +34,4 @@ related:
 
 - [ ] ROADMAP-as-source-of-truth enforcement (every active request links to a version)
 - [ ] Visual link-graph render (depends on [[visual-layer]])
+- [ ] Memory contradiction-check (FEEDBACKS.md 🟢): flag a memory whose claim a later session/decision overturns — cross-doc semantic reasoning, likely skill-side not CLI

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg" width="100%" alt="Spectacular — Other tools help you write code faster. Spectacular helps you stay coherent while you do." />
+<img src="docs/assets/banner.svg" width="100%" alt="Spectacular — a spec-driven protocol for building with AI agents. Agents build. Humans decide." />
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
@@ -11,19 +11,19 @@
 
 ---
 
-## The problem
+## No spec. No plan. No clue.
 
-AI coding agents are fast. They are not coherent.
+**Agents act before they understand.**
 
-Every new session starts cold. Decisions made last week are invisible. Context that took an hour to build evaporates the moment the conversation ends. Your agent doesn't know what was decided, what was tried, or what's next — so you re-explain, re-decide, and re-discover the same things, over and over.
+AI agents act on the first thing they find. Hand one a request and it starts coding immediately — without a spec, without a plan, without knowing *what* the project is or *why* the work matters. It can't see what was decided, what phase you're in, or what comes next.
 
-The bottleneck isn't code generation. It's everything around it.
+The bottleneck isn't writing code. It's giving agents — and yourself — the context to write the *right* code. That context has to be planned, not assumed.
 
 ---
 
-## What it is
+## A spec-driven protocol for agents
 
-Spectacular is an operational workspace for AI-assisted software projects. Drop a `.spectacular/` directory in any repo and it becomes the shared brain for you and every agent that touches the project.
+Spectacular is a spec-driven protocol for ideating, planning, scaffolding, and acting on projects with AI agents — keeping track of the changes, phases, tasks, and decisions so agents always know *what* they're doing and *why*. Drop a `.spectacular/` directory in any repo and it becomes the spec and shared context every agent works from.
 
 Strategic context is split across seven focused canonical docs (PRD / PRINCIPLES / ARCHITECTURE / ROADMAP / STACK / DECISIONS / AGENTS) so agents load only what each task needs, not the entire repo.
 
@@ -34,6 +34,12 @@ It ships as three layers:
 - **CLI** — `spectacular init` bootstraps the workspace in any project in seconds
 
 The skill is the primary interface. The CLI runs once.
+
+> **Agents build. Humans decide.** Agents are made for building — humans, for deciding what's worth building.
+
+In short, here's how spectacular helps you build your projects:
+
+<img src="docs/assets/benefits.svg" width="100%" alt="Six benefits: Stay coherent · Plan, then build · Start in seconds · Roadmap the runway · Trust the state · Lose nothing" />
 
 ---
 
@@ -59,7 +65,7 @@ spectacular init
 
 ---
 
-## How it works
+## The shape of it
 
 ### The three layers
 
@@ -237,27 +243,34 @@ Full schema in [`skills/spectacular/references/packs-contract.md`](skills/specta
 
 ---
 
-## Pairing with pageworks
+## Works well with
 
-Spectacular owns `.spectacular/` — strategy, current truth, active work. **Public-facing documentation (the `docs/` surface) is owned by [pageworks](https://github.com/alexsmedile/pageworks)**, a sibling skill extracted in v1.2.0.
+Spectacular owns one thing — `.spectacular/`: strategy, current truth, active work. It composes with focused sibling tools rather than absorbing their jobs.
 
-The two compose: when a SPEC-touching request archives, spectacular asks whether `docs/` should be updated and hands off to pageworks if you confirm. `spectacular doctor docs` reports discovery only (folder + manifest presence; install hint if pageworks missing) — never validates schema. There is no automatic invocation across the boundary.
+### Best with — pageworks
 
-Install pageworks separately when you need a public docs surface:
+**Public-facing documentation (the `docs/` surface) is owned by [pageworks](https://github.com/alexsmedile/pageworks)**, a sibling skill extracted in v1.2.0. The two compose: when a SPEC-touching request archives, spectacular asks whether `docs/` should be updated and hands off to pageworks if you confirm. `spectacular doctor docs` reports discovery only (folder + manifest presence; install hint if pageworks missing) — never validates schema. There is no automatic invocation across the boundary.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/alexsmedile/pageworks/main/cli/install.sh | bash
 ```
 
+### Also pairs with
+
+- **Claude Code / Codex / Cursor** — the agents that read `.spectacular/` and act on it. Spectacular is the protocol; these are the runtimes.
+- **Git** — `.spectacular/` is fully committed, so phases, decisions, and changelogs version alongside your code. `.spectacular.local/` stays gitignored.
+
+> Building a tool that composes with the `.spectacular/` contract? [Open an issue](https://github.com/alexsmedile/spectacular/issues) — this list is meant to grow.
+
 ---
 
-## Who it's for
+## Built for
 
 - Solo developers using Claude Code, Codex, or Cursor on projects that span weeks or months
 - Small teams where AI agents need to share operational context
 - Anyone who has re-explained the same architectural decision to an agent more than twice
 
-## Who it's not for
+## Not built for
 
 - Projects that live and die in a single session — the structure has no value at that scale
 - Teams that already have a working context management system

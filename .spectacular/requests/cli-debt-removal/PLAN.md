@@ -8,7 +8,7 @@ related:
   - PRD.md
   - ../../ROADMAP.md
   - ../../DECISIONS.md
-target_version: v1.13.0
+target_version: v1.14.0
 ---
 
 # Plan — cli-debt-removal

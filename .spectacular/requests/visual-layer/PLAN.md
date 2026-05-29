@@ -8,7 +8,7 @@ related:
   - PRD.md
   - ../../ROADMAP.md
   - ../../ARCHITECTURE.md
-target_version: v1.14.0
+target_version: v1.15.0
 ---
 
 # Plan — visual-layer

@@ -1,7 +1,7 @@
 ---
-version: 3.0
-updated: 2026-05-29
-summary: "Per-version scope, phase, and exit criteria. Active line is v1.9.0 (current). v1.10–v1.17 are the runway to the v2.0.0 major; v2.0.0 is a single breaking concern — .spectacular/ file-contract evolution (CLI debt removal lands earlier as v1.13.0 MINOR; the v1.15→v1.17 ladder pre-stages the contract change). v1.18–v1.19 are open buffer. Long-term gets fuzzier on purpose. (v3.0 of this doc: reconciled the stale pre-convention version map against shipped reality.)"
+version: 3.1
+updated: 2026-05-30
+summary: "Per-version scope, phase, and exit criteria. Active line is v1.10.0 (shipped); v1.11 next. v1.11–v1.18 are the runway to the v2.0.0 major; v2.0.0 is a single breaking concern — .spectacular/ file-contract evolution (CLI debt removal lands earlier as v1.14.0 MINOR; the v1.16→v1.18 ladder pre-stages the contract change). v1.19–v1.20 are open buffer. Long-term gets fuzzier on purpose. (v3.1 of this doc: inserted v1.12 policy-engine, cascaded the tail +1.)"
 related:
   - PRD.md
   - ARCHITECTURE.md
@@ -14,13 +14,13 @@ Per-version planning artifact. Uses a precision gradient: active + near-term ver
 
 Phase chain: `intent → discover → prototype → spec-refine → mvp → iterate → test → release-prep → release`. See [[roadmap-overrides]] for the full spec.
 
-> **Versioning convention:** the number scheme follows [`docs/versioning.md`](../docs/versioning.md) — strict SemVer underneath, with this roadmap as the only place an optional marketing/arc narrative lives. **MAJOR is reserved for a breaking contract change** (here: the `.spectacular/` file-format break). The v1.10–v1.17 runway below is all backward-compatible MINOR work — including the v1.15→v1.17 ladder that *pre-stages* the contract change so **v2.0.0 is a near-mechanical flip, not a big-bang major.**
+> **Versioning convention:** the number scheme follows [`docs/versioning.md`](../docs/versioning.md) — strict SemVer underneath, with this roadmap as the only place an optional marketing/arc narrative lives. **MAJOR is reserved for a breaking contract change** (here: the `.spectacular/` file-format break). The v1.11–v1.18 runway below is all backward-compatible MINOR work — including the v1.16→v1.18 ladder that *pre-stages* the contract change so **v2.0.0 is a near-mechanical flip, not a big-bang major.**
 >
 > *Reconciliation note (2026-05-29):* this map was rewritten to match shipped reality. The earlier version listed pre-convention bands (`v0.7.x`, `v1.5.x`–`v1.8.x`) as planned even though the soft-DB substrate, query/read verbs, and the v1.0 stable surface had already shipped (now in [Recently shipped](#recently-shipped)). Unshipped work was judged on substance — not its stale label — and re-targeted: kept items got real forward minors (v1.10–v1.12), non-urgent items moved to v2.x/vision.
 
 ---
 
-## v1.9.0 — Versioning convention (current)
+## v1.9.0 — Versioning convention
 
 **Tier:** full
 **Status:** shipped (2026-05-29)
@@ -39,16 +39,16 @@ Spectacular has a written, enforceable versioning convention — strict SemVer, 
 
 ---
 
-> **Runway to v2.0.0.** The blocks below (v1.10 → v1.17) are all backward-compatible MINOR work, pinned in priority order: three ready capabilities (v1.10–v1.12), CLI debt removal (v1.13), the visual layer (v1.14), then the contract-prep ladder (v1.15–v1.17). v1.18–v1.19 are open buffer. Numbers can reorder if priority shifts, but each is a real, self-contained release with no contract-breaking risk — the break is isolated to v2.0.0.
+> **Runway to v2.0.0.** The blocks below (v1.11 → v1.18) are all backward-compatible MINOR work, pinned in priority order: the validation walk (v1.11), the policy engine (v1.12), cross-request awareness (v1.13), CLI debt removal (v1.14), the visual layer (v1.15), then the contract-prep ladder (v1.16–v1.18). v1.19–v1.20 are open buffer. Numbers can reorder if priority shifts, but each is a real, self-contained release with no contract-breaking risk — the break is isolated to v2.0.0.
 
 ---
 
-## v1.10.0 — SPEC.md density refactor
+## v1.10.0 — SPEC.md density refactor (current)
 
 **Tier:** full
-**Status:** planned
-**Phase:** intent
-**Linked request:** `spec-refactor` (drafted, ready — retargeted from stale v1.9.0)
+**Status:** shipped (2026-05-30)
+**Phase:** release
+**Linked request:** `spec-refactor` (verified + archived; grew to include the skill-file audit — self-describing refs + catalog.sh + legacy cleanup)
 
 **Outcome:**
 `.spectacular/SPEC.md`'s densest 1-2 capability bullets are promoted to focused `specs/<capability>/SPEC.md` files, so an agent loading capability detail reads a standalone spec instead of a cramped index line — without bloating the index or promoting prematurely.
@@ -97,7 +97,40 @@ The validation layer (Principle 7) gets a first-class skill-side walk: `/spectac
 
 ---
 
-## v1.12.0 — Cross-request awareness (advisory)
+## v1.12.0 — Policy engine (configurable action gates)
+
+**Tier:** full
+**Status:** planned
+**Phase:** intent
+**Linked request:** `policy-engine` (drafted — urgent, captured 2026-05-30)
+
+**Outcome:**
+Spectacular gains a **policy layer** — declarative, configurable rules that gate actions at defined lifecycle points — shipping with a built-in **"understand before you change"** pre-implementation gate (before `planned → active`, the agent must produce a *current-system / what-changes / what-stays-the-same* analysis). Defaults ship enabled; any project enables, disables, tunes severity, or registers its own policies via `config.yaml`. Policies are the *executable* counterpart to PRINCIPLES.md's prose enforcement hooks.
+
+**Themes:**
+- `references/policies-contract.md` — policy = id + trigger-point + check + severity + default-state
+- Built-in `understand-before-change` gate at `planned → active` (the now/changes/stays-same analysis)
+- `config.yaml` `policies:` block — enable/disable built-ins, set per-policy severity (`warn` | `block`), register custom policies; 4-tier scope precedence (candidate, mirroring convention-packs)
+- Enforcement wired into `promote` (consults active policies at the transition) + a `doctor policies` area
+- Per-policy advisory-vs-blocking severity — humans decide by default
+
+**Scope (out):**
+- A full rules DSL — start with a small, declarative schema
+- Policies that require external services or network calls
+- Subsuming verify-walk's `review→verified` gate (noted as a possible future convergence, not forced here)
+
+**Exit criteria:**
+- `policies-contract.md` ships; a reader can author a custom policy from it alone
+- Understanding gate fires on `planned → active`; missing analysis is flagged per configured severity; present analysis passes
+- `config.yaml` can disable a built-in, change a severity, register a custom policy — each takes effect
+- `doctor policies` reports status; CHANGELOG entry; plugin bump to v1.12.0
+
+**Linked requests:**
+- policy-engine (planned, high, urgent)
+
+---
+
+## v1.13.0 — Cross-request awareness (advisory)
 
 **Tier:** themed
 **Status:** planned
@@ -125,14 +158,14 @@ A request can declare its relationships to other requests (`related:` / `depends
 - Inverse-link resolver implemented + tested
 - Doctor `links` area validates references
 - `status` surface shows advisory warnings
-- CHANGELOG entry; plugin bump to v1.12.0
+- CHANGELOG entry; plugin bump to v1.13.0
 
 **Linked requests:**
 <!-- autopopulated -->
 
 ---
 
-## v1.13.0 — CLI debt removal
+## v1.14.0 — CLI debt removal
 
 **Tier:** themed
 **Status:** planned
@@ -157,14 +190,14 @@ Spectacular sheds its accumulated deprecation debt — the `docs *` verbs (extra
 - All deprecated verbs/refs/aliases removed; banner machinery gone
 - `--help` + usage reflect the trimmed surface; tests updated
 - `pageworks` install hint still surfaces where `docs *` used to
-- CHANGELOG entry (note: removal of already-deprecated surface, MINOR per the call above); plugin bump to v1.13.0
+- CHANGELOG entry (note: removal of already-deprecated surface, MINOR per the call above); plugin bump to v1.14.0
 
 **Linked requests:**
 <!-- autopopulated -->
 
 ---
 
-## v1.14.0 — Visual layer (ASCII rendering)
+## v1.15.0 — Visual layer (ASCII rendering)
 
 **Tier:** full
 **Status:** planned
@@ -190,25 +223,25 @@ Spectacular's read surfaces stop rendering as flat text and gain a scannable vis
 - `ascii-render` helper shipped + unit-tested (bar math, width clamping, NO_COLOR)
 - `progress`, `summary`, `roadmap` render visually; `--format json` unchanged; piped/non-TTY degrades cleanly
 - App-UI mockup block documented with 1+ example in a real request
-- `docs/` page for the visual conventions; CHANGELOG entry; plugin bump to v1.14.0
+- `docs/` page for the visual conventions; CHANGELOG entry; plugin bump to v1.15.0
 
 **Linked requests:**
 <!-- autopopulated -->
 
 ---
 
-> **Contract-prep ladder (v1.15 → v1.17).** Three non-breaking MINORs that stage the v2.0.0 file-contract change so the major becomes a near-trivial "flip the switch." Each is backward-compatible on its own: spec the design → soak the fields → stage the migration. All hang off the existing `workspace_schema:` field and the already-shipped `spectacular migrate` registry infra.
+> **Contract-prep ladder (v1.16 → v1.18).** Three non-breaking MINORs that stage the v2.0.0 file-contract change so the major becomes a near-trivial "flip the switch." Each is backward-compatible on its own: spec the design → soak the fields → stage the migration. All hang off the existing `workspace_schema:` field and the already-shipped `spectacular migrate` registry infra.
 
 ---
 
-## v1.15.0 — Contract prep ①: v2 contract spec (doc only)
+## v1.16.0 — Contract prep ①: v2 contract spec (doc only)
 
 **Tier:** full
 **Status:** planned
 **Phase:** intent
 
 **Outcome:**
-The v2 `.spectacular/` file format is fully *designed and frozen on paper* before any code changes — shipped as the first real per-capability spec under `specs/workspace-v2/SPEC.md` plus an ARCHITECTURE.md update — so the contract is reviewed and agreed before implementation, and v1.16/v1.17/v2.0.0 just execute against a fixed target.
+The v2 `.spectacular/` file format is fully *designed and frozen on paper* before any code changes — shipped as the first real per-capability spec under `specs/workspace-v2/SPEC.md` plus an ARCHITECTURE.md update — so the contract is reviewed and agreed before implementation, and v1.17/v1.18/v2.0.0 just execute against a fixed target.
 
 **Themes:**
 - `specs/workspace-v2/SPEC.md` — the v2 file-format contract (new/changed frontmatter fields, file layout, what breaks vs. what's additive)
@@ -220,24 +253,24 @@ The v2 `.spectacular/` file format is fully *designed and frozen on paper* befor
 - `specs/workspace-v2/SPEC.md` ships; `doctor specs` validates it (frontmatter + non-empty body)
 - ARCHITECTURE.md reflects the v2 contract + delta
 - 1 ADR per breaking change in DECISIONS.md
-- CHANGELOG entry; plugin bump to v1.15.0
+- CHANGELOG entry; plugin bump to v1.16.0
 
 **Linked requests:**
 <!-- autopopulated -->
 
 ---
 
-## v1.16.0 — Contract prep ②: v2 frontmatter fields (optional/additive)
+## v1.17.0 — Contract prep ②: v2 frontmatter fields (optional/additive)
 
 **Tier:** themed
 **Status:** planned
 **Phase:** intent
 
 **Outcome:**
-The new v2 frontmatter fields land as **optional, additive** in v1.16 — old workspaces keep reading and validating fine, new fields are written-when-present — so the schema soaks in real use (this repo's own `.spectacular/`) before v2.0.0 makes them load-bearing. Deprecation-in-reverse: introduce soft, harden later.
+The new v2 frontmatter fields land as **optional, additive** in v1.17 — old workspaces keep reading and validating fine, new fields are written-when-present — so the schema soaks in real use (this repo's own `.spectacular/`) before v2.0.0 makes them load-bearing. Deprecation-in-reverse: introduce soft, harden later.
 
 **Themes:**
-- Add the v2 fields (from the v1.15 spec) to scaffolders + frontmatter helpers as optional
+- Add the v2 fields (from the v1.16 spec) to scaffolders + frontmatter helpers as optional
 - Doctor recognizes them when present, never *requires* them (no warning on absence)
 - Dogfood: this repo's workspace adopts the optional fields and runs on them through the rest of the runway
 - `workspace_schema:` stays at v1 (fields are additive, not a schema break yet)
@@ -246,21 +279,21 @@ The new v2 frontmatter fields land as **optional, additive** in v1.16 — old wo
 - New fields writable + readable; absence is silent (backward-compatible)
 - Doctor validates shape when present; tests cover both old + new shape
 - This repo's `.spectacular/` carries the optional fields and stays green
-- CHANGELOG entry; plugin bump to v1.16.0
+- CHANGELOG entry; plugin bump to v1.17.0
 
 **Linked requests:**
 <!-- autopopulated -->
 
 ---
 
-## v1.17.0 — Contract prep ③: v1→v2 migration scaffold (dry-run, no-op)
+## v1.18.0 — Contract prep ③: v1→v2 migration scaffold (dry-run, no-op)
 
 **Tier:** themed
 **Status:** planned
 **Phase:** intent
 
 **Outcome:**
-The v1→v2 migration exists and is testable *before* the major — a registry entry under the already-shipped `spectacular migrate` infra whose `--dry-run` reports exactly what v2.0.0 will change, while the live apply is still effectively a no-op (fields already soaking from v1.16). So when v2.0.0 flips `workspace_schema`, the migration that runs is one that's already been exercised.
+The v1→v2 migration exists and is testable *before* the major — a registry entry under the already-shipped `spectacular migrate` infra whose `--dry-run` reports exactly what v2.0.0 will change, while the live apply is still effectively a no-op (fields already soaking from v1.17). So when v2.0.0 flips `workspace_schema`, the migration that runs is one that's already been exercised.
 
 **Themes:**
 - `references/migrations/v1-to-v2.md` registry entry (frontmatter contract: `id`, `from`, `to`, `mechanical`, `reversible`, `apply-fn`, `affects`)
@@ -269,17 +302,17 @@ The v1→v2 migration exists and is testable *before* the major — a registry e
 - Judgment-walk path defined for any non-mechanical part (snapshot-before-edit + y/n/q)
 
 **Exit criteria:**
-- Migration registry entry ships; `--dry-run` output matches the v1.15 spec's delta
+- Migration registry entry ships; `--dry-run` output matches the v1.16 spec's delta
 - Apply path tested on a v1 fixture → produces valid v2 shape
 - Doctor accepts both v1 and v2 `workspace_schema`
-- CHANGELOG entry; plugin bump to v1.17.0
+- CHANGELOG entry; plugin bump to v1.18.0
 
 **Linked requests:**
 <!-- autopopulated -->
 
 ---
 
-> **v1.18 – v1.19 — open buffer.** Intentionally unallocated. Reserved for whatever surfaces as urgent during the runway (bug-driven patches roll as v1.x.Z; net-new capability claims a free minor here). Don't fill with speculative work — promote from Icebox only when a real need lands.
+> **v1.19 – v1.20 — open buffer.** Intentionally unallocated. Reserved for whatever surfaces as urgent during the runway (bug-driven patches roll as v1.x.Z; net-new capability claims a free minor here). Don't fill with speculative work — promote from Icebox only when a real need lands.
 
 ---
 
@@ -290,30 +323,30 @@ The v1→v2 migration exists and is testable *before* the major — a registry e
 **Phase:** intent
 
 **Outcome:**
-Spectacular evolves the `.spectacular/` file-format contract in one deliberate, asked-first major — the **only** breaking release on the map. By the time it lands, the change is nearly mechanical: the design was frozen in v1.15, the new fields have been soaking since v1.16, and the v1→v2 migration has been dry-run-tested since v1.17. v2.0.0 is the **flip** — make the new fields load-bearing, remove the old layout, bump `workspace_schema`.
+Spectacular evolves the `.spectacular/` file-format contract in one deliberate, asked-first major — the **only** breaking release on the map. By the time it lands, the change is nearly mechanical: the design was frozen in v1.16, the new fields have been soaking since v1.17, and the v1→v2 migration has been dry-run-tested since v1.18. v2.0.0 is the **flip** — make the new fields load-bearing, remove the old layout, bump `workspace_schema`.
 
-Per [`docs/versioning.md`](../docs/versioning.md), MAJOR is reserved for exactly this kind of contract break — and the agent confirms the target before bumping into it. (CLI deprecation debt is *not* here — it ships earlier as the v1.13.0 MINOR, deliberately keeping this major to a single breaking concern.)
+Per [`docs/versioning.md`](../docs/versioning.md), MAJOR is reserved for exactly this kind of contract break — and the agent confirms the target before bumping into it. (CLI deprecation debt is *not* here — it ships earlier as the v1.14.0 MINOR, deliberately keeping this major to a single breaking concern.)
 
-**Themes (the flip — everything below was staged by the v1.15→v1.17 ladder):**
-- Make the v2 frontmatter fields **required / load-bearing** (additive + soaking since v1.16)
+**Themes (the flip — everything below was staged by the v1.16→v1.18 ladder):**
+- Make the v2 frontmatter fields **required / load-bearing** (additive + soaking since v1.17)
 - Remove the v1 file layout the new format supersedes (the actual break — old unmigrated workspaces stop validating)
-- `workspace_schema:` bump to v2; doctor's v2-shape recognition (added v1.17) becomes the default expectation
-- Promote the v1→v2 migration (scaffolded v1.17) from dry-run to live apply; exercise it on this repo's own `.spectacular/`
+- `workspace_schema:` bump to v2; doctor's v2-shape recognition (added v1.18) becomes the default expectation
+- Promote the v1→v2 migration (scaffolded v1.18) from dry-run to live apply; exercise it on this repo's own `.spectacular/`
 
 **Scope (out) — explicitly NOT in this major (separate future lines):**
-- CLI debt removal → **already shipped in v1.13.0**
+- CLI debt removal → **already shipped in v1.14.0**
 - Multi/nested workspaces (vision, below)
 - Context-orchestration / semantic retrieval (vision, below)
 - Convention pack v2 / modular packs (gated, below)
 
 **Exit criteria:**
-- The v1.15 spec, v1.16 optional fields, and v1.17 migration scaffold are all shipped (hard dependency — v2.0.0 does not start until the ladder is complete)
+- The v1.16 spec, v1.17 optional fields, and v1.18 migration scaffold are all shipped (hard dependency — v2.0.0 does not start until the ladder is complete)
 - New fields required; v1 layout removed; `workspace_schema` = v2; tests updated for the v2-only shape
 - v1→v2 migration flipped to live + exercised on this repo's `.spectacular/` with a clean doctor afterward
 - Optional `-rc.N` soak per the versioning ladder if the migration warrants real-world bake time
 - CHANGELOG `### Breaking` section; plugin bump to v2.0.0; agent-confirmed target
 
-**Depends on:** v1.15.0 (spec) → v1.16.0 (optional fields) → v1.17.0 (migration scaffold). This block cannot start until all three ship.
+**Depends on:** v1.16.0 (spec) → v1.17.0 (optional fields) → v1.18.0 (migration scaffold). This block cannot start until all three ship.
 
 **Linked requests:**
 <!-- autopopulated — backfill when v2-planning request is cut -->

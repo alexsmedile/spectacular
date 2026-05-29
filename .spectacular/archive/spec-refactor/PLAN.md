@@ -1,13 +1,14 @@
 ---
-status: verified
+status: archived
 priority: medium
 owner: alex
-updated: 2026-05-29
+updated: 2026-05-30
 target_version: v1.10.0
 summary: "Audit SPEC.md, promote 1-2 dense capability bullets to specs/<capability>/SPEC.md (target: v1.10.0 — retargeted from v1.9.0, which shipped the versioning doc instead)"
 related:
   - ../../SPEC.md
   - ../../ARCHITECTURE.md
+archived: 2026-05-30
 ---
 
 # Plan — spec-refactor

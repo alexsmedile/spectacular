@@ -1,3 +1,8 @@
+---
+description: Vibe-to-spec rewriter and append-mode handler for any registered doc.
+when_to_use: spectacular <doc> refine.
+---
+
 # Refine — generic vibe→spec rewriter and append-mode handler
 
 Loaded when the user runs `spectacular <doc> refine` (full-document refine pass) or implicitly by `grill.md` (mini-refine during slot loop) or when `<doc>` has `mode: append` in the registry.

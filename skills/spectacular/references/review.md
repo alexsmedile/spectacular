@@ -1,3 +1,8 @@
+---
+description: Quality-gate runner — structural checks in CLI, semantic review in skill.
+when_to_use: spectacular <doc> review.
+---
+
 # Review — generic quality gate runner
 
 Loaded when the user runs `spectacular <doc> review` or implicitly at the end of `grill.md`.

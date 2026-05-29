@@ -1,3 +1,8 @@
+---
+description: Canonical file templates with frontmatter stubs for every .spectacular/ doc type.
+when_to_use: Need the frontmatter shape for a file you are scaffolding by hand.
+---
+
 # Scaffold Reference — File Templates
 
 Canonical templates for all Spectacular files. Used by the skill when creating new files.
@@ -51,7 +56,7 @@ related:
 - See `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `AGENTS.md`
 ```
 
-For full PRD crafting, prefer the kit-based templates in `templates/prd/` — use `prd-grill.md` to drive the interactive flow.
+For full PRD crafting, prefer the kit-based templates in `templates/prd/` — run `spectacular prd grill` (generic engine via `grill.md` + `prd-rules.md`) to drive the interactive flow.
 
 ### PRINCIPLES.md
 ```md
@@ -211,7 +216,7 @@ related:
 | Task type | Load |
 |---|---|
 | Planning / design | `PRD.md`, `PRINCIPLES.md`, `DECISIONS.md` |
-| Refining intent / PRD work | `PRD.md`, skill refs `prd-grill.md` / `prd-refine.md` / `prd-review.md` |
+| Refining intent / PRD work | `PRD.md`, skill refs `grill.md` / `refine.md` / `review.md` + `prd-rules.md` |
 | Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `TASKS.md`, `SPEC.md`, relevant `specs/<capability>/SPEC.md` |
 | Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `specs/<capability>/SPEC.md`, `RISKS.md` |
 | Onboarding cold | `PRD.md`, `ARCHITECTURE.md`, this file |

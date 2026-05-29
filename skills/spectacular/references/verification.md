@@ -1,3 +1,8 @@
+---
+description: The 2-of-6 rule — when a request needs a VERIFY.md vs folding verification into PLAN.
+when_to_use: Deciding where verification lives for a request.
+---
+
 # Verification — when VERIFY.md is needed vs folded into PLAN/TASKS
 
 Loaded when the skill is deciding whether to scaffold a `VERIFY.md` for a request, or when moving a request from `review` → `verified`.

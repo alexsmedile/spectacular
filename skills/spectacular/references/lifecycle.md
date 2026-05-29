@@ -1,3 +1,8 @@
+---
+description: Lifecycle state transitions, signal detection, proactive proposals.
+when_to_use: A request changes state (planned/active/review/verified).
+---
+
 # Lifecycle — State Transitions
 
 State machine: `planned → active → review → verified → archived`

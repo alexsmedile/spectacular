@@ -1,3 +1,8 @@
+---
+description: Archive a completed request — move to archive/, propose spec sync + memory entries.
+when_to_use: spectacular archive <slug>.
+---
+
 # Archive — Completing a Request
 
 Triggered by: `spectacular archive <slug>`, or skill proposing archive after request reaches `verified`.

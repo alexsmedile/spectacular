@@ -1,3 +1,8 @@
+---
+description: When/how spectacular delegates public-doc work to the pageworks skill.
+when_to_use: A request touches public-facing docs.
+---
+
 # Pageworks Handoff — when spectacular delegates public-doc work
 
 Loaded when: spectacular detects that an action may require public-doc updates and needs to surface the handoff (typically during `archive`, but also during `status` briefings or when the user asks about docs).

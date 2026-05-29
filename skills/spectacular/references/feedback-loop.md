@@ -1,3 +1,8 @@
+---
+description: Prototyping-stage human-feedback acquisition — 5-step loop, distinct from verification/benchmark.
+when_to_use: Running a feedback loop on a prototype (PRINCIPLES §9).
+---
+
 # Feedback Loop — prototyping-mode human-feedback acquisition
 
 > Spectacular is in prototyping. This mode operationalizes deliberate human-feedback acquisition on the system itself — a strategy for **acquiring knowledge, insights, use-case validation, and durable preferences from the user**.

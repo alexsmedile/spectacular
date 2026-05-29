@@ -1,3 +1,8 @@
+---
+description: Doctor entry point — severity model, report format, mechanical-fix taxonomy.
+when_to_use: spectacular doctor (any area).
+---
+
 # Doctor — environment/infrastructure self-check
 
 Loaded when the user runs `spectacular doctor [<area>] [--fix]` or when another skill flow auto-invokes a doctor subset.

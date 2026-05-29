@@ -1,3 +1,8 @@
+---
+description: Human catalog of every doc type, its mode and location. Dispatch lives in each <doc-id>-rules.md frontmatter, not here.
+when_to_use: Looking up which doc types exist or where one lives.
+---
+
 # Doc Index — what Spectacular knows how to write
 
 Human catalog of every document type in a Spectacular workspace.

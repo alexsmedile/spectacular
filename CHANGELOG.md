@@ -5,6 +5,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ---
 
+## [Unreleased]
+
+> Work in progress toward v1.10.0 (SPEC.md density refactor). Not yet released.
+
+### Added
+- **Per-capability specs for the two densest capabilities.** `.spectacular/specs/doc-engine/SPEC.md` and `.spectacular/specs/roadmap/SPEC.md` promote the registry-driven doc engine and the structured-roadmap artifact out of the cramped `SPEC.md` index into standalone specs. The doc-engine spec documents the full mode taxonomy (now correctly **9 modes**, including the previously-undocumented `index` soft-DB mode), a drift-proof by-scope registry (no hardcoded doc count), and carries an inline design-decision log.
+- **Self-describing skill reference docs + a catalog script.** Every `skills/spectacular/references/*.md` now carries `description` + `when_to_use` frontmatter (mirroring the `SKILL.md` field convention); `scripts/catalog.sh` renders the catalog from that frontmatter — `--when` (with load triggers), `--missing` (lint for undocumented docs), `--json`. The catalog is self-maintaining; `SKILL.md`'s reference-loading table remains the authoritative routing source.
+
+### Changed
+- **`SPEC.md` index entries compressed.** The doc-engine and structured-roadmap bullets collapse to one line + a link to their new capability specs; the index stays terse. Pre-edit snapshot at `snapshots/SPEC/@v2.md`.
+- **README repositioned around spec-driven development.** New thesis ("No spec. No plan. No clue." / "Agents build. Humans decide."), a colorful 6-benefit SVG grid, an extensible "Works well with" ecosystem block, and an updated banner.
+- **`SKILL.md` registered-docs reference de-hardcoded.** Dropped the stale "18 doc IDs (v1.7.0)" list — the live registry is the `references/*-rules.md` set, catalogued in `doc-index.md`. The skill description now also names the soft-DB collections (memory, sessions, feedback, ideas).
+
+### Fixed
+- **`index`-mode docs no longer fall through the grill router.** `grill.md` listed only `append`/`stub`/`freeform`/`reference` as non-grill routes, so a soft-DB doc (memory/sessions/feedback/idea) reaching the grill flow had no route. It now redirects to the doc's CLI mutator.
+
+### Removed
+- **Legacy `prd-grill.md` / `prd-refine.md` / `prd-review.md` reference docs.** Superseded by the generic engine (`grill`/`refine`/`review` + `prd-rules.md`) since v1.4.0; the 546 lines of duplicated routing are gone (snapshots preserved in `versions/`). The orphaned `doc-registry@v1.md` snapshot (renamed `doc-registry` → `doc-index` in v1.4.0) moved out of `references/` into `versions/`.
+
+---
+
 ## [1.9.0] — 2026-05-29
 
 ### Added

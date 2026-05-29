@@ -1,3 +1,8 @@
+---
+description: Snapshot-before-edit rules and the <FILE>@vN.md naming convention.
+when_to_use: Snapshotting a canonical doc before a substantive edit.
+---
+
 # Versioning — Snapshot Before Edit
 
 Canonical documents are **never overwritten in place**. Always snapshot first.

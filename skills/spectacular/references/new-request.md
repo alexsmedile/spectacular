@@ -1,3 +1,8 @@
+---
+description: Scaffold a new request — slug rules, templates, target-version.
+when_to_use: spectacular new <description> or spectacular promote.
+---
+
 # New Request — Scaffolding
 
 Triggered by: `spectacular new <description>`, or when conversational context clearly indicates a new piece of work to track.

@@ -1,3 +1,8 @@
+---
+description: Continue active work — session state, task tracking, milestone progress.
+when_to_use: Actively working on a request that already exists.
+---
+
 # Active Request — Continuing Work
 
 Triggered by: skill detects user is actively implementing a request, or user asks to continue work on a specific slug.

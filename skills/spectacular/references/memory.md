@@ -1,3 +1,8 @@
+---
+description: The remember-this command — write triggers, slug derivation, anti-collision rules.
+when_to_use: spectacular remember this.
+---
+
 # Memory — Writing Operational Learning
 
 Triggered by: `spectacular remember this`, or as part of the archive sequence.

@@ -1,3 +1,8 @@
+---
+description: The /spectacular migrate skill walk — judgment migrations with snapshot + y/n/q per step.
+when_to_use: spectacular migrate, or a workspace_schema upgrade.
+---
+
 # `/spectacular migrate` — Skill walk for judgment migrations
 
 Loaded when the user invokes `/spectacular migrate` in their AI agent (Claude Code, Codex, etc.).

@@ -1,3 +1,8 @@
+---
+description: Kit extension schema — adds-slots, modifies-slots, triggers-docs (single-kit in v1).
+when_to_use: Authoring a kit or resolving which docs a kit scaffolds.
+---
+
 # Kits Contract — diff-only extensions over a base doc
 
 Loaded by `grill.md` / `review.md` when the active doc has `kit-support: true` in the registry (currently only PRD).

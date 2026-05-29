@@ -1,3 +1,8 @@
+---
+description: Judgment-fix repair flow — y/n/q walk, snapshot-before-edit, worked examples.
+when_to_use: Applying a non-mechanical doctor fix that needs judgment.
+---
+
 # Doctor — judgment-fix repair flow
 
 Loaded when the skill is invoked as `/spectacular doctor --fix`. Entry point: [[doctor]]; check-area reference: [[doctor-areas]]; auto-invocation triggers: [[doctor-substrate]].

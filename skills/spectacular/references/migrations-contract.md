@@ -1,3 +1,8 @@
+---
+description: Schema contract for migration .md files under migrations/ (id, from, to, mechanical, reversible, apply-fn, affects).
+when_to_use: Authoring or validating a workspace migration.
+---
+
 # Migrations Contract — workspace-schema migrations as a registry
 
 Loaded when the CLI's `cmd_migrate` builds the migration chain, or when the skill walks a judgment migration (`/spectacular migrate`), or when doctor's `check_kits` validates chain integrity.

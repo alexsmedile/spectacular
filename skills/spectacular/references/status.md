@@ -1,3 +1,8 @@
+---
+description: No-arg invocation — read state, build briefing, surface the next action.
+when_to_use: /spectacular with no arguments.
+---
+
 # Status — No-arg invocation
 
 Triggered by: `/spectacular` with no arguments, or `spectacular status`.

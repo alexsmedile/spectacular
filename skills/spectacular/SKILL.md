@@ -185,7 +185,7 @@ These map to the generalized handler with `<doc> = prd`. Behavior is identical.
 | `spectacular prd refine` | same | `prd-rules.md` → `refine.md` |
 | `spectacular prd review` | same | `prd-rules.md` → `review.md` |
 
-The legacy `prd-grill.md` / `prd-refine.md` / `prd-review.md` references are kept for backwards compatibility but new behavior lives in `grill.md` / `refine.md` / `review.md` + `prd-rules.md`.
+PRD behavior is fully handled by the generic engine (`grill.md` / `refine.md` / `review.md`) driven by `prd-rules.md`. (The pre-v1.4 `prd-grill/refine/review.md` files were removed once superseded — snapshots remain in `versions/`.)
 
 ---
 
@@ -283,10 +283,6 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/docs-contract.md` | **DEPRECATED v1.2.0** — public docs schema; canonical at `pageworks/references/contract.md`. Removed in v2.0.0 |
 | `references/docs-rules.md` | **DEPRECATED v1.2.0** — docs-specific skill rules; canonical at `pageworks/references/authoring.md`. Removed in v2.0.0 |
 | `references/docs-renderer-adapters.md` | **DEPRECATED v1.2.0** — renderer adapters (MkDocs + Docusaurus); canonical at `pageworks/references/renderers.md`. Removed in v2.0.0 |
-| **Legacy PRD references (deprecated, kept for backwards compat)** | |
-| `references/prd-grill.md` | Legacy — superseded by `grill.md` + `prd-rules.md` |
-| `references/prd-refine.md` | Legacy — superseded by `refine.md` + `prd-rules.md` |
-| `references/prd-review.md` | Legacy — superseded by `review.md` + `prd-rules.md` |
 
 ---
 

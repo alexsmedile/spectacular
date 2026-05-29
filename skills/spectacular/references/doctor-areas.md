@@ -1,3 +1,8 @@
+---
+description: Per-area check tables for every doctor area.
+when_to_use: Explaining or implementing a specific doctor check.
+---
+
 # Doctor — check areas
 
 Per-area check tables. Load when explaining a specific finding, implementing a new check, or debugging area behavior. For overall orchestration see [[doctor]]; for the repair flow see [[doctor-repair]].

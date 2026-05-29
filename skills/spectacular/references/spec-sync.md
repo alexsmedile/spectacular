@@ -1,3 +1,8 @@
+---
+description: Proposing SPEC.md + specs/ updates when archiving a SPEC-touching request.
+when_to_use: Archive flow on a request that changed what is built.
+---
+
 # Spec Sync — Updating the System Spec After a Request Ships
 
 Triggered by: archive sequence, or when skill detects a request has meaningfully changed a capability.

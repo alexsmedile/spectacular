@@ -1,3 +1,8 @@
+---
+description: Convention-pack schema — folder shape + 6 rule categories + 4-tier scope precedence.
+when_to_use: Authoring or validating a convention pack.
+---
+
 # Packs Contract — repo-shape conventions as installable mini-skills
 
 Loaded when the orchestrator needs to read, validate, or apply a convention pack. A pack is the canonical place a project's *opinions* about folder structure, naming, file placement, README contract, and gitignore defaults live.

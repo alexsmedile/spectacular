@@ -1,3 +1,8 @@
+---
+description: Generic interactive slot-filler — walks a doc's slots one at a time per its declared mode.
+when_to_use: spectacular <doc> grill, or <doc> when empty.
+---
+
 # Grill — interactive slot-filling skill
 
 Loaded when the user runs `spectacular <doc> grill` (or `spectacular <doc>` when the doc is empty and the doc's `mode:` is grill-family).

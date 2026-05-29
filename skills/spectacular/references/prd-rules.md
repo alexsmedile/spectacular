@@ -263,7 +263,4 @@ Fails only if Vision is a single short sentence under 30 words and not split int
 - [[grill]] — consumes the slot prompts + mini-refine patterns from this file
 - [[refine]] — consumes the vibe→spec tables for full refine passes
 - [[review]] — consumes the gate checks from this file
-- [[prd-grill]] — legacy reference (now superseded by `grill.md` + this file; kept for v1 backwards compat during migration)
-- [[prd-refine]] — legacy reference
-- [[prd-review]] — legacy reference
 - [[kits-as-plugins]] — how kits extend this doc's slots

@@ -1,3 +1,8 @@
+---
+description: DEPRECATED v1.2.0 — public-docs schema; canonical now in pageworks. Removed in v2.0.0.
+when_to_use: Legacy only — see pageworks/references/contract.md.
+---
+
 # Docs Contract — schema for public-facing documentation
 
 > **⚠ DEPRECATED in spectacular v1.2.0** — public-facing docs work is now owned by the [pageworks](https://github.com/alexsmedile/pageworks) skill. This reference will be removed in spectacular v2.0.0. The schema documented here lives at `pageworks/skills/pageworks/references/contract.md`.

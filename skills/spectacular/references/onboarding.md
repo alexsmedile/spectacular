@@ -1,3 +1,8 @@
+---
+description: First-invocation walk on an existing .spectacular/ project.
+when_to_use: Opening /spectacular on a project for the first time.
+---
+
 # Onboarding — First Invocation on Existing Project
 
 Triggered by: first time `/spectacular` is invoked in a project that already has a `.spectacular/` directory.

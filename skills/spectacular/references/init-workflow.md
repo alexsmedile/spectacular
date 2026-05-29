@@ -1,3 +1,8 @@
+---
+description: CLI init + first-time project setup (zero-prompt always-set, kits, --with).
+when_to_use: spectacular init (CLI context).
+---
+
 # Init Workflow — CLI Bootstrap
 
 Triggered by: `spectacular init` CLI command, or first-time setup conversation.

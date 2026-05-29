@@ -1,3 +1,8 @@
+---
+description: DEPRECATED v1.2.0 — MkDocs + Docusaurus renderer adapters; canonical now in pageworks. Removed in v2.0.0.
+when_to_use: Legacy only — see pageworks/references/renderers.md.
+---
+
 # Docs Renderer Adapters — MkDocs + Docusaurus
 
 > **⚠ DEPRECATED in spectacular v1.2.0** — renderer adapters moved to the [pageworks](https://github.com/alexsmedile/pageworks) skill. This reference will be removed in spectacular v2.0.0. The equivalent (pageworks-native) lives at `pageworks/skills/pageworks/references/renderers.md`. The CLI verb `spectacular docs export <renderer>` still works for backward compatibility; use `pageworks export <renderer>` for new projects.

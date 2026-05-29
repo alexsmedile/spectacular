@@ -1,3 +1,8 @@
+---
+description: Auto-invocation spec — when status/grill/onboarding/lifecycle silently run doctor first.
+when_to_use: A skill flow needs to self-check substrate before proceeding.
+---
+
 # Doctor — skill-invoked substrate checks
 
 Loaded when a skill flow (status, grill, onboarding, lifecycle transition) hits a substrate failure and needs to auto-invoke a scoped doctor area. Entry point: [[doctor]]; check tables: [[doctor-areas]].

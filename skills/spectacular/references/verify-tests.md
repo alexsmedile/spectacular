@@ -1,3 +1,8 @@
+---
+description: When to author tests/verify/<slug>.test.sh vs leave manual checklists in VERIFY.md.
+when_to_use: Setting up executable verification for a request.
+---
+
 # VERIFY-as-tests — When and how to promote VERIFY scenarios to scripts
 
 Loaded when a request's VERIFY.md contains scenarios that would benefit from automation, or when designing how to capture verification for a new request.

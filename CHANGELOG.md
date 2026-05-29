@@ -7,7 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
-> Work in progress toward v1.10.0 (SPEC.md density refactor). Not yet released.
+## [1.10.0] — 2026-05-29
 
 ### Added
 - **Per-capability specs for the two densest capabilities.** `.spectacular/specs/doc-engine/SPEC.md` and `.spectacular/specs/roadmap/SPEC.md` promote the registry-driven doc engine and the structured-roadmap artifact out of the cramped `SPEC.md` index into standalone specs. The doc-engine spec documents the full mode taxonomy (now correctly **9 modes**, including the previously-undocumented `index` soft-DB mode), a drift-proof by-scope registry (no hardcoded doc count), and carries an inline design-decision log.

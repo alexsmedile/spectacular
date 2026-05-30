@@ -25,7 +25,8 @@ related:
 ## M3 — `spectacular policy` verb + injection loop
 - [ ] Implement `spectacular policy` (forms: bare list / `@<hook>` / `<id>` / `--principle N` / `--json`)
 - [ ] `@<hook>` output pulls the hook's policies + each linked principle's heading + one line (skim, read-verbs style)
-- [ ] Reference doc + SKILL.md routing: the injection loop (enter phase → retrieve → inject → evaluate → resolve by severity)
+- [ ] Add the gate block (`run spectacular policy @<hook>, follow active policies`) to the head of each phase ref doc (PLAN §8 mapping: init-workflow / new-request / active-request / verification / archive / memory / versioning / sessions-rules)
+- [ ] Write `references/policy-injection.md`: the loop (enter phase → retrieve → inject → evaluate → resolve by severity); severity-default = non-blocking
 
 ## M4 — Enforcement + config
 - [ ] Wire policy consultation into `promote`/`archive` at the spine hooks
@@ -50,3 +51,6 @@ related:
 - [x] Enforcement → skill-side + doctor; no hooks.json in v1
 - [x] Scope model → config-only v1; 4-tier deferred v2
 - [x] verify-walk → absorbed as `verification-present` policy; not refactored in v1.12
+- [x] Severity opt-in → blocks only if explicit `severity: block`; absent/warn → non-blocking (safe default)
+- [x] Enforcement mechanic → gate block at head of each phase ref doc (ref doc = phase trigger); no event bus
+- [x] Source of truth → POLICY.md defines, config.yaml overrides; both CLI-managed + hand-editable, structure-bound; no check-kind field

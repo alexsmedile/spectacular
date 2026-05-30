@@ -95,6 +95,10 @@ it leaves alone.
 
 Schema: `hook` (the heading it lives under) + `principle?` (optional) + `severity` + `check` + prose.
 
+**Severity is opt-in to blocking.** A policy blocks **only** if it explicitly declares `severity: block`. **Absent, `warn`, or unrecognized severity → non-blocking** (surface + continue). This is a safe default: a half-written or custom policy can never accidentally hard-stop a user — you must opt in to a gate. The 8 defaults ship with explicit `severity:` on all of them; the 4 blockers (`understand-before-change`, `verification-present`, `confirm-before-write`, `snapshot-before-overwrite`) say `block`, the other 4 say `warn`.
+
+Whether a `check` is *mechanical* (doctor-verifiable, e.g. "`## Understanding` slot exists") or *judgment* (skill-evaluated, e.g. "goal is well-formed") is not a schema field — it's just how the check gets evaluated. `doctor policies` reports on the mechanical ones; judgment ones are enforced purely by the injected instruction (§8).
+
 The `understand-before-change` check is backed by a new **`## Understanding` slot in PLAN.md** (`### How it works now` / `### What changes` / `### What stays the same`), escalating to a dedicated `requests/<slug>/UNDERSTANDING.md` for large requests. Satisfied by *either* location — the VERIFY.md 2-of-N pattern. **No `ANALYSIS.md`.**
 
 ## 6. Retrieval script
@@ -123,25 +127,51 @@ spectacular policy --json             # machine form (skill-consumed)
 6. Done               context holds only this hook's rules
 ```
 
-## 8. Milestones
+## 8. Mechanics
+
+**Enforcement = an injected instruction at the head of each phase's reference doc.** No event bus, no new wiring. The skill already loads exactly one reference doc per phase (the SKILL.md routing model), so **the reference doc *is* the phase boundary.** Each phase ref doc opens with a 2-line gate block:
+
+```markdown
+> **@Planning policy gate.** Before anything else, run `spectacular policy @Planning`
+> and follow every active policy returned. `block` → satisfy or stop; otherwise → surface and continue.
+```
+
+When the skill loads that doc to do the phase, the first thing it reads is the instruction to consult policies. The gate fires precisely when the phase begins, by construction. Per-phase placement:
+
+| Hook | Gate block goes at the top of |
+|---|---|
+| `@Init` | `init-workflow.md` |
+| `@Planning` | `new-request.md` |
+| `@Implementation` | `active-request.md` / `lifecycle.md` (→active) |
+| `@Verification` | `verification.md` / `lifecycle.md` (review→verified) |
+| `@Archive` | `archive.md` |
+| `@Remember` | `memory.md` |
+| `@Snapshot` | `versioning.md` |
+| `@SessionEnd` | `sessions-rules.md` (session end flow) |
+
+**Source of truth: POLICY.md; config is an override layer.** POLICY.md *defines* each policy (hook, check, severity, prose). `config.yaml`'s `policies:` block *tunes* it for this project (enable/disable/change severity). They are layers, not competing copies — `spectacular policy` reads POLICY.md, applies config overrides, returns the merged result. No "which wins" ambiguity.
+
+**POLICY.md (and PRINCIPLES.md) are CLI-managed *and* hand-editable, but structure-bound.** The CLI scaffolds and can mutate them; a human can edit directly; both must obey the declared structure (`## @hook` sections + policy-block anatomy). The `review` verb on POLICY.md = a **structure check** (every block has required fields, hooks are from the known set, no orphan sections) — richer than `principles-rules.md`'s placeholder check, same spirit.
+
+## 9. Milestones
 
 - **M1 — Practice-layer contract.** `references/policies-contract.md`: POLICY.md structure (sections keyed by `## @hook`), policy anatomy (`hook + principle? + severity + check + prose`), the locked hook set, and how `config.yaml` enables/disables/tunes. Scope model: **config-only** for v1 (4-tier precedence noted as v2 candidate).
 - **M2 — POLICY.md scaffold + 8 defaults.** New `doc_policy()` in `cli/spectacular` emitting POLICY.md with all 8 prefilled policies; add POLICY.md to the **always-set** list. Spec the `## Understanding` PLAN slot + `UNDERSTANDING.md` escalation; register the slot in `plan-overrides.md` + `scaffold-reference.md`.
-- **M3 — `spectacular policy` verb + injection.** Implement the retrieval script (all five forms). Document the injection loop the skill follows on entering each phase (new/updated reference doc + SKILL.md routing).
+- **M3 — `spectacular policy` verb + injection.** Implement the retrieval script (all five forms). Add the **gate block** (`run spectacular policy @<hook>, follow active policies`) to the head of each phase's reference doc per the §8 mapping. Write `references/policy-injection.md` documenting the loop.
 - **M4 — Enforcement + config.** Wire policy consultation into `promote`/`archive` at the spine hooks; add a `doctor policies` area for presence-checkable policies. `config.yaml` `policies:` block — per-policy enable/disable/severity + register custom; worked custom-policy example.
 - **M5 — Dogfood + ship.** Enable POLICY.md on this repo (it's already dogfooding); drive 1+ real request through `@Implementation` with a filled `## Understanding`; CHANGELOG + plugin bump to v1.12.0.
 
-## 9. Tasks
+## 10. Tasks
 
 See `TASKS.md`.
 
-## 10. Dependencies
+## 11. Dependencies
 
 - **Sequenced after [[verify-walk]] (v1.11).** verify-walk established the skill-side "walk + gate + lifecycle-flip" pattern at `review → verified`; policy-engine generalizes it into the named-hook practice layer. Its gate becomes the `verification-present` prefilled policy.
 - Touches [[lifecycle]] (`promote`/`archive` consult policies), [[doctor]] (new `policies` area), and the always-set scaffold (POLICY.md joins it).
 - Relates to [[PRINCIPLES]] — POLICY.md is its executable practice sibling; the optional `principle:` tag links the two.
 
-## 11. Validation
+## 12. Validation
 
 - M1 — `policies-contract.md` documents POLICY.md structure + policy anatomy + hook set; a reader can author a custom policy from it alone.
 - M2 — `spectacular init` creates POLICY.md with 8 prefilled policies; the `## Understanding` slot is registered and scaffolded.
@@ -149,7 +179,7 @@ See `TASKS.md`.
 - M4 — `promote → active` consults `@Implementation`; a request lacking `## Understanding` is **blocked**; a request with it passes. `config.yaml` can disable a policy and change a severity — each takes effect. `doctor policies` reports status.
 - M5 — This repo runs with POLICY.md enabled; a real request shows `## Understanding` was required before `active`; manifests at v1.12.0.
 
-## 12. Deliverables
+## 13. Deliverables
 
 - `POLICY.md` scaffold (8 prefilled policies) + always-set wiring
 - `references/policies-contract.md` — POLICY.md structure, policy anatomy, hook set, config surface
@@ -171,3 +201,6 @@ See `TASKS.md`.
 8. **Enforcement** — skill-side + doctor; no `hooks.json` harness wiring in v1 (v2 upgrade path for kernel-level locks).
 9. **Scope model** — config-only in v1; 4-tier precedence deferred to v2.
 10. **verify-walk** — absorbed as the `verification-present` policy; not refactored onto the engine in v1.12.
+11. **Severity is opt-in to blocking** — a policy blocks only if it explicitly says `severity: block`; absent/`warn`/unrecognized → non-blocking. Safe default: no policy accidentally hard-stops.
+12. **Enforcement mechanic** — a gate block at the head of each phase's reference doc tells the skill to run `spectacular policy @<hook>` first. The ref doc *is* the phase trigger; no event bus, no SKILL.md special-casing. (Replaces the earlier "skill-side + doctor, somehow wired" hand-wave.)
+13. **Source of truth + editability** — POLICY.md defines policies; `config.yaml` is an override layer (not a competing copy). Both POLICY.md and PRINCIPLES.md are CLI-managed *and* hand-editable but **structure-bound**; `review` on POLICY.md is a structure check. No `check-kind` schema field — mechanical-vs-judgment is just how a check is evaluated (doctor vs skill).

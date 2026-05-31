@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.12.1"
+SPECTACULAR_VERSION="1.13.0"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -4724,6 +4724,19 @@ Irreversibles require confirmation.
 
 **How the skill enforces this:**
 - <add hook>
+
+## 9. Feedback ≠ verification ≠ benchmark
+Verification ('did we ship what PLAN said?'), feedback ('was it the right thing?'), and benchmark (quantitative grading) are distinct — never conflate them.
+
+**How the skill enforces this:**
+- <add hook>
+
+## 10. Build the smallest verified slice, full scope in mind
+Default to the minimum high-impact slice now — verify, learn, extend. Build less, but as a finished block, not a stub. Hold full scope in mind so today's slice stays future-proof. Over-engineering (speculative generality, features without a current need) is the failure mode.
+
+**How the skill enforces this:**
+- @Planning policy \`scope-down\` (warn) asks for the smallest high-impact slice before milestones are fixed
+- Deferred scope goes to ROADMAP as explicit \`v2+\`; non-goals are a first-class slot
 "
 }
 
@@ -4775,6 +4788,11 @@ The workspace must satisfy its scaffold contract — README present, \`.spectacu
 - principle: 3
 - severity: warn
 A new request's PLAN must be well-shaped before work begins: a one-sentence Goal, explicit Constraints, and demoable Milestones — not a vague wish. Surface a thin plan; let the author proceed.
+
+### scope-down
+- principle: 10
+- severity: warn
+Before fixing milestones, name the smallest high-impact slice that delivers the core value now, and push the rest to ROADMAP as \`v2+\`. Prefer a finished MVP of the features actually needed today over a complete build of features that might be. Flag speculative generality and any feature without a current need. Surface the leaner cut; the human chooses the scope.
 
 ## @Implementation
 

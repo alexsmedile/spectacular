@@ -45,6 +45,11 @@ The workspace must satisfy its scaffold contract — README present, `.spectacul
 - severity: warn
 A new request's PLAN must be well-shaped before work begins: a one-sentence Goal, explicit Constraints, and demoable Milestones — not a vague wish. Surface a thin or unfocused plan; let the author proceed.
 
+### scope-down
+- principle: 10
+- severity: warn
+Before fixing milestones, name the smallest high-impact slice that delivers the core value now, and push the rest to ROADMAP as `v2+`. Prefer a finished MVP of the features actually needed today over a complete build of features that might be. Flag speculative generality and any feature without a current need. Surface the leaner cut; the human chooses the scope.
+
 ## @Implementation
 
 ### understand-before-change

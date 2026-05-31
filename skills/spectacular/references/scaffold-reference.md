@@ -90,6 +90,8 @@ Default principles (Spectacular-aligned, customize per project):
 6. Progressive disclosure
 7. Three layers: intent → execution → validation
 8. Humans decide, agents propose
+9. Feedback ≠ verification ≠ benchmark
+10. Build the smallest verified slice, full scope in mind
 
 ### POLICY.md
 ```md

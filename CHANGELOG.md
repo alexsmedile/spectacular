@@ -7,6 +7,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.12.1] — 2026-05-31
+
+### Added
+- **`scope-down` policy (`@Planning`, warn) + Principle 10.** Practice layer: before fixing milestones, name the smallest high-impact slice that delivers the core value now and defer the rest to ROADMAP `v2+`; flag speculative generality and features without a current need. Theory: Principle 10 — *Build the smallest verified slice, full scope in mind* — counters the agent build-everything reflex (build less, as a finished block, future-proof). `warn`, not `block`: scope is a human judgment call (Principle 8). Added to this repo's workspace `.spectacular/POLICY.md` + `PRINCIPLES.md`; not yet propagated to the default `init` scaffold.
+
 ## [1.12.0] — 2026-05-31
 
 ### Added

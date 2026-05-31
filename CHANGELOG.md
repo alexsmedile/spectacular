@@ -7,7 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
-## [1.12.0] — 2026-05-30
+## [1.12.0] — 2026-05-31
 
 ### Added
 - **POLICY.md — the practice layer (`references/policies-contract.md`).** A new always-set canonical doc, the operational sibling to `PRINCIPLES.md`: PRINCIPLES is *theory* (the why, optional), POLICY is *practice* (the how-we-actually-work, the floor). Policies are filed under named **work-phase hooks** and the skill retrieves only the active hook's policies on entering a phase — progressive disclosure (Principle 6) applied to the rule layer. Deliberately asymmetric with optional PRINCIPLES: every `spectacular init` scaffolds POLICY.md with 8 prefilled defaults.

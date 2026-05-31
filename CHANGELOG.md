@@ -7,7 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
-## [1.13.0] — 2026-05-31
+## [1.12.2] — 2026-05-31
 
 ### Added
 - **`scope-down` + Principle 10 now ship in the default scaffold.** Every `spectacular init` scaffolds the `scope-down` policy (`@Planning`, warn, `principle: 10`) and, when PRINCIPLES.md is scaffolded, Principle 10 *Build the smallest verified slice, full scope in mind*. Propagated into `doc_policy()` + `doc_principles()` (CLI), `templates/policy/base.md`, and `scaffold-reference.md` — v1.12.1 added them only to this repo's workspace.

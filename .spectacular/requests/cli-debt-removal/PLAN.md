@@ -30,7 +30,7 @@ Remove Spectacular's accumulated, banner-warned deprecation debt — the `docs *
 - M2 — Remove verbs + banner: delete `docs init|export|new|review|status` and the `deprecation_notice()` machinery; preserve the pageworks install hint.
 - M3 — Remove refs + alias: delete `docs-contract` / `docs-rules` / `docs-renderer-adapters` + legacy back-compat PRD references; remove the `--global` alias for `--skill-scope global`.
 - M4 — Update surface + tests: `--help`, usage text, and the test suite reflect the trimmed surface; `doctor docs` (discovery-only) still passes.
-- M5 — Ship: CHANGELOG entry (Removed section, MINOR per ADR); plugin bump to v1.13.0.
+- M5 — Ship: CHANGELOG entry (Removed section, MINOR per ADR); plugin bump to v1.14.0.
 
 ## 4. Tasks
 
@@ -46,7 +46,7 @@ See `TASKS.md`.
 - M2 — `spectacular docs <anything>` no longer runs the old verb; pageworks hint still surfaces.
 - M3 — Deprecated reference docs gone; `--global` removed (only `--skill-scope global` remains).
 - M4 — `spectacular --help` shows no deprecated surface; test suite green; `doctor docs` discovery-only passes.
-- M5 — CHANGELOG Removed section; manifests at v1.13.0.
+- M5 — CHANGELOG Removed section; manifests at v1.14.0.
 
 ## 7. Deliverables
 
@@ -55,4 +55,4 @@ See `TASKS.md`.
 - `--global` alias removed
 - `docs-contract` / `docs-rules` / `docs-renderer-adapters` + legacy PRD refs removed
 - Updated `--help`, usage, tests
-- CHANGELOG [1.13.0] entry (Removed)
+- CHANGELOG [1.14.0] entry (Removed)

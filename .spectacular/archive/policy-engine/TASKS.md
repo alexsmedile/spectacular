@@ -1,6 +1,6 @@
 ---
-status: active
-updated: 2026-05-30
+status: verified
+updated: 2026-05-31
 related:
   - PLAN.md
 ---

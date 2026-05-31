@@ -7,6 +7,8 @@ when_to_use: Actively working on a request that already exists.
 
 Triggered by: skill detects user is actively implementing a request, or user asks to continue work on a specific slug.
 
+> **@Implementation policy gate.** Before moving a request `planned → active`, run `spectacular policy @Implementation` and follow every active policy. The default blocker is `understand-before-change`: PLAN.md must have a filled `## Understanding` section (or a `UNDERSTANDING.md` with the same three subheads) — satisfy it or stop. See [policy-injection.md](policy-injection.md).
+
 ---
 
 ## On entering active state

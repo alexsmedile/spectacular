@@ -7,6 +7,8 @@ when_to_use: Snapshotting a canonical doc before a substantive edit.
 
 Canonical documents are **never overwritten in place**. Always snapshot first.
 
+> **@Snapshot policy gate.** Before overwriting a canonical doc, run `spectacular policy @Snapshot` and follow every active policy. The default blocker is `snapshot-before-overwrite`: a `<DOC>@v<N>.md` snapshot must exist first — or you stop. See [policy-injection.md](policy-injection.md).
+
 ---
 
 ## What counts as canonical

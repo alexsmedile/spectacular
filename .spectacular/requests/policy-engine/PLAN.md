@@ -1,5 +1,5 @@
 ---
-status: planned
+status: active
 priority: high
 owner: alex
 updated: 2026-05-30
@@ -26,6 +26,19 @@ Give Spectacular a **practice layer** — `POLICY.md`, the operational sibling t
 A **policy** is filed under a named **work-phase hook** (e.g. `@Implementation`). When the skill enters a phase, it retrieves *only that hook's* policies and injects them into context — progressive disclosure (Principle 6) applied to the rule layer itself. Policies ship prefilled with sensible defaults; users customize, disable, or add their own via `config.yaml`. A policy may optionally tag the **principle** it enforces, so retrieval pulls the one relevant theory line alongside it.
 
 The headline built-in: `understand-before-change` @ `@Implementation` — a request can't move `planned → active` until the agent has written down how the system works now, what changes, and what stays the same.
+
+## Understanding
+
+<!-- Filled before `planned → active` per the understand-before-change policy (@Implementation) — this request's own headline gate, dogfooded. -->
+
+### How it works now
+Spectacular had a single "operating" doc, `PRINCIPLES.md` — optional, kit-triggered, stub-mode (placeholder principles + "How the skill enforces this: <add hook>" lines). There was no executable practice layer: enforcement lived implicitly inside each phase's reference doc prose, with no central, retrievable, per-phase rule set. The always-set list was `prd spec config agents`; doctor had 16 areas; the CLI had no `policy` verb.
+
+### What changes
+Adds `POLICY.md` as a fifth always-set doc — the practice layer. Policies are filed under 8 named work-phase hooks (`@Init … @SessionEnd`); a new `spectacular policy [@hook|<id>|--principle N|--json]` verb retrieves and merges them (POLICY.md definition + config.yaml overrides). Each phase reference doc gains a 2-line gate block instructing the skill to consult policies on entry. `promote` surfaces an advisory at the spine transitions; a new `doctor policies` area checks structure + the `## Understanding` gate. PLAN gains an optional `## Understanding` slot. New refs: `policies-contract.md`, `policy-injection.md`, `policy-rules.md`; new template `templates/policy/base.md`.
+
+### What stays the same
+`PRINCIPLES.md` is untouched (still optional theory; POLICY links to it via the optional `principle:` tag). The lifecycle state machine, the 7 required PLAN slots, the rules-file dispatch pattern, and every existing doctor area keep their current behavior. No `hooks.json` harness wiring (v1 is skill-side + doctor). verify-walk is absorbed as the `verification-present` policy but not refactored onto the engine. Severity is opt-in to blocking — nothing accidentally hard-stops.
 
 ## 2. Constraints
 

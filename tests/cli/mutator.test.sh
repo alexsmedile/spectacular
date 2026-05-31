@@ -136,14 +136,15 @@ scenario_4_snapshot_basic() {
   seed_workspace "$dir"
 
   (cd "$dir" && "$CLI" snapshot .spectacular/PRD.md >/dev/null)
-  assert_file_exists "$dir/.spectacular/PRD@v1.md"
+  # v1.5.0+ layout: snapshots/<DOC>/@v<N>.md (not root-level <DOC>@v<N>.md)
+  assert_file_exists "$dir/.spectacular/snapshots/PRD/@v1.md"
   assert_file_contains "$dir/.spectacular/PRD.md" "version: 1.2"
 
   local out
   out=$(cd "$dir" && "$CLI" snapshot .spectacular/PRD.md 2>&1)
   assert_output_contains "$out" "no body changes"
-  if [[ -f "$dir/.spectacular/PRD@v2.md" ]]; then
-    echo "    ✗ second snapshot should not have created PRD@v2.md"
+  if [[ -f "$dir/.spectacular/snapshots/PRD/@v2.md" ]]; then
+    echo "    ✗ second snapshot should not have created @v2.md"
     fail_count=$((fail_count + 1))
   else
     pass_count=$((pass_count + 1))
@@ -151,7 +152,7 @@ scenario_4_snapshot_basic() {
 
   echo "new content" >> "$dir/.spectacular/PRD.md"
   (cd "$dir" && "$CLI" snapshot .spectacular/PRD.md >/dev/null)
-  assert_file_exists "$dir/.spectacular/PRD@v2.md"
+  assert_file_exists "$dir/.spectacular/snapshots/PRD/@v2.md"
 
   echo "---" > "$dir/random.md"
   echo "title: foo" >> "$dir/random.md"

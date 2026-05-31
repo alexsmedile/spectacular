@@ -104,6 +104,23 @@ summary: "agents"
 ---
 # Agents
 EOF
+  cat > "$dir/.spectacular/POLICY.md" <<EOF
+---
+version: 1.0
+updated: 2026-05-22
+summary: "Operating policies — the practice layer paired with PRINCIPLES.md"
+---
+# Test — Operating Policies
+
+## @Implementation
+
+### understand-before-change
+- principle: 7
+- severity: block
+- check: PLAN.md has a filled \`## Understanding\` section, OR a \`UNDERSTANDING.md\` exists
+
+A request must not move planned → active until understanding is written down.
+EOF
   echo ".spectacular.local/" > "$dir/.gitignore"
   cat > "$dir/.spectacular/skills.lock" <<EOF
 spectacular:
@@ -193,16 +210,18 @@ scenario_5_snapshot_gap() {
   echo "Scenario 5: snapshot version gap → warning, exit 1"
   local dir="/tmp/doctor-test-5"
   seed_clean "$dir"
-  # Create v1.0 and v1.2 of PRD; doctor should flag missing v1.1
-  cp "$dir/.spectacular/PRD.md" "$dir/.spectacular/PRD@v1.0.md"
-  cp "$dir/.spectacular/PRD.md" "$dir/.spectacular/PRD@v1.2.md"
+  # Create v1.0 and v1.2 of PRD in the v1.5.0+ layout; doctor flags missing v1.1.
+  # (Root-level <DOC>@v<N>.md is now a legacy-migration warning, not gap detection.)
+  mkdir -p "$dir/.spectacular/snapshots/PRD"
+  cp "$dir/.spectacular/PRD.md" "$dir/.spectacular/snapshots/PRD/@v1.0.md"
+  cp "$dir/.spectacular/PRD.md" "$dir/.spectacular/snapshots/PRD/@v1.2.md"
 
   local out
   out=$(cd "$dir" && "$CLI" doctor snapshots 2>&1)
   local code=$?
 
   assert_exit_code "1" "$code" "snapshot gap exits 1 (warning)"
-  assert_output_contains "$out" "PRD@v1.1.md" "gap finding mentions missing version"
+  assert_output_contains "$out" "PRD/@v1.1.md" "gap finding mentions missing version"
   assert_output_contains "$out" "version-sequence gap" "specific message"
 
   rm -rf "$dir"

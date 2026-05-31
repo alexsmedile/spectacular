@@ -7,6 +7,8 @@ when_to_use: spectacular archive <slug>.
 
 Triggered by: `spectacular archive <slug>`, or skill proposing archive after request reaches `verified`.
 
+> **@Archive policy gate.** First, run `spectacular policy @Archive` and follow every active policy. Defaults (`spec-sync`, `memory-propose`) are `warn`: propose the SPEC/`specs/` sync and any memory worth keeping, then continue. See [policy-injection.md](policy-injection.md).
+
 ---
 
 ## Archive sequence

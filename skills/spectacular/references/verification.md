@@ -7,6 +7,8 @@ when_to_use: Deciding where verification lives for a request.
 
 Loaded when the skill is deciding whether to scaffold a `VERIFY.md` for a request, or when moving a request from `review` → `verified`.
 
+> **@Verification policy gate.** Before moving a request `review → verified`, run `spectacular policy @Verification` and follow every active policy. The default blocker is `verification-present`: every check in VERIFY.md (or PLAN § Validation) must be satisfied — or you stop. See [policy-injection.md](policy-injection.md).
+
 ## Core principle
 
 **Verification always happens. The standalone file is opt-in.**

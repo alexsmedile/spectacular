@@ -7,6 +7,8 @@ when_to_use: spectacular new <description> or spectacular promote.
 
 Triggered by: `spectacular new <description>`, or when conversational context clearly indicates a new piece of work to track.
 
+> **@Planning policy gate.** First, run `spectacular policy @Planning` and follow every active policy returned. A `block` policy must be satisfied or you stop; a `warn` policy you surface and continue. See [policy-injection.md](policy-injection.md).
+
 ---
 
 ## Autopilot vs interactive

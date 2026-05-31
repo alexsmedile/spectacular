@@ -15,6 +15,7 @@ Human catalog of every document type in a Spectacular workspace.
 |---|---|---|---|
 | `prd` | grill | `.spectacular/PRD.md` | [prd-rules](prd-rules.md) |
 | `principles` | stub | `.spectacular/PRINCIPLES.md` | [principles-rules](principles-rules.md) |
+| `policy` | structured (always-set) | `.spectacular/POLICY.md` | [policy-rules](policy-rules.md) |
 | `architecture` | stub | `.spectacular/ARCHITECTURE.md` | [architecture-rules](architecture-rules.md) |
 | `spec` | stub | `.spectacular/SPEC.md` | [spec-rules](spec-rules.md) |
 | `roadmap` | grill-each | `.spectacular/ROADMAP.md` | [roadmap-rules](roadmap-rules.md) |

@@ -12,6 +12,8 @@ status: active
 
 # SESSIONS Rules
 
+> **@SessionEnd policy gate.** On `spectacular session end` / handoff, run `spectacular policy @SessionEnd` and follow every active policy. The default (`summarize-before-handoff`) is `warn`: summarize what changed, what's left, and what's next, then continue. See [policy-injection.md](policy-injection.md).
+
 Soft-folder database. The index file (`SESSIONS.md`) is regenerated from individual entry files (`sessions/<date>-<slug>.md`).
 
 **Mode: `index`** — same pattern as [[memory-rules]]. Canonical content in `entries-dir`; root file is the catalog.

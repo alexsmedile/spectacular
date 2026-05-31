@@ -98,6 +98,22 @@ State lives in `PLAN.md` frontmatter. The skill reads it on every invocation and
 
 ### The workspace
 
+New here? Two things to understand. First, what lives at the top of `.spectacular/`:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/workspace-tree-dark.svg" />
+  <img src="docs/assets/workspace-tree-light.svg" width="100%" alt=".spectacular/ holds three things: PRD.md (the intent), SPEC.md (the truth), and requests/ (the work)" />
+</picture>
+
+And second, what's inside any one request:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/request-tree-dark.svg" />
+  <img src="docs/assets/request-tree-light.svg" width="100%" alt="A request folder holds PLAN.md (the approach), TASKS.md (the steps), VERIFY.md (the proof), and an optional specs/ folder" />
+</picture>
+
+That's the whole idea. The full layout, once a project fills in:
+
 ```
 .spectacular/
 │   ── always-set (created by every init) ─────────────────────────────

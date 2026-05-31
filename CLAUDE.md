@@ -65,6 +65,7 @@ spectacular/
 
 | Slug | Status | Target | Summary |
 |---|---|---|---|
+| `policy-engine` | active | v1.12.0 | POLICY.md practice layer — policies under 8 work-phase hooks, `spectacular policy` verb, gate blocks, `doctor policies`, config overrides. Built M1–M5; self-dogfooded |
 | `convention-pack-modules` | planned (gated) | tbd | v2 modular packs — stays planned until composition pain surfaces from v1 use |
 | `spec-refactor` | planned | v1.9.0 | Audit SPEC.md, promote 1-2 dense capabilities to `specs/<capability>/SPEC.md` |
 
@@ -145,9 +146,13 @@ spectacular init --name my-app --agents-file CLAUDE.md
 spectacular init --global           # install to ~/.agents/ and ~/.claude/
 spectacular init --update           # re-download latest skill release
 
-spectacular doctor                  # substrate self-check (8 areas)
-spectacular doctor <area>           # scoped: skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions
+spectacular doctor                  # substrate self-check (all areas)
+spectacular doctor <area>           # scoped: skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|policies
 spectacular doctor --fix            # apply mechanical fixes
+
+spectacular policy                  # read the merged policy contract (POLICY.md + config overrides)
+spectacular policy @<hook>          # one work-phase's policies + linked principle lines
+spectacular policy --principle N    # reverse: which policies enforce principle N
 
 spectacular pack list               # show packs across all 4 scopes
 spectacular pack install <name>     # copy to ~/.spectacular/packs/<name>/

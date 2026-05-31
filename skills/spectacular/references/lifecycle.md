@@ -9,6 +9,12 @@ State machine: `planned → active → review → verified → archived`
 
 State lives in `PLAN.md` frontmatter: `status: planned | active | review | verified`
 
+> **Policy gates on transitions.** Two transitions consult the policy engine before flipping state:
+> - `planned → active` → run `spectacular policy @Implementation` (blocker: `understand-before-change`).
+> - `review → verified` → run `spectacular policy @Verification` (blocker: `verification-present`).
+>
+> Satisfy every `block` policy or refuse the transition; surface `warn` policies and continue. See [policy-injection.md](policy-injection.md).
+
 ---
 
 ## Transition rules

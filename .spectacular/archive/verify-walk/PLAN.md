@@ -1,5 +1,5 @@
 ---
-status: verified
+status: archived
 priority: high
 owner: alex
 updated: 2026-05-30
@@ -9,6 +9,7 @@ related:
   - ../../PRINCIPLES.md
   - ../../ROADMAP.md
 target_version: v1.11.0
+archived: 2026-05-30
 ---
 
 # Plan — verify-walk

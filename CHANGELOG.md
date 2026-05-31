@@ -7,6 +7,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.12.0] — 2026-05-30
+
+### Added
+- **POLICY.md — the practice layer (`references/policies-contract.md`).** A new always-set canonical doc, the operational sibling to `PRINCIPLES.md`: PRINCIPLES is *theory* (the why, optional), POLICY is *practice* (the how-we-actually-work, the floor). Policies are filed under named **work-phase hooks** and the skill retrieves only the active hook's policies on entering a phase — progressive disclosure (Principle 6) applied to the rule layer. Deliberately asymmetric with optional PRINCIPLES: every `spectacular init` scaffolds POLICY.md with 8 prefilled defaults.
+- **8 work-phase hooks (`@` reads "at").** Spine: `@Init`, `@Planning`, `@Implementation`, `@Verification`, `@Archive`. Moments: `@Remember`, `@Snapshot`, `@SessionEnd`. The before/after verb lives in the *policy name* (`understand-before-change`), never the hook.
+- **8 prefilled default policies — 4 block · 4 warn.** Block: `understand-before-change` (@Implementation), `verification-present` (@Verification, absorbs verify-walk's gate), `confirm-before-write` (@Remember), `snapshot-before-overwrite` (@Snapshot). Warn: `scaffold-contract` (@Init), `request-shape` (@Planning), `spec-sync`+`memory-propose` (@Archive), `summarize-before-handoff` (@SessionEnd). **Severity is opt-in to blocking** — a policy hard-stops only if it explicitly declares `severity: block`; absent/warn/unrecognized → surface-and-continue (no policy accidentally blocks).
+- **`spectacular policy` verb — 5 forms.** `policy` (all, grouped by hook), `policy @<hook>` (one phase's policies + each linked principle's heading and one line), `policy <id>` (one policy, full text + principle), `policy --principle N` (reverse: which policies enforce principle N), `policy --json` (machine form). Skim-by-default, matching the read-verbs convention; merges POLICY.md (definition) with `config.yaml` overrides.
+- **Injection loop + phase gate blocks (`references/policy-injection.md`).** Each phase reference doc (`init-workflow`, `new-request`, `active-request`/`lifecycle`, `verification`/`lifecycle`, `archive`, `memory`, `versioning`, `sessions-rules`) opens with a 2-line `@<hook> policy gate` instructing the skill to run `spectacular policy @<hook>` first. The ref doc *is* the phase boundary — no event bus, no `hooks.json` wiring (skill-native; works in bare-CLI and installed-plugin sessions alike).
+- **`## Understanding` PLAN slot.** Optional authoring slot (`How it works now` / `What changes` / `What stays the same`) required before `planned → active` by `understand-before-change`; escalates to a dedicated `requests/<slug>/UNDERSTANDING.md` for large requests (satisfied by either — the VERIFY.md 2-of-N pattern). No `ANALYSIS.md`.
+- **`doctor policies` area.** Mechanical structure check (POLICY.md present + frontmatter; every blocker has a `check:`; severities are `block|warn`; hooks are from the locked 8; no orphan sections) plus the `understand-before-change` presence-check on every active request. `--fix` re-scaffolds a missing/empty POLICY.md.
+- **`config.yaml` `policies:` override layer.** Per-policy `enabled` / `severity` overrides and custom-policy registration (declare a `hook:` to add your own). POLICY.md is the source of truth; config tunes it — layers, not competing copies. Commented stanza shipped in the init scaffold. Scope is config-only in v1 (4-tier precedence deferred to v2).
+
+### Changed
+- **Always-set grows to five docs** — `prd spec config agents policy`. POLICY.md joins the always-set scaffold and the `doctor workspace` always-set check; `doctor --fix` re-scaffolds it like any other always-set file.
+- **`PRINCIPLES.md` stays optional** — explicitly the asymmetry: theory is optional reading, practice (POLICY) is the operational floor. The optional `principle: N` tag links a policy back to the principle it enforces.
+
+### Notes
+- Self-dogfooded: this repo's `.spectacular/POLICY.md` was scaffolded via `doctor --fix`, and the `policy-engine` request itself was promoted `planned → active` through the `understand-before-change` gate with a filled `## Understanding`.
+- No harness `hooks.json` wiring in v1 — enforcement is skill-side + doctor; kernel-level locks are the v2 upgrade path. verify-walk is absorbed as the `verification-present` policy but not refactored onto the engine in this release.
+
 ## [1.11.0] — 2026-05-30
 
 ### Added

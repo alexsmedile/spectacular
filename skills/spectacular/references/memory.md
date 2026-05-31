@@ -7,6 +7,8 @@ when_to_use: spectacular remember this.
 
 Triggered by: `spectacular remember this`, or as part of the archive sequence.
 
+> **@Remember policy gate.** Before writing memory, run `spectacular policy @Remember` and follow every active policy. The default blocker is `confirm-before-write`: show the proposed entry and write only after the user confirms — never write unconfirmed memory. See [policy-injection.md](policy-injection.md).
+
 ---
 
 ## Memory location

@@ -237,6 +237,39 @@ Full pack schema in [`skills/spectacular/references/packs-contract.md`](../skill
 
 ---
 
+## `policies` *(v1.12.0+)*
+
+An **override layer** over `POLICY.md` (the always-set practice layer). `POLICY.md` *defines* each policy — hook, check, severity, prose. This block *tunes* the contract for this project: enable/disable a shipped default, change a severity, or register a custom policy. They are layers, not competing copies — `spectacular policy` reads POLICY.md, applies these overrides, returns the merged result.
+
+```yaml
+policies:
+  understand-before-change:
+    enabled: false          # disable a shipped default
+  scaffold-contract:
+    severity: block         # override shipped severity (warn → block)
+  no-secrets-in-memory:     # register a custom policy (id = key)
+    hook: "@Remember"       # required for custom: one of the 8 hooks
+    severity: warn
+    check: "memory entry contains no API keys, tokens, or passwords"
+```
+
+### Fields (per policy id)
+
+- **`enabled`** — `true` (default) or `false`. A disabled policy is still listed by `spectacular policy` but marked `[disabled]` and never enforced.
+- **`severity`** — `block` (refuse to proceed) or `warn` (surface + continue). Overrides the value in POLICY.md. **Severity is opt-in to blocking**: a policy hard-stops only with an explicit `block`; absent/`warn`/unrecognized → non-blocking.
+- **`hook`** *(custom only)* — one of `@Init @Planning @Implementation @Verification @Archive @Remember @Snapshot @SessionEnd`. Required to register a policy that isn't in POLICY.md.
+- **`check`** — the condition (required for blockers).
+- **`principle`** — optional integer linking the principle this policy enforces; `spectacular policy` pulls that one line alongside it.
+
+### Notes
+
+- **Scope is config-only in v1.** A single `policies:` block in `.spectacular/config.yaml`. The 4-tier scope precedence used by convention packs is a v2 candidate, not built.
+- `doctor policies` validates the merged contract's structure and the `## Understanding` gate on active requests.
+
+Full policy schema in [`skills/spectacular/references/policies-contract.md`](../skills/spectacular/references/policies-contract.md).
+
+---
+
 ## `.spectacular.local/`
 
 `.spectacular.local/` is a personal override layer at the repository root.

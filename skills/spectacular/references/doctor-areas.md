@@ -130,6 +130,22 @@ Judgment-only area — no `--fix`. Scans `.spectacular/ideas/*.md`.
 
 No `--fix` because every finding requires a human decision (promote? demote? delete? move?). See [[idea-rules]] for the full mode spec.
 
+## `policies` (v1.12.0+)
+
+Self-check of the practice layer (`POLICY.md`, always-set). Structure checks are mechanical; the `## Understanding` gate is mechanical presence (judgment to fill). Scans `POLICY.md` + every active request's PLAN.
+
+| Check | Severity | Detects |
+|---|---|---|
+| POLICY.md present | ❌ error | always-set file missing (`--fix` re-scaffolds) |
+| Frontmatter present | ⚠️ | no `---` delimiter at line 1 |
+| Policy blocks defined | ⚠️ | zero `### <id>` blocks (`--fix` restores 8 defaults) |
+| Unknown hook section | ⚠️ | `## @<hook>` outside the locked 8 |
+| Blocker missing `check:` | ⚠️ | a `severity: block` policy with no `- check:` line |
+| Invalid severity | ⚠️ | `severity:` value other than `block`/`warn` |
+| understand-before-change | ⚠️ per active request | request is `active` but PLAN § Understanding empty and no `UNDERSTANDING.md` |
+
+`--fix` re-scaffolds a missing/empty POLICY.md (mechanical); the Understanding gate is reported, not auto-filled (it needs the skill to interview). See [[policies-contract]] and [[policy-injection]].
+
 ## Related
 
 - [[doctor]] — entry point, severity model, report format

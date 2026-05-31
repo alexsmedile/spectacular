@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.11.0"
+SPECTACULAR_VERSION="1.12.0"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -43,10 +43,10 @@ OPT_SKILL_SCOPE=""
 
 # Always-set: scaffolded regardless of kit. The 6-file minimum.
 #   PRD.md, SPEC.md, config.yaml, AGENTS.md (file name varies per --agents-file), requests/, specs/
-ALWAYS_SET="prd spec config agents"
+ALWAYS_SET="prd spec config agents policy"
 
 # Known doc IDs (kit triggers-docs entries and --with values must match these)
-KNOWN_DOCS="prd spec principles architecture roadmap stack decisions memory sessions agents config personas plan tasks"
+KNOWN_DOCS="prd spec principles policy architecture roadmap stack decisions memory sessions agents config personas plan tasks"
 
 # Bundled kits (must exist as templates/prd/kits/<id>.md in installed skill)
 KNOWN_KITS="blank coding content product research"
@@ -717,6 +717,19 @@ skills:
 #   source: minimal           # pack name (resolved via scope precedence)
 #   mode: suggest             # suggest | scaffold | enforce
 #   overrides: []             # optional list of rule paths to skip (e.g. naming.forbidden-words)
+
+# Policies — override layer over POLICY.md (the always-set practice layer).
+# POLICY.md defines the policies; this block tunes them per-project. See
+# 'spectacular policy' and references/policies-contract.md.
+# policies:
+#   understand-before-change:
+#     enabled: false          # disable a shipped default
+#   scaffold-contract:
+#     severity: block         # override shipped severity (warn → block)
+#   no-secrets-in-memory:     # register a custom policy (id = key)
+#     hook: \"@Remember\"       # required for custom: one of the 8 hooks
+#     severity: warn
+#     check: \"memory entry contains no API keys, tokens, or passwords\"
 "
 }
 
@@ -2739,6 +2752,7 @@ EOF
     prd)          path=".spectacular/PRD.md" ;;
     spec)         path=".spectacular/SPEC.md" ;;
     principles)   path=".spectacular/PRINCIPLES.md" ;;
+    policy)       path=".spectacular/POLICY.md" ;;
     architecture) path=".spectacular/ARCHITECTURE.md" ;;
     roadmap)      path=".spectacular/ROADMAP.md" ;;
     stack)        path=".spectacular/STACK.md" ;;
@@ -3324,6 +3338,74 @@ EOF
 # ── promote ──────────────────────────────────────────────────────────────────
 # `spectacular promote <slug> [--to <state>] [--force]`
 # State machine: planned → active → review → verified (linear).
+# Is PLAN.md's `## Understanding` section filled? (the understand-before-change
+# mechanical check). "Filled" = at least one line of real content under the
+# section, ignoring HTML comment blocks (<!-- ... -->, possibly multi-line),
+# blank lines, and the ### subheads themselves. Satisfied by a sibling
+# UNDERSTANDING.md too. Exit 0 = filled, 1 = empty/absent.
+_plan_understanding_filled() {
+  local plan="$1"
+  [[ -f "$plan" ]] || return 1
+  local und_dir
+  und_dir="$(dirname "$plan")/UNDERSTANDING.md"
+  [[ -f "$und_dir" ]] && return 0
+  awk '
+    /^##[[:space:]]+Understanding/ { in_u=1; next }
+    in_u && /^##[[:space:]]/ && !/^###/ { in_u=0 }
+    !in_u { next }
+    {
+      line=$0
+      # strip comment spans; track open multi-line comments. Strip the FIRST
+      # complete comment each pass (awk sub is greedy + has no non-greedy op, so
+      # we cut to the first "-->" via a placeholder) to avoid eating real content
+      # sandwiched between two inline comments on one line.
+      if (in_c) { ci=index(line, "-->"); if (ci) { line=substr(line, ci+3); in_c=0 } else next }
+      while (match(line, /<!--/)) {
+        if (line ~ /-->/) {
+          # replace the first <!-- ... --> only: split at the first close marker
+          pre=substr(line, 1, RSTART-1)
+          rest=substr(line, RSTART)
+          ci=index(rest, "-->")
+          line=pre substr(rest, ci+3)
+        } else { sub(/<!--.*/, "", line); in_c=1; break }
+      }
+      sub(/^###.*/, "", line)          # subheads are not content
+      gsub(/[[:space:]]/, "", line)
+      if (line != "") found=1
+    }
+    END { exit found ? 0 : 1 }
+  ' "$plan"
+}
+
+# Advisory policy consult on a lifecycle transition. Prints the hook's active
+# policies; for @Implementation it runs the mechanical understand-before-change
+# presence-check and surfaces a warning if unmet. The CLI does NOT block — the
+# skill's injection loop (policy-injection.md) is authoritative. Honors the
+# locked design: CLI mechanical surface, skill judgment + enforcement.
+_policy_consult_transition() {
+  local slug="$1" plan="$2" hook="$3"
+  [[ -f ".spectacular/POLICY.md" ]] || return 0
+
+  local pol_out
+  pol_out="$(cmd_policy "$hook" 2>/dev/null)"
+  [[ -z "$pol_out" ]] && return 0
+
+  echo "  policy gate $hook:"
+  echo "$pol_out" | sed 's/^/    /'
+
+  # Mechanical gate: understand-before-change on planned → active.
+  # Honor config: skip entirely if the policy is disabled; label by merged severity.
+  if [[ "$hook" == "@Implementation" ]] && _policy_enabled "understand-before-change" \
+       && ! _plan_understanding_filled "$plan"; then
+    local sev rec; rec="$(_policy_lookup "understand-before-change")"
+    sev="${rec##*$'\037'}"; [[ -z "$sev" ]] && sev="block"
+    info "  ⚠ understand-before-change ($sev): no filled '## Understanding' in PLAN.md (or UNDERSTANDING.md)."
+    info "    Fill it before implementing — How it works now / What changes / What stays the same."
+    info "    (CLI advisory only; run /spectacular to enforce the gate.)"
+  fi
+  echo ""
+}
+
 # Default --to: advances one step. Refuses backward without --force.
 cmd_promote() {
   local slug="" opt_to="" opt_force=false opt_archive=false opt_skip_doctor=false
@@ -3416,6 +3498,15 @@ EOF
   if (( tgt_idx < cur_idx )) && ! $opt_force; then
     die "promote: backward transition $current → $target refused. Use --force to override."
   fi
+
+  # Policy consult on spine transitions (advisory at the CLI; the skill's
+  # injection loop is authoritative for block enforcement — see policy-injection.md).
+  # The CLI surfaces the relevant hook's policies + a mechanical check so a
+  # terminal user isn't blind to a gate they're about to cross.
+  case "$target" in
+    active)   _policy_consult_transition "$slug" "$plan" "@Implementation" ;;
+    verified) _policy_consult_transition "$slug" "$plan" "@Verification" ;;
+  esac
 
   fm_set "$plan" "status" "$target"
   fm_touch "$plan"
@@ -4219,6 +4310,318 @@ config_pack_mode_raw() {
   ' "$cfg"
 }
 
+# ══════════════════════════════════════════════════════════════════════════════
+# POLICY — the practice layer (v1.12.0)
+#
+# POLICY.md defines policies under `## @<hook>` sections; config.yaml's
+# `policies:` block is an override layer (enable/disable/severity + custom).
+# `spectacular policy` reads POLICY.md, applies overrides, returns merged result.
+# The skill calls `spectacular policy @<hook>` on entering a phase. Full spec:
+# references/policies-contract.md + references/policy-injection.md.
+# ══════════════════════════════════════════════════════════════════════════════
+
+POLICY_VALID_HOOKS="@Init @Planning @Implementation @Verification @Archive @Remember @Snapshot @SessionEnd"
+
+# Emit the merged policy table to stdout, one record per line. Fields are
+# separated by US (\x1f / octal 037) — NOT tab — because `read` with a
+# whitespace IFS collapses consecutive separators, mangling empty fields
+# (e.g. a policy with no `principle:` line). Field order:
+#   hook⟨US⟩id⟨US⟩principle⟨US⟩severity⟨US⟩enabled⟨US⟩check
+# Reads POLICY.md (definition) then applies config.yaml `policies:` overrides.
+# Custom policies declared only in config (with a `hook:`) are appended.
+_policy_records() {
+  local pol=".spectacular/POLICY.md"
+  local cfg=".spectacular/config.yaml"
+  [[ -f "$pol" ]] || return 0
+  local US=$'\037'
+
+  # 1) Parse POLICY.md blocks.
+  awk '
+    BEGIN { hook=""; id=""; principle=""; severity=""; check=""; US=sprintf("%c",31) }
+    function flush() {
+      if (id != "") {
+        printf "%s%s%s%s%s%s%s%s%s%s%s\n", hook, US, id, US, principle, US, severity, US, "true", US, check
+      }
+      id=""; principle=""; severity=""; check=""
+    }
+    /^##[[:space:]]+@/ {
+      flush()
+      h=$0; sub(/^##[[:space:]]+/, "", h); sub(/[[:space:]]+$/, "", h)
+      hook=h; next
+    }
+    /^###[[:space:]]+/ {
+      flush()
+      i=$0; sub(/^###[[:space:]]+/, "", i); sub(/[[:space:]]+$/, "", i)
+      id=i; next
+    }
+    /^-[[:space:]]+principle:/ { v=$0; sub(/^-[[:space:]]+principle:[[:space:]]*/, "", v); sub(/[[:space:]]+$/, "", v); principle=v; next }
+    /^-[[:space:]]+severity:/  { v=$0; sub(/^-[[:space:]]+severity:[[:space:]]*/, "", v); sub(/[[:space:]]+$/, "", v); severity=v; next }
+    /^-[[:space:]]+check:/     { v=$0; sub(/^-[[:space:]]+check:[[:space:]]*/, "", v); sub(/[[:space:]]+$/, "", v); check=v; next }
+    END { flush() }
+  ' "$pol" | while IFS="$US" read -r hook id principle severity enabled check; do
+    # Apply config overrides for this id.
+    local ov_enabled ov_severity
+    ov_enabled="$(_policy_cfg_get "$id" "enabled")"
+    ov_severity="$(_policy_cfg_get "$id" "severity")"
+    [[ -n "$ov_enabled" ]]  && enabled="$ov_enabled"
+    [[ -n "$ov_severity" ]] && severity="$ov_severity"
+    printf '%s%s%s%s%s%s%s%s%s%s%s\n' "$hook" "$US" "$id" "$US" "$principle" "$US" "$severity" "$US" "$enabled" "$US" "$check"
+  done
+
+  # 2) Append config-only custom policies (have a `hook:` field, not in POLICY.md).
+  [[ -f "$cfg" ]] || return 0
+  local defined_ids
+  defined_ids="$(awk '/^###[[:space:]]+/ { i=$0; sub(/^###[[:space:]]+/, "", i); sub(/[[:space:]]+$/, "", i); print i }' "$pol" | tr '\n' ' ')"
+  _policy_cfg_custom_ids | while IFS= read -r cid; do
+    [[ -z "$cid" ]] && continue
+    in_list "$cid" "$defined_ids" && continue   # already defined in POLICY.md
+    local c_hook c_sev c_check c_pr c_en
+    c_hook="$(_policy_cfg_get "$cid" "hook")"
+    [[ -z "$c_hook" ]] && continue               # custom must declare a hook
+    c_sev="$(_policy_cfg_get "$cid" "severity")"
+    c_check="$(_policy_cfg_get "$cid" "check")"
+    c_pr="$(_policy_cfg_get "$cid" "principle")"
+    c_en="$(_policy_cfg_get "$cid" "enabled")"; [[ -z "$c_en" ]] && c_en="true"
+    printf '%s%s%s%s%s%s%s%s%s%s%s\n' "$c_hook" "$US" "$cid" "$US" "$c_pr" "$US" "$c_sev" "$US" "$c_en" "$US" "$c_check"
+  done
+}
+
+# Read a single field for a policy id from config.yaml's `policies:` block.
+# Block shape (2-space indent under `policies:`, 4-space under the id):
+#   policies:
+#     understand-before-change:
+#       enabled: false
+#       severity: block
+_policy_cfg_get() {
+  local id="$1" field="$2" cfg=".spectacular/config.yaml"
+  [[ -f "$cfg" ]] || return 0
+  awk -v id="$id" -v field="$field" '
+    /^policies:/ { in_p=1; next }
+    in_p && /^[^[:space:]]/ { in_p=0 }
+    in_p && /^  [^[:space:]]/ {
+      cur=$1; sub(/:.*/, "", cur); sub(/^[[:space:]]+/, "", cur)
+      match_id = (cur == id)
+      next
+    }
+    in_p && match_id && /^    [^[:space:]]/ {
+      key=$1; sub(/:.*/, "", key); sub(/^[[:space:]]+/, "", key)
+      if (key == field) {
+        v=$0; sub(/^[[:space:]]*[^:]+:[[:space:]]*/, "", v); sub(/[[:space:]]+$/, "", v)
+        gsub(/^"|"$/, "", v)
+        print v; exit
+      }
+    }
+  ' "$cfg"
+}
+
+# List all policy ids appearing in config.yaml's `policies:` block.
+_policy_cfg_custom_ids() {
+  local cfg=".spectacular/config.yaml"
+  [[ -f "$cfg" ]] || return 0
+  awk '
+    /^policies:/ { in_p=1; next }
+    in_p && /^[^[:space:]]/ { in_p=0 }
+    in_p && /^  [^[:space:]]/ { cur=$1; sub(/:.*/, "", cur); sub(/^[[:space:]]+/, "", cur); print cur }
+  ' "$cfg"
+}
+
+# Pull a principle's heading + first content line from PRINCIPLES.md.
+# Arg: principle number N. Stdout: "N. <heading> — <first line>" or empty.
+_policy_principle_line() {
+  local n="$1" pr=".spectacular/PRINCIPLES.md"
+  [[ -n "$n" ]] || return 0
+  [[ -f "$pr" ]] || return 0
+  awk -v n="$n" '
+    $0 ~ "^##[[:space:]]+" n "\\." {
+      head=$0; sub(/^##[[:space:]]+/, "", head)
+      body=""; got=0
+      while ((getline line) > 0) {
+        if (line ~ /^##[[:space:]]/) break          # next heading → no body
+        if (line ~ /^[[:space:]]*$/) continue       # skip blank lines
+        body=line; got=1; break
+      }
+      sub(/^[[:space:]]+/, "", body)
+      if (got) print head " — " body                # body found
+      else     print head                           # heading only — no dangling em-dash
+      exit
+    }
+  ' "$pr"
+}
+
+# is this severity a blocker? (opt-in: only literal "block")
+_policy_is_block() { [[ "$1" == "block" ]]; }
+
+# Look up one policy's MERGED state (POLICY.md + config overrides) by id.
+# Stdout: "enabled<US>severity" (e.g. "true<US>block"); empty if the id is unknown.
+# Use this — not the raw POLICY.md text — before enforcing a gate, so config
+# `enabled: false` / severity overrides are honored.
+_policy_lookup() {
+  local want="$1" US=$'\037' hook id principle severity enabled check
+  while IFS="$US" read -r hook id principle severity enabled check; do
+    [[ "$id" == "$want" ]] || continue
+    printf '%s%s%s\n' "${enabled:-true}" "$US" "$severity"
+    return 0
+  done < <(_policy_records)
+  return 0
+}
+
+# Is a policy enabled in the merged contract? (default: true if id unknown — a
+# gate hard-coded in a ref doc shouldn't vanish just because POLICY.md was edited).
+_policy_enabled() {
+  local rec; rec="$(_policy_lookup "$1")"
+  [[ -z "$rec" ]] && return 0                       # unknown id → treat as enabled
+  local US=$'\037'
+  local en="${rec%%"$US"*}"
+  case "$en" in
+    false|no|off|0|False|FALSE|No|NO) return 1 ;;   # disabled
+    *) return 0 ;;
+  esac
+}
+
+cmd_policy() {
+  local form="list" arg="" principle_filter="" json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --principle) require_value "--principle" "${2:-}"; principle_filter="$2"; form="principle"; shift 2 ;;
+      --principle=*) principle_filter="${1#--principle=}"; form="principle"; shift ;;
+      --json) json=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular policy [@hook | <id> | --principle N | --json]
+
+Read the merged policy contract (POLICY.md + config.yaml overrides).
+
+Forms:
+  spectacular policy                 All policies, grouped by hook (skim)
+  spectacular policy @Verification   One hook's policies + linked principle lines
+  spectacular policy <id>            One policy, full text + its principle
+  spectacular policy --principle N   Reverse: which policies enforce principle N
+  spectacular policy --json          Machine form (skill-consumed)
+
+The skill calls 'spectacular policy @<hook>' on entering a work phase.
+Valid hooks: ${POLICY_VALID_HOOKS}
+EOF
+        exit 0 ;;
+      @*) arg="$1"; form="hook"; shift ;;
+      -*) die "Unknown flag for policy: $1" ;;
+      *)  arg="$1"; form="id"; shift ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "policy: not inside a Spectacular workspace"
+  [[ -f ".spectacular/POLICY.md" ]] || die_recover "policy: .spectacular/POLICY.md not found" \
+    "spectacular doctor --fix   # re-scaffold the always-set POLICY.md"
+
+  # Validate hook arg against the known set.
+  if [[ "$form" == "hook" ]] && ! in_list "$arg" "$POLICY_VALID_HOOKS"; then
+    die "policy: unknown hook '$arg'. Valid: ${POLICY_VALID_HOOKS}"
+  fi
+
+  local records US=$'\037'
+  records="$(_policy_records)"
+  [[ -z "$records" ]] && { info "(no policies defined)"; return 0; }
+
+  # ── JSON form ──────────────────────────────────────────────────────────────
+  if $json; then
+    printf '['
+    local i=0 hook id principle severity enabled check
+    while IFS="$US" read -r hook id principle severity enabled check; do
+      [[ -z "$id" ]] && continue
+      # Apply filters
+      if [[ "$form" == "hook" && "$hook" != "$arg" ]]; then continue; fi
+      if [[ "$form" == "id"   && "$id"   != "$arg" ]]; then continue; fi
+      if [[ "$form" == "principle" && "$principle" != "$principle_filter" ]]; then continue; fi
+      local is_block="false"; _policy_is_block "$severity" && is_block="true"
+      # Normalize enabled to a literal JSON boolean — config may carry yes/no/1/etc.
+      local en_json="true"
+      case "${enabled:-true}" in
+        false|no|off|0|False|FALSE|No|NO) en_json="false" ;;
+        *) en_json="true" ;;
+      esac
+      (( i > 0 )) && printf ','
+      printf '{"hook":"%s","id":"%s","principle":"%s","severity":"%s","blocking":%s,"enabled":%s,"check":"%s"}' \
+        "$(_json_escape "$hook")" "$(_json_escape "$id")" "$(_json_escape "$principle")" \
+        "$(_json_escape "$severity")" "$is_block" "$en_json" "$(_json_escape "$check")"
+      i=$((i + 1))
+    done <<< "$records"
+    printf ']\n'
+    return 0
+  fi
+
+  # ── id form: one policy, full text + principle ───────────────────────────────
+  if [[ "$form" == "id" ]]; then
+    local found=false hook id principle severity enabled check
+    while IFS="$US" read -r hook id principle severity enabled check; do
+      [[ "$id" == "$arg" ]] || continue
+      found=true
+      local sev_disp="${severity:-warn}"; _policy_is_block "$sev_disp" && sev_disp="block (refuse)" || sev_disp="${sev_disp} (surface + continue)"
+      echo "$id"
+      echo "  hook:      $hook"
+      echo "  severity:  $sev_disp"
+      [[ "${enabled:-true}" == "false" ]] && echo "  enabled:   false (disabled via config)"
+      [[ -n "$principle" ]] && echo "  principle: $principle"
+      echo "  check:     $check"
+      if [[ -n "$principle" ]]; then
+        local pl; pl="$(_policy_principle_line "$principle")"
+        [[ -n "$pl" ]] && echo "  → P$pl"
+      fi
+    done <<< "$records"
+    $found || die "policy: no policy with id '$arg'"
+    return 0
+  fi
+
+  # ── principle form: reverse lookup ───────────────────────────────────────────
+  if [[ "$form" == "principle" ]]; then
+    [[ "$principle_filter" =~ ^[0-9]+$ ]] || die "policy: --principle expects a number"
+    local pl; pl="$(_policy_principle_line "$principle_filter")"
+    echo "Principle $principle_filter${pl:+: ${pl#*. }}"
+    echo ""
+    local any=false hook id principle severity enabled check
+    printf "%-28s  %-16s  %s\n" "POLICY" "HOOK" "SEVERITY"
+    printf "%-28s  %-16s  %s\n" "------" "----" "--------"
+    while IFS="$US" read -r hook id principle severity enabled check; do
+      [[ "$principle" == "$principle_filter" ]] || continue
+      any=true
+      printf "%-28s  %-16s  %s\n" "$id" "$hook" "${severity:-warn}"
+    done <<< "$records"
+    $any || info "(no policies enforce principle $principle_filter)"
+    return 0
+  fi
+
+  # ── hook form / bare list ────────────────────────────────────────────────────
+  # Group by hook; in hook-form, show only the requested hook + principle lines.
+  local current_hook="" hook id principle severity enabled check shown=0
+  local order="$POLICY_VALID_HOOKS"
+  local h
+  for h in $order; do
+    [[ "$form" == "hook" && "$h" != "$arg" ]] && continue
+    local hook_has=false
+    while IFS="$US" read -r hook id principle severity enabled check; do
+      [[ "$hook" == "$h" ]] || continue
+      [[ -z "$id" ]] && continue
+      if ! $hook_has; then
+        echo "$h"
+        hook_has=true
+      fi
+      local marker="·"; _policy_is_block "$severity" && marker="⛔"
+      local dis=""; [[ "${enabled:-true}" == "false" ]] && dis="  [disabled]"
+      printf "  %s %-28s %-6s%s\n" "$marker" "$id" "${severity:-warn}" "$dis"
+      shown=$((shown + 1))
+      # In hook form, pull the linked principle line (the workhorse behavior).
+      if [[ "$form" == "hook" && -n "$principle" ]]; then
+        local pl; pl="$(_policy_principle_line "$principle")"
+        [[ -n "$pl" ]] && printf "      → P%s\n" "$pl"
+      fi
+    done <<< "$records"
+  done
+  (( shown == 0 )) && info "(no policies for ${arg:-this workspace})"
+  if [[ "$form" == "list" ]]; then
+    echo ""
+    info "⛔ = blocks   · = warns.   spectacular policy @<hook> for one phase's rules + principles."
+  fi
+  return 0
+}
+
 doc_prd() {
   # Init scaffolds a BASE 8-slot PRD with `kit:` recorded in frontmatter.
   # The kit's adds-slots / modifies-slots deltas are NOT applied here — the
@@ -4321,6 +4724,111 @@ Irreversibles require confirmation.
 
 **How the skill enforces this:**
 - <add hook>
+"
+}
+
+# POLICY.md — the practice layer (always-set). Emits the 8 prefilled defaults
+# inline so a bare-CLI init (no installed skill template) still scaffolds a
+# correct, enforceable contract. Full spec: references/policies-contract.md.
+doc_policy() {
+  local name="$1"
+  write_if_missing ".spectacular/POLICY.md" "---
+version: 1.0
+updated: ${TODAY}
+summary: \"Operating policies — the practice layer paired with PRINCIPLES.md\"
+---
+
+# ${name} — Operating Policies
+
+<!-- Pairs with PRINCIPLES.md (theory). PRINCIPLES is optional, so it is NOT a
+     declared 'related:' dependency — policies link individual principles via the
+     per-policy 'principle: N' tag instead. -->
+
+<!--
+  POLICY.md is the PRACTICE layer (PRINCIPLES.md is the THEORY layer).
+  Policies are filed under named work-phase hooks (## @<hook>). The skill
+  retrieves only the active hook's policies on entering a phase.
+
+  Anatomy:  ### <verb>-<noun>
+            - principle: N      (optional — the PRINCIPLES.md § it enforces)
+            - severity: block   (block = refuse | warn = surface + continue)
+            - check: <condition>
+            <prose: rationale + the instruction injected into context>
+
+  Severity is OPT-IN to blocking: blocks ONLY if it explicitly says
+  'severity: block'. Absent/warn/unrecognized → non-blocking.
+
+  Valid hooks (8): @Init @Planning @Implementation @Verification @Archive
+  @Remember @Snapshot @SessionEnd.
+-->
+
+## @Init
+
+### scaffold-contract
+- principle: 4
+- severity: warn
+The workspace must satisfy its scaffold contract — README present, \`.spectacular/\` committed, \`.spectacular.local/\` gitignored, always-set docs in place. Surface any gap on init; don't block.
+
+## @Planning
+
+### request-shape
+- principle: 3
+- severity: warn
+A new request's PLAN must be well-shaped before work begins: a one-sentence Goal, explicit Constraints, and demoable Milestones — not a vague wish. Surface a thin plan; let the author proceed.
+
+## @Implementation
+
+### understand-before-change
+- principle: 7
+- severity: block
+- check: PLAN.md has a filled \`## Understanding\` section (How it works now / What changes / What stays the same), OR a \`UNDERSTANDING.md\` exists with the same three subheads
+
+A request must not move \`planned → active\` until the agent has written down how the system works today, what this change touches, and what it leaves alone. Establish understanding before touching code. Satisfied by either the PLAN slot or a dedicated UNDERSTANDING.md.
+
+## @Verification
+
+### verification-present
+- principle: 7
+- severity: block
+- check: every check in VERIFY.md (or PLAN § Validation) is satisfied before \`review → verified\`
+
+A request must not reach \`verified\` while any verification check is unmet. Verification always happens; the only question is which artifact carries the checks. (Absorbs verify-walk's gate.)
+
+## @Archive
+
+### spec-sync
+- principle: 2
+- severity: warn
+On archiving a request, propose the SPEC.md / \`specs/\` updates the shipped work implies. Intent and truth are different files — keep truth current. The human confirms.
+
+### memory-propose
+- principle: 5
+- severity: warn
+On archiving, propose any operational lesson worth keeping as a memory. Operational memory compounds. Surface the candidate; never write memory without confirmation.
+
+## @Remember
+
+### confirm-before-write
+- principle: 8
+- severity: block
+- check: the user has confirmed the memory text before it is written to \`.spectacular/memory/\`
+
+Memory is team-visible and git-committed. Humans decide, agents propose: never write a memory the user has not seen and confirmed.
+
+## @Snapshot
+
+### snapshot-before-overwrite
+- principle: 8
+- severity: block
+- check: a \`<DOC>@v<N>.md\` snapshot exists before a canonical doc is overwritten in place
+
+Canonical documents are never overwritten without a snapshot first. The unversioned filename always points to current; history is preserved.
+
+## @SessionEnd
+
+### summarize-before-handoff
+- severity: warn
+Before handing off, summarize what changed, what's left, and what's next, so the next session resumes without re-deriving context. Surface the summary; don't block.
 "
 }
 
@@ -4690,6 +5198,7 @@ scaffold() {
       prd)           doc_prd "$name" "$kit_id" ;;
       spec)          doc_spec "$name" ;;
       principles)    doc_principles "$name" ;;
+      policy)        doc_policy "$name" ;;
       architecture)  doc_architecture "$name" ;;
       roadmap)       doc_roadmap "$name" ;;
       stack)         doc_stack ;;
@@ -4744,7 +5253,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas policies"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -4804,7 +5313,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) require_value "--format" "${2:-}"; DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|policies)
         if [[ -z "$DOC_OPT_AREA" ]]; then
           DOC_OPT_AREA="$1"
         else
@@ -4906,7 +5415,7 @@ check_workspace() {
     [[ -n "$cfg_agents" ]] && agents_file="$cfg_agents"
   fi
 
-  local always_set=("PRD.md" "SPEC.md" "config.yaml" "$agents_file")
+  local always_set=("PRD.md" "SPEC.md" "config.yaml" "POLICY.md" "$agents_file")
   for f in "${always_set[@]}"; do
     if [[ -f ".spectacular/$f" ]]; then
       doc_add "workspace" "pass" ".spectacular/$f" "always-set file present"
@@ -5089,23 +5598,27 @@ check_snapshots() {
   shopt -s nullglob
   local snapshots=(.spectacular/snapshots/**/@v*.md .spectacular/snapshots/*/@v*.md)
   shopt -u nullglob
-  # Deduplicate (the two globs overlap on direct children)
+  # Deduplicate (the two globs overlap on direct children).
+  # Note: bash 3.2 + `set -u` errors on `"${arr[@]}"` for an empty array, so
+  # guard expansions with the `${arr[@]+...}` idiom (expands to nothing if empty).
   local seen="" dedup=()
-  for s in "${snapshots[@]}"; do
+  for s in ${snapshots[@]+"${snapshots[@]}"}; do
     if ! in_list "$s" "$seen"; then
       seen+="$s "
       dedup+=("$s")
     fi
   done
-  snapshots=("${dedup[@]}")
+  snapshots=(${dedup[@]+"${dedup[@]}"})
 
   if [[ ${#snapshots[@]} -eq 0 && ${#legacy[@]} -eq 0 ]]; then
     return  # No snapshots is fine — many workspaces have none yet
   fi
 
-  # Collect unique doc paths (the snapshots/<...>/ container, identifies the doc)
+  # Collect unique doc paths (the snapshots/<...>/ container, identifies the doc).
+  # Guarded expansion (bash 3.2 + set -u): snapshots may be empty when only
+  # legacy root-level snapshots exist.
   local doc_dirs=""
-  for s in "${snapshots[@]}"; do
+  for s in ${snapshots[@]+"${snapshots[@]}"}; do
     local d
     d=$(dirname "$s")
     if ! in_list "$d" "$doc_dirs"; then
@@ -5119,7 +5632,7 @@ check_snapshots() {
     local base
     base=$(basename "$doc_dir")
     local versions=""
-    for s in "${snapshots[@]}"; do
+    for s in ${snapshots[@]+"${snapshots[@]}"}; do
       [[ "$(dirname "$s")" == "$doc_dir" ]] || continue
       local b
       b=$(basename "$s")
@@ -6091,6 +6604,121 @@ check_ideas() {
   fi
 }
 
+# ── check_policies (v1.12.0+) ────────────────────────────────────────────────
+# Mechanical self-check of the practice layer: POLICY.md present + well-formed
+# (every policy block has a check; severities are block|warn; hooks are from the
+# known 8), plus the `understand-before-change` gate on any active request
+# (PLAN § Understanding filled OR UNDERSTANDING.md present). Judgment checks are
+# left to the skill's injection loop.
+check_policies() {
+  [[ -d ".spectacular" ]] || return 0
+  local pol=".spectacular/POLICY.md"
+
+  if [[ ! -f "$pol" ]]; then
+    # check_workspace already emits the mechanical always-set finding that drives
+    # --fix re-scaffolding; emit an info here (fix_type=skip) so the repair loop,
+    # which matches on $file alone, doesn't re-scaffold POLICY.md twice.
+    doc_add "policies" "info" "$pol" "POLICY.md missing — see the 'workspace' always-set finding (re-scaffolds via --fix)" \
+      "skip" "judgment"
+    return 0
+  fi
+
+  if head -1 "$pol" | grep -q '^---$'; then
+    doc_add "policies" "pass" "$pol" "POLICY.md present with frontmatter"
+  else
+    doc_add "policies" "warning" "$pol" "POLICY.md missing frontmatter delimiter" \
+      "add a frontmatter block (version, updated, summary)" "judgment"
+  fi
+
+  # Structure check: orphan hooks, missing checks, bad severities, dangling principle refs.
+  local orphan_hooks="" missing_check="" bad_sev="" dangling_pr="" policy_count=0
+  local cur_hook="" cur_id="" seen_check=false cur_is_block=false
+  local pr=".spectacular/PRINCIPLES.md"
+  local line
+  while IFS= read -r line; do
+    case "$line" in
+      "## @"*)
+        local h="${line#\#\# }"
+        h="${h%"${h##*[![:space:]]}"}"
+        if ! in_list "$h" "$POLICY_VALID_HOOKS"; then
+          orphan_hooks="${orphan_hooks:+$orphan_hooks, }$h"
+        fi
+        cur_hook="$h"
+        ;;
+      "### "*)
+        # close previous policy block — a `check:` is required only for blockers.
+        if [[ -n "$cur_id" ]] && $cur_is_block && ! $seen_check; then
+          missing_check="${missing_check:+$missing_check, }$cur_id"
+        fi
+        cur_id="${line#\#\#\# }"; cur_id="${cur_id%"${cur_id##*[![:space:]]}"}"
+        policy_count=$((policy_count + 1))
+        seen_check=false; cur_is_block=false
+        ;;
+      "- principle:"*)
+        # Flag a principle ref that can't resolve (no PRINCIPLES.md, or no § N).
+        local pn="${line#- principle:}"; pn="${pn//[[:space:]]/}"
+        if [[ -n "$pn" ]]; then
+          if [[ ! -f "$pr" ]] || ! grep -q "^##[[:space:]]\+${pn}\." "$pr" 2>/dev/null; then
+            dangling_pr="${dangling_pr:+$dangling_pr, }${cur_id}→P${pn}"
+          fi
+        fi
+        ;;
+      "- check:"*) seen_check=true ;;
+      "- severity:"*)
+        local sv="${line#- severity:}"; sv="${sv#"${sv%%[![:space:]]*}"}"; sv="${sv%"${sv##*[![:space:]]}"}"
+        case "$sv" in
+          block) cur_is_block=true ;;
+          warn)  ;;
+          *) bad_sev="${bad_sev:+$bad_sev, }$cur_id=$sv" ;;
+        esac
+        ;;
+    esac
+  done < "$pol"
+  # close the final block
+  if [[ -n "$cur_id" ]] && $cur_is_block && ! $seen_check; then
+    missing_check="${missing_check:+$missing_check, }$cur_id"
+  fi
+
+  if [[ $policy_count -eq 0 ]]; then
+    doc_add "policies" "warning" "$pol" "POLICY.md has no policy blocks (### <id>)" \
+      "re-scaffold via 'spectacular doctor --fix' to restore the 8 defaults" "mechanical"
+  else
+    doc_add "policies" "pass" "$pol" "$policy_count policy block(s) defined"
+  fi
+  [[ -n "$orphan_hooks" ]] && doc_add "policies" "warning" "$pol" \
+    "unknown hook section(s): $orphan_hooks" "use one of: $POLICY_VALID_HOOKS" "judgment"
+  [[ -n "$missing_check" ]] && doc_add "policies" "warning" "$pol" \
+    "policy block(s) with no 'check:' field: $missing_check" "add a '- check:' line to each" "judgment"
+  [[ -n "$bad_sev" ]] && doc_add "policies" "warning" "$pol" \
+    "invalid severity value(s): $bad_sev" "severity must be 'block' or 'warn' (or omitted = non-blocking)" "judgment"
+  # Dangling principle refs are info, not error — PRINCIPLES.md is optional.
+  [[ -n "$dangling_pr" ]] && doc_add "policies" "info" "$pol" \
+    "principle ref(s) with no matching PRINCIPLES.md section: $dangling_pr" \
+    "scaffold PRINCIPLES.md (e.g. 'spectacular init --with principles') or drop the principle: tag" "judgment"
+
+  # understand-before-change gate: any active request must have Understanding.
+  # Mechanical presence-check; the skill enforces at the transition. Honor config:
+  # skip the gate entirely when the policy is disabled in the merged contract.
+  if _policy_enabled "understand-before-change"; then
+    local reqs_dir=".spectacular/requests" plan slug status_v
+    if [[ -d "$reqs_dir" ]]; then
+      for plan in "$reqs_dir"/*/PLAN.md; do
+        [[ -f "$plan" ]] || continue
+        status_v="$(fm_get "$plan" "status")"
+        [[ "$status_v" == "active" ]] || continue
+        slug="$(basename "$(dirname "$plan")")"
+        if _plan_understanding_filled "$plan"; then
+          doc_add "policies" "pass" "$plan" "[$slug] active + Understanding present (understand-before-change satisfied)"
+        else
+          doc_add "policies" "warning" "$plan" \
+            "[$slug] active but no filled '## Understanding' (or UNDERSTANDING.md) — understand-before-change unmet" \
+            "fill PLAN § Understanding (How it works now / What changes / What stays the same) or add UNDERSTANDING.md" "judgment"
+        fi
+      done
+    fi
+  fi
+}
+
 # ── doctor orchestrator ───────────────────────────────────────────────────────
 # Dispatch a list of area names to their check_<area> functions.
 # Single source of truth — adding a new area only requires touching this one case.
@@ -6112,6 +6740,7 @@ run_areas() {
       sessions)    check_sessions ;;
       feedback)    check_feedback ;;
       ideas)       check_ideas ;;
+      policies)    check_policies ;;
       *)           die "Unknown doctor area: '$area'" ;;
     esac
   done
@@ -6311,7 +6940,7 @@ doctor_apply_mechanical_fixes() {
     fi
 
     # Missing always-set file → re-scaffold using doc_<id>
-    if [[ "$file" == ".spectacular/PRD.md" || "$file" == ".spectacular/SPEC.md" || "$file" == ".spectacular/config.yaml" || "$file" == ".spectacular/AGENTS.md" || "$file" == ".spectacular/CLAUDE.md" ]]; then
+    if [[ "$file" == ".spectacular/PRD.md" || "$file" == ".spectacular/SPEC.md" || "$file" == ".spectacular/config.yaml" || "$file" == ".spectacular/POLICY.md" || "$file" == ".spectacular/AGENTS.md" || "$file" == ".spectacular/CLAUDE.md" ]]; then
       local fname
       fname=$(basename "$file")
       local name="${OPT_NAME:-$(slug_from_dir)}"
@@ -6319,6 +6948,7 @@ doctor_apply_mechanical_fixes() {
         PRD.md)        doc_prd "$name" "blank" ;;
         SPEC.md)       doc_spec "$name" ;;
         config.yaml)   doc_config "$name" "" "AGENTS.md" "blank" ;;
+        POLICY.md)     doc_policy "$name" ;;
         AGENTS.md|CLAUDE.md) doc_agents "$name" "$fname" ;;
       esac
       echo "  ✓ fixed [workspace]: re-scaffolded $file"
@@ -7474,6 +8104,16 @@ main() {
     summary)    shift; cmd_summary "$@";    exit $? ;;
     progress)   shift; cmd_progress "$@";   exit $? ;;
     paths)      shift; cmd_paths "$@";      exit $? ;;
+    # Policy (v1.12.0+): read the merged policy contract. CLI-mechanical
+    # retrieval — the skill calls `policy @<hook>` on entering a phase.
+    # `policy grill|refine|review` falls through to the doc-verb redirect
+    # (POLICY is also a doc); everything else is CLI retrieval.
+    policy)
+      case "${2:-}" in
+        grill|refine|review) : ;;  # fall through to doc-verb pre-check below
+        *) shift; cmd_policy "$@"; exit $? ;;
+      esac
+      ;;
   esac
 
   if [[ "$subcmd" == "doctor" ]]; then

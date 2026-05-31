@@ -139,8 +139,9 @@ scenario_3_interactive() {
   # Interactive prompts (in order):
   #   name (default), summary (empty), agents-file (default), scope (default),
   #   kit=2 (coding), then per-suggested-doc y/n, then final "Proceed?" confirm.
-  # Coding kit suggested = principles, roadmap, decisions → answer y / n / y, then y to confirm
-  (cd "$dir" && printf '\n\n\n\n2\ny\nn\ny\ny\n' | "$CLI" init -i 2>&1) >/dev/null || true
+  # Coding kit suggests 5 docs: principles, roadmap, decisions, memory, sessions.
+  # Answer principles=y, roadmap=n, decisions=y, memory=n, sessions=n, then y to confirm.
+  (cd "$dir" && printf '\n\n\n\n2\ny\nn\ny\nn\nn\ny\n' | "$CLI" init -i 2>&1) >/dev/null || true
 
   assert_file_exists "$dir/.spectacular/STACK.md"
   assert_file_exists "$dir/.spectacular/ARCHITECTURE.md"

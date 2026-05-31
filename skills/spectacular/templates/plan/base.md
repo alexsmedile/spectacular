@@ -35,6 +35,28 @@ related:
 - <CONSTRAINT 1>
 - <CONSTRAINT 2>
 
+## Understanding
+
+<!--
+  OPTIONAL authoring slot, but REQUIRED before `planned → active` by the
+  `understand-before-change` policy (@Implementation). Fill it here for a
+  typical request; escalate to a dedicated requests/<slug>/UNDERSTANDING.md
+  (same three subheads) for large ones — the policy is satisfied by EITHER.
+  Not one of the 7 required authoring slots; it gates implementation, not planning.
+-->
+
+### How it works now
+
+<!-- The current behavior/structure this request touches. -->
+
+### What changes
+
+<!-- The specific surfaces this request modifies. -->
+
+### What stays the same
+
+<!-- The boundary — what this change deliberately leaves alone. -->
+
 ## 3. Milestones
 
 <!-- Ordered, demoable checkpoints. Outcomes, not tasks. -->

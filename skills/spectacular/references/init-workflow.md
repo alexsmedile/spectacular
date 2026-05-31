@@ -7,6 +7,8 @@ when_to_use: spectacular init (CLI context).
 
 Triggered by: `spectacular init` CLI command, or first-time setup conversation.
 
+> **@Init policy gate.** First, run `spectacular policy @Init` and follow every active policy returned. A `block` policy must be satisfied or you stop; a `warn` policy you surface and continue. See [policy-injection.md](policy-injection.md).
+
 ---
 
 ## What init does

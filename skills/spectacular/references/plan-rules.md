@@ -59,6 +59,14 @@ Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `plan` (
 >
 > *Example:* "Updated `cli/spectacular`, updated `references/init-workflow.md`, CHANGELOG entry."
 
+## Understanding slot (policy-gated, not one of the 7)
+
+PLAN has an **optional** `## Understanding` section with three subheads — `### How it works now`, `### What changes`, `### What stays the same`. It is **not** one of the 7 required authoring slots (grill/review don't demand it during planning), but the `understand-before-change` policy (`@Implementation`, severity `block`) **requires it filled before `planned → active`**.
+
+> The gate is satisfied by **either** a filled `## Understanding` in PLAN.md **or** a `requests/<slug>/UNDERSTANDING.md` with the same three subheads (the VERIFY.md 2-of-N pattern). Escalate to the standalone file for a large request. There is no `ANALYSIS.md`.
+
+When the skill is about to promote a request to `active` and the section is empty, it fills it by interviewing: *how does the touched system work today / what does this change / what does it deliberately leave alone?* See [policy-injection.md](policy-injection.md).
+
 ## Mini-refine patterns
 
 | Pattern | Slots scope | Trigger | Proposed action |

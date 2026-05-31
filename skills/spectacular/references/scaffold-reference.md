@@ -91,6 +91,27 @@ Default principles (Spectacular-aligned, customize per project):
 7. Three layers: intent → execution → validation
 8. Humans decide, agents propose
 
+### POLICY.md
+```md
+---
+version: 1.0
+updated: <today>
+summary: "Operating policies — the practice layer paired with PRINCIPLES.md"
+---
+
+# <Project> — Operating Policies
+
+## @<Hook>
+
+### <verb>-<noun>
+- principle: <N>        # optional — the PRINCIPLES.md § it enforces
+- severity: <block|warn>
+- check: <condition that must hold>
+<prose: rationale + the instruction the skill follows when injected>
+```
+
+**Always-set** (every `spectacular init`) — the practice layer. Ships 8 prefilled policies (4 block / 4 warn) filed under the 8 work-phase hooks. Severity is opt-in to blocking: a policy blocks only if it explicitly says `severity: block`. Full spec: [policies-contract.md](policies-contract.md). Hooks (locked 8): `@Init @Planning @Implementation @Verification @Archive @Remember @Snapshot @SessionEnd`.
+
 ### ARCHITECTURE.md
 ```md
 ---

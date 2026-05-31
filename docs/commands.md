@@ -209,6 +209,20 @@ Canonical files: `PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `ST
 
 Promotes an idea file into a full request and moves the original to `.spectacular/archive/ideas/`.
 
+### `spectacular policy [@hook | <id> | --principle N | --json]` *(v1.12.0+)*
+
+Reads the merged **policy contract** — `POLICY.md` (the always-set practice layer) with any `config.yaml` `policies:` overrides applied. The skill calls `spectacular policy @<hook>` on entering a work phase to retrieve only that phase's rules (progressive disclosure).
+
+```text
+spectacular policy                 # all policies, grouped by hook (skim)
+spectacular policy @Verification   # one hook's policies + linked principle lines
+spectacular policy understand-before-change   # one policy, full text + its principle
+spectacular policy --principle 7   # reverse: which policies enforce principle 7
+spectacular policy --json          # machine form (skill-consumed)
+```
+
+Hooks (the locked 8): `@Init`, `@Planning`, `@Implementation`, `@Verification`, `@Archive`, `@Remember`, `@Snapshot`, `@SessionEnd`. A policy blocks a transition only if it declares `severity: block`; `warn` and unset are surface-and-continue. `spectacular promote` prints an advisory at the spine transitions, and `spectacular doctor policies` reports structural + `## Understanding`-gate findings. See [policies-contract](../skills/spectacular/references/policies-contract.md) for the schema.
+
 ### `/spectacular doctor [<area>] [--fix]`
 
 Skill side of the doctor command. Reads the CLI's JSON report and walks each judgment-requiring finding interactively (per-finding `y/n/q`). Snapshots canonical docs before any edit.

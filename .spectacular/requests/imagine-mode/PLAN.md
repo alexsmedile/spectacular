@@ -18,6 +18,8 @@ target_version: v1.15.0
 
 > ✅ **Blocking questions resolved 2026-06-02** (Q1 mode, Q2 layout, Q3 handoff, Q4 approval — see § Open questions). The `## Understanding` slot is filled; the `understand-before-change` gate is satisfied. Remaining open items (Q5/Q6 PRD overlap, Q8 ASCII palette) are v2/M3 and do **not** block `active`.
 
+> 🔍 **Shipped as PREVIEW (2026-06-02, untagged).** The feature is functionally complete (M1–M6 done, dogfooded) and committed/pushed to `main`, but **not released** — no version bump, no tag. It rides to a real release in **v1.15.0** alongside [[visual-layer]]. Until then it's usable on `main` as a preview. Focus moved to v1.13.0 [[cross-request-links]].
+
 ## 1. Goal
 
 Add `/spectacular imagine <slug>` — a generative, imagination-backed planning mode that renders artifacts a vision-driven human can see and react to (UI fragments, flow walk, user stories, architecture sketches), then **derives a draft PLAN from the approved vision**. This expands Spectacular's thesis from *spec-driven* to *spec-driven **and** imagination-backed*: specs become accountable to what the human approved, not authored in a vacuum.
@@ -59,7 +61,7 @@ PLAN keeps sole ownership of lifecycle state. PRD/SPEC remain the canonical conv
 - **M3 — Generative render engine.** The skill imagines + renders the spine (end-goal, macro dev phases, flow walk) + ≥1 fragment of each kind (story, ui, arch) in ASCII. Leads with proposed artifacts.
 - **M4 — React-on-parts loop.** Per-fragment approval (`approved: true|false|pending` frontmatter); the human approves/redirects/rejects individual fragments; engine regenerates only what's redirected.
 - **M5 — Build derivation.** From the approved vision, `imagine` drafts/refines `PLAN.md` (stories→goals, flow→milestone arc, fragments→acceptance surfaces), then hands off to PLAN grill/review. Pre-fills `## Understanding` from the vision.
-- **M6 — Dogfood + ship.** Run `imagine` on a real request in this repo; CHANGELOG entry; plugin bump to v1.15.0.
+- **M6 — Dogfood + ship.** Run `imagine` on a real request in this repo; CHANGELOG entry; plugin bump to v1.15.0. **Co-ships with [[visual-layer]] in v1.15.0** — both are the ASCII-rendering milestone (imagine renders UI/arch fragments; visual-layer renders progress/summary/roadmap). They share the `ascii-render` substrate.
 
 ## 4. Tasks
 
@@ -104,4 +106,4 @@ See `TASKS.md`.
 5. **PRD overlap (v2 gate)** — at the project altitude, is `vision` a *pre-PRD* doc or a *feedback layer on a PRD draft*? PRD already has a Vision slot. **Must resolve before the v2 project altitude** — not blocking v1 (which is request-only). *Still open — v2.*
 6. **PRD positioning copy (v2)** — the thesis shift means `.spectacular/PRD.md`'s Vision section should eventually claim "spec-driven **and** imagination-backed." Follow-up, not v1. *Still open — v2.*
 7. **Derivation trust** — gate on the *derived* PLAN = the existing PLAN grill/review (draft never auto-accepted). **Settled by Q3** — confirm in practice at M5.
-8. **ASCII palette** — ship a `templates/vision/` palette (box-drawing chars, screen-frame convention) for render consistency, or improvise? Leaning ship-a-palette. Decide at M3 (not blocking `active`). *Still open — M3.*
+8. ~~**ASCII palette**~~ **RESOLVED 2026-06-02 (M3) → ship a light convention** in [[imagine]] (box-drawing frames, `───►` flow, `[ x ]`/`‹ x ›` markers, ≤64-char width). Readability over strict grammar. Templates already carry box-drawing scaffolds.

@@ -65,6 +65,10 @@ spectacular/
 
 | Slug | Status | Target | Summary |
 |---|---|---|---|
+| `imagine-mode` | active | v1.15.0 | Imagination-backed planning — `/spectacular imagine` renders ASCII artifacts (UI/flow/stories/arch), reacts per-fragment, derives a draft PLAN. Co-ships with `visual-layer`. M1–M6 done; only the release step remains |
+| `visual-layer` | planned | v1.15.0 | ASCII rendering layer — progress bars, roadmap render, summary dashboard, app-UI mockups. Co-ships with `imagine-mode`; carries the folded `progress-view` vision artifacts |
+| `cross-request-links` | planned | v1.13.0 | Advisory cross-request awareness — related:/depends-on:/blocks: + inverse-link resolver + `doctor links` |
+| `cli-debt-removal` | planned | v1.14.0 | Remove long-deprecated `docs *` verbs + `--global` alias; shrink v2 to a single breaking concern |
 | `convention-pack-modules` | planned (gated) | tbd | v2 modular packs — stays planned until composition pain surfaces from v1 use |
 | `spec-refactor` | planned | v1.9.0 | Audit SPEC.md, promote 1-2 dense capabilities to `specs/<capability>/SPEC.md` |
 

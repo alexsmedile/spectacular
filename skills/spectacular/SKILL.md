@@ -127,6 +127,20 @@ Never mid-flow. Never unsolicited. Single short prompt; user accepts or declines
 
 **Auto-promotion to memory:** when a feedback resolution captures a durable preference signal ("I always want X", "Y is the right default"), the skill must explicitly confirm before writing a memory entry. No silent promotions. Sets `promoted_to:` on the feedback file.
 
+### Imagine mode (v1.15.0+) — imagination-backed planning
+
+`imagine` is a distinct, **generative-first** mode: the skill renders see-able ASCII artifacts (user stories, UI/output mockups, architecture sketches) the human reacts to per-fragment, then **derives a draft PLAN from the approved vision**. This is Spectacular's second planning axis — spec-driven **and** imagination-backed. Unlike `grill` (which interrogates the human slot-by-slot), `imagine` leads with proposed artifacts. Full engine: [[imagine]]. Doc-type rules: [[vision-rules]].
+
+| User says / context | Route to |
+|---|---|
+| `spectacular imagine <slug>` (bare, in agent) | → `references/imagine.md` — run the render → react → derive loop |
+| `spectacular imagine <slug>` (CLI, with slug) | → CLI verb scaffolds `requests/<slug>/vision/` (mechanical), then hands to the skill |
+| `spectacular vision add <kind> <name> --slug <s>` | → CLI verb (mechanical fragment mutator); see [[vision-rules]] |
+| `spectacular vision grill\|refine\|review` | → generic engine via [[vision-rules]] (manual spine authoring — rare; `imagine` is the default) |
+| `spectacular doctor vision` | → `references/doctor.md` (vision area) |
+
+**Scope (v1):** request-level only, **Build-only** derivation (vision → draft PLAN). Compare/reconcile (diff an existing spec against a vision) and the project altitude (`imagine` near PRD) are v2. The derived PLAN is always a **draft** — it flows into the existing PLAN grill/review gate; never auto-accepted.
+
 ### Pack-specific aliases (convenience over `spectacular convention-pack <verb>`)
 
 Packs use a short alias and add a `new <name>` verb (since packs are user-scope, identified by name, not project-singleton):

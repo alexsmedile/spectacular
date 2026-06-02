@@ -72,7 +72,7 @@ updated: YYYY-MM-DD
 
 ## The `imagine` mode
 
-A **distinct mode** (resolved Q1), registered in the doc-index mode taxonomy. It is *not* a `grill` variant: grill **interrogates** the human slot-by-slot; `imagine` **generates** artifacts first, then derives a spec. Two behavioral differences grill-loop doesn't have.
+A **distinct mode** (resolved Q1), registered in the doc-index mode taxonomy. It is *not* a `grill` variant: grill **interrogates** the human slot-by-slot; `imagine` **generates** artifacts first, then derives a spec. Two behavioral differences grill-loop doesn't have. **The full engine — render → react → derive, plus the ASCII palette — lives in [[imagine]].**
 
 **The loop:**
 

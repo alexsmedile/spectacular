@@ -197,14 +197,14 @@ Spectacular sheds its accumulated deprecation debt — the `docs *` verbs (extra
 
 ---
 
-## v1.15.0 — Visual layer (ASCII rendering)
+## v1.15.0 — Visual layer + Imagine mode (ASCII rendering)
 
 **Tier:** full
 **Status:** planned
-**Phase:** intent
+**Phase:** build (imagine-mode active; visual-layer planned)
 
 **Outcome:**
-Spectacular's read surfaces stop rendering as flat text and gain a scannable visual layer — progress bars, a roadmap render, a summary dashboard, and ASCII mockup blocks for app-UI requests — so a human (or agent) understands workspace state at a glance instead of parsing `M1 — …: 0/5` lines. The data already exists (`progress`, `summary`, the milestone parser); this is a **rendering layer** over it, not a new subsystem.
+Spectacular's read surfaces stop rendering as flat text and gain a scannable visual layer — progress bars, a roadmap render, a summary dashboard, and ASCII mockup blocks for app-UI requests — so a human (or agent) understands workspace state at a glance instead of parsing `M1 — …: 0/5` lines. **Paired in the same release: `imagine` mode** — imagination-backed planning that *renders* see-able ASCII artifacts (UI/flow/stories/arch) the human reacts to, then derives a draft PLAN. Both are the ASCII-rendering milestone and share the rendering substrate; the data already exists (`progress`, `summary`, the milestone parser) — this is a **rendering + generation layer** over it, not a new subsystem.
 
 **Themes:**
 - Shared `ascii-render` helper (bars `███░░ 60%`, box-drawing, alignment) — one helper, reused by every surface
@@ -223,10 +223,12 @@ Spectacular's read surfaces stop rendering as flat text and gain a scannable vis
 - `ascii-render` helper shipped + unit-tested (bar math, width clamping, NO_COLOR)
 - `progress`, `summary`, `roadmap` render visually; `--format json` unchanged; piped/non-TTY degrades cleanly
 - App-UI mockup block documented with 1+ example in a real request
+- **imagine mode:** `spectacular imagine <slug>` renders a `vision/` soft-folder + derives a draft PLAN; `doctor vision` clean; dogfooded on a real request
 - `docs/` page for the visual conventions; CHANGELOG entry; plugin bump to v1.15.0
 
 **Linked requests:**
-<!-- autopopulated -->
+- visual-layer (planned, high) — progress/summary/roadmap renders + app-UI mockups
+- imagine-mode (active, high) — imagination-backed planning; renders ASCII fragments, derives PLAN
 
 ---
 

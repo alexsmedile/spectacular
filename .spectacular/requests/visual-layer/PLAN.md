@@ -42,6 +42,8 @@ See `TASKS.md`.
 - Builds on shipped read verbs (`progress`, `summary`) + the milestone parser + the structured ROADMAP — all already in place.
 - Enables the deferred "visual link-graph render" in [[cross-request-links]] (v2 task there).
 - Independent of [[verify-walk]] and [[cli-debt-removal]]; orderable freely on the runway.
+- **Co-ships with [[imagine-mode]] in v1.15.0** — both are the ASCII-rendering milestone; share the `ascii-render` helper.
+- **Planning input:** `vision/` holds an imagined spec for the workspace-wide `spectacular progress` (no-slug) render — folded in from the retired `progress-view` dogfood. See `vision/ui/dashboard.md` + `vision/ui/stalled-filter.md`.
 
 ## 6. Validation
 
@@ -49,7 +51,7 @@ See `TASKS.md`.
 - M2 — `progress` and `summary` render bars on a TTY; `--format json` output is byte-identical to today; piped text is plain.
 - M3 — `spectacular roadmap` renders the version arc with correct tiers; degrades to plain text non-TTY.
 - M4 — A real request's PLAN/SPEC carries a rendered app-UI mockup block; the format is documented.
-- M5 — `docs/` visual-conventions page ships; manifests at v1.14.0.
+- M5 — `docs/` visual-conventions page ships; manifests at v1.15.0.
 
 ## 7. Deliverables
 
@@ -57,4 +59,5 @@ See `TASKS.md`.
 - Visual `progress`, `summary`, and `roadmap` renders (text default; json untouched)
 - Documented app-UI mockup block format + 1 example in a real request
 - `docs/<visual-conventions>.md` page (registered in `docs.yaml`)
-- CHANGELOG [1.14.0] entry
+- CHANGELOG [1.15.0] entry
+- `vision/` workspace-progress artifacts (folded from `progress-view`) as a concrete render spec for the `progress` theme

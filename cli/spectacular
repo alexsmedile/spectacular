@@ -2046,16 +2046,14 @@ _vision_iter_fragments() {
   done
 }
 
-# Regenerate the spine VISION.md ## Manifest section from fragment files.
-# Rewrites only the manifest block (everything from '## Manifest' to EOF).
-_regen_vision_manifest() {
+# Emit the manifest body lines for a vision/ folder (one per fragment, current
+# state). Shared by _regen_vision_manifest (writer) and check_vision (drift).
+_vision_manifest_lines() {
   local vdir="$1"
-  local spine="$vdir/VISION.md"
-  [[ -f "$spine" ]] || return 0
-
-  local lines="" f kind caption approved subdir
+  local f kind caption approved subdir any=false
   while IFS= read -r f; do
     [[ -z "$f" ]] && continue
+    any=true
     kind=$(fm_get "$f" "kind")
     caption=$(fm_get "$f" "caption")
     approved=$(fm_get "$f" "approved")
@@ -2063,12 +2061,17 @@ _regen_vision_manifest() {
     [[ -z "$kind" ]] && kind="?"
     [[ -z "$caption" ]] && caption="$(basename "$f" .md)"
     [[ -z "$approved" ]] && approved="pending"
-    lines="${lines}- \`[$kind]\` $caption — **$approved** (\`$subdir/$(basename "$f")\`)
-"
+    printf -- '- `[%s]` %s — **%s** (`%s/%s`)\n' "$kind" "$caption" "$approved" "$subdir" "$(basename "$f")"
   done < <(_vision_iter_fragments "$vdir")
+  $any || printf -- '_No fragments yet. Add one with `spectacular vision add <story|ui|arch> <name>`._\n'
+}
 
-  [[ -z "$lines" ]] && lines="_No fragments yet. Add one with \`spectacular vision add <story|ui|arch> <name>\`._
-"
+# Regenerate the spine VISION.md ## Manifest section from fragment files.
+# Rewrites only the manifest block (everything from '## Manifest' to EOF).
+_regen_vision_manifest() {
+  local vdir="$1"
+  local spine="$vdir/VISION.md"
+  [[ -f "$spine" ]] || return 0
 
   # Replace everything from the '## Manifest' heading onward.
   local head
@@ -2076,7 +2079,7 @@ _regen_vision_manifest() {
   {
     printf '%s\n' "$head"
     printf '## Manifest\n\n'
-    printf '%s' "$lines"
+    _vision_manifest_lines "$vdir"
   } > "$spine"
 }
 
@@ -2166,8 +2169,13 @@ cmd_vision_add() {
   local kind="" name="" slug="" caption=""
   while (( $# > 0 )); do
     case "$1" in
-      --slug)    require_value "--slug"    "${2:-}"; slug="$2"; shift 2 ;;
-      --caption) require_value "--caption" "${2:-}"; caption="$2"; shift 2 ;;
+      --slug)      require_value "--slug" "${2:-}"; slug="$2"; shift 2 ;;
+      --slug=*)    slug="${1#--slug=}"; shift ;;
+      # --caption may be free text that legitimately starts with '-' (e.g. a flag
+      # name mentioned in the caption). Accept the attached --caption=<text> form
+      # to bypass the require_value '-*' guard; keep the spaced form for the common case.
+      --caption)   require_value "--caption" "${2:-}"; caption="$2"; shift 2 ;;
+      --caption=*) caption="${1#--caption=}"; shift ;;
       --help|-h)
         cat <<EOF
 Usage: spectacular vision add <kind> <name> [options]
@@ -2177,7 +2185,8 @@ Usage: spectacular vision add <kind> <name> [options]
 
 Options:
   --slug <slug>      Request slug (required unless cwd is inside the request)
-  --caption "<text>" One-line caption for the spine manifest (default: name)
+  --caption "<text>" One-line caption for the spine manifest (default: name).
+                     Use --caption="--foo ..." if the caption starts with a dash.
 
 Writes requests/<slug>/vision/<kind>/<name>.md with approved: pending and
 regenerates the spine manifest.
@@ -6905,16 +6914,15 @@ check_vision() {
         "add the persona to PERSONAS.md or correct the story's personas:" "judgment"
     fi
 
-    # Manifest drift: compare fragment basenames listed in the spine vs on disk.
+    # Manifest drift: compare the live manifest body to a freshly-computed one.
+    # This catches missing/extra fragments AND stale approved-state/captions — the
+    # manifest's whole job is to mirror current fragment state.
     if [[ -f "$vdir/VISION.md" && $frag_count -gt 0 ]]; then
-      local missing_from_manifest=""
-      while IFS= read -r f; do
-        [[ -z "$f" ]] && continue
-        local bn; bn=$(basename "$f")
-        grep -q "$bn" "$vdir/VISION.md" || missing_from_manifest="${missing_from_manifest:+$missing_from_manifest, }$bn"
-      done < <(_vision_iter_fragments "$vdir")
-      if [[ -n "$missing_from_manifest" ]]; then
-        doc_add "vision" "warning" "$vdir" "spine manifest out of date (missing: $missing_from_manifest)" \
+      local live_manifest fresh_manifest
+      live_manifest=$(awk 'f{print} /^## Manifest$/{f=1}' "$vdir/VISION.md" | awk 'BEGIN{s=0}/./{s=1}s{print}')
+      fresh_manifest=$(_vision_manifest_lines "$vdir")
+      if [[ "$live_manifest" != "$fresh_manifest" ]]; then
+        doc_add "vision" "warning" "$vdir" "spine manifest out of date (fragment state changed)" \
           "regenerate the spine manifest" "mechanical"
       fi
     fi

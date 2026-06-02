@@ -1,8 +1,8 @@
 ---
-status: planned
+status: active
 priority: high
 owner: alex
-updated: 2026-05-31
+updated: 2026-06-02
 summary: "/spectacular imagine — imagination-backed planning. Skill renders artifacts (UI/flow/stories/arch) the human reacts to per-part, then derives the spec/plan to deliver the approved flow. Expands the thesis from spec-driven to spec-driven AND imagination-backed."
 related:
   - PRD.md
@@ -16,7 +16,7 @@ target_version: v1.15.0
 
 > **Promoted from idea** `ideas/explore-mode.md` (now at `archive/ideas/explore-mode.md`). The archived idea holds the full thinking (thesis §0, derivation loop §5, all 9 open questions). This PLAN carries the **narrow v1 slice**; the idea is the v2+ backlog and the rationale.
 
-> ⚠ **OPEN QUESTIONS — resolve before `planned → active`.** This request is scaffolded with the scope intentionally cut small, but several design questions are unresolved. They are listed in § Open questions below and must be settled (some at M1) before implementation. Do **not** silently pick defaults for the ones marked **[blocking]**.
+> ✅ **Blocking questions resolved 2026-06-02** (Q1 mode, Q2 layout, Q3 handoff, Q4 approval — see § Open questions). The `## Understanding` slot is filled; the `understand-before-change` gate is satisfied. Remaining open items (Q5/Q6 PRD overlap, Q8 ASCII palette) are v2/M3 and do **not** block `active`.
 
 ## 1. Goal
 
@@ -35,23 +35,26 @@ Add `/spectacular imagine <slug>` — a generative, imagination-backed planning 
 
 ## Understanding
 
-<!-- REQUIRED before planned → active by the understand-before-change policy. Filled at M1 once open questions resolve. Left as a stub deliberately — see Open questions. -->
-
 ### How it works now
 
-Spectacular is spec-driven: `idea → PRD → SPEC → PLAN → build`. The human reacts to *specification text*. There is no phase that renders see-able artifacts, and no engine that derives specs *from* an approved vision. `grill`/`refine`/`review` interrogate; nothing generates-then-reconciles.
+Spectacular is spec-driven: `idea → PRD → SPEC → PLAN → build`. The human reacts to *specification text*. There is no phase that renders see-able artifacts, and no engine that derives specs *from* an approved vision. The existing doc verbs (`grill`/`refine`/`review`) **interrogate** the human slot-by-slot; none **generate** an artifact first or reconcile a spec against it. Per-request docs today are `PLAN.md` + `TASKS.md`; soft-folder DBs (memory/sessions/ideas/feedback) already exist with `index` mode, CLI mutators, and doctor areas — the proven substrate this request reuses.
 
 ### What changes
 
-*(fill at M1 — depends on Open Q1 mode decision and Q4 handoff decision.)*
+A new **distinct `imagine` mode** (Q1) and a `vision` `index`-mode soft-folder doc-type:
+
+- `spectacular imagine <slug>` scaffolds `requests/<slug>/vision/` with **typed subfolders** `stories/` `ui/` `arch/` (Q2) + a spine `VISION.md` (narrative + regenerable manifest).
+- The skill **generates-first**: renders the spine (end-goal, macro dev phases, flow walk) + ≥1 ASCII fragment per kind, then the human **reacts per-fragment**. Approval state lives in each fragment's frontmatter as `approved: true|false|pending` (Q4).
+- `spectacular vision add <kind> <name>` mutator (kind→folder) lets a vision grow to many fragments; `doctor vision` validates frontmatter + manifest-vs-files drift + dangling persona refs + approval sanity.
+- At the end, `imagine` **auto-offers `→ plan`**: derives a draft `PLAN.md` from the approved vision (stories→goals, flow→milestones, fragments→acceptance) and **pre-fills `## Understanding`** from the vision spine (Q3). The draft is never auto-accepted — it flows into the existing PLAN grill/review gate (Q7).
 
 ### What stays the same
 
-PLAN keeps sole ownership of lifecycle state. PRD/SPEC remain the canonical convergent docs. The soft-folder substrate, frontmatter-as-signal, and snapshot conventions are unchanged. `imagine` is **optional** — small/obvious requests skip it.
+PLAN keeps sole ownership of lifecycle state. PRD/SPEC remain the canonical convergent docs — untouched in v1 (the PRD-positioning rewrite is v2, Q6). The soft-folder substrate, frontmatter-as-signal, snapshot conventions, and the mechanical(CLI)/agentic(skill) split are unchanged. **v1 derivation is Build-only** — Compare/reconcile (diffing an *existing* spec against a vision) and the **project altitude** are deferred to v2. `imagine` is **optional** — small/obvious requests skip straight to PLAN.
 
 ## 3. Milestones
 
-- **M1 — Resolve open questions + write the contract.** Settle the blocking open questions (mode, subfolder-vs-flat, handoff); document the `vision` doc-type in a `vision-rules.md` ref + doc-index entry + ARCHITECTURE. Fill the Understanding slot. *(Gate: no code until this lands.)*
+- **M1 — Write the contract.** (Blocking questions resolved 2026-06-02; Understanding filled.) Document the `vision` doc-type: `vision-rules.md` ref (frontmatter, slots, fragment kinds, `imagine` mode behavior) + doc-index entry + ARCHITECTURE section + register `imagine` in the mode taxonomy.
 - **M2 — `vision/` soft-folder substrate.** `spectacular imagine <slug>` scaffolds `requests/<slug>/vision/` (spine `VISION.md` + `stories/` + `ui/` + `arch/`). CLI mutators add fragments (`vision add <kind> <name>`). Index/manifest regenerable. `doctor vision` area.
 - **M3 — Generative render engine.** The skill imagines + renders the spine (end-goal, macro dev phases, flow walk) + ≥1 fragment of each kind (story, ui, arch) in ASCII. Leads with proposed artifacts.
 - **M4 — React-on-parts loop.** Per-fragment approval (`approved: true|false|pending` frontmatter); the human approves/redirects/rejects individual fragments; engine regenerates only what's redirected.
@@ -92,13 +95,13 @@ See `TASKS.md`.
 
 ## Open questions
 
-> **Signalled per request.** Settle the `[blocking]` ones at M1 before any code. Full discussion lives in `archive/ideas/explore-mode.md` §8.
+> **Signalled per request.** The three `[blocking]` ones + Q4 were **resolved 2026-06-02** (see below). Full original discussion lives in `archive/ideas/explore-mode.md` §8.
 
-1. **[blocking] Mode** — distinct `imagine` mode vs reuse `grill-loop`? Leaning **distinct** (generative-first + derivation are real behavioral differences from grill). Decide before M3.
-2. **[blocking] Fragment layout** — typed *subfolders* (`stories/` `ui/` `arch/`) vs a flat `fragments/` folder typed by `kind:` frontmatter. User leaned subfolders; confirm before M2 (drives the mutator signature).
-3. **[blocking] vision → PLAN handoff** — does `imagine` auto-offer `→ plan` at the end? Does Build derivation pre-fill PLAN `## Understanding`? Decide before M5 (currently assumed yes to both).
-4. **Approval substrate** — does per-fragment `approved:` state live in fragment frontmatter, or as `feedback/` entries (reusing [[feedback-loop]])? Affects M4.
-5. **PRD overlap (v2 gate)** — at the project altitude, is `vision` a *pre-PRD* doc or a *feedback layer on a PRD draft*? PRD already has a Vision slot. **Must resolve before the v2 project altitude** — not blocking v1 (which is request-only).
-6. **PRD positioning copy (v2)** — the thesis shift means `.spectacular/PRD.md`'s Vision section should eventually claim "spec-driven **and** imagination-backed." Does v1 touch PRD positioning, or is it a follow-up? Leaning follow-up.
-7. **Derivation trust** — where is the gate on the *derived* PLAN? Assumed: the existing PLAN grill/review (draft is never auto-accepted). Confirm at M5.
-8. **ASCII palette** — ship a `templates/vision/` palette (box-drawing chars, screen-frame convention) for render consistency, or let the engine improvise? Leaning ship-a-palette. Decide at M1/M3.
+1. ~~**[blocking] Mode**~~ **RESOLVED 2026-06-02 → distinct `imagine` mode.** grill interrogates slot-by-slot; `imagine` leads with rendered artifacts (generative-first) then derives a spec — two behavioral differences grill-loop doesn't have. New mode in the taxonomy.
+2. ~~**[blocking] Fragment layout**~~ **RESOLVED 2026-06-02 → typed subfolders** `vision/stories/` `vision/ui/` `vision/arch/`. Kind = location. Mutator `vision add <kind> <name>` maps kind→folder; the spine manifest groups by folder.
+3. ~~**[blocking] vision → PLAN handoff**~~ **RESOLVED 2026-06-02 → auto-offer `→ plan` AND pre-fill `## Understanding`** from the vision spine. Closes the imagination-backed loop. Derived PLAN is a draft — still goes through PLAN grill/review (never auto-accepted).
+4. ~~**Approval substrate**~~ **RESOLVED 2026-06-02 → fragment frontmatter** `approved: true|false|pending`. Self-contained, travels with the fragment, simple for derivation to read; doctor sanity-checks it. (Not reusing `feedback/` entries in v1 — avoids cross-referencing two locations.)
+5. **PRD overlap (v2 gate)** — at the project altitude, is `vision` a *pre-PRD* doc or a *feedback layer on a PRD draft*? PRD already has a Vision slot. **Must resolve before the v2 project altitude** — not blocking v1 (which is request-only). *Still open — v2.*
+6. **PRD positioning copy (v2)** — the thesis shift means `.spectacular/PRD.md`'s Vision section should eventually claim "spec-driven **and** imagination-backed." Follow-up, not v1. *Still open — v2.*
+7. **Derivation trust** — gate on the *derived* PLAN = the existing PLAN grill/review (draft never auto-accepted). **Settled by Q3** — confirm in practice at M5.
+8. **ASCII palette** — ship a `templates/vision/` palette (box-drawing chars, screen-frame convention) for render consistency, or improvise? Leaning ship-a-palette. Decide at M3 (not blocking `active`). *Still open — M3.*

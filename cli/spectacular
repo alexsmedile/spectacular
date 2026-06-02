@@ -46,7 +46,7 @@ OPT_SKILL_SCOPE=""
 ALWAYS_SET="prd spec config agents policy"
 
 # Known doc IDs (kit triggers-docs entries and --with values must match these)
-KNOWN_DOCS="prd spec principles policy architecture roadmap stack decisions memory sessions agents config personas plan tasks"
+KNOWN_DOCS="prd spec principles policy architecture roadmap stack decisions memory sessions agents config personas plan tasks vision"
 
 # Bundled kits (must exist as templates/prd/kits/<id>.md in installed skill)
 KNOWN_KITS="blank coding content product research"
@@ -2027,6 +2027,210 @@ EOF
   info "  → idea archived: $archived_path"
   info "  → status: promoted"
   info "  ↳ next: cd into the request and flesh out PLAN slots"
+}
+
+# ── vision / imagine (v1.15.0+) ──────────────────────────────────────────────
+# `imagine` is the generative-first planning mode. The CLI does the MECHANICAL
+# part: scaffold the vision/ soft-folder (spine + typed subfolders) and add
+# fragment files. The skill does the AGENTIC part: render artifacts, run the
+# react-on-parts loop, derive a draft PLAN. See references/vision-rules.md.
+
+# Echo every fragment file under a request's vision/ subfolders.
+_vision_iter_fragments() {
+  local vdir="$1" kind f
+  for kind in stories ui arch; do
+    [[ -d "$vdir/$kind" ]] || continue
+    for f in "$vdir/$kind"/*.md; do
+      [[ -f "$f" ]] && echo "$f"
+    done
+  done
+}
+
+# Regenerate the spine VISION.md ## Manifest section from fragment files.
+# Rewrites only the manifest block (everything from '## Manifest' to EOF).
+_regen_vision_manifest() {
+  local vdir="$1"
+  local spine="$vdir/VISION.md"
+  [[ -f "$spine" ]] || return 0
+
+  local lines="" f kind caption approved subdir
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    kind=$(fm_get "$f" "kind")
+    caption=$(fm_get "$f" "caption")
+    approved=$(fm_get "$f" "approved")
+    subdir=$(basename "$(dirname "$f")")
+    [[ -z "$kind" ]] && kind="?"
+    [[ -z "$caption" ]] && caption="$(basename "$f" .md)"
+    [[ -z "$approved" ]] && approved="pending"
+    lines="${lines}- \`[$kind]\` $caption — **$approved** (\`$subdir/$(basename "$f")\`)
+"
+  done < <(_vision_iter_fragments "$vdir")
+
+  [[ -z "$lines" ]] && lines="_No fragments yet. Add one with \`spectacular vision add <story|ui|arch> <name>\`._
+"
+
+  # Replace everything from the '## Manifest' heading onward.
+  local head
+  head=$(awk '/^## Manifest$/{exit} {print}' "$spine")
+  {
+    printf '%s\n' "$head"
+    printf '## Manifest\n\n'
+    printf '%s' "$lines"
+  } > "$spine"
+}
+
+# `spectacular imagine <slug>` — scaffold the vision/ folder for a request.
+cmd_imagine() {
+  local slug=""
+  while (( $# > 0 )); do
+    case "$1" in
+      --help|-h)
+        cat <<EOF
+Usage: spectacular imagine <slug>
+
+Scaffold the imagination-backed planning folder for an existing request:
+
+  requests/<slug>/vision/
+  ├── VISION.md      spine — narrative slots + regenerable manifest
+  ├── stories/       one user story per file
+  ├── ui/            one ASCII UI/output mockup per file
+  └── arch/          one ASCII architecture sketch per file
+
+This is the MECHANICAL scaffold only. The generative render (imagining the
+artifacts), the react-on-parts loop, and the draft-PLAN derivation are skill
+work — run /spectacular imagine <slug> inside your AI agent.
+
+Add fragments with:  spectacular vision add <story|ui|arch> <name> --slug <slug>
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for imagine: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "imagine: only one <slug> argument allowed"
+        slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -z "$slug" ]] && die "imagine: <slug> argument required"
+  [[ -d ".spectacular" ]] || die "imagine: not inside a Spectacular workspace"
+
+  local req_dir=".spectacular/requests/$slug"
+  [[ -d "$req_dir" ]] || die "imagine: request '$slug' not found at $req_dir. Create it first with 'spectacular new $slug'."
+
+  local vdir="$req_dir/vision"
+  if [[ -d "$vdir" ]]; then
+    die "imagine: vision/ already exists at $vdir. Add fragments with 'spectacular vision add'."
+  fi
+
+  mkdir -p "$vdir/stories" "$vdir/ui" "$vdir/arch"
+
+  local template rendered spine="$vdir/VISION.md"
+  template=$(_resolve_template "vision/spine.md") || die_recover \
+    "imagine: vision spine template not found" \
+    "Create $spine by hand with a '## End goal', '## Macro dev phases'," \
+    "'## Flow walk', and '## Manifest' section."
+  rendered=$(_render_template "$template" SLUG "$slug" DATE "$TODAY")
+  echo "$rendered" > "$spine"
+
+  created "$vdir/"
+  info "  → spine: $spine"
+  info "  → fragment folders: stories/ ui/ arch/"
+  info "  ↳ generative render is skill work: /spectacular imagine $slug"
+  info "  ↳ or add a fragment manually: spectacular vision add ui <name> --slug $slug"
+}
+
+# `spectacular vision add <kind> <name> [--slug <slug>] [--caption <text>]`
+cmd_vision() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    add) cmd_vision_add "$@" ;;
+    --help|-h|"")
+      cat <<EOF
+Usage: spectacular vision <subcommand>
+
+Subcommands:
+  add <kind> <name>     Add a fragment file to a request's vision/ folder.
+                          kind = story | ui | arch  (maps to the subfolder)
+                          Options: --slug <request-slug>  --caption "<text>"
+
+The vision/ folder is created by 'spectacular imagine <slug>'. Fragments are
+ASCII artifacts the skill renders and the human reacts to (approved: frontmatter).
+See references/vision-rules.md.
+EOF
+      [[ "$sub" == "" ]] && exit 1 || exit 0 ;;
+    *) die "vision: unknown subcommand '$sub'. Use: add" ;;
+  esac
+}
+
+cmd_vision_add() {
+  local kind="" name="" slug="" caption=""
+  while (( $# > 0 )); do
+    case "$1" in
+      --slug)    require_value "--slug"    "${2:-}"; slug="$2"; shift 2 ;;
+      --caption) require_value "--caption" "${2:-}"; caption="$2"; shift 2 ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular vision add <kind> <name> [options]
+
+  <kind>             story | ui | arch  (selects the subfolder)
+  <name>             kebab-case fragment name (becomes <name>.md)
+
+Options:
+  --slug <slug>      Request slug (required unless cwd is inside the request)
+  --caption "<text>" One-line caption for the spine manifest (default: name)
+
+Writes requests/<slug>/vision/<kind>/<name>.md with approved: pending and
+regenerates the spine manifest.
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for vision add: $1" ;;
+      *)
+        if [[ -z "$kind" ]]; then kind="$1"
+        elif [[ -z "$name" ]]; then name="$1"
+        else die "vision add: unexpected argument '$1'"; fi
+        shift ;;
+    esac
+  done
+
+  [[ -z "$kind" ]] && die "vision add: <kind> required (story | ui | arch)"
+  [[ -z "$name" ]] && die "vision add: <name> required"
+  [[ -d ".spectacular" ]] || die "vision add: not inside a Spectacular workspace"
+
+  local subdir tmpl_name
+  case "$kind" in
+    story) subdir="stories"; tmpl_name="story" ;;
+    ui)    subdir="ui";      tmpl_name="ui" ;;
+    arch)  subdir="arch";    tmpl_name="arch" ;;
+    *) die "vision add: invalid kind '$kind'. Must be: story | ui | arch" ;;
+  esac
+
+  if [[ ! "$name" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]]; then
+    die "vision add: invalid name '$name'. Must be kebab-case, lowercase alnum + hyphens, max 64 chars."
+  fi
+
+  # Resolve the request slug: explicit --slug, else infer from cwd if inside a request.
+  if [[ -z "$slug" ]]; then
+    die "vision add: --slug <request-slug> required."
+  fi
+
+  local vdir=".spectacular/requests/$slug/vision"
+  [[ -d "$vdir" ]] || die "vision add: vision/ not found at $vdir. Run 'spectacular imagine $slug' first."
+
+  local frag="$vdir/$subdir/$name.md"
+  [[ -e "$frag" ]] && die "vision add: fragment already exists at $frag"
+
+  [[ -z "$caption" ]] && caption="$name"
+
+  local template rendered
+  template=$(_resolve_template "vision/$tmpl_name.md") || die "vision add: template vision/$tmpl_name.md not found"
+  rendered=$(_render_template "$template" NAME "$name" CAPTION "$caption" DATE "$TODAY")
+  echo "$rendered" > "$frag"
+
+  _regen_vision_manifest "$vdir"
+
+  created "$frag"
+  info "  → kind: $kind · approved: pending"
+  info "  → spine manifest regenerated"
 }
 
 # ── archive ──────────────────────────────────────────────────────────────────
@@ -5271,7 +5475,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas policies"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas policies vision"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -5331,7 +5535,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) require_value "--format" "${2:-}"; DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|policies)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|policies|vision)
         if [[ -z "$DOC_OPT_AREA" ]]; then
           DOC_OPT_AREA="$1"
         else
@@ -6622,6 +6826,113 @@ check_ideas() {
   fi
 }
 
+# ── check_vision (v1.15.0+) ──────────────────────────────────────────────────
+# Validates each request's vision/ soft-folder: fragment frontmatter shape,
+# kind-vs-subfolder match, dangling persona refs, manifest-vs-files drift, and
+# approval progress. Mechanical --fix: regenerate the spine manifest.
+check_vision() {
+  [[ -d ".spectacular/requests" ]] || return 0
+
+  local personas=".spectacular/PERSONAS.md"
+  local req vdir found_any=false
+  for req in .spectacular/requests/*/; do
+    vdir="${req}vision"
+    [[ -d "$vdir" ]] || continue
+    found_any=true
+    local slug; slug=$(basename "$req")
+
+    if [[ ! -f "$vdir/VISION.md" ]]; then
+      doc_add "vision" "warning" "$vdir" "vision/ has no VISION.md spine" \
+        "rerun 'spectacular imagine $slug' or create vision/VISION.md" "judgment"
+    fi
+
+    local frag_count=0 malformed="" bad_kind="" dangling="" approved_count=0
+    local f kind caption approved subdir
+    while IFS= read -r f; do
+      [[ -z "$f" ]] && continue
+      frag_count=$((frag_count + 1))
+      kind=$(fm_get "$f" "kind")
+      caption=$(fm_get "$f" "caption")
+      approved=$(fm_get "$f" "approved")
+      subdir=$(basename "$(dirname "$f")")
+
+      if [[ -z "$kind" || -z "$caption" || -z "$approved" ]]; then
+        malformed="${malformed:+$malformed, }$(basename "$f")"
+        continue
+      fi
+
+      case "$kind" in
+        story) [[ "$subdir" == "stories" ]] || bad_kind="${bad_kind:+$bad_kind, }$(basename "$f")(kind=$kind in $subdir/)" ;;
+        ui)    [[ "$subdir" == "ui" ]]      || bad_kind="${bad_kind:+$bad_kind, }$(basename "$f")(kind=$kind in $subdir/)" ;;
+        arch)  [[ "$subdir" == "arch" ]]    || bad_kind="${bad_kind:+$bad_kind, }$(basename "$f")(kind=$kind in $subdir/)" ;;
+        *)     bad_kind="${bad_kind:+$bad_kind, }$(basename "$f")(kind=$kind)" ;;
+      esac
+
+      case "$approved" in
+        true) approved_count=$((approved_count + 1)) ;;
+      esac
+
+      # Dangling persona refs (stories only)
+      if [[ "$kind" == "story" && -f "$personas" ]]; then
+        local plist; plist=$(fm_get "$f" "personas")
+        # personas is a YAML inline list like [a, b]; strip brackets and split
+        plist="${plist#[}"; plist="${plist%]}"
+        local p
+        local IFS_OLD="$IFS"; IFS=','
+        for p in $plist; do
+          p="${p#"${p%%[![:space:]]*}"}"; p="${p%"${p##*[![:space:]]}"}"
+          [[ -z "$p" ]] && continue
+          if ! grep -qi "$p" "$personas"; then
+            dangling="${dangling:+$dangling, }$(basename "$f")→$p"
+          fi
+        done
+        IFS="$IFS_OLD"
+      fi
+    done < <(_vision_iter_fragments "$vdir")
+
+    doc_add "vision" "pass" "$vdir" "$frag_count fragment(s), $approved_count approved [$slug]"
+
+    if [[ -n "$malformed" ]]; then
+      doc_add "vision" "warning" "$vdir" "fragments missing kind/caption/approved: $malformed" \
+        "fill the required frontmatter; see references/vision-rules.md" "judgment"
+    fi
+    if [[ -n "$bad_kind" ]]; then
+      doc_add "vision" "warning" "$vdir" "kind does not match subfolder: $bad_kind" \
+        "move the file to the matching subfolder, or fix its kind:" "judgment"
+    fi
+    if [[ -n "$dangling" ]]; then
+      doc_add "vision" "warning" "$vdir" "story personas not found in PERSONAS.md: $dangling" \
+        "add the persona to PERSONAS.md or correct the story's personas:" "judgment"
+    fi
+
+    # Manifest drift: compare fragment basenames listed in the spine vs on disk.
+    if [[ -f "$vdir/VISION.md" && $frag_count -gt 0 ]]; then
+      local missing_from_manifest=""
+      while IFS= read -r f; do
+        [[ -z "$f" ]] && continue
+        local bn; bn=$(basename "$f")
+        grep -q "$bn" "$vdir/VISION.md" || missing_from_manifest="${missing_from_manifest:+$missing_from_manifest, }$bn"
+      done < <(_vision_iter_fragments "$vdir")
+      if [[ -n "$missing_from_manifest" ]]; then
+        doc_add "vision" "warning" "$vdir" "spine manifest out of date (missing: $missing_from_manifest)" \
+          "regenerate the spine manifest" "mechanical"
+      fi
+    fi
+
+    # Approval progress: active request but nothing reacted-to yet.
+    local req_status; req_status=$(fm_get "${req}PLAN.md" "status")
+    if [[ "$req_status" == "active" && $frag_count -gt 0 && $approved_count -eq 0 ]]; then
+      doc_add "vision" "info" "$vdir" "request active but no fragment approved yet — vision not reacted-to" \
+        "skip" "judgment"
+    fi
+  done
+
+  if ! $found_any; then
+    doc_add "vision" "info" ".spectacular/requests/" "no vision/ folders — opt-in via 'spectacular imagine <slug>'" \
+      "skip" "judgment"
+  fi
+}
+
 # ── check_policies (v1.12.0+) ────────────────────────────────────────────────
 # Mechanical self-check of the practice layer: POLICY.md present + well-formed
 # (every policy block has a check; severities are block|warn; hooks are from the
@@ -6759,6 +7070,7 @@ run_areas() {
       feedback)    check_feedback ;;
       ideas)       check_ideas ;;
       policies)    check_policies ;;
+      vision)      check_vision ;;
       *)           die "Unknown doctor area: '$area'" ;;
     esac
   done
@@ -6877,6 +7189,17 @@ doctor_apply_mechanical_fixes() {
           echo "  ✓ fixed [conventions]: appended $entry to .gitignore"
           applied=$((applied + 1))
         fi
+      fi
+      continue
+    fi
+
+    # Vision spine manifest drift (from check_vision)
+    if [[ "$area" == "vision" && "$msg" == *"spine manifest out of date"* ]]; then
+      # $file is the vision/ dir
+      if [[ -d "$file" ]]; then
+        _regen_vision_manifest "$file"
+        echo "  ✓ fixed [vision]: regenerated spine manifest in $file"
+        applied=$((applied + 1))
       fi
       continue
     fi
@@ -8110,6 +8433,22 @@ main() {
     # Idea (v1.7.0+): thinking scratchpad.
     idea)
       shift; cmd_idea "$@"; exit $? ;;
+    # Imagine / vision (v1.15.0+): imagination-backed planning.
+    # `imagine <slug>` scaffolds the vision/ folder (mechanical), then the skill
+    # renders + derives. Bare `imagine` (no slug) is a skill verb. `vision add`
+    # is the mechanical fragment mutator.
+    imagine)
+      shift
+      if [[ $# -eq 0 ]]; then
+        skill_verb_message "imagine" \
+          "Imagination-backed planning — render ASCII artifacts (stories/ui/arch), react per-fragment, then derive a draft PLAN. Generative-first; needs an LLM." \
+          "$@"
+      else
+        cmd_imagine "$@"; exit $?
+      fi
+      ;;
+    vision)
+      shift; cmd_vision "$@"; exit $? ;;
     # Read verbs (v1.8.0+): plural-noun = list, singular-noun = detail.
     requests)   shift; cmd_requests "$@";   exit $? ;;
     decisions)  shift; cmd_decisions "$@";  exit $? ;;

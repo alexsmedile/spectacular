@@ -248,6 +248,11 @@ requests/add-team-billing/
 ├── SESSION.md          # created when request moves to active
 ├── RISKS.md            # proposed by skill for high-risk requests
 ├── VERIFY.md           # proposed by skill for user-visible or high-stakes changes
+├── vision/             # imagination-backed planning artifact (v1.15.0+; created by `spectacular imagine`, not `new`)
+│   ├── VISION.md       #   spine — narrative + regenerable fragment manifest
+│   ├── stories/        #   one user story per file
+│   ├── ui/             #   one ASCII UI/output mockup per file
+│   └── arch/           #   one ASCII architecture sketch per file
 ├── feedback/           # request-scoped feedback-loop entries (v1.6.0+; see references/feedback-loop.md)
 ├── specs/              # per-request capability specs (track own frontmatter state)
 └── artifacts/
@@ -341,6 +346,28 @@ Distinct from PLAN.md and TASKS.md:
 - VERIFY.md answers "did we build it correctly and safely, with risk-aware coverage?"
 
 Contains (when scaffolded): step-by-step manual QA checklist, specific edge cases, regression checklist, rollback validation.
+
+## vision/ (on demand — imagination-backed planning, v1.15.0+)
+
+**On-demand only.** Created by `spectacular imagine <slug>`, never by `spectacular new`. A `vision/` folder is the **divergent** counterpart to PLAN's convergence: where PLAN decomposes a *decided* thing into milestones, a vision **imagines the built thing concretely** — renders see-able ASCII artifacts the human reacts to *before* milestones exist.
+
+This is Spectacular's second planning axis: spec-driven **and imagination-backed**. The `imagine` mode renders artifacts, the human reacts per-fragment, and the skill **derives a draft PLAN from the approved vision** — so the spec is accountable to what the human approved, not authored in a vacuum. Full rules: [`references/vision-rules.md`](../../skills/spectacular/references/vision-rules.md).
+
+**Structure — spine + typed subfolders** (an `index`-mode soft-folder, like memory/sessions/ideas, but the index is a narrative *spine*):
+
+```
+vision/
+├── VISION.md      # spine — end-goal, macro dev phases, flow walk + regenerable manifest
+├── stories/       # one user story per file (As a … I want … so that …)
+├── ui/            # one ASCII UI/output mockup per file
+└── arch/          # one ASCII architecture sketch per file
+```
+
+Fragment kind = subfolder (no `kind:`-based routing). Each fragment carries `approved: pending|true|false` frontmatter — the per-fragment human reaction. The derivation step reads only `approved: true` fragments as load-bearing.
+
+**Lifecycle fit:** `idea/brief → imagine → vision/ + draft PLAN → PLAN (grill/review) → active`. The `vision/` folder becomes **read-only context** once PLAN exists (it explains *why behind the shape*); it never owns lifecycle state. `snapshot-on-edit: false` — fragments are scratch-that-graduates.
+
+**v1 scope:** request-level only, Build-only derivation. Compare/reconcile (diff an existing spec against a vision) and the project altitude (`imagine` near PRD) are deferred to v2 — the latter gated on the PRD-Vision-slot overlap.
 
 ---
 

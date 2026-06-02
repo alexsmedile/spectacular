@@ -1,6 +1,6 @@
 ---
-status: planned
-updated: 2026-05-31
+status: active
+updated: 2026-06-02
 related:
   - PLAN.md
 ---
@@ -9,21 +9,24 @@ related:
 
 ## v1
 
-### M1 — Resolve open questions + contract
-- [ ] Settle [blocking] Q1 (mode: distinct `imagine` vs `grill-loop`)
-- [ ] Settle [blocking] Q2 (typed subfolders vs flat `fragments/` + `kind:`)
-- [ ] Settle [blocking] Q3 (vision → PLAN handoff + Understanding pre-fill)
-- [ ] Write `vision-rules.md` (frontmatter, slots, fragment kinds, mode)
-- [ ] Add `vision` row to `doc-index.md`
-- [ ] Add ARCHITECTURE.md section: `vision/` substrate + imagination-backed thesis
-- [ ] Fill PLAN `## Understanding` once decisions land
+### M1 — Contract
+- [x] Settle [blocking] Q1 (mode → distinct `imagine`)
+- [x] Settle [blocking] Q2 (layout → typed subfolders)
+- [x] Settle [blocking] Q3 (handoff → auto-offer + Understanding pre-fill)
+- [x] Settle Q4 (approval → fragment frontmatter)
+- [x] Fill PLAN `## Understanding`
+- [x] Write `vision-rules.md` (frontmatter, slots, fragment kinds, `imagine` mode)
+- [x] Add `vision` row to `doc-index.md`
+- [x] Register `imagine` in the mode taxonomy
+- [x] Add ARCHITECTURE.md section: `vision/` substrate + imagination-backed thesis
 
-### M2 — vision/ soft-folder substrate
-- [ ] `spectacular imagine <slug>` scaffolds `requests/<slug>/vision/` (spine + subfolders)
-- [ ] `spectacular vision add <kind> <name>` mutator writes a fragment file
-- [ ] Spine `VISION.md` manifest regenerates from fragment files (index mode)
-- [ ] `templates/vision/` — spine + per-kind fragment scaffolds
-- [ ] `doctor vision` area: fragment frontmatter + manifest-vs-files drift + dangling persona refs
+### M2 — vision/ soft-folder substrate ✅ (2026-06-02)
+- [x] `spectacular imagine <slug>` scaffolds `requests/<slug>/vision/` (spine + subfolders)
+- [x] `spectacular vision add <kind> <name>` mutator writes a fragment file
+- [x] Spine `VISION.md` manifest regenerates from fragment files (index mode)
+- [x] `templates/vision/` — spine + per-kind fragment scaffolds
+- [x] `doctor vision` area: fragment frontmatter + kind/subfolder match + manifest drift (+`--fix`) + dangling persona refs + approval progress
+- [x] Registered: KNOWN_DOCS, DOC_AREAS, run_areas, doctor_parse_args, router (`imagine`/`vision`)
 
 ### M3 — generative render engine
 - [ ] `imagine` mode behavior (skill ref) — leads with proposed artifacts

@@ -1,6 +1,6 @@
 ---
-status: planned
-updated: 2026-05-29
+status: active
+updated: 2026-06-02
 related:
   - PLAN.md
 ---
@@ -14,13 +14,16 @@ related:
 - [ ] Specify the computed-not-stored inverse rule
 
 ### M2 — Inverse-link resolver
-- [ ] Scan all PLAN frontmatter, build the relationship graph
-- [ ] Derive `blocked-by` from `blocks` at read time (never write to target)
+- [ ] Scan all PLAN frontmatter, build the relationship graph (helper: `_links_graph`)
+- [ ] Derive `blocked-by` from `blocks`, `required-by` from `depends-on` at read time (never write to target)
+- [ ] New `spectacular links [<slug>] [--json]` verb — whole-graph dump or per-request
+- [ ] Surface inverse links in `spectacular request <slug>` detail
 
-### M3 — doctor links area
-- [ ] Validate link integrity across requests + archive
+### M3 — doctor links extension + path fix
+- [ ] **Root-aware path resolution** — slugs → requests/ then archive/; root-doc names → .spectacular/ (kills 7 false `related:` warnings)
+- [ ] Validate `depends-on`/`blocks` targets across requests + archive
 - [ ] Flag dangling references (missing/archived slugs) as warnings
-- [ ] Side-rider (FEEDBACKS.md 🟢): `doctor memory` staleness flag — age-check mirroring sessions/feedback/ideas convention (pick threshold; memory is less time-sensitive so lean conservative)
+- [ ] Side-rider (FEEDBACKS.md 🟢): `doctor memory` staleness flag — age-check mirroring sessions/feedback/ideas convention (lean conservative — memory less time-sensitive)
 
 ### M4 — status + new surfaces
 - [ ] `spectacular status` advisory: related active requests

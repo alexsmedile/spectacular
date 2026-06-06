@@ -1,8 +1,8 @@
 ---
-status: planned
+status: active
 priority: medium
 owner: alex
-updated: 2026-05-29
+updated: 2026-06-02
 summary: "Advisory cross-request awareness — related:/depends-on:/blocks: in PLAN frontmatter, inverse-link resolver, doctor links area; carries a doctor-memory staleness side-rider from FEEDBACKS.md"
 related:
   - PRD.md
@@ -24,12 +24,40 @@ Let a request declare its relationships to other requests (`related:` / `depends
 - **Dangling references are surfaced, not fatal.** A link to a non-existent/archived slug is a doctor warning, not an error.
 - **Reuses the existing `related:` convention.** `depends-on:` / `blocks:` are additive siblings to the `related:` field already in every PLAN.
 
+## Understanding
+
+### How it works now
+
+Every PLAN.md frontmatter already carries `related: [list of slugs/paths]` — a flat, one-directional list with no semantics (it doesn't distinguish "touches" from "depends on" from "blocks") and no inverse resolution (A listing B tells you nothing when you're reading B). `doctor links` already exists and validates that `related:` targets resolve — that's the hook this request extends. There is no `status`-surface awareness of inter-request relationships; an agent picking up a request can't see what else in flight touches it without reading every other PLAN. `fm_get`/`fm_get_list` read frontmatter; the read verbs (`requests`, `request <slug>`) render per-request views.
+
+### What changes
+
+- **Frontmatter schema** gains two additive sibling fields to `related:` — `depends-on:` and `blocks:` (lists of request slugs). Documented in ARCHITECTURE.md.
+- **An inverse-link resolver** computes the bidirectional graph at read time: `blocks: [B]` on A means B is `blocked-by: A` — *computed, never written to B*. Same for `depends-on:` ↔ `required-by:`.
+- **`doctor links`** extends to validate the new fields + flag dangling references to missing/archived slugs (warning, not error). Side-rider: add a staleness flag to `doctor memory` (age-check floor, mirroring sessions/feedback/ideas).
+- **`spectacular status`** gains an advisory line when active requests are related; **`spectacular new`** prompts to declare relationships on slug-keyword match.
+
+### What stays the same
+
+**Advisory only** — no locking, no blocking, no auto-coordination; conflict resolution stays human. The single source of truth is each request's own forward declaration; inverse links are *derived*, never stored (no write-back to other files). `related:` keeps working unchanged — the new fields are additive. Dangling refs stay non-fatal. No change to lifecycle state ownership (PLAN frontmatter) or any existing verb's output shape (advisory lines are additive; `--format json` unaffected).
+
+## Design decisions (2026-06-02)
+
+- **Inverse labels:** `blocks:` ↔ `blocked-by:`, `depends-on:` ↔ `required-by:` (computed, never stored).
+- **Path-resolution fix (folded into M3):** the existing `check_links` resolves `related:` targets relative to each file's *own* dir — the real cause of the 7 recurring `related: PRD.md` false warnings (it looks for `requests/<slug>/PRD.md`). Fix: root-aware resolution — bare slugs → `requests/` (then `archive/`); root-doc names (`PRD.md`, `ARCHITECTURE.md`, `ROADMAP.md`, …) → `.spectacular/`. Needed anyway for slug-based `depends-on`/`blocks`.
+- **M4 data flow:** `status` is a *skill* verb. CLI computes the graph (mechanical), skill renders the advisory (agentic). The new `spectacular links` verb is the data source.
+- **Surfaces (3):** inverse links visible in (1) `spectacular request <slug>` detail, (2) `doctor links`, (3) a new dedicated `spectacular links [--json]` verb (whole-graph dump).
+- **Archived dependencies = satisfied:** a `depends-on:` pointing at an *archived* request resolves as met — show `depends-on: X ✓ (shipped)`, not a dangling warning. Only a slug matching *nothing* (active or archived) is dangling.
+- **`doctor memory` staleness threshold = 180 days** — memory holds durable facts; the gradient is sessions 4h < feedback 30d < ideas 90d < **memory 180d**. Conservative nudge, not a nag.
+- **`spectacular links` (no slug) default = only requests WITH edges** (the actual graph); `--all` includes unlinked requests.
+- **Scope:** all 5 milestones ship in v1.13.0.
+
 ## 3. Milestones
 
-- M1 — Frontmatter schema extension: `depends-on:` / `blocks:` documented in ARCHITECTURE.md alongside existing `related:`.
-- M2 — Inverse-link resolver: given all PLAN frontmatter, compute the bidirectional graph (`blocks` ↔ `blocked-by`) at read time.
-- M3 — `doctor links` area: validates link integrity, flags dangling references to missing/archived slugs. **Side-rider (from FEEDBACKS.md 🟢):** add a staleness flag to `doctor memory` — mirror the existing `sessions`/`feedback`/`ideas` convention. Naive age-check is the v1 floor; the valuable contradiction-check (a memory referencing a blocker a later session/decision overturns) is deferred to v2.
-- M4 — `status` advisory surface: `spectacular status` shows "⚠ active request `<slug>` is related to active request `<other>`"; `spectacular new` prompts to declare relationships when slug keywords match existing requests.
+- M1 — Frontmatter schema extension: `depends-on:` / `blocks:` documented in ARCHITECTURE.md alongside existing `related:` (+ inverse-label table, computed-not-stored rule).
+- M2 — Inverse-link resolver (CLI, mechanical): given all PLAN frontmatter, compute the bidirectional graph at read time. Surface in `spectacular request <slug>` detail **and** a new `spectacular links [--json]` verb (whole-graph dump).
+- M3 — `doctor links` extension: validate the new fields + flag dangling refs to missing/archived slugs. **Fold in the path-resolution fix** (root-aware target resolution — kills the 7 false `related:` warnings). **Side-rider (FEEDBACKS.md 🟢):** add a staleness flag to `doctor memory` (age-check floor, mirroring sessions/feedback/ideas; contradiction-check deferred to v2).
+- M4 — `status` advisory surface: CLI `links` emits the data; skill `status.md` renders "⚠ active request `<slug>` is related to active `<other>`"; `spectacular new` prompts to declare relationships when slug keywords match existing requests.
 - M5 — Examples + ship: 2 example projects demonstrate the link graph; CHANGELOG entry; plugin bump to v1.13.0.
 
 ## 4. Tasks
@@ -52,9 +80,12 @@ See `TASKS.md`.
 
 ## 7. Deliverables
 
-- ARCHITECTURE.md frontmatter-schema extension (`depends-on:` / `blocks:`)
+- ARCHITECTURE.md frontmatter-schema extension (`depends-on:` / `blocks:` + inverse-label table)
 - Inverse-link resolver (CLI, mechanical)
-- `doctor links` area (validate + flag dangling)
-- `spectacular status` advisory line + `spectacular new` relationship prompt
+- New `spectacular links [<slug>] [--json]` read verb (whole-graph or per-request)
+- Inverse links surfaced in `spectacular request <slug>` detail
+- `doctor links` extension (new fields + dangling) **+ root-aware path-resolution fix** (kills 7 false `related:` warnings)
+- `doctor memory` staleness flag (side-rider)
+- `spectacular status` advisory line (CLI data → skill render) + `spectacular new` relationship prompt
 - 2 example link-graph demonstrations
 - CHANGELOG [1.13.0] entry

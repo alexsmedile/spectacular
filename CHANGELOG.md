@@ -7,6 +7,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.15.0] — 2026-06-07
+
+### Added
+
+- **Visual layer — ASCII rendering (`_ascii_bar`, `_ascii_box`, `_ascii_color_enabled`).** A shared rendering helper layer in the CLI: `_ascii_bar <done> <total> [<width>]` fills `█░` (TTY/color) or `#.` (plain) with a percentage; `_ascii_box <title> [lines...]` draws a left-border box. Both degrade cleanly via `NO_COLOR=1` or non-TTY stdout (no escape codes, no block characters, no color). One helper reused by every visual surface — no per-command bespoke rendering.
+- **Visual `progress <slug>` render.** Milestone bars with percentage and done/total count; a roll-up overall bar at the bottom. Completed milestones show `✓`; `--format json` output is byte-identical to v1.14.x.
+- **Visual `summary` dashboard.** Request-state counts (planned/active/review/verified) rendered as proportional mini bars (width 10). Zero-count states are omitted. `--json` unchanged.
+- **`spectacular roadmap` CLI verb.** Renders `ROADMAP.md` as a version arc grouped by tier (`full` → Runway · `themed` → Major · `vision` → Vision). Status indicators: `✓` shipped · `▶` active · `·` planned. Shipped versions hidden by default; `--all` includes them. `--json` emits an array of `{version, title, tier, status}` objects.
+- **ASCII app-UI mockup block format.** Documented convention for dropping a renderable mockup into a request `PLAN.md` or `SPEC.md`: fenced code block with language tag `mockup`, ≤ 64-char lines, `[square brackets]` for actions, `[____]` for input fields. Used by the skill during `imagine` to propose UI artifacts for human approval. Full spec: `docs/visual-conventions.md`.
+- **`docs/visual-conventions.md`.** Public-facing doc covering: bar fill conventions (block vs plain), summary dashboard layout, roadmap arc tier legend, and the mockup block format with a real example. Registered in `docs/docs.yaml`.
+- **`_progress_text` / `_progress_json` milestone-header fix.** Both helpers now match `### M` (H3) in addition to `## M` (H2) — all real TASKS.md files use H3 milestone headers; the old `## M` pattern silently produced empty output for every request.
+
+### Imagine mode (v1.15.0 co-ship)
+
+- **`/spectacular imagine <slug>` — imagination-backed planning.** Generative-first mode: renders see-able ASCII artifacts (user stories, UI mockups, architecture sketches) the human reacts to per-fragment, then derives a draft PLAN from the approved vision. Expands Spectacular's thesis from spec-driven to *spec-driven AND imagination-backed*. Full engine: `references/imagine.md`.
+- **`vision/` soft-folder substrate.** `requests/<slug>/vision/` holds a `VISION.md` spine + typed subfolders (`stories/`, `ui/`, `arch/`). `spectacular imagine <slug>` scaffolds it; `spectacular vision add <kind> <name>` is the mechanical fragment mutator. Manifest regenerates from fragment files.
+- **`doctor vision` area.** Fragment frontmatter check + kind/subfolder match + manifest drift (with `--fix`) + dangling persona refs + approval progress.
+- **`references/imagine.md`.** Full render→react→derive loop spec: generative rendering (step 1), per-fragment approve/redirect/reject (step 2), approved vision → draft PLAN derivation (step 3). Draft never auto-accepted — hands off to PLAN grill/review.
+- **`references/vision-rules.md`.** Doc-type rules for `vision`: frontmatter schema, fragment kinds, `imagine` dispatch mode, spine/subfolder structure.
+
 ## [1.12.2] — 2026-05-31
 
 ### Added

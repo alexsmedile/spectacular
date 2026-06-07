@@ -54,7 +54,7 @@ related:
 - [x] Run `imagine` on a real in-repo request end-to-end (`progress-view`; vision + 4 fragments, all approved)
 - [x] Dogfood found + fixed 2 bugs: `--caption=` for dash-leading values; manifest drift now catches approval-state (feedback/2026-06-02-dogfood-progress-view, resolved)
 - [x] Test suite green for new verbs + doctor area (9/9)
-- [ ] CHANGELOG [1.15.0] entry; plugin bump to v1.15.0  ← remaining: the release step
+- [x] CHANGELOG [1.15.0] entry; plugin bump to v1.15.0
 
 ## v2 (deferred — see archive/ideas/explore-mode.md)
 

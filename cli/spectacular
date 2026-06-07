@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.12.2"
+SPECTACULAR_VERSION="1.15.0"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -3001,24 +3001,107 @@ EOF
   fi
 }
 
+# ── ascii-render helpers (v1.15.0+) ──────────────────────────────────────────
+# Shared rendering primitives used by progress, summary, roadmap, and any
+# future surface that needs a visual layer. All functions degrade cleanly:
+# - _ascii_color_enabled: returns 0 (true) only when stdout is a TTY and
+#   NO_COLOR is unset/empty. Call once and branch; never inline the test.
+# - _ascii_bar: renders a filled/empty bar + percentage, NO_COLOR-aware.
+# - _ascii_box: wraps lines in a light box, NO_COLOR-aware (plain lines fallback).
+
+_ascii_color_enabled() {
+  [[ -z "${NO_COLOR:-}" ]] && [[ -t 1 ]]
+}
+
+# _ascii_bar <done> <total> [<width>]
+# Prints "███░░░ 60%"  (block chars on TTY/color) or "[###...] 60%" (plain).
+# Width defaults to 20 fill chars. Clamps done to [0,total].
+_ascii_bar() {
+  local done="$1" total="$2" width="${3:-20}"
+  (( done < 0 ))     && done=0
+  (( done > total )) && done=$total
+  local pct=0
+  (( total > 0 )) && pct=$(( done * 100 / total ))
+  local filled=$(( total > 0 ? done * width / total : 0 ))
+  local empty=$(( width - filled ))
+  if _ascii_color_enabled; then
+    local bar=""
+    local i
+    for (( i=0; i<filled; i++ )); do bar+="█"; done
+    for (( i=0; i<empty;  i++ )); do bar+="░"; done
+    printf "%s %d%%" "$bar" "$pct"
+  else
+    local bar="["
+    local i
+    for (( i=0; i<filled; i++ )); do bar+="#"; done
+    for (( i=0; i<empty;  i++ )); do bar+="."; done
+    bar+="]"
+    printf "%s %d%%" "$bar" "$pct"
+  fi
+}
+
+# _ascii_box <title> [line...]
+# Prints a left-border box: ┌─ title / │ line / └─
+# Falls back to plain "=== title / line / ===" when color disabled.
+_ascii_box() {
+  local title="$1"; shift
+  if _ascii_color_enabled; then
+    echo "┌─ $title"
+    while (( $# > 0 )); do echo "│ $1"; shift; done
+    echo "└─"
+  else
+    echo "=== $title ==="
+    while (( $# > 0 )); do echo "  $1"; shift; done
+    echo "==="
+  fi
+}
+
 # ── cmd_progress (TASKS milestone tick rate) ─────────────────────────────────
 _progress_text() {
   local tasks="$1"
   [[ -f "$tasks" ]] || { echo "(TASKS.md not found)"; return 1; }
-  awk '
-    /^## M[0-9]+/ {
-      if (milestone != "") print milestone ": " done "/" (done+todo) (todo==0 ? " ✓" : "")
+
+  # Parse milestones into parallel arrays via awk, then render with _ascii_bar.
+  local -a names dones totals
+  while IFS='|' read -r name done total; do
+    names+=("$name")
+    dones+=("$done")
+    totals+=("$total")
+  done < <(awk '
+    /^#{2,3} M[0-9]+/ {
+      if (milestone != "") printf "%s|%d|%d\n", milestone, done, (done+todo)
       milestone = $0
-      sub(/^## /, "", milestone)
+      sub(/^#{2,3} /, "", milestone)
       done = 0; todo = 0
       next
     }
     /^- \[x\]/ { done++ }
     /^- \[ \]/ { todo++ }
     END {
-      if (milestone != "") print milestone ": " done "/" (done+todo) (todo==0 ? " ✓" : "")
+      if (milestone != "") printf "%s|%d|%d\n", milestone, done, (done+todo)
     }
-  ' "$tasks"
+  ' "$tasks")
+
+  local total_done=0 total_items=0
+  local i
+  for (( i=0; i<${#names[@]}; i++ )); do
+    total_done=$(( total_done + dones[i] ))
+    total_items=$(( total_items + totals[i] ))
+    local bar
+    bar=$(_ascii_bar "${dones[$i]}" "${totals[$i]}" 16)
+    if (( totals[i] > 0 && dones[i] == totals[i] )); then
+      printf "  %-38s %s ✓\n" "${names[$i]}" "$bar"
+    else
+      printf "  %-38s %s  %d/%d\n" "${names[$i]}" "$bar" "${dones[$i]}" "${totals[$i]}"
+    fi
+  done
+
+  if (( ${#names[@]} > 1 )); then
+    echo ""
+    local rollup
+    rollup=$(_ascii_bar "$total_done" "$total_items" 20)
+    printf "  %-38s %s\n" "overall" "$rollup"
+  fi
 }
 
 _progress_json() {
@@ -3026,14 +3109,14 @@ _progress_json() {
   [[ -f "$tasks" ]] || { echo "null"; return 1; }
   awk '
     BEGIN { printf "[" }
-    /^## M[0-9]+/ {
+    /^#{2,3} M[0-9]+/ {
       if (milestone != "") {
         if (started) printf ","
         printf "{\"milestone\":\"%s\",\"done\":%d,\"total\":%d}", milestone, done, (done+todo)
         started = 1
       }
       milestone = $0
-      sub(/^## /, "", milestone)
+      sub(/^#{2,3} /, "", milestone)
       gsub(/"/, "\\\"", milestone)
       done = 0; todo = 0
       next
@@ -3232,21 +3315,147 @@ EOF
 
   echo "── Spectacular Workspace Summary ──"
   echo ""
-  echo "Project:    $project"
+  printf "Project:    %s\n" "$project"
   echo ""
-  echo "Requests:   $total_requests total"
-  printf "            %d planned · %d active · %d review · %d verified\n" "$planned" "$active" "$review" "$verified"
+
+  if (( total_requests > 0 )); then
+    printf "Requests:   %d total\n" "$total_requests"
+    # Status breakdown with mini bars (width=10, proportional to total)
+    local statuses=("planned" "active" "review" "verified")
+    local counts=("$planned" "$active" "$review" "$verified")
+    local s c bar
+    for (( i=0; i<4; i++ )); do
+      s="${statuses[$i]}"
+      c="${counts[$i]}"
+      (( c == 0 )) && continue
+      bar=$(_ascii_bar "$c" "$total_requests" 10)
+      printf "            %-10s %s  %d\n" "$s" "$bar" "$c"
+    done
+  else
+    echo "Requests:   0"
+  fi
   echo ""
-  echo "Decisions:  $total_decisions"
-  echo "Memories:   $total_memories"
-  echo "Sessions:   $total_sessions ($open_sessions open)"
-  echo "Ideas:      $total_ideas"
-  echo "Feedback:   $total_feedback"
+  printf "Decisions:  %d\n" "$total_decisions"
+  printf "Memories:   %d\n" "$total_memories"
+  printf "Sessions:   %d (%d open)\n" "$total_sessions" "$open_sessions"
+  printf "Ideas:      %d\n" "$total_ideas"
+  printf "Feedback:   %d\n" "$total_feedback"
   echo ""
   if (( active > 0 )); then
     echo "Active requests:"
     spectacular_self_active_requests=true cmd_requests --active --limit 5 2>/dev/null | tail -n +3 | sed 's/^/  /'
   fi
+}
+
+# ── cmd_roadmap (v1.15.0+) ────────────────────────────────────────────────────
+# Renders the ROADMAP.md as a version arc with tier-aware visual formatting.
+# Tier legend: full = current/near-term detail, themed = mid-term, vision = future.
+# Non-TTY / NO_COLOR: degrades to plain text (no box chars, no color logic).
+cmd_roadmap() {
+  local json=false all=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --json)    json=true;  shift ;;
+      --all)     all=true;   shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular roadmap [--all] [--json]
+
+Render the ROADMAP.md as a version arc — runway (near-term), major (breaking),
+and vision (future-direction) tiers shown with aligned status indicators.
+
+  --all   include shipped versions (default: only planned/active)
+  --json  machine-readable: array of {version,title,tier,status} objects
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for roadmap: $1" ;;
+      *) die "roadmap: unexpected argument '$1'" ;;
+    esac
+  done
+
+  local roadmap=".spectacular/ROADMAP.md"
+  [[ -f "$roadmap" ]] || die "roadmap: ROADMAP.md not found at $roadmap"
+
+  # Parse version blocks via awk → emit TSV: version|title|tier|status
+  local -a versions titles tiers statuses
+  while IFS='|' read -r ver title tier status; do
+    versions+=("$ver")
+    titles+=("$title")
+    tiers+=("$tier")
+    statuses+=("$status")
+  done < <(awk '
+    /^## v[0-9]/ {
+      if (ver != "") printf "%s|%s|%s|%s\n", ver, title, tier, status
+      ver = $0; sub(/^## /, "", ver)
+      # split "v1.15.0 — Some title" into ver and title
+      if (ver ~ / — /) {
+        title = ver; sub(/^[^ ]+ — /, "", title)
+        ver = ver; sub(/ — .*/, "", ver)
+      } else {
+        title = ""
+      }
+      tier = ""; status = ""
+      next
+    }
+    /^\*\*Tier:\*\*/ { tier = $0; sub(/^\*\*Tier:\*\* */, "", tier); gsub(/ .*/, "", tier) }
+    /^\*\*Status:\*\*/ { status = $0; sub(/^\*\*Status:\*\* */, "", status); sub(/ .*/, "", status) }
+    END { if (ver != "") printf "%s|%s|%s|%s\n", ver, title, tier, status }
+  ' "$roadmap")
+
+  if $json; then
+    printf "["
+    local first=true i
+    for (( i=0; i<${#versions[@]}; i++ )); do
+      $all || [[ "${statuses[$i]}" != "shipped" ]] || continue
+      $first && first=false || printf ","
+      printf '{"version":"%s","title":"%s","tier":"%s","status":"%s"}' \
+        "${versions[$i]}" "${titles[$i]}" "${tiers[$i]}" "${statuses[$i]}"
+    done
+    printf "]\n"
+    return 0
+  fi
+
+  # Text render
+  if _ascii_color_enabled; then
+    echo "── Roadmap ──────────────────────────────────────────────────────"
+  else
+    echo "── Roadmap ──"
+  fi
+  echo ""
+
+  local cur_tier="" i
+  for (( i=0; i<${#versions[@]}; i++ )); do
+    local status="${statuses[$i]}"
+    $all || [[ "$status" != "shipped" ]] || continue
+
+    local tier="${tiers[$i]}"
+    # Tier header when transitioning
+    if [[ "$tier" != "$cur_tier" ]]; then
+      [[ -n "$cur_tier" ]] && echo ""
+      case "$tier" in
+        full)    echo "  ── Runway (near-term) ──" ;;
+        themed)  echo "  ── Major (mid-term) ──" ;;
+        vision)  echo "  ── Vision (future) ──" ;;
+        *)       echo "  ── $tier ──" ;;
+      esac
+      cur_tier="$tier"
+    fi
+
+    # Status indicator
+    local indicator
+    case "$status" in
+      shipped)  indicator="✓" ;;
+      active)   indicator="▶" ;;
+      planned)  indicator="·" ;;
+      *)        indicator="?" ;;
+    esac
+
+    local title="${titles[$i]}"
+    # Clamp title to 44 chars to keep alignment
+    if (( ${#title} > 44 )); then title="${title:0:43}…"; fi
+    printf "  %s  %-12s  %s\n" "$indicator" "${versions[$i]}" "$title"
+  done
+  echo ""
 }
 
 # `spectacular archive <slug> [--force]`
@@ -8468,6 +8677,7 @@ main() {
     show)       shift; cmd_show "$@";       exit $? ;;
     summary)    shift; cmd_summary "$@";    exit $? ;;
     progress)   shift; cmd_progress "$@";   exit $? ;;
+    roadmap)    shift; cmd_roadmap "$@";    exit $? ;;
     paths)      shift; cmd_paths "$@";      exit $? ;;
     # Policy (v1.12.0+): read the merged policy contract. CLI-mechanical
     # retrieval — the skill calls `policy @<hook>` on entering a phase.

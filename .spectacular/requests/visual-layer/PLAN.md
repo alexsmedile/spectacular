@@ -1,8 +1,8 @@
 ---
-status: planned
+status: verified
 priority: high
 owner: alex
-updated: 2026-05-29
+updated: 2026-06-07
 summary: "ASCII rendering layer — progress bars, roadmap render, summary dashboard, app-UI mockup blocks; shared ascii-render helper, --format/NO_COLOR aware"
 related:
   - PRD.md

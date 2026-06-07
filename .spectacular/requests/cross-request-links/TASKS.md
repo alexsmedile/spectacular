@@ -31,7 +31,7 @@ related:
 
 ### M5 — Examples + ship
 - [ ] 2 example projects demonstrating the link graph
-- [ ] CHANGELOG [1.13.0] entry; plugin bump to v1.13.0
+- [ ] CHANGELOG [1.16.0] entry; plugin bump to v1.16.0
 
 ## v2 (deferred)
 

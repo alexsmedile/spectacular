@@ -29,7 +29,7 @@ related:
 - [ ] Confirm `doctor docs` (discovery-only) still passes
 
 ### M5 — Ship
-- [ ] CHANGELOG [1.14.0] Removed entry; plugin bump to v1.14.0
+- [ ] CHANGELOG [1.17.0] Removed entry; plugin bump to v1.17.0
 
 ## v2 (deferred)
 

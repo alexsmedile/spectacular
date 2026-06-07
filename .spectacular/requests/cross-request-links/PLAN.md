@@ -8,7 +8,7 @@ related:
   - PRD.md
   - ../../ARCHITECTURE.md
   - ../../ROADMAP.md
-target_version: v1.13.0
+target_version: v1.16.0
 ---
 
 # Plan — cross-request-links
@@ -58,7 +58,7 @@ Every PLAN.md frontmatter already carries `related: [list of slugs/paths]` — a
 - M2 — Inverse-link resolver (CLI, mechanical): given all PLAN frontmatter, compute the bidirectional graph at read time. Surface in `spectacular request <slug>` detail **and** a new `spectacular links [--json]` verb (whole-graph dump).
 - M3 — `doctor links` extension: validate the new fields + flag dangling refs to missing/archived slugs. **Fold in the path-resolution fix** (root-aware target resolution — kills the 7 false `related:` warnings). **Side-rider (FEEDBACKS.md 🟢):** add a staleness flag to `doctor memory` (age-check floor, mirroring sessions/feedback/ideas; contradiction-check deferred to v2).
 - M4 — `status` advisory surface: CLI `links` emits the data; skill `status.md` renders "⚠ active request `<slug>` is related to active `<other>`"; `spectacular new` prompts to declare relationships when slug keywords match existing requests.
-- M5 — Examples + ship: 2 example projects demonstrate the link graph; CHANGELOG entry; plugin bump to v1.13.0.
+- M5 — Examples + ship: 2 example projects demonstrate the link graph; CHANGELOG entry; plugin bump to v1.16.0.
 
 ## 4. Tasks
 

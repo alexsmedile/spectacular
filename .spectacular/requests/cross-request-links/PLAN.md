@@ -50,7 +50,7 @@ Every PLAN.md frontmatter already carries `related: [list of slugs/paths]` — a
 - **Archived dependencies = satisfied:** a `depends-on:` pointing at an *archived* request resolves as met — show `depends-on: X ✓ (shipped)`, not a dangling warning. Only a slug matching *nothing* (active or archived) is dangling.
 - **`doctor memory` staleness threshold = 180 days** — memory holds durable facts; the gradient is sessions 4h < feedback 30d < ideas 90d < **memory 180d**. Conservative nudge, not a nag.
 - **`spectacular links` (no slug) default = only requests WITH edges** (the actual graph); `--all` includes unlinked requests.
-- **Scope:** all 5 milestones ship in v1.13.0.
+- **Scope:** all 5 milestones ship in the target release (see frontmatter `target_version`).
 
 ## 3. Milestones
 
@@ -76,7 +76,7 @@ See `TASKS.md`.
 - M2 — A fixture where A `blocks` B resolves to B showing `blocked-by: A` without B's file being edited.
 - M3 — `doctor links` flags a deliberately-dangling reference; passes clean on valid links. `doctor memory` flags a deliberately-aged entry; quiet on fresh entries.
 - M4 — Two related active requests trigger the `status` advisory; `new` on a keyword-matching slug prompts for relationships.
-- M5 — Example projects render a correct link graph; manifests at v1.13.0.
+- M5 — Example projects render a correct link graph; manifests at target release.
 
 ## 7. Deliverables
 

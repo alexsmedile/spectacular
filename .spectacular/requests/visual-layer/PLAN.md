@@ -31,7 +31,7 @@ Give Spectacular's read surfaces a scannable visual layer — progress bars, a r
 - M2 — Data-backed renders: `spectacular progress <slug>` → milestone bars + roll-up %; `spectacular summary` → dashboard with request-state bars + substrate counts. `--format json` unchanged.
 - M3 — Roadmap render: `spectacular roadmap` → version arc / timeline view (runway → major → vision), tier-aware.
 - M4 — App-UI mockup blocks: a documented ASCII layout-block format the skill can drop into a request's PLAN/SPEC to sketch a UI (rendered, not just described); pairs with the AskUserQuestion preview pattern; 1+ real example.
-- M5 — Docs + ship: `docs/` page for the visual conventions; CHANGELOG entry; plugin bump to v1.14.0.
+- M5 — Docs + ship: `docs/` page for the visual conventions; CHANGELOG entry; plugin bump to target release.
 
 ## 4. Tasks
 

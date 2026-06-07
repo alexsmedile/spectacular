@@ -1,39 +1,46 @@
 ---
-status: planned
-updated: 2026-05-30
+status: active
+updated: 2026-06-07
 related:
   - PLAN.md
 ---
 
 # Tasks — roadmap-ledger
 
-## M1 — Ledger schema
-- [ ] Define the single table: `seq | slug | title | tier | planned-target | status`
-- [ ] Decide: stable `seq` vs row-position for ordering
-- [ ] Decide ledger location (top of ROADMAP.md)
-- [ ] Document the rule: version is derived from the ledger, never hand-written elsewhere
+## v1
 
-## M2 — De-duplicate references
-- [ ] Convert ROADMAP prose + dep chains to slug/label refs (no absolute `v1.x`)
-- [ ] Demote/remove `target_version:` from request PLAN frontmatter (source → derived/advisory)
-- [ ] Verify: version mentions outside the ledger table drop to ~0
+### M1 — Ledger schema
+- [ ] Define ledger table: `build | slug | title | tier | target-version | status`
+- [ ] Ledger lives at the top of ROADMAP.md (above first version block)
+- [ ] `spectacular new` stamps `build: bN` on new requests; increments `last_build:` in `config.yaml`
+- [ ] Document the rule in ARCHITECTURE.md: version is derived from ledger, never hand-written in prose
 
-## M3 — Insert/reorder is one edit
-- [ ] Fixture: insert a request = one ledger row + re-render, zero prose touched
-- [ ] Document the before/after vs the policy-engine reslot (~14 refs → 1 row)
+### M2 — Remove target_version, add build id
+- [ ] Remove `target_version:` from all active + planned request PLAN frontmatters
+- [ ] Add `build: bN` to each (assign sequential ids to existing requests)
+- [ ] Update `scaffold-reference.md` + PLAN template: `build:` in, `target_version:` out
+- [ ] Update `spectacular new` to write `build: bN` instead of `target_version:`
+- [ ] Update `plan-rules.md`: prose must not repeat version numbers; version lives in ledger only
 
-## M4 — Render + check
-- [ ] Roadmap render reads per-version view from the ledger (coordinate with visual-layer)
-- [ ] `doctor` flags any hardcoded version reference outside the ledger
+### M3 — De-duplicate ROADMAP prose
+- [ ] Convert ROADMAP block headings + dep chain prose to slug/label refs (no `v1.x` outside ledger)
+- [ ] Verify: `grep -c "v1\.[0-9]" ROADMAP.md` outside the ledger table is ~0
 
-## M5 — Migrate + ship
-- [ ] Convert live ROADMAP.md to ledger-driven
+### M4 — Insert/reorder is one edit
+- [ ] Demonstrate: inserting a fixture request = one ledger row, zero prose touched
+- [ ] Document before/after vs the policy-engine reslot (~14 refs → 1 row)
+
+### M5 — Render + doctor check
+- [ ] `spectacular roadmap` reads version blocks from the ledger (extend existing render)
+- [ ] `doctor links` (from cross-request-links) flags stray hardcoded version refs outside the ledger
+
+### M6 — Migrate + ship
+- [ ] Convert live ROADMAP.md to ledger-driven (ledger table + slug refs in prose)
 - [ ] Dogfood: reslot a real request, confirm one-row edit
-- [ ] CHANGELOG entry; plugin bump
+- [ ] Coordinate final migration with cross-request-links M5 (both ship as v1.16.0)
+- [ ] CHANGELOG entry; plugin bump to target release
 
-## Resolve before building (from PLAN open questions)
-- [ ] Stable id: sequence number vs slug-only
-- [ ] target_version: leave frontmatter entirely vs read-only mirror
-- [ ] Merge with cross-request-links vs separate adjacent requests
-- [ ] Buffer/gap representation in a position-derived scheme
-- [ ] Include shipped history in the ledger, or planned-only
+## v2 (deferred)
+
+- [ ] `target_version` computed field readable via `spectacular request <slug>` (reverse-lookup ledger)
+- [ ] `spectacular new` UI shows the assigned build id + projected version at creation

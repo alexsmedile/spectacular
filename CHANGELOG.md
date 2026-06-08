@@ -7,6 +7,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.16.0] — 2026-06-08
+
+### Added
+
+- **Cross-request link schema (`depends-on:` / `blocks:` in PLAN frontmatter).** Two additive sibling fields to `related:` — `depends-on: [slug]` (A cannot ship before B) and `blocks: [slug]` (A must ship before B can proceed). Documented in ARCHITECTURE.md alongside the inverse-label table and computed-not-stored rule. Advisory only — no locking, no auto-blocking.
+- **Inverse-link resolver.** At read time, the CLI computes the bidirectional graph from all forward declarations: `blocks: [B]` on A surfaces as `blocked-by: A` on B; `depends-on: [B]` surfaces as `required-by: A` on B. Inverses are never written to disk — single source of truth stays the declaring request.
+- **`spectacular links [<slug>] [--json] [--all]`** — new read verb. Shows the whole-graph dump (default: only requests with edges; `--all` includes unlinked). Per-request view with `<slug>`. `--json` emits `{graph: [{slug, depends_on, blocks, related, required_by, blocked_by}]}`.
+- **`spectacular request <slug>` gains a Links section.** When a request has any declared or computed edges, they appear below the progress bars in the detail view.
+- **`spectacular summary` link advisory.** When active requests have declared edges, a compact "Active links:" section surfaces ordering dependencies at a glance (advisory, non-blocking).
+- **`spectacular new` relationship prompt.** After scaffolding a new request, if existing active/planned requests share keyword overlap with the new slug, a hint to declare `depends-on:`/`blocks:`/`related:` is printed.
+- **`doctor links` root-aware path resolution.** `related:` targets that are bare root-doc filenames (`PRD.md`, `ARCHITECTURE.md`, `ROADMAP.md`, etc.) now resolve against `.spectacular/` rather than the declaring file's own directory — eliminating 7 false "not found" warnings for canonical doc references.
+- **`doctor links` validates `depends-on:` and `blocks:`.** Slug targets are checked against `requests/` and `archive/`; archived = satisfied (shows `✓ (shipped)`); unknown slug = warning. All three link fields validated in one pass.
+- **`doctor memory` staleness flag.** Memory entries older than 180 days trigger a warning to review and prune — conservative nudge, not a nag. Gradient: sessions 4h < feedback 30d < ideas 90d < memory 180d.
+- **Example link graphs in `tests/cli/links.test.sh`.** Two example scenarios: (A) `depends-on` + inverse `required-by`; (B) `blocks` + `blocked-by` + archived dep resolved as satisfied + dangling slug flagged by `doctor links`.
+
 ## [1.15.0] — 2026-06-07
 
 ### Added

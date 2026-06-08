@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.15.0"
+SPECTACULAR_VERSION="1.16.0"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -2853,6 +2853,400 @@ EOF
     echo "Progress:"
     _progress_text "$tasks" | sed 's/^/  /'
   fi
+
+  # Show cross-request links if any declared or computed
+  local _dep _blk _rel _req_by _blk_by
+  _dep=$(awk '
+    /^---$/ { fm++; if (fm > 1) exit; next }
+    fm == 1 && found && /^[a-zA-Z]/ { exit }
+    fm == 1 && found && /^[[:space:]]*-[[:space:]]+/ {
+      val = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", val)
+      gsub(/^"|"$/, "", val); gsub(/[[:space:]]+$/, "", val)
+      if (val != "") print val
+    }
+    fm == 1 && /^depends-on:/ { found=1 }
+  ' "$plan")
+  _blk=$(awk '
+    /^---$/ { fm++; if (fm > 1) exit; next }
+    fm == 1 && found && /^[a-zA-Z]/ { exit }
+    fm == 1 && found && /^[[:space:]]*-[[:space:]]+/ {
+      val = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", val)
+      gsub(/^"|"$/, "", val); gsub(/[[:space:]]+$/, "", val)
+      if (val != "") print val
+    }
+    fm == 1 && /^blocks:/ { found=1 }
+  ' "$plan")
+  # Filter related: to slug-only entries (no '/' or '.md') — file refs are
+  # for human navigation, not the link graph.
+  local _rel_raw
+  _rel_raw=$(awk '
+    /^---$/ { fm++; if (fm > 1) exit; next }
+    fm == 1 && found && /^[a-zA-Z]/ { exit }
+    fm == 1 && found && /^[[:space:]]*-[[:space:]]+/ {
+      val = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", val)
+      gsub(/^"|"$/, "", val); gsub(/[[:space:]]+$/, "", val)
+      if (val != "") print val
+    }
+    fm == 1 && /^related:/ { found=1 }
+  ' "$plan")
+  _rel=""
+  if [[ -n "$_rel_raw" ]]; then
+    while IFS= read -r _rr; do
+      [[ "$_rr" == */* ]] && continue
+      [[ "$_rr" == *.md ]] && continue
+      _rel="${_rel:+$_rel$'\n'}$_rr"
+    done <<< "$_rel_raw"
+  fi
+
+  # Compute inverses by scanning all other active requests
+  _req_by=""
+  _blk_by=""
+  if [[ -d ".spectacular/requests" ]]; then
+    shopt -s nullglob
+    for _other_plan in .spectacular/requests/*/PLAN.md; do
+      local _other_slug
+      _other_slug=$(basename "$(dirname "$_other_plan")")
+      [[ "$_other_slug" == "$slug" ]] && continue
+      # Check if other blocks us (→ we are blocked-by other)
+      local _other_blocks
+      _other_blocks=$(awk '
+        /^---$/ { fm++; if (fm > 1) exit; next }
+        fm == 1 && found && /^[a-zA-Z]/ { exit }
+        fm == 1 && found && /^[[:space:]]*-[[:space:]]+/ {
+          val = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", val)
+          gsub(/^"|"$/, "", val); gsub(/[[:space:]]+$/, "", val)
+          if (val != "") print val
+        }
+        fm == 1 && /^blocks:/ { found=1 }
+      ' "$_other_plan")
+      if echo "$_other_blocks" | grep -qx "$slug" 2>/dev/null; then
+        _blk_by="${_blk_by:+$_blk_by$'\n'}$_other_slug"
+      fi
+      # Check if other depends-on us (→ we are required-by other)
+      local _other_deps
+      _other_deps=$(awk '
+        /^---$/ { fm++; if (fm > 1) exit; next }
+        fm == 1 && found && /^[a-zA-Z]/ { exit }
+        fm == 1 && found && /^[[:space:]]*-[[:space:]]+/ {
+          val = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", val)
+          gsub(/^"|"$/, "", val); gsub(/[[:space:]]+$/, "", val)
+          if (val != "") print val
+        }
+        fm == 1 && /^depends-on:/ { found=1 }
+      ' "$_other_plan")
+      if echo "$_other_deps" | grep -qx "$slug" 2>/dev/null; then
+        _req_by="${_req_by:+$_req_by$'\n'}$_other_slug"
+      fi
+    done
+    shopt -u nullglob
+  fi
+
+  local _has_links=false
+  [[ -n "$_dep"    ]] && _has_links=true
+  [[ -n "$_blk"    ]] && _has_links=true
+  [[ -n "$_rel"    ]] && _has_links=true
+  [[ -n "$_req_by" ]] && _has_links=true
+  [[ -n "$_blk_by" ]] && _has_links=true
+
+  if $_has_links; then
+    echo ""
+    echo "Links:"
+    if [[ -n "$_dep" ]]; then
+      while IFS= read -r t; do
+        [[ -z "$t" ]] && continue
+        local _tst=""
+        [[ -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ✓ (shipped)"
+        [[ ! -f ".spectacular/requests/$t/PLAN.md" ]] && [[ ! -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ⚠ (not found)"
+        printf "  depends-on:  %s%s\n" "$t" "$_tst"
+      done <<< "$_dep"
+    fi
+    if [[ -n "$_blk" ]]; then
+      while IFS= read -r t; do
+        [[ -z "$t" ]] && continue
+        local _tst=""
+        [[ -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ✓ (shipped)"
+        [[ ! -f ".spectacular/requests/$t/PLAN.md" ]] && [[ ! -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ⚠ (not found)"
+        printf "  blocks:      %s%s\n" "$t" "$_tst"
+      done <<< "$_blk"
+    fi
+    if [[ -n "$_rel" ]]; then
+      while IFS= read -r t; do
+        [[ -z "$t" ]] && continue
+        local _tst=""
+        [[ -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ✓ (shipped)"
+        [[ ! -f ".spectacular/requests/$t/PLAN.md" ]] && [[ ! -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ⚠ (not found)"
+        printf "  related:     %s%s\n" "$t" "$_tst"
+      done <<< "$_rel"
+    fi
+    if [[ -n "$_req_by" ]]; then
+      while IFS= read -r t; do
+        [[ -z "$t" ]] && continue
+        printf "  required-by: %s  (computed)\n" "$t"
+      done <<< "$_req_by"
+    fi
+    if [[ -n "$_blk_by" ]]; then
+      while IFS= read -r t; do
+        [[ -z "$t" ]] && continue
+        printf "  blocked-by:  %s  (computed)\n" "$t"
+      done <<< "$_blk_by"
+    fi
+  fi
+}
+
+# ── cmd_links ─────────────────────────────────────────────────────────────────
+# Build and display the cross-request link graph (v1.16.0+).
+# Forward edges come from depends-on:/blocks:/related: in each PLAN.md.
+# Inverse edges (required-by:, blocked-by:) are computed at read time — never
+# stored. Use --all to include unlinked requests; default shows only those with
+# at least one edge. Use <slug> to show one request's edges only.
+cmd_links() {
+  local slug="" json=false all=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --json) json=true; shift ;;
+      --all)  all=true;  shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular links [<slug>] [--json] [--all]
+
+Show the cross-request link graph.
+
+  <slug>   Show edges for one request only
+  --json   Machine-readable JSON output
+  --all    Include requests with no edges (default: only linked requests)
+
+Forward declarations live in each PLAN.md frontmatter:
+  related:     touches (symmetric)
+  depends-on:  A cannot ship before B  → B gains required-by: A
+  blocks:      A must ship before B    → B gains blocked-by:  A
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for links: $1" ;;
+      *)
+        [[ -n "$slug" ]] && die "links: only one <slug> argument allowed"
+        slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "links: not inside a Spectacular workspace"
+
+  # ── helper: parse a YAML list field from frontmatter ──────────────────────
+  _links_parse_list() {
+    local file="$1" field="$2"
+    awk -v fld="$field" '
+      /^---$/ { fm++; if (fm > 1) exit; next }
+      fm != 1 { next }
+      found && /^[a-zA-Z]/ { exit }
+      found && /^[[:space:]]*-[[:space:]]+/ {
+        val = $0; sub(/^[[:space:]]*-[[:space:]]+/, "", val)
+        gsub(/^"|"$/, "", val)
+        gsub(/[[:space:]]+$/, "", val)
+        if (val != "") print val
+      }
+      $0 ~ "^"fld":" { found=1 }
+    ' "$file"
+  }
+
+  # ── helper: slug → status label ───────────────────────────────────────────
+  _links_status() {
+    local t="$1"
+    if [[ -f ".spectacular/requests/$t/PLAN.md" ]]; then
+      fm_get ".spectacular/requests/$t/PLAN.md" "status"
+    elif [[ -f ".spectacular/archive/$t/PLAN.md" ]]; then
+      echo "archived"
+    else
+      echo "unknown"
+    fi
+  }
+
+  # ── helper: suffix label for a target slug ────────────────────────────────
+  _links_suffix() {
+    local t="$1"
+    if [[ ! -f ".spectacular/requests/$t/PLAN.md" ]]; then
+      if [[ -f ".spectacular/archive/$t/PLAN.md" ]]; then
+        echo " ✓ (shipped)"
+      else
+        echo " ⚠ (not found)"
+      fi
+    fi
+  }
+
+  # ── 1. Collect active slugs ────────────────────────────────────────────────
+  local -a active_slugs=()
+  shopt -s nullglob
+  for _d in .spectacular/requests/*/; do
+    active_slugs+=("$(basename "$_d")")
+  done
+  shopt -u nullglob
+
+  # ── 2. Build graph via temp files (bash 3.2 compatible) ───────────────────
+  # Temp dir: one file per edge type per slug: <dir>/slug.dep, slug.blk, slug.rel
+  # related: entries that contain '/' or '.md' are file refs, not slug refs —
+  # skip them (legacy field; depends-on: and blocks: carry the slug edges)
+  local _graph_dir
+  _graph_dir=$(mktemp -d)
+
+  for _s in "${active_slugs[@]}"; do
+    local _plan=".spectacular/requests/$_s/PLAN.md"
+    [[ -f "$_plan" ]] || continue
+    local _deps _blks _rels_raw
+    _deps=$(_links_parse_list "$_plan" "depends-on")
+    _blks=$(_links_parse_list "$_plan" "blocks")
+    _rels_raw=$(_links_parse_list "$_plan" "related")
+    # Filter related: to slug-only entries (no '/' and not ending in .md)
+    local _rels=""
+    if [[ -n "$_rels_raw" ]]; then
+      while IFS= read -r _r; do
+        [[ "$_r" == */* ]] && continue
+        [[ "$_r" == *.md ]] && continue
+        _rels="${_rels:+$_rels$'\n'}$_r"
+      done <<< "$_rels_raw"
+    fi
+    [[ -n "$_deps" ]] && printf '%s\n' "$_deps" > "$_graph_dir/$_s.dep"
+    [[ -n "$_blks" ]] && printf '%s\n' "$_blks" > "$_graph_dir/$_s.blk"
+    [[ -n "$_rels" ]] && printf '%s\n' "$_rels" > "$_graph_dir/$_s.rel"
+  done
+
+  # ── 3. Compute inverses ────────────────────────────────────────────────────
+  # For each A deps-on B → append A to B.req_by
+  # For each A blocks B → append A to B.blk_by
+  for _s in "${active_slugs[@]}"; do
+    if [[ -f "$_graph_dir/$_s.dep" ]]; then
+      while IFS= read -r _t; do
+        [[ -z "$_t" ]] && continue
+        echo "$_s" >> "$_graph_dir/$_t.req_by"
+      done < "$_graph_dir/$_s.dep"
+    fi
+    if [[ -f "$_graph_dir/$_s.blk" ]]; then
+      while IFS= read -r _t; do
+        [[ -z "$_t" ]] && continue
+        echo "$_s" >> "$_graph_dir/$_t.blk_by"
+      done < "$_graph_dir/$_s.blk"
+    fi
+  done
+
+  # ── 4. Helper: does slug have any edges? ──────────────────────────────────
+  _links_has_edges() {
+    local t="$1"
+    [[ -f "$_graph_dir/$t.dep"    ]] && return 0
+    [[ -f "$_graph_dir/$t.blk"    ]] && return 0
+    [[ -f "$_graph_dir/$t.rel"    ]] && return 0
+    [[ -f "$_graph_dir/$t.req_by" ]] && return 0
+    [[ -f "$_graph_dir/$t.blk_by" ]] && return 0
+    return 1
+  }
+
+  # ── 5. Scoped to one slug if provided ─────────────────────────────────────
+  local -a render_slugs=()
+  if [[ -n "$slug" ]]; then
+    if [[ ! -f ".spectacular/requests/$slug/PLAN.md" ]] && \
+       [[ ! -f ".spectacular/archive/$slug/PLAN.md" ]]; then
+      rm -rf "$_graph_dir"
+      die "links: '$slug' not found in requests/ or archive/"
+    fi
+    render_slugs=("$slug")
+  else
+    for _s in "${active_slugs[@]}"; do
+      if $all || _links_has_edges "$_s"; then
+        render_slugs+=("$_s")
+      fi
+    done
+  fi
+
+  # ── 6. JSON output ─────────────────────────────────────────────────────────
+  if $json; then
+    printf '{"graph":['
+    local _first_node=true
+    for _s in "${render_slugs[@]}"; do
+      $_first_node && _first_node=false || printf ','
+      printf '{"slug":"%s"' "$(_json_escape "$_s")"
+
+      local _field _ftype
+      for _ftype in dep blk rel; do
+        case "$_ftype" in
+          dep) _field="depends_on" ;;
+          blk) _field="blocks"     ;;
+          rel) _field="related"    ;;
+        esac
+        printf ',"%s":[' "$_field"
+        local _fe=true
+        if [[ -f "$_graph_dir/$_s.$_ftype" ]]; then
+          while IFS= read -r _t; do
+            [[ -z "$_t" ]] && continue
+            local _st; _st=$(_links_status "$_t")
+            $_fe && _fe=false || printf ','
+            printf '{"slug":"%s","status":"%s"}' "$(_json_escape "$_t")" "$(_json_escape "$_st")"
+          done < "$_graph_dir/$_s.$_ftype"
+        fi
+        printf ']'
+      done
+
+      for _ftype in req_by blk_by; do
+        case "$_ftype" in
+          req_by) _field="required_by" ;;
+          blk_by) _field="blocked_by"  ;;
+        esac
+        printf ',"%s":[' "$_field"
+        local _fe=true
+        if [[ -f "$_graph_dir/$_s.$_ftype" ]]; then
+          while IFS= read -r _t; do
+            [[ -z "$_t" ]] && continue
+            $_fe && _fe=false || printf ','
+            printf '"%s"' "$(_json_escape "$_t")"
+          done < "$_graph_dir/$_s.$_ftype"
+        fi
+        printf ']'
+      done
+      printf '}'
+    done
+    printf ']}\n'
+    rm -rf "$_graph_dir"
+    return 0
+  fi
+
+  # ── 7. Text output ─────────────────────────────────────────────────────────
+  if [[ ${#render_slugs[@]} -eq 0 ]]; then
+    info "No cross-request links declared yet. Add depends-on:/blocks:/related: to a PLAN.md."
+    rm -rf "$_graph_dir"
+    return 0
+  fi
+
+  for _s in "${render_slugs[@]}"; do
+    local _st; _st=$(_links_status "$_s")
+    printf "%-30s  [%s]\n" "$_s" "$_st"
+
+    if [[ -f "$_graph_dir/$_s.dep" ]]; then
+      while IFS= read -r _t; do
+        [[ -z "$_t" ]] && continue
+        printf "  depends-on:  %s%s\n" "$_t" "$(_links_suffix "$_t")"
+      done < "$_graph_dir/$_s.dep"
+    fi
+    if [[ -f "$_graph_dir/$_s.blk" ]]; then
+      while IFS= read -r _t; do
+        [[ -z "$_t" ]] && continue
+        printf "  blocks:      %s%s\n" "$_t" "$(_links_suffix "$_t")"
+      done < "$_graph_dir/$_s.blk"
+    fi
+    if [[ -f "$_graph_dir/$_s.rel" ]]; then
+      while IFS= read -r _t; do
+        [[ -z "$_t" ]] && continue
+        printf "  related:     %s%s\n" "$_t" "$(_links_suffix "$_t")"
+      done < "$_graph_dir/$_s.rel"
+    fi
+    if [[ -f "$_graph_dir/$_s.req_by" ]]; then
+      while IFS= read -r _t; do
+        [[ -z "$_t" ]] && continue
+        printf "  required-by: %s  (computed)\n" "$_t"
+      done < "$_graph_dir/$_s.req_by"
+    fi
+    if [[ -f "$_graph_dir/$_s.blk_by" ]]; then
+      while IFS= read -r _t; do
+        [[ -z "$_t" ]] && continue
+        printf "  blocked-by:  %s  (computed)\n" "$_t"
+      done < "$_graph_dir/$_s.blk_by"
+    fi
+  done
+  rm -rf "$_graph_dir"
 }
 
 cmd_decision() {
@@ -3344,6 +3738,79 @@ EOF
   if (( active > 0 )); then
     echo "Active requests:"
     spectacular_self_active_requests=true cmd_requests --active --limit 5 2>/dev/null | tail -n +3 | sed 's/^/  /'
+  fi
+
+  # Cross-request link advisory (v1.16.0+): show active requests that have
+  # declared edges so an agent sees ordering dependencies at a glance.
+  local _link_lines=""
+  if [[ -d ".spectacular/requests" ]]; then
+    local _link_gdir
+    _link_gdir=$(mktemp -d)
+    local _active_plan_slugs=()
+    shopt -s nullglob
+    for _d in .spectacular/requests/*/; do
+      local _sl; _sl=$(basename "$_d")
+      local _st; _st=$(fm_get ".spectacular/requests/$_sl/PLAN.md" "status" 2>/dev/null || true)
+      [[ "$_st" == "active" ]] || continue
+      _active_plan_slugs+=("$_sl")
+      local _dp
+      _dp=$(awk '/^---$/{c++;if(c>1)exit;next}c==1&&f&&/^[a-zA-Z]/{exit}c==1&&f&&/^[[:space:]]*-/{v=$0;sub(/^[[:space:]]*-[[:space:]]*/,"",v);gsub(/^"|"$/,"",v);gsub(/[[:space:]]+$/,"",v);if(v!="")print v}c==1&&/^depends-on:/{f=1}' \
+        ".spectacular/requests/$_sl/PLAN.md")
+      local _bk
+      _bk=$(awk '/^---$/{c++;if(c>1)exit;next}c==1&&f&&/^[a-zA-Z]/{exit}c==1&&f&&/^[[:space:]]*-/{v=$0;sub(/^[[:space:]]*-[[:space:]]*/,"",v);gsub(/^"|"$/,"",v);gsub(/[[:space:]]+$/,"",v);if(v!="")print v}c==1&&/^blocks:/{f=1}' \
+        ".spectacular/requests/$_sl/PLAN.md")
+      [[ -n "$_dp" ]] && printf '%s\n' "$_dp" > "$_link_gdir/$_sl.dep"
+      [[ -n "$_bk" ]] && printf '%s\n' "$_bk" > "$_link_gdir/$_sl.blk"
+    done
+    shopt -u nullglob
+    # Compute inverses for active requests only
+    for _sl in "${_active_plan_slugs[@]}"; do
+      if [[ -f "$_link_gdir/$_sl.dep" ]]; then
+        while IFS= read -r _t; do
+          [[ -z "$_t" ]] && continue
+          echo "$_sl" >> "$_link_gdir/$_t.req_by"
+        done < "$_link_gdir/$_sl.dep"
+      fi
+      if [[ -f "$_link_gdir/$_sl.blk" ]]; then
+        while IFS= read -r _t; do
+          [[ -z "$_t" ]] && continue
+          echo "$_sl" >> "$_link_gdir/$_t.blk_by"
+        done < "$_link_gdir/$_sl.blk"
+      fi
+    done
+    # Build advisory lines
+    for _sl in "${_active_plan_slugs[@]}"; do
+      local _has=false
+      [[ -f "$_link_gdir/$_sl.dep"    ]] && _has=true
+      [[ -f "$_link_gdir/$_sl.blk"    ]] && _has=true
+      [[ -f "$_link_gdir/$_sl.req_by" ]] && _has=true
+      [[ -f "$_link_gdir/$_sl.blk_by" ]] && _has=true
+      $_has || continue
+      local _parts=""
+      if [[ -f "$_link_gdir/$_sl.dep" ]]; then
+        local _ts; _ts=$(paste -sd, "$_link_gdir/$_sl.dep")
+        _parts="${_parts:+$_parts; }depends-on: $_ts"
+      fi
+      if [[ -f "$_link_gdir/$_sl.blk" ]]; then
+        local _ts; _ts=$(paste -sd, "$_link_gdir/$_sl.blk")
+        _parts="${_parts:+$_parts; }blocks: $_ts"
+      fi
+      if [[ -f "$_link_gdir/$_sl.req_by" ]]; then
+        local _ts; _ts=$(paste -sd, "$_link_gdir/$_sl.req_by")
+        _parts="${_parts:+$_parts; }required-by: $_ts"
+      fi
+      if [[ -f "$_link_gdir/$_sl.blk_by" ]]; then
+        local _ts; _ts=$(paste -sd, "$_link_gdir/$_sl.blk_by")
+        _parts="${_parts:+$_parts; }blocked-by: $_ts"
+      fi
+      _link_lines="${_link_lines:+$_link_lines$'\n'}  ${_sl}: $_parts"
+    done
+    rm -rf "$_link_gdir"
+  fi
+  if [[ -n "$_link_lines" ]]; then
+    echo "Active links:"
+    echo "$_link_lines"
+    echo ""
   fi
 }
 
@@ -4113,6 +4580,31 @@ EOF
   echo "  ✓ scaffolded: $target/TASKS.md"
   echo ""
   echo "Next: edit $target/PLAN.md to flesh out the 7 slots."
+
+  # Relationship prompt (v1.16.0+): if any active request's slug shares a
+  # keyword with the new slug, hint to declare depends-on:/blocks:/related:.
+  local _new_keywords _match_slugs=""
+  _new_keywords=$(echo "$slug" | tr '-' '\n')
+  shopt -s nullglob
+  for _d in .spectacular/requests/*/; do
+    local _cs; _cs=$(basename "$_d")
+    [[ "$_cs" == "$slug" ]] && continue
+    local _cst; _cst=$(fm_get ".spectacular/requests/$_cs/PLAN.md" "status" 2>/dev/null || true)
+    [[ "$_cst" == "active" ]] || [[ "$_cst" == "planned" ]] || continue
+    local _matched=false
+    while IFS= read -r _kw; do
+      [[ ${#_kw} -lt 4 ]] && continue  # skip short words
+      if echo "$_cs" | grep -qi "$_kw"; then
+        _matched=true; break
+      fi
+    done <<< "$_new_keywords"
+    $_matched && _match_slugs="${_match_slugs:+$_match_slugs, }$_cs"
+  done
+  shopt -u nullglob
+  if [[ -n "$_match_slugs" ]]; then
+    echo "  ⚠  Related requests detected: $_match_slugs"
+    echo "     Consider adding depends-on:, blocks:, or related: in PLAN.md."
+  fi
 }
 
 # ── touch ────────────────────────────────────────────────────────────────────
@@ -6120,54 +6612,104 @@ check_snapshots() {
 check_links() {
   if [[ ! -d ".spectacular" ]]; then return; fi
 
+  # Root-aware target resolution (v1.16.0+):
+  # - Bare slug (no '/', no '.md') → resolve as request slug: requests/<slug>/PLAN.md
+  #   or archive/<slug>/PLAN.md (archived = satisfied)
+  # - Root doc name (PRD.md, ARCHITECTURE.md, etc.) → resolve at .spectacular/
+  # - Anything with '/' → resolve relative to the file's own dir (legacy behaviour)
+  local -a _root_docs=(PRD.md ARCHITECTURE.md ROADMAP.md PRINCIPLES.md AGENTS.md
+                       STACK.md DECISIONS.md SPEC.md PERSONAS.md POLICY.md)
+
+  _cl_resolve_target() {
+    local target="$1" file="$2"
+    # Bare slug: no slash, not ending in .md
+    if [[ "$target" != */* ]] && [[ "$target" != *.md ]]; then
+      # depends-on:/blocks: are always slugs; handle via _cl_check_slug below
+      echo "slug:$target"
+      return
+    fi
+    # Root doc (just a filename, matches known root doc names)
+    for _rd in "${_root_docs[@]}"; do
+      if [[ "$target" == "$_rd" ]]; then
+        echo "file:.spectacular/$target"
+        return
+      fi
+    done
+    # Relative path → resolve from file's dir
+    echo "file:$(dirname "$file")/$target"
+  }
+
+  _cl_check_slug() {
+    local slug="$1" file="$2" field="$3"
+    if [[ -f ".spectacular/requests/$slug/PLAN.md" ]]; then
+      : # active request — valid
+    elif [[ -f ".spectacular/archive/$slug/PLAN.md" ]]; then
+      : # archived = satisfied — valid, not a warning
+    else
+      doc_add "links" "warning" "$file" \
+        "$field: slug '$slug' not found in requests/ or archive/" \
+        "remove the stale link or create the request" \
+        "judgment"
+    fi
+  }
+
   shopt -s nullglob
   while IFS= read -r f; do
     [[ -f "$f" ]] || continue
-    # Skip snapshots
     if [[ "$(basename "$f")" =~ @v ]]; then continue; fi
-    # Skip archive/ per architecture: skill does not read archive/ during normal operation
     if [[ "$f" == *".spectacular/archive/"* ]]; then continue; fi
 
-    local in_fm=false in_related=false
+    local in_fm=false cur_field=""
     while IFS= read -r line; do
       if [[ "$line" == "---" ]]; then
         if $in_fm; then break; else in_fm=true; continue; fi
       fi
       $in_fm || continue
-      if [[ "$line" =~ ^related: ]]; then in_related=true; continue; fi
-      # Exit related: block on next top-level key
-      if $in_related && [[ "$line" =~ ^[a-zA-Z] ]]; then in_related=false; fi
 
-      if $in_related && [[ "$line" =~ ^[[:space:]]+-[[:space:]]+(.+)$ ]]; then
+      # Detect which list field we're in (related:, depends-on:, blocks:)
+      if [[ "$line" =~ ^related: ]];    then cur_field="related";    continue; fi
+      if [[ "$line" =~ ^depends-on: ]]; then cur_field="depends-on"; continue; fi
+      if [[ "$line" =~ ^blocks: ]];     then cur_field="blocks";     continue; fi
+      # Exit current field on next top-level key
+      if [[ -n "$cur_field" ]] && [[ "$line" =~ ^[a-zA-Z] ]]; then cur_field=""; fi
+
+      if [[ -n "$cur_field" ]] && [[ "$line" =~ ^[[:space:]]+-[[:space:]]+(.+)$ ]]; then
         local target="${BASH_REMATCH[1]}"
-        # Strip quotes + comments
         target="${target%%#*}"
         target="${target%\"}"; target="${target#\"}"
         target="${target%\'}"; target="${target#\'}"
-        target="$(echo "$target" | xargs)"  # trim whitespace
+        target="$(echo "$target" | xargs)"
         [[ -z "$target" ]] && continue
 
-        # Resolve relative to file's dir
-        local base_dir
-        base_dir=$(dirname "$f")
-        local resolved="$base_dir/$target"
-
-        if [[ -e "$resolved" ]]; then
-          : # pass — don't spam pass entries for every link
+        if [[ "$cur_field" == "depends-on" ]] || [[ "$cur_field" == "blocks" ]]; then
+          # These fields only accept slugs
+          _cl_check_slug "$target" "$f" "$cur_field"
         else
-          doc_add "links" "warning" "$f" \
-            "related: target '$target' does not exist (resolved: $resolved)" \
-            "remove the stale link or fix the target" \
-            "judgment"
+          # related: — root-aware resolution
+          local resolved_spec
+          resolved_spec=$(_cl_resolve_target "$target" "$f")
+          case "$resolved_spec" in
+            slug:*)
+              _cl_check_slug "${resolved_spec#slug:}" "$f" "related"
+              ;;
+            file:*)
+              local resolved="${resolved_spec#file:}"
+              if [[ ! -e "$resolved" ]]; then
+                doc_add "links" "warning" "$f" \
+                  "related: target '$target' does not exist (resolved: $resolved)" \
+                  "remove the stale link or fix the target" \
+                  "judgment"
+              fi
+              ;;
+          esac
         fi
       fi
     done < "$f"
   done < <(find ".spectacular" -type f -name "*.md")
   shopt -u nullglob
 
-  # If no warnings emitted, add a single pass note
   if ! echo "$DOC_FINDINGS" | grep -q "^links|warning"; then
-    doc_add "links" "pass" ".spectacular/" "all related: targets resolve"
+    doc_add "links" "pass" ".spectacular/" "all related:/depends-on:/blocks: targets resolve"
   fi
 }
 
@@ -6779,6 +7321,35 @@ check_memory() {
       "regenerate by writing or removing an entry — any 'spectacular remember' call rebuilds the index" "judgment"
   else
     doc_add "memory" "pass" "$dir" "${entry_count} memory entries; index ↔ entries in sync"
+  fi
+
+  # Staleness check (v1.16.0+): flag memory entries older than 180 days.
+  # Memory holds durable facts; 180d is a conservative nudge to review and
+  # prune obsolete entries before they mislead. Gradient: sessions 4h <
+  # feedback 30d < ideas 90d < memory 180d.
+  local _stale_count=0 _stale_slugs="" _now_epoch _entry_epoch _age_days _updated
+  _now_epoch=$(date "+%s")
+  if [[ -d "$dir" ]]; then
+    for file in "$dir"/*.md; do
+      [[ -f "$file" ]] || continue
+      _updated=$(fm_get "$file" "updated" 2>/dev/null || true)
+      [[ -z "$_updated" ]] && continue
+      # Parse ISO date YYYY-MM-DD; skip if not that shape
+      [[ "$_updated" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || continue
+      _entry_epoch=$(date -j -f "%Y-%m-%d" "$_updated" "+%s" 2>/dev/null || echo 0)
+      [[ "$_entry_epoch" -eq 0 ]] && continue
+      _age_days=$(( (_now_epoch - _entry_epoch) / 86400 ))
+      if [[ $_age_days -gt 180 ]]; then
+        _stale_count=$((_stale_count + 1))
+        local _mslug; _mslug=$(basename "$file" .md)
+        _stale_slugs="${_stale_slugs:+$_stale_slugs, }$_mslug (${_age_days}d)"
+      fi
+    done
+  fi
+  if [[ $_stale_count -gt 0 ]]; then
+    doc_add "memory" "warning" "$dir" \
+      "${_stale_count} memory $([ $_stale_count -eq 1 ] && echo entry || echo entries) older than 180 days: ${_stale_slugs}" \
+      "review and update or archive stale entries" "judgment"
   fi
 }
 
@@ -8672,6 +9243,7 @@ main() {
     memories)   shift; cmd_memories "$@";   exit $? ;;
     sessions)   shift; cmd_sessions "$@";   exit $? ;;
     request)    shift; cmd_request "$@";    exit $? ;;
+    links)      shift; cmd_links "$@";      exit $? ;;
     decision)   shift; cmd_decision "$@";   exit $? ;;
     memory)     shift; cmd_memory "$@";     exit $? ;;
     show)       shift; cmd_show "$@";       exit $? ;;

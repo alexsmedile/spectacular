@@ -168,6 +168,10 @@ updated: 2026-05-11
 summary: "What this request changes"
 related:
   - current/auth
+depends-on:
+  - other-slug
+blocks:
+  - another-slug
 ---
 ```
 
@@ -176,6 +180,22 @@ related:
 - Other fields are optional; skill warns but does not block
 - `PLAN.md` frontmatter is the **single source of lifecycle state** for a request
 - Capability specs in `current/` track their own state independently
+
+### Cross-request relationship fields (v1.16.0+)
+
+`related:`, `depends-on:`, and `blocks:` are sibling fields declaring inter-request relationships. All three accept lists of request slugs.
+
+| Declared field | Meaning | Computed inverse |
+|---|---|---|
+| `related: [B]` | A and B touch each other (no ordering implied) | `related: [A]` on B |
+| `depends-on: [B]` | A cannot ship before B | `required-by: [A]` on B |
+| `blocks: [B]` | A must ship before B can proceed | `blocked-by: [A]` on B |
+
+**Computed-not-stored rule:** inverse labels (`required-by:`, `blocked-by:`) are *never written* to a request's PLAN.md — they are derived at read time from the full graph of forward declarations. Storing inverses duplicates source and causes drift. A request only declares its own outbound edges.
+
+**Archived dependencies = satisfied:** a `depends-on:` targeting an *archived* request resolves as met — shown as `depends-on: X ✓ (shipped)`, not a dangling warning. A slug matching nothing (active or archived) is dangling and flagged by `doctor links`.
+
+**Advisory only:** these fields carry no enforcement. No locking, no auto-blocking. Conflict resolution is always human judgment.
 
 ---
 

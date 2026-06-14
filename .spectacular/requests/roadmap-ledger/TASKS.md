@@ -1,6 +1,6 @@
 ---
 status: active
-updated: 2026-06-07
+updated: 2026-06-14
 related:
   - PLAN.md
 ---
@@ -10,10 +10,10 @@ related:
 ## v1
 
 ### M1 — Ledger schema
-- [ ] Define ledger table: `build | slug | title | tier | target-version | status`
-- [ ] Ledger lives at the top of ROADMAP.md (above first version block)
-- [ ] `spectacular new` stamps `build: bN` on new requests; increments `last_build:` in `config.yaml`
-- [ ] Document the rule in ARCHITECTURE.md: version is derived from ledger, never hand-written in prose
+- [x] Document ledger schema in ARCHITECTURE.md: columns `build | slug | title | tier | target-version | status`; tier legend (`full` = near-term detailed, `themed` = mid-term directional, `vision` = long-horizon direction-only); status values (`planned | active | shipped`, release-level, distinct from request lifecycle); grouped-build rule (two rows same version = fine); computed-not-stored rule (version lives only here)
+- [x] Document ledger placement rule in ARCHITECTURE.md: lives at top of ROADMAP.md above first version block; human adds rows manually when slotting a request; `spectacular new` does NOT auto-insert rows
+- [x] CLI: `spectacular new` reads `last_build:` from `config.yaml` (treat missing as `0`), stamps `build: b(N+1)` on new PLAN.md, writes `last_build: N+1` back to `config.yaml`
+- [x] CLI: `spectacular new` output prints `✓ build id: bN` and a "add a row to the ledger in ROADMAP.md when slotting" hint
 
 ### M2 — Remove target_version, add build id
 - [ ] Remove `target_version:` from all active + planned request PLAN frontmatters

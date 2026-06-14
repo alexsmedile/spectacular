@@ -197,6 +197,69 @@ blocks:
 
 **Advisory only:** these fields carry no enforcement. No locking, no auto-blocking. Conflict resolution is always human judgment.
 
+### Roadmap ledger (v1.17.0+)
+
+The ledger is a single markdown table at the **top of `ROADMAP.md`**, above the first version block. It is the **only place a target version number is written** — request frontmatter carries a stable `build:` id instead; all prose references requests by slug or build id.
+
+#### Schema
+
+```
+| build | slug | title | tier | target-version | status |
+|-------|------|-------|------|----------------|--------|
+| b1    | auth-backend | Auth backend | full | v1.10.0 | shipped |
+| b2    | user-profile | User profile | full | v1.10.0 | shipped |
+| b3    | cross-request-links | Cross-request awareness | full | v1.16.0 | active |
+```
+
+**Columns:**
+
+| Column | Values | Notes |
+|---|---|---|
+| `build` | `b1`, `b2`, … | Monotonic counter, stamped at `spectacular new`, immutable |
+| `slug` | kebab-case | Human identity; used in `depends-on:`/`blocks:` |
+| `title` | short label | Copied from PLAN `summary:` when slotting; may drift slightly |
+| `tier` | `full` · `themed` · `vision` | See tier legend below |
+| `target-version` | `v1.10.0` | **Only place this is written.** Editable; changing it is a one-row edit |
+| `status` | `planned` · `active` · `shipped` | Release-level; distinct from request lifecycle (see below) |
+
+#### Tier legend
+
+| Tier | Meaning |
+|---|---|
+| `full` | Near-term — detailed milestones, spec'd, on the active runway |
+| `themed` | Mid-term — directional theme known, details deferred |
+| `vision` | Long-horizon — direction only, no committed scope |
+
+#### Status values (release-level)
+
+| Status | Meaning |
+|---|---|
+| `planned` | Version not yet started |
+| `active` | Version in progress |
+| `shipped` | Version tagged and released |
+
+These are **distinct from request lifecycle** (`planned | active | review | verified` in PLAN.md frontmatter). A request can be `verified` (done) while the ledger row is still `planned` (release hasn't shipped yet). The ledger row flips to `shipped` when the version tags — a one-time write.
+
+#### Rules
+
+- **Version-is-derived:** the `target-version` column is the single source of truth. No version number is written anywhere else (not in PLAN frontmatter, not in prose, not in milestone text).
+- **Grouped builds:** two requests targeting the same version = two rows with the same `target-version` value. Flat table; the render groups visually at read time.
+- **Human-adds-rows:** `spectacular new` stamps `build: bN` on the PLAN.md and increments `last_build:` in `config.yaml`, but does **not** insert a ledger row. The human adds the row to ROADMAP.md when slotting the request into a version.
+- **Gaps are normal:** if a build id is skipped (request merged into another release, abandoned), that gap is fine — like skipped Xcode build numbers.
+- **Planned runway only:** the ledger tracks future/in-progress work. Shipped history lives in `CHANGELOG.md`, not the ledger.
+
+#### `build:` in PLAN.md frontmatter
+
+```yaml
+---
+status: active
+build: b3
+summary: "What this request changes"
+---
+```
+
+`build:` replaces `target_version:`. It is stamped at `spectacular new` and never changes, even if the version shifts. The version is a ledger read, not a stored copy — so reslotting a request is a one-row edit in the ledger with zero changes to the request's own files.
+
 ---
 
 # Ideas layer

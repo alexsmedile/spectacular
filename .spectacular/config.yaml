@@ -26,3 +26,5 @@ agents:
 
 skills:
   symlink_on_init: []
+
+last_build: 2

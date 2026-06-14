@@ -105,7 +105,7 @@ See `TASKS.md`.
 - Roadmap render reads from the ledger (coordinated with visual-layer)
 - CHANGELOG entry
 
-## Design decisions (2026-06-07)
+## Design decisions (2026-06-07, extended 2026-06-14)
 
 - ~~Stable id: sequence vs slug?~~ → **monotonic build counter** (`b1`, `b2`…) as identity + slug as label.
 - ~~When is the id stamped?~~ → **at `spectacular new`**; gaps from merges are normal.
@@ -114,4 +114,11 @@ See `TASKS.md`.
 - ~~Merge with cross-request-links or stay separate?~~ → **Two requests, one release (v1.16.0).** cross-request-links ships the link schema; roadmap-ledger ships the version-as-derived model. Adjacent, coordinated.
 - ~~Gaps/buffers~~ → absent build numbers; no explicit buffer rows in the ledger.
 - ~~Shipped history in ledger?~~ → **Planned runway only.** Shipped history stays in CHANGELOG.
-- **Version-column format for grouped builds** — how does the ledger show `b10`+`b11` both → v1.10.0?
+- ~~Version-column format for grouped builds~~ → **two rows, same `target-version` value.** Flat table; render groups visually. No merged cells, no comma-separated values.
+- ~~Ledger `status` column values?~~ → **`planned | active | shipped`** — release-level states, distinct from request lifecycle (`planned | active | review | verified`). Flips to `shipped` when the version tags.
+- ~~Does `spectacular new` auto-add a ledger row?~~ → **No.** `new` stamps `build: bN` + increments `last_build:` only. Human adds the ledger row manually when slotting the request into a version.
+- ~~`last_build:` initialization~~ → missing treated as `0`; first `new` stamps `b1`, writes `last_build: 1` silently.
+- ~~Build id assignment for existing requests (M2)~~ → sorted by `updated:` date ascending, alpha tiebreaker; `last_build:` set to N after assignment.
+- ~~Remove `--target-version` flag in M1 or M2?~~ → **M2.** M1 adds `build:` stamping only; M2 is the `target_version:` removal sweep.
+- ~~Tier legend — where does it live?~~ → **ARCHITECTURE.md** (ledger schema section). Not in `docs/versioning.md`. Values: `full` = near-term detailed, `themed` = mid-term directional, `vision` = long-horizon direction-only.
+- ~~`spectacular new` output~~ → prints `✓ build id: bN` + "add a row to the ledger in ROADMAP.md when slotting" hint.

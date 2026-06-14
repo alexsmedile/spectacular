@@ -4495,6 +4495,17 @@ EOF
   fi
   [[ -z "$owner" ]] && owner="$(whoami 2>/dev/null || echo unknown)"
 
+  # Assign build id (v1.17.0+): read last_build: from config.yaml (missing = 0),
+  # compute next id, stamp build: bN on PLAN.md, write last_build: N+1 back.
+  local _last_build=0 _build_id=""
+  if [[ -f ".spectacular/config.yaml" ]]; then
+    local _lb
+    _lb=$(awk '/^last_build:/ { sub(/^last_build:[[:space:]]*/, ""); print; exit }' .spectacular/config.yaml)
+    [[ "$_lb" =~ ^[0-9]+$ ]] && _last_build="$_lb"
+  fi
+  local _next_build=$(( _last_build + 1 ))
+  _build_id="b${_next_build}"
+
   mkdir -p "$target"
 
   # PLAN.md from template
@@ -4509,9 +4520,10 @@ EOF
         -e "s|<one-sentence description of what this request changes>|${opt_summary:-<one-sentence description of what this request changes>}|" \
         -e "s|<Request Title>|${slug}|g" \
         "$plan_template" > "$target/PLAN.md"
-    # Override frontmatter status + priority via fm_set
+    # Override frontmatter status + priority + build via fm_set
     fm_set "$target/PLAN.md" "status" "$opt_status"
     fm_set "$target/PLAN.md" "priority" "$opt_priority"
+    fm_set "$target/PLAN.md" "build" "$_build_id"
     [[ -n "$opt_target_version" ]] && fm_set "$target/PLAN.md" "target_version" "$opt_target_version"
   else
     # Fallback minimal scaffold
@@ -4521,6 +4533,7 @@ status: $opt_status
 priority: $opt_priority
 owner: $owner
 updated: $TODAY
+build: $_build_id
 summary: "${opt_summary}"
 related: []
 ---
@@ -4576,10 +4589,23 @@ related:
 EOF
   fi
 
+  # Write last_build: back to config.yaml (create field if missing)
+  if [[ -f ".spectacular/config.yaml" ]]; then
+    if grep -q "^last_build:" .spectacular/config.yaml; then
+      local _tmp; _tmp=$(mktemp)
+      awk -v nb="$_next_build" '/^last_build:/ { print "last_build: " nb; next } { print }' \
+        .spectacular/config.yaml > "$_tmp" && mv "$_tmp" .spectacular/config.yaml
+    else
+      printf '\nlast_build: %s\n' "$_next_build" >> .spectacular/config.yaml
+    fi
+  fi
+
   echo "  ✓ scaffolded: $target/PLAN.md"
   echo "  ✓ scaffolded: $target/TASKS.md"
+  echo "  ✓ build id:   $_build_id"
   echo ""
   echo "Next: edit $target/PLAN.md to flesh out the 7 slots."
+  echo "      When slotting into the roadmap, add a row to the ledger in ROADMAP.md."
 
   # Relationship prompt (v1.16.0+): if any active request's slug shares a
   # keyword with the new slug, hint to declare depends-on:/blocks:/related:.

@@ -16,11 +16,11 @@ related:
 - [x] CLI: `spectacular new` output prints `✓ build id: bN` and a "add a row to the ledger in ROADMAP.md when slotting" hint
 
 ### M2 — Remove target_version, add build id
-- [ ] Remove `target_version:` from all active + planned request PLAN frontmatters
-- [ ] Add `build: bN` to each (assign sequential ids to existing requests)
-- [ ] Update `scaffold-reference.md` + PLAN template: `build:` in, `target_version:` out
-- [ ] Update `spectacular new` to write `build: bN` instead of `target_version:`
-- [ ] Update `plan-rules.md`: prose must not repeat version numbers; version lives in ledger only
+- [x] Remove `target_version:` from all active + planned request PLAN frontmatters
+- [x] Add `build: bN` to each (assign sequential ids to existing requests sorted by updated: date; b3–b8; last_build: 8)
+- [x] Update PLAN template (`skills/spectacular/templates/plan/base.md`): `build: <BUILD>` in, no `target_version:`
+- [x] Update `spectacular new`: substitutes `<BUILD>` from template; removed `--target-version` flag + help text
+- [x] Update `plan-rules.md`: frontmatter schema note + version-in-prose rule (no hardcoded vX.y in milestone text)
 
 ### M3 — De-duplicate ROADMAP prose
 - [ ] Convert ROADMAP block headings + dep chain prose to slug/label refs (no `v1.x` outside ledger)

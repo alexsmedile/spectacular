@@ -112,6 +112,14 @@ PLAN structure check: milestones (slot 3) must logically precede tasks (slot 4 /
 
 If TASKS.md has groupings, those groupings should reference the slot-3 milestones by name or number.
 
+## Frontmatter schema (v1.17.0+)
+
+Required: `status`, `updated`, `summary`.
+Optional stable identity: `build: bN` — stamped by `spectacular new`, immutable. Do not edit.
+Removed: `target_version:` — version is derived from the roadmap ledger, not stored in the request. Do not add it back.
+
+**Version-in-prose rule:** milestone text, validation lines, and dependency chains must not contain hardcoded version numbers (`v1.x.y`). Reference requests by slug (`depends-on: cross-request-links`) or by build id (`b7`). The version lives only in the ledger table in `ROADMAP.md`. If a prose line says "plugin bump to v1.17.0" or "manifests at v1.16.0", flag it during refine — replace with "target release" or "the version in the ledger".
+
 ## Related
 
 - [[doc-index]] — registry entry referencing this file

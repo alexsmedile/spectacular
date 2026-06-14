@@ -8,7 +8,7 @@ related:
   - PRD.md
   - ../../ARCHITECTURE.md
   - ../../ROADMAP.md
-target_version: v1.16.0
+build: b5
 ---
 
 # Plan — cross-request-links

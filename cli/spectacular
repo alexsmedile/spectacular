@@ -4423,31 +4423,31 @@ EOF
 # Scaffolds .spectacular/requests/<slug>/PLAN.md + TASKS.md from templates with
 # frontmatter prefilled. Refuses if <slug> exists in requests/ OR archive/.
 cmd_new() {
-  local slug="" opt_summary="" opt_status="planned" opt_priority="medium" opt_target_version=""
+  local slug="" opt_summary="" opt_status="planned" opt_priority="medium"
   while (( $# > 0 )); do
     case "$1" in
       --summary)        require_value "--summary" "${2:-}"; opt_summary="$2"; shift 2 ;;
       --status)         require_value "--status" "${2:-}"; opt_status="$2"; shift 2 ;;
       --priority)       require_value "--priority" "${2:-}"; opt_priority="$2"; shift 2 ;;
-      --target-version) require_value "--target-version" "${2:-}"; opt_target_version="$2"; shift 2 ;;
       --help|-h)
         cat <<EOF
-Usage: spectacular new <slug> [--summary "..."] [--status <state>] [--priority <level>] [--target-version <ver>]
+Usage: spectacular new <slug> [--summary "..."] [--status <state>] [--priority <level>]
 
 Scaffold a new request at .spectacular/requests/<slug>/ with PLAN.md and
-TASKS.md prefilled from templates.
+TASKS.md prefilled from templates. Assigns the next build id (build: bN) and
+increments last_build: in config.yaml.
 
 Arguments:
-  <slug>                  Kebab-case identifier (e.g. user-auth, fix-race-cond)
+  <slug>              Kebab-case identifier (e.g. user-auth, fix-race-cond)
 
 Options:
-  --summary "..."         One-sentence description (default: empty placeholder)
-  --status <state>        planned | active | review  (default: planned)
-  --priority <level>      low | medium | high       (default: medium)
-  --target-version <ver>  Roadmap version this request targets (e.g. 0.7.1)
-                          Populates target_version: in PLAN frontmatter; used by
-                          \`spectacular roadmap refine\` to auto-link in ROADMAP.md.
-  -h, --help              Show this help
+  --summary "..."     One-sentence description (default: empty placeholder)
+  --status <state>    planned | active | review  (default: planned)
+  --priority <level>  low | medium | high        (default: medium)
+  -h, --help          Show this help
+
+The target version is NOT set here — add a row to the roadmap ledger in
+ROADMAP.md when you slot this request into a version.
 
 Refuses if <slug> already exists in .spectacular/requests/ or
 .spectacular/archive/.
@@ -4517,14 +4517,13 @@ EOF
   if [[ -f "$plan_template" ]]; then
     sed -e "s|<OWNER>|${owner}|g" \
         -e "s|<DATE>|${TODAY}|g" \
+        -e "s|<BUILD>|${_build_id}|g" \
         -e "s|<one-sentence description of what this request changes>|${opt_summary:-<one-sentence description of what this request changes>}|" \
         -e "s|<Request Title>|${slug}|g" \
         "$plan_template" > "$target/PLAN.md"
-    # Override frontmatter status + priority + build via fm_set
+    # Override frontmatter status + priority via fm_set (build already in template)
     fm_set "$target/PLAN.md" "status" "$opt_status"
     fm_set "$target/PLAN.md" "priority" "$opt_priority"
-    fm_set "$target/PLAN.md" "build" "$_build_id"
-    [[ -n "$opt_target_version" ]] && fm_set "$target/PLAN.md" "target_version" "$opt_target_version"
   else
     # Fallback minimal scaffold
     cat > "$target/PLAN.md" <<EOF

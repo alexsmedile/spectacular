@@ -9,7 +9,7 @@ related:
   - ../../ROADMAP.md
   - ../../ARCHITECTURE.md
   - ../../PERSONAS.md
-target_version: v1.15.0
+build: b6
 ---
 
 # Plan — imagine-mode

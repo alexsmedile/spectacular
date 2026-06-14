@@ -10,7 +10,7 @@ related:
   - ../../PRINCIPLES.md
 depends-on:
   - cross-request-links
-target_version: v1.16.0
+build: b7
 ---
 
 # Plan — roadmap-ledger

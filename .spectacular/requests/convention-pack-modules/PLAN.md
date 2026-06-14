@@ -8,6 +8,7 @@ related:
   - ../../archive/convention-pack-schema/PLAN.md
   - ../../archive/convention-pack-fabricator/PLAN.md
   - ../../archive/convention-pack-application/PLAN.md
+build: b3
 ---
 
 # Plan — Convention Pack Modules

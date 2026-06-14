@@ -3,6 +3,7 @@ status: planned
 priority: medium
 owner: <OWNER>
 updated: <DATE>
+build: <BUILD>
 summary: "<one-sentence description of what this request changes>"
 related:
   - PRD.md

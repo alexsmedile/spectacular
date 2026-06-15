@@ -48,4 +48,37 @@ Omitted sections are written as **empty headers** (not dropped) so the ADR shape
 **Session:** [[sessions/2026-05-24-foo]]   <!-- optional, set if session open -->
 ```
 
-> v1.6.x will introduce optional migration to a soft-folder shape (`decisions/<slug>.md` + `DECISIONS.md` index), unlocking query verbs (`spectacular decisions --7d`). v1.5.0 leaves the flat format intact.
+---
+
+## Index mode (large projects — 50+ decisions)
+
+When `DECISIONS.md` grows past ~50 entries the flat file becomes a context-tax. Use **index mode** instead:
+
+```
+.spectacular/
+├── DECISIONS.md          ← index only: one line per decision
+└── decisions/
+    ├── D1.md
+    ├── D2.md
+    └── ...
+```
+
+**Index line format:**
+```markdown
+- **D42** — Reject field-mode storage for v1 — folders-only until v2 ships
+```
+
+**Per-decision file format** (`decisions/D42.md`):
+```markdown
+# D42 — Reject field-mode storage for v1
+
+**Context:** ...
+**Decision:** ...
+**Consequences:** ...
+```
+
+**Agent read pattern:** always load `DECISIONS.md` (index, cheap). Load `decisions/Dxxx.md` on demand when that decision is directly relevant to current work.
+
+**Migration:** read flat DECISIONS.md, extract each `### Dxxx` block into `decisions/Dxxx.md`, rewrite DECISIONS.md as one-liner index. CLI support (`spectacular decisions migrate`) is planned for v1.6.x. Until then, do it manually or write a project-local script.
+
+**Detected by:** presence of a `decisions/` subfolder next to `DECISIONS.md`. Absence = flat mode (backwards compat).

@@ -111,7 +111,7 @@ See `TASKS.md`.
 - ~~When is the id stamped?~~ → **at `spectacular new`**; gaps from merges are normal.
 - ~~Build column in PLAN frontmatter~~ → `target_version:` **removed entirely**; `build: bN` added as stable identity. No derived mirror — mirrors drift.
 - ~~Where does `last_build` live?~~ → `config.yaml`; `spectacular new` increments it. Single-user concurrency ignored in v1.
-- ~~Merge with cross-request-links or stay separate?~~ → **Two requests, one release (v1.16.0).** cross-request-links ships the link schema; roadmap-ledger ships the version-as-derived model. Adjacent, coordinated.
+- ~~Merge with cross-request-links or stay separate?~~ → **Two requests, sequential releases.** cross-request-links shipped the link schema (v1.16.0, 2026-06-08); roadmap-ledger ships the version-as-derived model in the next available slot (v1.17.0, co-shipping with or following cli-debt-removal).
 - ~~Gaps/buffers~~ → absent build numbers; no explicit buffer rows in the ledger.
 - ~~Shipped history in ledger?~~ → **Planned runway only.** Shipped history stays in CHANGELOG.
 - ~~Version-column format for grouped builds~~ → **two rows, same `target-version` value.** Flat table; render groups visually. No merged cells, no comma-separated values.
@@ -122,3 +122,20 @@ See `TASKS.md`.
 - ~~Remove `--target-version` flag in M1 or M2?~~ → **M2.** M1 adds `build:` stamping only; M2 is the `target_version:` removal sweep.
 - ~~Tier legend — where does it live?~~ → **ARCHITECTURE.md** (ledger schema section). Not in `docs/versioning.md`. Values: `full` = near-term detailed, `themed` = mid-term directional, `vision` = long-horizon direction-only.
 - ~~`spectacular new` output~~ → prints `✓ build id: bN` + "add a row to the ledger in ROADMAP.md when slotting" hint.
+
+## M4 — Insert/reorder demonstration (2026-06-14)
+
+**Before (policy-engine reslot, 2026-05-29):** inserting `policy-engine` at v1.12 required edits to ~14 refs — 3 request PLAN frontmatters (`target_version:`), ROADMAP block heading, prose references in ~6 dependency-chain lines, range labels ("v1.15→v1.17 ladder"), and the ROADMAP summary frontmatter. Three misses were confirmed afterward.
+
+**After (ledger model):** to insert a new fixture request `spec-completeness` at v1.17.0 (bumping `roadmap-ledger` to v1.18.0), the full edit is:
+
+```diff
+ | b4 | cli-debt-removal | CLI debt removal | themed | v1.17.0 | planned |
++| b9 | spec-completeness | Spec completeness check | full | v1.17.0 | planned |
+-| b7 | roadmap-ledger | Roadmap ledger | full | v1.17.0 | active |
++| b7 | roadmap-ledger | Roadmap ledger | full | v1.18.0 | active |
+```
+
+Two rows in one table. Zero prose touched. The `roadmap-ledger` PLAN.md keeps `build: b7` — no frontmatter change. No dependency chains to update. No version refs to grep for.
+
+**Reduction:** ~14 scattered edits → 2 ledger rows (1 insert + 1 version column update). The motivating pain — guaranteed misses on reslots — is structurally eliminated.

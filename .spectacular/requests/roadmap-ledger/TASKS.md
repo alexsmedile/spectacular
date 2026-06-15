@@ -23,12 +23,12 @@ related:
 - [x] Update `plan-rules.md`: frontmatter schema note + version-in-prose rule (no hardcoded vX.y in milestone text)
 
 ### M3 — De-duplicate ROADMAP prose
-- [ ] Convert ROADMAP block headings + dep chain prose to slug/label refs (no `v1.x` outside ledger)
-- [ ] Verify: `grep -c "v1\.[0-9]" ROADMAP.md` outside the ledger table is ~0
+- [x] Convert ROADMAP block headings + dep chain prose to slug/label refs (no `v1.x` outside ledger)
+- [x] Verify: `grep -c "v1\.[0-9]" ROADMAP.md` outside the ledger table is ~0
 
 ### M4 — Insert/reorder is one edit
-- [ ] Demonstrate: inserting a fixture request = one ledger row, zero prose touched
-- [ ] Document before/after vs the policy-engine reslot (~14 refs → 1 row)
+- [x] Demonstrate: inserting a fixture request = one ledger row, zero prose touched
+- [x] Document before/after vs the policy-engine reslot (~14 refs → 1 row)
 
 ### M5 — Render + doctor check
 - [ ] `spectacular roadmap` reads version blocks from the ledger (extend existing render)
@@ -37,7 +37,7 @@ related:
 ### M6 — Migrate + ship
 - [ ] Convert live ROADMAP.md to ledger-driven (ledger table + slug refs in prose)
 - [ ] Dogfood: reslot a real request, confirm one-row edit
-- [ ] Coordinate final migration with cross-request-links M5 (both ship as v1.16.0)
+- [ ] Coordinate final migration with cross-request-links (already shipped as v1.16.0; roadmap-ledger ships in the next available slot)
 - [ ] CHANGELOG entry; plugin bump to target release
 
 ## v2 (deferred)

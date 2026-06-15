@@ -63,18 +63,18 @@ spectacular/
 
 ## Active Requests
 
-| Slug | Status | Target | Summary |
-|---|---|---|---|
-| `imagine-mode` | active | v1.15.0 | Imagination-backed planning — `/spectacular imagine` renders ASCII artifacts (UI/flow/stories/arch), reacts per-fragment, derives a draft PLAN. Co-ships with `visual-layer`. M1–M6 done; only the release step remains |
-| `visual-layer` | planned | v1.15.0 | ASCII rendering layer — progress bars, roadmap render, summary dashboard, app-UI mockups. Co-ships with `imagine-mode`; carries the folded `progress-view` vision artifacts |
-| `cross-request-links` | planned | v1.13.0 | Advisory cross-request awareness — related:/depends-on:/blocks: + inverse-link resolver + `doctor links` |
-| `cli-debt-removal` | planned | v1.14.0 | Remove long-deprecated `docs *` verbs + `--global` alias; shrink v2 to a single breaking concern |
-| `convention-pack-modules` | planned (gated) | tbd | v2 modular packs — stays planned until composition pain surfaces from v1 use |
-| `spec-refactor` | planned | v1.9.0 | Audit SPEC.md, promote 1-2 dense capabilities to `specs/<capability>/SPEC.md` |
+| Slug | Status | Summary |
+|---|---|---|
+| `roadmap-ledger` | active | Single ledger table maps build id → version; M1–M4 done |
+| `cli-debt-removal` | planned | Remove long-deprecated `docs *` verbs + `--global` alias |
+| `decisions-index` | planned | DECISIONS.md index mode — cheap root + per-entry files |
+| `convention-pack-modules` | planned (gated) | v2 modular packs — gated until composition pain surfaces |
+
+Version targets live in the ROADMAP ledger, not here. For full context on any request see `.spectacular/requests/<slug>/PLAN.md`.
 
 **Parked as idea (not active request):** `memory-protocols` — abandoned 2026-05-26 as too broad to ship as a single milestone (6 usecase families × 8 patterns × 6 ideas × 13 open questions). All research consolidated into `.spectacular/ideas/memory-protocols.md` (PLAN + TASKS + IDEAS merged). A narrower spec request will be cut from it.
 
-**Archived (shipped):** `policy-engine` (v1.12.0 — POLICY.md always-set practice layer paired with optional PRINCIPLES.md; 8 policies under 8 work-phase hooks (@Init…@SessionEnd), 4 block/4 warn, severity opt-in to blocking; `spectacular policy` verb (5 forms) merging POLICY.md + config overrides; gate blocks at the head of all 9 phase ref docs; `## Understanding` PLAN slot gating planned→active; `doctor policies` area; config `policies:` override layer; self-dogfooded — promoted through its own @Implementation + @Verification gates; fixed a pre-existing bash 3.2 `set -u` doctor crash in passing), `read-verbs` (v1.8.0 — 11 read-only CLI verbs collapsing multi-step agent workflows; skim-by-default with `--full` opt-in; universal `--status\|--since\|--limit\|--all\|--json`), `ideas-doctype` (v1.7.0 — `idea` registered as first-class doc-type with CLI verbs `new\|list\|promote`, doctor area, status enum `parked\|exploring\|promoted`), `soft-db-substrate` (v1.5.0 — memory/sessions/decisions promoted to soft-folder DBs with `index.md` + `entries/`, CLI mutators `decide\|remember\|session start\|end`, auto-link to active session, doctor `memory` + `sessions` areas), `substrate-clarity` (v1.4.0 — demoted doc-registry → doc-index, modes collapsed `reps` → `grill-each`, grill sub-modes `grill-wide\|grill-each\|grill-loop`, CLI redirect for agentic verbs, rules-file frontmatter schema), `add-personas-doc` (v1.3.0 — opt-in PERSONAS.md canonical doc with per-persona grill-each, triggered by product/content kits), `feedback-loop` (v1.6.0 — prototyping-mode human-feedback acquisition; 5-step loop, `.spectacular/feedback/` substrate, `doctor feedback` area, PRINCIPLES.md §9 codifies feedback ≠ verification ≠ benchmark; self-dogfooded, 4 CLI fixes applied in same release), `snapshot-tidy` (v1.5.0 — root-level `*@v*.md` snapshots moved into `.spectacular/snapshots/<DOC>/@v<N>.md`; `doctor snapshots` area + `--fix` migration; 11 snapshots migrated), `convention-pack-schema` (foundation pre-v0.4.0), `pageworks-migration` (v1.2.0 — public-facing docs extracted to standalone `pageworks` skill; spectacular kept discovery-only awareness, verbs deprecated, removal target v2.0.0), `public-docs-advanced` (v1.1.0 — narrowed scope: MkDocs + Docusaurus adapters only, dogfood deferred to future docs-writer-driven request), `cli-bootstrap` (v0.2.0, verified v1.0.1), `roadmap-richness-v2` (v0.7.2), `roadmap-richness` (v0.7.1), `convention-pack-fabricator` (v0.4.0), `cli-mutator-verbs` (v0.7.0), `workspace-migrations` (Stage 1: v0.6.1; Stage 2: v0.6.2), `doctor` (v0.3.1), `spec-rename` (v0.5.0), `public-docs-foundation` (v0.6.0), `convention-pack-application` (v0.4.0), plus pre-v0.4 work (`repo-conventions` superseded by pack system in v0.4.0). See `.spectacular/archive/`.
+**Archived (shipped):** see `.spectacular/archive/`.
 
 ## Skill Architecture
 

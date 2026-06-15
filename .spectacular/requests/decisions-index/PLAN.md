@@ -1,5 +1,5 @@
 ---
-status: planned
+status: active
 priority: medium
 owner: alex
 updated: 2026-06-15

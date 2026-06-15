@@ -1,11 +1,11 @@
 ---
 doc-id: decisions
-mode: append
-location: .spectacular/DECISIONS.md
+mode: index | flat
+location: .spectacular/DECISIONS.md (flat) | .spectacular/DECISIONS.md + .spectacular/decisions/D<N>.md (index)
 scope: project-wide
 template: templates/decisions/entry.md
 snapshot-on-edit: false
-summary: "ADR-style decision log — append one entry per decision"
+summary: "ADR-style decision log — flat append or index mode (one-liner root + per-entry files)"
 status: active
 ---
 
@@ -50,6 +50,14 @@ Omitted sections are written as **empty headers** (not dropped) so the ADR shape
 
 ---
 
+## Mode detection
+
+**Flat mode** (default): `DECISIONS.md` contains full ADR prose. No `decisions/` folder. Backwards-compatible — all existing workspaces stay in flat mode with zero changes.
+
+**Index mode**: detected by presence of a `decisions/` subfolder next to `DECISIONS.md`. The root file is a cheap one-liner index; full ADR prose lives in per-entry files. The CLI switches to index-mode behavior automatically when it detects the folder.
+
+---
+
 ## Index mode (large projects — 50+ decisions)
 
 When `DECISIONS.md` grows past ~50 entries the flat file becomes a context-tax. Use **index mode** instead:
@@ -63,22 +71,27 @@ When `DECISIONS.md` grows past ~50 entries the flat file becomes a context-tax. 
     └── ...
 ```
 
-**Index line format:**
+**Index line format** (canonical):
 ```markdown
 - **D42** — Reject field-mode storage for v1 — folders-only until v2 ships
 ```
 
-**Per-decision file format** (`decisions/D42.md`):
+Three parts separated by ` — `: D-number (bold), short title, one-sentence rationale. No trailing period.
+
+**Per-entry file format** (`decisions/D42.md`):
 ```markdown
 # D42 — Reject field-mode storage for v1
 
 **Context:** ...
 **Decision:** ...
 **Consequences:** ...
+**Session:** [[sessions/2026-05-24-foo]]   <!-- optional -->
 ```
 
-**Agent read pattern:** always load `DECISIONS.md` (index, cheap). Load `decisions/Dxxx.md` on demand when that decision is directly relevant to current work.
+Heading format: `# D<N> — Title` (same title as the index line's short title). Sections follow the ADR schema (Context / Decision / Consequences). Session link is optional.
 
-**Migration:** read flat DECISIONS.md, extract each `### Dxxx` block into `decisions/Dxxx.md`, rewrite DECISIONS.md as one-liner index. CLI support (`spectacular decisions migrate`) is planned for v1.6.x. Until then, do it manually or write a project-local script.
+**Agent read pattern:** always load `DECISIONS.md` (index, cheap — ~1 line per decision). Load `decisions/D<N>.md` on demand when that specific decision is directly relevant to current work. Never load all per-entry files at once.
 
-**Detected by:** presence of a `decisions/` subfolder next to `DECISIONS.md`. Absence = flat mode (backwards compat).
+**Migration:** `spectacular decisions migrate` reads flat `DECISIONS.md`, splits each `## YYYY-MM-DD —` block into `decisions/D<N>.md`, then rewrites `DECISIONS.md` as the one-liner index. `--dry-run` previews without writing. Idempotent if `decisions/` already exists.
+
+**Detected by:** presence of `decisions/` subfolder next to `DECISIONS.md`. Absence = flat mode (backwards compat).

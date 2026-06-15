@@ -146,6 +146,20 @@ Self-check of the practice layer (`POLICY.md`, always-set). Structure checks are
 
 `--fix` re-scaffolds a missing/empty POLICY.md (mechanical); the Understanding gate is reported, not auto-filled (it needs the skill to interview). See [[policies-contract]] and [[policy-injection]].
 
+## `decisions` (v1.17.0+)
+
+Index-mode consistency checks for `DECISIONS.md`. Only runs meaningful checks when `decisions/` folder exists (index mode detected). In flat mode, emits a single pass and skips all checks.
+
+| Check | Severity | Detects |
+|---|---|---|
+| Mode consistency | ⚠️ | `decisions/` exists but `DECISIONS.md` still contains `**Context:**`/`**Decision:**` prose blocks |
+| DECISIONS.md present | ℹ️ info | index-mode workspace has `decisions/` but no root `DECISIONS.md` |
+| No orphan index lines | ⚠️ | index line `- **D<N>**` has no corresponding `decisions/D<N>.md` file |
+| No stale files | ⚠️ | `decisions/D<N>.md` file has no corresponding index line |
+| Sequential numbering | ❌ error (duplicate) / ⚠️ (gap) | D-numbers not sequential; gaps or duplicates in `decisions/` |
+
+No `--fix` — every finding requires a human decision (create file? remove line? renumber?). Use `spectacular decisions migrate` to convert a flat file to index mode.
+
 ## Related
 
 - [[doctor]] — entry point, severity model, report format

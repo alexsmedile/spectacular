@@ -7,6 +7,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added
+
+- **`DECISIONS.md` index mode.** When a project's decisions file outgrows flat-file scale (~50+ entries), agents can now split it into a cheap one-liner index + per-entry files in `decisions/`. Detected by presence of `decisions/` subfolder — flat mode remains fully valid and backwards-compatible.
+- **`spectacular decisions migrate [--dry-run]`.** One-shot verb: reads flat `DECISIONS.md`, extracts each `## YYYY-MM-DD —` block into `decisions/D<N>.md`, rewrites root as one-liner index. `--dry-run` previews without writing. Idempotent if already migrated.
+- **`spectacular decide` writes index mode automatically.** When `decisions/` folder exists, `decide` writes full ADR prose to `decisions/D<N>.md` and appends one index line to `DECISIONS.md`. Flat-mode behavior unchanged. Auto-numbers from the highest D<N> in the folder.
+- **`doctor decisions` area.** Index-mode consistency checks: mode consistency (no prose in index), orphan index lines, stale per-entry files, sequential D-numbering (gaps → warning, duplicates → error).
+- **`decisions-rules.md` updated.** `mode: index | flat`, canonical index line format, per-entry file format, detection rule, and agent read pattern all documented.
+
 ## [1.16.0] — 2026-06-08
 
 ### Added

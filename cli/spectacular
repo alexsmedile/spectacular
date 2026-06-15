@@ -1123,7 +1123,8 @@ EOF
 }
 
 # ── cmd_decide: spectacular decide "<text>" ─────────────────────────────────
-# v1.5.0: appends to flat DECISIONS.md (folder migration deferred to v1.6.x).
+# v1.5.0: appends to flat DECISIONS.md.
+# v1.17.0: detects index mode (decisions/ folder) and writes per-entry file instead.
 cmd_decide() {
   local text="" context="" consequences="" dry_run=false
   while (( $# > 0 )); do
@@ -1137,8 +1138,12 @@ Usage: spectacular decide "<decision>" [--context "..."] [--consequences "..."] 
 
 Append one ADR-style entry to .spectacular/DECISIONS.md (Context / Decision /
 Consequences). The positional argument fills **Decision:**. Auto-derives a
-title slug from the first ~6 words of the decision. If a session is open, the
-entry includes a Session: link to the active session.
+title from the first ~6 words of the decision. If a session is open, the entry
+includes a Session: link to the active session.
+
+In index mode (detected by presence of .spectacular/decisions/), writes full
+ADR prose to decisions/D<N>.md and appends one index line to DECISIONS.md.
+In flat mode, appends the full block directly to DECISIONS.md.
 
   --context "..."        fill the **Context:** section (situation forcing the decision)
   --consequences "..."   fill the **Consequences:** section (what it enables/forecloses)
@@ -1156,15 +1161,80 @@ EOF
   [[ -z "$text" ]] && die "decide: <decision> argument required. See: spectacular decide --help"
   [[ -d ".spectacular" ]] || die "decide: not inside a Spectacular workspace"
 
-  local title summary session
+  local title session
   title=$(_summary_from_text "$text")
   session=$(_active_session_slug)
 
   local decisions=".spectacular/DECISIONS.md"
+  local decisions_dir=".spectacular/decisions"
 
-  # ADR shape: Context / Decision / Consequences. Decision is always populated
-  # from the positional arg; Context/Consequences come from flags (empty header
-  # if the flag is omitted, so the entry stays fillable by hand or by the skill).
+  # ── Index mode ──────────────────────────────────────────────────────────────
+  if [[ -d "$decisions_dir" ]]; then
+    # Auto-number: find highest D<N> in decisions/ dir
+    local next_n=1
+    local f num
+    for f in "$decisions_dir"/D*.md; do
+      [[ -f "$f" ]] || continue
+      num=$(basename "$f" .md)
+      num="${num#D}"
+      [[ "$num" =~ ^[0-9]+$ ]] && (( num >= next_n )) && next_n=$(( num + 1 ))
+    done
+
+    local dnum="D${next_n}"
+    local entry_path="${decisions_dir}/${dnum}.md"
+
+    # Build the index line: - **D<N>** — Title — one-sentence rationale
+    # Title comes from the decision text; rationale from consequences if provided.
+    local rationale="${consequences:-${context:-}}"
+    local index_line
+    if [[ -n "$rationale" ]]; then
+      index_line="- **${dnum}** — ${title} — ${rationale}"
+    else
+      index_line="- **${dnum}** — ${title}"
+    fi
+
+    # Build full ADR prose for the per-entry file
+    local prose
+    prose=$(printf '# %s — %s\n\n**Context:**\n%s\n\n**Decision:**\n%s\n\n**Consequences:**\n%s\n' \
+      "$dnum" "$title" "$context" "$text" "$consequences")
+    if [[ -n "$session" ]]; then
+      prose+="$(printf '\n**Session:** [[sessions/%s]]\n' "$session")"
+    fi
+
+    if $dry_run; then
+      echo "── would write ${entry_path} ──"
+      echo "$prose"
+      echo ""
+      echo "── would append to ${decisions} (index line) ──"
+      echo "$index_line"
+      return 0
+    fi
+
+    # Ensure DECISIONS.md exists (bootstrap if absent in an index-mode workspace)
+    if [[ ! -f "$decisions" ]]; then
+      cat > "$decisions" <<EOF
+---
+type: decisions
+doc: decisions
+updated: $TODAY
+---
+
+# Decisions
+
+EOF
+      created "$decisions"
+    fi
+
+    printf '%s\n' "$prose" > "$entry_path"
+    created "$entry_path"
+    printf '%s\n' "$index_line" >> "$decisions"
+    fm_touch "$decisions"
+    info "  ✓  decision ${dnum}: $title"
+    [[ -n "$session" ]] && info "  ↳ linked to session: $session"
+    return 0
+  fi
+
+  # ── Flat mode (original behavior) ───────────────────────────────────────────
   local entry
   entry=$(printf '\n## %s — %s\n\n**Context:**\n%s\n\n**Decision:**\n%s\n\n**Consequences:**\n%s\n' \
     "$TODAY" "$title" "$context" "$text" "$consequences")
@@ -1197,9 +1267,153 @@ EOF
   printf '%s' "$entry" >> "$decisions"
   fm_touch "$decisions"
   info "  ✓  appended decision: $title"
-  if [[ -n "$session" ]]; then
-    info "  ↳ linked to session: $session"
+  [[ -n "$session" ]] && info "  ↳ linked to session: $session"
+}
+
+# ── cmd_decisions_migrate: spectacular decisions migrate ─────────────────────
+# v1.17.0: split flat DECISIONS.md into index mode.
+cmd_decisions_migrate() {
+  local dry_run=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --dry-run) dry_run=true; shift ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular decisions migrate [--dry-run]
+
+Split a flat .spectacular/DECISIONS.md into index mode:
+  - Extracts each "## YYYY-MM-DD — Title" block into decisions/D<N>.md
+  - Rewrites DECISIONS.md as a one-liner index (one line per decision)
+
+Safe: per-entry files are written before DECISIONS.md is rewritten.
+Idempotent: exits 0 if decisions/ already exists.
+
+  --dry-run   Preview would-write paths and index; write nothing.
+EOF
+        exit 0 ;;
+      *) die "Unknown flag for decisions migrate: $1" ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "decisions migrate: not inside a Spectacular workspace"
+
+  local decisions=".spectacular/DECISIONS.md"
+  local decisions_dir=".spectacular/decisions"
+
+  # Idempotent: already migrated
+  if [[ -d "$decisions_dir" ]]; then
+    info "  ✓  already in index mode ($decisions_dir exists) — nothing to do"
+    return 0
   fi
+
+  [[ -f "$decisions" ]] || die "decisions migrate: $decisions not found — nothing to migrate"
+
+  # Parse flat DECISIONS.md: split on "## YYYY-MM-DD —" heading lines.
+  # Accumulate blocks, write D<N>.md per block.
+  # Skip the YAML frontmatter (first --- ... --- block) then parse entries.
+  local block_title="" block_lines=""
+  local -a titles=() blocks=()
+
+  # Strip frontmatter first (awk: skip from line 1 "---" to the closing "---")
+  local body
+  if head -1 "$decisions" | grep -q '^---$'; then
+    body=$(awk 'NR==1{next} /^---$/ && NR>1 {found=1; next} found{print}' "$decisions")
+  else
+    body=$(cat "$decisions")
+  fi
+
+  local line
+  while IFS= read -r line; do
+    # Detect a new decision block heading: ## YYYY-MM-DD — ... or ## YYYY-MM-DD
+    if [[ "$line" =~ ^##[[:space:]]+[0-9]{4}-[0-9]{2}-[0-9]{2} ]]; then
+      # Save previous block if any
+      if [[ -n "$block_title" ]]; then
+        titles+=("$block_title")
+        blocks+=("$block_lines")
+      fi
+      # Extract title: everything after "## YYYY-MM-DD — " (or just the date)
+      local heading="${line#\#\# }"
+      if [[ "$heading" =~ [[:space:]]—[[:space:]] ]]; then
+        block_title="${heading#*— }"
+      else
+        block_title="$heading"
+      fi
+      block_lines=""
+      continue
+    fi
+
+    # Skip the top-level "# Decisions" heading
+    [[ "$line" =~ ^#[[:space:]] && -z "$block_title" ]] && continue
+
+    # Accumulate body lines for the current block
+    if [[ -n "$block_title" ]]; then
+      block_lines+="${line}"$'\n'
+    fi
+  done <<< "$body"
+
+  # Flush final block
+  if [[ -n "$block_title" ]]; then
+    titles+=("$block_title")
+    blocks+=("$block_lines")
+  fi
+
+  local total=${#titles[@]}
+  if [[ $total -eq 0 ]]; then
+    die "decisions migrate: no '## YYYY-MM-DD' blocks found in $decisions — nothing to migrate"
+  fi
+
+  if $dry_run; then
+    echo "── dry-run: would create $decisions_dir/ with $total entries ──"
+    local i
+    for ((i=0; i<total; i++)); do
+      local dnum="D$((i+1))"
+      echo "  would write: ${decisions_dir}/${dnum}.md  (${titles[$i]})"
+    done
+    echo ""
+    echo "── dry-run: would rewrite $decisions as index ──"
+    for ((i=0; i<total; i++)); do
+      local dnum="D$((i+1))"
+      echo "- **${dnum}** — ${titles[$i]}"
+    done
+    return 0
+  fi
+
+  # Write per-entry files (all before touching DECISIONS.md — no data loss on partial run)
+  mkdir -p "$decisions_dir"
+  local i
+  for ((i=0; i<total; i++)); do
+    local dnum="D$((i+1))"
+    local entry_path="${decisions_dir}/${dnum}.md"
+    local body="${blocks[$i]}"
+    # Strip leading/trailing blank lines from body
+    body=$(printf '%s' "$body" | sed -e '/./,$!d' -e 's/[[:space:]]*$//')
+    printf '# %s — %s\n\n%s\n' "$dnum" "${titles[$i]}" "$body" > "$entry_path"
+    created "$entry_path"
+  done
+
+  # Now rewrite DECISIONS.md as index
+  {
+    cat <<FM
+---
+type: decisions
+doc: decisions
+mode: index
+updated: $TODAY
+---
+
+FM
+    echo "# Decisions"
+    echo ""
+    for ((i=0; i<total; i++)); do
+      local dnum="D$((i+1))"
+      echo "- **${dnum}** — ${titles[$i]}"
+    done
+  } > "${decisions}.tmp.$$" && mv "${decisions}.tmp.$$" "$decisions"
+
+  fm_touch "$decisions"
+  info "  ✓  migrated $total decisions to index mode"
+  info "  ↳  full entries in: $decisions_dir/"
+  info "  ↳  index: $decisions"
 }
 
 # ── cmd_session: spectacular session start|end ──────────────────────────────
@@ -2443,8 +2657,13 @@ EOF
   fi
 }
 
-# ── cmd_decisions (list) ─────────────────────────────────────────────────────
+# ── cmd_decisions (list + migrate subcommand) ────────────────────────────────
 cmd_decisions() {
+  # Route sub-verb first
+  case "${1:-}" in
+    migrate) shift; cmd_decisions_migrate "$@"; return $? ;;
+  esac
+
   local tag_filter="" since="" limit=20 show_all=false json=false
   while (( $# > 0 )); do
     case "$1" in
@@ -2455,9 +2674,12 @@ cmd_decisions() {
       --json)  json=true; shift ;;
       --help|-h)
         cat <<EOF
-Usage: spectacular decisions [options]
+Usage: spectacular decisions [<subcommand>] [options]
 
-List decisions from .spectacular/decisions/.
+Subcommands:
+  migrate [--dry-run]   Split flat DECISIONS.md into index mode
+
+List decisions from .spectacular/decisions/ (index mode) or flat DECISIONS.md.
 
 Options:
   --tag <t>       Filter to entries tagged with <t>
@@ -6210,7 +6432,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas policies vision"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas policies vision decisions"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -6245,6 +6467,7 @@ Areas (run all if omitted):
   sessions      SESSIONS.md frontmatter + open-session invariant + 4h stale warning (v1.5.0+; opt-in)
   feedback      feedback/ entries — frontmatter, stale-open (>30d), orphan back-refs (v1.6.0+)
   ideas         ideas/ entries — frontmatter, stale-exploring (>90d), orphan promoted (v1.7.0+)
+  decisions     DECISIONS.md index-mode consistency — orphans, stale files, numbering gaps (v1.17.0+)
 
 Options:
   --fix              Apply mechanical fixes (gitignore append, missing dirs,
@@ -6270,7 +6493,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) require_value "--format" "${2:-}"; DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|policies|vision)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|policies|vision|decisions)
         if [[ -z "$DOC_OPT_AREA" ]]; then
           DOC_OPT_AREA="$1"
         else
@@ -7861,6 +8084,131 @@ check_policies() {
   fi
 }
 
+# ── area: decisions ──────────────────────────────────────────────────────────
+# v1.17.0: check DECISIONS.md index-mode consistency.
+# Only runs when decisions/ folder exists (index mode). Flat mode: skip.
+check_decisions() {
+  [[ -d ".spectacular" ]] || return 0
+  local decisions=".spectacular/DECISIONS.md"
+  local decisions_dir=".spectacular/decisions"
+
+  # Flat mode — skip. All checks are index-mode only.
+  if [[ ! -d "$decisions_dir" ]]; then
+    doc_add "decisions" "pass" "$decisions" "flat mode — no decisions/ folder (index checks skipped)"
+    return 0
+  fi
+
+  # Check 1: mode consistency — DECISIONS.md must not contain prose blocks
+  if [[ -f "$decisions" ]]; then
+    if grep -q "^\*\*Context:\*\*\|^\*\*Decision:\*\*\|^\*\*Consequences:\*\*" "$decisions"; then
+      doc_add "decisions" "warning" "$decisions" \
+        "DECISIONS.md contains prose blocks but decisions/ folder exists — file is not a pure index" \
+        "run 'spectacular decisions migrate' to convert the remaining prose to per-entry files" "judgment"
+    else
+      doc_add "decisions" "pass" "$decisions" "DECISIONS.md is index-only (no prose blocks)"
+    fi
+  else
+    doc_add "decisions" "info" "$decisions" "DECISIONS.md missing (index-mode workspace has decisions/ but no root index)" \
+      "run 'spectacular decide' to create the first entry — it will bootstrap the index" "judgment"
+  fi
+
+  # Collect index entries: lines matching "- **D<N>**"
+  local -a index_nums=()
+  if [[ -f "$decisions" ]]; then
+    local line dnum
+    while IFS= read -r line; do
+      if [[ "$line" =~ ^\-[[:space:]]\*\*D([0-9]+)\*\* ]]; then
+        index_nums+=("${BASH_REMATCH[1]}")
+      fi
+    done < "$decisions"
+  fi
+
+  # Collect file entries: D<N>.md in decisions/
+  local -a file_nums=()
+  local f num
+  for f in "$decisions_dir"/D*.md; do
+    [[ -f "$f" ]] || continue
+    num=$(basename "$f" .md)
+    num="${num#D}"
+    [[ "$num" =~ ^[0-9]+$ ]] && file_nums+=("$num")
+  done
+
+  local idx_count=${#index_nums[@]}
+  local file_count=${#file_nums[@]}
+
+  # Check 2: no orphan index lines (index entry with no corresponding file)
+  local orphans=""
+  local n
+  for n in "${index_nums[@]}"; do
+    [[ -f "${decisions_dir}/D${n}.md" ]] || orphans="${orphans:+$orphans, }D${n}"
+  done
+  if [[ -n "$orphans" ]]; then
+    doc_add "decisions" "warning" "$decisions_dir" \
+      "orphan index line(s) with no file: $orphans" \
+      "create the missing decisions/D<N>.md files or remove the stale index lines" "judgment"
+  else
+    (( idx_count > 0 )) && doc_add "decisions" "pass" "$decisions_dir" "all $idx_count index lines have a corresponding file"
+  fi
+
+  # Check 3: no stale files (file with no corresponding index line)
+  local stale=""
+  for n in "${file_nums[@]}"; do
+    local found=false
+    local idx_n
+    for idx_n in "${index_nums[@]}"; do
+      [[ "$n" == "$idx_n" ]] && found=true && break
+    done
+    $found || stale="${stale:+$stale, }D${n}"
+  done
+  if [[ -n "$stale" ]]; then
+    doc_add "decisions" "warning" "$decisions_dir" \
+      "stale file(s) with no index line: $stale" \
+      "add a '- **D<N>** — Title — rationale' line to DECISIONS.md for each" "judgment"
+  else
+    (( file_count > 0 )) && doc_add "decisions" "pass" "$decisions_dir" "all $file_count per-entry files have a corresponding index line"
+  fi
+
+  # Check 4: numbering — sequential, no gaps, no duplicates
+  if [[ $file_count -gt 0 ]]; then
+    # Sort numerically
+    local sorted_nums
+    sorted_nums=$(printf '%s\n' "${file_nums[@]}" | sort -n)
+    local prev=0 gap="" dup="" seen_list=""
+    while IFS= read -r n; do
+      # Duplicate check
+      if [[ " $seen_list " == *" $n "* ]]; then
+        dup="${dup:+$dup, }D${n}"
+      fi
+      seen_list="$seen_list $n"
+      # Gap check
+      if (( n > prev + 1 )); then
+        local missing_start=$(( prev + 1 ))
+        local missing_end=$(( n - 1 ))
+        if (( missing_start == missing_end )); then
+          gap="${gap:+$gap, }D${missing_start}"
+        else
+          gap="${gap:+$gap, }D${missing_start}-D${missing_end}"
+        fi
+      fi
+      prev=$n
+    done <<< "$sorted_nums"
+
+    if [[ -n "$gap" ]]; then
+      doc_add "decisions" "warning" "$decisions_dir" \
+        "D-number gap(s) in decisions/: $gap" \
+        "either create the missing files or renumber to close the gap" "judgment"
+    fi
+    if [[ -n "$dup" ]]; then
+      doc_add "decisions" "error" "$decisions_dir" \
+        "duplicate D-number(s) in decisions/: $dup" \
+        "rename files to remove duplicates" "judgment"
+    fi
+    if [[ -z "$gap" && -z "$dup" ]]; then
+      doc_add "decisions" "pass" "$decisions_dir" "D-numbers are sequential with no gaps or duplicates (1–${prev})"
+    fi
+  fi
+}
+
 # ── doctor orchestrator ───────────────────────────────────────────────────────
 # Dispatch a list of area names to their check_<area> functions.
 # Single source of truth — adding a new area only requires touching this one case.
@@ -7884,6 +8232,7 @@ run_areas() {
       ideas)       check_ideas ;;
       policies)    check_policies ;;
       vision)      check_vision ;;
+      decisions)   check_decisions ;;
       *)           die "Unknown doctor area: '$area'" ;;
     esac
   done

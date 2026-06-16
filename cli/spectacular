@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.16.0"
+SPECTACULAR_VERSION="1.17.0"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -4036,8 +4036,9 @@ EOF
   fi
 }
 
-# ── cmd_roadmap (v1.15.0+) ────────────────────────────────────────────────────
-# Renders the ROADMAP.md as a version arc with tier-aware visual formatting.
+# ── cmd_roadmap (v1.15.0+, ledger-driven v1.13.0+) ────────────────────────────
+# Renders ROADMAP.md using the ledger table as the single source of truth.
+# Ledger columns: build | slug | title | tier | target-version | status
 # Tier legend: full = current/near-term detail, themed = mid-term, vision = future.
 # Non-TTY / NO_COLOR: degrades to plain text (no box chars, no color logic).
 cmd_roadmap() {
@@ -4052,9 +4053,10 @@ Usage: spectacular roadmap [--all] [--json]
 
 Render the ROADMAP.md as a version arc — runway (near-term), major (breaking),
 and vision (future-direction) tiers shown with aligned status indicators.
+Data source: the roadmap ledger table (build → target-version mapping).
 
-  --all   include shipped versions (default: only planned/active)
-  --json  machine-readable: array of {version,title,tier,status} objects
+  --all   include shipped entries (default: only planned/active)
+  --json  machine-readable: array of {build,slug,version,title,tier,status} objects
 EOF
         exit 0 ;;
       -*) die "Unknown flag for roadmap: $1" ;;
@@ -4065,40 +4067,42 @@ EOF
   local roadmap=".spectacular/ROADMAP.md"
   [[ -f "$roadmap" ]] || die "roadmap: ROADMAP.md not found at $roadmap"
 
-  # Parse version blocks via awk → emit TSV: version|title|tier|status
-  local -a versions titles tiers statuses
-  while IFS='|' read -r ver title tier status; do
-    versions+=("$ver")
+  # Parse ledger table → emit pipe-delimited: build|slug|title|tier|version|status
+  # Ledger format: | build | slug | title | tier | target-version | status |
+  # Skips header row (contains "build") and separator row (contains "---").
+  local -a builds slugs titles tiers versions statuses
+  while IFS='|' read -r _pre build slug title tier ver status _post; do
+    # strip whitespace from each field
+    build="${build## }"; build="${build%% }"
+    slug="${slug## }";   slug="${slug%% }"
+    title="${title## }"; title="${title%% }"
+    tier="${tier## }";   tier="${tier%% }"
+    ver="${ver## }";     ver="${ver%% }"
+    status="${status## }"; status="${status%% }"
+    # skip header, separator, and empty rows
+    [[ "$build" == "build" || "$build" == "---"* || -z "$build" ]] && continue
+    builds+=("$build")
+    slugs+=("$slug")
     titles+=("$title")
     tiers+=("$tier")
+    versions+=("$ver")
     statuses+=("$status")
-  done < <(awk '
-    /^## v[0-9]/ {
-      if (ver != "") printf "%s|%s|%s|%s\n", ver, title, tier, status
-      ver = $0; sub(/^## /, "", ver)
-      # split "v1.15.0 — Some title" into ver and title
-      if (ver ~ / — /) {
-        title = ver; sub(/^[^ ]+ — /, "", title)
-        ver = ver; sub(/ — .*/, "", ver)
-      } else {
-        title = ""
-      }
-      tier = ""; status = ""
-      next
-    }
-    /^\*\*Tier:\*\*/ { tier = $0; sub(/^\*\*Tier:\*\* */, "", tier); gsub(/ .*/, "", tier) }
-    /^\*\*Status:\*\*/ { status = $0; sub(/^\*\*Status:\*\* */, "", status); sub(/ .*/, "", status) }
-    END { if (ver != "") printf "%s|%s|%s|%s\n", ver, title, tier, status }
-  ' "$roadmap")
+  done < <(awk '/^\| *build/,/^[^|]/' "$roadmap" | grep '^|')
+
+  if (( ${#builds[@]} == 0 )); then
+    info "roadmap: no ledger table found in $roadmap"
+    return 0
+  fi
 
   if $json; then
     printf "["
     local first=true i
-    for (( i=0; i<${#versions[@]}; i++ )); do
+    for (( i=0; i<${#builds[@]}; i++ )); do
       $all || [[ "${statuses[$i]}" != "shipped" ]] || continue
       $first && first=false || printf ","
-      printf '{"version":"%s","title":"%s","tier":"%s","status":"%s"}' \
-        "${versions[$i]}" "${titles[$i]}" "${tiers[$i]}" "${statuses[$i]}"
+      printf '{"build":"%s","slug":"%s","version":"%s","title":"%s","tier":"%s","status":"%s"}' \
+        "${builds[$i]}" "${slugs[$i]}" "${versions[$i]}" \
+        "${titles[$i]}" "${tiers[$i]}" "${statuses[$i]}"
     done
     printf "]\n"
     return 0
@@ -4113,12 +4117,11 @@ EOF
   echo ""
 
   local cur_tier="" i
-  for (( i=0; i<${#versions[@]}; i++ )); do
+  for (( i=0; i<${#builds[@]}; i++ )); do
     local status="${statuses[$i]}"
     $all || [[ "$status" != "shipped" ]] || continue
 
     local tier="${tiers[$i]}"
-    # Tier header when transitioning
     if [[ "$tier" != "$cur_tier" ]]; then
       [[ -n "$cur_tier" ]] && echo ""
       case "$tier" in
@@ -4130,7 +4133,6 @@ EOF
       cur_tier="$tier"
     fi
 
-    # Status indicator
     local indicator
     case "$status" in
       shipped)  indicator="✓" ;;
@@ -4139,10 +4141,10 @@ EOF
       *)        indicator="?" ;;
     esac
 
+    local ver="${versions[$i]}"
     local title="${titles[$i]}"
-    # Clamp title to 44 chars to keep alignment
     if (( ${#title} > 44 )); then title="${title:0:43}…"; fi
-    printf "  %s  %-12s  %s\n" "$indicator" "${versions[$i]}" "$title"
+    printf "  %s  %-12s  %s\n" "$indicator" "$ver" "$title"
   done
   echo ""
 }

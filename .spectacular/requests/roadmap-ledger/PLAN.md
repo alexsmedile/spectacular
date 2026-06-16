@@ -1,8 +1,8 @@
 ---
-status: active
+status: review
 priority: high
 owner: alex
-updated: 2026-06-07
+updated: 2026-06-16
 summary: "Single-ledger roadmap — requests carry a stable build id, not a hardcoded target version; one table in ROADMAP.md maps build → planned version. Inserting a request edits one row, not ~14 scattered refs."
 related:
   - PRD.md

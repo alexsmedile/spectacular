@@ -7,9 +7,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.17.0] — 2026-06-16
+
 ### Added
 
-- **`DECISIONS.md` index mode.** When a project's decisions file outgrows flat-file scale (~50+ entries), agents can now split it into a cheap one-liner index + per-entry files in `decisions/`. Detected by presence of `decisions/` subfolder — flat mode remains fully valid and backwards-compatible.
+- **Roadmap ledger — single source of truth for `build → version` mapping.** Every request gets a stable build id (`b<N>`) and one row in the `## Roadmap ledger` table in `ROADMAP.md`. The `target-version` column is the only place a version number is written; everything else uses slug or build id. `spectacular new` stamps `build: bN` on new PLAN frontmatter and increments `last_build:` in `config.yaml`.
+- **`spectacular roadmap` reads from the ledger (v1.17.0+).** The render verb now parses the ledger table as its data source instead of prose version blocks — a one-row edit to reslot a request is reflected immediately in `spectacular roadmap` output. JSON output gains `build` and `slug` fields.
+- **`DECISIONS.md` index mode.** When a project's decisions file outgrows flat-file scale (~50+ entries), agents can split it into a cheap one-liner index + per-entry files in `decisions/`. Detected by presence of `decisions/` subfolder — flat mode remains fully valid and backwards-compatible.
 - **`spectacular decisions migrate [--dry-run]`.** One-shot verb: reads flat `DECISIONS.md`, extracts each `## YYYY-MM-DD —` block into `decisions/D<N>.md`, rewrites root as one-liner index. `--dry-run` previews without writing. Idempotent if already migrated.
 - **`spectacular decide` writes index mode automatically.** When `decisions/` folder exists, `decide` writes full ADR prose to `decisions/D<N>.md` and appends one index line to `DECISIONS.md`. Flat-mode behavior unchanged. Auto-numbers from the highest D<N> in the folder.
 - **`doctor decisions` area.** Index-mode consistency checks: mode consistency (no prose in index), orphan index lines, stale per-entry files, sequential D-numbering (gaps → warning, duplicates → error).

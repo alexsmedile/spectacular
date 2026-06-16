@@ -1,7 +1,7 @@
 ---
-version: 3.2
-updated: 2026-06-14
-summary: "Per-version scope, phase, and exit criteria. Active line is v1.16.0 (shipped); v1.17 next. v1.17+ is the runway to the v2.0.0 major; v2.0.0 is a single breaking concern — .spectacular/ file-contract evolution (CLI debt removal lands earlier as MINOR; the contract-prep ladder pre-stages the change). Long-term gets fuzzier on purpose. (v3.3 of this doc: v1.16 marked shipped; slug refs replace hardcoded planned versions in prose.)"
+version: 3.3
+updated: 2026-06-16
+summary: "Per-version scope, phase, and exit criteria. Active line is v1.17.0 (roadmap-ledger + decisions-index shipped; cli-debt-removal planned). v1.17+ is the runway to the v2.0.0 major; v2.0.0 is a single breaking concern — .spectacular/ file-contract evolution. Long-term gets fuzzier on purpose. (v3.4 of this doc: ledger rows updated for v1.17.0 shipped; roadmap render now ledger-driven.)"
 related:
   - PRD.md
   - ARCHITECTURE.md
@@ -32,9 +32,9 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b4 | cli-debt-removal | CLI debt removal | themed | v1.17.0 | planned |
 | b5 | cross-request-links | Cross-request awareness | themed | v1.16.0 | shipped |
 | b6 | imagine-mode | Imagine mode | full | v1.15.0 | shipped |
-| b7 | roadmap-ledger | Roadmap ledger | full | v1.17.0 | active |
+| b7 | roadmap-ledger | Roadmap ledger | full | v1.17.0 | shipped |
 | b8 | visual-layer | Visual layer | full | v1.15.0 | shipped |
-| b9 | decisions-index | Decisions index mode | full | v1.17.0 | planned |
+| b9 | decisions-index | Decisions index mode | full | v1.17.0 | shipped |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 
@@ -145,34 +145,30 @@ Spectacular's read surfaces stop rendering as flat text and gain a scannable vis
 
 ---
 
-## v1.17.0 — CLI debt removal
+## v1.17.0 — Roadmap ledger + Decisions index + CLI debt removal
 
 **Tier:** themed
-**Status:** planned
-**Phase:** intent
+**Status:** active
+**Phase:** release-prep
 
 **Outcome:**
-Spectacular sheds its accumulated deprecation debt — the `docs *` verbs (extracted to `pageworks` in v1.2.0) and the `--global` alias — in a clean MINOR rather than holding them for the major. These have shown deprecation banners pointing at removal for many releases, so removing them is the *fulfillment* of a long-telegraphed contract, not a surprise break. Pulling debt-removal out of v2.0.0 shrinks the major to a single breaking concern (the file contract) and de-risks it.
+Three housekeeping items that sharpen the operational substrate. Roadmap ledger makes `build → version` the single source of truth (one edit to reslot a request, not ~14 refs). Decisions index mode splits a flat `DECISIONS.md` into a cheap index + per-entry files when it grows large. CLI debt removal sheds the long-deprecated `docs *` verbs and `--global` alias. The first two ship in this release; cli-debt-removal is planned for this slot.
 
-> **Versioning note:** treating banner-warned, long-deprecated verb removal as MINOR is a deliberate call (per [`docs/versioning.md`](../docs/versioning.md) the strict reading would be MAJOR). The justification: the removal was announced in-product since v1.2.0, `pageworks` is the documented replacement, and no *current* documented surface changes behavior. The agent confirmed this framing rather than auto-classifying.
+**Shipped (2026-06-16):**
+- `roadmap-ledger` — ledger table as single source of truth; `spectacular roadmap` reads from ledger; `spectacular new` stamps build ids; `doctor links` flags stray version refs
+- `decisions-index` — index mode (`decisions/D<N>.md` + cheap root index); `spectacular decisions migrate`; `doctor decisions` area
 
-**Themes:**
+**Themes (cli-debt-removal, planned):**
 - Remove `docs init|export|new|review|status` verbs + the `deprecation_notice()` banner machinery
 - Remove the `docs-contract` / `docs-rules` / `docs-renderer-adapters` reference docs + legacy back-compat PRD references
 - Remove the `--global` alias for `--skill-scope global`
 - Update `--help`, usage, tests for the removed surface; `doctor docs` stays (discovery-only)
 
-**Scope (out):**
-- Any `.spectacular/` file-format change (that's the v2.0.0 major)
-- Verb *renames* (fold into v2.0.0 if any surface genuinely — none currently identified)
-
-**Exit criteria:**
-- All deprecated verbs/refs/aliases removed; banner machinery gone
-- `--help` + usage reflect the trimmed surface; tests updated
-- `pageworks` install hint still surfaces where `docs *` used to
-- CHANGELOG entry (note: removal of already-deprecated surface, MINOR per the call above); plugin bump to the target release
+> **Versioning note (cli-debt-removal):** treating banner-warned, long-deprecated verb removal as MINOR is a deliberate call (per [`docs/versioning.md`](../docs/versioning.md) the strict reading would be MAJOR). The justification: the removal was announced in-product since v1.2.0, `pageworks` is the documented replacement, and no *current* documented surface changes behavior.
 
 **Linked requests:**
+- roadmap-ledger (shipped)
+- decisions-index (shipped)
 - cli-debt-removal (planned, medium)
 
 ---

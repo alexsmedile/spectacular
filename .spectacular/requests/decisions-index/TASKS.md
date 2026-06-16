@@ -1,6 +1,6 @@
 ---
-status: active
-updated: 2026-06-15
+status: review
+updated: 2026-06-16
 related:
   - PLAN.md
 ---
@@ -45,7 +45,7 @@ related:
 - [x] Verify: `grep -c "^\*\*Context" .spectacular/DECISIONS.md` returns 0
 - [x] Verify: `ls .spectacular/decisions/ | wc -l` returns correct count
 - [x] CHANGELOG entry
-- [ ] Plugin bump to target release (deferred — ships with v1.17.0 release commit)
+- [x] Plugin bump to target release (v1.17.0)
 
 ## v2 (deferred)
 

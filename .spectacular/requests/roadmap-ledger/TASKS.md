@@ -1,6 +1,6 @@
 ---
-status: active
-updated: 2026-06-14
+status: review
+updated: 2026-06-16
 related:
   - PLAN.md
 ---
@@ -31,14 +31,14 @@ related:
 - [x] Document before/after vs the policy-engine reslot (~14 refs → 1 row)
 
 ### M5 — Render + doctor check
-- [ ] `spectacular roadmap` reads version blocks from the ledger (extend existing render)
-- [ ] `doctor links` (from cross-request-links) flags stray hardcoded version refs outside the ledger
+- [x] `spectacular roadmap` reads version blocks from the ledger (extend existing render)
+- [x] `doctor links` (from cross-request-links) flags stray hardcoded version refs outside the ledger
 
 ### M6 — Migrate + ship
-- [ ] Convert live ROADMAP.md to ledger-driven (ledger table + slug refs in prose)
-- [ ] Dogfood: reslot a real request, confirm one-row edit
-- [ ] Coordinate final migration with cross-request-links (already shipped as v1.16.0; roadmap-ledger ships in the next available slot)
-- [ ] CHANGELOG entry; plugin bump to target release
+- [x] Convert live ROADMAP.md to ledger-driven (ledger table + slug refs in prose)
+- [x] Dogfood: reslot a real request, confirm one-row edit
+- [x] Coordinate final migration with cross-request-links (already shipped as v1.16.0; roadmap-ledger ships in the next available slot)
+- [x] CHANGELOG entry; plugin bump to v1.17.0
 
 ## v2 (deferred)
 

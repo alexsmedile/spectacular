@@ -1,0 +1,54 @@
+<svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace">
+
+  <!-- background -->
+  <rect width="760" height="300" fill="#ffffff" rx="12"/>
+
+  <!-- ── root folder ── -->
+  <rect x="290" y="28" width="180" height="56" rx="8" fill="#f6f8fa" stroke="#9a6700" stroke-width="1.5"/>
+  <text x="380" y="56" text-anchor="middle" fill="#9a6700" font-size="14" font-weight="600">📁 &lt;request&gt;/</text>
+  <text x="380" y="74" text-anchor="middle" fill="#8c959f" font-size="10">one piece of work</text>
+
+  <!-- ── connectors: root → four children ── -->
+  <line x1="380" y1="84" x2="380" y2="108" stroke="#d0d7de" stroke-width="1.5"/>
+  <line x1="95" y1="108" x2="665" y2="108" stroke="#d0d7de" stroke-width="1.5"/>
+  <line x1="95"  y1="108" x2="95"  y2="132" stroke="#d0d7de" stroke-width="1.5"/>
+  <line x1="285" y1="108" x2="285" y2="132" stroke="#d0d7de" stroke-width="1.5"/>
+  <line x1="475" y1="108" x2="475" y2="132" stroke="#d0d7de" stroke-width="1.5"/>
+  <line x1="665" y1="108" x2="665" y2="132" stroke="#d0d7de" stroke-width="1.5"/>
+
+  <!-- ── child: PLAN.md ── -->
+  <rect x="25" y="132" width="140" height="100" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
+  <text x="41" y="160" fill="#8c959f" font-size="11">📄</text>
+  <text x="59" y="160" fill="#1f2328" font-size="13" font-weight="600">PLAN.md</text>
+  <text x="41" y="184" fill="#6e7781" font-size="10">how you'll do it</text>
+  <text x="41" y="200" fill="#6e7781" font-size="10">+ the status</text>
+  <text x="41" y="222" fill="#1a7f37" font-size="10">the approach</text>
+
+  <!-- ── child: TASKS.md ── -->
+  <rect x="215" y="132" width="140" height="100" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
+  <text x="231" y="160" fill="#8c959f" font-size="11">📄</text>
+  <text x="249" y="160" fill="#1f2328" font-size="13" font-weight="600">TASKS.md</text>
+  <text x="231" y="184" fill="#6e7781" font-size="10">the checklist</text>
+  <text x="231" y="200" fill="#6e7781" font-size="10">of steps</text>
+  <text x="231" y="222" fill="#0969da" font-size="10">the steps</text>
+
+  <!-- ── child: VERIFY.md ── -->
+  <rect x="405" y="132" width="140" height="100" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
+  <text x="421" y="160" fill="#8c959f" font-size="11">📄</text>
+  <text x="439" y="160" fill="#1f2328" font-size="13" font-weight="600">VERIFY.md</text>
+  <text x="421" y="184" fill="#6e7781" font-size="10">how you'll know</text>
+  <text x="421" y="200" fill="#6e7781" font-size="10">it works</text>
+  <text x="421" y="222" fill="#9a6700" font-size="10">the proof</text>
+
+  <!-- ── child: specs/ ── -->
+  <rect x="595" y="132" width="140" height="100" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
+  <text x="611" y="160" fill="#8c959f" font-size="11">📁</text>
+  <text x="629" y="160" fill="#1f2328" font-size="13" font-weight="600">specs/</text>
+  <text x="611" y="184" fill="#6e7781" font-size="10">deeper detail,</text>
+  <text x="611" y="200" fill="#6e7781" font-size="10">when needed</text>
+  <text x="611" y="222" fill="#6e7781" font-size="10">optional</text>
+
+  <!-- caption -->
+  <text x="380" y="276" text-anchor="middle" fill="#8c959f" font-size="10">plan it · track it · verify it · everything for one request lives together</text>
+
+</svg>

@@ -40,7 +40,7 @@ spectacular init --kit coding --minimal       # always-set only; kit identity pr
 spectacular init --name my-app
 spectacular init --summary "Internal dashboard for support workflows"
 spectacular init --agents-file CLAUDE.md      # for Claude-only teams
-spectacular init --global                     # install skill to ~/.agents and ~/.claude
+spectacular init --skill-scope global         # install skill to ~/.agents and ~/.claude
 spectacular init --update                     # re-download latest skill release
 ```
 

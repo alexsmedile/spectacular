@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
 ![Platform](https://img.shields.io/badge/platform-Claude%20%7C%20Codex%20%7C%20Cursor-lightgrey)
-![Version](https://img.shields.io/badge/version-1.11.0-green)
+![Version](https://img.shields.io/badge/version-1.17.0-green)
 
 </div>
 
@@ -169,8 +169,8 @@ A typical coding project (`spectacular init --kit coding`) scaffolds the always-
 | `spectacular progress <slug>` | Milestone tick rate from TASKS.md (v1.8.0+) |
 | `spectacular paths` | JSON map of conventional workspace paths (v1.8.0+) |
 
-> [!WARNING]
-> **`spectacular docs *` verbs are deprecated as of v1.2.0** — public-facing documentation work moved to the standalone [pageworks](https://github.com/alexsmedile/pageworks) skill. The verbs still work and emit a deprecation banner pointing to the equivalent pageworks command; they will be removed in v2.0.0. Install pageworks via its own one-liner.
+> [!NOTE]
+> **`spectacular docs *` verbs were removed in v1.17.0.** Public-facing documentation work lives in the standalone [pageworks](https://github.com/alexsmedile/pageworks) skill. `doctor docs` (discovery-only) remains. Install pageworks via its own one-liner.
 
 ---
 
@@ -351,7 +351,7 @@ cp -r skills/spectacular ~/.agents/skills/
 | Scope | Source | Claude symlink |
 |---|---|---|
 | Project-local (default) | `.agents/skills/spectacular/` | `.claude/skills/spectacular/` → above |
-| Global (`--global`) | `~/.agents/skills/spectacular/` | `~/.claude/skills/spectacular/` → above |
+| Global (`--skill-scope global`) | `~/.agents/skills/spectacular/` | `~/.claude/skills/spectacular/` → above |
 
 ---
 

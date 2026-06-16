@@ -164,7 +164,7 @@ You won't get `spectacular init`, `spectacular doctor`, or any other CLI verbs â
 | Scope | Source | Claude symlink |
 |---|---|---|
 | Project-local (default) | `.agents/skills/spectacular/` | `.claude/skills/spectacular/` |
-| Global (`spectacular init --global`) | `~/.agents/skills/spectacular/` | `~/.claude/skills/spectacular/` |
+| Global (`spectacular init --skill-scope global`) | `~/.agents/skills/spectacular/` | `~/.claude/skills/spectacular/` |
 
 `.agents/` is the source of truth; `.claude/` is always a symlink. This is intentional â€” it keeps the skill toolchain-agnostic and lets Codex, Cursor, and any other tool that respects `.agents/` use the same files.
 

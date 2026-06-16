@@ -42,15 +42,6 @@ Human catalog of every document type in a Spectacular workspace.
 |---|---|---|---|
 | `convention-pack` | grill | `~/.spectacular/packs/<name>/pack.md` | [pack-rules](pack-rules.md) |
 
-## Public-facing docs (deprecated v1.2.0)
-
-> See [pageworks](https://github.com/alexsmedile/pageworks) for current public-docs authoring. These entries remain for backwards compatibility; removal target v2.0.0.
-
-| Doc | Mode | Location | Rules | Status |
-|---|---|---|---|---|
-| `docs-manifest` | stub | `docs/docs.yaml` | [docs-rules](docs-rules.md) | deprecated v1.2.0 |
-| `docs-page` | stub | `docs/<section>/<slug>.md` | [docs-rules](docs-rules.md) | deprecated v1.2.0 |
-
 ## Skill-internal references
 
 | Doc | Mode | Location | Rules |

@@ -29,7 +29,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | build | slug | title | tier | target-version | status |
 |-------|------|-------|------|----------------|--------|
 | b3 | convention-pack-modules | Convention pack v2 — modular packs | vision | tbd | planned |
-| b4 | cli-debt-removal | CLI debt removal | themed | v1.17.0 | planned |
+| b4 | cli-debt-removal | CLI debt removal | themed | v1.17.0 | shipped |
 | b5 | cross-request-links | Cross-request awareness | themed | v1.16.0 | shipped |
 | b6 | imagine-mode | Imagine mode | full | v1.15.0 | shipped |
 | b7 | roadmap-ledger | Roadmap ledger | full | v1.17.0 | shipped |

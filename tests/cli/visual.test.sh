@@ -188,15 +188,15 @@ echo "6. roadmap: renders version arc"
 
 rm_out=$(cd "$REPO_ROOT" && NO_COLOR=1 bash "$CLI" roadmap 2>&1)
 assert_contains "$rm_out" "Roadmap" "roadmap header present"
-assert_contains "$rm_out" "v1." "at least one v1.x version shown"
 assert_contains "$rm_out" "·" "planned items use · indicator"
 
-# shipped versions should be hidden by default
-assert_lacks "$rm_out" "v1.9.0" "shipped v1.9.0 hidden by default"
+# shipped versions hidden by default (ledger-driven)
+assert_lacks "$rm_out" "v1.16.0" "shipped v1.16.0 hidden by default"
 
-# --all shows shipped
+# --all shows shipped ledger entries with v1.x versions and ✓ indicator
 rm_all=$(cd "$REPO_ROOT" && NO_COLOR=1 bash "$CLI" roadmap --all 2>&1)
-assert_contains "$rm_all" "v1.9.0" "--all shows shipped versions"
+assert_contains "$rm_all" "v1." "at least one v1.x version in --all"
+assert_contains "$rm_all" "v1.16.0" "--all shows shipped versions"
 assert_contains "$rm_all" "✓" "--all shows ✓ for shipped"
 
 # ── test 7: roadmap --json ────────────────────────────────────────────────────

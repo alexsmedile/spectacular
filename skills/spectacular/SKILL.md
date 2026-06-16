@@ -157,23 +157,15 @@ Packs use a short alias and add a `new <name>` verb (since packs are user-scope,
 
 ### Public-facing docs (DEPRECATED in v1.2.0 — owned by pageworks)
 
-> Public-facing docs work has moved to the dedicated [pageworks](https://github.com/alexsmedile/pageworks) skill. Spectacular keeps **discovery-only awareness** of `docs/` (folder + manifest presence). Schema, authoring, renderer adapters, and validation all live in pageworks now. The verbs below still work for backward compatibility but will be removed in spectacular v2.0.0.
+> Public-facing docs work has moved to the dedicated [pageworks](https://github.com/alexsmedile/pageworks) skill. Spectacular keeps **discovery-only awareness** of `docs/` (folder + manifest presence). Schema, authoring, renderer adapters, and validation all live in pageworks now. The `docs *` verbs were removed in v1.17.0.
 
 | User says | Route to | Handled by |
 |---|---|---|
-| `spectacular docs init` / `docs init --minimal` | CLI (deprecated) — also prints deprecation banner | CLI binary |
-| `spectacular docs export <renderer>` | CLI (deprecated) — also prints deprecation banner | CLI binary |
-| `spectacular docs new\|review\|status` | Skill verb (deprecated) — also prints deprecation banner | Skill |
-| `spectacular doctor docs` | CLI — **slimmed to discovery only** (folder presence, manifest presence, pageworks install hint) | CLI binary |
+| `spectacular doctor docs` | CLI — discovery only (folder presence, manifest presence, pageworks install hint) | CLI binary |
 | User asks "write docs", "create a docs page", "add a tutorial" | → `references/pageworks-handoff.md` § install hint | Skill |
 | After `spectacular archive <slug>` with SPEC changes | → CLI prints pageworks-audit hint (suppress with `--no-docs-prompt`) | CLI binary |
 
 When delegating to pageworks, surface the canonical install hint from `references/pageworks-handoff.md`. Never auto-install.
-
-Pre-v1.2.0 references (still loaded for backward compatibility but show deprecation banners):
-- [[docs-contract]] — schema (deprecated; canonical at `pageworks/references/contract.md`)
-- [[docs-rules]] — authoring rules (deprecated; canonical at `pageworks/references/authoring.md`)
-- [[docs-renderer-adapters]] — renderer adapters (deprecated; canonical at `pageworks/references/renderers.md`)
 
 ### Verification routing (when writing PLAN.md or moving requests to review)
 
@@ -300,9 +292,6 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 | `references/packs-contract.md` | Convention pack schema: pack folder shape + 6 rule categories (naming/taxonomy/root-files/gitignore/file-placement/project-types) |
 | `references/pack-rules.md` | Pack-specific grill rules: slot prompts, mini-refine patterns, source-ingestion (`--from`), reserved pack-ids, review gate checks 4-12 |
 | `references/pageworks-handoff.md` | **v1.2.0+** — when/how spectacular delegates public-doc work to pageworks; canonical install hint; archive-time prompt mechanics |
-| `references/docs-contract.md` | **DEPRECATED v1.2.0** — public docs schema; canonical at `pageworks/references/contract.md`. Removed in v2.0.0 |
-| `references/docs-rules.md` | **DEPRECATED v1.2.0** — docs-specific skill rules; canonical at `pageworks/references/authoring.md`. Removed in v2.0.0 |
-| `references/docs-renderer-adapters.md` | **DEPRECATED v1.2.0** — renderer adapters (MkDocs + Docusaurus); canonical at `pageworks/references/renderers.md`. Removed in v2.0.0 |
 
 ---
 

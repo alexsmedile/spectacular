@@ -214,17 +214,17 @@ scenario_6_promote_archive_combo() {
   rm -rf "$dir"
 }
 
-scenario_8_new_target_version() {
-  echo "Scenario 8: new --target-version writes target_version: to PLAN frontmatter"
+scenario_8_new_build_id() {
+  echo "Scenario 8: new stamps build: bN in PLAN frontmatter; no target_version:"
   local dir="/tmp/spectacular-mutator-8"
   seed_workspace "$dir"
 
-  (cd "$dir" && "$CLI" new feat-tagged --target-version 0.9.0 --summary "tagged" >/dev/null)
-  assert_file_contains "$dir/.spectacular/requests/feat-tagged/PLAN.md" "target_version: 0.9.0"
+  (cd "$dir" && "$CLI" new feat-first --summary "first" >/dev/null)
+  assert_file_contains "$dir/.spectacular/requests/feat-first/PLAN.md" "build:"
+  assert_file_lacks    "$dir/.spectacular/requests/feat-first/PLAN.md" "target_version:"
 
-  # Without --target-version, no target_version field added
-  (cd "$dir" && "$CLI" new feat-untagged --summary "untagged" >/dev/null)
-  assert_file_lacks "$dir/.spectacular/requests/feat-untagged/PLAN.md" "target_version:"
+  (cd "$dir" && "$CLI" new feat-second --summary "second" >/dev/null)
+  assert_file_contains "$dir/.spectacular/requests/feat-second/PLAN.md" "build:"
 
   rm -rf "$dir"
 }
@@ -292,7 +292,7 @@ scenario_4_snapshot_basic
 scenario_5_archive_basic
 scenario_6_promote_archive_combo
 scenario_7_help_flags
-scenario_8_new_target_version
+scenario_8_new_build_id
 scenario_9_doctor_precondition_archive
 scenario_10_doctor_precondition_clean_passes
 

@@ -19,6 +19,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - **`doctor decisions` area.** Index-mode consistency checks: mode consistency (no prose in index), orphan index lines, stale per-entry files, sequential D-numbering (gaps → warning, duplicates → error).
 - **`decisions-rules.md` updated.** `mode: index | flat`, canonical index line format, per-entry file format, detection rule, and agent read pattern all documented.
 
+### Removed
+
+- **`spectacular docs init|export|new|review|status` verbs.** Removed after being deprecated with in-product banners since v1.2.0 (4+ releases). Public docs work lives in the [`pageworks`](https://github.com/alexsmedile/pageworks) skill; `doctor docs` (discovery-only) remains.
+- **`deprecation_notice()` banner machinery.** No longer needed once the deprecated verbs are gone.
+- **`--global` init flag.** Deprecated alias for `--skill-scope global`; use `--skill-scope global` directly.
+- **`docs-contract.md`, `docs-rules.md`, `docs-renderer-adapters.md` reference docs.** Canonical versions live at `pageworks/references/`.
+- **Deprecated `docs-manifest` and `docs-page` entries from `doc-index.md`.**
+
+> **MINOR classification rationale (D6):** Removal of banner-warned, continuously-telegraphed deprecated surface is treated as MINOR per the project's versioning convention. No undeprecated behavior changes. `pageworks` is the documented, available replacement.
+
 ## [1.16.0] — 2026-06-08
 
 ### Added

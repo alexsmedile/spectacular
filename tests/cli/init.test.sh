@@ -249,7 +249,7 @@ scenario_7_interactive_abort() {
 }
 
 scenario_8_global_flag() {
-  echo "Scenario 8: --global uses fake HOME (no real ~/.agents pollution)"
+  echo "Scenario 8: --skill-scope global uses fake HOME (no real ~/.agents pollution)"
   local fake_home="/tmp/spectacular-test-8-home"
   rm -rf "$fake_home"
   mkdir -p "$fake_home/.agents/skills" "$fake_home/project/.spectacular"
@@ -259,7 +259,7 @@ spectacular:
   ref: local-dev
 EOF
 
-  (cd "$fake_home/project" && HOME="$fake_home" "$CLI" init --global) >/dev/null
+  (cd "$fake_home/project" && HOME="$fake_home" "$CLI" init --skill-scope global) >/dev/null
 
   # Workspace scaffolded in project dir
   assert_file_exists "$fake_home/project/.spectacular/PRD.md"

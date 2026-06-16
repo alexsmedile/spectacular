@@ -1,8 +1,8 @@
 ---
-status: planned
+status: review
 priority: medium
 owner: alex
-updated: 2026-05-29
+updated: 2026-06-16
 summary: "Remove long-deprecated docs * verbs + --global alias + docs-* refs; shrink v2 to a single breaking concern"
 related:
   - PRD.md

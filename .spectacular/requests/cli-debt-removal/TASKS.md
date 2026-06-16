@@ -1,6 +1,6 @@
 ---
-status: planned
-updated: 2026-05-29
+status: review
+updated: 2026-06-16
 related:
   - PLAN.md
 ---
@@ -10,26 +10,26 @@ related:
 ## v1
 
 ### M1 — Audit + ADR
-- [ ] Enumerate every deprecated surface (verbs, --global, docs-* refs, banner machinery)
-- [ ] Write DECISIONS ADR: MINOR classification + exact removal list
+- [x] Enumerate every deprecated surface (verbs, --global, docs-* refs, banner machinery)
+- [x] Write DECISIONS ADR: MINOR classification + exact removal list (D6)
 
 ### M2 — Remove verbs + banner
-- [ ] Delete `docs init|export|new|review|status` verbs
-- [ ] Remove `deprecation_notice()` machinery
-- [ ] Preserve pageworks install hint where docs verbs used to point
+- [x] Delete `docs init|export|new|review|status` verbs
+- [x] Remove `deprecation_notice()` machinery
+- [x] Preserve pageworks install hint where docs verbs used to point
 
 ### M3 — Remove refs + alias
-- [ ] Delete `docs-contract` / `docs-rules` / `docs-renderer-adapters` reference docs
-- [ ] Remove legacy back-compat PRD references
-- [ ] Remove `--global` alias (keep `--skill-scope global`)
+- [x] Delete `docs-contract` / `docs-rules` / `docs-renderer-adapters` reference docs
+- [x] Remove legacy back-compat PRD references
+- [x] Remove `--global` alias (keep `--skill-scope global`)
 
 ### M4 — Surface + tests
-- [ ] Update `--help` + usage text for trimmed surface
-- [ ] Update test suite for removed surface
-- [ ] Confirm `doctor docs` (discovery-only) still passes
+- [x] Update `--help` + usage text for trimmed surface
+- [x] Update test suite for removed surface (deleted docs*.test.sh; updated init + mutator + visual tests)
+- [x] Confirm `doctor docs` (discovery-only) still passes
 
 ### M5 — Ship
-- [ ] CHANGELOG [1.17.0] Removed entry; plugin bump to v1.17.0
+- [x] CHANGELOG [1.17.0] Removed entry; plugin bump already at v1.17.0
 
 ## v2 (deferred)
 

@@ -7,6 +7,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.17.1] — 2026-06-20
+
+### Fixed
+
+- `DECISIONS.md` missing `version` and `summary` frontmatter fields (doctor frontmatter warnings)
+- Stale `related:` link in `ideas/memory-protocols.md` pointing to removed `requests/soft-db-substrate/PLAN.md` (doctor links warning)
+
 ## [1.17.0] — 2026-06-16
 
 ### Added

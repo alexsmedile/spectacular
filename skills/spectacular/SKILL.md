@@ -2,23 +2,21 @@
 name: spectacular
 description: |
   AI-native operational workspace for software projects. Stop losing context. Start shipping.
-  Manages the full lifecycle of a .spectacular/ workspace: reads project state, proposes actions,
-  scaffolds requests, manages lifecycle transitions, writes memory, archives completed work,
-  and grills/refines/reviews any structured doc (PRD, PLAN, TASKS, PRINCIPLES, POLICY, ARCHITECTURE,
+  Manages the full lifecycle of a .spectacular/ workspace: reads project state, scaffolds
+  requests, manages lifecycle transitions, writes memory, archives completed work, and
+  grills/refines/reviews any structured doc (PRD, PLAN, TASKS, PRINCIPLES, POLICY, ARCHITECTURE,
   ROADMAP, STACK, AGENTS, DECISIONS, PERSONAS) plus soft-DB collections (memory, sessions,
-  feedback, ideas) via rules files that declare each doc's mode + slots. Enforces a practice
-  layer (POLICY.md): policies filed under work-phase hooks gate transitions (e.g. understand
-  before implementation, verification before verified).
-  Use when: opening /spectacular on any project, scaffolding a new request, archiving completed
-  work, capturing a memory, snapshotting a canonical doc, onboarding to an existing workspace,
-  consulting or authoring policies, or building any canonical doc from scratch.
+  feedback, ideas). Enforces a practice layer (POLICY.md): policies under work-phase hooks gate
+  transitions (e.g. understand before implementation, verification before verified).
+  Use when: opening /spectacular, scaffolding a request, archiving work, capturing a memory,
+  snapshotting a doc, onboarding to a workspace, or building any canonical doc from scratch.
   Triggers: /spectacular, spectacular status|new|archive|promote|init|snapshot|remember|policy,
   spectacular <doc> [grill|refine|review], spectacular pack [new|grill|refine|review].
 when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type listed in doc-index.md.
-version: 1.17.1
+version: 1.17.2
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]

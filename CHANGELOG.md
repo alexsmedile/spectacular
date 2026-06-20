@@ -7,6 +7,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.17.2] — 2026-06-20
+
+### Fixed
+
+- Skill `description` trimmed from 1146 → 986 chars so it loads under Codex's 1024-char limit (Claude Code's 1536 limit had masked the issue). No triggers or doc names removed — only wording tightened.
+
 ## [1.17.1] — 2026-06-20
 
 ### Fixed

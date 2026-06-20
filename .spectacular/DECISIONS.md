@@ -2,7 +2,9 @@
 type: decisions
 doc: decisions
 mode: index
-updated: 2026-06-16
+version: 1.0
+updated: 2026-06-20
+summary: "Architectural and product decisions log"
 ---
 
 # Decisions

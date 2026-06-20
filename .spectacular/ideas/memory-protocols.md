@@ -8,7 +8,6 @@ origin: requests/memory-protocols (abandoned 2026-05-26 — too broad; a narrowe
 related:
   - ../ROADMAP.md
   - ../SPEC.md
-  - ../requests/soft-db-substrate/PLAN.md
   - ../../_research/agent-memory/REPORT.md
   - ../../_research/agent-memory/REPORT-v2.md
 ---

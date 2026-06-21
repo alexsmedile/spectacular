@@ -6552,6 +6552,11 @@ check_skill() {
   if [[ -f "$skill_md" ]]; then
     if head -1 "$skill_md" | grep -q '^---$'; then
       doc_add "skill" "pass" "$skill_md" "SKILL.md frontmatter loads"
+      # description length vs Codex's 1024-char cap. See scripts/check-skill-desc.sh
+      # and .spectacular/decisions/D7.md — Codex measures `description` ALONE and
+      # skips any skill over 1024. Claude Code's 1536 cap masks this, so a guard is
+      # the only thing that catches it before a release ships.
+      check_skill_desc_len "$skill_md"
     else
       doc_add "skill" "error" "$skill_md" "SKILL.md missing frontmatter delimiter" \
         "re-install the skill via \`spectacular init --update\`" "judgment"
@@ -6559,6 +6564,38 @@ check_skill() {
   else
     doc_add "skill" "error" "$skill_md" "SKILL.md missing" \
       "re-install the skill via \`spectacular init --update\`" "judgment"
+  fi
+}
+
+# Measure a SKILL.md `description` block (chars) and file a doctor finding.
+# Thresholds: error > 1024 (Codex skips the skill), warning > 1000 (about to break).
+# Kept in lock-step with scripts/check-skill-desc.sh (the pre-commit path).
+check_skill_desc_len() {
+  local skill_md="$1"
+  local n
+  n=$(awk '
+    /^---$/ { fm = !fm; if (!fm && seen) exit; next }
+    fm && /^description:[[:space:]]*\|[[:space:]]*$/ { in_desc=1; seen=1; next }
+    fm && /^description:[[:space:]]*[^|[:space:]]/ {
+      val = $0; sub(/^description:[[:space:]]*/, "", val); gsub(/^"|"$/, "", val)
+      total += length(val); seen=1; exit
+    }
+    in_desc {
+      if ($0 ~ /^[^[:space:]]/ || $0 ~ /^---$/) { exit }
+      line = $0; sub(/^[[:space:]]+/, "", line)
+      if (started) total += 1
+      total += length(line); started=1
+    }
+    END { print total + 0 }
+  ' "$skill_md")
+  if (( n > 1024 )); then
+    doc_add "skill" "error" "$skill_md" "description is $n chars — over Codex's 1024 cap (Codex will skip this skill)" \
+      "trim the \`description\` frontmatter below 1024 chars" "judgment"
+  elif (( n > 1000 )); then
+    doc_add "skill" "warning" "$skill_md" "description is $n chars — $((1024 - n)) under the 1024 cap; trim soon" \
+      "trim the \`description\` frontmatter to give more headroom" "judgment"
+  else
+    doc_add "skill" "pass" "$skill_md" "description length ok ($n chars, under 1024 Codex cap)"
   fi
 }
 

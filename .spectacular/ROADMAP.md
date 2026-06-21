@@ -35,6 +35,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b7 | roadmap-ledger | Roadmap ledger | full | v1.17.0 | shipped |
 | b8 | visual-layer | Visual layer | full | v1.15.0 | shipped |
 | b9 | decisions-index | Decisions index mode | full | v1.17.0 | shipped |
+| b10 | skill-desc-length-check | Skill description length guard | themed | tbd | planned |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

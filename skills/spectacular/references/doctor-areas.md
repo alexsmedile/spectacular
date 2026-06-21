@@ -16,6 +16,7 @@ Per-area check tables. Load when explaining a specific finding, implementing a n
 | skills.lock present | ⚠️ if missing | `.spectacular/skills.lock` |
 | skills.lock consistent | ⚠️ if drift | `ref:` matches installed version (best-effort) |
 | SKILL.md parseable | ❌ if malformed | Top of install path; frontmatter loads |
+| description length | ❌ if >1024 · ⚠️ if >1000 | `description` frontmatter vs Codex's 1024-char cap. Codex skips any skill over the cap; Claude Code's 1536 limit masks it. Measures `description` alone (not `description`+`when_to_use`). Same logic in `scripts/check-skill-desc.sh` powers the pre-commit guard. See [[D7]]. |
 
 ## `workspace`
 

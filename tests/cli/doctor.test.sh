@@ -566,6 +566,59 @@ scenario_11_help_flag() {
   assert_output_contains "$out" "--format" "help mentions --format"
 }
 
+# Helper: write a SKILL.md whose `description` literal block totals ~N chars.
+_write_skill_with_desc() {
+  local path="$1" n="$2"
+  {
+    echo "---"
+    echo "name: spectacular"
+    echo "description: |"
+    local remaining="$n"
+    local first=1
+    while (( remaining > 0 )); do
+      local take=$(( remaining < 90 ? remaining : 90 ))
+      printf '  '; printf 'x%.0s' $(seq 1 "$take"); printf '\n'
+      remaining=$(( remaining - take ))
+      (( remaining > 0 )) && remaining=$(( remaining - 1 ))   # joining newline
+      first=0
+    done
+    echo "version: 1.0.0"
+    echo "---"
+    echo "# Spectacular"
+  } > "$path"
+}
+
+scenario_17_description_length() {
+  echo "Scenario 17: SKILL.md description vs Codex 1024-char cap (error >1024, warning >1000)"
+  local dir="/tmp/doctor-test-17"
+  seed_clean "$dir"
+  # Replace the symlinked skill with a real dir we can mutate, preserving the
+  # bundled templates the kits area expects (copy from the live skill).
+  rm "$dir/.agents/skills/spectacular"
+  cp -R "$LOCAL_SKILL" "$dir/.agents/skills/spectacular"
+  local skill_md="$dir/.agents/skills/spectacular/SKILL.md"
+
+  # over the cap → error
+  _write_skill_with_desc "$skill_md" 1100
+  local out_over
+  out_over=$(cd "$dir" && "$CLI" doctor skill 2>&1)
+  assert_output_contains "$out_over" "over Codex's 1024 cap" "over-limit description flagged as error"
+
+  # in the warning band → warning, not error
+  _write_skill_with_desc "$skill_md" 1010
+  local out_warn
+  out_warn=$(cd "$dir" && "$CLI" doctor skill 2>&1)
+  assert_output_contains "$out_warn" "trim soon" "near-limit description flagged as warning"
+
+  # comfortably under → no description finding among errors/warnings
+  _write_skill_with_desc "$skill_md" 800
+  local out_ok
+  out_ok=$(cd "$dir" && "$CLI" doctor skill 2>&1)
+  assert_output_contains "$out_ok" "description length ok" "short description passes"
+
+  rm -rf "$dir"
+}
+
 # ── run ───────────────────────────────────────────────────────────────────────
 
 scenario_1_clean_workspace_exits_zero
@@ -585,6 +638,7 @@ scenario_13_migration_chain_validates
 scenario_14_migration_chain_gap
 scenario_15_roadmap_shape_detection
 scenario_16_roadmap_icebox_rename
+scenario_17_description_length
 
 echo ""
 echo "  Asserts: $pass_count passed, $fail_count failed"

@@ -7,6 +7,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added
+
+- **SPEC.md drift check** in `spectacular doctor specs` — warns (`⚠️`) when `SPEC.md`'s `updated` date predates the newest archived request, signalling a likely missed spec-sync. Surfaced in `/spectacular status` and routed to the skill's spec-sync flow for content reconciliation. Date heuristic ("may be stale"), not a content diff.
+- New planned request `spec-audit-mode` — content-aware spec audit (orphan capability bullets, orphan spec files, stale per-capability specs) building on the drift heuristic.
+
+### Fixed
+
+- `spectacular summary` crashed with `_active_plan_slugs[@]: unbound variable` when no request had `status: active` (empty array under `set -u`). Both dependency-graph loops now guard the empty array.
+
+### Docs
+
+- `docs/commands.md` doctor area list refreshed (was missing `docs`, `personas`, `memory`, `sessions`, `feedback`, `ideas`, `policies`) and documents the new `specs` drift check.
+- `SPEC.md` synced: added the previously-unrecorded `policy-engine` capability bullet (shipped v1.12.0) and the `policies` doctor area; cleared the live drift the new check flagged.
+
 ## [1.17.2] — 2026-06-20
 
 ### Fixed

@@ -6446,7 +6446,7 @@ Areas (run all if omitted):
   lifecycle     request status vs required verification artifacts
   kits          bundled + project-local kit files parse cleanly
   conventions   active convention_pack resolves; gitignore drift in scaffold/enforce modes
-  specs         SPEC.md present + parseable; specs/ dir present; legacy current/ migration
+  specs         SPEC.md present + parseable; specs/ dir present; legacy current/ migration; SPEC.md drift vs newest archive (v1.18.0+)
   docs          docs.yaml + frontmatter validation across the docs/ tree (v0.6.0+)
   personas      PERSONAS.md frontmatter + persona blocks + stories (v1.3.0+; opt-in)
   memory        MEMORY.md frontmatter + index ↔ entries drift (v1.5.0+; opt-in)

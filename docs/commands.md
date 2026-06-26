@@ -65,7 +65,9 @@ spectacular doctor --fix                  # apply mechanical fixes interactively
 spectacular doctor --format json          # JSON report for skill/tool consumption
 ```
 
-Available areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions` *(v0.4.0+)*, `specs` *(v0.5.0+)*.
+Available areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions` *(v0.4.0+)*, `specs` *(v0.5.0+)*, `docs` *(v0.6.0+)*, `personas` *(v1.3.0+)*, `memory` / `sessions` *(v1.5.0+)*, `feedback` *(v1.6.0+)*, `ideas` *(v1.7.0+)*, `policies` *(v1.12.0+)*.
+
+The `specs` area also flags **SPEC.md drift** *(v1.18.0+)* — a `⚠️` warning when `SPEC.md`'s `updated` date predates the newest archived request, signalling a likely missed spec-sync. It's a date heuristic, so it routes to the skill's spec-sync flow to confirm and reconcile content.
 
 Exit codes:
 - `0` clean (no warnings, no errors)

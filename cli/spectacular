@@ -3968,8 +3968,9 @@ EOF
       [[ -n "$_bk" ]] && printf '%s\n' "$_bk" > "$_link_gdir/$_sl.blk"
     done
     shopt -u nullglob
-    # Compute inverses for active requests only
-    for _sl in "${_active_plan_slugs[@]}"; do
+    # Compute inverses for active requests only.
+    # ponytail: ${arr[@]+...} guards the empty-array-under-set-u bash quirk.
+    for _sl in ${_active_plan_slugs[@]+"${_active_plan_slugs[@]}"}; do
       if [[ -f "$_link_gdir/$_sl.dep" ]]; then
         while IFS= read -r _t; do
           [[ -z "$_t" ]] && continue
@@ -3984,7 +3985,7 @@ EOF
       fi
     done
     # Build advisory lines
-    for _sl in "${_active_plan_slugs[@]}"; do
+    for _sl in ${_active_plan_slugs[@]+"${_active_plan_slugs[@]}"}; do
       local _has=false
       [[ -f "$_link_gdir/$_sl.dep"    ]] && _has=true
       [[ -f "$_link_gdir/$_sl.blk"    ]] && _has=true

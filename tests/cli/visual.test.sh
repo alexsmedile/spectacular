@@ -183,6 +183,21 @@ sjson=$(cd "$TMPDIR" && NO_COLOR=1 bash "$CLI" summary --json 2>&1)
 assert_valid_json "$sjson" "summary --json is valid JSON"
 assert_contains "$sjson" '"active":1' "summary JSON shows 1 active"
 
+# ── test 5b: summary survives zero active requests (regression) ──────────────
+# Empty _active_plan_slugs array under set -u used to crash with
+# "_active_plan_slugs[@]: unbound variable". Seed a workspace whose only
+# request is NOT active and confirm summary exits clean.
+echo "5b. summary: no active requests doesn't crash"
+
+NOACT="$(mktemp -d)"
+make_workspace "$NOACT"
+perl -0pi -e 's/^status: active$/status: planned/m' "$NOACT/.spectacular/requests/my-req/PLAN.md"
+noact_out=$(cd "$NOACT" && NO_COLOR=1 bash "$CLI" summary 2>&1); noact_rc=$?
+assert_lacks "$noact_out" "unbound variable" "summary doesn't hit unbound-variable crash"
+if [[ $noact_rc -eq 0 ]]; then pass_count=$((pass_count + 1)); echo "    ✓ summary exits 0 with no active requests"
+else fail_count=$((fail_count + 1)); echo "    ✗ summary exited $noact_rc with no active requests"; fi
+rm -rf "$NOACT"
+
 # ── test 6: roadmap render (using real repo's ROADMAP) ───────────────────────
 echo "6. roadmap: renders version arc"
 

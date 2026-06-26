@@ -5,7 +5,7 @@ when_to_use: Archive flow on a request that changed what is built.
 
 # Spec Sync — Updating the System Spec After a Request Ships
 
-Triggered by: archive sequence, or when skill detects a request has meaningfully changed a capability.
+Triggered by: archive sequence, when skill detects a request has meaningfully changed a capability, or when `spectacular doctor specs` / `status` flags SPEC.md drift (its `updated` predates the newest archived request — see [[doctor-areas]] `specs` area). In the drift case there's no active request to sync from: read the flagged `archive/<slug>/PLAN.md` and check each `related:` capability against SPEC.md, same as below.
 
 ---
 

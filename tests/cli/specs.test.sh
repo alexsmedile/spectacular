@@ -308,6 +308,41 @@ scenario_8_repeat_init_nondestructive() {
   rm -rf "$dir"
 }
 
+scenario_10_spec_drift_vs_archive() {
+  echo "Scenario 10: SPEC.md drift flagged when an archived request is newer"
+  local dir="/tmp/spectacular-specs-test-10"
+  seed_workspace "$dir"
+  run_cli "$dir" init >/dev/null
+
+  # Pin SPEC.md updated to an old date
+  local spec="$dir/.spectacular/SPEC.md"
+  perl -0pi -e 's/^updated:.*$/updated: 2026-01-01/m' "$spec"
+
+  # Archive a request with a newer updated date
+  mkdir -p "$dir/.spectacular/archive/late-feature"
+  cat > "$dir/.spectacular/archive/late-feature/PLAN.md" <<'EOF'
+---
+status: verified
+updated: 2026-03-01
+summary: "shipped later than SPEC.md was touched"
+---
+# Late Feature
+EOF
+
+  local out; out="$(run_cli "$dir" doctor specs)"
+  if echo "$out" | grep -q "may be stale.*late-feature"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ drift not flagged"; echo "$out" | grep -i spec; fail_count=$((fail_count + 1)); fi
+
+  # Now bump SPEC.md newer than the archive → no drift warning
+  perl -0pi -e 's/^updated:.*$/updated: 2026-04-01/m' "$spec"
+  out="$(run_cli "$dir" doctor specs)"
+  if echo "$out" | grep -q "may be stale"; then
+    echo "    ✗ drift still flagged after SPEC.md bumped newer"; fail_count=$((fail_count + 1))
+  else pass_count=$((pass_count + 1)); fi
+
+  rm -rf "$dir"
+}
+
 # ── run all ───────────────────────────────────────────────────────────────────
 echo "=== specs.test.sh ==="
 scenario_1_fresh_init_scaffolds_spec
@@ -319,6 +354,7 @@ scenario_6_conflict_both_dirs_no_autofix
 scenario_7_per_capability_spec_validated
 scenario_8_repeat_init_nondestructive
 scenario_9_flat_contract_docs_valid
+scenario_10_spec_drift_vs_archive
 
 echo ""
 echo "Results: ${pass_count} passed, ${fail_count} failed"

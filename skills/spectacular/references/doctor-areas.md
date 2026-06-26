@@ -95,6 +95,7 @@ Mechanical fix: missing gitignore entries are appended by `spectacular doctor --
 | `specs/` dir present | ❌ if missing | `.spectacular/specs/` exists (may contain `.gitkeep` only) |
 | Legacy `current/` migration | ⚠️ + mechanical | `current/` exists alongside `specs/` → propose `git mv current → specs` |
 | Conflict (both `current/` and `specs/` with content) | ❌ | Manual resolution required |
+| SPEC.md drift (v1.18.0+) | ⚠️ judgment | `SPEC.md`'s `updated` predates the newest `archive/*/PLAN.md` `updated` → SPEC may have missed a spec-sync. Date heuristic, not a content diff — routes to [[spec-sync]] to confirm. |
 
 ## `docs` (v0.6.0+)
 

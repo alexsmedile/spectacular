@@ -7417,6 +7417,31 @@ check_specs() {
         "add proper frontmatter block" "judgment"
     fi
   done
+
+  # Drift: SPEC.md staler than the newest archived request → it likely missed a
+  # spec-sync. ponytail: date heuristic, not a content diff — a request archived
+  # without touching any capability false-positives, hence "may be stale".
+  if [[ -f "$spec_file" ]] && head -1 "$spec_file" | grep -q '^---$'; then
+    local spec_updated newest_arch="" newest_epoch=0 spec_epoch
+    spec_updated=$(fm_get "$spec_file" "updated")
+    spec_epoch=$(_date_to_epoch "$spec_updated")
+    for arch_plan in .spectacular/archive/*/PLAN.md; do
+      [[ -f "$arch_plan" ]] || continue
+      local a_upd a_epoch
+      a_upd=$(fm_get "$arch_plan" "updated")
+      a_epoch=$(_date_to_epoch "$a_upd")
+      if (( a_epoch > newest_epoch )); then
+        newest_epoch=$a_epoch
+        newest_arch="$(basename "$(dirname "$arch_plan")")"
+      fi
+    done
+    if (( newest_epoch > 0 && spec_epoch > 0 && newest_epoch > spec_epoch )); then
+      doc_add "specs" "warning" "$spec_file" \
+        "SPEC.md (updated $spec_updated) may be stale — request '$newest_arch' archived more recently; run spec-sync to confirm it's reflected" \
+        "review SPEC.md against archive/$newest_arch and update if a capability is missing" "judgment"
+    fi
+  fi
+
   shopt -u nullglob
 }
 

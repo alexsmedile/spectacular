@@ -27,6 +27,7 @@ See [[doctor-substrate]] for the full auto-invocation table.
 3. Read `.spectacular/SPEC.md` (top-level index) and any `specs/<capability>/SPEC.md` files (per-capability, optional).
 4. Read frontmatter from all `requests/*/PLAN.md` files.
 5. Read `.spectacular/memory/` file list and rough counts (not full content).
+6. Run `spectacular doctor specs` and capture any SPEC.md drift warning (the CLI compares SPEC.md's `updated` against the newest archived request — see signal table below). This is the one archive read you delegate to the CLI; you still don't read `archive/` bodies yourself.
 
 Do NOT read `archive/` unless explicitly asked.
 
@@ -63,6 +64,7 @@ While reading state, flag any of the following:
 | Status is `review`, no VERIFY.md | Offer to create VERIFY.md |
 | Request `updated` date > 14 days ago, status `active` | Flag as potentially stale |
 | `specs/` capability is `draft`, no active request | Suggest creating a request or promoting to stable |
+| SPEC.md drift (from `spectacular doctor specs`) | The CLI computes this — run `spectacular doctor specs` and relay any "SPEC.md … may be stale" warning. Offer to run spec-sync against the named archive. Don't re-derive the date math here; the CLI owns it. See [[spec-sync]]. |
 | `requests/` has slug collision potential | Warn |
 
 Only surface the highest-signal item in the briefing. Offer to show full details.

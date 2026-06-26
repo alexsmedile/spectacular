@@ -1,6 +1,6 @@
 {
   "name": "spectacular",
-  "version": "1.17.2",
+  "version": "1.18.0",
   "description": "AI-native operational workspace for software projects. Stop losing context. Start shipping.",
   "skills": "./skills/",
   "hooks": "./hooks/hooks-codex.json",
@@ -10,7 +10,10 @@
     "longDescription": "Spectacular is an AI-native operational workspace for software projects. It separates strategy (PRD), system spec (what's built), and active work (requests) into a .spectacular/ directory that both humans and coding agents can navigate. Ships as a directory convention, a /spectacular Claude Code skill, and a spectacular init CLI bootstrap tool.",
     "developerName": "Alessandro Smedile",
     "category": "Productivity",
-    "capabilities": ["Read", "Write"],
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
     "websiteURL": "https://github.com/alexsmedile/spectacular",
     "defaultPrompt": [
       "/spectacular",

@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.18.0] — 2026-06-26
+
 ### Added
 
 - **SPEC.md drift check** in `spectacular doctor specs` — warns (`⚠️`) when `SPEC.md`'s `updated` date predates the newest archived request, signalling a likely missed spec-sync. Surfaced in `/spectacular status` and routed to the skill's spec-sync flow for content reconciliation. Date heuristic ("may be stale"), not a content diff.

@@ -95,7 +95,8 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 | `memory.md` | `spectacular remember this` |
 | `versioning.md` | `spectacular snapshot <file>` |
 | `init-workflow.md` | `spectacular init` (CLI context) |
-| `onboarding.md` | First invocation on existing `.spectacular/` project |
+| `onboarding.md` | First invocation on existing `.spectacular/` project *with prior work* (references `status.md` for the shared read+briefing flow since v1.21.0) |
+| `guided-first-run.md` | First invocation on a *fresh/empty* workspace — ushers new→PRD→first request one step at a time (v1.21.0) |
 | `scaffold-reference.md` | File template reference — frontmatter stubs for all file types |
 | `doc-index.md` | Human-readable catalog of every doc type. Dispatch lives in each `<doc>-rules.md` frontmatter (since v1.4.0; was `doc-registry.md` pre-v1.4.0) |
 | `grill.md` / `refine.md` / `review.md` | Generic engine for any registered doc (driven by registry + per-doc overrides) |

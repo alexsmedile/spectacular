@@ -1,6 +1,6 @@
 ---
-status: planned
-updated: 2026-06-27
+status: verified
+updated: 2026-06-28
 related:
   - PLAN.md
 ---
@@ -10,21 +10,21 @@ related:
 ## v1
 
 ### M1 — Identify shared spine vs deltas
-- [ ] Mark onboarding.md lines that duplicate status.md's read sequence
-- [ ] Mark onboarding-specific content (always-run substrate check, takeover tone, gap-observations table, pre-split detection, example briefing)
+- [x] Marked the shared spine (config→root docs→requests→SPEC→memory→briefing) vs onboarding deltas
+- [x] Identified onboarding-only: always-run substrate check, takeover tone, gap-observations table, pre-split detection, example briefing
 
 ### M2 — Refactor onboarding.md
-- [ ] Replace the 6-step read sequence with a reference to status.md's flow
-- [ ] Keep only the onboarding deltas + onboarding-specific sections
-- [ ] Confirm status.md reads as the single owner of the briefing flow (minor edits only if needed)
+- [x] Replaced the 7-step read sequence with "Run the status.md flow, with these deltas"
+- [x] Kept only the onboarding deltas + onboarding-specific sections
+- [x] status.md confirmed as single owner of read sequence + briefing format (added empty-workspace branch)
 
 ### M3 — Verify
-- [ ] First-invocation simulation: substrate check runs, takeover-tone briefing, ≤3 observations
-- [ ] `/spectacular` (status) on a warm workspace unchanged
+- [x] onboarding.md no longer restates the read sequence; sends reader to status.md
+- [x] `doctor links` clean (status/guided-first-run wikilinks resolve); warm-workspace status unchanged
 
 ### M4 — Guided first-run
-- [ ] Detect empty/new workspace (no requests, fresh init)
-- [ ] Skill flow: usher new/PRD-grill → first request → point at `spectacular next`
-- [ ] Decide CLI entry: `init --walk` vs auto-usher on empty `/spectacular`
-- [ ] One step at a time — never dump the verb surface
-- [ ] Verify: empty workspace ushers; warm workspace unaffected
+- [x] Detect empty/new workspace (status.md + onboarding.md both branch to guided-first-run)
+- [x] New `guided-first-run.md`: usher describe→PRD-grill(optional)→first request→point at `spectacular next`
+- [x] CLI entry decided: skill-driven (no flag needed — `next` already ushers empty; `init --walk` left as future optional)
+- [x] One step at a time — "never dump the verb surface" rule explicit in the doc
+- [x] Verify: empty→ushers, warm→unaffected; routing wired in SKILL.md (with-prior-work→onboarding, empty→guided-first-run)

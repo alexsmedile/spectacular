@@ -16,7 +16,7 @@ when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type listed in doc-index.md.
-version: 1.20.0
+version: 1.21.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -36,7 +36,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 
 | User says / context | Route to |
 |---|---|
-| `/spectacular` with no args | → `references/status.md` |
+| `/spectacular` with no args | → `references/status.md` (empty workspace → `references/guided-first-run.md`) |
 | `spectacular status` | → `references/status.md` |
 | `spectacular new <description>` | → `references/new-request.md` (then run `spectacular new <slug>`) |
 | `spectacular archive <slug>` | → CLI verb (no skill flow); see [[archive]] for context |
@@ -52,7 +52,8 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular policy [@hook\|<id>\|--principle N\|--json]` | → CLI verb (v1.12.0+); read the merged policy contract. See [[policy-injection]] for the runtime loop, [[policies-contract]] for the schema |
 | Entering any work phase (init/planning/implementation/verification/archive/remember/snapshot/session-end) | → the phase ref doc's **@\<hook\> policy gate** runs `spectacular policy @<hook>` first; see [[policy-injection]] |
 | `spectacular touch <file>` | → CLI verb; trivial — just bumps `updated:` |
-| First invocation on existing `.spectacular/` project | → `references/onboarding.md` |
+| First invocation on existing `.spectacular/` project *with prior work* | → `references/onboarding.md` |
+| First invocation on a *fresh/empty* `.spectacular/` (init ran, no requests) | → `references/guided-first-run.md` |
 | `spectacular init` (CLI context) | → `references/init-workflow.md` |
 | `spectacular doctor` / `spectacular doctor <area>` | → `references/doctor.md` (lean entry) |
 | `/spectacular doctor --fix` (judgment walk) | → `references/doctor-repair.md` |

@@ -20,6 +20,10 @@ If any of the steps below fail to read or parse — `config.yaml` malformed, roo
 
 See [[doctor-substrate]] for the full auto-invocation table.
 
+## Empty workspace → usher, don't brief
+
+If the read below finds **no requests** and the canonical docs are still template stubs (a fresh `spectacular init`), don't print an empty briefing — route to [[guided-first-run]], which walks the user into their first request one step at a time.
+
 ## Steps
 
 1. Read `.spectacular/config.yaml` for project name and config.

@@ -1,8 +1,8 @@
 ---
-status: planned
+status: verified
 priority: medium
 owner: alex
-updated: 2026-06-27
+updated: 2026-06-28
 build: b14
 summary: "Onboarding work: (a) dedup — onboarding.md references status.md for the shared flow, keeping only onboarding-specific intent; (b) guided first-run — an ushered new→prd grill→first request flow for a brand-new (empty) workspace."
 related:

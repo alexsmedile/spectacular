@@ -7,6 +7,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.21.0] — 2026-06-28
+
+### Changed
+
+- **`onboarding.md` deduped against `status.md`** (onboarding-dedup b14 → v1.21.0). Onboarding no longer restates the ~95%-shared read+briefing sequence — it now says "run the status.md flow, with these deltas" and keeps only what's onboarding-specific (always-run substrate check, takeover tone, first-look observations table, pre-split detection, example briefing). `status.md` is the single owner of the read sequence; one source of truth, no independent drift.
+
+### Added
+
+- **Guided first-run** (`references/guided-first-run.md`) — when `/spectacular` hits a fresh/empty workspace (init ran, no requests), the skill ushers the user new → optional PRD grill → first request → `spectacular next`, **one step at a time, never dumping the verb surface**, instead of printing an empty briefing. Routing wired into both `status.md` and `onboarding.md`; the empty-vs-existing distinction is explicit (onboarding = existing project with prior work; guided first-run = blank slate). Skill-driven — no new CLI flag (an optional `init --walk` is left for later).
+
 ## [1.20.0] — 2026-06-28
 
 ### Changed

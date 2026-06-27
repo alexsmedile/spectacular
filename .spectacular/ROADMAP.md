@@ -1,7 +1,7 @@
 ---
-version: 3.3
-updated: 2026-06-16
-summary: "Per-version scope, phase, and exit criteria. Active line is v1.17.0 (roadmap-ledger + decisions-index shipped; cli-debt-removal planned). v1.17+ is the runway to the v2.0.0 major; v2.0.0 is a single breaking concern — .spectacular/ file-contract evolution. Long-term gets fuzzier on purpose. (v3.4 of this doc: ledger rows updated for v1.17.0 shipped; roadmap render now ledger-driven.)"
+version: 3.4
+updated: 2026-06-27
+summary: "Per-version scope, phase, and exit criteria. Shipped through v1.18.1 (SPEC.md drift check). Next runway is the coherence batch (v1.19–v1.22: naming-coherence, rules-files-audit, onboarding-dedup, lifecycle-undo), then the contract-prep ladder (v1.23–v1.25) leading to the v2.0.0 major — a single breaking concern, .spectacular/ file-contract evolution. Long-term gets fuzzier on purpose. (v3.4 of this doc: stale 'contract prep ①' v1.18 section corrected — v1.18.0 actually shipped the drift check; coherence batch slotted ahead of the ladder; ledger rows b11–b15 added.)"
 related:
   - PRD.md
   - ARCHITECTURE.md
@@ -36,6 +36,11 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b8 | visual-layer | Visual layer | full | v1.15.0 | shipped |
 | b9 | decisions-index | Decisions index mode | full | v1.17.0 | shipped |
 | b10 | skill-desc-length-check | Skill description length guard | themed | tbd | planned |
+| b11 | spec-audit-mode | Content-aware spec audit | themed | tbd | planned |
+| b15 | naming-coherence | Naming coherence (advance/feedback/pack/next) | themed | v1.19.0 | planned |
+| b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | planned |
+| b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | planned |
+| b12 | lifecycle-undo | Lifecycle undo (reverse gear) | full | v1.22.0 | planned |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 
@@ -174,11 +179,109 @@ Three housekeeping items that sharpen the operational substrate. Roadmap ledger 
 
 ---
 
+> **Reconciliation note (2026-06-27):** v1.18.0 shipped the **SPEC.md drift check** (see [Recently shipped](#recently-shipped)), not "Contract prep ①" as an earlier draft of this doc labelled it — a stale section that predated the release. Corrected here: the contract-prep ladder moved to v1.23–v1.25, and a **coherence batch** (b15/b13/b14/b12) is slotted ahead of it at v1.19–v1.22. These four are smaller, ready, and sharpen daily use; the contract-prep ladder is still all `intent`-phase, so deferring it costs nothing.
+
+---
+
+## v1.19.0 — Naming coherence (advance · feedback · pack · next)
+
+**Tier:** themed
+**Status:** planned
+**Phase:** intent
+**Linked request:** `naming-coherence` (b15)
+
+**Outcome:**
+The verb surface stops carrying near-synonyms and stutters: lifecycle move-forward is `advance` (was `promote`), human feedback is `feedback` (was `feedback-loop`), convention packs are `pack` only (drop `convention-pack`), and a new read-only `spectacular next` names the single highest-priority next action. All renames ship backward-compatible (deprecation aliases), and flow docs gain one-line tier-reveal suggestions so users discover the next verb in context.
+
+**Themes:**
+- `promote` → `advance` (alias kept, deprecation notice)
+- `feedback-loop` → `feedback` (hidden alias); `feedback-rules.md` doc name unchanged
+- `convention-pack` → silent alias of `pack`, flagged for removal next release
+- `spectacular next` — read-only, mutates nothing, prints one next action
+- Tier-reveal: one suggestion max in new-request/active-request/lifecycle/archive flows, never mid-flow
+
+**Exit criteria:**
+- Both old + new verb names work; deprecation notices on the old ones
+- `spectacular next` returns a sensible action on active + empty workspaces, mutates nothing
+- `--help`, docs/commands.md, SKILL.md routing all updated; tests cover both paths
+- CHANGELOG entry; plugin bump to v1.19.0
+
+---
+
+## v1.20.0 — Rules-file body audit + verify-trio collapse
+
+**Tier:** themed
+**Status:** planned
+**Phase:** intent
+**Linked request:** `rules-files-audit` (b13)
+
+**Outcome:**
+Skill-reference doc sprawl shrinks without touching dispatch: the 6 stub-mode `<doc>-rules.md` bodies (near-identical boilerplate) are thinned to frontmatter + a single pointer (or promoted where a real body is warranted), and the three-file verify trio (`verification.md` + `verify.md` + `verify-tests.md`) collapses into one sectioned `verify.md`. Frontmatter (the engine's dispatch) stays per-file; only duplicated/empty bodies stop being maintained per-file.
+
+**Themes:**
+- Audit 6 stub bodies; classify thin-to-pointer vs write-real-body; record policy in DECISIONS.md
+- Shared "stub default behavior" section in doc-index.md
+- Collapse verify trio → one `verify.md`; update SKILL.md routing
+- No user-facing behavior change; `doctor docs` stays clean
+
+**Exit criteria:**
+- Each thinned file keeps complete frontmatter; verb behavior identical pre/post
+- `verification.md` + `verify-tests.md` no longer standalone; content sectioned in `verify.md`
+- `doctor docs` clean; CHANGELOG entry; plugin bump to v1.20.0
+
+---
+
+## v1.21.0 — Onboarding dedup + guided first-run
+
+**Tier:** themed
+**Status:** planned
+**Phase:** intent
+**Linked request:** `onboarding-dedup` (b14)
+
+**Outcome:**
+First-contact gets two fixes. `onboarding.md` (existing-workspace orientation) references `status.md` for the shared read+briefing flow instead of duplicating it — one source of truth, no independent drift. And a **guided first-run** ushers a brand-new/empty workspace through new→PRD-grill→first request→`spectacular next`, one step at a time, instead of printing an empty briefing or dumping the verb surface.
+
+**Themes:**
+- `onboarding.md` references status.md for the shared spine; keeps only onboarding-specific deltas
+- Guided first-run flow for empty workspaces (skill ushers; CLI entry via `init --walk` or empty-detect)
+- Distinction preserved: onboarding = existing workspace; guided first-run = fresh/empty
+
+**Exit criteria:**
+- onboarding.md no longer restates the read sequence verbatim; warm-workspace status unchanged
+- Empty workspace ushers one step at a time; no verb menu dumped
+- CHANGELOG entry; plugin bump to v1.21.0
+
+---
+
+## v1.22.0 — Lifecycle undo (reverse gear)
+
+**Tier:** full
+**Status:** planned
+**Phase:** intent
+**Linked request:** `lifecycle-undo` (b12)
+
+**Outcome:**
+Spectacular gains a reverse gear: `spectacular undo` reverts the last mutation — a lifecycle status transition, an archive (dir move + link rewrites — the hard part), or an idea promote — using a gitignored `.spectacular/.last-mutation` breadcrumb. Guardrails + `--dry-run` make it safe to preview before applying.
+
+**Themes:**
+- `.last-mutation` breadcrumb (gitignored) written by mutating verbs
+- Undo status transition, archive (move back + rewrite links), idea promote
+- Guardrails (only the last mutation, clean-tree check) + `--dry-run`
+- **Has open questions — grill before building.**
+
+**Exit criteria:**
+- `undo` reverts each supported mutation type to the prior state
+- `--dry-run` previews accurately; refuses when the breadcrumb is stale/absent
+- Tests cover each undo path + the refuse cases
+- CHANGELOG entry; plugin bump to v1.22.0
+
+---
+
 > **Contract-prep ladder (`workspace-v2-spec` → `workspace-v2-fields` → `workspace-v2-migration`).** Three non-breaking MINORs that stage the v2.0.0 file-contract change so the major becomes a near-trivial "flip the switch." Each is backward-compatible on its own: spec the design → soak the fields → stage the migration. All hang off the existing `workspace_schema:` field and the already-shipped `spectacular migrate` registry infra.
 
 ---
 
-## v1.18.0 — Contract prep ①: v2 contract spec (doc only)
+## v1.23.0 — Contract prep ①: v2 contract spec (doc only)
 
 **Tier:** full
 **Status:** planned
@@ -204,7 +307,7 @@ The v2 `.spectacular/` file format is fully *designed and frozen on paper* befor
 
 ---
 
-## v1.19.0 — Contract prep ②: v2 frontmatter fields (optional/additive)
+## v1.24.0 — Contract prep ②: v2 frontmatter fields (optional/additive)
 
 **Tier:** themed
 **Status:** planned
@@ -230,7 +333,7 @@ The new v2 frontmatter fields land as **optional, additive** in v1.19 — old wo
 
 ---
 
-## v1.20.0 — Contract prep ③: v1→v2 migration scaffold (dry-run, no-op)
+## v1.25.0 — Contract prep ③: v1→v2 migration scaffold (dry-run, no-op)
 
 **Tier:** themed
 **Status:** planned

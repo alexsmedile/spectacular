@@ -205,10 +205,12 @@ These are skill triggers for an agent conversation:
 ```text
 /spectacular
 spectacular new <description>
+spectacular advance <slug>
+spectacular next
 spectacular archive <slug>
 spectacular remember this
 spectacular snapshot <file>
-spectacular promote <idea>
+spectacular idea promote <idea>
 spectacular status
 spectacular prd
 spectacular prd refine

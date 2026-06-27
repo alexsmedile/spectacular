@@ -447,7 +447,7 @@ Low-commitment, speculative. Nothing in `ideas/` is acted on automatically by th
 
 Use for: raw thoughts, market observations, UX experiments, discarded approaches, future concepts.
 
-**Promotion:** An idea can be promoted to a request with `spectacular promote <idea-file>`. The skill scaffolds the request from the idea content and moves the idea file to `archive/ideas/`.
+**Promotion:** An idea can be promoted to a request with `spectacular idea promote <idea-file>`. The skill scaffolds the request from the idea content and moves the idea file to `archive/ideas/`.
 
 ---
 

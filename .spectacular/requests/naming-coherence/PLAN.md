@@ -1,8 +1,8 @@
 ---
-status: planned
+status: verified
 priority: medium
 owner: alex
-updated: 2026-06-27
+updated: 2026-06-28
 build: b15
 summary: "Resolve verb naming inconsistencies (feedback-loop→feedback, lifecycle promote→advance, drop convention-pack alias) and add contextual next-step suggestion (tier-reveal) plus a `spectacular next` verb."
 related:

@@ -119,7 +119,7 @@ Rules that keep it predictable:
 1. **Resolve the request.** `<slug>` must exist at `.spectacular/requests/<slug>/`. If it's in `archive/`, refuse ("already archived; restore first").
 2. **Check status.** The walk is meant for `status: review`.
    - If `review` → proceed.
-   - If `active` → "`<slug>` is still `active`. Move to `review` first (`spectacular promote <slug> --to review`)?"
+   - If `active` → "`<slug>` is still `active`. Move to `review` first (`spectacular advance <slug> --to review`)?"
    - If `verified` already → "`<slug>` is already verified. Re-run the walk anyway? (records a fresh VERIFY-LOG entry)"
    - If `planned` → refuse: "nothing to verify yet — `<slug>` hasn't been built."
 3. **Locate the verification artifact** (see § 1).
@@ -217,7 +217,7 @@ Walk complete — <slug>
 **If all checks passed (B = 0, S = 0):**
 - Default behavior is **propose, human confirms** (Spectacular principle: agents propose, humans decide):
   > "All <N> checks passed. Mark `<slug>` verified? (y/n)"
-  - On `y` → `spectacular promote <slug> --to verified`. Never edit `status:` directly.
+  - On `y` → `spectacular advance <slug> --to verified`. Never edit `status:` directly.
 - **Configurable auto-flip:** if `verify.auto_promote: true` in `.spectacular/config.yaml` (or `--auto` flag), skip the prompt and promote immediately, reporting it. This setting is the seam where the future [[policy-engine]] severity model plugs in.
 
 **If any blocker or skip (B > 0 or S > 0):**
@@ -260,7 +260,7 @@ The `[kind]` tag in each log line records *which authority* confirmed it — so 
 
 ## Lifecycle + archive tie-in
 
-- The walk is the *intended* path to `verified`. `spectacular promote <slug> --to verified` still works directly (the CLI stays a dumb mutator), but the walk is what makes the checks real.
+- The walk is the *intended* path to `verified`. `spectacular advance <slug> --to verified` still works directly (the CLI stays a dumb mutator), but the walk is what makes the checks real.
 - **Archive warning:** `spectacular archive <slug>` should warn when a request reaches archive with `verified` status but **no VERIFY-LOG.md** — i.e. it was flipped verified without ever being walked. Advisory, not blocking (see [[archive]]).
 
 ## CLI redirect

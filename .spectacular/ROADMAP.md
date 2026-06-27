@@ -37,7 +37,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b9 | decisions-index | Decisions index mode | full | v1.17.0 | shipped |
 | b10 | skill-desc-length-check | Skill description length guard | themed | tbd | planned |
 | b11 | spec-audit-mode | Content-aware spec audit | themed | tbd | planned |
-| b15 | naming-coherence | Naming coherence (advance/feedback/pack/next) | themed | v1.19.0 | planned |
+| b15 | naming-coherence | Naming coherence (advance/feedback/pack/next) | themed | v1.19.0 | shipped |
 | b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | planned |
 | b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | planned |
 | b12 | lifecycle-undo | Lifecycle undo (reverse gear) | full | v1.22.0 | planned |
@@ -186,9 +186,9 @@ Three housekeeping items that sharpen the operational substrate. Roadmap ledger 
 ## v1.19.0 — Naming coherence (advance · feedback · pack · next)
 
 **Tier:** themed
-**Status:** planned
-**Phase:** intent
-**Linked request:** `naming-coherence` (b15)
+**Status:** shipped (2026-06-28)
+**Phase:** release
+**Linked request:** `naming-coherence` (b15, verified)
 
 **Outcome:**
 The verb surface stops carrying near-synonyms and stutters: lifecycle move-forward is `advance` (was `promote`), human feedback is `feedback` (was `feedback-loop`), convention packs are `pack` only (drop `convention-pack`), and a new read-only `spectacular next` names the single highest-priority next action. All renames ship backward-compatible (deprecation aliases), and flow docs gain one-line tier-reveal suggestions so users discover the next verb in context.

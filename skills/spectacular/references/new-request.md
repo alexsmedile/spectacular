@@ -1,6 +1,6 @@
 ---
 description: Scaffold a new request — slug rules, templates, target-version.
-when_to_use: spectacular new <description> or spectacular promote.
+when_to_use: spectacular new <description> or spectacular idea promote.
 ---
 
 # New Request — Scaffolding
@@ -57,6 +57,8 @@ requests/<slug>/
 ├── PLAN.md       ← always created
 └── TASKS.md      ← always created
 ```
+
+> **Tier-reveal (next step).** After scaffolding, surface exactly one suggestion: `Next: spectacular plan grill <slug> to stress-test the PLAN before building.` One line, only after the scaffold is confirmed — never mid-flow, never a menu.
 
 Create only on demand (skill proposes, user confirms):
 - `SESSION.md` — when request moves to `active`
@@ -149,7 +151,7 @@ updated: <today>
 
 ## Promoting from an idea
 
-When user runs `spectacular promote <idea-file>`:
+When user runs `spectacular idea promote <idea-file>`:
 
 1. Read `ideas/<idea-file>.md` for content — use it to pre-fill PLAN.md goal, why, approach
 2. Scaffold request as above (show slug, confirm)

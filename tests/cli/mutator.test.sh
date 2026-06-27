@@ -232,11 +232,46 @@ scenario_8_new_build_id() {
 scenario_7_help_flags() {
   echo "Scenario 7: each verb --help exits 0 with usage line"
   local out code
-  for verb in touch new promote snapshot archive; do
+  for verb in touch new advance snapshot archive; do
     out=$("$CLI" "$verb" --help 2>&1) && code=0 || code=$?
     assert_exit "$code" 0 "$verb --help exits 0"
     assert_output_contains "$out" "Usage: spectacular $verb" "$verb help shows usage"
   done
+}
+
+scenario_7b_advance_alias() {
+  echo "Scenario 7b: advance is canonical; promote is a deprecated alias (v1.19.0)"
+  local dir="/tmp/spectacular-mutator-7b" out code
+  seed_workspace "$dir"
+  (cd "$dir" && "$CLI" new req1 --summary "test" >/dev/null)
+  # advance is the canonical verb
+  (cd "$dir" && "$CLI" advance req1 >/dev/null 2>&1) && code=0 || code=$?
+  assert_exit "$code" 0 "advance (canonical) advances state"
+  assert_file_contains "$dir/.spectacular/requests/req1/PLAN.md" 'status: active'
+  # promote alias still works AND emits a deprecation warning on stderr
+  out=$( (cd "$dir" && "$CLI" promote req1 2>&1 >/dev/null) )
+  assert_output_contains "$out" "deprecated" "promote prints deprecation notice"
+  assert_file_contains "$dir/.spectacular/requests/req1/PLAN.md" 'status: review'
+  rm -rf "$dir"
+}
+
+scenario_7c_next() {
+  echo "Scenario 7c: next is read-only and surfaces a next action (v1.19.0)"
+  local dir="/tmp/spectacular-mutator-7c" out code
+  seed_workspace "$dir"
+  # empty workspace → ushers into new
+  out=$( (cd "$dir" && "$CLI" next 2>&1) )
+  assert_output_contains "$out" "spectacular new" "next ushers empty workspace into new"
+  # with a planned request → suggests starting it
+  (cd "$dir" && "$CLI" new req1 --summary "test" >/dev/null)
+  out=$( (cd "$dir" && "$CLI" next 2>&1) )
+  assert_output_contains "$out" "req1" "next names the planned request"
+  # read-only: status unchanged after next
+  assert_file_contains "$dir/.spectacular/requests/req1/PLAN.md" 'status: planned'
+  # rejects arguments
+  (cd "$dir" && "$CLI" next bogus >/dev/null 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "next rejects arguments"
+  rm -rf "$dir"
 }
 
 scenario_9_doctor_precondition_archive() {
@@ -292,6 +327,8 @@ scenario_4_snapshot_basic
 scenario_5_archive_basic
 scenario_6_promote_archive_combo
 scenario_7_help_flags
+scenario_7b_advance_alias
+scenario_7c_next
 scenario_8_new_build_id
 scenario_9_doctor_precondition_archive
 scenario_10_doctor_precondition_clean_passes

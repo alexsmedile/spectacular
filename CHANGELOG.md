@@ -7,6 +7,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.19.0] — 2026-06-28
+
+### Added
+
+- **`spectacular advance`** — lifecycle move-forward verb (renamed from `promote`; `promote` stays as a deprecated alias that prints a one-line notice). Frees `promote` to read unambiguously as `idea promote`. (naming-coherence b15 → v1.19.0)
+- **`spectacular next`** — read-only verb that prints the single highest-priority next action (active → review → planned → empty-workspace usher). Mutates nothing.
+- **Tier-reveal suggestions** in skill flow docs — one-line "next step" hints after scaffolding (`new`) and at lifecycle checkpoints, never mid-flow.
+- `doc-id-aliases:` support sketch on `pack-rules.md` so the renamed `pack` doc-id keeps `convention-pack` as a back-compat alias.
+
+### Changed
+
+- **`feedback`** is now the canonical verb (was `feedback-loop`); `feedback-loop` joins the hidden aliases. `feedback-rules.md` doc name unchanged.
+- **Pack doc-id renamed `convention-pack` → `pack`** to match the `pack` CLI verb and `pack-rules.md`. The old id is still accepted. Updated doc-index.md, pack-rules.md, SKILL.md, grill.md.
+- `spectacular pack new|grill|refine|review` now redirect to the skill (documented but previously died as "unknown pack verb").
+- Lifecycle/verify/troubleshooting/scaffold/commands docs updated to teach `advance` and the correct `idea promote` form.
+
+### Fixed
+
+- Latent bug: backtick command-substitution in the feedback usage heredoc — bare `spectacular feedback` actually executed `spectacular remember` while printing help. Heredoc switched to a quoted delimiter (`<<'EOF'`).
+
 ## [1.18.1] — 2026-06-27
 
 ### Fixed

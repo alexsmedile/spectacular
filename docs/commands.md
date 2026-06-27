@@ -151,6 +151,25 @@ Output:
 (+ VERIFY.md if 2-of-6 rule triggers)
 ```
 
+### `spectacular advance <slug> [--to <state>] [--force]` *(v1.19.0+)*
+
+Advances a request one step through the lifecycle (`planned → active → review → verified`), or jumps with `--to`. Backward transitions require `--force`. The CLI is a dumb mutator — it edits `status:` in PLAN.md frontmatter only.
+
+```text
+spectacular advance add-team-billing            # one step forward
+spectacular advance add-team-billing --to review
+```
+
+> **Renamed from `promote` in v1.19.0.** `spectacular promote <slug>` still works as a deprecated alias (prints a one-line notice). Not to be confused with `spectacular idea promote`, which promotes an *idea* into a request.
+
+### `spectacular next` *(v1.19.0+)*
+
+Prints the single highest-priority next action for the workspace. Read-only — mutates nothing. Order: an active request (keep going / advance) beats a review request (verify) beats a planned request (start it); an empty workspace is ushered into `spectacular new`.
+
+```text
+spectacular next
+```
+
 ### `spectacular archive <slug>`
 
 Archives a verified request. The skill proposes `current/` updates and memory entries before moving the request to `.spectacular/archive/`.
@@ -207,7 +226,7 @@ spectacular snapshot .spectacular/PRD.md
 
 Canonical files: `PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`, `AGENTS.md`, `config.yaml`, `current/` capability specs.
 
-### `spectacular promote <idea>`
+### `spectacular idea promote <idea>`
 
 Promotes an idea file into a full request and moves the original to `.spectacular/archive/ideas/`.
 
@@ -223,7 +242,7 @@ spectacular policy --principle 7   # reverse: which policies enforce principle 7
 spectacular policy --json          # machine form (skill-consumed)
 ```
 
-Hooks (the locked 8): `@Init`, `@Planning`, `@Implementation`, `@Verification`, `@Archive`, `@Remember`, `@Snapshot`, `@SessionEnd`. A policy blocks a transition only if it declares `severity: block`; `warn` and unset are surface-and-continue. `spectacular promote` prints an advisory at the spine transitions, and `spectacular doctor policies` reports structural + `## Understanding`-gate findings. See [policies-contract](../skills/spectacular/references/policies-contract.md) for the schema.
+Hooks (the locked 8): `@Init`, `@Planning`, `@Implementation`, `@Verification`, `@Archive`, `@Remember`, `@Snapshot`, `@SessionEnd`. A policy blocks a transition only if it declares `severity: block`; `warn` and unset are surface-and-continue. `spectacular advance` prints an advisory at the spine transitions, and `spectacular doctor policies` reports structural + `## Understanding`-gate findings. See [policies-contract](../skills/spectacular/references/policies-contract.md) for the schema.
 
 ### `/spectacular doctor [<area>] [--fix]`
 

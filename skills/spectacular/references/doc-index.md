@@ -40,7 +40,9 @@ Human catalog of every document type in a Spectacular workspace.
 
 | Doc | Mode | Location | Rules |
 |---|---|---|---|
-| `convention-pack` | grill | `~/.spectacular/packs/<name>/pack.md` | [pack-rules](pack-rules.md) |
+| `pack` | grill | `~/.spectacular/packs/<name>/pack.md` | [pack-rules](pack-rules.md) |
+
+> `pack` was registered as `convention-pack` before v1.19.0; the old id is still accepted as an alias (`doc-id-aliases:` in pack-rules.md).
 
 ## Skill-internal references
 
@@ -87,4 +89,4 @@ CLI auto-discovers via filesystem walk. No edits to `cli/spectacular` needed for
 - [[scaffold-reference]] — frontmatter schema + template stubs for every file type
 - [[grill]] / [[refine]] / [[review]] — verb behaviors
 - [[kits-contract]] — kit extension schema (PRD-only in v1)
-- [[packs-contract]] — convention-pack schema
+- [[packs-contract]] — pack schema

@@ -23,15 +23,17 @@ The skill detects signals and **proposes** transitions. The user can also force 
 
 | From | To | Signal | Skill action |
 |---|---|---|---|
-| `planned` | `active` | User starts working on request | Run `spectacular promote <slug>`; create SESSION.md |
-| `active` | `review` | All TASKS.md items checked | Propose `spectacular promote <slug>`; also propose VERIFY.md if 2-of-6 rule triggers (see [[verification]]) |
-| `active` | `review` | User says "done" / "ready to review" | Run `spectacular promote <slug>` |
-| `review` | `verified` | All `- [x]` in VERIFY.md (when present) | Propose `spectacular promote <slug>` |
-| `review` | `verified` | All TASKS § Verification + PLAN § Validation items confirmed (when no VERIFY.md) | Propose `spectacular promote <slug>` |
-| `review` | `verified` | User confirms everything works | Run `spectacular promote <slug>` |
+| `planned` | `active` | User starts working on request | Run `spectacular advance <slug>`; create SESSION.md |
+| `active` | `review` | All TASKS.md items checked | Propose `spectacular advance <slug>`; also propose VERIFY.md if 2-of-6 rule triggers (see [[verification]]) |
+| `active` | `review` | User says "done" / "ready to review" | Run `spectacular advance <slug>` |
+| `review` | `verified` | All `- [x]` in VERIFY.md (when present) | Propose `spectacular advance <slug>` |
+| `review` | `verified` | All TASKS § Verification + PLAN § Validation items confirmed (when no VERIFY.md) | Propose `spectacular advance <slug>` |
+| `review` | `verified` | User confirms everything works | Run `spectacular advance <slug>` |
 | `verified` | `archived` | User confirms archive | Run `spectacular archive <slug>`; see [[archive]] |
 
-**Mutation principle (v0.7.0+):** state changes use `spectacular promote <slug>`. The CLI:
+> **Verb name (v1.19.0):** the lifecycle verb is `spectacular advance` (was `promote`). `promote` still works as a deprecated alias and prints a one-line notice. Distinct from `spectacular idea promote`, which promotes an *idea* into a request — that one keeps its name.
+
+**Mutation principle (v0.7.0+):** state changes use `spectacular advance <slug>`. The CLI:
 - Reads current status from PLAN.md frontmatter
 - Refuses backward transitions without `--force`
 - Sets `status:` + `updated:` atomically in PLAN.md AND TASKS.md
@@ -83,13 +85,13 @@ If a `specs/` capability has `status: draft` and no `requests/` item references 
 ## Forcing transitions
 
 User can explicitly say:
-- "mark `<slug>` as active" → `spectacular promote <slug> --to active`; create SESSION.md
-- "move `<slug>` to review" → `spectacular promote <slug> --to review`
-- "mark `<slug>` as verified" → `spectacular promote <slug> --to verified`
+- "mark `<slug>` as active" → `spectacular advance <slug> --to active`; create SESSION.md
+- "move `<slug>` to review" → `spectacular advance <slug> --to review`
+- "mark `<slug>` as verified" → `spectacular advance <slug> --to verified`
 - "archive `<slug>`" → `spectacular archive <slug>` (also see [[archive]])
 
 Backward transitions (e.g. `verified → active` because verification failed) require `--force`:
-- `spectacular promote <slug> --to active --force`
+- `spectacular advance <slug> --to active --force`
 
 The `--force` flag is intentionally awkward — backward moves should be rare and deliberate.
 

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.18.1"
+SPECTACULAR_VERSION="1.19.0"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -67,6 +67,7 @@ die_recover() {
   exit 1
 }
 info() { echo "$*"; }
+warn() { echo "  ⚠  $*" >&2; }
 skip() { echo "  ⊘  $*"; }
 created() { echo "  ✓  $*"; }
 filled() { echo "  ✓  $* (filled empty stub)"; }
@@ -200,11 +201,12 @@ CLI verbs (mutate workspace):
   pack <list|install|show|remove>      Manage convention packs
   migrate [--to|--from|--list|--dry-run]   Apply workspace schema migrations
   new <slug>             Scaffold a new request
-  promote <slug> [--to <state>]        Advance request lifecycle
+  advance <slug> [--to <state>]        Advance request lifecycle (was 'promote')
+  next                   Show the single highest-priority next action (read-only)
   snapshot <file>        Versioned copy of a canonical doc (<FILE>@vN.md)
   archive <slug>         Move request to .spectacular/archive/ + rewrite inbound links
   touch <file>           Bump frontmatter 'updated:' to today
-  feedback-loop <sub>    Prototyping-mode human-feedback acquisition (new|list|resolve|archive)
+  feedback <sub>         Prototyping-mode human-feedback acquisition (new|list|resolve|archive)
   idea <sub>             Thinking-scratchpad idea management (new|list|promote)
 
 Read verbs (v1.8.0+ — collapse multi-step inspection to one call):
@@ -1612,8 +1614,8 @@ cmd_feedback_loop() {
     resolve) cmd_feedback_loop_resolve "$@" ;;
     archive) cmd_feedback_loop_archive "$@" ;;
     ""|--help|-h)
-      cat <<EOF
-Usage: spectacular feedback-loop <subcommand> [options]
+      cat <<'EOF'
+Usage: spectacular feedback <subcommand> [options]
 
 Subcommands:
   new <target>              Scaffold a feedback entry (status: open). Optional:
@@ -2590,6 +2592,80 @@ EOF
 
   if (( count > effective_limit )); then
     info "(showing $effective_limit of $count — use --all for full list)"
+  fi
+}
+
+# ── cmd_next (v1.19.0+) ──────────────────────────────────────────────────────
+# Read-only. Names the single highest-priority next action. Lifecycle-state
+# ordering: an active request in flight beats starting a planned one; a review
+# request waiting on verify beats both. Empty workspace → usher into `new`.
+# Mutates nothing. ponytail: priority is a coarse high/medium/low rank; if a
+# numeric priority is ever added, swap _prio_weight for it.
+_prio_weight() {
+  case "$1" in
+    high) echo 0 ;; medium|"") echo 1 ;; low) echo 2 ;; *) echo 1 ;;
+  esac
+}
+
+cmd_next() {
+  case "${1:-}" in
+    --help|-h)
+      cat <<EOF
+Usage: spectacular next
+
+Print the single highest-priority next action for this workspace. Read-only —
+mutates nothing. Order: active (keep going / advance) > review (verify) >
+planned (advance the top-priority one) > empty (start your first request).
+EOF
+      exit 0 ;;
+    "") : ;;
+    *) die "next takes no arguments (got '$1')" ;;
+  esac
+
+  [[ -d ".spectacular" ]] || die "next: not inside a Spectacular workspace"
+
+  # Pick the best request per state: lowest priority-weight, tie-break newest.
+  local best_active="" best_active_w=9 best_active_upd=""
+  local best_review="" best_review_w=9 best_review_upd=""
+  local best_planned="" best_planned_w=9 best_planned_upd=""
+  local f slug status priority updated w
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    slug=$(basename "$(dirname "$f")")
+    status=$(fm_get "$f" "status")
+    priority=$(fm_get "$f" "priority")
+    updated=$(fm_get "$f" "updated")
+    w=$(_prio_weight "$priority")
+    case "$status" in
+      active)
+        if (( w < best_active_w )) || { (( w == best_active_w )) && [[ "$updated" > "$best_active_upd" ]]; }; then
+          best_active="$slug"; best_active_w=$w; best_active_upd="$updated"
+        fi ;;
+      review)
+        if (( w < best_review_w )) || { (( w == best_review_w )) && [[ "$updated" > "$best_review_upd" ]]; }; then
+          best_review="$slug"; best_review_w=$w; best_review_upd="$updated"
+        fi ;;
+      planned)
+        if (( w < best_planned_w )) || { (( w == best_planned_w )) && [[ "$updated" > "$best_planned_upd" ]]; }; then
+          best_planned="$slug"; best_planned_w=$w; best_planned_upd="$updated"
+        fi ;;
+    esac
+  done < <(_request_iter_all)
+
+  info "── Next ──"
+  info ""
+  if [[ -n "$best_active" ]]; then
+    info "  ▸ Keep working  $best_active  (active)"
+    info "    when done:    spectacular advance $best_active"
+  elif [[ -n "$best_review" ]]; then
+    info "  ▸ Verify        $best_review  (review)"
+    info "    run:          /spectacular verify $best_review"
+  elif [[ -n "$best_planned" ]]; then
+    info "  ▸ Start         $best_planned  (planned, top priority)"
+    info "    begin:        spectacular advance $best_planned"
+  else
+    info "  ▸ No requests yet — start your first one:"
+    info "    spectacular new <description>"
   fi
 }
 
@@ -4467,15 +4543,16 @@ cmd_promote() {
       --skip-doctor)  opt_skip_doctor=true; shift ;;
       --help|-h)
         cat <<EOF
-Usage: spectacular promote <slug> [--to <state>] [--force] [--archive] [--skip-doctor]
+Usage: spectacular advance <slug> [--to <state>] [--force] [--archive] [--skip-doctor]
+       (alias: spectacular promote — deprecated)
 
 Advance a request through the lifecycle. State machine:
   planned → active → review → verified
 
-Default behavior promotes one step (e.g. planned → active). Use --to to
+Default behavior advances one step (e.g. planned → active). Use --to to
 jump (e.g. --to verified). Backward transitions refused without --force.
 
-Promote alone is non-destructive (frontmatter edit only). When --archive is
+Advance alone is non-destructive (frontmatter edit only). When --archive is
 passed, the chain into archive runs the doctor precondition; --skip-doctor
 bypasses it.
 
@@ -8777,6 +8854,15 @@ pack() {
   local verb="${1:-}"
   case "$verb" in
     ""|--help|-h) pack_usage; exit 0 ;;
+    # Skill verbs (v1.19.0+): pack authoring (new/grill/refine/review) needs an
+    # LLM — redirect to the skill. The CLI owns only the mechanical lifecycle
+    # (list/install/remove/show). Matches the `<doc> grill` redirect pattern.
+    new|grill|refine|review)
+      shift
+      skill_verb_message "pack $verb" \
+        "Agentic pack authoring — interview/rewrite/gate-check a convention pack (doc-id: pack)." \
+        "$@"
+      ;;
     list)
       pack_list
       ;;
@@ -8891,7 +8977,14 @@ main() {
       ;;
     decide)   shift; cmd_decide "$@"; exit $? ;;
     session)  shift; cmd_session "$@"; exit $? ;;
-    promote)  shift; cmd_promote "$@"; exit $? ;;
+    # Lifecycle advance (v1.19.0+): `advance` is canonical; `promote` is a
+    # deprecation alias (warns once, then runs). Renamed from `promote` to free
+    # the word for `idea promote` and read as a clear forward-gear verb.
+    advance)  shift; cmd_promote "$@"; exit $? ;;
+    promote)
+      shift
+      warn "'spectacular promote' is deprecated — use 'spectacular advance'. (alias still works)"
+      cmd_promote "$@"; exit $? ;;
     # Verify (v1.11.0+): skill-only validation walk. Needs an LLM to read each
     # check, run/judge it by kind, and gate review→verified. No CLI dispatch.
     verify)
@@ -8900,9 +8993,10 @@ main() {
         "Validation walk — reads VERIFY.md (or PLAN § Validation), verifies each check by its kind (executable / assertable / judgable / observable / manual), records to VERIFY-LOG, and gates review→verified." \
         "$@"
       ;;
-    # Feedback-loop (v1.6.0+): canonical name + hidden aliases.
-    # Aliases are dispatched but NOT documented in --help per the contract.
-    feedback-loop|iterate|experiment|test|probe|try)
+    # Feedback (v1.6.0+; renamed from feedback-loop in v1.19.0): canonical name
+    # + hidden aliases. `feedback-loop` is now a hidden alias too. Aliases are
+    # dispatched but NOT documented in --help per the contract.
+    feedback|feedback-loop|iterate|experiment|test|probe|try)
       shift; cmd_feedback_loop "$@"; exit $? ;;
     # Idea (v1.7.0+): thinking scratchpad.
     idea)
@@ -8923,6 +9017,8 @@ main() {
       ;;
     vision)
       shift; cmd_vision "$@"; exit $? ;;
+    # next (v1.19.0+): read-only single-next-action pointer.
+    next)       shift; cmd_next "$@";       exit $? ;;
     # Read verbs (v1.8.0+): plural-noun = list, singular-noun = detail.
     requests)   shift; cmd_requests "$@";   exit $? ;;
     decisions)  shift; cmd_decisions "$@";  exit $? ;;
@@ -9006,7 +9102,7 @@ Run inside Claude Code or Codex:  /spectacular $subcmd <verb>"
 
   if [[ "$subcmd" != "init" ]]; then
     die "Unknown command: '${subcmd}'.
-CLI verbs:   init | doctor | pack | migrate | new | promote | snapshot | archive | touch | decide | remember | session | feedback-loop | idea
+CLI verbs:   init | doctor | pack | migrate | new | advance | next | snapshot | archive | touch | decide | remember | session | feedback | idea
 Read verbs:  summary | requests | request | decisions | decision | memories | memory | sessions | show | progress | paths (v1.8.0+)
 Skill verbs (run via /spectacular in your AI agent): status | remember this | verify <slug> | <doc> grill | <doc> refine | <doc> review"
   fi

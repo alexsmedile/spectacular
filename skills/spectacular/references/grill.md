@@ -26,7 +26,7 @@ Each doc declares a `mode:` in its rules-file frontmatter. The `grill-*` family 
 | `mode:` | Behavior |
 |---|---|
 | `grill` | Alias for `grill-wide` (default style). |
-| `grill-wide` | Walk all slots once, in order. One pass. (PRD, PLAN, convention-pack.) |
+| `grill-wide` | Walk all slots once, in order. One pass. (PRD, PLAN, pack.) |
 | `grill-each` | Per-block walk — same slots repeated for each block. Agent asks "add another?" after each completed block. (ROADMAP per-version, PERSONAS per-person.) |
 | `grill-loop` | Wide pass first (fast, short answers ok), then deep pass over slots flagged as vague/incomplete. |
 

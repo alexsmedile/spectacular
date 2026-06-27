@@ -1,5 +1,6 @@
 ---
-doc-id: convention-pack
+doc-id: pack
+doc-id-aliases: [convention-pack]
 mode: grill
 location: ~/.spectacular/packs/<name>/pack.md
 scope: user
@@ -10,9 +11,9 @@ summary: "Repo-shape convention pack — naming + taxonomy + gitignore + file-pl
 status: active
 ---
 
-# Pack Rules — convention-pack-specific rules consumed by the skill
+# Pack Rules — pack-specific rules consumed by the skill
 
-Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `convention-pack` (per doc-index).
+Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `pack` (per doc-index). `convention-pack` is a recognized back-compat alias for the same doc-id.
 
 This file declares everything pack-specific. The skill handles the rest.
 

@@ -56,7 +56,7 @@ Monitor `TASKS.md` for completion signals:
 
 - When a task item is checked off, acknowledge it
 - When **all items in a group** are checked, note it proactively
-- When **all items in TASKS.md** are checked → propose moving to `review` (see `lifecycle.md`)
+- When **all items in TASKS.md** are checked → tier-reveal one line: `Next: spectacular advance <slug> to move it to review.` (see `lifecycle.md`)
 
 ---
 

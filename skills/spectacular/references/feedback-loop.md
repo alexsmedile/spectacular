@@ -155,7 +155,7 @@ User during loop says "I always want grill-each to skip empty optional slots wit
 
 ## Related references
 
-- [[verification]] — sister contract on the conformance axis
+- [[verify]] — sister contract on the conformance axis
 - [[review]] — sister contract on the doc-quality axis
 - [[memory-rules]] — promotion target shape
 - [[archive]] — feedback files are preserved during request archive

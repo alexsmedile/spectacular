@@ -44,6 +44,20 @@ Human catalog of every document type in a Spectacular workspace.
 
 > `pack` was registered as `convention-pack` before v1.19.0; the old id is still accepted as an alias (`doc-id-aliases:` in pack-rules.md).
 
+## Stub default behavior
+
+`mode: stub` docs are scaffolded from a template and **edited directly** by the user — there is no grill interview. Unless a doc's own `<doc-id>-rules.md` body overrides it, every stub doc behaves identically across the three verbs:
+
+| Verb | Behavior |
+|---|---|
+| `grill` | Polite no-op + hint: "this is a stub doc — open it in your editor, or pass `--wide` to grill it ad-hoc." |
+| `refine` | Whole-doc rewrite pass (vibe → spec); does not interview slot-by-slot. |
+| `review` | Structural check only: frontmatter present, no template placeholders left unfilled. |
+
+`snapshot-on-edit: true` for the project-wide canonical stubs (PRINCIPLES, ARCHITECTURE, SPEC, STACK, AGENTS) — the skill snapshots before any edit (e.g. `PRINCIPLES@v2.md`). Per-request stubs (TASKS) do not snapshot.
+
+A stub's rules file therefore only needs its **frontmatter** (the engine's dispatch) plus any genuinely doc-specific note. Files that restate the table above are thinned to a single pointer back here (see [[rules-files-audit]], decision D8). Two "stubs" carry real bodies and are *not* thinned: `spec` (index role + archive-time sync) and `tasks` (review-gate + refine patterns).
+
 ## Skill-internal references
 
 | Doc | Mode | Location | Rules |

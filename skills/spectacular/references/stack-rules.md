@@ -11,11 +11,4 @@ status: active
 
 # STACK Rules
 
-Stub doc. Scaffolded from `templates/stack/base.md` (triggered by the `coding` PRD kit, or via `--with stack`). User edits directly.
-
-**Verbs:**
-- `grill` → polite no-op + hint
-- `refine` → whole-doc rewrite pass
-- `review` → structural check
-
-**Snapshot-on-edit: true** — canonical project-wide doc.
+Stub doc — default verb behavior (grill no-op / refine rewrite / review structural) and snapshot-on-edit are documented once in [[doc-index]] § Stub default behavior. Scaffolded from `templates/stack/base.md` (triggered by the `coding` PRD kit, or via `--with stack`); user edits directly.

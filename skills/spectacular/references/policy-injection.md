@@ -20,7 +20,7 @@ When the skill loads that doc to do the phase, the first thing it reads is the i
 | `@Init` | `init-workflow.md` | `spectacular init` |
 | `@Planning` | `new-request.md` | `spectacular new` / request authoring |
 | `@Implementation` | `active-request.md` + `lifecycle.md` | `planned → active` |
-| `@Verification` | `verification.md` + `lifecycle.md` | `review → verified` |
+| `@Verification` | `verify.md` + `lifecycle.md` | `review → verified` |
 | `@Archive` | `archive.md` | `spectacular archive` |
 | `@Remember` | `memory.md` | memory written |
 | `@Snapshot` | `versioning.md` | canonical doc overwritten |
@@ -93,4 +93,4 @@ Enforcement is **skill-side + doctor**, not `hooks.json`. This keeps policies wo
 - [policies-contract.md](policies-contract.md) — POLICY.md structure + policy anatomy + the 8 hooks
 - [policy-rules.md](policy-rules.md) — doc-verb dispatch (grill/refine/review) for POLICY.md
 - [lifecycle.md](lifecycle.md) — the two spine transitions that consult policies
-- [verification.md](verification.md) — the `verification-present` policy's home phase
+- [verify.md](verify.md) — the `verification-present` policy's home phase (Part 2, the 2-of-6 rule)

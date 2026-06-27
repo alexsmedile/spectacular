@@ -104,7 +104,7 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 | `pack-overrides.md` | Convention-pack-specific grill rules — slot prompts, source-ingestion (`--from`), reserved pack-ids |
 | `kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs |
 | `packs-contract.md` | Convention-pack schema: 6 rule categories, 4-tier scope precedence, modular-pack v2 sketch |
-| `verification.md` | 2-of-6 rule for when VERIFY.md is required vs folded into PLAN/TASKS |
+| `verify.md` | Single verification reference (v1.20.0): Part 1 the interactive walk · Part 2 the 2-of-6 rule (was `verification.md`) · Part 3 promoting checks to scripts (was `verify-tests.md`) |
 | `doctor.md` | Substrate self-check spec — areas, severity model, repair flow (CLI mechanical + skill judgment) |
 | `prd-grill.md` / `prd-refine.md` / `prd-review.md` | Legacy — superseded by generic engine + `prd-overrides.md` |
 

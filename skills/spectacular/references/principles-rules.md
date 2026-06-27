@@ -11,11 +11,4 @@ status: active
 
 # PRINCIPLES Rules
 
-Stub doc. Scaffolded from `templates/principles/base.md` on first request via `--with principles`. User edits directly thereafter.
-
-**Verbs:**
-- `grill` → polite no-op + hint: "PRINCIPLES is a stub doc. Open in editor, or pass `--wide` to grill it ad-hoc."
-- `refine` → whole-doc rewrite pass (vibe→spec)
-- `review` → structural check (frontmatter present, no template placeholders left)
-
-**Snapshot-on-edit: true** — PRINCIPLES is canonical project-wide, so the skill snapshots before any edit (e.g. `PRINCIPLES@v2.md`).
+Stub doc — default verb behavior (grill no-op / refine rewrite / review structural) and snapshot-on-edit are documented once in [[doc-index]] § Stub default behavior. Scaffolded from `templates/principles/base.md` on first request via `--with principles`; user edits directly.

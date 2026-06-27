@@ -20,7 +20,7 @@ The skill does **not** run a full doctor sweep. It runs the relevant area(s) and
 | `references/status.md` briefing | `workspace frontmatter kits` | If `config.yaml`, root doc frontmatter, or `doc-index.md` won't parse |
 | `references/grill.md` pre-flight | `kits frontmatter` | If `doc-index.md`, the requested doc's `<doc>-rules.md`, or the active kit file won't parse |
 | `references/onboarding.md` first-invocation | `workspace frontmatter` | First time the skill sees a workspace |
-| `references/lifecycle.md` transition to `verified` | `lifecycle` (scoped to that request) | Always — verifies the verification artifact exists per [[verification]] |
+| `references/lifecycle.md` transition to `verified` | `lifecycle` (scoped to that request) | Always — verifies the verification artifact exists per [[verify]] |
 
 ## Behavior on substrate failure
 

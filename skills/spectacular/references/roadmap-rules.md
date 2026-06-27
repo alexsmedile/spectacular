@@ -403,4 +403,4 @@ The bundled default chain is the 9-phase software chain. Most users never overri
 - [[review]] — consumes the gate checks from this file
 - [[prd-rules]] — sibling rules file (structural model)
 - [[packs-contract]] — convention packs that can override the phase chain
-- [[verification]] — 2-of-6 rule that gates whether a version's `test` phase needs a separate VERIFY.md
+- [[verify]] — 2-of-6 rule that gates whether a version's `test` phase needs a separate VERIFY.md

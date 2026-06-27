@@ -16,7 +16,7 @@ when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
   the command — never loads full context, always loads minimally and progressively. The
   generalized doc verbs (grill/refine/review) apply to any doc type listed in doc-index.md.
-version: 1.19.0
+version: 1.20.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -165,15 +165,16 @@ When delegating to pageworks, surface the canonical install hint from `reference
 
 ### Verification routing (when writing PLAN.md or moving requests to review)
 
-When grilling, scaffolding, or finalizing a PLAN.md for any request, **also route to `references/verification.md`** to decide where verification lives for this request. Two distinct decisions:
+When grilling, scaffolding, or finalizing a PLAN.md for any request, **route to `references/verify.md`** — the single verification reference (Part 1 the walk · Part 2 the 2-of-6 rule · Part 3 promoting checks to scripts; merged in v1.20.0). Decisions:
 
 | Decision point | Route to |
 |---|---|
-| Scaffolding a new request (`spectacular new`) | → `verification.md` — apply 2-of-6 rule. Default: no VERIFY.md. Add `### Verification` group to TASKS.md or fill PLAN § Validation instead. |
-| Grilling/refining a PLAN.md | → `verification.md` § Decision flow — confirm 2-of-6 rule result; ask user if VERIFY.md needed |
+| Scaffolding a new request (`spectacular new`) | → `verify.md` Part 2 — apply 2-of-6 rule. Default: no VERIFY.md. Add `### Verification` group to TASKS.md or fill PLAN § Validation instead. |
+| Grilling/refining a PLAN.md | → `verify.md` Part 2 — confirm 2-of-6 rule result; ask user if VERIFY.md needed |
 | Moving request `active → review` | → `lifecycle.md` § Verification artifact detection — pick artifact (VERIFY.md > TASKS Verification > PLAN Validation) |
-| Moving request `review → verified` | → **`verify.md`** — run the interactive validation walk: verify each check by its kind (executable / assertable / judgable / observable / manual), record to VERIFY-LOG, gate the transition. `verification.md` decides *where* checks live; `verify.md` *runs* them. **Never skip.** |
-| `spectacular verify <slug>` | → **`verify.md`** — the validation walk (skill-only; CLI redirects). |
+| Moving request `review → verified` | → **`verify.md` Part 1** — run the interactive validation walk: verify each check by its kind (executable / assertable / judgable / observable / manual), record to VERIFY-LOG, gate the transition. **Never skip.** |
+| `spectacular verify <slug>` | → **`verify.md` Part 1** — the validation walk (skill-only; CLI redirects). |
+| Automating a shipped scenario | → `verify.md` Part 3 — when to author `tests/verify/<slug>.test.sh`. |
 
 **Critical:** "VERIFY.md is opt-in" refers to *creating the file*, not *performing verification*. Verification always runs against *some* artifact. When VERIFY.md exists it is load-bearing; do not bypass it because it's "optional."
 

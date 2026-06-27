@@ -11,13 +11,6 @@ status: active
 
 # AGENTS Rules
 
-Stub doc. Always scaffolded at `spectacular init` (part of the always-set 6 files). User edits directly thereafter.
+Stub doc — default verb behavior (grill no-op / refine rewrite / review structural) and snapshot-on-edit are documented once in [[doc-index]] § Stub default behavior. Always scaffolded at `spectacular init` (part of the always-set 6 files); user edits directly.
 
-**Verbs:**
-- `grill` → polite no-op + hint
-- `refine` → whole-doc rewrite pass
-- `review` → structural check (frontmatter present, sections from template not left as placeholders)
-
-**Snapshot-on-edit: true** — canonical project-wide doc.
-
-**Note:** the host project may also have a top-level `AGENTS.md` (configurable via `config.yaml`'s `agents.file`). That file is separate from `.spectacular/AGENTS.md` and follows different conventions — see [[onboarding]].
+**Doc-specific note:** the host project may also have a top-level `AGENTS.md` (configurable via `config.yaml`'s `agents.file`). That file is separate from `.spectacular/AGENTS.md` and follows different conventions — see [[onboarding]].

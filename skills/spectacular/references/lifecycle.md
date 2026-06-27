@@ -24,7 +24,7 @@ The skill detects signals and **proposes** transitions. The user can also force 
 | From | To | Signal | Skill action |
 |---|---|---|---|
 | `planned` | `active` | User starts working on request | Run `spectacular advance <slug>`; create SESSION.md |
-| `active` | `review` | All TASKS.md items checked | Propose `spectacular advance <slug>`; also propose VERIFY.md if 2-of-6 rule triggers (see [[verification]]) |
+| `active` | `review` | All TASKS.md items checked | Propose `spectacular advance <slug>`; also propose VERIFY.md if 2-of-6 rule triggers (see [[verify]]) |
 | `active` | `review` | User says "done" / "ready to review" | Run `spectacular advance <slug>` |
 | `review` | `verified` | All `- [x]` in VERIFY.md (when present) | Propose `spectacular advance <slug>` |
 | `review` | `verified` | All TASKS § Verification + PLAN § Validation items confirmed (when no VERIFY.md) | Propose `spectacular advance <slug>` |
@@ -54,7 +54,7 @@ When reading TASKS.md and all `- [ ]` items are now `- [x]`:
 
 > "All tasks in `<slug>` are checked. Ready to move to `review`?"
 
-If moving to review, also evaluate the 2-of-6 rule (see [[verification]]) — only propose creating VERIFY.md when the request actually warrants one. Default for doc-only / refactor / spec requests is **no VERIFY.md** — use PLAN § Validation or add a `### Verification` group to TASKS.md instead.
+If moving to review, also evaluate the 2-of-6 rule (see [[verify]]) — only propose creating VERIFY.md when the request actually warrants one. Default for doc-only / refactor / spec requests is **no VERIFY.md** — use PLAN § Validation or add a `### Verification` group to TASKS.md instead.
 
 ### Verification artifact detection (review → verified)
 
@@ -66,7 +66,7 @@ Verification is **never skipped**. The skill always checks against some artifact
 
 **Substrate check (auto-invoked):** when the skill proposes `verified`, also run `spectacular doctor lifecycle` scoped to that request — confirms the verification artifact exists per the convention. If doctor reports an error, abort the transition with the finding.
 
-Per [[verification]], "opt-in" refers to **whether a standalone VERIFY.md file gets scaffolded** — not whether verification runs. The 2-of-6 rule decides the file; verification itself is mandatory.
+Per [[verify]], "opt-in" refers to **whether a standalone VERIFY.md file gets scaffolded** — not whether verification runs. The 2-of-6 rule decides the file; verification itself is mandatory.
 
 ### Stale request detection
 

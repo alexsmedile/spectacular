@@ -75,4 +75,4 @@ Never mid-flow. Never unsolicited. Single short prompt; user accepts or declines
 
 **Relationship to VERIFY.md:** orthogonal. VERIFY answers "did we ship what PLAN said?" — confirmatory, terminates at `verified`. Feedback-loop answers "was that the right thing to ship?" — exploratory, never terminates. Both can run on the same request without overlap.
 
-**Related:** [[feedback-loop]], [[verification]], [[review]], [[memory-rules]], [[doc-index]], [[archive]]
+**Related:** [[feedback-loop]], [[verify]], [[review]], [[memory-rules]], [[doc-index]], [[archive]]

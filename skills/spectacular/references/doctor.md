@@ -115,6 +115,6 @@ Stdout per fix: `✓ fixed <area>: <action>`. After all mechanical fixes apply, 
 - [[doctor-substrate]] — auto-invocation spec (load from status/grill/onboarding/lifecycle)
 - [[doc-index]] — source of truth for "what should each doc look like"
 - [[kits-contract]] — schema doctor validates kit files against
-- [[verification]] — convention doctor's lifecycle check enforces
+- [[verify]] — convention doctor's lifecycle check enforces
 - [[versioning]] — snapshot-before-edit rule every doctor judgment fix follows
 - [[init-workflow]] — smart-init's diagnostic-deferral messages point here

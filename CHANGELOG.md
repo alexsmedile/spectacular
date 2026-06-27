@@ -7,6 +7,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.20.0] — 2026-06-28
+
+### Changed
+
+- **Skill-reference doc sprawl reduced** (rules-files-audit b13 → v1.20.0):
+  - The 5 boilerplate-only `<doc>-rules.md` stub bodies (architecture, principles, stack, agents — and the verb list in spec) now point to a single **"Stub default behavior"** section in `doc-index.md` instead of each restating the grill/refine/review default. Frontmatter (the engine's dispatch) is untouched. `agents` keeps its top-level-`AGENTS.md` note; `spec` keeps its index role + archive-sync `review` override; `tasks` is unchanged (it carries a real body, mislabeled `mode: stub`). Decision recorded as D8.
+  - **Verify-doc trio merged into one `verify.md`** — the former `verification.md` (2-of-6 rule) becomes Part 2 and `verify-tests.md` (promoting checks to scripts) becomes Part 3 of the existing walk doc (Part 1). All inbound `[[verification]]`/`[[verify-tests]]` wikilinks, path references, and SKILL.md routing updated; the two source files removed. Three files for one concept → one reference with three labelled parts.
+
 ## [1.19.0] — 2026-06-28
 
 ### Added

@@ -1,6 +1,6 @@
 ---
-version: 3.4
-updated: 2026-06-27
+version: 3.5
+updated: 2026-06-28
 summary: "Per-version scope, phase, and exit criteria. Shipped through v1.18.1 (SPEC.md drift check). Next runway is the coherence batch (v1.19–v1.22: naming-coherence, rules-files-audit, onboarding-dedup, lifecycle-undo), then the contract-prep ladder (v1.23–v1.25) leading to the v2.0.0 major — a single breaking concern, .spectacular/ file-contract evolution. Long-term gets fuzzier on purpose. (v3.4 of this doc: stale 'contract prep ①' v1.18 section corrected — v1.18.0 actually shipped the drift check; coherence batch slotted ahead of the ladder; ledger rows b11–b15 added.)"
 related:
   - PRD.md
@@ -38,7 +38,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b10 | skill-desc-length-check | Skill description length guard | themed | tbd | planned |
 | b11 | spec-audit-mode | Content-aware spec audit | themed | tbd | planned |
 | b15 | naming-coherence | Naming coherence (advance/feedback/pack/next) | themed | v1.19.0 | shipped |
-| b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | planned |
+| b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | shipped |
 | b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | planned |
 | b12 | lifecycle-undo | Lifecycle undo (reverse gear) | full | v1.22.0 | planned |
 
@@ -211,9 +211,9 @@ The verb surface stops carrying near-synonyms and stutters: lifecycle move-forwa
 ## v1.20.0 — Rules-file body audit + verify-trio collapse
 
 **Tier:** themed
-**Status:** planned
-**Phase:** intent
-**Linked request:** `rules-files-audit` (b13)
+**Status:** shipped (2026-06-28)
+**Phase:** release
+**Linked request:** `rules-files-audit` (b13, verified)
 
 **Outcome:**
 Skill-reference doc sprawl shrinks without touching dispatch: the 6 stub-mode `<doc>-rules.md` bodies (near-identical boilerplate) are thinned to frontmatter + a single pointer (or promoted where a real body is warranted), and the three-file verify trio (`verification.md` + `verify.md` + `verify-tests.md`) collapses into one sectioned `verify.md`. Frontmatter (the engine's dispatch) stays per-file; only duplicated/empty bodies stop being maintained per-file.

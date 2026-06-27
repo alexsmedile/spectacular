@@ -136,7 +136,7 @@ Same as `/spectacular`.
 
 ### `spectacular new <description>`
 
-Creates a new request folder. The skill derives a kebab-case slug, checks for collisions, applies the [[verification]] 2-of-6 rule to decide whether to scaffold a `VERIFY.md`, and asks the user for confirmation before writing.
+Creates a new request folder. The skill derives a kebab-case slug, checks for collisions, applies the [[verify]] 2-of-6 rule to decide whether to scaffold a `VERIFY.md`, and asks the user for confirmation before writing.
 
 ```text
 spectacular new add team billing
@@ -310,7 +310,7 @@ The walk records to both `VERIFY.md` (ticks passed boxes) and an append-only `VE
 spectacular verify add-team-billing
 ```
 
-**Skill only** — needs an LLM to read each check and judge evidence. At the terminal the CLI prints a redirect to run `/spectacular verify <slug>` inside Claude Code or Codex. See [verify.md](../skills/spectacular/references/verify.md) (how it walks) and [verification.md](../skills/spectacular/references/verification.md) (where checks live).
+**Skill only** — needs an LLM to read each check and judge evidence. At the terminal the CLI prints a redirect to run `/spectacular verify <slug>` inside Claude Code or Codex. See [verify.md](../skills/spectacular/references/verify.md) — the single verification reference (Part 1 the walk · Part 2 the 2-of-6 rule · Part 3 promoting checks to scripts).
 
 ### `spectacular prd` / `spectacular prd grill`
 

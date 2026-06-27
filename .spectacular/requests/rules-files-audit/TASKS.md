@@ -1,6 +1,6 @@
 ---
-status: planned
-updated: 2026-06-27
+status: verified
+updated: 2026-06-28
 related:
   - PLAN.md
 ---
@@ -10,25 +10,25 @@ related:
 ## v1
 
 ### M1 — Audit + decision
-- [ ] Read all 6 stub bodies (agents/architecture/principles/spec/stack/tasks) side by side
-- [ ] Classify each: thin-to-pointer (A) or write-real-body (B)
-- [ ] Confirm `tasks-rules.md` (51 lines) — partial stub or real?
-- [ ] Record stub-body policy + per-file dispositions in DECISIONS.md
+- [x] Read all 6 stub bodies (agents/architecture/principles/spec/stack/tasks) side by side
+- [x] Classify each: thin-to-pointer (A) or write-real-body (B)
+- [x] Confirm `tasks-rules.md` (51 lines) — real body (review-gate + refine patterns), NOT a stub despite mode label
+- [x] Record stub-body policy + per-file dispositions in DECISIONS.md (D8)
 
 ### M2 — Shared default in doc-index.md
-- [ ] Add a "stub default verb behavior" section (grill no-op / refine rewrite / review structural)
+- [x] Add "Stub default behavior" section (grill no-op / refine rewrite / review structural + snapshot rule)
 
 ### M3 — Apply treatment
-- [ ] Thin A-files to frontmatter + single pointer line
-- [ ] Write real bodies for any B-files
-- [ ] Confirm no frontmatter was touched (dispatch intact)
+- [x] Thin A-files (architecture/principles/stack) to frontmatter + single pointer; agents keeps its top-level-AGENTS.md delta
+- [x] Keep B-files: spec (index role + sync override) trimmed to deltas; tasks untouched (real body)
+- [x] Confirm no frontmatter was touched (doc-id/mode/template intact on all 6)
 
 ### M4 — Verify no drift
-- [ ] `spectacular <stubdoc> grill/refine/review` behaves identically pre/post
-- [ ] `spectacular doctor docs` clean
+- [x] Frontmatter dispatch preserved; bodies 160→129 lines
+- [x] `spectacular doctor docs` clean (0 errors, 0 warnings)
 
 ### M5 — Collapse verify-doc trio
-- [ ] Merge verification.md (2-of-6 rule) + verify-tests.md (script-vs-checklist) into verify.md as sections
-- [ ] Delete the two absorbed files
-- [ ] Update SKILL.md verification routing table to point at verify.md only
-- [ ] Confirm the verify walk (review→verified) runs identically
+- [x] Merge verification.md (2-of-6, Part 2) + verify-tests.md (scripts, Part 3) into verify.md
+- [x] Delete the two absorbed files (git rm)
+- [x] Update SKILL.md routing + all inbound [[verification]]/[[verify-tests]] wikilinks + path refs → verify.md
+- [x] Confirm verify walk runs identically; doctor links clean; 9/9 tests pass

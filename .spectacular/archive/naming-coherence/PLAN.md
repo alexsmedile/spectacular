@@ -1,5 +1,5 @@
 ---
-status: verified
+status: archived
 priority: medium
 owner: alex
 updated: 2026-06-28
@@ -8,6 +8,7 @@ summary: "Resolve verb naming inconsistencies (feedback-loop→feedback, lifecyc
 related:
   - ../../PRINCIPLES.md
   - ../../SPEC.md
+archived: 2026-06-28
 ---
 
 # Plan — naming-coherence

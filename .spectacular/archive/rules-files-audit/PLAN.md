@@ -1,5 +1,5 @@
 ---
-status: verified
+status: archived
 priority: medium
 owner: alex
 updated: 2026-06-28
@@ -8,6 +8,7 @@ summary: "Reduce skill-reference doc sprawl: audit the 18 <doc>-rules.md files f
 related:
   - ../../ARCHITECTURE.md
   - ../../SPEC.md
+archived: 2026-06-28
 ---
 
 # Plan — rules-files-audit

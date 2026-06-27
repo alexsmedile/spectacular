@@ -1,5 +1,5 @@
 ---
-status: verified
+status: archived
 priority: medium
 owner: alex
 updated: 2026-06-28
@@ -9,6 +9,7 @@ related:
   - PRD.md
   - ../../ROADMAP.md
   - ../../PRINCIPLES.md
+archived: 2026-06-28
 ---
 
 # Plan — lifecycle-undo

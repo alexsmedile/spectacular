@@ -1,14 +1,15 @@
 ---
-status: verified
+status: archived
 priority: medium
 owner: alex
-updated: 2026-06-08
+updated: 2026-06-28
 summary: "Advisory cross-request awareness — related:/depends-on:/blocks: in PLAN frontmatter, inverse-link resolver, doctor links area; carries a doctor-memory staleness side-rider from FEEDBACKS.md"
 related:
   - PRD.md
   - ../../ARCHITECTURE.md
   - ../../ROADMAP.md
 build: b5
+archived: 2026-06-28
 ---
 
 # Plan — cross-request-links

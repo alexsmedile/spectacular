@@ -1,8 +1,8 @@
 ---
-status: verified
+status: archived
 priority: high
 owner: alex
-updated: 2026-06-07
+updated: 2026-06-28
 summary: "/spectacular imagine — imagination-backed planning. Skill renders artifacts (UI/flow/stories/arch) the human reacts to per-part, then derives the spec/plan to deliver the approved flow. Expands the thesis from spec-driven to spec-driven AND imagination-backed."
 related:
   - PRD.md
@@ -10,6 +10,7 @@ related:
   - ../../ARCHITECTURE.md
   - ../../PERSONAS.md
 build: b6
+archived: 2026-06-28
 ---
 
 # Plan — imagine-mode

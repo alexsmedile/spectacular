@@ -1,13 +1,14 @@
 ---
-status: review
+status: archived
 priority: medium
 owner: alex
-updated: 2026-06-16
+updated: 2026-06-28
 build: b9
 summary: "Split DECISIONS.md into a cheap index + per-entry files when it grows large — agents load only the index by default, fetch individual entries on demand."
 related:
   - PRD.md
   - ../../ROADMAP.md
+archived: 2026-06-28
 ---
 
 # Plan — decisions-index

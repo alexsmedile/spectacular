@@ -114,8 +114,6 @@ Each doc is described by a rules file at `references/<doc-id>-rules.md`. The rul
 | `spectacular feedback-loop resolve <slug>` | → CLI verb (close entry, optional auto-promote to memory) |
 | `spectacular feedback-loop archive <slug>` | → CLI verb |
 | `spectacular feedback grill\|refine\|review` | → generic engine via [[feedback-rules]] (works like any registered doc) |
-| Aliases: `iterate`, `experiment`, `test`, `probe`, `try` | → same as `feedback-loop` (hidden — not shown in help) |
-
 **Proactive surfacing — three checkpoints only:**
 1. **Milestone tick in TASKS.md** — after acknowledging the milestone, may offer: "Want to feedback-loop M<N> before moving on?"
 2. **Request status → `review`** — same single-prompt offer scoped to the request as a whole.
@@ -243,80 +241,11 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 
 ---
 
-## References index
+## References & templates index
 
-| File | Purpose |
-|---|---|
-| **Workspace lifecycle** | |
-| `references/status.md` | No-arg invocation — read state, build briefing, surface next action |
-| `references/new-request.md` | Scaffold new request, slug rules, templates |
-| `references/active-request.md` | Continue work, session state, task tracking |
-| `references/lifecycle.md` | State transitions, signal detection, proactive proposals |
-| `references/verification.md` | When VERIFY.md is needed (2-of-6 rule) vs folded into PLAN § Validation or TASKS § Verification |
-| `references/verify.md` | The `spectacular verify <slug>` validation walk — typed checks (5 kinds), walk loop, VERIFY-LOG, gates review→verified |
-| `references/verify-tests.md` | When to author `tests/verify/<slug>.test.sh` scripts vs leave scenarios in VERIFY.md as manual checklists |
-| `references/doctor.md` | Doctor entry point — severity model, report format, mechanical fixes |
-| `references/doctor-areas.md` | Per-area check tables (load when explaining/implementing a check) |
-| `references/doctor-repair.md` | Judgment-fix repair flow — y/n/q walk, snapshot-before-edit, examples |
-| `references/doctor-substrate.md` | Auto-invocation spec for status/grill/onboarding/lifecycle |
-| `references/migrate.md` | `/spectacular migrate` skill walk — judgment migrations with snapshot + y/n/q |
-| `references/migrations-contract.md` | Schema contract for migration .md files under `migrations/` |
-| `references/archive.md` | Archive a request, propose spec sync + memory entries |
-| `references/memory.md` | `remember this` command, write triggers, anti-collision rules |
-| `references/versioning.md` | Snapshot-before-edit rules, naming convention |
-| `references/spec-sync.md` | Proposing `SPEC.md` + `specs/` updates when archiving (renamed from current-sync.md in v0.5.0) |
-| `references/scaffold-reference.md` | Canonical file templates with frontmatter stubs |
-| `references/onboarding.md` | First invocation on an existing project |
-| `references/init-workflow.md` | CLI init + first-time project setup |
-| **Doc-writing (v0.3.0+; rules-driven v1.4.0+)** | |
-| `references/doc-index.md` | Human catalog of doc types. Dispatch lives in each `<doc-id>-rules.md` frontmatter |
-| `references/grill.md` | Interactive slot-filler (consumes per-doc rules; honors mode `grill` / `grill-wide` / `grill-each` / `grill-loop`) |
-| `references/refine.md` | Vibe→spec rewriter + append-mode handler |
-| `references/review.md` | Quality gate runner (structural in CLI; semantic in skill) |
-| `references/prd-rules.md` | PRD: 8 slots, kit selection, vague-word list, gate checks |
-| `references/plan-rules.md` | PLAN: milestone ordering, dependency-link validation |
-| `references/tasks-rules.md` | TASKS: checklist format, frontmatter sync (stub mode) |
-| `references/roadmap-rules.md` | ROADMAP: per-version blocks (grill-each), 9-phase chain, 18-check review gate |
-| `references/personas-rules.md` | **v1.3.0+** — PERSONAS: per-persona blocks (grill-each), gate checks |
-| `references/principles-rules.md` | **v1.4.0+** — PRINCIPLES (stub) |
-| `references/architecture-rules.md` | **v1.4.0+** — ARCHITECTURE (stub) |
-| `references/stack-rules.md` | **v1.4.0+** — STACK (stub) |
-| `references/agents-rules.md` | **v1.4.0+** — AGENTS (stub) |
-| `references/spec-rules.md` | **v1.4.0+** — SPEC (stub) |
-| `references/decisions-rules.md` | **v1.4.0+** — DECISIONS (append, one ADR entry per decision) |
-| `references/memory-rules.md` | **v1.5.0+** — MEMORY (index, soft-folder DB with entries in `memory/`) |
-| `references/sessions-rules.md` | **v1.5.0+** — SESSIONS (index, soft-folder DB with entries in `sessions/`, auto-links decisions+memories) |
-| `references/kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs; single-kit-only in v1 |
-| `references/packs-contract.md` | Convention pack schema: pack folder shape + 6 rule categories (naming/taxonomy/root-files/gitignore/file-placement/project-types) |
-| `references/pack-rules.md` | Pack-specific grill rules: slot prompts, mini-refine patterns, source-ingestion (`--from`), reserved pack-ids, review gate checks 4-12 |
-| `references/pageworks-handoff.md` | **v1.2.0+** — when/how spectacular delegates public-doc work to pageworks; canonical install hint; archive-time prompt mechanics |
+This file deliberately does **not** hand-list every reference doc or template — that list drifts every time a doc ships (see the registry note above, and principle 6). The live sources of truth:
 
----
+- **Reference docs** — the set of `references/*.md`. Human catalog: `references/doc-index.md`. Each doc's dispatch lives in its own `references/<doc-id>-rules.md` frontmatter.
+- **Templates** — the `templates/` tree (canonical bases under `templates/<doc>/base.md`, PRD kits under `templates/prd/kits/`, soft-DB entries under `templates/<collection>/entry.md`). Frontmatter stubs for every file type: `references/scaffold-reference.md`.
 
-## Templates index
-
-| Path | Purpose |
-|---|---|
-| `templates/prd/base.md` | Canonical 8-slot PRD template (general-purpose) |
-| `templates/prd/kits/coding.md` | Coding kit — base + stack + interfaces |
-| `templates/prd/kits/product.md` | Product kit — base + user stories + metrics + distribution |
-| `templates/prd/kits/content.md` | Content kit — base + audience + format + distribution |
-| `templates/prd/kits/research.md` | Research kit — base + hypothesis + method + decision-being-informed |
-| `templates/prd/kits/blank.md` | Blank kit — pure 8-slot base, no extras |
-| `templates/plan/base.md` | 7-slot PLAN template (per-request) |
-| `templates/tasks/base.md` | TASKS checklist template (per-request) |
-| `templates/principles/base.md` | Operating principles + enforcement hooks |
-| `templates/architecture/base.md` | `.spectacular/` structure spec |
-| `templates/spec/base.md` | System spec — index of what's built right now |
-| `templates/roadmap/base.md` | Time-ordered roadmap |
-| `templates/stack/base.md` | Host project tech choices |
-| `templates/agents/base.md` | Onboarding doc for `.spectacular/` agents |
-| `templates/decisions/entry.md` | Single ADR entry (append-mode template) |
-| `templates/memory/entry.md` | **v1.5.0+** — Single memory entry written by `spectacular remember` |
-| `templates/sessions/entry.md` | **v1.5.0+** — Single session entry written by `spectacular session start` |
-| `templates/packs/minimal/` | Bundled convention pack — `.gitignore` + README contract only (see [[packs-contract]]) |
-| `templates/docs/docs.yaml.tmpl` | Public-docs nav manifest template (v0.6.0+) |
-| `templates/docs/index.md.tmpl` | Public-docs landing page template (v0.6.0+) |
-| `templates/docs/page.md.tmpl` | Public-docs page template with frontmatter stub (v0.6.0+) |
-
-Project may override by placing files at `.spectacular/templates/<doc>/...` — same filenames, project-local takes precedence.
+Project may override any template by placing files at `.spectacular/templates/<doc>/...` — same filenames, project-local takes precedence.

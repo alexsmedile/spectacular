@@ -7,6 +7,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.18.1] — 2026-06-27
+
+### Fixed
+
+- `is_canonical_doc` had an unreachable duplicate `SPEC.md` case arm, so per-capability `specs/<cap>/SPEC.md` files were never recognized as canonical and **could not be snapshotted**. The `SPEC.md` arm now matches both the top-level doc and capability specs.
+- Dead, misleadingly-commented `exit 0` after the `doctor` dispatch replaced with `exit $?` so a real exit code propagates if `doctor` ever returns.
+
+### Changed
+
+- Internal cleanup (no behavior change): collapsed four byte-identical collection walkers (`_idea`/`_decision`/`_memory`/`_session_iter_all`) into one `_iter_md <subdir>`, and merged `kit_triggers_always`/`kit_triggers_suggested` into a single `kit_triggers <kit> <which>`. Net −48 lines in `cli/spectacular`.
+
 ## [1.18.0] — 2026-06-26
 
 ### Added

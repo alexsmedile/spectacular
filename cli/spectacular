@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.17.2"
+SPECTACULAR_VERSION="1.18.1"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -289,7 +289,7 @@ resolve_doc_set() {
   local kit_always=""
 
   if ! $OPT_MINIMAL; then
-    kit_always="$(kit_triggers_always "$OPT_KIT")"
+    kit_always="$(kit_triggers "$OPT_KIT" always)"
     for doc in $kit_always; do
       if ! in_list "$doc" "$resolved"; then
         resolved="$resolved $doc"
@@ -311,45 +311,23 @@ resolve_doc_set() {
   echo "$resolved"
 }
 
-# Read kit frontmatter and extract triggers-docs.always entries.
-# Naive YAML parser: looks for `always:` under `triggers-docs:` and lists trailing `  - <doc>` items.
+# Read kit frontmatter and extract triggers-docs.<which> entries (which = always|suggested).
+# Naive YAML parser: looks for `<which>:` under `triggers-docs:` and lists trailing `    - <doc>` items.
 # Falls back to empty if kit file not yet installed or parse fails.
-kit_triggers_always() {
-  local kit_id="$1"
+kit_triggers() {
+  local kit_id="$1" which="$2"
   local kit_file
   kit_file="$(find_kit_file "$kit_id")"
   [[ -z "$kit_file" ]] && return 0
 
-  awk '
+  awk -v which="$which" '
     /^---$/ { fm = !fm; next }
     !fm { exit }
-    /^triggers-docs:/ { in_td = 1; in_always = 0; next }
-    in_td && /^  always:/ { in_always = 1; next }
-    in_td && /^  suggested:/ { in_always = 0; next }
-    in_td && /^[a-zA-Z]/ { in_td = 0; in_always = 0; next }
-    in_always && /^    - / {
-      gsub(/^    - /, "", $0)
-      gsub(/[[:space:]]/, "", $0)
-      print $0
-    }
-  ' "$kit_file" | tr '\n' ' '
-}
-
-# Same as kit_triggers_always but for suggested
-kit_triggers_suggested() {
-  local kit_id="$1"
-  local kit_file
-  kit_file="$(find_kit_file "$kit_id")"
-  [[ -z "$kit_file" ]] && return 0
-
-  awk '
-    /^---$/ { fm = !fm; next }
-    !fm { exit }
-    /^triggers-docs:/ { in_td = 1; in_sugg = 0; next }
-    in_td && /^  suggested:/ { in_sugg = 1; next }
-    in_td && /^  always:/ { in_sugg = 0; next }
-    in_td && /^[a-zA-Z]/ { in_td = 0; in_sugg = 0; next }
-    in_sugg && /^    - / {
+    /^triggers-docs:/ { in_td = 1; on = 0; next }
+    in_td && $0 ~ "^  " which ":" { on = 1; next }
+    in_td && /^  [a-z]+:/ { on = 0; next }
+    in_td && /^[a-zA-Z]/ { in_td = 0; on = 0; next }
+    on && /^    - / {
       gsub(/^    - /, "", $0)
       gsub(/[[:space:]]/, "", $0)
       print $0
@@ -432,7 +410,7 @@ run_interactive() {
   # (skill must be installed). On fresh init this is usually a no-op since skill
   # installs after scaffold; user can re-run with --with for finer control.
   local suggested
-  suggested="$(kit_triggers_suggested "$OPT_KIT")"
+  suggested="$(kit_triggers "$OPT_KIT" suggested)"
   if [[ -n "$suggested" ]]; then
     echo ""
     echo "The '$OPT_KIT' kit suggests these additional root docs. Add each?"
@@ -1582,12 +1560,13 @@ is_canonical_doc() {
   local base
   base=$(basename "$file")
   case "$base" in
-    PRD.md|SPEC.md|ARCHITECTURE.md|PRINCIPLES.md|ROADMAP.md|STACK.md|DECISIONS.md|AGENTS.md|config.yaml)
-      [[ "$file" == ".spectacular/$base" ]] || [[ "$file" == "./.spectacular/$base" ]]
-      ;;
     SPEC.md)
-      # specs/<capability>/SPEC.md is also canonical
+      # top-level SPEC.md or a per-capability specs/<capability>/SPEC.md
+      [[ "$file" == ".spectacular/$base" ]] || [[ "$file" == "./.spectacular/$base" ]] || \
       [[ "$file" == .spectacular/specs/*/SPEC.md ]] || [[ "$file" == ./.spectacular/specs/*/SPEC.md ]]
+      ;;
+    PRD.md|ARCHITECTURE.md|PRINCIPLES.md|ROADMAP.md|STACK.md|DECISIONS.md|AGENTS.md|config.yaml)
+      [[ "$file" == ".spectacular/$base" ]] || [[ "$file" == "./.spectacular/$base" ]]
       ;;
     *) return 1 ;;
   esac
@@ -1977,11 +1956,13 @@ EOF
   esac
 }
 
-# Walk all idea entries in .spectacular/ideas/*.md
-_idea_iter_all() {
-  local f
-  [[ -d ".spectacular/ideas" ]] || return 0
-  for f in .spectacular/ideas/*.md; do
+# Walk all *.md in a .spectacular/ subdir. Emits one path per line.
+# Shared by ideas, decisions, memory, sessions (single-folder collections).
+# feedback is NOT one of these — it spans two locations (see _feedback_iter_all).
+_iter_md() {
+  local dir=".spectacular/$1" f
+  [[ -d "$dir" ]] || return 0
+  for f in "$dir"/*.md; do
     [[ -f "$f" ]] && echo "$f"
   done
 }
@@ -2127,7 +2108,7 @@ EOF
     fi
     printf "%-32s  %-10s  %-8s  %-10s  %s\n" "$slug_display" "$status" "${priority:-?}" "${updated:-?}" "${origin:-?}"
     count=$((count + 1))
-  done < <(_idea_iter_all)
+  done < <(_iter_md ideas)
 
   if [[ $count -eq 0 ]]; then
     if [[ "$status_filter" == "all" ]]; then
@@ -2503,34 +2484,6 @@ _request_iter_all() {
   done
 }
 
-# Iterate over all decision entries. Emits one path per entry.
-_decision_iter_all() {
-  local f
-  if [[ -d ".spectacular/decisions" ]]; then
-    for f in .spectacular/decisions/*.md; do
-      [[ -f "$f" ]] && echo "$f"
-    done
-  fi
-}
-
-# Iterate over all memory entries.
-_memory_iter_all() {
-  local f
-  [[ -d ".spectacular/memory" ]] || return 0
-  for f in .spectacular/memory/*.md; do
-    [[ -f "$f" ]] && echo "$f"
-  done
-}
-
-# Iterate over all session entries.
-_session_iter_all() {
-  local f
-  [[ -d ".spectacular/sessions" ]] || return 0
-  for f in .spectacular/sessions/*.md; do
-    [[ -f "$f" ]] && echo "$f"
-  done
-}
-
 # ── cmd_requests (list) ──────────────────────────────────────────────────────
 cmd_requests() {
   local status_filter="all" since="" limit=20 show_all=false json=false
@@ -2701,7 +2654,7 @@ EOF
     [[ -z "$summary" ]] && summary=$(fm_get "$f" "decision")
     rows+=("$slug|${decided:-?}|${tags:-}|${summary:-}")
     count=$((count + 1))
-  done < <(_decision_iter_all)
+  done < <(_iter_md decisions)
 
   # Sort by decided date desc (we'll trust filesystem; if needed, can pipe through sort)
   local effective_limit=$count
@@ -2799,7 +2752,7 @@ EOF
     [[ -z "$summary" ]] && summary=$(fm_get "$f" "lesson")
     rows+=("$slug|${created:-?}|${tags:-}|${summary:-}")
     count=$((count + 1))
-  done < <(_memory_iter_all)
+  done < <(_iter_md memory)
 
   local effective_limit=$count
   if ! $show_all && (( count > limit )); then
@@ -2908,7 +2861,7 @@ EOF
     [[ -z "$summary" ]] && summary=$(fm_get "$f" "focus")
     rows+=("$slug|${status}|${opened:-?}|${summary:-}")
     count=$((count + 1))
-  done < <(_session_iter_all)
+  done < <(_iter_md sessions)
 
   local effective_limit=$count
   if ! $show_all && (( count > limit )); then
@@ -3875,8 +3828,8 @@ EOF
 
   # Count decisions, memories
   local total_decisions=0 total_memories=0
-  while IFS= read -r f; do [[ -n "$f" ]] && total_decisions=$((total_decisions + 1)); done < <(_decision_iter_all)
-  while IFS= read -r f; do [[ -n "$f" ]] && total_memories=$((total_memories + 1)); done < <(_memory_iter_all)
+  while IFS= read -r f; do [[ -n "$f" ]] && total_decisions=$((total_decisions + 1)); done < <(_iter_md decisions)
+  while IFS= read -r f; do [[ -n "$f" ]] && total_memories=$((total_memories + 1)); done < <(_iter_md memory)
 
   # Sessions: total + open
   local total_sessions=0 open_sessions=0
@@ -3885,7 +3838,7 @@ EOF
     total_sessions=$((total_sessions + 1))
     s=$(fm_get "$f" "status")
     [[ "$s" == "open" ]] && open_sessions=$((open_sessions + 1))
-  done < <(_session_iter_all)
+  done < <(_iter_md sessions)
 
   # Ideas + feedback (light counts)
   local total_ideas=0
@@ -7121,8 +7074,8 @@ check_kits() {
     fi
     # triggers-docs entries match KNOWN_DOCS
     local triggers
-    triggers=$(kit_triggers_always "$name")
-    triggers+=" $(kit_triggers_suggested "$name")"
+    triggers=$(kit_triggers "$name" always)
+    triggers+=" $(kit_triggers "$name" suggested)"
     local kit_ok=true
     for doc in $triggers; do
       [[ -z "$doc" ]] && continue
@@ -7881,7 +7834,7 @@ check_ideas() {
         unknown_files="${unknown_files:+$unknown_files, }$(basename "$f" .md)→$status_v"
         ;;
     esac
-  done < <(_idea_iter_all)
+  done < <(_iter_md ideas)
 
   if [[ $entry_count -eq 0 ]]; then
     doc_add "ideas" "info" "$top_dir" "no ideas yet — start one with 'spectacular idea new <slug>'"
@@ -8999,8 +8952,7 @@ main() {
   if [[ "$subcmd" == "doctor" ]]; then
     shift
     doctor "$@"
-    # doctor exits internally; this is unreachable
-    exit 0
+    exit $?
   fi
 
   if [[ "$subcmd" == "pack" ]]; then

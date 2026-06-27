@@ -7,6 +7,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.22.0] — 2026-06-28
+
+### Added
+
+- **`spectacular undo`** — a reverse gear for lifecycle mutations (lifecycle-undo b12 → v1.22.0). Reverses the most recent `advance`, `archive`, or `idea promote`:
+  - **advance** → status back one step on PLAN + TASKS.
+  - **archive** → moves the dir back to `requests/`, restores the pre-archive status, drops the `archived:` field, and reverses the inbound `../../archive/<slug>/` link rewrites across sibling requests (git-aware, plain-`mv` fallback).
+  - **idea promote** → restores the idea source to `ideas/`, resets its status, drops `promoted_to:`; the scaffolded request dir is **left in place** unless the user confirms removal (decision D9).
+  - **Single-level** (one `.last-mutation` breadcrumb, gitignored). Refuses on a **stale breadcrumb** (any affected file modified after the recorded mutation — timestamp-vs-mtime guard). `--dry-run` previews without mutating. "Nothing to undo" exits 0.
+  - Each mutator (`cmd_promote`, `cmd_archive`, `cmd_idea_promote`) writes the breadcrumb; `cmd_undo` reads, reverses, and clears it. New `fm_unset` frontmatter helper. Skill tier-reveal hints added to `lifecycle.md` + `archive.md`. `tests/cli/undo.test.sh` (30 assertions).
+
 ## [1.21.0] — 2026-06-28
 
 ### Changed

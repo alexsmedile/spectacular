@@ -1,8 +1,8 @@
 ---
-status: planned
+status: verified
 priority: medium
 owner: alex
-updated: 2026-06-27
+updated: 2026-06-28
 build: b12
 summary: "A reverse gear for lifecycle mutations — `spectacular undo` reverts the last state transition or move (advance/archive/idea promote) so a mis-step doesn't require manual file surgery."
 related:
@@ -92,6 +92,6 @@ See `TASKS.md`.
 
 ## Open questions (resolve during grill)
 
-1. **Idea-promote undo + scaffolded request:** auto-remove the scaffolded request dir, or leave it and just restore the idea? (Leaning: prompt, default leave — removing a dir the user may have started editing is the more destructive choice.)
-2. **Breadcrumb vs git:** is `.last-mutation` enough, or should undo verify against `git reflog`/`git status` to refuse when the working tree moved since the mutation? (Leaning: M4 staleness check compares breadcrumb timestamp to file mtimes; full git verification is v2.)
-3. **Multi-level undo:** stack of breadcrumbs vs single? (v1 = single, explicitly.)
+1. **Idea-promote undo + scaffolded request:** ✅ RESOLVED (2026-06-28) — **prompt, default leave.** undo restores the idea to `ideas/`; the scaffolded request dir is left in place unless the user confirms removal. Removing a dir the user may have edited is the destructive choice — opt-in only.
+2. **Breadcrumb vs git:** ✅ RESOLVED (2026-06-28) — **timestamp vs file mtimes.** undo compares `.last-mutation`'s timestamp to the affected files' mtimes and refuses (stale) if any changed after the recorded mutation. Full git reflog/status verification is v2.
+3. **Multi-level undo:** ✅ RESOLVED (2026-06-28) — **single-level only.** One breadcrumb; undo reverses the last mutation. A stack is v2 if demand surfaces.

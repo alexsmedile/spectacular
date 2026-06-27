@@ -51,6 +51,7 @@ Propose concrete, specific entries. Avoid vague lessons. If nothing notable happ
 - Skill does not read `archive/` during normal operation
 - Promoted idea files go to `archive/ideas/<filename>.md`
 - Use `spectacular archive <slug>` — never manual `git mv` + sed (v0.7.0+)
+- **Reversible (v1.22.0+):** an accidental archive is undone with `spectacular undo` — it moves the dir back, restores status, and reverses the inbound-link rewrites. Surface this as a one-line tier-reveal after archiving, not a separate flow. Undo is single-level and refuses on a stale breadcrumb.
 
 ---
 

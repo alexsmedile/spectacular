@@ -44,6 +44,8 @@ Never hand-edit `status:` in PLAN.md frontmatter when the CLI verb covers it. Ma
 
 **Never auto-transition.** Always propose and wait for user confirmation before running the verb.
 
+> **Reverse gear (v1.22.0+):** after a transition, you may surface one line — `↩ revert with spectacular undo` — so a mis-step doesn't need manual file surgery. `undo` reverses the last `advance`/`archive`/`idea promote` (single-level; refuses on a stale breadcrumb). Tier-reveal only — one line, never mid-flow.
+
 ---
 
 ## Signal detection details

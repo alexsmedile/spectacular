@@ -1,7 +1,7 @@
 ---
-version: 3.6
+version: 3.7
 updated: 2026-06-28
-summary: "Per-version scope, phase, and exit criteria. Shipped through v1.18.1 (SPEC.md drift check). Next runway is the coherence batch (v1.19–v1.22: naming-coherence, rules-files-audit, onboarding-dedup, lifecycle-undo), then the contract-prep ladder (v1.23–v1.25) leading to the v2.0.0 major — a single breaking concern, .spectacular/ file-contract evolution. Long-term gets fuzzier on purpose. (v3.4 of this doc: stale 'contract prep ①' v1.18 section corrected — v1.18.0 actually shipped the drift check; coherence batch slotted ahead of the ladder; ledger rows b11–b15 added.)"
+summary: "Per-version scope, phase, and exit criteria. Shipped through v1.22.0 — the coherence batch (v1.19 naming-coherence, v1.20 rules-files-audit, v1.21 onboarding-dedup, v1.22 lifecycle-undo) is complete. Next runway is the contract-prep ladder (v1.23–v1.25) leading to the v2.0.0 major — a single breaking concern, .spectacular/ file-contract evolution. Long-term gets fuzzier on purpose. (v3.7: coherence batch all shipped.)"
 related:
   - PRD.md
   - ARCHITECTURE.md
@@ -40,7 +40,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b15 | naming-coherence | Naming coherence (advance/feedback/pack/next) | themed | v1.19.0 | shipped |
 | b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | shipped |
 | b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | shipped |
-| b12 | lifecycle-undo | Lifecycle undo (reverse gear) | full | v1.22.0 | planned |
+| b12 | lifecycle-undo | Lifecycle undo (reverse gear) | full | v1.22.0 | shipped |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 
@@ -256,9 +256,9 @@ First-contact gets two fixes. `onboarding.md` (existing-workspace orientation) r
 ## v1.22.0 — Lifecycle undo (reverse gear)
 
 **Tier:** full
-**Status:** planned
-**Phase:** intent
-**Linked request:** `lifecycle-undo` (b12)
+**Status:** shipped (2026-06-28)
+**Phase:** release
+**Linked request:** `lifecycle-undo` (b12, verified)
 
 **Outcome:**
 Spectacular gains a reverse gear: `spectacular undo` reverts the last mutation — a lifecycle status transition, an archive (dir move + link rewrites — the hard part), or an idea promote — using a gitignored `.spectacular/.last-mutation` breadcrumb. Guardrails + `--dry-run` make it safe to preview before applying.

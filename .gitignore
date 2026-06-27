@@ -1,6 +1,9 @@
 # spectacular workspace personal overrides
 .spectacular.local/
 
+# undo breadcrumb — session ephemera, not team state (v1.22.0+)
+.spectacular/.last-mutation
+
 # tool caches
 .scrapekit/
 .playwright-mcp/

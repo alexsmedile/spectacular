@@ -1,6 +1,6 @@
 ---
 version: 1.1
-updated: 2026-05-22
+updated: 2026-06-28
 summary: "The .spectacular/ directory — layers, file roles, frontmatter conventions, lifecycle, versioning"
 related:
   - PRD.md
@@ -410,7 +410,7 @@ Agents rarely reason about failure modes unless explicitly prompted — this fil
 
 ## VERIFY.md (on demand)
 
-**On-demand only.** The skill proposes creation when the request hits the **2-of-6 rule** (see [[verification]] for full text):
+**On-demand only.** The skill proposes creation when the request hits the **2-of-6 rule** (see [[verify]] Part 2 for full text):
 
 1. User-visible change
 2. High reversibility cost

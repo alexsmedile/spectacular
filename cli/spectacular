@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.21.0"
+SPECTACULAR_VERSION="1.22.0"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -202,6 +202,7 @@ CLI verbs (mutate workspace):
   migrate [--to|--from|--list|--dry-run]   Apply workspace schema migrations
   new <slug>             Scaffold a new request
   advance <slug> [--to <state>]        Advance request lifecycle (was 'promote')
+  undo [--dry-run]       Reverse the last lifecycle mutation (advance/archive/idea promote)
   next                   Show the single highest-priority next action (read-only)
   snapshot <file>        Versioned copy of a canonical doc (<FILE>@vN.md)
   archive <slug>         Move request to .spectacular/archive/ + rewrite inbound links
@@ -760,6 +761,46 @@ fm_set() {
 fm_touch() {
   fm_set "$1" "updated" "$TODAY"
 }
+
+# Remove a frontmatter field entirely (within the first --- block). No-op if absent.
+# Usage: fm_unset <file> <field>
+fm_unset() {
+  local file="$1" field="$2"
+  [[ -f "$file" ]] || die "fm_unset: file not found: $file"
+  local tmp; tmp=$(mktemp)
+  awk -v fld="$field" '
+    /^---$/ { fm++; print; next }
+    fm == 1 && $0 ~ "^"fld":" { next }
+    { print }
+  ' "$file" > "$tmp" && mv "$tmp" "$file"
+}
+
+# ── last-mutation breadcrumb (v1.22.0+, for `spectacular undo`) ───────────────
+# Single-level only: each lifecycle mutator overwrites .spectacular/.last-mutation
+# with key=value lines describing how to reverse the last op. Gitignored — session
+# ephemera, not team state. undo reads it, reverses, then clears it. See [[lifecycle-undo]].
+_BREADCRUMB=".spectacular/.last-mutation"
+
+# _breadcrumb_write op slug [k=v ...]  — overwrites the breadcrumb. Always stamps ts (epoch).
+_breadcrumb_write() {
+  local op="$1" slug="$2"; shift 2
+  [[ -d ".spectacular" ]] || return 0
+  {
+    echo "op=$op"
+    echo "slug=$slug"
+    echo "ts=$(date +%s)"
+    local kv
+    for kv in "$@"; do echo "$kv"; done
+  } > "$_BREADCRUMB"
+}
+
+# _breadcrumb_get key  — print a value from the breadcrumb, empty if absent.
+_breadcrumb_get() {
+  [[ -f "$_BREADCRUMB" ]] || return 0
+  awk -F= -v k="$1" '$1==k { sub(/^[^=]*=/,""); print; exit }' "$_BREADCRUMB"
+}
+
+_breadcrumb_clear() { rm -f "$_BREADCRUMB"; }
 
 # Append item to a YAML list field. Creates the list (as inline `field: [item]`)
 # if absent. Skips silently if item already present in list.
@@ -2157,6 +2198,11 @@ EOF
   local idea_path
   idea_path=$(_idea_find "$slug") || die "idea promote: idea '$slug' not found in .spectacular/ideas/"
 
+  # Capture the idea's pre-promote status for the undo breadcrumb.
+  local idea_prev_status
+  idea_prev_status="$(fm_get "$idea_path" "status")"
+  [[ -z "$idea_prev_status" ]] && idea_prev_status="exploring"
+
   [[ -z "$request_slug" ]] && request_slug="$slug"
 
   # Refuse if request slug already taken
@@ -2202,6 +2248,11 @@ EOF
     die "idea promote: archive target already exists: $archived_path (manual cleanup needed)"
   fi
   mv "$idea_path" "$archived_path"
+
+  # Breadcrumb for `spectacular undo` (single-level). Records the idea slug and the
+  # scaffolded request so undo can restore the source; the request dir is left in
+  # place on undo unless the user confirms removal (per decision D9).
+  _breadcrumb_write "idea-promote" "$slug" "request_slug=$request_slug" "idea_prev_status=$idea_prev_status"
 
   created ".spectacular/requests/$request_slug/"
   info "  → idea archived: $archived_path"
@@ -4243,6 +4294,9 @@ EOF
     echo "    Consider: /spectacular verify $slug  (records evidence + a walk log before archiving)" >&2
   fi
 
+  # Capture the pre-archive status for the undo breadcrumb (before we overwrite it).
+  local pre_archive_status="$status"
+
   # Bump PLAN frontmatter BEFORE the move (avoids losing the change)
   fm_set "$plan" "status" "archived"
   fm_set "$plan" "archived" "$TODAY"
@@ -4276,6 +4330,11 @@ EOF
   if [[ "$rewrite_count" -eq 0 ]]; then
     echo "  • no inbound related: links found to rewrite"
   fi
+
+  # Breadcrumb for `spectacular undo` (single-level). Records the pre-archive
+  # status so undo restores it; the dir move + link rewrites are reversed
+  # deterministically from op+slug.
+  _breadcrumb_write "archive" "$slug" "prev_status=$pre_archive_status"
 
   # ── pageworks handoff prompt (v1.2.0+) ─────────────────────────────────────
   # If the archived request touched SPEC.md, specs/, ARCHITECTURE.md, or PRD.md
@@ -4643,6 +4702,9 @@ EOF
     fm_set "$tasks" "status" "$target"
     fm_touch "$tasks"
   fi
+  # Breadcrumb for `spectacular undo` (single-level). Records prior status so undo
+  # can restore it. Skipped when chaining into archive (--archive overwrites it next).
+  $opt_archive || _breadcrumb_write "advance" "$slug" "prev_status=$current"
   echo "  ✓ $slug: $current → $target"
 
   # --archive: chain into cmd_archive (pass --skip-doctor through if set)
@@ -4654,6 +4716,180 @@ EOF
       cmd_archive "$slug"
     fi
   fi
+}
+
+# ── undo (v1.22.0+) ──────────────────────────────────────────────────────────
+# Reverses the most recent lifecycle mutation recorded in .last-mutation:
+#   advance       → status back to prev_status (PLAN + TASKS)
+#   archive       → dir back to requests/, status restored, archived: dropped, links reversed
+#   idea-promote  → idea source restored to ideas/, status reset; scaffolded request left
+#                   in place unless the user confirms removal (decision D9)
+# Single-level only. Refuses if the breadcrumb is stale (an affected file changed
+# after the mutation timestamp) — timestamp-vs-mtime guard. --dry-run previews.
+
+# Largest mtime (epoch) among existing paths; 0 if none exist. Portable (BSD+GNU stat).
+_max_mtime() {
+  local p m max=0
+  for p in "$@"; do
+    [[ -e "$p" ]] || continue
+    m="$(stat -f %m "$p" 2>/dev/null || stat -c %Y "$p" 2>/dev/null || echo 0)"
+    (( m > max )) && max=$m
+  done
+  echo "$max"
+}
+
+cmd_undo() {
+  local dry_run=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --dry-run) dry_run=true; shift ;;
+      --help|-h)
+        cat <<'EOF'
+Usage: spectacular undo [--dry-run]
+
+Reverse the most recent lifecycle mutation (single-level):
+  advance       → status back one step (PLAN + TASKS)
+  archive       → move back to requests/, restore status, drop archived:, reverse links
+  idea-promote  → restore the idea to ideas/, reset its status (scaffolded request left in place)
+
+Refuses if nothing to undo, or if the breadcrumb is stale (an affected file was
+modified after the recorded mutation). --dry-run prints what would change and
+mutates nothing.
+EOF
+        exit 0 ;;
+      *) die "undo: unexpected argument '$1' (only --dry-run is accepted)" ;;
+    esac
+  done
+
+  [[ -d ".spectacular" ]] || die "undo: not inside a Spectacular workspace"
+
+  if [[ ! -f "$_BREADCRUMB" ]]; then
+    info "Nothing to undo — no recent lifecycle mutation recorded."
+    return 0
+  fi
+
+  local op slug ts
+  op="$(_breadcrumb_get op)"
+  slug="$(_breadcrumb_get slug)"
+  ts="$(_breadcrumb_get ts)"
+  [[ -z "$op" || -z "$slug" ]] && die "undo: .last-mutation is malformed (missing op/slug). Remove it manually if stuck."
+
+  case "$op" in
+    advance)
+      local prev; prev="$(_breadcrumb_get prev_status)"
+      local plan=".spectacular/requests/$slug/PLAN.md"
+      local tasks=".spectacular/requests/$slug/TASKS.md"
+      [[ -f "$plan" ]] || die "undo: $plan not found — cannot reverse advance for '$slug'."
+      # Staleness: refuse if PLAN/TASKS changed after the mutation.
+      local mt; mt="$(_max_mtime "$plan" "$tasks")"
+      if [[ -n "$ts" ]] && (( mt > ts + 1 )); then
+        die "undo: '$slug' changed since the advance — refusing (stale breadcrumb). Reverse manually if intended."
+      fi
+      local now; now="$(fm_get "$plan" "status")"
+      if $dry_run; then
+        info "[dry-run] advance undo: $slug status $now → $prev (PLAN + TASKS)"
+        return 0
+      fi
+      fm_set "$plan" "status" "$prev"; fm_touch "$plan"
+      [[ -f "$tasks" ]] && { fm_set "$tasks" "status" "$prev"; fm_touch "$tasks"; }
+      _breadcrumb_clear
+      info "  ↩ undo advance: $slug $now → $prev"
+      ;;
+
+    archive)
+      local prev; prev="$(_breadcrumb_get prev_status)"
+      local arc=".spectacular/archive/$slug"
+      local dest=".spectacular/requests/$slug"
+      [[ -d "$arc" ]] || die "undo: archived dir $arc not found — cannot reverse archive for '$slug'."
+      [[ -d "$dest" ]] && die "undo: $dest already exists — refusing to overwrite. Resolve manually."
+      # Staleness: refuse if the archived PLAN changed after the mutation.
+      local mt; mt="$(_max_mtime "$arc/PLAN.md" "$arc/TASKS.md")"
+      if [[ -n "$ts" ]] && (( mt > ts + 1 )); then
+        die "undo: '$slug' changed since archiving — refusing (stale breadcrumb). Reverse manually if intended."
+      fi
+      if $dry_run; then
+        info "[dry-run] archive undo for $slug:"
+        info "  move   $arc → $dest"
+        info "  status archived → ${prev:-review}; drop archived: field"
+        info "  links  ../../archive/$slug/ → ../$slug/ in sibling requests"
+        return 0
+      fi
+      # Reverse the move (git-aware, mirroring cmd_archive)
+      if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        git mv "$arc" "$dest" 2>/dev/null || mv "$arc" "$dest"
+      else
+        mv "$arc" "$dest"
+      fi
+      info "  ↩ moved: $arc → $dest"
+      # Restore status, drop archived:
+      local plan="$dest/PLAN.md"
+      fm_set "$plan" "status" "${prev:-review}"; fm_unset "$plan" "archived"; fm_touch "$plan"
+      local tasks="$dest/TASKS.md"
+      [[ -f "$tasks" ]] && { fm_set "$tasks" "status" "${prev:-review}"; fm_touch "$tasks"; }
+      # Reverse inbound link rewrites: ../../archive/<slug>/ → ../<slug>/
+      local rev=0 tf
+      shopt -s nullglob
+      for tf in .spectacular/requests/*/PLAN.md .spectacular/requests/*/TASKS.md .spectacular/requests/*/VERIFY.md; do
+        if grep -q "\.\./\.\./archive/${slug}/" "$tf" 2>/dev/null; then
+          sed -i.bak "s|\\.\\./\\.\\./archive/${slug}/|../${slug}/|g" "$tf"
+          rm -f "$tf.bak"; rev=$((rev+1))
+          info "  ↩ reversed inbound link in: $tf"
+        fi
+      done
+      shopt -u nullglob
+      (( rev == 0 )) && info "  • no inbound links to reverse"
+      _breadcrumb_clear
+      info "  ↩ undo archive: $slug restored to requests/ (status ${prev:-review})"
+      ;;
+
+    idea-promote)
+      local req_slug idea_prev
+      req_slug="$(_breadcrumb_get request_slug)"
+      idea_prev="$(_breadcrumb_get idea_prev_status)"; [[ -z "$idea_prev" ]] && idea_prev="exploring"
+      local arc=".spectacular/archive/ideas/$slug.md"
+      local dest=".spectacular/ideas/$slug.md"
+      [[ -f "$arc" ]] || die "undo: archived idea $arc not found — cannot reverse idea-promote for '$slug'."
+      [[ -f "$dest" ]] && die "undo: $dest already exists — refusing to overwrite. Resolve manually."
+      local mt; mt="$(_max_mtime "$arc")"
+      if [[ -n "$ts" ]] && (( mt > ts + 1 )); then
+        die "undo: idea '$slug' changed since promotion — refusing (stale breadcrumb)."
+      fi
+      if $dry_run; then
+        info "[dry-run] idea-promote undo for $slug:"
+        info "  move   $arc → $dest"
+        info "  status promoted → $idea_prev; drop promoted_to:"
+        info "  request dir .spectacular/requests/$req_slug/ left in place (use removal prompt to delete)"
+        return 0
+      fi
+      mkdir -p .spectacular/ideas
+      if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        git mv "$arc" "$dest" 2>/dev/null || mv "$arc" "$dest"
+      else
+        mv "$arc" "$dest"
+      fi
+      fm_set "$dest" "status" "$idea_prev"; fm_unset "$dest" "promoted_to"; fm_touch "$dest"
+      info "  ↩ restored idea: $arc → $dest (status $idea_prev)"
+      # Scaffolded request: leave by default; prompt to remove (decision D9).
+      local req_dir=".spectacular/requests/$req_slug"
+      if [[ -d "$req_dir" ]]; then
+        info ""
+        info "  The scaffolded request still exists: $req_dir"
+        printf "  Remove it too? [y/N] "
+        local ans; read -r ans </dev/tty 2>/dev/null || ans="n"
+        if [[ "$ans" == "y" || "$ans" == "Y" ]]; then
+          rm -rf "$req_dir"; info "  ↩ removed scaffolded request: $req_dir"
+        else
+          info "  • left scaffolded request in place: $req_dir"
+        fi
+      fi
+      _breadcrumb_clear
+      info "  ↩ undo idea-promote: $slug"
+      ;;
+
+    *)
+      die "undo: unknown op '$op' in .last-mutation. Remove it manually if stuck."
+      ;;
+  esac
 }
 
 # ── new ──────────────────────────────────────────────────────────────────────
@@ -8985,6 +9221,8 @@ main() {
       shift
       warn "'spectacular promote' is deprecated — use 'spectacular advance'. (alias still works)"
       cmd_promote "$@"; exit $? ;;
+    # Undo (v1.22.0+): reverse the last lifecycle mutation via .last-mutation breadcrumb.
+    undo)     shift; cmd_undo "$@"; exit $? ;;
     # Verify (v1.11.0+): skill-only validation walk. Needs an LLM to read each
     # check, run/judge it by kind, and gate review→verified. No CLI dispatch.
     verify)
@@ -9102,7 +9340,7 @@ Run inside Claude Code or Codex:  /spectacular $subcmd <verb>"
 
   if [[ "$subcmd" != "init" ]]; then
     die "Unknown command: '${subcmd}'.
-CLI verbs:   init | doctor | pack | migrate | new | advance | next | snapshot | archive | touch | decide | remember | session | feedback | idea
+CLI verbs:   init | doctor | pack | migrate | new | advance | undo | next | snapshot | archive | touch | decide | remember | session | feedback | idea
 Read verbs:  summary | requests | request | decisions | decision | memories | memory | sessions | show | progress | paths (v1.8.0+)
 Skill verbs (run via /spectacular in your AI agent): status | remember this | verify <slug> | <doc> grill | <doc> refine | <doc> review"
   fi

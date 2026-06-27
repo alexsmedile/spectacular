@@ -132,7 +132,7 @@ Rules that keep it predictable:
 
 ### 1. Locate the checks (artifact resolution)
 
-Per [[verification]], a request's checks live in one of two shapes. Resolve in this order:
+Per Part 2 (the 2-of-6 rule) below, a request's checks live in one of two shapes. Resolve in this order:
 
 1. **`requests/<slug>/VERIFY.md`** exists → walk its checkbox items (across all sections: Manual QA, Edge cases, Regression, Rollback validation).
 2. **No VERIFY.md** → fall back to **`PLAN.md § Validation`** items (and `TASKS.md § Verification` if present).

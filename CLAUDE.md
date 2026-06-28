@@ -71,6 +71,9 @@ spectacular/
 | `convention-pack-modules` | planned (gated) | v2 modular packs — gated until composition pain surfaces |
 | `skill-desc-length-check` | planned | Doctor + pre-commit guard for SKILL.md descriptions over Codex's 1024-char limit (b10) |
 | `spec-audit-mode` | planned | Content-aware spec audit — orphan bullets/spec files + stale capability specs, beyond the date drift heuristic (b11) |
+| `snapshot-retention` | planned | Snapshot allowlist (+DESIGN.md), @vN↔version: coupling, configurable retention (keep 3) + prune, configurable `_snapshots/` folder name + gitignore (b16) |
+| `roadmap-contract-docs` | planned (high) | Spec the ledger (build-id→version) in specs/roadmap + SPEC.md, define `tbd` sentinel (fix the rule that rejects it), user docs + tutorial (b17) |
+| `roadmap-pruning` | planned | Prune shipped ROADMAP prose to the ledger (history→CHANGELOG) or index mode; ~49% of the file is past-tense. Depends on b17 (b18) |
 
 Version targets live in the ROADMAP ledger, not here. For full context on any request see `.spectacular/requests/<slug>/PLAN.md`.
 

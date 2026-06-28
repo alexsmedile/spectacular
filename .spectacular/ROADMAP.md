@@ -1,7 +1,7 @@
 ---
-version: 3.7
+version: 3.9
 updated: 2026-06-28
-summary: "Per-version scope, phase, and exit criteria. Shipped through v1.22.0 — the coherence batch (v1.19 naming-coherence, v1.20 rules-files-audit, v1.21 onboarding-dedup, v1.22 lifecycle-undo) is complete. Next runway is the contract-prep ladder (v1.23–v1.25) leading to the v2.0.0 major — a single breaking concern, .spectacular/ file-contract evolution. Long-term gets fuzzier on purpose. (v3.7: coherence batch all shipped.)"
+summary: "Per-version scope, phase, and exit criteria. Shipped through v1.22.0 (coherence batch complete). Next up — priority order (tbd-slotted, not pinned): cli-debt-removal → skill-desc-length-check → roadmap-contract-docs → snapshot-retention → spec-audit-mode → roadmap-pruning, all ahead of the pinned contract-prep ladder (v1.23–v1.25) → v2.0.0 major. Long-term gets fuzzier on purpose. (v3.9: +b17 roadmap-contract-docs, +b18 roadmap-pruning from the roadmap-documentation audit.)"
 related:
   - PRD.md
   - ARCHITECTURE.md
@@ -29,7 +29,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | build | slug | title | tier | target-version | status |
 |-------|------|-------|------|----------------|--------|
 | b3 | convention-pack-modules | Convention pack v2 — modular packs | vision | tbd | planned |
-| b4 | cli-debt-removal | CLI debt removal | themed | v1.17.0 | shipped |
+| b4 | cli-debt-removal | CLI debt removal | themed | tbd | active |
 | b5 | cross-request-links | Cross-request awareness | themed | v1.16.0 | shipped |
 | b6 | imagine-mode | Imagine mode | full | v1.15.0 | shipped |
 | b7 | roadmap-ledger | Roadmap ledger | full | v1.17.0 | shipped |
@@ -41,8 +41,31 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | shipped |
 | b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | shipped |
 | b12 | lifecycle-undo | Lifecycle undo (reverse gear) | full | v1.22.0 | shipped |
+| b16 | snapshot-retention | Snapshot retention + version coupling | themed | tbd | planned |
+| b17 | roadmap-contract-docs | Spec + document the roadmap ledger | themed | tbd | planned |
+| b18 | roadmap-pruning | Roadmap shipped-history pruning/scaling | themed | tbd | planned |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
+
+### Next up — priority order (2026-06-28)
+
+Operational substrate work ships **before** the contract-prep ladder. These are
+`tbd` in the ledger (not version-pinned) — they take the next free MINOR slots in
+this order as each is cut; the ladder stays pinned at v1.23–v1.25 behind them.
+
+| Order | Build | Slug | Lifecycle | Why here |
+|---|---|---|---|---|
+| 1 | b4 | `cli-debt-removal` | review (code in main) | Built; verify + archive is near-free. Close it out first. |
+| 2 | b10 | `skill-desc-length-check` | review | Built; same — verify + ship. |
+| 3 | b17 | `roadmap-contract-docs` | planned (high) | Docs/spec only — closes the "ledger documented nowhere user-facing" gap; prereq for b18. Cheap, no behavior. |
+| 4 | b16 | `snapshot-retention` | planned | Fully spec'd this session; ready to build. |
+| 5 | b11 | `spec-audit-mode` | planned | Medium; heuristic design still to settle. |
+| 6 | b18 | `roadmap-pruning` | planned | Scales ROADMAP.md context cost; depends on b17. Needs A-vs-B design call. |
+| — | b3 | `convention-pack-modules` | planned (gated) | Deferred until pack-composition pain surfaces. |
+
+Then the pinned runway: **v1.23 → v1.24 → v1.25** (contract-prep ①②③) → **v2.0.0**
+(the one deliberate break). The ladder is all `intent`-phase, so deferring it
+behind the four operational items above costs nothing.
 
 ---
 
@@ -175,7 +198,7 @@ Three housekeeping items that sharpen the operational substrate. Roadmap ledger 
 **Linked requests:**
 - roadmap-ledger (shipped)
 - decisions-index (shipped)
-- cli-debt-removal (planned, medium)
+- cli-debt-removal (**moved out of this slot** — code already in main, request in review; reslotted to `tbd`/active as priority item #1, see [Next up](#next-up--priority-order-2026-06-28))
 
 ---
 

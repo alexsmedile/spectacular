@@ -290,6 +290,22 @@ Doc IDs in v1.4.0: `prd`, `plan`, `tasks`, `principles`, `architecture`, `roadma
 
 Legacy aliases (backwards-compatible from v0.2.x): `spectacular prd`, `spectacular prd grill`, `spectacular prd refine`, `spectacular prd review`.
 
+### `spectacular roadmap` — the ledger + version mapping *(v1.17.0+)*
+
+`spectacular roadmap` grills/renders `.spectacular/ROADMAP.md`, which has **two layers**:
+
+- a **build-id ledger** (a table mapping each build `b1..bN` → its `target-version`) — the single source of truth for which build ships in which version, and
+- **per-version prose blocks** with the precision-graded planning detail.
+
+Requests carry a stable **`build:` id** (stamped by `spectacular new`, tracked by
+[`last_build:`](configuration.md#last_build-v1170)), never a version. The version a build
+targets lives only in the ledger's `target-version` cell — use **`tbd`** when a build is
+slotted but not pinned to a release yet. Release-level ledger `status`
+(`planned/active/shipped`) is distinct from request lifecycle.
+
+Full model + worked example: [versioning.md § The roadmap ledger](versioning.md#the-roadmap-ledger--how-builds-map-to-versions).
+Canonical schema: `.spectacular/ARCHITECTURE.md` § Roadmap ledger.
+
 ### `spectacular verify <slug>` *(v1.11.0+)*
 
 Runs the **validation walk** — the skill-side ritual that moves a request from `review` → `verified`. Reads the request's `VERIFY.md` (or falls back to `PLAN § Validation`) and walks every check, one at a time, verifying each by its **kind**:

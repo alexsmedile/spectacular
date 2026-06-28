@@ -368,7 +368,15 @@ Applied inline by the grill after each slot answer.
 
 ### Universal base checks still run
 
-Placeholder check (no `<TODO>`, `<TBD>`, `???` in any slot), clarification check (no `[NEEDS CLARIFICATION: ...]` markers remaining), frontmatter integrity (frontmatter parseable as YAML).
+Placeholder check (no `<TODO>`, `<TBD>`, `???` in any **prose slot**), clarification check (no `[NEEDS CLARIFICATION: ...]` markers remaining), frontmatter integrity (frontmatter parseable as YAML).
+
+> **Ledger `tbd` is not a placeholder.** The placeholder check scans the per-version **prose slots** (Status, Phase, Scope, Exit criteria, …). It does **not** apply to the **ledger table** at the top of ROADMAP.md, where `tbd` is a legitimate `target-version` value (see below). Never flag a `tbd` in the ledger column; only flag `<TBD>`/`<TODO>`/`???` left in a prose slot.
+
+## The ledger (build → version)
+
+Above the first version block, ROADMAP.md carries a **ledger table** — the single source of truth mapping each build id (`b1..bN`) to its `target-version`. Schema, columns, and the human-adds-rows / gaps-are-normal rules are canonical in `ARCHITECTURE.md` § Roadmap ledger; the two-layer model is summarized in [[specs/roadmap/SPEC]].
+
+**`tbd` rule (behavioral):** when a build is real and prioritized but you don't yet know which release it lands in, set its `target-version` to **`tbd`** — not a guessed version, not a blank, not a `<TBD>` placeholder. `tbd` is a committed "slotted, not pinned" state; pin it to a concrete `vX.Y.Z` when the release is decided (a one-row edit). Prefer `tbd` over inventing a speculative version number — false precision on unpinned work is the exact anti-pattern the precision gradient exists to prevent.
 
 ## Vague-scope blocklist (slots 3, 4, 5)
 

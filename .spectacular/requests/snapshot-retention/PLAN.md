@@ -10,7 +10,6 @@ related:
   - ../../ARCHITECTURE.md
   - ../../ROADMAP.md
   - ../../SPEC.md
-  - ../../specs/cli/SPEC.md
 ---
 
 # Plan — snapshot-retention
@@ -118,7 +117,7 @@ The allowlist model (still closed, one entry added), the `<store>/<DOC>/@v<N>.md
 
 ### M5 — Doctor retention check + docs
 - `check_snapshots`: flag docs over `keep`.
-- Update `docs/commands.md`, `docs/configuration.md` (new `snapshots:` block — folder/keep/period/gitignore + the tiered-retention explanation), ARCHITECTURE.md versioning section + any `snapshots/` path mentions, SPEC.md + specs/cli/SPEC.md verb list.
+- Update `docs/commands.md`, `docs/configuration.md` (new `snapshots:` block — folder/keep/period/gitignore + the tiered-retention explanation), ARCHITECTURE.md versioning section + any `snapshots/` path mentions, SPEC.md verb list (+ `specs/cli/SPEC.md` if a CLI capability spec exists by then).
 - VERIFY-LOG.
 
 ## Decisions (resolved at grill, 2026-06-28)

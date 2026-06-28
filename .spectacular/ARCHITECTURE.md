@@ -227,7 +227,7 @@ The ledger is a single markdown table at the **top of `ROADMAP.md`**, above the 
 | `slug` | kebab-case | Human identity; used in `depends-on:`/`blocks:` |
 | `title` | short label | Copied from PLAN `summary:` when slotting; may drift slightly |
 | `tier` | `full` · `themed` · `vision` | See tier legend below |
-| `target-version` | `v1.10.0` | **Only place this is written.** Editable; changing it is a one-row edit |
+| `target-version` | `v1.10.0` · `tbd` | **Only place this is written.** Editable; changing it is a one-row edit. Use **`tbd`** when the build is slotted + prioritized but not yet pinned to a release — a committed sentinel, not an unfilled blank (distinct from a `<TBD>` placeholder). A build moves `tbd → vX.Y.Z` when pinned. |
 | `status` | `planned` · `active` · `shipped` | Release-level; distinct from request lifecycle (see below) |
 
 #### Tier legend

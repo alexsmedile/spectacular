@@ -1,19 +1,36 @@
 ---
-status: draft
-updated: 2026-05-29
-summary: "Structured ROADMAP.md — per-version blocks with precision tiers, a 9-phase chain, an outcome slot, and a tier-aware review gate"
+status: published
+version: 1.1
+updated: 2026-06-28
+summary: "Structured ROADMAP.md — the build-id ledger (single source of truth for build→version) plus per-version prose blocks with precision tiers, a 9-phase chain, an outcome slot, and a tier-aware review gate"
 related:
   - ../../SPEC.md
   - ../../ROADMAP.md
+  - ../../ARCHITECTURE.md
 ---
 
 # Structured roadmap
 
-> Promoted from `SPEC.md` in v1.10.0 (was a single dense bullet). The index keeps a one-line pointer; the behavioral rules live in `references/roadmap-overrides.md` and the artifact shape lives here.
+> Promoted from `SPEC.md` in v1.10.0 (was a single dense bullet). The index keeps a one-line pointer; the behavioral rules live in `references/roadmap-rules.md` and the artifact shape lives here.
+
+`ROADMAP.md` has **two layers**: a **ledger table** at the top (the compact build→version index — schema below) and **per-version prose blocks** below it (the precision-graded planning detail). The ledger is the machine-readable spine; the prose blocks are the human narrative.
 
 ## Purpose
 
 `ROADMAP.md` is a structured planning artifact (`mode: structured`), not a freeform list. It captures *what's next* with a deliberate **precision gradient**: near-term work is detailed, long-term work is just direction. This prevents the two failure modes of feature-list roadmaps — false precision on far-out work, and missing intent on near work. Detail for in-flight work lives in `requests/<slug>/`; shipped history lives in `CHANGELOG.md`; the roadmap is the bridge between them.
+
+## The ledger (build → version)
+
+The ledger is a single markdown table at the **top of `ROADMAP.md`**, above the first version block. It is the **only place a target version number is written** — request frontmatter carries a stable `build:` id instead, and all prose references requests by slug or build id.
+
+| Concept | What it is |
+|---|---|
+| **Build id** (`b1`, `b2`, …) | Monotonic, immutable counter stamped on a request at `spectacular new` (increments `last_build:` in `config.yaml`). A request's permanent identity in the roadmap; never changes even when its target version shifts. |
+| **`target-version`** | The version a build is slotted for (`v1.10.0`). **The single source of truth** — no version number lives anywhere else (not PLAN frontmatter, not prose, not milestone text). Reslotting a request is a one-row edit here. |
+| **`tbd`** | The legitimate `target-version` value for a build that is **slotted but not version-pinned yet** — work is real and prioritized, but which release it lands in isn't decided. Distinct from a `<TBD>` *placeholder* (which the review gate rejects in prose slots): `tbd` in the ledger column is a committed sentinel, not an unfilled blank. A build moves from `tbd` to a concrete `vX.Y.Z` when it's pinned to a release. |
+| **`status`** (release-level) | `planned · active · shipped`. **Distinct from request lifecycle** (`planned | active | review | verified` in PLAN.md): a request can be `verified` (done) while its ledger row is still `planned` (release hasn't shipped). The row flips to `shipped` when the version tags. |
+
+> **Canonical schema home: [ARCHITECTURE.md § Roadmap ledger](../../ARCHITECTURE.md).** That section owns the full column table, tier legend, and the human-adds-rows / gaps-are-normal / planned-runway-only rules. This spec summarizes the ledger as one of the two roadmap layers and adds the `tbd` definition; it does not fork a second authoritative copy.
 
 ## Per-version block structure
 
@@ -48,4 +65,5 @@ Unbound ideas live in the **Icebox** section (renamed from "Bucket list" in v0.7
 
 ## Related references
 
-- `references/roadmap-overrides.md` — the grill/review behavior (tier-aware prompts, the 18-check gate)
+- `references/roadmap-rules.md` — the grill/review behavior (tier-aware prompts, the 18-check gate, the ledger `tbd` rule)
+- `ARCHITECTURE.md` § Roadmap ledger — canonical ledger schema (columns, tier legend, ledger rules)

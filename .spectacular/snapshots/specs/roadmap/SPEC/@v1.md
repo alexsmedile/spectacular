@@ -1,0 +1,51 @@
+---
+status: draft
+updated: 2026-05-29
+summary: "Structured ROADMAP.md — per-version blocks with precision tiers, a 9-phase chain, an outcome slot, and a tier-aware review gate"
+related:
+  - ../../SPEC.md
+  - ../../ROADMAP.md
+---
+
+# Structured roadmap
+
+> Promoted from `SPEC.md` in v1.10.0 (was a single dense bullet). The index keeps a one-line pointer; the behavioral rules live in `references/roadmap-overrides.md` and the artifact shape lives here.
+
+## Purpose
+
+`ROADMAP.md` is a structured planning artifact (`mode: structured`), not a freeform list. It captures *what's next* with a deliberate **precision gradient**: near-term work is detailed, long-term work is just direction. This prevents the two failure modes of feature-list roadmaps — false precision on far-out work, and missing intent on near work. Detail for in-flight work lives in `requests/<slug>/`; shipped history lives in `CHANGELOG.md`; the roadmap is the bridge between them.
+
+## Per-version block structure
+
+Each version is its own block. Every block carries:
+
+- **Precision tier** — `full | themed | vision`. Captures the natural gradient (active = `full`, mid-term = `themed`, long-term = `vision`).
+- **Outcome slot** *(required for `full` + `themed`, v0.7.2+)* — the goal that sits between Phase and Scope-in. Convergent research (Pichler / Torres / Cagan / Gilad) names this the #1 slot missing from feature-list roadmaps.
+- **Phase** — where in the chain the work sits.
+- **Scope-in / scope-out** — what's included and explicitly excluded.
+
+## The 9-phase chain
+
+`intent → discover → prototype → spec-refine → mvp → iterate → test → release-prep → release`
+
+Skip notation is allowed (a phase can be marked skipped). Three **meta-phase aliases** — `discover | build | release` — are accepted alongside specific phase values, so a block can start coarse and refine as the work crystallizes. **Prototype** is defined broadly: any artifact that validates a decision against real tooling or against the user (schemas, mocks, wireframes, sample CLI output).
+
+## Tier-aware review gate
+
+An 18-check review gate validates a roadmap block, with checks weighted by tier. Gate guards:
+
+- **No dates in `themed`/`vision` blocks** — Cagan's "#1 sin" of roadmapping.
+- **Soft warning at 8+ `full`-tier blocks** — too much false precision.
+- **Scope-out push when scope-in ≥ 4** — forces the author to name what's excluded.
+
+## Icebox
+
+Unbound ideas live in the **Icebox** section (renamed from "Bucket list" in v0.7.2 to match the GitHub Projects / Pivotal / Linear idiom). Items are promoted out of the icebox into a versioned block via a 4-step ritual.
+
+## Doctor integration
+
+`doctor` flags pre-v0.7.1 freeform roadmap shape AND pre-v0.7.2 "Bucket list" naming as **info** (not error) — the roadmap still works, but the newer shape is preferred.
+
+## Related references
+
+- `references/roadmap-overrides.md` — the grill/review behavior (tier-aware prompts, the 18-check gate)

@@ -198,6 +198,24 @@ In v1, Spectacular installs its own skill and leaves project-specific skill auto
 
 ---
 
+## `last_build` *(v1.17.0+)*
+
+The monotonic counter behind roadmap **build ids**. Each `spectacular new` stamps the
+next id (`build: bN`) on the request's `PLAN.md` and increments this field.
+
+```yaml
+last_build: 18
+```
+
+You normally never edit this by hand — `spectacular new` owns it. It exists so build
+ids are globally unique and never reused, even across reslotted or abandoned requests
+(gaps in the sequence are normal and fine). Build ids are the request's permanent
+identity in the [roadmap ledger](versioning.md#the-roadmap-ledger--how-builds-map-to-versions);
+the version a build targets lives in the ledger's `target-version` column, never here
+and never on the request.
+
+---
+
 ## `convention_pack` *(v0.4.0+)*
 
 Opt-in. Declares which convention pack the repo follows and how strictly it's enforced.

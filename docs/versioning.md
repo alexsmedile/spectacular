@@ -72,6 +72,57 @@ For MINOR and PATCH with no roadmap milestone in play: **don't ask, just increme
 
 ---
 
+## The roadmap ledger — how builds map to versions
+
+Before a change set *becomes* a release, it lives in the **roadmap ledger** — a table
+at the top of `.spectacular/ROADMAP.md` that is the **single source of truth for which
+build ships in which version.** Understanding it is how you read "what's planned for
+v1.x" without grepping.
+
+**The model — a request never stores a version; it stores a build id.**
+
+1. **`spectacular new <desc>`** scaffolds a request and stamps a **build id** on its
+   `PLAN.md` frontmatter — `build: b17` — incrementing `last_build:` in `config.yaml`.
+   The build id is permanent and never changes, even if the release target moves.
+2. **You add a ledger row** when you slot the build into the roadmap (the CLI does *not*
+   auto-insert rows — slotting is a human decision):
+
+   ```
+   | build | slug | title | tier | target-version | status |
+   |-------|------|-------|------|----------------|--------|
+   | b17   | roadmap-contract-docs | Document the ledger | themed | tbd     | planned |
+   | b12   | lifecycle-undo        | Lifecycle undo      | full   | v1.22.0 | shipped |
+   ```
+
+3. **`target-version` is the only place a version number is written.** Not in PLAN
+   frontmatter, not in prose. Reslotting a request to a different release is a **one-row
+   edit** — change the cell, done.
+4. **`tbd` means "slotted but not pinned yet."** When a build is real and prioritized
+   but you haven't decided which release it lands in, its `target-version` is `tbd` —
+   a committed sentinel, *not* a guessed number and *not* a blank. Prefer `tbd` over
+   inventing a speculative version: false precision on unpinned work is exactly what the
+   roadmap's precision gradient exists to avoid. Pin `tbd → vX.Y.Z` when the release is
+   decided.
+5. **Release-level `status` (`planned · active · shipped`) is distinct from request
+   lifecycle** (`planned | active | review | verified` in PLAN.md). A request can be
+   `verified` (the work is done and validated) while its ledger row is still `planned`
+   (the release hasn't tagged yet). The row flips to `shipped` when the version tags.
+
+**Why build ids instead of versions on the request?** Because versions move and builds
+don't. If you store `v1.20.0` on a request and then reslot it to v1.22.0, you have to
+find and edit every reference. With a build id, the request's own files never change —
+only the one ledger cell does. The version is always a *read* from the ledger, never a
+stored copy.
+
+> **Shipped history lives in `CHANGELOG.md`, not the ledger.** The ledger tracks
+> future + in-progress work; once a version tags, its detail belongs in the changelog.
+
+Canonical schema (columns, tier legend, all the rules): `.spectacular/ARCHITECTURE.md`
+§ Roadmap ledger. The two-layer roadmap model (ledger + per-version prose blocks):
+`.spectacular/specs/roadmap/SPEC.md`.
+
+---
+
 ## The single canonical version source
 
 Spectacular carries its version in several files. The convention: **one bump touches

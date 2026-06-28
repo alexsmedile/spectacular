@@ -1,5 +1,5 @@
 ---
-status: planned
+status: review
 updated: 2026-06-28
 related:
   - PLAN.md
@@ -10,19 +10,19 @@ related:
 ## v1
 
 ### M1 — Spec the ledger
-- [ ] `spectacular snapshot .spectacular/specs/roadmap/SPEC.md` (canonical doc, snapshot first)
-- [ ] Add Ledger section to specs/roadmap/SPEC.md (build ids, table schema, target-version single-source, status-vs-lifecycle, tbd); refresh frontmatter (published, 2026-06-28)
-- [ ] SPEC.md structured-ROADMAP bullet names the ledger + links specs/roadmap/SPEC
-- [ ] Resolve M-question 1 (canonical schema home: ARCHITECTURE vs spec)
-- [ ] `doctor specs` green
+- [x] `spectacular snapshot .spectacular/specs/roadmap/SPEC.md` → @v1 (canonical doc, snapshot first)
+- [x] Add Ledger section to specs/roadmap/SPEC.md (build ids, table schema, target-version single-source, status-vs-lifecycle, tbd); frontmatter published/1.1; fixed stale roadmap-overrides ref
+- [x] SPEC.md structured-ROADMAP bullet names the ledger + links specs/roadmap/SPEC + ARCHITECTURE + roadmap-rules (fixed stale roadmap-overrides link)
+- [x] M-question 1 resolved: ARCHITECTURE is canonical schema home; spec summarizes + points to it (no forked copy)
+- [x] `doctor specs` green
 
 ### M2 — Define `tbd` + fix contradicting rule
-- [ ] ARCHITECTURE.md target-version row documents `tbd` sentinel
-- [ ] roadmap-rules.md: ledger `tbd` rule + scope placeholder check (prose `<TBD>` still rejected)
-- [ ] Check: ledger `tbd` passes the gate; prose `<TBD>` still fails
+- [x] ARCHITECTURE.md target-version row documents `tbd` sentinel (vs `<TBD>` placeholder)
+- [x] roadmap-rules.md: ledger section + `tbd` behavioral rule; placeholder check scoped to "prose slot" + explicit "ledger tbd is not a placeholder" note
+- [x] Check: ledger `tbd` passes the gate (own ROADMAP uses tbd, doctor green); prose `<TBD>` still rejected (rule text intact)
 
 ### M3 — User docs + tutorial
-- [ ] docs/commands.md `spectacular roadmap` section + build-id↔version model
-- [ ] docs/configuration.md documents `last_build:`
-- [ ] Short tutorial walkthrough (location per M-question 2); link from docs/versioning.md
-- [ ] VERIFY-LOG
+- [x] docs/commands.md `spectacular roadmap` section + build-id↔version model
+- [x] docs/configuration.md documents `last_build:`
+- [x] Tutorial walkthrough = versioning.md § "The roadmap ledger" (M-question 2: folded into versioning.md, the natural home, vs a new page); linked from commands.md + configuration.md
+- [x] VERIFY-LOG

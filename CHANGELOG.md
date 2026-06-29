@@ -7,6 +7,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.23.0] — 2026-06-29
+
+### Added
+
+- **`spectacular roadmap migrate [--dry-run] [--keep N]`** — index-mode shipped-history scaling for `ROADMAP.md` (roadmap-pruning b18). Moves shipped per-version prose blocks into per-version files (`.spectacular/roadmap/v<X.Y.Z>.md`) behind a `## Shipped` index, keeping the most-recent **N (default 3)** shipped blocks inline. Only blocks whose own `**Status:**` is `shipped` move; planned/active/vision blocks stay. Snapshot-safe (writes per-version files before rewriting ROADMAP.md — no data loss on a partial run), idempotent, dry-run by default. Mirrors the decisions-index pattern. Bounds ROADMAP.md's agent-context cost as history grows (this repo: 528 → 410 lines).
+- **`doctor roadmap` area** — index-mode integrity: orphan `## Shipped` index lines (no matching file), stale per-version files (no index line), and an info nudge when shipped blocks beyond the keep-window are still inline (prunable via `roadmap migrate`). Flat mode emits only the nudge.
+- **Roadmap ledger documentation** (roadmap-contract-docs b17) — the build-id → version model is now specified, not just architecture-noted: `specs/roadmap/SPEC.md` gained a ledger section (build ids, `target-version` single-source, `tbd` sentinel, ledger-status-vs-request-lifecycle); `docs/versioning.md` gained "The roadmap ledger" walkthrough; `docs/configuration.md` documents `last_build:`; `docs/commands.md` gained a `spectacular roadmap` section.
+- **ADR discoverability** — `decisions-rules.md` now carries a "store-worthy decision?" routing table and an explicit "ADRs live in DECISIONS.md — don't create `docs/adr/`" callout. `doc-index.md` and `SKILL.md` triggers now grep-match "ADR" / "architecture decision" → `spectacular decide`.
+
+### Changed
+
+- **`target-version: tbd`** is now a documented ledger sentinel ("slotted but not version-pinned yet"), distinct from a `<TBD>` placeholder. `roadmap-rules.md`'s placeholder check is scoped to prose slots so ledger `tbd` is no longer falsely flagged.
+- **ROADMAP.md** dogfooded the new index mode: 7 oldest shipped blocks moved to `.spectacular/roadmap/`, the "Recently shipped" CHANGELOG-mirror section removed, stale reconciliation notes pruned, `roadmap-overrides` → `roadmap-rules` references fixed.
+
 ## [1.22.0] — 2026-06-28
 
 ### Added

@@ -1,7 +1,7 @@
 ---
-version: 3.10
+version: 3.11
 updated: 2026-06-29
-summary: "Per-version scope, phase, and exit criteria. Shipped through v1.22.0 (coherence batch complete). Next up — priority order (tbd-slotted, not pinned): cli-debt-removal → skill-desc-length-check → roadmap-contract-docs → snapshot-retention → spec-audit-mode → roadmap-pruning, all ahead of the pinned contract-prep ladder (v1.23–v1.25) → v2.0.0 major. Long-term gets fuzzier on purpose. (v3.9: +b17 roadmap-contract-docs, +b18 roadmap-pruning from the roadmap-documentation audit.)"
+summary: "Per-version scope, phase, and exit criteria. Shipped through v1.23.0 (roadmap ledger docs + index-mode pruning, b17+b18). Next up — priority order: cli-debt-removal → skill-desc-length-check → snapshot-retention → spec-audit-mode, all ahead of the pinned contract-prep ladder (v1.24–v1.26) → v2.0.0 major. Long-term gets fuzzier on purpose. (v3.11: v1.23.0 shipped; contract ladder shifted to v1.24–v1.26.)"
 related:
   - PRD.md
   - ARCHITECTURE.md
@@ -38,8 +38,8 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | shipped |
 | b12 | lifecycle-undo | Lifecycle undo (reverse gear) | full | v1.22.0 | shipped |
 | b16 | snapshot-retention | Snapshot retention + version coupling | themed | tbd | planned |
-| b17 | roadmap-contract-docs | Spec + document the roadmap ledger | themed | tbd | planned |
-| b18 | roadmap-pruning | Roadmap shipped-history pruning/scaling | themed | tbd | planned |
+| b17 | roadmap-contract-docs | Spec + document the roadmap ledger | themed | v1.23.0 | shipped |
+| b18 | roadmap-pruning | Roadmap shipped-history pruning/scaling | themed | v1.23.0 | shipped |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 
@@ -47,21 +47,22 @@ The single source of truth for `build → version` mapping. Every planned reques
 
 Operational substrate work ships **before** the contract-prep ladder. These are
 `tbd` in the ledger (not version-pinned) — they take the next free MINOR slots in
-this order as each is cut; the ladder stays pinned at v1.23–v1.25 behind them.
+this order as each is cut; the ladder stays pinned at v1.24–v1.26 behind them.
 
 | Order | Build | Slug | Lifecycle | Why here |
 |---|---|---|---|---|
+| ✅ | b17 | `roadmap-contract-docs` | review → **shipped v1.23.0** | Ledger docs + tbd sentinel + ADR discoverability. |
+| ✅ | b18 | `roadmap-pruning` | review → **shipped v1.23.0** | Index-mode pruning + `doctor roadmap`. |
 | 1 | b4 | `cli-debt-removal` | review (code in main) | Built; verify + archive is near-free. Close it out first. |
 | 2 | b10 | `skill-desc-length-check` | review | Built; same — verify + ship. |
-| 3 | b17 | `roadmap-contract-docs` | planned (high) | Docs/spec only — closes the "ledger documented nowhere user-facing" gap; prereq for b18. Cheap, no behavior. |
-| 4 | b16 | `snapshot-retention` | planned | Fully spec'd this session; ready to build. |
-| 5 | b11 | `spec-audit-mode` | planned | Medium; heuristic design still to settle. |
-| 6 | b18 | `roadmap-pruning` | planned | Scales ROADMAP.md context cost; depends on b17. Needs A-vs-B design call. |
+| 3 | b16 | `snapshot-retention` | planned | Fully spec'd this session; ready to build. |
+| 4 | b11 | `spec-audit-mode` | planned | Medium; heuristic design still to settle. |
 | — | b3 | `convention-pack-modules` | planned (gated) | Deferred until pack-composition pain surfaces. |
 
-Then the pinned runway: **v1.23 → v1.24 → v1.25** (contract-prep ①②③) → **v2.0.0**
+Then the pinned runway: **v1.24 → v1.25 → v1.26** (contract-prep ①②③) → **v2.0.0**
 (the one deliberate break). The ladder is all `intent`-phase, so deferring it
-behind the four operational items above costs nothing.
+behind the operational items above costs nothing. (v1.23.0 shipped the roadmap
+work — b17 ledger docs + b18 index-mode pruning — ahead of the ladder.)
 
 ---
 
@@ -93,7 +94,7 @@ Three housekeeping items that sharpen the operational substrate. Roadmap ledger 
 
 ---
 
-> **Reconciliation note (2026-06-27):** v1.18.0 shipped the **SPEC.md drift check** (see [`CHANGELOG.md`](../CHANGELOG.md)), not "Contract prep ①" as an earlier draft labelled it. The contract-prep ladder is at v1.23–v1.25; the coherence batch (b15/b13/b14/b12) shipped ahead of it as v1.19–v1.22.
+> **Reconciliation note (2026-06-27):** v1.18.0 shipped the **SPEC.md drift check** (see [`CHANGELOG.md`](../CHANGELOG.md)), not "Contract prep ①" as an earlier draft labelled it. The contract-prep ladder is at v1.24–v1.26; the coherence batch (b15/b13/b14/b12) shipped ahead of it as v1.19–v1.22.
 
 ---
 
@@ -166,11 +167,30 @@ Spectacular gains a reverse gear: `spectacular undo` reverts the last mutation �
 
 ---
 
+## v1.23.0 — Roadmap ledger docs + index-mode pruning
+
+**Tier:** themed
+**Status:** shipped (2026-06-29)
+**Phase:** release
+**Linked requests:** `roadmap-contract-docs` (b17) + `roadmap-pruning` (b18)
+
+**Outcome:**
+The roadmap's own build→version model is now documented and the file is kept lean as history grows. b17 specced the ledger (build ids, `target-version` single-source, the `tbd` sentinel, ledger-status-vs-request-lifecycle) in `specs/roadmap/SPEC.md` + user docs, and made ADRs discoverable (DECISIONS.md is the home; store-worthy routing table). b18 added `spectacular roadmap migrate` + a `doctor roadmap` area — index mode that moves old shipped prose into `roadmap/v*.md` behind a `## Shipped` index, keeping the newest 3 inline. Dogfooded here: ROADMAP.md 528 → 410 lines.
+
+**Shipped:**
+- `spectacular roadmap migrate [--dry-run] [--keep N]` + `doctor roadmap` area (orphan/stale/prune-nudge)
+- `specs/roadmap/SPEC.md` ledger + index-mode sections; `docs/versioning.md` ledger walkthrough; `last_build:` documented
+- `tbd` sentinel documented; placeholder check scoped to prose slots
+- ADR store-worthy routing table in `decisions-rules.md`; doc-index + SKILL triggers grep-match "ADR"
+- `tests/cli/roadmap-migrate.test.sh` (22 assertions)
+
+---
+
 > **Contract-prep ladder (`workspace-v2-spec` → `workspace-v2-fields` → `workspace-v2-migration`).** Three non-breaking MINORs that stage the v2.0.0 file-contract change so the major becomes a near-trivial "flip the switch." Each is backward-compatible on its own: spec the design → soak the fields → stage the migration. All hang off the existing `workspace_schema:` field and the already-shipped `spectacular migrate` registry infra.
 
 ---
 
-## v1.23.0 — Contract prep ①: v2 contract spec (doc only)
+## v1.24.0 — Contract prep ①: v2 contract spec (doc only)
 
 **Tier:** full
 **Status:** planned
@@ -196,7 +216,7 @@ The v2 `.spectacular/` file format is fully *designed and frozen on paper* befor
 
 ---
 
-## v1.24.0 — Contract prep ②: v2 frontmatter fields (optional/additive)
+## v1.25.0 — Contract prep ②: v2 frontmatter fields (optional/additive)
 
 **Tier:** themed
 **Status:** planned
@@ -222,7 +242,7 @@ The new v2 frontmatter fields land as **optional, additive** in v1.19 — old wo
 
 ---
 
-## v1.25.0 — Contract prep ③: v1→v2 migration scaffold (dry-run, no-op)
+## v1.26.0 — Contract prep ③: v1→v2 migration scaffold (dry-run, no-op)
 
 **Tier:** themed
 **Status:** planned

@@ -1,5 +1,5 @@
 ---
-status: review
+status: verified
 priority: medium
 owner: alex
 updated: 2026-06-29

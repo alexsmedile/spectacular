@@ -378,6 +378,14 @@ Above the first version block, ROADMAP.md carries a **ledger table** — the sin
 
 **`tbd` rule (behavioral):** when a build is real and prioritized but you don't yet know which release it lands in, set its `target-version` to **`tbd`** — not a guessed version, not a blank, not a `<TBD>` placeholder. `tbd` is a committed "slotted, not pinned" state; pin it to a concrete `vX.Y.Z` when the release is decided (a one-row edit). Prefer `tbd` over inventing a speculative version number — false precision on unpinned work is the exact anti-pattern the precision gradient exists to prevent.
 
+**Never cascade-renumber the runway (the renumber anti-pattern).** When a work item ships into a version slot that *unstarted, intent-phase* future work was loosely "pinned" to (e.g. roadmap work takes v1.23.0 that the contract ladder was sketched at), **do NOT shift that future work's numbers** (v1.24 → v1.25 → …). That cascade is busywork and churns the doc on every reslot. Instead, the unstarted runway should already be `target: tbd` (ordered, not numbered) so nothing needs to move. The rule:
+
+- **Pin a version number only when a release is actually decided/imminent.** Shipped versions keep their real numbers forever; in-flight (`active`) work may carry its target; everything further out stays `tbd`.
+- **Reslotting is a one-cell edit, never a renumber.** If you ever find yourself editing 3+ version numbers because one slot moved, stop — convert the affected future items to `tbd` instead.
+- Version blocks for `tbd` runway use a label header (`## Contract prep ① — … *(target: tbd)*`), not a `## vX.Y.Z` header. Only give a block a `## vX.Y.Z` header once its version is pinned.
+
+This is why the ledger stores `build → version` (not the reverse): the build id is the stable identity; the version is a late-bound, single-source cell that defaults to `tbd`.
+
 ## Vague-scope blocklist (slots 3, 4, 5)
 
 `improvements`, `polish`, `enhancements`, `optimizations`, `better`, `cleanup`, `refactoring`, `tweaks`, `bug fixes` (without specifics), `performance work`, `quality work`, `dx improvements`, `ux improvements`.

@@ -1,8 +1,8 @@
 ---
-status: planned
+status: review
 priority: medium
 owner: alex
-updated: 2026-06-28
+updated: 2026-06-29
 build: b18
 summary: "Stop ROADMAP.md bloating agent context: enforce the already-stated 'shipped history lives in CHANGELOG' principle by pruning shipped prose blocks down to their ledger row (the index), and/or add a decisions-index-style roadmap mode (cheap ledger + per-version files). ~49% of ROADMAP.md is currently past-tense duplication."
 related:
@@ -76,9 +76,28 @@ The ledger table (grows one row per build forever — cheap), forward-looking pr
 - Dogfood: prune THIS repo's ROADMAP.md (12 shipped blocks + the mirror) — confirm CHANGELOG covers each first.
 - Tests + VERIFY-LOG.
 
-## M-questions
+## Decisions (resolved 2026-06-29)
 
-1. **A vs B?** Lean A (prune-to-ledger; CHANGELOG is already the documented home, laziest, biggest context win). Pick B only if shipped prose holds planning rationale worth keeping structured.
-2. **Keep-window:** prune *all* shipped blocks, or keep the last K shipped inline for recent context? Lean: keep the last ~2-3 shipped inline (recent "what just landed" context), prune older. Mirrors the snapshot-retention recent-tier instinct.
-3. **The "Recently shipped" mirror (ROADMAP.md:490-515):** remove entirely (pure CHANGELOG dup) — any objection? Lean: remove.
-4. **Reconciliation block-quotes** (5 narrative notes, ROADMAP.md:17-21/87/201/299/420): prune the stale ones too, or leave? Out of strict scope; note for cleanup.
+1. **Approach B — roadmap-index mode.** Shipped prose blocks move to per-version files `.spectacular/roadmap/v<X.Y.Z>.md`; ROADMAP.md keeps the ledger + Next-up + a cheap **shipped index** (one line per shipped version → its file) + forward-looking prose + Icebox. Mirrors the shipped decisions-index pattern (`cmd_decisions_migrate` is the template). Chosen over A (prune-to-ledger) to keep the per-version prose narrative discoverable, not just the CHANGELOG facts.
+2. **Keep-window = last 2-3 shipped inline.** The most-recent shipped blocks stay inline as "what just landed" context; older shipped blocks move to `roadmap/`. Default keep **3** (mirrors snapshot-retention's recent tier). Configurable later if needed; hardcode-with-named-constant for v1.
+3. **Remove the "Recently shipped" mirror** (ROADMAP.md ~490-515) — pure CHANGELOG duplication. The shipped index replaces its navigational purpose.
+4. **Reconciliation block-quotes:** prune obviously-stale ones during the dogfood migration; leave current ones. Light touch — not a separate milestone.
+
+## Design (B, mirroring decisions-index)
+
+- **Detection of mode:** `roadmap/` folder exists → index mode (like `decisions/`). Absent → flat mode (all blocks inline; checks skipped).
+- **Split unit:** `## v<X.Y.Z> — Title` blocks whose Status is `shipped`. Planned/active/vision blocks NEVER move (they're the forward surface). Only shipped, and only those beyond the keep-window.
+- **The ledger is already the index** — but it has no file pointers. The new **shipped index** section in ROADMAP.md adds `- v1.9.0 → roadmap/v1.9.0.md` lines for migrated versions. (Ledger stays as-is; shipped index is the file-pointer layer.)
+- **Verb:** `spectacular roadmap migrate [--dry-run] [--keep N]` — snapshot ROADMAP.md, write `roadmap/v*.md` per shipped-beyond-keep block (before touching ROADMAP.md → no data loss on partial run), then rewrite ROADMAP.md with those blocks replaced by index lines. Idempotent (re-run moves only newly-agable blocks). `--keep` overrides the default 3.
+- **Doctor `roadmap` area:** when `roadmap/` exists — flag orphan index lines (index → no file), stale files (file → no index line), and shipped blocks still inline beyond keep-window ("N shipped blocks could migrate"). Flat mode: info only.
+
+## Validation
+
+Recorded in `VERIFY-LOG.md`. Success criteria:
+
+- `run: bash tests/cli/roadmap-migrate.test.sh` → all pass (dry-run, migrate, idempotence, doctor: clean/orphan/stale/flat-nudge).
+- {assert} `spectacular roadmap migrate` moves shipped-beyond-keep to `roadmap/v*.md`, keeps newest 3 inline, writes `## Shipped` index, leaves planned/active/vision blocks inline.
+- {assert} idempotent (re-run = "nothing to migrate"); per-version files written before ROADMAP rewrite (no data loss).
+- {assert} `doctor roadmap` detects orphan index lines, stale files, and the flat-mode prune nudge.
+- {judge} dogfood: this repo's ROADMAP.md migrated (528 → ~410 lines), `doctor roadmap` clean, no information lost (CHANGELOG + roadmap/v*.md cover the moved prose).
+- `run: bash tests/run.sh` → all areas green; `./cli/spectacular doctor` → 0 errors.

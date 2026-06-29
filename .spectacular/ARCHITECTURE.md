@@ -254,7 +254,7 @@ These are **distinct from request lifecycle** (`planned | active | review | veri
 - **Grouped builds:** two requests targeting the same version = two rows with the same `target-version` value. Flat table; the render groups visually at read time.
 - **Human-adds-rows:** `spectacular new` stamps `build: bN` on the PLAN.md and increments `last_build:` in `config.yaml`, but does **not** insert a ledger row. The human adds the row to ROADMAP.md when slotting the request into a version.
 - **Gaps are normal:** if a build id is skipped (request merged into another release, abandoned), that gap is fine — like skipped Xcode build numbers.
-- **Planned runway only:** the ledger tracks future/in-progress work. Shipped history lives in `CHANGELOG.md`, not the ledger.
+- **Planned runway only:** the ledger tracks future/in-progress work. Shipped history lives in `CHANGELOG.md` (facts) and, as per-version planning prose, under `roadmap/v<X.Y.Z>.md` once migrated — not in the ledger. The ledger keeps one row per build (past + future) as the compact index; see `spectacular roadmap migrate` + `specs/roadmap/SPEC.md` § Index mode for how shipped prose blocks are aged out of ROADMAP.md to bound context cost.
 
 #### `build:` in PLAN.md frontmatter
 

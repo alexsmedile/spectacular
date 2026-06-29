@@ -4100,12 +4100,177 @@ EOF
   fi
 }
 
+# ── cmd_roadmap_migrate: spectacular roadmap migrate ─────────────────────────
+# v1.23.0 (b18): move shipped per-version prose blocks into per-version files
+# (.spectacular/roadmap/v<X.Y.Z>.md) behind a cheap "shipped index", keeping the
+# most-recent N shipped blocks inline. Mirrors cmd_decisions_migrate.
+#
+# Mode: roadmap/ folder present → index mode. Only SHIPPED versions (per the
+# ledger status column) beyond the keep-window move. Planned/active/vision blocks
+# never move. Safe: per-version files written before ROADMAP.md is rewritten.
+ROADMAP_KEEP_DEFAULT=3
+
+cmd_roadmap_migrate() {
+  local dry_run=false keep="$ROADMAP_KEEP_DEFAULT"
+  while (( $# > 0 )); do
+    case "$1" in
+      --dry-run) dry_run=true; shift ;;
+      --keep) require_value "--keep" "${2:-}"; keep="$2"; shift 2 ;;
+      --help|-h)
+        cat <<EOF
+Usage: spectacular roadmap migrate [--dry-run] [--keep N]
+
+Move shipped per-version prose blocks into per-version files
+(.spectacular/roadmap/v<X.Y.Z>.md) behind a "## Shipped" index, keeping the most
+recent N shipped blocks inline (default $ROADMAP_KEEP_DEFAULT). Only blocks whose
+ledger status is 'shipped' move; planned/active/vision blocks stay inline.
+
+Safe: per-version files are written before ROADMAP.md is rewritten.
+Idempotent: re-running moves only newly-ageable blocks.
+
+  --dry-run   Preview would-write paths + the index; write nothing.
+  --keep N    Keep the N most-recent shipped blocks inline (default $ROADMAP_KEEP_DEFAULT).
+EOF
+        exit 0 ;;
+      *) die "Unknown flag for roadmap migrate: $1" ;;
+    esac
+  done
+
+  [[ "$keep" =~ ^[0-9]+$ ]] || die "roadmap migrate: --keep must be a non-negative integer"
+  [[ -d ".spectacular" ]] || die "roadmap migrate: not inside a Spectacular workspace"
+
+  local roadmap=".spectacular/ROADMAP.md"
+  local roadmap_dir=".spectacular/roadmap"
+  [[ -f "$roadmap" ]] || die "roadmap migrate: $roadmap not found"
+
+  # 1. Parse ## v<X.Y.Z> blocks in document order. Capture heading, body span, and
+  #    whether the block's own `**Status:**` line says shipped. The block's own
+  #    status is the authority for "is this prose past-tense" — more reliable than
+  #    the ledger, which has no rows for pre-ledger (v1.17.0) shipped versions.
+  #    A block runs from its "## v..." line up to (not including) the next "## "
+  #    heading or EOF. (Bash 3.2: plain indexed arrays only, no associative.)
+  local -a blk_ver blk_head blk_start blk_end blk_shipped
+  local n=0 lineno=0 cur_ver="" line
+  while IFS= read -r line; do
+    lineno=$((lineno+1))
+    if [[ "$line" =~ ^##[[:space:]]+(v[0-9]+\.[0-9]+\.[0-9]+) ]]; then
+      if [[ -n "$cur_ver" ]]; then blk_end[$n]=$((lineno-1)); n=$((n+1)); fi
+      cur_ver="${BASH_REMATCH[1]}"
+      blk_ver[$n]="$cur_ver"; blk_head[$n]="$line"; blk_start[$n]=$lineno; blk_shipped[$n]=0
+    elif [[ "$line" =~ ^##[[:space:]] ]] && [[ -n "$cur_ver" ]]; then
+      blk_end[$n]=$((lineno-1)); n=$((n+1)); cur_ver=""
+    elif [[ -n "$cur_ver" && "$line" =~ ^\*\*Status:\*\*[[:space:]]*shipped ]]; then
+      blk_shipped[$n]=1
+    fi
+  done < "$roadmap"
+  if [[ -n "$cur_ver" ]]; then blk_end[$n]=$lineno; n=$((n+1)); fi
+
+  # 2. Determine which shipped blocks move: all shipped EXCEPT the newest `keep`.
+  #    "Newest" by document order — shipped blocks run oldest→newest top→bottom;
+  #    later document position = newer.
+  local -a shipped_idx
+  local i
+  for ((i=0; i<n; i++)); do
+    [[ "${blk_shipped[$i]}" == 1 ]] && shipped_idx+=("$i")
+  done
+  local total_shipped=${#shipped_idx[@]}
+  local move_count=$(( total_shipped > keep ? total_shipped - keep : 0 ))
+
+  if (( move_count == 0 )); then
+    info "  ✓  roadmap: $total_shipped shipped block(s), keep=$keep — nothing to migrate"
+    return 0
+  fi
+
+  # The blocks to move = the first (oldest) move_count shipped blocks.
+  local -a move_idx
+  for ((i=0; i<move_count; i++)); do move_idx+=("${shipped_idx[$i]}"); done
+
+  if $dry_run; then
+    echo "── dry-run: would move $move_count of $total_shipped shipped blocks (keep newest $keep) ──"
+    for i in "${move_idx[@]}"; do
+      echo "  would write: ${roadmap_dir}/${blk_ver[$i]}.md   (${blk_head[$i]#\#\# })"
+    done
+    echo ""
+    echo "── dry-run: would add to '## Shipped' index in $roadmap ──"
+    for i in "${move_idx[@]}"; do
+      echo "- ${blk_ver[$i]} → roadmap/${blk_ver[$i]}.md"
+    done
+    return 0
+  fi
+
+  # 4. Write per-version files (all before rewriting ROADMAP.md — no data loss).
+  mkdir -p "$roadmap_dir"
+  for i in "${move_idx[@]}"; do
+    local v="${blk_ver[$i]}"
+    local s="${blk_start[$i]}" e="${blk_end[$i]}"
+    # Slice the block, then drop trailing blank lines (awk: buffer blanks, flush
+    # only when a non-blank follows — portable, no BSD/GNU sed divergence).
+    sed -n "${s},${e}p" "$roadmap" \
+      | awk 'NF{for(;b>0;b--)print ""; print; next} {b++}' > "${roadmap_dir}/${v}.md"
+    created "${roadmap_dir}/${v}.md"
+  done
+
+  # 5. Build the "## Shipped" index from every v*.md in roadmap/ (sorted), into a
+  #    temp file (awk reads it — avoids the newline-in-`-v` limitation).
+  local idx_file="${roadmap}.idx.$$"
+  {
+    echo "## Shipped"
+    echo ""
+    echo "> Older shipped versions — full prose moved to per-version files (\`roadmap/v*.md\`); the most recent stay inline above. Facts also live in \`CHANGELOG.md\`."
+    echo ""
+    local f vv
+    while IFS= read -r f; do
+      vv=$(basename "$f" .md)
+      echo "- ${vv} → roadmap/${vv}.md"
+    done < <(ls "$roadmap_dir"/v*.md 2>/dev/null | sort -V)
+  } > "$idx_file"
+
+  # 6. Rewrite ROADMAP.md in one awk pass: skip the moved blocks' line ranges, and
+  #    inject the Shipped index just before "## Icebox" (or at EOF if no Icebox).
+  #    `ranges` = space-separated "start:end" pairs for moved blocks.
+  local ranges=""
+  for i in "${move_idx[@]}"; do ranges+="${blk_start[$i]}:${blk_end[$i]} "; done
+
+  local tmp="${roadmap}.tmp.$$"
+  awk -v ranges="$ranges" -v idxfile="$idx_file" '
+    BEGIN {
+      ni = split(ranges, a, " ");
+      for (k = 1; k <= ni; k++) {
+        if (a[k] == "") continue;
+        split(a[k], se, ":"); lo[k] = se[1]; hi[k] = se[2];
+      }
+      nr = ni;
+    }
+    function skip(n,   k) { for (k=1;k<=nr;k++) if (a[k]!="" && n>=lo[k] && n<=hi[k]) return 1; return 0 }
+    /^## Icebox/ && !done {
+      while ((getline il < idxfile) > 0) print il;
+      print "";
+      close(idxfile); done=1;
+    }
+    { if (!skip(NR)) print }
+    END {
+      if (!done) { print ""; while ((getline il < idxfile) > 0) print il; close(idxfile); }
+    }
+  ' "$roadmap" > "$tmp"
+
+  rm -f "$idx_file"
+  mv "$tmp" "$roadmap"
+  fm_touch "$roadmap"
+  info "  ✓  migrated $move_count shipped block(s) to $roadmap_dir/"
+  info "  ↳  kept newest $keep shipped inline; index in $roadmap (## Shipped)"
+}
+
 # ── cmd_roadmap (v1.15.0+, ledger-driven v1.13.0+) ────────────────────────────
 # Renders ROADMAP.md using the ledger table as the single source of truth.
 # Ledger columns: build | slug | title | tier | target-version | status
 # Tier legend: full = current/near-term detail, themed = mid-term, vision = future.
 # Non-TTY / NO_COLOR: degrades to plain text (no box chars, no color logic).
 cmd_roadmap() {
+  # Route sub-verb first
+  case "${1:-}" in
+    migrate) shift; cmd_roadmap_migrate "$@"; return $? ;;
+  esac
+
   local json=false all=false
   while (( $# > 0 )); do
     case "$1" in
@@ -4114,6 +4279,7 @@ cmd_roadmap() {
       --help|-h)
         cat <<EOF
 Usage: spectacular roadmap [--all] [--json]
+       spectacular roadmap migrate [--dry-run] [--keep N]
 
 Render the ROADMAP.md as a version arc — runway (near-term), major (breaking),
 and vision (future-direction) tiers shown with aligned status indicators.
@@ -4121,6 +4287,10 @@ Data source: the roadmap ledger table (build → target-version mapping).
 
   --all   include shipped entries (default: only planned/active)
   --json  machine-readable: array of {build,slug,version,title,tier,status} objects
+
+Subcommands:
+  migrate [--dry-run] [--keep N]   Move old shipped prose blocks into per-version
+                                   files (roadmap/v*.md) behind a Shipped index.
 EOF
         exit 0 ;;
       -*) die "Unknown flag for roadmap: $1" ;;
@@ -6684,7 +6854,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas policies vision decisions"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas policies vision decisions roadmap"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -6745,7 +6915,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) require_value "--format" "${2:-}"; DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|policies|vision|decisions)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|policies|vision|decisions|roadmap)
         if [[ -z "$DOC_OPT_AREA" ]]; then
           DOC_OPT_AREA="$1"
         else
@@ -8523,6 +8693,91 @@ check_decisions() {
   fi
 }
 
+# ── check_roadmap (v1.23.0+, b18) ─────────────────────────────────────────────
+# Roadmap index-mode integrity + prune nudge. Mirrors check_decisions.
+#   - flat mode (no roadmap/ folder): info only, no index checks
+#   - index mode: orphan index lines (## Shipped → no file), stale files
+#     (roadmap/v*.md → no index line), and a nudge when shipped prose blocks
+#     beyond the keep-window are still inline (prunable via `roadmap migrate`).
+check_roadmap() {
+  [[ -d ".spectacular" ]] || return 0
+  local roadmap=".spectacular/ROADMAP.md"
+  local roadmap_dir=".spectacular/roadmap"
+  [[ -f "$roadmap" ]] || { doc_add "roadmap" "info" "$roadmap" "ROADMAP.md not present — skipped"; return 0; }
+
+  # Count inline shipped prose blocks: ## v-blocks whose body has **Status:** shipped.
+  # On each new ## heading, bank the previous block if it was a shipped v-block.
+  local inline_shipped
+  inline_shipped=$(awk '
+    /^## / {
+      if (inv && shipped) c++
+      inv = ($0 ~ /^## v[0-9]+\.[0-9]+\.[0-9]+/) ? 1 : 0
+      shipped = 0
+    }
+    /^\*\*Status:\*\*[[:space:]]*shipped/ { if (inv) shipped = 1 }
+    END { if (inv && shipped) c++; print c+0 }
+  ' "$roadmap")
+
+  # Flat mode — no roadmap/ folder. Only nudge if many shipped blocks sit inline.
+  if [[ ! -d "$roadmap_dir" ]]; then
+    if (( inline_shipped > ROADMAP_KEEP_DEFAULT )); then
+      doc_add "roadmap" "info" "$roadmap" \
+        "$inline_shipped shipped prose blocks inline (flat mode) — beyond keep=$ROADMAP_KEEP_DEFAULT" \
+        "run 'spectacular roadmap migrate' to move older shipped prose into roadmap/v*.md behind a Shipped index" "judgment"
+    else
+      doc_add "roadmap" "pass" "$roadmap" "flat mode — $inline_shipped shipped block(s) inline (no roadmap/ folder)"
+    fi
+    return 0
+  fi
+
+  # Index mode. Collect index lines (- vX.Y.Z → roadmap/vX.Y.Z.md) and files.
+  local -a idx_vers file_vers
+  local line v
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^-[[:space:]]+(v[0-9]+\.[0-9]+\.[0-9]+)[[:space:]]+.*roadmap/ ]]; then
+      idx_vers+=("${BASH_REMATCH[1]}")
+    fi
+  done < "$roadmap"
+  local f
+  for f in "$roadmap_dir"/v*.md; do
+    [[ -f "$f" ]] || continue
+    v=$(basename "$f" .md)
+    file_vers+=("$v")
+  done
+
+  # Orphan index lines (index entry, no file).
+  local orphans=""
+  for v in "${idx_vers[@]}"; do
+    [[ -f "${roadmap_dir}/${v}.md" ]] || orphans="${orphans:+$orphans, }$v"
+  done
+  if [[ -n "$orphans" ]]; then
+    doc_add "roadmap" "warning" "$roadmap_dir" "orphan Shipped index line(s) with no file: $orphans" \
+      "create the missing roadmap/<v>.md files or remove the stale index lines" "judgment"
+  elif (( ${#idx_vers[@]} > 0 )); then
+    doc_add "roadmap" "pass" "$roadmap" "all ${#idx_vers[@]} Shipped index line(s) have a corresponding file"
+  fi
+
+  # Stale files (file, no index line). Build a padded set of index versions.
+  local idx_set=" "; for v in "${idx_vers[@]}"; do idx_set+="$v "; done
+  local stale=""
+  for v in "${file_vers[@]}"; do
+    [[ "$idx_set" == *" $v "* ]] || stale="${stale:+$stale, }$v"
+  done
+  if [[ -n "$stale" ]]; then
+    doc_add "roadmap" "warning" "$roadmap_dir" "per-version file(s) with no Shipped index line: $stale" \
+      "add index lines under '## Shipped' or remove the stale files" "judgment"
+  elif (( ${#file_vers[@]} > 0 )); then
+    doc_add "roadmap" "pass" "$roadmap_dir" "all ${#file_vers[@]} per-version file(s) are indexed"
+  fi
+
+  # Prune nudge: shipped prose beyond keep-window still inline.
+  if (( inline_shipped > ROADMAP_KEEP_DEFAULT )); then
+    doc_add "roadmap" "info" "$roadmap" \
+      "$inline_shipped shipped block(s) still inline — beyond keep=$ROADMAP_KEEP_DEFAULT" \
+      "run 'spectacular roadmap migrate' to move the older ones into roadmap/" "judgment"
+  fi
+}
+
 # ── doctor orchestrator ───────────────────────────────────────────────────────
 # Dispatch a list of area names to their check_<area> functions.
 # Single source of truth — adding a new area only requires touching this one case.
@@ -8547,6 +8802,7 @@ run_areas() {
       policies)    check_policies ;;
       vision)      check_vision ;;
       decisions)   check_decisions ;;
+      roadmap)     check_roadmap ;;
       *)           die "Unknown doctor area: '$area'" ;;
     esac
   done

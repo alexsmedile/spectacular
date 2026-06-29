@@ -84,7 +84,17 @@ The ledger mechanism, the prose-block spec, the review gate, the CLI. No file mo
 - Short tutorial walkthrough; link from `docs/versioning.md`.
 - VERIFY-LOG.
 
-## M-questions
+## Validation
 
-1. **Schema canonical home:** keep it in ARCHITECTURE.md (spec *references*) or move the schema into `specs/roadmap/SPEC.md` (ARCHITECTURE references)? Lean: ARCHITECTURE stays canonical (it's the structure-of-`.spectacular/` doc); the spec adds a ledger section that points to it — avoids a second drifting copy.
-2. **Tutorial location:** a standalone `docs/roadmap.md`, a section in an existing doc, or an onboarding addition? Lean: `docs/` page (user-facing) + a one-line pointer from onboarding.
+Docs/spec-only request → verification is read-and-confirm, recorded in `VERIFY-LOG.md`. Success criteria:
+
+- {assert} `specs/roadmap/SPEC.md` has a ledger section (build ids, target-version, tbd, status-vs-lifecycle); frontmatter `published`.
+- {assert} `ARCHITECTURE.md` target-version row documents `tbd`; `roadmap-rules.md` placeholder check scoped to prose slots + has the ledger `tbd` rule.
+- {assert} `docs/versioning.md` carries the ledger walkthrough; `configuration.md` documents `last_build:`; `commands.md` has the `spectacular roadmap` section.
+- {judge} no second authoritative schema copy (ARCHITECTURE canonical, spec points to it); zero behavior change.
+- `run: ./cli/spectacular doctor specs links docs` → 0 errors.
+
+## M-questions (resolved at grill 2026-06-28)
+
+1. **Schema canonical home:** ✅ ARCHITECTURE.md stays canonical; the spec adds a ledger section that *points to it* — no second drifting copy.
+2. **Tutorial location:** ✅ folded into `docs/versioning.md` § "The roadmap ledger" (the natural home — how versions get assigned), linked from commands.md + configuration.md, rather than a standalone page.

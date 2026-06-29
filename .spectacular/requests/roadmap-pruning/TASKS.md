@@ -1,6 +1,6 @@
 ---
-status: planned
-updated: 2026-06-28
+status: review
+updated: 2026-06-29
 related:
   - PLAN.md
 ---
@@ -12,13 +12,14 @@ related:
 ## v1
 
 ### M1 — Decide approach + spec it
-- [ ] Choose A (prune-to-ledger) vs B (roadmap-index mode); resolve M-questions 1-2
-- [ ] Update specs/roadmap/SPEC.md + ARCHITECTURE.md with the chosen retention/pruning model (enforce the stated "history → CHANGELOG" principle)
+- [x] Approach B (roadmap-index mode), keep newest 3 inline — resolved at design call (decisions 1-2)
+- [x] specs/roadmap/SPEC.md § "Index mode" + ARCHITECTURE.md ledger rule updated (enforces "history → CHANGELOG"); spec snapshotted @v2, 1.2
 
 ### M2 — Detection (doctor)
-- [ ] `doctor roadmap`: flag shipped prose blocks beyond keep-window + the "Recently shipped" mirror as prunable (info/warning), relayed by `status`
+- [x] New `doctor roadmap` area: orphan index lines, stale per-version files, flat/index prune nudge beyond keep-window. Registered in DOC_AREAS + dispatch + arg validation.
 
 ### M3 — Prune mechanism
-- [ ] CLI prune verb / `doctor --fix roadmap`: snapshot ROADMAP.md, remove/move shipped blocks (A: delete after CHANGELOG-presence check; B: move to roadmap/v*.md + index), dry-run default
-- [ ] Dogfood: prune this repo's 12 shipped blocks + mirror (confirm CHANGELOG covers each)
-- [ ] Tests + VERIFY-LOG
+- [x] `spectacular roadmap migrate [--dry-run] [--keep N]`: snapshot-safe, writes roadmap/v*.md before rewriting ROADMAP, ## Shipped index, dry-run default, idempotent (bash 3.2 safe)
+- [x] Dogfood: migrated this repo's ROADMAP (528 → 410 lines; 7 oldest shipped → roadmap/v*.md; removed "Recently shipped" mirror + stale reconciliation notes; fixed roadmap-overrides→roadmap-rules refs)
+- [x] tests/cli/roadmap-migrate.test.sh (22 assertions, all pass) + docs (commands.md, doctor area lists in commands.md/CLAUDE.md)
+- [x] VERIFY-LOG

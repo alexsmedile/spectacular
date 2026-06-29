@@ -21,7 +21,7 @@ Human catalog of every document type in a Spectacular workspace.
 | `roadmap` | grill-each | `.spectacular/ROADMAP.md` | [roadmap-rules](roadmap-rules.md) |
 | `stack` | stub | `.spectacular/STACK.md` | [stack-rules](stack-rules.md) |
 | `agents` | stub | `.spectacular/AGENTS.md` | [agents-rules](agents-rules.md) |
-| `decisions` | append | `.spectacular/DECISIONS.md` | [decisions-rules](decisions-rules.md) |
+| `decisions` | append | `.spectacular/DECISIONS.md` | [decisions-rules](decisions-rules.md) — **ADR / architecture-decision log**; write with `spectacular decide` |
 | `memory` | index | `.spectacular/MEMORY.md` + `memory/` | [memory-rules](memory-rules.md) |
 | `sessions` | index | `.spectacular/SESSIONS.md` + `sessions/` | [sessions-rules](sessions-rules.md) |
 | `personas` | grill-each | `.spectacular/PERSONAS.md` | [personas-rules](personas-rules.md) |

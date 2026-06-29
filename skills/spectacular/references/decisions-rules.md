@@ -13,6 +13,25 @@ status: active
 
 Append-only ADR log. Each new decision is one entry, appended to the bottom. Entries are immutable by convention — corrections go in a follow-up entry, not by rewriting history.
 
+> **This is where ADRs (Architecture Decision Records) live in Spectacular.** When asked to "record an ADR" / "record an architecture decision," write here with `spectacular decide` — do **not** create a separate `docs/adr/` folder.
+
+## Is it a DECISIONS.md entry? (store-worthy decisions)
+
+Record a decision here when it is **architectural or product-shaping, has lasting consequences, and a future reader would ask "why was this done this way?"**
+
+**Litmus test (one line):** *would reversing this later need an explanation?* Yes → ADR. No → not store-worthy here.
+
+| ✅ DECISIONS.md (write an ADR) | ❌ Not an ADR — record elsewhere |
+|---|---|
+| Project-wide choice with lasting trade-offs (e.g. "CLI mutates, skill orchestrates") | **Request-scoped design call** → that request's `PLAN.md` § Decisions |
+| A rejected alternative worth remembering ("why not X") | Implementation detail / how-to → code comment or `SPEC.md` |
+| A reversal that supersedes an earlier decision | A task or next step → `TASKS.md` |
+| A cross-cutting convention other work must respect | A transient session note → `SESSION.md` / memory |
+| 1 ADR per breaking change (e.g. the v2 file-contract) | A routine fix or change → `CHANGELOG.md` |
+| Something an outside contributor needs to understand the system | Personal/ephemeral preference → don't record |
+
+The key distinction agents get wrong: **project-wide architecture → DECISIONS.md; one-request design decision → that request's PLAN.md § Decisions.** When in doubt, if the decision outlives the request that prompted it, it's an ADR.
+
 **Verbs:**
 - `grill` → capture one new entry interactively, append it
   - Prompts for: title, context, decision, consequences

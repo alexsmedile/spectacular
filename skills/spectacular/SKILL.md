@@ -6,11 +6,11 @@ description: |
   requests, manages lifecycle transitions, writes memory, archives completed work, and
   grills/refines/reviews any structured doc (PRD, PLAN, TASKS, PRINCIPLES, POLICY, ARCHITECTURE,
   ROADMAP, STACK, AGENTS, DECISIONS, PERSONAS) plus soft-DB collections (memory, sessions,
-  feedback, ideas). Enforces a practice layer (POLICY.md): policies under work-phase hooks gate
-  transitions (e.g. understand before implementation, verification before verified).
+  feedback, ideas). Enforces a practice layer (POLICY.md): work-phase hooks gate transitions
+  (e.g. understand before implementation, verification before verified).
   Use when: opening /spectacular, scaffolding a request, archiving work, capturing a memory,
   snapshotting a doc, onboarding to a workspace, or building any canonical doc from scratch.
-  Triggers: /spectacular, spectacular status|new|archive|advance|next|init|snapshot|remember|policy,
+  Triggers: /spectacular, spectacular status|new|archive|advance|next|init|snapshot|remember|decide|policy,
   spectacular <doc> [grill|refine|review], spectacular pack [new|grill|refine|review].
 when_to_use: |
   Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
@@ -43,6 +43,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular remember this` | → `references/memory.md` (legacy free-text capture) |
 | `spectacular remember "<text>"` | → CLI verb (v1.5.0+); see [[memory-rules]] for entry shape |
 | `spectacular decide "<decision>" [--context\|--consequences]` | → CLI verb (v1.5.0+; flags v1.8.4+); see [[decisions-rules]] |
+| "record a decision" / "record an ADR" / "architecture decision" | → `spectacular decide`; ADRs live in DECISIONS.md, see [[decisions-rules]] (store-worthy? table) |
 | `spectacular session start\|end` | → CLI verb (v1.5.0+); see [[sessions-rules]] |
 | `spectacular idea new <slug>` | → CLI verb (v1.7.0+); see [[idea-rules]] for entry shape |
 | `spectacular idea list` | → CLI verb (v1.7.0+) |

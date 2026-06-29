@@ -1,7 +1,7 @@
 ---
-version: 3.11
+version: 3.12
 updated: 2026-06-29
-summary: "Per-version scope, phase, and exit criteria. Shipped through v1.23.0 (roadmap ledger docs + index-mode pruning, b17+b18). Next up — priority order: cli-debt-removal → skill-desc-length-check → snapshot-retention → spec-audit-mode, all ahead of the pinned contract-prep ladder (v1.24–v1.26) → v2.0.0 major. Long-term gets fuzzier on purpose. (v3.11: v1.23.0 shipped; contract ladder shifted to v1.24–v1.26.)"
+summary: "Per-version scope, phase, and exit criteria. Shipped through v1.23.0 (roadmap ledger docs + index-mode pruning, b17+b18). Next up — priority order: cli-debt-removal → skill-desc-length-check → snapshot-retention → spec-audit-mode, all ahead of the contract-prep ladder (①→②→③, target tbd) → v2.0.0 major. Long-term gets fuzzier on purpose. (v3.12: contract ladder un-pinned to tbd — generic, so reslotting never forces a renumber.)"
 related:
   - PRD.md
   - ARCHITECTURE.md
@@ -47,7 +47,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 
 Operational substrate work ships **before** the contract-prep ladder. These are
 `tbd` in the ledger (not version-pinned) — they take the next free MINOR slots in
-this order as each is cut; the ladder stays pinned at v1.24–v1.26 behind them.
+this order as each is cut; the contract-prep ladder (`tbd`, ordered ①→②→③) follows behind them.
 
 | Order | Build | Slug | Lifecycle | Why here |
 |---|---|---|---|---|
@@ -59,10 +59,11 @@ this order as each is cut; the ladder stays pinned at v1.24–v1.26 behind them.
 | 4 | b11 | `spec-audit-mode` | planned | Medium; heuristic design still to settle. |
 | — | b3 | `convention-pack-modules` | planned (gated) | Deferred until pack-composition pain surfaces. |
 
-Then the pinned runway: **v1.24 → v1.25 → v1.26** (contract-prep ①②③) → **v2.0.0**
-(the one deliberate break). The ladder is all `intent`-phase, so deferring it
-behind the operational items above costs nothing. (v1.23.0 shipped the roadmap
-work — b17 ledger docs + b18 index-mode pruning — ahead of the ladder.)
+Then the runway: **contract-prep ①→②→③** (`target: tbd` — they take the next
+free MINORs in order, not fixed numbers) → **v2.0.0** (the one deliberate break).
+The ladder is all `intent`-phase and deliberately **not** version-pinned, so
+operational work slotting ahead of it never forces a renumber. (v1.23.0 shipped
+the roadmap work — b17 ledger docs + b18 index-mode pruning — ahead of the ladder.)
 
 ---
 
@@ -94,7 +95,7 @@ Three housekeeping items that sharpen the operational substrate. Roadmap ledger 
 
 ---
 
-> **Reconciliation note (2026-06-27):** v1.18.0 shipped the **SPEC.md drift check** (see [`CHANGELOG.md`](../CHANGELOG.md)), not "Contract prep ①" as an earlier draft labelled it. The contract-prep ladder is at v1.24–v1.26; the coherence batch (b15/b13/b14/b12) shipped ahead of it as v1.19–v1.22.
+> **Reconciliation note (2026-06-27):** v1.18.0 shipped the **SPEC.md drift check** (see [`CHANGELOG.md`](../CHANGELOG.md)), not "Contract prep ①" as an earlier draft labelled it. The contract-prep ladder is `target: tbd` (ordered ①→②→③, not version-pinned); the coherence batch (b15/b13/b14/b12) shipped ahead of it as v1.19–v1.22.
 
 ---
 
@@ -190,7 +191,7 @@ The roadmap's own build→version model is now documented and the file is kept l
 
 ---
 
-## v1.24.0 — Contract prep ①: v2 contract spec (doc only)
+## Contract prep ① — v2 contract spec (doc only)  *(target: tbd)*
 
 **Tier:** full
 **Status:** planned
@@ -216,7 +217,7 @@ The v2 `.spectacular/` file format is fully *designed and frozen on paper* befor
 
 ---
 
-## v1.25.0 — Contract prep ②: v2 frontmatter fields (optional/additive)
+## Contract prep ② — v2 frontmatter fields (optional/additive)  *(target: tbd)*
 
 **Tier:** themed
 **Status:** planned
@@ -242,7 +243,7 @@ The new v2 frontmatter fields land as **optional, additive** in v1.19 — old wo
 
 ---
 
-## v1.26.0 — Contract prep ③: v1→v2 migration scaffold (dry-run, no-op)
+## Contract prep ③ — v1→v2 migration scaffold (dry-run, no-op)  *(target: tbd)*
 
 **Tier:** themed
 **Status:** planned

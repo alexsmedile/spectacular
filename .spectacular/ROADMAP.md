@@ -1,6 +1,6 @@
 ---
 version: 3.12
-updated: 2026-06-29
+updated: 2026-06-30
 summary: "Per-version scope, phase, and exit criteria. Shipped through v1.23.0 (roadmap ledger docs + index-mode pruning, b17+b18). Next up — priority order: cli-debt-removal → skill-desc-length-check → snapshot-retention → spec-audit-mode, all ahead of the contract-prep ladder (①→②→③, target tbd) → v2.0.0 major. Long-term gets fuzzier on purpose. (v3.12: contract ladder un-pinned to tbd — generic, so reslotting never forces a renumber.)"
 related:
   - PRD.md
@@ -31,7 +31,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b7 | roadmap-ledger | Roadmap ledger | full | v1.17.0 | shipped |
 | b8 | visual-layer | Visual layer | full | v1.15.0 | shipped |
 | b9 | decisions-index | Decisions index mode | full | v1.17.0 | shipped |
-| b10 | skill-desc-length-check | Skill description length guard | themed | tbd | planned |
+| b10 | skill-desc-length-check | Skill description length guard | themed | v1.23.3 | shipped |
 | b11 | spec-audit-mode | Content-aware spec audit | themed | tbd | planned |
 | b15 | naming-coherence | Naming coherence (advance/feedback/pack/next) | themed | v1.19.0 | shipped |
 | b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | shipped |
@@ -54,9 +54,9 @@ this order as each is cut; the contract-prep ladder (`tbd`, ordered ①→②→
 | ✅ | b17 | `roadmap-contract-docs` | review → **shipped v1.23.0** | Ledger docs + tbd sentinel + ADR discoverability. |
 | ✅ | b18 | `roadmap-pruning` | review → **shipped v1.23.0** | Index-mode pruning + `doctor roadmap`. |
 | ✅ | b4 | `cli-debt-removal` | review → **shipped v1.23.2** | Verified live; swept a missed dead `templates/docs/` dir on archive. |
-| 1 | b10 | `skill-desc-length-check` | review | Built; verify + ship. |
-| 2 | b16 | `snapshot-retention` | planned | Fully spec'd; ready to build. |
-| 3 | b11 | `spec-audit-mode` | planned | Medium; heuristic design still to settle. |
+| ✅ | b10 | `skill-desc-length-check` | review → **shipped v1.23.3** | Verified live (53/53 tests, guard fires on commit); awk duplication reviewed + accepted (install boundary). |
+| 1 | b16 | `snapshot-retention` | planned | Fully spec'd; ready to build. |
+| 2 | b11 | `spec-audit-mode` | planned | Medium; heuristic design still to settle. |
 | — | b3 | `convention-pack-modules` | planned (gated) | Deferred until pack-composition pain surfaces. |
 
 Then the runway: **contract-prep ①→②→③** (`target: tbd` — they take the next
@@ -96,29 +96,6 @@ Three housekeeping items that sharpen the operational substrate. Roadmap ledger 
 ---
 
 > **Reconciliation note (2026-06-27):** v1.18.0 shipped the **SPEC.md drift check** (see [`CHANGELOG.md`](../CHANGELOG.md)), not "Contract prep ①" as an earlier draft labelled it. The contract-prep ladder is `target: tbd` (ordered ①→②→③, not version-pinned); the coherence batch (b15/b13/b14/b12) shipped ahead of it as v1.19–v1.22.
-
----
-
-## v1.20.0 — Rules-file body audit + verify-trio collapse
-
-**Tier:** themed
-**Status:** shipped (2026-06-28)
-**Phase:** release
-**Linked request:** `rules-files-audit` (b13, verified)
-
-**Outcome:**
-Skill-reference doc sprawl shrinks without touching dispatch: the 6 stub-mode `<doc>-rules.md` bodies (near-identical boilerplate) are thinned to frontmatter + a single pointer (or promoted where a real body is warranted), and the three-file verify trio (`verification.md` + `verify.md` + `verify-tests.md`) collapses into one sectioned `verify.md`. Frontmatter (the engine's dispatch) stays per-file; only duplicated/empty bodies stop being maintained per-file.
-
-**Themes:**
-- Audit 6 stub bodies; classify thin-to-pointer vs write-real-body; record policy in DECISIONS.md
-- Shared "stub default behavior" section in doc-index.md
-- Collapse verify trio → one `verify.md`; update SKILL.md routing
-- No user-facing behavior change; `doctor docs` stays clean
-
-**Exit criteria:**
-- Each thinned file keeps complete frontmatter; verb behavior identical pre/post
-- `verification.md` + `verify-tests.md` no longer standalone; content sectioned in `verify.md`
-- `doctor docs` clean; CHANGELOG entry; plugin bump to v1.20.0
 
 ---
 
@@ -368,6 +345,19 @@ Spectacular as the substrate for coordinated agent teams operating on long-runni
 - v1.15.0 → roadmap/v1.15.0.md
 - v1.16.0 → roadmap/v1.16.0.md
 - v1.19.0 → roadmap/v1.19.0.md
+
+## Shipped
+
+> Older shipped versions — full prose moved to per-version files (`roadmap/v*.md`); the most recent stay inline above. Facts also live in `CHANGELOG.md`.
+
+- v1.9.0 → roadmap/v1.9.0.md
+- v1.10.0 → roadmap/v1.10.0.md
+- v1.11.0 → roadmap/v1.11.0.md
+- v1.12.0 → roadmap/v1.12.0.md
+- v1.15.0 → roadmap/v1.15.0.md
+- v1.16.0 → roadmap/v1.16.0.md
+- v1.19.0 → roadmap/v1.19.0.md
+- v1.20.0 → roadmap/v1.20.0.md
 
 ## Icebox
 

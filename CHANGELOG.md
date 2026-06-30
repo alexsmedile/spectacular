@@ -7,6 +7,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.23.3] — 2026-06-30
+
+### Changed
+
+- **Closed `skill-desc-length-check` (b10 — verified + archived).** The doctor sub-check (`check_skill_desc_len`), shared `scripts/check-skill-desc.sh` helper, and the `pre-commit-wrapper` guard were all verified live (doctor.test scenario 17: 53/53 assertions; guard fires on every commit). The awk parser is intentionally duplicated between the CLI binary and the helper — `cli/install.sh` ships only the binary, so the installed doctor cannot source `scripts/`; the two copies are kept byte-identical in lock-step.
+- **ROADMAP/CLAUDE.md drift reconciled.** Ledger slots `b4 → v1.23.2` and `b10 → v1.23.3` (both shipped). `CLAUDE.md`'s active-requests table no longer lists shipped/archived work (`roadmap-ledger`, `decisions-index`, `cli-debt-removal`, `skill-desc-length-check`, `roadmap-contract-docs`, `roadmap-pruning` removed); the remaining active set is ordered by priority.
+- **`ROADMAP.md` pruned via `roadmap migrate`** — the v1.20.0 shipped block moved to `.spectacular/roadmap/v1.20.0.md` behind the `## Shipped` index (keep newest 3 inline); `doctor roadmap` now fully green.
+
 ## [1.23.2] — 2026-06-30
 
 ### Removed

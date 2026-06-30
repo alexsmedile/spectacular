@@ -7,6 +7,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.23.1] — 2026-06-30
+
+### Changed
+
+- **Contract-prep ladder un-pinned to `target: tbd`** in `ROADMAP.md` — the v2.0.0 ledger entries (①→②→③) no longer carry concrete version numbers, so reslotting a near-term build never forces a cascade-renumber of the runway.
+- **Roadmap renumber anti-pattern documented** in `roadmap-rules.md` — keep unstarted runway `tbd`, treat a reslot as a one-cell edit (not a renumber), and use `## Label *(target: tbd)*` headers until a version is actually pinned.
+
 ## [1.23.0] — 2026-06-29
 
 ### Added

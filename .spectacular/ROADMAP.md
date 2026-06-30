@@ -67,38 +67,6 @@ the roadmap work — b17 ledger docs + b18 index-mode pruning — ahead of the l
 
 ---
 
-## v1.17.0 — Roadmap ledger + Decisions index + CLI debt removal
-
-**Tier:** themed
-**Status:** active
-**Phase:** release-prep
-
-**Outcome:**
-Three housekeeping items that sharpen the operational substrate. Roadmap ledger makes `build → version` the single source of truth (one edit to reslot a request, not ~14 refs). Decisions index mode splits a flat `DECISIONS.md` into a cheap index + per-entry files when it grows large. CLI debt removal sheds the long-deprecated `docs *` verbs and `--global` alias. The first two ship in this release; cli-debt-removal is planned for this slot.
-
-**Shipped (2026-06-16):**
-- `roadmap-ledger` — ledger table as single source of truth; `spectacular roadmap` reads from ledger; `spectacular new` stamps build ids; `doctor links` flags stray version refs
-- `decisions-index` — index mode (`decisions/D<N>.md` + cheap root index); `spectacular decisions migrate`; `doctor decisions` area
-
-**Themes (cli-debt-removal, planned):**
-- Remove `docs init|export|new|review|status` verbs + the `deprecation_notice()` banner machinery
-- Remove the `docs-contract` / `docs-rules` / `docs-renderer-adapters` reference docs + legacy back-compat PRD references
-- Remove the `--global` alias for `--skill-scope global`
-- Update `--help`, usage, tests for the removed surface; `doctor docs` stays (discovery-only)
-
-> **Versioning note (cli-debt-removal):** treating banner-warned, long-deprecated verb removal as MINOR is a deliberate call (per [`docs/versioning.md`](../docs/versioning.md) the strict reading would be MAJOR). The justification: the removal was announced in-product since v1.2.0, `pageworks` is the documented replacement, and no *current* documented surface changes behavior.
-
-**Linked requests:**
-- roadmap-ledger (shipped)
-- decisions-index (shipped)
-- cli-debt-removal (**moved out of this slot** — code already in main, request in review; reslotted to `tbd`/active as priority item #1, see [Next up](#next-up--priority-order-2026-06-28))
-
----
-
-> **Reconciliation note (2026-06-27):** v1.18.0 shipped the **SPEC.md drift check** (see [`CHANGELOG.md`](../CHANGELOG.md)), not "Contract prep ①" as an earlier draft labelled it. The contract-prep ladder is `target: tbd` (ordered ①→②→③, not version-pinned); the coherence batch (b15/b13/b14/b12) shipped ahead of it as v1.19–v1.22.
-
----
-
 ## v1.21.0 — Onboarding dedup + guided first-run
 
 **Tier:** themed
@@ -356,6 +324,20 @@ Spectacular as the substrate for coordinated agent teams operating on long-runni
 - v1.12.0 → roadmap/v1.12.0.md
 - v1.15.0 → roadmap/v1.15.0.md
 - v1.16.0 → roadmap/v1.16.0.md
+- v1.19.0 → roadmap/v1.19.0.md
+- v1.20.0 → roadmap/v1.20.0.md
+
+## Shipped
+
+> Older shipped versions — full prose moved to per-version files (`roadmap/v*.md`); the most recent stay inline above. Facts also live in `CHANGELOG.md`.
+
+- v1.9.0 → roadmap/v1.9.0.md
+- v1.10.0 → roadmap/v1.10.0.md
+- v1.11.0 → roadmap/v1.11.0.md
+- v1.12.0 → roadmap/v1.12.0.md
+- v1.15.0 → roadmap/v1.15.0.md
+- v1.16.0 → roadmap/v1.16.0.md
+- v1.17.0 → roadmap/v1.17.0.md
 - v1.19.0 → roadmap/v1.19.0.md
 - v1.20.0 → roadmap/v1.20.0.md
 

@@ -1,14 +1,15 @@
 ---
-status: review
+status: archived
 priority: medium
 owner: alex
-updated: 2026-06-16
+updated: 2026-06-30
 summary: "Remove long-deprecated docs * verbs + --global alias + docs-* refs; shrink v2 to a single breaking concern"
 related:
   - PRD.md
   - ../../ROADMAP.md
   - ../../DECISIONS.md
 build: b4
+archived: 2026-06-30
 ---
 
 # Plan — cli-debt-removal

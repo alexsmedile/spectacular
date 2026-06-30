@@ -25,7 +25,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | build | slug | title | tier | target-version | status |
 |-------|------|-------|------|----------------|--------|
 | b3 | convention-pack-modules | Convention pack v2 — modular packs | vision | tbd | planned |
-| b4 | cli-debt-removal | CLI debt removal | themed | tbd | active |
+| b4 | cli-debt-removal | CLI debt removal | themed | v1.23.2 | shipped |
 | b5 | cross-request-links | Cross-request awareness | themed | v1.16.0 | shipped |
 | b6 | imagine-mode | Imagine mode | full | v1.15.0 | shipped |
 | b7 | roadmap-ledger | Roadmap ledger | full | v1.17.0 | shipped |
@@ -53,10 +53,10 @@ this order as each is cut; the contract-prep ladder (`tbd`, ordered ①→②→
 |---|---|---|---|---|
 | ✅ | b17 | `roadmap-contract-docs` | review → **shipped v1.23.0** | Ledger docs + tbd sentinel + ADR discoverability. |
 | ✅ | b18 | `roadmap-pruning` | review → **shipped v1.23.0** | Index-mode pruning + `doctor roadmap`. |
-| 1 | b4 | `cli-debt-removal` | review (code in main) | Built; verify + archive is near-free. Close it out first. |
-| 2 | b10 | `skill-desc-length-check` | review | Built; same — verify + ship. |
-| 3 | b16 | `snapshot-retention` | planned | Fully spec'd this session; ready to build. |
-| 4 | b11 | `spec-audit-mode` | planned | Medium; heuristic design still to settle. |
+| ✅ | b4 | `cli-debt-removal` | review → **shipped v1.23.2** | Verified live; swept a missed dead `templates/docs/` dir on archive. |
+| 1 | b10 | `skill-desc-length-check` | review | Built; verify + ship. |
+| 2 | b16 | `snapshot-retention` | planned | Fully spec'd; ready to build. |
+| 3 | b11 | `spec-audit-mode` | planned | Medium; heuristic design still to settle. |
 | — | b3 | `convention-pack-modules` | planned (gated) | Deferred until pack-composition pain surfaces. |
 
 Then the runway: **contract-prep ①→②→③** (`target: tbd` — they take the next

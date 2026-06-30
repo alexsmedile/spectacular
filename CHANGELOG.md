@@ -7,6 +7,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.23.2] — 2026-06-30
+
+### Removed
+
+- **Dead `skills/spectacular/templates/docs/` directory** (`docs.yaml.tmpl`, `index.md.tmpl`, `page.md.tmpl`). Residue the `cli-debt-removal` cleanup missed: the templates scaffolded the removed `docs export` machinery, `docs.yaml.tmpl` still pointed at the deleted `references/docs-renderer-adapters.md` and documented the removed `docs export <renderer>` verb, and nothing in the CLI loaded any of them (`doctor docs` directs users to `pageworks init` to scaffold `docs.yaml`). Closes the `cli-debt-removal` request (b4 — verified + archived).
+
 ## [1.23.1] — 2026-06-30
 
 ### Changed

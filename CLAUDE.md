@@ -66,7 +66,6 @@ spectacular/
 | Slug | Status | Summary |
 |---|---|---|
 | `roadmap-ledger` | active | Single ledger table maps build id → version; M1–M4 done |
-| `cli-debt-removal` | planned | Remove long-deprecated `docs *` verbs + `--global` alias |
 | `decisions-index` | planned | DECISIONS.md index mode — cheap root + per-entry files |
 | `convention-pack-modules` | planned (gated) | v2 modular packs — gated until composition pain surfaces |
 | `skill-desc-length-check` | planned | Doctor + pre-commit guard for SKILL.md descriptions over Codex's 1024-char limit (b10) |

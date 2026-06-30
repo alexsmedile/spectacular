@@ -41,9 +41,9 @@ This is distinct from `STACK.md` — STACK describes the **host project's** tech
 ├── sessions/           # work-session log (index.md + entries; v1.5.0+)
 ├── decisions/          # ADR entries when DECISIONS.md is in index mode (v1.17.0+)
 ├── feedback/           # prototyping-mode feedback entries (v1.6.0+; system-level)
-├── snapshots/          # versioned snapshots of canonical docs (v1.5.0+)
+├── _snapshots/         # versioned snapshots of canonical docs (store name configurable; default _snapshots since v1.24.0)
 │   ├── PRD/            # one folder per canonical doc, uppercase preserved
-│   │   └── @v1.2.md
+│   │   └── @v1.2.md    # filename = the content's version (couples to version:)
 │   ├── specs/cli/SPEC/ # capability-spec snapshots mirror their sub-path
 │   │   └── @v1.md
 │   └── ROADMAP/
@@ -314,7 +314,7 @@ specs/
 - current only — no past state, no future plans (future lives in ROADMAP.md)
 - behavior-oriented, not implementation-oriented
 - modular — one capability per `specs/<capability>/SPEC.md`; promote a dense `SPEC.md` bullet into its own file only when it earns it (see the v1.10.0 density refactor)
-- **never overwritten in place** — skill snapshots before proposing edits (`snapshots/specs/<capability>/SPEC/@v<N>.md`)
+- **never overwritten in place** — skill snapshots before proposing edits (`_snapshots/specs/<capability>/SPEC/@v<ver>.md`)
 - skill proposes `SPEC.md` + `specs/` updates when a request is archived; humans confirm (the spec-sync flow)
 
 **Capability spec structure** — each `specs/<capability>/SPEC.md` contains:
@@ -577,13 +577,15 @@ Canonical documents are **never overwritten in place**.
 
 **Rules:**
 - skill always proposes a snapshot before editing any canonical document
-- snapshot location (v1.6.0+): `snapshots/<DOC>/@v<N>.md` — folder per canonical doc, uppercase preserved
-- sub-doc snapshots mirror their path: `specs/cli/SPEC.md` → `snapshots/specs/cli/SPEC/@v1.0.md`
+- snapshot location (v1.24.0+): `_snapshots/<DOC>/@v<ver>.md` — store dir configurable via `config.yaml` `snapshots.folder` (default `_snapshots`; pre-v1.24 default was `snapshots/`), folder per canonical doc, uppercase preserved
+- **filename couples to the content's version** (v1.24.0+): a doc at `version: 1.3` snapshots to `@v1.3.md`, *then* the live doc bumps to `1.4` — the `@v` label and `version:` never drift. Docs without a `version:` field (e.g. `DESIGN.md`) use a plain `@v<N>` counter and are not version-bumped.
+- sub-doc snapshots mirror their path: `specs/cli/SPEC.md` → `_snapshots/specs/cli/SPEC/@v1.0.md`
 - version tracked in frontmatter: `version: 1.0`
 - the unversioned filename at root (`PRD.md`) always points to the current version
-- applies to: root layer files, `SPEC.md`, `specs/<capability>/SPEC.md` capability specs, `config.yaml`
+- applies to: root layer files, `SPEC.md`, `specs/<capability>/SPEC.md` capability specs, `DESIGN.md`, `config.yaml`
 - this is **default behavior** — not opt-in
-- legacy snapshots at root (`PRD@v1.0.md`) continue to be read; `spectacular doctor snapshots` warns until migrated via `--fix` (warn until v1.7, then info)
+- legacy snapshots at root (`PRD@v1.0.md`) continue to be read; `spectacular doctor snapshots` warns until migrated via `--fix`
+- **retention (v1.24.0+):** snapshots are bounded by tiered retention — origin (`@v1`) + periodic (newest per `month`/`week` bucket) + recent (newest `keep`, default 3). `spectacular snapshot prune` removes the rest (git-rm if tracked, else `.trash/`); configured via the `snapshots:` block. `doctor snapshots` nudges when prunable snapshots accumulate.
 
 ---
 

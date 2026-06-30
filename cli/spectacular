@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.23.3"
+SPECTACULAR_VERSION="1.24.0"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -1608,7 +1608,8 @@ is_canonical_doc() {
       [[ "$file" == ".spectacular/$base" ]] || [[ "$file" == "./.spectacular/$base" ]] || \
       [[ "$file" == .spectacular/specs/*/SPEC.md ]] || [[ "$file" == ./.spectacular/specs/*/SPEC.md ]]
       ;;
-    PRD.md|ARCHITECTURE.md|PRINCIPLES.md|ROADMAP.md|STACK.md|DECISIONS.md|AGENTS.md|config.yaml)
+    PRD.md|ARCHITECTURE.md|PRINCIPLES.md|ROADMAP.md|STACK.md|DECISIONS.md|AGENTS.md|DESIGN.md|config.yaml)
+      # DESIGN.md is snapshot-able even though Spectacular doesn't otherwise manage it (b16).
       [[ "$file" == ".spectacular/$base" ]] || [[ "$file" == "./.spectacular/$base" ]]
       ;;
     *) return 1 ;;
@@ -1633,6 +1634,50 @@ config_workspace_schema() {
     }
   ' "$cfg")
   echo "${schema:-0.4}"
+}
+
+# ── snapshots: config block (b16) ─────────────────────────────────────────────
+# Reads a key from the `snapshots:` block of .spectacular/config.yaml:
+#
+#   snapshots:
+#     folder: _snapshots   # store dir name        (default _snapshots)
+#     keep: 3              # recent-tier count      (default 3)
+#     period: month        # periodic tier bucket   (default month; month|week|off)
+#     gitignore: false     # gitignore the store?   (default false)
+#
+# All fields default when the block or the field is absent. Best-effort parse:
+# an indented `  <key>: <value>` line under a top-level `snapshots:` key.
+config_snapshots_field() {
+  local key="$1"
+  local cfg=".spectacular/config.yaml"
+  [[ -f "$cfg" ]] || return 0
+  awk -v key="$key" '
+    /^[^[:space:]#]/ { inblock = ($0 ~ /^snapshots:/) ? 1 : 0 }
+    inblock && $0 ~ "^[[:space:]]+" key ":" {
+      val = $0
+      sub("^[[:space:]]+" key ":[[:space:]]*", "", val)
+      sub(/[[:space:]]*#.*$/, "", val)          # strip trailing comment
+      gsub(/^["'"'"']|["'"'"'][[:space:]]*$/, "", val)
+      gsub(/[[:space:]]+$/, "", val)
+      print val; exit
+    }
+  ' "$cfg"
+}
+
+config_snapshots_folder() {
+  local v; v="$(config_snapshots_field folder)"; echo "${v:-_snapshots}"
+}
+config_snapshots_keep() {
+  local v; v="$(config_snapshots_field keep)"
+  [[ "$v" =~ ^[0-9]+$ ]] && echo "$v" || echo 3
+}
+config_snapshots_period() {
+  local v; v="$(config_snapshots_field period)"
+  case "$v" in month|week|off) echo "$v" ;; *) echo month ;; esac
+}
+config_snapshots_gitignore() {
+  local v; v="$(config_snapshots_field gitignore)"
+  [[ "$v" == "true" ]] && echo true || echo false
 }
 
 # ── feedback-loop (v1.6.0+) ──────────────────────────────────────────────────
@@ -3894,7 +3939,7 @@ EOF
     ".spectacular/ideas/"
     ".spectacular/requests/"
     ".spectacular/archive/"
-    ".spectacular/snapshots/"
+    ".spectacular/$(config_snapshots_folder)/"
     ".spectacular/packs/"
     ".spectacular/config.yaml"
     ".spectacular/skills.lock"
@@ -4557,6 +4602,103 @@ EOF
   fi
 }
 
+# ── snapshot retention (b16) ──────────────────────────────────────────────────
+# Tiered, generational retention — keep the union of three tiers, prune the rest:
+#   origin    — always keep the lowest version (@v1 / @v1.0)
+#   recent    — keep the newest `keep` by version ordinal
+#   periodic  — keep the newest snapshot in each calendar bucket (month|week),
+#               bucketed by each snapshot's `updated:` frontmatter date (stable
+#               across clone, unlike mtime). `off` skips this tier.
+# A snapshot kept by ANY tier survives. Used by both `cmd_snapshot_prune` and the
+# doctor retention check, so the kept-set logic lives in one place.
+
+# Sortable key for a snapshot basename: "@v1.3.md" -> "1 3", "@v2.md" -> "2 0".
+# Feeds `sort -k1n -k2n` for correct ordinal ordering (1.10 > 1.9).
+snapshot_sort_key() {
+  local b="$1"
+  b="${b#@v}"; b="${b%.*}"   # strip @v prefix and .md/.ext suffix
+  local maj="${b%%.*}" min="0"
+  [[ "$b" == *.* ]] && min="${b#*.}"
+  [[ "$maj" =~ ^[0-9]+$ ]] || maj=0
+  [[ "$min" =~ ^[0-9]+$ ]] || min=0
+  echo "$maj $min"
+}
+
+# Emit the basenames of snapshots to KEEP for one doc dir, one per line.
+# Args: <doc_dir> <keep> <period>  (period: month|week|off)
+snapshot_retained_set() {
+  local doc_dir="$1" keep="$2" period="$3"
+  shopt -s nullglob
+  local files=("$doc_dir"/@v*)
+  shopt -u nullglob
+  [[ ${#files[@]} -eq 0 ]] && return 0
+
+  # Sort basenames by version ordinal (ascending).
+  local sorted=()
+  local line
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && sorted+=("$line")
+  done < <(
+    for f in "${files[@]}"; do
+      local b; b="$(basename "$f")"
+      echo "$(snapshot_sort_key "$b") $b"
+    done | sort -k1n -k2n | awk '{print $3}'
+  )
+  local n=${#sorted[@]}
+  (( n == 0 )) && return 0
+
+  local kept=""   # space-padded set of kept basenames
+
+  # origin: lowest version (first after ascending sort)
+  kept+=" ${sorted[0]} "
+
+  # recent: newest `keep` (tail of ascending list)
+  local start=$(( n - keep )); (( start < 0 )) && start=0
+  local i
+  for (( i = start; i < n; i++ )); do
+    [[ "$kept" == *" ${sorted[$i]} "* ]] || kept+="${sorted[$i]} "
+  done
+
+  # periodic: newest snapshot per calendar bucket, keyed off `updated:` date.
+  if [[ "$period" != "off" ]]; then
+    # Walk ascending so the LAST write per bucket is the newest → wins.
+    local -a bucket_keys=() bucket_files=()
+    for (( i = 0; i < n; i++ )); do
+      local b="${sorted[$i]}"
+      local up; up="$(fm_get "$doc_dir/$b" updated 2>/dev/null)"
+      [[ "$up" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || continue   # no usable date → skip tier for this file
+      local bkey
+      if [[ "$period" == "week" ]]; then
+        bkey="$(snapshot_week_bucket "$up")"
+      else
+        bkey="${up%-*}"   # YYYY-MM-DD -> YYYY-MM (substring, no date math)
+      fi
+      [[ -z "$bkey" ]] && continue
+      # upsert: replace this bucket's current winner with the newer file
+      local found=0 j
+      for (( j = 0; j < ${#bucket_keys[@]}; j++ )); do
+        if [[ "${bucket_keys[$j]}" == "$bkey" ]]; then bucket_files[$j]="$b"; found=1; break; fi
+      done
+      (( found )) || { bucket_keys+=("$bkey"); bucket_files+=("$b"); }
+    done
+    for (( j = 0; j < ${#bucket_files[@]}; j++ )); do
+      local bf="${bucket_files[$j]}"
+      [[ "$kept" == *" $bf "* ]] || kept+="$bf "
+    done
+  fi
+
+  # Emit kept basenames, one per line.
+  for b in $kept; do echo "$b"; done
+}
+
+# ISO week bucket "YYYY-Www" from a YYYY-MM-DD date. Guards BSD vs GNU date.
+snapshot_week_bucket() {
+  local d="$1" out
+  out="$(date -j -f "%Y-%m-%d" "$d" "+%G-W%V" 2>/dev/null)" && { echo "$out"; return; }
+  out="$(date -d "$d" "+%G-W%V" 2>/dev/null)" && { echo "$out"; return; }
+  echo ""   # no usable date binary → empty (caller skips)
+}
+
 # ── snapshot ─────────────────────────────────────────────────────────────────
 # `spectacular snapshot <file> [--major]`
 # Copies a canonical doc to <FILE>@v<N>.md (next N inferred), bumps version
@@ -4570,17 +4712,33 @@ cmd_snapshot() {
       --help|-h)
         cat <<EOF
 Usage: spectacular snapshot <file> [--major]
+       spectacular snapshot prune [--apply]
 
-Snapshot a canonical doc as <FILE>@v<N>.md, bump version field, set updated.
-Idempotent: re-running with no content changes since last snapshot is a no-op.
+Snapshot a canonical doc into <store>/<DOC>/@v<ver>.md, bump its version field,
+set updated. The snapshot is named for the version the copied content IS (a doc
+at 1.3 → @v1.3.md, then the live doc bumps to 1.4). Docs without a version:
+field (e.g. DESIGN.md) use a plain @v<N> counter. Idempotent: re-running with no
+content changes since the last snapshot is a no-op.
 
 Canonical docs are: PRD, SPEC, ARCHITECTURE, PRINCIPLES, ROADMAP, STACK,
-DECISIONS, AGENTS, and specs/<capability>/SPEC.md files. Non-canonical files
-are refused — manual snapshots for those use plain cp.
+DECISIONS, AGENTS, DESIGN, and specs/<capability>/SPEC.md files. Non-canonical
+files are refused — manual snapshots for those use plain cp.
+
+The store dir, retention, and gitignoring are configured in config.yaml:
+  snapshots:
+    folder: _snapshots   # store dir name      (default _snapshots)
+    keep: 3              # recent-tier count   (default 3)
+    period: month        # periodic bucket     (month|week|off, default month)
+    gitignore: false     # gitignore the store (default false)
 
 Options:
   --major    Bump major version (X.Y → (X+1).0). Default is minor bump (X.Y → X.(Y+1)).
   -h, --help Show this help
+
+Subcommand:
+  prune [--apply]   Apply tiered retention (origin + periodic + recent),
+                    removing snapshots outside the kept tiers. Dry-run unless
+                    --apply. See: spectacular snapshot prune --help
 EOF
         exit 0 ;;
       -*) die "Unknown flag for snapshot: $1" ;;
@@ -4610,16 +4768,18 @@ EOF
   ext="${base##*.}"
   base_no_ext="${base%.*}"
 
-  # v1.5.0+ snapshot layout: snapshots/<DOC>/@v<N>.<ext>, mirroring sub-paths.
-  # The canonical doc at .spectacular/PRD.md → .spectacular/snapshots/PRD/@v<N>.md
-  # The capability spec at .spectacular/specs/cli/SPEC.md → .spectacular/snapshots/specs/cli/SPEC/@v<N>.md
-  local snap_dir rel_dir
+  # Snapshot layout: <store>/<DOC>/@v<N>.<ext>, mirroring sub-paths. Store dir is
+  # config-driven (b16, default _snapshots; pre-b16 workspaces used snapshots/).
+  # .spectacular/PRD.md → <store>/PRD/@v<N>.md
+  # .spectacular/specs/cli/SPEC.md → <store>/specs/cli/SPEC/@v<N>.md
+  local snap_root snap_dir rel_dir
+  snap_root="$(snapshot_store_root)"
   rel_dir="${dir#.spectacular/}"
   if [[ "$rel_dir" == ".spectacular" || "$rel_dir" == "$dir" ]]; then
     # File is at .spectacular root (rel_dir collapses), or not under .spectacular at all
-    snap_dir=".spectacular/snapshots/${base_no_ext}"
+    snap_dir="${snap_root}/${base_no_ext}"
   else
-    snap_dir=".spectacular/snapshots/${rel_dir}/${base_no_ext}"
+    snap_dir="${snap_root}/${rel_dir}/${base_no_ext}"
   fi
 
   local max_n=0 latest_path=""
@@ -4648,7 +4808,6 @@ EOF
   shopt -u nullglob
 
   local next_n=$((max_n + 1))
-  local snapshot_path="$snap_dir/@v${next_n}.${ext}"
 
   # Idempotence: compare BODY (everything after the frontmatter block) only.
   # Frontmatter fields like `version:` and `updated:` change every snapshot,
@@ -4664,12 +4823,12 @@ EOF
     fi
   fi
 
-  # Compute new version field
+  # Compute the new version field. Version coupling is best-effort (b16): a
+  # parseable MAJOR.MINOR bumps; absent/malformed falls back to the counter and
+  # never dies — DESIGN.md without a version: is the canonical case.
   local current_ver new_ver
   current_ver="$(fm_get "$file" "version")"
-  if [[ -z "$current_ver" ]]; then
-    new_ver="1.0"
-  elif [[ "$current_ver" =~ ^([0-9]+)\.([0-9]+)$ ]]; then
+  if [[ "$current_ver" =~ ^([0-9]+)\.([0-9]+)$ ]]; then
     local major="${BASH_REMATCH[1]}" minor="${BASH_REMATCH[2]}"
     if $opt_major; then
       new_ver="$((major + 1)).0"
@@ -4677,17 +4836,158 @@ EOF
       new_ver="${major}.$((minor + 1))"
     fi
   else
-    die "snapshot: cannot parse version '$current_ver' as MAJOR.MINOR. Set version: field manually first."
+    # No version: field (DESIGN.md), or unparseable: don't impose one — stay on
+    # the @v<N> counter and leave the live doc's frontmatter untouched.
+    new_ver=""
   fi
 
-  # Write snapshot (creating dir if needed), then bump
+  # Snapshot filename = the version the COPIED content actually IS (decision 1):
+  # snapshot first (pre-bump), so the file is named for the current version,
+  # then the live doc bumps. Fall back to the @v<N> counter when there is no
+  # parseable version to couple to (DESIGN.md without frontmatter, malformed ver).
+  local snapshot_path
+  if [[ "$current_ver" =~ ^[0-9]+\.[0-9]+$ ]]; then
+    snapshot_path="$snap_dir/@v${current_ver}.${ext}"
+  else
+    snapshot_path="$snap_dir/@v${next_n}.${ext}"
+  fi
+
+  # Write snapshot (creating dir if needed), then bump (if we have a new version)
   mkdir -p "$snap_dir"
   cp "$file" "$snapshot_path"
-  fm_set "$file" "version" "$new_ver"
+  if [[ -n "$new_ver" ]]; then
+    fm_set "$file" "version" "$new_ver"
+  fi
   fm_touch "$file"
 
   echo "  ✓ snapshot: $snapshot_path"
-  echo "  ✓ version: ${current_ver:-(none)} → $new_ver"
+  if [[ -n "$new_ver" ]]; then
+    echo "  ✓ version: ${current_ver:-(none)} → $new_ver"
+  else
+    echo "  ✓ version: ${current_ver:-(none)} (unchanged — counter snapshot)"
+  fi
+}
+
+# Resolve the active snapshot store dir. Prefers the configured folder
+# (default _snapshots); falls back to a legacy snapshots/ dir if that's what's
+# on disk and the configured one doesn't exist yet (pre-M4-migration workspace).
+snapshot_store_root() {
+  local folder; folder="$(config_snapshots_folder)"
+  if [[ -d ".spectacular/$folder" ]]; then
+    echo ".spectacular/$folder"
+  elif [[ "$folder" != "snapshots" && -d ".spectacular/snapshots" ]]; then
+    echo ".spectacular/snapshots"
+  else
+    echo ".spectacular/$folder"
+  fi
+}
+
+# ── snapshot prune (b16) ──────────────────────────────────────────────────────
+# `spectacular snapshot prune [--apply]`
+# Apply tiered retention (origin + periodic + recent) across every doc in the
+# snapshot store; move snapshots no tier claims out of the way. Dry-run by
+# default — prints what WOULD go; --apply performs the move. Tracked files are
+# `git rm`'d (history holds the content); untracked / non-git fall back to
+# .spectacular/.trash/<store>/<doc>/. The live canonical file is never touched.
+cmd_snapshot_prune() {
+  local apply=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --apply|--confirm) apply=true; shift ;;
+      --help|-h)
+        cat <<'EOF'
+Usage: spectacular snapshot prune [--apply]
+
+Apply tiered retention to the snapshot store and remove snapshots outside the
+kept tiers (origin @v1 + newest-per-period + newest `keep`). Dry-run by default.
+
+Retention is configured in .spectacular/config.yaml:
+  snapshots:
+    keep: 3          # recent tier count   (default 3)
+    period: month    # periodic bucket     (month|week|off, default month)
+
+Options:
+  --apply    Perform the prune (git rm if tracked, else move to .trash/).
+             Without it, prints what would be pruned and changes nothing.
+  -h, --help Show this help
+EOF
+        exit 0 ;;
+      *) die "snapshot prune: unknown argument '$1'. See: spectacular snapshot prune --help" ;;
+    esac
+  done
+
+  local root; root="$(snapshot_store_root)"
+  if [[ ! -d "$root" ]]; then
+    echo "  • no snapshot store at $root — nothing to prune"
+    return 0
+  fi
+
+  local keep period; keep="$(config_snapshots_keep)"; period="$(config_snapshots_period)"
+
+  # Doc dirs = every dir directly containing @v* files. bash 3.2 has no globstar,
+  # so enumerate the known nesting depths explicitly (root docs at <store>/<DOC>/,
+  # capability specs at <store>/specs/<cap>/SPEC/).
+  local doc_dirs=""
+  local f
+  shopt -s nullglob
+  for f in "$root"/*/@v* "$root"/*/*/@v* "$root"/*/*/*/@v*; do
+    local d; d="$(dirname "$f")"
+    [[ "$doc_dirs" == *" $d "* ]] || doc_dirs+=" $d "
+  done
+  shopt -u nullglob
+
+  local total_pruned=0 doc_dir
+  for doc_dir in $doc_dirs; do
+    # kept set (basenames)
+    local kept=" "
+    local b
+    while IFS= read -r b; do [[ -n "$b" ]] && kept+="$b "; done < <(snapshot_retained_set "$doc_dir" "$keep" "$period")
+
+    # prunable = all @v* basenames not in kept
+    shopt -s nullglob
+    local all=("$doc_dir"/@v*)
+    shopt -u nullglob
+    local prunable=()
+    for f in "${all[@]}"; do
+      b="$(basename "$f")"
+      [[ "$kept" == *" $b "* ]] || prunable+=("$f")
+    done
+    (( ${#prunable[@]} == 0 )) && continue
+
+    local doc_label; doc_label="$(basename "$doc_dir")"
+    echo "  $doc_label: keep $(( ${#all[@]} - ${#prunable[@]} )) / prune ${#prunable[@]}"
+    for f in "${prunable[@]}"; do
+      total_pruned=$(( total_pruned + 1 ))
+      if $apply; then
+        snapshot_prune_remove "$f"
+      else
+        echo "      would prune: $f"
+      fi
+    done
+  done
+
+  if (( total_pruned == 0 )); then
+    echo "  ✓ nothing to prune — all snapshots within retention tiers"
+  elif $apply; then
+    echo "  ✓ pruned $total_pruned snapshot(s)"
+  else
+    echo "  • dry-run: $total_pruned snapshot(s) would be pruned. Re-run with --apply."
+  fi
+}
+
+# Remove one snapshot file: git rm if tracked (history keeps it), else move to
+# .spectacular/.trash/ preserving the relative path. Never rm -f.
+snapshot_prune_remove() {
+  local f="$1"
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1 && \
+     git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+    git rm -q "$f" >/dev/null 2>&1 && { echo "      pruned (git rm): $f"; return; }
+  fi
+  # Fallback: move to .trash/ mirroring the path under .spectacular/
+  local rel="${f#.spectacular/}"
+  local dest=".spectacular/.trash/$rel"
+  mkdir -p "$(dirname "$dest")"
+  mv "$f" "$dest" && echo "      pruned (→ .trash): $f"
 }
 
 # ── promote ──────────────────────────────────────────────────────────────────
@@ -6725,6 +7025,28 @@ doc_gitignore() {
     printf '.spectacular.local/\n' > "$gitignore"
     created ".gitignore"
   fi
+  # Returns 1 when already in sync — that's a status, not an error; don't let
+  # `set -e` treat it as fatal during init.
+  snapshot_gitignore_sync || true
+}
+
+# Add or remove the snapshot-store ignore line in .gitignore to match the
+# `snapshots.gitignore` config (b16). Default false → store stays in git. Idempotent.
+# Returns 0 if it changed the file, 1 if already in sync.
+snapshot_gitignore_sync() {
+  local gitignore=".gitignore"
+  local entry=".spectacular/$(config_snapshots_folder)/"
+  local want; want="$(config_snapshots_gitignore)"
+  [[ -f "$gitignore" ]] || { [[ "$want" == "true" ]] || return 1; touch "$gitignore"; }
+  local present=1; grep -qxF "$entry" "$gitignore" 2>/dev/null || present=0
+  if [[ "$want" == "true" && "$present" -eq 0 ]]; then
+    echo "$entry" >> "$gitignore"; return 0
+  elif [[ "$want" == "false" && "$present" -eq 1 ]]; then
+    # grep -v exits 1 when it filters out every line (empty result) — don't gate mv on it.
+    grep -vxF "$entry" "$gitignore" > "$gitignore.tmp" || true
+    mv "$gitignore.tmp" "$gitignore"; return 0
+  fi
+  return 1
 }
 
 # Parse a pack's gitignore.always-add list from its pack.md frontmatter.
@@ -7205,15 +7527,22 @@ check_frontmatter() {
 }
 
 # ── area: snapshots ───────────────────────────────────────────────────────────
-# v1.5.0+ canonical layout: .spectacular/snapshots/<DOC>/@v<N>.md
-# Legacy layout (pre-v1.5): .spectacular/<DOC>@v<N>.md at root, alongside canonical
-# Two checks:
-#   1. Flag legacy root-level snapshots as warnings with --fix migration path
-#   2. Detect version-sequence gaps in the new snapshots/ tree
+# Canonical layout: <store>/<DOC>/@v<N>.md (store = config_snapshots_folder,
+# default _snapshots since b16; pre-b16 default was snapshots/).
+# Legacy layout (pre-v1.5): .spectacular/<DOC>@v<N>.md at root.
+# Checks:
+#   1. Legacy root-level snapshots → warning with --fix migration path
+#   2. Folder migration: old snapshots/ present while config wants _snapshots/
+#   3. Version-sequence gaps in the store tree
+#   4. Retention: snapshots outside the kept tiers (prunable) → info
 check_snapshots() {
   if [[ ! -d ".spectacular" ]]; then
     return
   fi
+
+  local snap_root snap_folder
+  snap_root="$(snapshot_store_root)"
+  snap_folder="$(config_snapshots_folder)"
 
   # ── 1. Legacy root-level snapshot detection (migration warning) ─────────────
   shopt -s nullglob
@@ -7225,17 +7554,40 @@ check_snapshots() {
       b=$(basename "$s")
       doc_prefix="${b%@v*}"
       ver_part="@v${b#*@v}"
-      target=".spectacular/snapshots/${doc_prefix}/${ver_part}"
+      target="${snap_root}/${doc_prefix}/${ver_part}"
       doc_add "snapshots" "warning" "$s" \
-        "legacy root-level snapshot (v1.5.0+ layout is snapshots/<DOC>/@v<N>.md)" \
+        "legacy root-level snapshot (layout is <store>/<DOC>/@v<N>.md)" \
         "spectacular doctor --fix snapshots  # moves to $target" \
         "mechanical"
     done
   fi
 
-  # ── 2. New-layout gap detection ─────────────────────────────────────────────
+  # ── 2. Folder migration: old snapshots/ while config wants a different store ─
+  if [[ "$snap_folder" != "snapshots" && -d ".spectacular/snapshots" && ! -d ".spectacular/$snap_folder" ]]; then
+    doc_add "snapshots" "warning" ".spectacular/snapshots/" \
+      "snapshot store is at snapshots/ but config wants ${snap_folder}/ (b16 rename)" \
+      "spectacular doctor --fix snapshots  # renames snapshots/ → ${snap_folder}/" \
+      "mechanical"
+  fi
+
+  # ── 2b. gitignore drift: .gitignore line doesn't match snapshots.gitignore ──
+  local want_gi gi_entry gi_present=0
+  want_gi="$(config_snapshots_gitignore)"
+  gi_entry=".spectacular/${snap_folder}/"
+  grep -qxF "$gi_entry" .gitignore 2>/dev/null && gi_present=1
+  if [[ "$want_gi" == "true" && "$gi_present" -eq 0 ]]; then
+    doc_add "snapshots" "warning" ".gitignore" \
+      "snapshots.gitignore is true but $gi_entry is not in .gitignore" \
+      "spectacular doctor --fix snapshots  # adds the ignore line" "mechanical"
+  elif [[ "$want_gi" == "false" && "$gi_present" -eq 1 ]]; then
+    doc_add "snapshots" "warning" ".gitignore" \
+      "snapshots.gitignore is false but $gi_entry is in .gitignore" \
+      "spectacular doctor --fix snapshots  # removes the ignore line" "mechanical"
+  fi
+
+  # ── 3. Gap detection (bash 3.2: no globstar — enumerate known depths) ───────
   shopt -s nullglob
-  local snapshots=(.spectacular/snapshots/**/@v*.md .spectacular/snapshots/*/@v*.md)
+  local snapshots=("$snap_root"/*/@v*.md "$snap_root"/*/*/@v*.md "$snap_root"/*/*/*/@v*.md)
   shopt -u nullglob
   # Deduplicate (the two globs overlap on direct children).
   # Note: bash 3.2 + `set -u` errors on `"${arr[@]}"` for an empty array, so
@@ -7287,6 +7639,20 @@ check_snapshots() {
     local sorted
     sorted=$(echo "$versions" | tr ' ' '\n' | sort -t. -k1n -k2n | grep -v '^$' | tr '\n' ' ')
 
+    # Skip gap detection when the dir MIXES counter names (@vN, no dot — pre-b16
+    # or version-less docs) with version-coupled names (@vX.Y). They aren't a
+    # single sequence, so a "gap" between them is a false positive. Once a doc is
+    # fully on either scheme the check resumes. (b16 transition guard.)
+    local has_counter=0 has_dotted=0
+    for v in $sorted; do
+      if [[ "$v" == *.* ]]; then has_dotted=1; else has_counter=1; fi
+    done
+    if (( has_counter && has_dotted )); then
+      doc_add "snapshots" "info" "${doc_dir}/@v*.md" \
+        "$(echo "$sorted" | wc -w | tr -d ' ') snapshot(s) for $base (mixed counter + version names — gap check skipped)"
+      continue
+    fi
+
     # Build minor-version list per major
     local prev_major="" prev_minor=""
     for v in $sorted; do
@@ -7310,6 +7676,25 @@ check_snapshots() {
     if [[ -z "$sorted" ]]; then continue; fi
     doc_add "snapshots" "info" "${doc_dir}/@v*.md" \
       "$(echo "$sorted" | wc -w | tr -d ' ') snapshot(s) found for $base"
+
+    # ── 4. Retention: count snapshots outside the kept tiers (prunable) ───────
+    local keep period kept=" " all_count=0 prunable=0
+    keep="$(config_snapshots_keep)"; period="$(config_snapshots_period)"
+    local kb
+    while IFS= read -r kb; do [[ -n "$kb" ]] && kept+="$kb "; done < <(snapshot_retained_set "$doc_dir" "$keep" "$period")
+    shopt -s nullglob
+    local sf
+    for sf in "$doc_dir"/@v*; do
+      all_count=$(( all_count + 1 ))
+      [[ "$kept" == *" $(basename "$sf") "* ]] || prunable=$(( prunable + 1 ))
+    done
+    shopt -u nullglob
+    if (( prunable > 0 )); then
+      doc_add "snapshots" "info" "${doc_dir}/@v*.md" \
+        "$prunable of $all_count snapshot(s) outside retention (keep $keep, $period) for $base" \
+        "spectacular snapshot prune       # preview, then --apply" \
+        "judgment"
+    fi
   done
 }
 
@@ -8937,7 +9322,8 @@ doctor_apply_mechanical_fixes() {
     fi
 
     # gitignore append (workspace area — .spectacular.local/ baseline)
-    if [[ "$file" == ".gitignore"* || "$msg" == *".gitignore"* ]]; then
+    # Skip snapshots-area gitignore findings — the snapshots block below owns those.
+    if [[ "$area" != "snapshots" ]] && [[ "$file" == ".gitignore"* || "$msg" == *".gitignore"* ]]; then
       if [[ -f ".gitignore" ]]; then
         if ! grep -qF ".spectacular.local/" .gitignore; then
           echo ".spectacular.local/" >> .gitignore
@@ -8972,14 +9358,15 @@ doctor_apply_mechanical_fixes() {
     fi
 
     # Legacy snapshot migration (snapshots area, mechanical)
-    # Pattern: .spectacular/<DOC>@v<N>.md → .spectacular/snapshots/<DOC>/@v<N>.md
+    # Pattern: .spectacular/<DOC>@v<N>.md → <store>/<DOC>/@v<N>.md
     if [[ "$area" == "snapshots" && "$msg" == *"legacy root-level snapshot"* ]]; then
       if [[ -f "$file" ]]; then
-        local b doc_prefix ver_part target_dir target
+        local b doc_prefix ver_part target_dir target snap_root
+        snap_root="$(snapshot_store_root)"
         b=$(basename "$file")
         doc_prefix="${b%@v*}"
         ver_part="@v${b#*@v}"
-        target_dir=".spectacular/snapshots/${doc_prefix}"
+        target_dir="${snap_root}/${doc_prefix}"
         target="${target_dir}/${ver_part}"
         mkdir -p "$target_dir"
         # Prefer git mv when the file is tracked; fall back to plain mv
@@ -8993,6 +9380,33 @@ doctor_apply_mechanical_fixes() {
             echo "  ✓ fixed [snapshots]: mv $file → $target"
             applied=$((applied + 1))
           }
+        fi
+      fi
+      continue
+    fi
+
+    # gitignore drift for the snapshot store (b16, mechanical)
+    if [[ "$area" == "snapshots" && "$msg" == *"snapshots.gitignore"* ]]; then
+      if snapshot_gitignore_sync; then
+        echo "  ✓ fixed [snapshots]: synced .gitignore to snapshots.gitignore=$(config_snapshots_gitignore)"
+        applied=$((applied + 1))
+      fi
+      continue
+    fi
+
+    # Folder rename: snapshots/ → <configured folder> (b16, mechanical)
+    if [[ "$area" == "snapshots" && "$msg" == *"config wants"* ]]; then
+      local snap_folder
+      snap_folder="$(config_snapshots_folder)"
+      if [[ -d ".spectacular/snapshots" && ! -d ".spectacular/$snap_folder" ]]; then
+        if git ls-files --error-unmatch ".spectacular/snapshots" >/dev/null 2>&1; then
+          git mv ".spectacular/snapshots" ".spectacular/$snap_folder" 2>/dev/null && {
+            echo "  ✓ fixed [snapshots]: git mv snapshots/ → ${snap_folder}/"
+            applied=$((applied + 1)); }
+        else
+          mv ".spectacular/snapshots" ".spectacular/$snap_folder" && {
+            echo "  ✓ fixed [snapshots]: mv snapshots/ → ${snap_folder}/"
+            applied=$((applied + 1)); }
         fi
       fi
       continue
@@ -9456,7 +9870,10 @@ main() {
       skill_verb_message "status" "Briefing of project state — frontmatter only, no full-file reads." "$@"
       ;;
     new)      shift; cmd_new "$@"; exit $? ;;
-    snapshot) shift; cmd_snapshot "$@"; exit $? ;;
+    snapshot)
+      shift
+      if [[ "${1:-}" == "prune" ]]; then shift; cmd_snapshot_prune "$@"; else cmd_snapshot "$@"; fi
+      exit $? ;;
     remember)
       shift
       # v1.5.0: if invoked with text argument, route to CLI writer.

@@ -218,13 +218,35 @@ At most **one** session can be open at a time. At `end`, the writer scans `DECIS
 
 ### `spectacular snapshot <file>`
 
-Creates a versioned snapshot (`<FILE>@vN.md`) before editing a canonical document.
+Creates a versioned snapshot in `<store>/<DOC>/@v<ver>.md` before editing a canonical document, then bumps the live doc's `version:` field.
 
 ```text
-spectacular snapshot .spectacular/PRD.md
+spectacular snapshot .spectacular/PRD.md          # PRD at 1.3 → _snapshots/PRD/@v1.3.md, live doc → 1.4
+spectacular snapshot .spectacular/PRD.md --major  # → (X+1).0 instead of X.(Y+1)
 ```
 
-Canonical files: `PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`, `AGENTS.md`, `config.yaml`, `current/` capability specs.
+The snapshot filename **couples to the version the copied content is** (a doc at `1.3` produces `@v1.3.md`), so the `@v` label and the `version:` field never drift. Docs without a `version:` field (e.g. `DESIGN.md`) use a plain `@v<N>` counter and the live doc is left untouched. Idempotent — re-running with no body change since the last snapshot is a no-op.
+
+Canonical files: `PRD.md`, `SPEC.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`, `AGENTS.md`, `DESIGN.md`, `config.yaml`, and `specs/<capability>/SPEC.md`.
+
+The store directory, retention, and gitignoring are configured via the [`snapshots`](configuration.md#snapshots-v1240) block in `config.yaml` (default store `_snapshots/`).
+
+### `spectacular snapshot prune [--apply]`
+
+Applies **tiered retention** and removes snapshots no tier claims. Dry-run by default; `--apply` performs the removal (`git rm` if the file is tracked, otherwise moved to `.spectacular/.trash/` — the live doc is never touched).
+
+```text
+spectacular snapshot prune            # preview what would be pruned
+spectacular snapshot prune --apply    # perform it
+```
+
+Three tiers, unioned (a snapshot kept by **any** tier survives):
+
+- **origin** — always keep the first snapshot (`@v1`).
+- **periodic** — keep the newest snapshot in each calendar bucket (`month` or `week`, configurable; `off` disables this tier). Bucketed by each snapshot's `updated:` frontmatter date — stable across clone, unlike mtime.
+- **recent** — keep the newest `keep` (default 3) by version ordinal.
+
+This bounds a doc's snapshot count to roughly `1 + periods_alive + keep`. `doctor snapshots` surfaces an info nudge when prunable snapshots accumulate.
 
 ### `spectacular idea promote <idea>`
 

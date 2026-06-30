@@ -1,8 +1,8 @@
 ---
-status: planned
+status: archived
 priority: medium
 owner: alex
-updated: 2026-06-28
+updated: 2026-06-30
 build: b16
 summary: "Snapshot system: bound the canonical allowlist (add DESIGN.md), couple @vN to frontmatter version: so they stop drifting, add configurable retention (default keep 3) with a doctor-driven prune, and rename the store to _snapshots/ with a configurable folder name + opt-in gitignore so the history layer stops bloating both the tree and git."
 related:
@@ -10,6 +10,7 @@ related:
   - ../../ARCHITECTURE.md
   - ../../ROADMAP.md
   - ../../SPEC.md
+archived: 2026-06-30
 ---
 
 # Plan — snapshot-retention
@@ -139,9 +140,9 @@ The allowlist model (still closed, one entry added), the `<store>/<DOC>/@v<N>.md
 
    Rationale: origin = "where it started," periodic = "a thread through the whole history at coarse resolution," recent = "fine detail of how it got here lately." Bounds growth to ≈ `1 + months_alive + keep` per doc instead of unbounded.
 
-## Still-open (decide during M3)
+## Decisions (cont.)
 
-5. **`rm` vs `.trash/`:** locked to `.trash/` (recoverable) per constraints; in a git repo `git rm` (history holds it) is an option. Lean: `.trash/` uniformly.
+5. **Prune target = `git rm` if tracked, else `.trash/`** (resolved 2026-06-30, before build). In a git repo the snapshot's content survives in history, so `git rm` is sufficient and avoids `.trash/` clutter; untracked snapshots or non-git workspaces fall back to `.spectacular/.trash/`. Either way the live canonical file is never touched and prune is dry-run by default. (M3.)
 
 ## Deferred (TODO, not this request)
 

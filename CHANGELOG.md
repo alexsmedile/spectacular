@@ -7,6 +7,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.24.0] — 2026-06-30
+
+### Added
+
+- **Snapshot version coupling** (snapshot-retention b16) — `spectacular snapshot` now names the snapshot for the version the copied content **is** (a doc at `version: 1.3` → `_snapshots/PRD/@v1.3.md`), *then* bumps the live doc to `1.4`. The `@v` label and the `version:` field can no longer drift. Docs without a `version:` field (e.g. the newly snapshot-able `DESIGN.md`) use a plain `@v<N>` counter and are not version-bumped.
+- **Tiered snapshot retention + `spectacular snapshot prune`** — generational retention keeps the union of three tiers: origin (`@v1`), periodic (newest per `month`/`week` bucket, keyed off `updated:` frontmatter dates), and recent (newest `keep`, default 3). `snapshot prune` removes the rest — `git rm` if tracked (history holds it), else moved to `.spectacular/.trash/`; dry-run by default, `--apply` to perform. Bounds a doc to ≈ `1 + periods_alive + keep` snapshots instead of unbounded growth.
+- **`snapshots:` config block** — `folder` (store dir, default `_snapshots`), `keep` (default 3), `period` (`month`|`week`|`off`, default `month`), `gitignore` (default `false`). All optional with sane defaults. See `docs/configuration.md`.
+- **`DESIGN.md` is snapshot-able** — added to the canonical allowlist (the allowlist stays closed otherwise).
+- **`doctor snapshots` retention/migration/gitignore checks** — flags prunable accumulation (info), the `snapshots/` → `_snapshots/` folder rename (warning + `--fix`), and `.gitignore` drift vs `snapshots.gitignore` (warning + `--fix`). Gap detection now skips dirs that mix counter and version names (a b16 transition guard — no false positives).
+
+### Changed
+
+- **Snapshot store renamed `snapshots/` → `_snapshots/`** (configurable via `snapshots.folder`). The `_` prefix marks it a non-content layer, consistent with `_archive/`. `doctor --fix snapshots` migrates an existing `snapshots/` dir losslessly (git-mv when tracked). This repo was dogfood-migrated (18 snapshots). The 15 hardcoded `snapshots/` paths in the CLI collapsed to a single config-resolved `$snap_root`.
+
 ## [1.23.3] — 2026-06-30
 
 ### Changed

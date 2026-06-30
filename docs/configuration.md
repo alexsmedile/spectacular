@@ -216,6 +216,41 @@ and never on the request.
 
 ---
 
+## `snapshots` *(v1.24.0+)*
+
+Controls the snapshot store directory, retention, and whether snapshots are gitignored.
+All fields are optional and default sanely when the block or any field is absent — a
+workspace with no `snapshots:` block behaves exactly as the defaults below.
+
+```yaml
+snapshots:
+  folder: _snapshots   # store dir name under .spectacular/   (default _snapshots)
+  keep: 3              # recent-tier count per doc            (default 3)
+  period: month        # periodic-tier bucket: month|week|off (default month)
+  gitignore: false     # gitignore the store by default?      (default false)
+```
+
+### Fields
+
+- **`folder`** — the store directory under `.spectacular/`. Default `_snapshots` (the
+  `_` prefix marks it a non-content / scanner-skip layer, like `_archive/`). A workspace
+  still on the old `snapshots/` dir is flagged by `doctor snapshots`; `doctor --fix`
+  renames it (git-mv when tracked) losslessly.
+- **`keep`** — how many of the most-recent snapshots (by version ordinal) the **recent**
+  retention tier keeps. Default 3.
+- **`period`** — the calendar bucket for the **periodic** tier: `month`, `week`, or `off`.
+  The tier keeps the newest snapshot per bucket, keyed off each snapshot's `updated:`
+  frontmatter date. `off` collapses retention to origin + recent. Default `month`.
+- **`gitignore`** — when `true`, `init` and `doctor --fix` add `.spectacular/<folder>/`
+  to `.gitignore`; when `false` (default), the store stays committed. Toggling the value
+  and re-running `doctor --fix snapshots` adds or removes the ignore line.
+
+Retention is **tiered and generational** — a snapshot kept by *any* of origin (`@v1`),
+periodic, or recent survives. Apply it with [`spectacular snapshot prune`](commands.md#spectacular-snapshot-prune---apply)
+(dry-run by default). See also [`spectacular snapshot`](commands.md#spectacular-snapshot-file).
+
+---
+
 ## `convention_pack` *(v0.4.0+)*
 
 Opt-in. Declares which convention pack the repo follows and how strictly it's enforced.

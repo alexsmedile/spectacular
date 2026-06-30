@@ -37,7 +37,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | shipped |
 | b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | shipped |
 | b12 | lifecycle-undo | Lifecycle undo (reverse gear) | full | v1.22.0 | shipped |
-| b16 | snapshot-retention | Snapshot retention + version coupling | themed | tbd | planned |
+| b16 | snapshot-retention | Snapshot retention + version coupling | themed | v1.24.0 | shipped |
 | b17 | roadmap-contract-docs | Spec + document the roadmap ledger | themed | v1.23.0 | shipped |
 | b18 | roadmap-pruning | Roadmap shipped-history pruning/scaling | themed | v1.23.0 | shipped |
 
@@ -55,8 +55,8 @@ this order as each is cut; the contract-prep ladder (`tbd`, ordered ①→②→
 | ✅ | b18 | `roadmap-pruning` | review → **shipped v1.23.0** | Index-mode pruning + `doctor roadmap`. |
 | ✅ | b4 | `cli-debt-removal` | review → **shipped v1.23.2** | Verified live; swept a missed dead `templates/docs/` dir on archive. |
 | ✅ | b10 | `skill-desc-length-check` | review → **shipped v1.23.3** | Verified live (53/53 tests, guard fires on commit); awk duplication reviewed + accepted (install boundary). |
-| 1 | b16 | `snapshot-retention` | planned | Fully spec'd; ready to build. |
-| 2 | b11 | `spec-audit-mode` | planned | Medium; heuristic design still to settle. |
+| ✅ | b16 | `snapshot-retention` | planned → **shipped v1.24.0** | Version coupling + tiered retention + `_snapshots/` rename; dogfooded on this repo. |
+| 1 | b11 | `spec-audit-mode` | planned | Medium; heuristic design still to settle. |
 | — | b3 | `convention-pack-modules` | planned (gated) | Deferred until pack-composition pain surfaces. |
 
 Then the runway: **contract-prep ①→②→③** (`target: tbd` — they take the next

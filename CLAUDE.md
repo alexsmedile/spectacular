@@ -65,7 +65,6 @@ spectacular/
 
 | Slug | Status | Summary |
 |---|---|---|
-| `snapshot-retention` | planned | Snapshot allowlist (+DESIGN.md), @vN↔version: coupling, configurable retention (keep 3) + prune, configurable `_snapshots/` folder name + gitignore (b16) |
 | `spec-audit-mode` | planned | Content-aware spec audit — orphan bullets/spec files + stale capability specs, beyond the date drift heuristic (b11) |
 | `convention-pack-modules` | planned (gated) | v2 modular packs — gated until composition pain surfaces |
 

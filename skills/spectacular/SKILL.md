@@ -41,16 +41,16 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular new <description>` | → `references/new-request.md` (then run `spectacular new <slug>`) |
 | `spectacular archive <slug>` | → CLI verb (no skill flow); see [[archive]] for context |
 | `spectacular remember this` | → `references/memory.md` (legacy free-text capture) |
-| `spectacular remember "<text>"` | → CLI verb (v1.5.0+); see [[memory-rules]] for entry shape |
-| `spectacular decide "<decision>" [--context\|--consequences]` | → CLI verb (v1.5.0+; flags v1.8.4+); see [[decisions-rules]] |
+| `spectacular remember "<text>"` | → CLI verb; see [[memory-rules]] for entry shape |
+| `spectacular decide "<decision>" [--context\|--consequences]` | → CLI verb; see [[decisions-rules]] |
 | "record a decision" / "record an ADR" / "architecture decision" | → `spectacular decide`; ADRs live in DECISIONS.md, see [[decisions-rules]] (store-worthy? table) |
-| `spectacular session start\|end` | → CLI verb (v1.5.0+); see [[sessions-rules]] |
-| `spectacular idea new <slug>` | → CLI verb (v1.7.0+); see [[idea-rules]] for entry shape |
-| `spectacular idea list` | → CLI verb (v1.7.0+) |
-| `spectacular idea promote <slug>` | → CLI verb (v1.7.0+); scaffolds request, moves source to `archive/ideas/` |
+| `spectacular session start\|end` | → CLI verb; see [[sessions-rules]] |
+| `spectacular idea new <slug>` | → CLI verb; see [[idea-rules]] for entry shape |
+| `spectacular idea list` | → CLI verb |
+| `spectacular idea promote <slug>` | → CLI verb; scaffolds request, moves source to `archive/ideas/` |
 | `spectacular advance <slug>` | → CLI verb (no skill flow); lifecycle move-forward (was `promote`, still an alias); see [[lifecycle]] |
 | `spectacular snapshot <file>` | → CLI verb (no skill flow); see [[versioning]] for snapshot rules |
-| `spectacular policy [@hook\|<id>\|--principle N\|--json]` | → CLI verb (v1.12.0+); read the merged policy contract. See [[policy-injection]] for the runtime loop, [[policies-contract]] for the schema |
+| `spectacular policy [@hook\|<id>\|--principle N\|--json]` | → CLI verb; read the merged policy contract. See [[policy-injection]] for the runtime loop, [[policies-contract]] for the schema |
 | Entering any work phase (init/planning/implementation/verification/archive/remember/snapshot/session-end) | → the phase ref doc's **@\<hook\> policy gate** runs `spectacular policy @<hook>` first; see [[policy-injection]] |
 | `spectacular touch <file>` | → CLI verb; trivial — just bumps `updated:` |
 | First invocation on existing `.spectacular/` project *with prior work* | → `references/onboarding.md` |
@@ -103,6 +103,8 @@ Each doc is described by a rules file at `references/<doc-id>-rules.md`. The rul
 
 **Registered docs:** the live registry is the set of `references/<doc-id>-rules.md` files — each declares one doc's dispatch + behavior. The authoritative catalog (every doc-id, its mode, and location) is `references/doc-index.md`; the per-capability detail for the engine itself is in `.spectacular/specs/doc-engine/SPEC.md`. Don't maintain a hardcoded id list here — it drifts every time a doc ships.
 
+`spectacular prd [grill|refine|review]` is just this handler with `<doc> = prd` (bare `prd` → grill if empty, else review).
+
 ### Feedback-loop mode (v1.6.0+)
 
 `feedback-loop` is a distinct skill mode for prototyping-stage human-feedback acquisition. **Not** a benchmark or verification pass. See [[feedback-loop]] for the full spec.
@@ -151,19 +153,10 @@ Packs use a short alias and add a `new <name>` verb (since packs are user-scope,
 | `spectacular pack grill <name>` | → `grill.md` + `pack-rules.md` — resume grill on an existing pack |
 | `spectacular pack refine <name>` | → `refine.md` + `pack-rules.md` |
 | `spectacular pack review <name>` | → `review.md` + `pack-rules.md` |
-| `spectacular convention-pack <verb>` | deprecated alias of `pack <verb>` (old doc-id, still accepted) |
 
-### Public-facing docs (DEPRECATED in v1.2.0 — owned by pageworks)
+### Public-facing docs — owned by pageworks
 
-> Public-facing docs work has moved to the dedicated [pageworks](https://github.com/alexsmedile/pageworks) skill. Spectacular keeps **discovery-only awareness** of `docs/` (folder + manifest presence). Schema, authoring, renderer adapters, and validation all live in pageworks now. The `docs *` verbs were removed in v1.17.0.
-
-| User says | Route to | Handled by |
-|---|---|---|
-| `spectacular doctor docs` | CLI — discovery only (folder presence, manifest presence, pageworks install hint) | CLI binary |
-| User asks "write docs", "create a docs page", "add a tutorial" | → `references/pageworks-handoff.md` § install hint | Skill |
-| After `spectacular archive <slug>` with SPEC changes | → CLI prints pageworks-audit hint (suppress with `--no-docs-prompt`) | CLI binary |
-
-When delegating to pageworks, surface the canonical install hint from `references/pageworks-handoff.md`. Never auto-install.
+Public-facing docs work lives in the dedicated [pageworks](https://github.com/alexsmedile/pageworks) skill. Spectacular keeps **discovery-only awareness** of `docs/` (folder + manifest presence, surfaced by `doctor docs` and an archive-time audit hint). When the user asks to "write docs / add a page / add a tutorial", route to `references/pageworks-handoff.md` and surface its install hint — never auto-install.
 
 ### Verification routing (when writing PLAN.md or moving requests to review)
 
@@ -183,19 +176,6 @@ When grilling, scaffolding, or finalizing a PLAN.md for any request, **route to 
 The skill never auto-scaffolds VERIFY.md. It is created only when:
 - The 2-of-6 rule triggers during request scaffolding, AND
 - The user confirms.
-
-### Legacy PRD triggers (backwards compatible)
-
-These map to the generalized handler with `<doc> = prd`. Behavior is identical.
-
-| Legacy trigger | Equivalent | Routes via |
-|---|---|---|
-| `spectacular prd` | `spectacular prd grill` (if empty) or `spectacular prd review` (if filled) | rules file → grill or review |
-| `spectacular prd grill` | same | `prd-rules.md` → `grill.md` |
-| `spectacular prd refine` | same | `prd-rules.md` → `refine.md` |
-| `spectacular prd review` | same | `prd-rules.md` → `review.md` |
-
-PRD behavior is fully handled by the generic engine (`grill.md` / `refine.md` / `review.md`) driven by `prd-rules.md`. (The pre-v1.4 `prd-grill/refine/review.md` files were removed once superseded — snapshots remain in `versions/`.)
 
 ---
 

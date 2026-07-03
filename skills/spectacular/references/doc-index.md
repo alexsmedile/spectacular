@@ -27,6 +27,8 @@ Human catalog of every document type in a Spectacular workspace.
 | `personas` | grill-each | `.spectacular/PERSONAS.md` | [personas-rules](personas-rules.md) |
 | `feedback` | index | `.spectacular/feedback/` (+ `requests/<slug>/feedback/`) | [feedback-rules](feedback-rules.md) |
 | `idea` | index | `.spectacular/ideas/` | [idea-rules](idea-rules.md) |
+| `audit` | index | `.spectacular/audit/` | [audit-rules](audit-rules.md) — **bug investigation** before a fix is planned; scaffold-only (v1.25.0, no CLI verb yet) |
+| `fixes` | index | `.spectacular/fixes/` | [fixes-rules](fixes-rules.md) — **verified-fix log**; write only once resolved; scaffold-only (v1.25.0, no CLI verb yet) |
 
 ## Per-request docs
 

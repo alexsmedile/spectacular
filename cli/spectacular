@@ -1272,6 +1272,7 @@ EOF
   fm_touch "$decisions"
   info "  ✓  appended decision: $title"
   [[ -n "$session" ]] && info "  ↳ linked to session: $session"
+  return 0
 }
 
 # ── cmd_decisions_migrate: spectacular decisions migrate ─────────────────────
@@ -4000,7 +4001,12 @@ EOF
 
   # Count decisions, memories
   local total_decisions=0 total_memories=0
-  while IFS= read -r f; do [[ -n "$f" ]] && total_decisions=$((total_decisions + 1)); done < <(_iter_md decisions)
+  if [[ -d ".spectacular/decisions" ]]; then
+    while IFS= read -r f; do [[ -n "$f" ]] && total_decisions=$((total_decisions + 1)); done < <(_iter_md decisions)
+  elif [[ -f ".spectacular/DECISIONS.md" ]]; then
+    # flat mode: each ADR is a "## <date> — <title>" prose block
+    total_decisions=$(grep -c '^## ' .spectacular/DECISIONS.md 2>/dev/null || true)
+  fi
   while IFS= read -r f; do [[ -n "$f" ]] && total_memories=$((total_memories + 1)); done < <(_iter_md memory)
 
   # Sessions: total + open

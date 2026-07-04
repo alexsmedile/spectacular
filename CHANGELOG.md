@@ -7,6 +7,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added
+
+- **`audit/` + `fixes/` soft-DB collections** — two new bug-lifecycle collections (index-only, auto-numbered `A<N>` / `F<N>`). `audit/` is the diagnosis scratchpad *before* a fix is planned; `fixes/` is the verified-fix log written only once a bug is resolved **and** verified. Both ride the existing collection machinery (templates + `<id>-rules.md` + `_iter_md`).
+- **`spectacular audit new|list|resolve`** — scaffold, list, and close bug investigations. `audit resolve <A> --into-fix` **graduates** an audit into a fix entry, copying every matching slot forward (Problem, Intended behavior, Root cause, Proposed fix, Success criteria) and setting `from_audit: A<N>`.
+- **`spectacular fix new|list`** — log a verified fix. Flags: `--problem/--intended/--cause/--fix/--criteria`, `--verified-by`, `--signature`, `--from-audit` (validated). Omitting `--verified-by` warns and marks the entry `verified: null` (a soft gate — a draft, not a trusted fix).
+- **Bug-fixing skeleton in both entry schemas** — every audit/fix entry now carries `problem → intended behavior → root cause → fix → success criteria`. `fixes/` adds **Verified by** (the evidence, distinct from the success-criteria bar) and a searchable **Signature** field.
+- **Self-learning loop (`references/bug-workflow.md`)** — the skill checks `.spectacular/fixes/` signatures *before* diagnosing a new bug ("have we fixed this before?"), applies a lightweight audit-first-vs-just-fix heuristic (no ceremony on one-liners), and logs a signed fix only when it carries reusable knowledge. Per-project today; corpus designed to later pool/export across projects.
+- **`references/soft-db-index.md`** — canonical routing index for all 7 soft-DB collections (memory · decisions · sessions · ideas · feedback · audit · fixes): role, purpose, structure, write verb, and the boundary rule that prevents mis-routing. Clarifies that `requests/` and canonical docs are *not* collections.
+
+### Changed
+
+- **SKILL.md** — added routing for bug reports (→ `bug-workflow.md`), the audit/fix verbs, and a "Where does this belong?" soft-DB routing section (→ `soft-db-index.md`). The `description` now lists all seven collections (trimmed to 949 chars, under the doctor 1000-char warn band). Ponytail trim carried over from the same session: −20 lines (dead PRD-legacy table, inline version stamps).
+- **`decide` flat-mode fixes** — `summary` now counts decisions in flat mode (was reporting 0 when ADRs are prose blocks in `DECISIONS.md`); flat-mode `decide` returns exit 0 on success (was returning 1 via a trailing `[[ ]] &&` short-circuit despite persisting). Logged as `fixes/F1`–`F3`; guarded by `tests/cli/decide.test.sh`.
+
 ## [1.24.0] — 2026-06-30
 
 ### Added

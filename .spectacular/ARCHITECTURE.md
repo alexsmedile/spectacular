@@ -41,8 +41,8 @@ This is distinct from `STACK.md` — STACK describes the **host project's** tech
 ├── sessions/           # work-session log (index.md + entries; v1.5.0+)
 ├── decisions/          # ADR entries when DECISIONS.md is in index mode (v1.17.0+)
 ├── feedback/           # prototyping-mode feedback entries (v1.6.0+; system-level)
-├── audit/              # bug investigations — diagnose before planning a fix (A<N>.md; v1.25.0+, scaffold-only)
-├── fixes/              # verified-fix log — logged only once resolved (F<N>.md; v1.25.0+, scaffold-only)
+├── audit/              # bug investigations — diagnose before planning a fix (A<N>.md; v1.25.0+, `spectacular audit`)
+├── fixes/              # verified-fix log — logged only once resolved (F<N>.md; v1.25.0+, `spectacular fix`)
 ├── _snapshots/         # versioned snapshots of canonical docs (store name configurable; default _snapshots since v1.24.0)
 │   ├── PRD/            # one folder per canonical doc, uppercase preserved
 │   │   └── @v1.2.md    # filename = the content's version (couples to version:)

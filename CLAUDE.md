@@ -95,6 +95,8 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 | `guided-first-run.md` | First invocation on a *fresh/empty* workspace — ushers new→PRD→first request one step at a time (v1.21.0) |
 | `scaffold-reference.md` | File template reference — frontmatter stubs for all file types |
 | `doc-index.md` | Human-readable catalog of every doc type. Dispatch lives in each `<doc>-rules.md` frontmatter (since v1.4.0; was `doc-registry.md` pre-v1.4.0) |
+| `soft-db-index.md` | Canonical routing index for the 7 soft-DB collections (memory/decisions/sessions/ideas/feedback/audit/fixes) — role, purpose, structure, boundary rules. Loaded when deciding *where* knowledge belongs (v1.25.0) |
+| `bug-workflow.md` | Bug handling — check prior fixes first, decide audit-first vs just-fix, log a reusable fix. Ties audit/ + fixes/ into a self-learning loop (v1.25.0) |
 | `grill.md` / `refine.md` / `review.md` | Generic engine for any registered doc (driven by registry + per-doc overrides) |
 | `prd-overrides.md` | PRD-specific rules: kit selection, slot prompts, vague-word list, gate checks |
 | `plan-overrides.md` / `tasks-overrides.md` | PLAN/TASKS-specific rules consumed by the same engine |

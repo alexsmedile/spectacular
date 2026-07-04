@@ -27,8 +27,8 @@ Human catalog of every document type in a Spectacular workspace.
 | `personas` | grill-each | `.spectacular/PERSONAS.md` | [personas-rules](personas-rules.md) |
 | `feedback` | index | `.spectacular/feedback/` (+ `requests/<slug>/feedback/`) | [feedback-rules](feedback-rules.md) |
 | `idea` | index | `.spectacular/ideas/` | [idea-rules](idea-rules.md) |
-| `audit` | index | `.spectacular/audit/` | [audit-rules](audit-rules.md) — **bug investigation** before a fix is planned; scaffold-only (v1.25.0, no CLI verb yet) |
-| `fixes` | index | `.spectacular/fixes/` | [fixes-rules](fixes-rules.md) — **verified-fix log**; write only once resolved; scaffold-only (v1.25.0, no CLI verb yet) |
+| `audit` | index | `.spectacular/audit/` | [audit-rules](audit-rules.md) — **bug investigation** before a fix is planned; write with `spectacular audit new\|list\|resolve` (v1.25.0) |
+| `fixes` | index | `.spectacular/fixes/` | [fixes-rules](fixes-rules.md) — **verified-fix log**; write only once resolved, with `spectacular fix new\|list` (v1.25.0) |
 
 ## Per-request docs
 
@@ -66,6 +66,8 @@ A stub's rules file therefore only needs its **frontmatter** (the engine's dispa
 |---|---|---|---|
 | `migrations-contract` | reference | `skills/spectacular/references/migrations-contract.md` | — |
 | `migration` | reference | `skills/spectacular/references/migrations/v<from>-to-v<to>.md` | — |
+| `bug-workflow` | reference | `skills/spectacular/references/bug-workflow.md` | ties audit/ + fixes/ into the self-learning loop; loaded on any bug report |
+| `soft-db-index` | reference | `skills/spectacular/references/soft-db-index.md` | **canonical routing index** for the 7 soft-DB collections — role, purpose, structure, boundary rules |
 
 ## Mode taxonomy
 

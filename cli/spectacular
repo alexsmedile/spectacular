@@ -2306,6 +2306,323 @@ EOF
   info "  ↳ next: cd into the request and flesh out PLAN slots"
 }
 
+# ── audit / fixes (v1.25.0+) ─────────────────────────────────────────────────
+# Two soft-DB collections, one bug-lifecycle workflow:
+#   audit/  A<N>.md  — investigation BEFORE a fix is planned (open→resolved/folded)
+#   fixes/  F<N>.md  — verified-fix log, logged only once resolved (terminal entries)
+# Both index-only (folder of files); auto-numbered like `decide`'s index mode.
+# See references/audit-rules.md and references/fixes-rules.md.
+
+# Next free N for a prefix (A|F) in a collection dir. Echoes the integer.
+_next_entry_num() {
+  local dir="$1" prefix="$2" f num next_n=1
+  for f in "$dir/$prefix"*.md; do
+    [[ -f "$f" ]] || continue
+    num=$(basename "$f" .md); num="${num#$prefix}"
+    [[ "$num" =~ ^[0-9]+$ ]] && (( num >= next_n )) && next_n=$(( num + 1 ))
+  done
+  echo "$next_n"
+}
+
+_validate_severity() {
+  case "$1" in low|medium|high) ;; *) die "$2: invalid severity '$1'. Must be: low | medium | high" ;; esac
+}
+
+cmd_audit() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    new)     cmd_audit_new "$@" ;;
+    list)    cmd_audit_list "$@" ;;
+    resolve) cmd_audit_resolve "$@" ;;
+    ""|--help|-h)
+      cat <<EOF
+Usage: spectacular audit <subcommand> [options]
+
+Subcommands:
+  new "<title>"               Scaffold an investigation at .spectacular/audit/A<N>.md
+                                (status: open). Options:
+                                  --severity low|medium|high  (default: medium)
+                                  --symptom <text>            Prefill the Symptom slot
+                                  --dry-run
+  list [--status <s>]         List audits (open|resolved|folded|all)
+  resolve <A<N>> --disposition "<text>"   Close an audit (status: resolved).
+                                  --into-fix                  Also scaffold a fix F<N>
+                                                                (from_audit: A<N>)
+                                  --verified-by <text>        (with --into-fix)
+
+audit/ is the diagnostic scratchpad between "something's off" and "here's the plan".
+See references/audit-rules.md.
+EOF
+      [[ -z "$sub" ]] && exit 1 || exit 0 ;;
+    *) die "audit: unknown subcommand '$sub'. Use: new | list | resolve" ;;
+  esac
+}
+
+cmd_audit_new() {
+  local title="" severity="medium" problem="" intended="" dry_run=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --severity)          require_value "--severity" "${2:-}"; severity="$2"; shift 2 ;;
+      --problem|--symptom) require_value "$1" "${2:-}"; problem="$2"; shift 2 ;;
+      --intended)          require_value "--intended" "${2:-}"; intended="$2"; shift 2 ;;
+      --dry-run)  dry_run=true; shift ;;
+      --help|-h)  echo "Usage: spectacular audit new \"<title>\" [--severity l|m|h] [--problem <text>] [--intended <text>] [--dry-run]"; exit 0 ;;
+      -*) die "Unknown flag for audit new: $1" ;;
+      *) [[ -n "$title" ]] && die "audit new: only one <title> argument (quote it)"; title="$1"; shift ;;
+    esac
+  done
+  [[ -z "$title" ]] && die "audit new: <title> argument required (quote it)"
+  [[ -d ".spectacular" ]] || die "audit new: not inside a Spectacular workspace"
+  _validate_severity "$severity" "audit new"
+
+  local dir=".spectacular/audit"
+  local id="A$(_next_entry_num "$dir" A)"
+  local entry_path="$dir/$id.md"
+
+  local template rendered
+  template=$(_resolve_template "audit/entry.md") \
+    || die "audit new: audit template not found (skills/spectacular/templates/audit/entry.md)"
+  rendered=$(_render_template "$template" \
+    ID "$id" TITLE "$title" SEVERITY "$severity" DATE "$TODAY" \
+    PROBLEM "${problem:-_(fill in)_}" \
+    INTENDED "${intended:-_(what SHOULD happen instead — the contract the bug violates)_}")
+
+  if $dry_run; then echo "── would write $entry_path ──"; echo "$rendered"; return 0; fi
+  mkdir -p "$dir"
+  echo "$rendered" > "$entry_path"
+  created "$entry_path"
+  info "  → status: open · severity: $severity"
+  info "  ↳ close it with: spectacular audit resolve $id --disposition \"...\""
+}
+
+cmd_audit_list() {
+  local status_filter="all"
+  while (( $# > 0 )); do
+    case "$1" in
+      --status) require_value "--status" "${2:-}"; status_filter="$2"; shift 2 ;;
+      --help|-h) echo "Usage: spectacular audit list [--status open|resolved|folded|all]"; exit 0 ;;
+      *) die "Unknown flag for audit list: $1" ;;
+    esac
+  done
+  [[ -d ".spectacular" ]] || die "audit list: not inside a Spectacular workspace"
+
+  local count=0 f status severity updated id disposition
+  printf "%-6s  %-9s  %-8s  %-10s  %s\n" "ID" "STATUS" "SEVERITY" "UPDATED" "DISPOSITION"
+  printf "%-6s  %-9s  %-8s  %-10s  %s\n" "--" "------" "--------" "-------" "-----------"
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    status=$(fm_get "$f" "status"); [[ -z "$status" ]] && status="?"
+    [[ "$status_filter" != "all" && "$status" != "$status_filter" ]] && continue
+    severity=$(fm_get "$f" "severity"); updated=$(fm_get "$f" "updated")
+    disposition=$(fm_get "$f" "disposition")
+    id=$(basename "$f" .md)
+    printf "%-6s  %-9s  %-8s  %-10s  %s\n" "$id" "$status" "${severity:-?}" "${updated:-?}" "${disposition:-—}"
+    count=$((count + 1))
+  done < <(_iter_md audit)
+  if [[ $count -eq 0 ]]; then
+    [[ "$status_filter" == "all" ]] \
+      && info "(no audits yet — start one with 'spectacular audit new \"<title>\"')" \
+      || info "(no audits with status: $status_filter)"
+  fi
+}
+
+cmd_audit_resolve() {
+  local id="" disposition="" into_fix=false verified_by=""
+  while (( $# > 0 )); do
+    case "$1" in
+      --disposition) require_value "--disposition" "${2:-}"; disposition="$2"; shift 2 ;;
+      --into-fix)    into_fix=true; shift ;;
+      --verified-by) require_value "--verified-by" "${2:-}"; verified_by="$2"; shift 2 ;;
+      --help|-h) echo "Usage: spectacular audit resolve <A<N>> --disposition \"<text>\" [--into-fix [--verified-by <text>]]"; exit 0 ;;
+      -*) die "Unknown flag for audit resolve: $1" ;;
+      *) [[ -n "$id" ]] && die "audit resolve: only one <id> argument"; id="$1"; shift ;;
+    esac
+  done
+  [[ -z "$id" ]] && die "audit resolve: <A<N>> argument required"
+  [[ -z "$disposition" ]] && die "audit resolve: --disposition \"<text>\" required"
+  [[ -d ".spectacular" ]] || die "audit resolve: not inside a Spectacular workspace"
+
+  local entry_path=".spectacular/audit/$id.md"
+  [[ -f "$entry_path" ]] || die "audit resolve: '$id' not found at $entry_path"
+
+  # --into-fix graduates the audit into a verified-fix entry, copying every
+  # matching slot forward (problem, intended, cause, proposed fix, criteria).
+  local fix_id=""
+  if $into_fix; then
+    local f_title f_from_audit f_severity f_problem f_intended f_cause f_fix f_criteria f_verified_by f_signature
+    f_title=$(_h1_title "$entry_path"); [[ -z "$f_title" ]] && f_title="fix for $id"
+    f_from_audit="$id"
+    f_severity=$(fm_get "$entry_path" severity)
+    f_verified_by="$verified_by"
+    f_problem=$(_copy_section  "$entry_path" "Problem")
+    f_intended=$(_copy_section "$entry_path" "Intended behavior")
+    f_cause=$(_copy_section    "$entry_path" "Root cause")
+    f_fix=$(_copy_section      "$entry_path" "Proposed fix")   # proposal → the fix, refine after
+    f_criteria=$(_copy_section "$entry_path" "Success criteria")
+    fix_id=$(_fix_scaffold) || die "audit resolve: could not scaffold fix entry"
+    # --into-fix owns the disposition; don't duplicate the user's phrasing.
+    disposition="became fix $fix_id"
+  fi
+
+  fm_set "$entry_path" "status" "resolved"
+  fm_set "$entry_path" "updated" "$TODAY"
+  fm_set "$entry_path" "disposition" "$disposition"
+
+  created "$entry_path"
+  info "  → status: resolved · disposition: $disposition"
+  $into_fix && info "  ↳ created fix $fix_id (slots copied from $id) — confirm Fix + add Verified by / Signature"
+  return 0
+}
+
+# Copy a section's body forward, treating a placeholder hint (_(...)_) as empty.
+_copy_section() {
+  local body; body=$(_section_body "$1" "$2")
+  [[ "$body" =~ ^_\(.*\)_$ ]] && body=""
+  echo "$body"
+}
+
+# Echo the body under a "## <heading>" up to the next "## " (or EOF), leading blanks trimmed.
+_section_body() {
+  awk -v h="## $2" '
+    $0 == h { grab=1; next }
+    grab && /^## / { exit }
+    grab { if (!started && $0 ~ /./) started=1; if (started) print }
+  ' "$1"
+}
+
+# Scaffold a fixes/F<N>.md from named slot vars.
+# Reads these locals from the CALLER's scope (set them before calling):
+#   f_title f_from_audit f_severity f_problem f_intended f_cause f_fix
+#   f_criteria f_verified_by f_signature
+# Default: writes the file, echoes the new id.
+# If f_dry=true: writes nothing, echoes the rendered content (for --dry-run).
+_fix_scaffold() {
+  local dir=".spectacular/fixes"
+  local id="F$(_next_entry_num "$dir" F)"
+  local verified_date="null"
+  [[ -n "${f_verified_by:-}" ]] && verified_date="$TODAY"
+  local template rendered
+  template=$(_resolve_template "fixes/entry.md") || { echo ""; return 1; }
+  rendered=$(_render_template "$template" \
+    ID "$id" TITLE "${f_title:-untitled}" SEVERITY "${f_severity:-medium}" \
+    OPENED "$TODAY" VERIFIED "$verified_date" FROM_AUDIT "${f_from_audit:-null}" \
+    SIGNATURE "${f_signature:-}" \
+    PROBLEM     "${f_problem:-_(fill in)_}" \
+    INTENDED    "${f_intended:-_(what SHOULD happen)_}" \
+    CAUSE       "${f_cause:-_(fill in)_}" \
+    FIX         "${f_fix:-_(fill in)_}" \
+    CRITERIA    "${f_criteria:-_(the observable bar the fix must clear)_}" \
+    VERIFIED_BY "${f_verified_by:-_(fill in — name the check)_}")
+  if [[ "${f_dry:-false}" == true ]]; then echo "$rendered"; return 0; fi
+  mkdir -p "$dir"
+  echo "$rendered" > "$dir/$id.md"
+  echo "$id"
+}
+
+cmd_fix() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    new)  cmd_fix_new "$@" ;;
+    list) cmd_fix_list "$@" ;;
+    ""|--help|-h)
+      cat <<EOF
+Usage: spectacular fix <subcommand> [options]
+
+Subcommands:
+  new "<title>"               Log a VERIFIED fix at .spectacular/fixes/F<N>.md.
+                                Options:
+                                  --severity low|medium|high  (default: medium)
+                                  --bug <text> --cause <text> --fix <text>
+                                  --verified-by <text>   The check that proves it
+                                                           (omitting → verified: null + warn)
+                                  --from-audit <A<N>>    Link to originating audit
+                                  --dry-run
+  list [--since <Nd>]         List fix entries
+
+fixes/ logs a bug fix ONLY once fully resolved and verified. See references/fixes-rules.md.
+EOF
+      [[ -z "$sub" ]] && exit 1 || exit 0 ;;
+    *) die "fix: unknown subcommand '$sub'. Use: new | list" ;;
+  esac
+}
+
+cmd_fix_new() {
+  # slot vars use the f_ prefix consumed by _fix_scaffold
+  local f_title="" f_severity="medium" f_problem="" f_intended="" f_cause="" f_fix="" \
+        f_criteria="" f_verified_by="" f_from_audit="" f_signature="" dry_run=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --severity)        require_value "--severity"    "${2:-}"; f_severity="$2"; shift 2 ;;
+      --problem|--bug)   require_value "$1" "${2:-}"; f_problem="$2"; shift 2 ;;
+      --intended)        require_value "--intended"    "${2:-}"; f_intended="$2"; shift 2 ;;
+      --cause)           require_value "--cause"       "${2:-}"; f_cause="$2"; shift 2 ;;
+      --fix)             require_value "--fix"         "${2:-}"; f_fix="$2"; shift 2 ;;
+      --criteria)        require_value "--criteria"    "${2:-}"; f_criteria="$2"; shift 2 ;;
+      --verified-by)     require_value "--verified-by" "${2:-}"; f_verified_by="$2"; shift 2 ;;
+      --signature)       require_value "--signature"   "${2:-}"; f_signature="$2"; shift 2 ;;
+      --from-audit)      require_value "--from-audit"  "${2:-}"; f_from_audit="$2"; shift 2 ;;
+      --dry-run)         dry_run=true; shift ;;
+      --help|-h)
+        echo "Usage: spectacular fix new \"<title>\" [--verified-by <text>] [--problem/--intended/--cause/--fix/--criteria <text>] [--signature <text>] [--from-audit A<N>] [--severity l|m|h] [--dry-run]"; exit 0 ;;
+      -*) die "Unknown flag for fix new: $1" ;;
+      *) [[ -n "$f_title" ]] && die "fix new: only one <title> argument (quote it)"; f_title="$1"; shift ;;
+    esac
+  done
+  [[ -z "$f_title" ]] && die "fix new: <title> argument required (quote it)"
+  [[ -d ".spectacular" ]] || die "fix new: not inside a Spectacular workspace"
+  _validate_severity "$f_severity" "fix new"
+  if [[ -n "$f_from_audit" && ! -f ".spectacular/audit/$f_from_audit.md" ]]; then
+    die "fix new: --from-audit '$f_from_audit' not found at .spectacular/audit/$f_from_audit.md"
+  fi
+  [[ -z "$f_verified_by" ]] && warn "no --verified-by — entry marked unverified; fill 'Verified by' before trusting it"
+
+  if $dry_run; then
+    echo "── would write .spectacular/fixes/F$(_next_entry_num .spectacular/fixes F).md ──"
+    local f_dry=true; _fix_scaffold || die "fix new: could not render fixes template"
+    return 0
+  fi
+
+  local id
+  id=$(_fix_scaffold) || die "fix new: could not render fixes template"
+  created ".spectacular/fixes/$id.md"
+  if [[ -n "$f_verified_by" ]]; then info "  → verified: $TODAY · by: $f_verified_by"; else info "  → verified: null (unverified)"; fi
+  [[ -n "$f_from_audit" ]] && info "  ↳ linked to audit: $f_from_audit"
+  return 0
+}
+
+cmd_fix_list() {
+  local since=""
+  while (( $# > 0 )); do
+    case "$1" in
+      --since) require_value "--since" "${2:-}"; since="$2"; shift 2 ;;
+      --help|-h) echo "Usage: spectacular fix list [--since <Nd>]"; exit 0 ;;
+      *) die "Unknown flag for fix list: $1" ;;
+    esac
+  done
+  [[ -d ".spectacular" ]] || die "fix list: not inside a Spectacular workspace"
+
+  local count=0 f verified severity id from_audit
+  printf "%-6s  %-12s  %-8s  %-10s  %s\n" "ID" "VERIFIED" "SEVERITY" "FROM" "TITLE"
+  printf "%-6s  %-12s  %-8s  %-10s  %s\n" "--" "--------" "--------" "----" "-----"
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    verified=$(fm_get "$f" "verified"); [[ -z "$verified" || "$verified" == "null" ]] && verified="unverified"
+    severity=$(fm_get "$f" "severity"); from_audit=$(fm_get "$f" "from_audit")
+    [[ -z "$from_audit" || "$from_audit" == "null" ]] && from_audit="—"
+    id=$(basename "$f" .md)
+    local title; title=$(_h1_title "$f")
+    printf "%-6s  %-12s  %-8s  %-10s  %s\n" "$id" "$verified" "${severity:-?}" "$from_audit" "${title:-?}"
+    count=$((count + 1))
+  done < <(_iter_md fixes)
+  [[ $count -eq 0 ]] && info "(no fixes yet — log one with 'spectacular fix new \"<title>\" --verified-by \"...\"')"
+  return 0
+}
+
+# Echo the "# <ID> — <title>" H1 title portion (after the em-dash), or the whole H1.
+_h1_title() {
+  awk '/^# / { sub(/^# /, ""); if (index($0, " — ")) sub(/^.* — /, ""); print; exit }' "$1"
+}
+
 # ── vision / imagine (v1.15.0+) ──────────────────────────────────────────────
 # `imagine` is the generative-first planning mode. The CLI does the MECHANICAL
 # part: scaffold the vision/ soft-folder (spine + typed subfolders) and add
@@ -9918,6 +10235,11 @@ main() {
     # Idea (v1.7.0+): thinking scratchpad.
     idea)
       shift; cmd_idea "$@"; exit $? ;;
+    # Audit / fix (v1.25.0+): bug-lifecycle soft-DB collections.
+    audit)
+      shift; cmd_audit "$@"; exit $? ;;
+    fix)
+      shift; cmd_fix "$@"; exit $? ;;
     # Imagine / vision (v1.15.0+): imagination-backed planning.
     # `imagine <slug>` scaffolds the vision/ folder (mechanical), then the skill
     # renders + derives. Bare `imagine` (no slug) is a skill verb. `vision add`

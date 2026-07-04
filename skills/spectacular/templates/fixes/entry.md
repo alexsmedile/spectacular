@@ -1,31 +1,44 @@
 <!--
   One fix entry — a FULLY RESOLVED AND VERIFIED bug fix.
-  Written to .spectacular/fixes/F<N>.md. Scaffold-only in v1.25.0 (no CLI verb
-  yet — hand-write from this template). See references/fixes-rules.md.
+  Written to .spectacular/fixes/F<N>.md by `spectacular fix new`.
+  Substitution tokens (filled by CLI): <ID> <TITLE> <SEVERITY> <OPENED> <VERIFIED>
+  <FROM_AUDIT> <PROBLEM> <INTENDED> <CAUSE> <FIX> <CRITERIA> <VERIFIED_BY> <SIGNATURE>.
+  Other bracketed text is a fill-in hint left in place. See references/fixes-rules.md.
 
-  A fix entry is not a symptom log. It's the settled record: what broke, why,
-  what we changed, and the check that proves it holds. Log ONLY after verified.
+  The body follows the bug-fixing skeleton, made retrievable:
+    problem → intended behavior → root cause → fix (definitive) →
+    success criteria → verified by (evidence) → signature (for future recall).
 -->
 
 ---
 type: fix
-opened: <DATE>
-verified: <DATE>
-severity: low | medium | high
-from_audit: null
+opened: <OPENED>
+verified: <VERIFIED>
+severity: <SEVERITY>
+from_audit: <FROM_AUDIT>
+signature: <SIGNATURE>
 related: []
 ---
 
-# Fix — <TITLE>
+# <ID> — <TITLE>
 
-## Bug
-<THE SYMPTOM THAT WAS REPORTED>
+## Problem
+<PROBLEM>
+
+## Intended behavior
+<INTENDED>
 
 ## Root cause
-<WHY IT HAPPENED — the actual mechanism>
+<CAUSE>
 
 ## Fix
-<WHAT WAS CHANGED — file:line, the shape of the change>
+<FIX>
+
+## Success criteria
+<CRITERIA>
 
 ## Verified by
-<THE CHECK THAT PROVES IT: a test path, a repro-now-passing, a manual walk>
+<VERIFIED_BY>
+
+## Signature
+<SIGNATURE>

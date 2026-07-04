@@ -5,9 +5,8 @@ description: |
   Manages the full lifecycle of a .spectacular/ workspace: reads project state, scaffolds
   requests, manages lifecycle transitions, writes memory, archives completed work, and
   grills/refines/reviews any structured doc (PRD, PLAN, TASKS, PRINCIPLES, POLICY, ARCHITECTURE,
-  ROADMAP, STACK, AGENTS, DECISIONS, PERSONAS) plus soft-DB collections (memory, sessions,
-  feedback, ideas). Enforces a practice layer (POLICY.md): work-phase hooks gate transitions
-  (e.g. understand before implementation, verification before verified).
+  ROADMAP, STACK, AGENTS, DECISIONS, PERSONAS) plus soft-DB collections (memory, decisions,
+  sessions, ideas, feedback, audit, fixes). Enforces a practice layer (POLICY.md): work-phase hooks gate transitions.
   Use when: opening /spectacular, scaffolding a request, archiving work, capturing a memory,
   snapshotting a doc, onboarding to a workspace, or building any canonical doc from scratch.
   Triggers: /spectacular, spectacular status|new|archive|advance|next|init|snapshot|remember|decide|policy,
@@ -48,6 +47,12 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular idea new <slug>` | → CLI verb; see [[idea-rules]] for entry shape |
 | `spectacular idea list` | → CLI verb |
 | `spectacular idea promote <slug>` | → CLI verb; scaffolds request, moves source to `archive/ideas/` |
+| A bug/quirk/regression is reported (any "why does X do Y", "this is broken") | → **`references/bug-workflow.md`** — check prior fixes first, then decide audit-first vs just-fix. Load this before diagnosing. |
+| `spectacular audit new\|list\|resolve` | → CLI verb; bug investigation before a fix. `resolve --into-fix` graduates to a fix (copies all slots). See [[audit-rules]], [[bug-workflow]] |
+| `spectacular fix new\|list` | → CLI verb; log a **verified, signed** fix. See [[fixes-rules]], [[bug-workflow]] |
+| "record a fix" / "log this fix" / "the bug is fixed and verified" | → `spectacular fix new` once resolved+verified, **with `--signature`**; see [[fixes-rules]] |
+| "investigate this bug" / "audit this quirk" before planning | → `spectacular audit new`; see [[audit-rules]] |
+| "have we seen this bug before?" / starting to diagnose | → **[[bug-workflow]] Step 0** — grep `.spectacular/fixes/` signatures first (self-learning loop) |
 | `spectacular advance <slug>` | → CLI verb (no skill flow); lifecycle move-forward (was `promote`, still an alias); see [[lifecycle]] |
 | `spectacular snapshot <file>` | → CLI verb (no skill flow); see [[versioning]] for snapshot rules |
 | `spectacular policy [@hook\|<id>\|--principle N\|--json]` | → CLI verb; read the merged policy contract. See [[policy-injection]] for the runtime loop, [[policies-contract]] for the schema |
@@ -104,6 +109,10 @@ Each doc is described by a rules file at `references/<doc-id>-rules.md`. The rul
 **Registered docs:** the live registry is the set of `references/<doc-id>-rules.md` files — each declares one doc's dispatch + behavior. The authoritative catalog (every doc-id, its mode, and location) is `references/doc-index.md`; the per-capability detail for the engine itself is in `.spectacular/specs/doc-engine/SPEC.md`. Don't maintain a hardcoded id list here — it drifts every time a doc ships.
 
 `spectacular prd [grill|refine|review]` is just this handler with `<doc> = prd` (bare `prd` → grill if empty, else review).
+
+### Where does this belong? — soft-DB routing
+
+When you have a piece of operational knowledge and must decide *which store* it goes in (a fact? a decision? a bug fix? an idea?), route via **`references/soft-db-index.md`** — the canonical index of the seven soft-DB collections (`memory` · `decisions` · `sessions` · `ideas` · `feedback` · `audit` · `fixes`), each with its role, purpose, structure, write verb, and the boundary rule that keeps entries from landing in the wrong collection. Load it whenever the routing isn't obvious. (`requests/` and the canonical docs are **not** collections — soft-db-index says why.)
 
 ### Feedback-loop mode (v1.6.0+)
 
@@ -202,6 +211,7 @@ Never read `archive/` during normal operation.
 - **Slugs** are kebab-case, skill-derived, user-overridable, uniqueness enforced.
 - **Memory** (`spectacular remember this`) writes to `.spectacular/memory/` — git-committed, team-visible. Never to `.claude/` memory.
 - Be proactive: surface stale state, propose lifecycle transitions, flag blocked requests.
+- **Know when to write to a collection, not just how.** Each soft-DB collection has a named prompt-moment — see the "When to act" trigger table in [[soft-db-index]]. Reversible/cheap writes (audit note, session, idea) happen on their natural trigger; permanent/team-visible writes (memory, decisions, archive) are **proposed, human confirms, then written** — never autonomous. Archive is the convergence point (spec-sync + memory + fix/audit capture); see [[archive]].
 
 ### Task tracking — two layers
 

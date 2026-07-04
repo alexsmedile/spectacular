@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.25.0] — 2026-07-04
+
 ### Added
 
 - **`audit/` + `fixes/` soft-DB collections** — two new bug-lifecycle collections (index-only, auto-numbered `A<N>` / `F<N>`). `audit/` is the diagnosis scratchpad *before* a fix is planned; `fixes/` is the verified-fix log written only once a bug is resolved **and** verified. Both ride the existing collection machinery (templates + `<id>-rules.md` + `_iter_md`).

@@ -22,14 +22,16 @@ Shell scripts use Bash with `set -euo pipefail`, two-space indentation inside fu
 
 ## Testing Guidelines
 
-No formal test suite exists yet. Treat shell syntax checks and the version guard as the required baseline. For changes to `cli/spectacular`, test the affected command path manually in a temporary directory, for example:
+A shell test suite lives under `tests/` — run it with `bash tests/run.sh` (or a single area, e.g. `bash tests/cli/doctor.test.sh`). Coverage spans `tests/cli/` (CLI flags + scaffold output, asserting on findings + exit codes), `tests/pipeline/` (debug-fleet orchestration runbooks with real bug fixtures), and `tests/agents/` (single-agent judgment fixtures for the fixer/investigator). Treat shell syntax checks (`bash -n cli/spectacular`) and the version guard as the required baseline on top of that.
+
+For a one-off manual check of a `cli/spectacular` command path, use a temporary directory:
 
 ```bash
 tmpdir="$(mktemp -d)" && cd "$tmpdir"
 /path/to/repo/cli/spectacular init --name demo
 ```
 
-Do not commit scratch directories. If adding automated tests later, prefer shell-focused tests that exercise CLI flags and scaffold output.
+Do not commit scratch directories. Prefer shell-focused tests that exercise CLI flags and scaffold output; add new CLI-behavior scenarios to `tests/cli/*.test.sh` in the existing assert style.
 
 ## Commit & Pull Request Guidelines
 

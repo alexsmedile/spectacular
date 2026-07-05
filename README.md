@@ -135,6 +135,9 @@ That's the whole idea. The full layout, once a project fills in:
 ├── memory/             # long-term operational learning (git-committed)
 ├── feedback/           # prototyping-mode feedback entries (v1.6.0+)
 ├── ideas/              # thinking scratchpad — not acted on automatically (v1.7.0+)
+├── debug/              # live debug-job traces — one folder per bug (v1.26.0+)
+├── audit/              # diagnostic examinations earned at resolution (v1.25.0+)
+├── fixes/              # reusable verified-fix library, greppable (v1.25.0+)
 └── archive/            # completed requests (never deleted)
 ```
 
@@ -168,6 +171,8 @@ A typical coding project (`spectacular init --kit coding`) scaffolds the always-
 | `spectacular show <doctype>` | Dump canonical doc (`prd\|spec\|principles\|...`); `--section <h2>` filters (v1.8.0+) |
 | `spectacular progress <slug>` | Milestone tick rate from TASKS.md (v1.8.0+) |
 | `spectacular paths` | JSON map of conventional workspace paths (v1.8.0+) |
+| _(bug report to `/spectacular`)_ | Debug agent fleet — the skill checks prior `fixes/`, decides audit-first vs just-fix, delegates to read-only `debug-investigator` / apply-only `debug-fixer` / `debug-researcher`, then graduates a verified fix to the library. Traces land in `debug/`; reusable remedies in `fixes/` (v1.26.0+) |
+| `spectacular fix new` / `audit new` | Log a verified fix / open a diagnostic audit (the debug-fleet library verbs); `fix new --debug-job <slug>` back-links the trace (v1.25.0+, `--debug-job` v1.26.0) |
 
 > [!NOTE]
 > **`spectacular docs *` verbs were removed in v1.17.0.** Public-facing documentation work lives in the standalone [pageworks](https://github.com/alexsmedile/pageworks) skill. `doctor docs` (discovery-only) remains. Install pageworks via its own one-liner.
@@ -189,7 +194,7 @@ spectacular init --skill-scope none           # scaffold only; skip skill instal
 spectacular init --update                     # re-download latest skill release
 
 spectacular doctor                            # substrate self-check (all areas)
-spectacular doctor <area>                     # scoped: skill | workspace | frontmatter | snapshots | links | lifecycle | kits | conventions | specs | docs | personas | memory | sessions | feedback | ideas | policies
+spectacular doctor <area>                     # scoped: skill | workspace | frontmatter | snapshots | links | lifecycle | kits | conventions | specs | docs | personas | memory | sessions | feedback | ideas | debug | policies | vision | decisions | roadmap
 spectacular doctor --fix                      # apply mechanical fixes (gitignore, missing dirs, dangling symlinks, pack drift, legacy current/ migration)
 spectacular doctor --format json              # JSON report for the skill or other tools
 

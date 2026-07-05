@@ -152,7 +152,7 @@ spectacular init --global           # install to ~/.agents/ and ~/.claude/
 spectacular init --update           # re-download latest skill release
 
 spectacular doctor                  # substrate self-check (all areas)
-spectacular doctor <area>           # scoped: skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|policies|vision|decisions|roadmap
+spectacular doctor <area>           # scoped: skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|debug|policies|vision|decisions|roadmap
 spectacular doctor --fix            # apply mechanical fixes
 
 spectacular policy                  # read the merged policy contract (POLICY.md + config overrides)

@@ -231,6 +231,14 @@ The bridge from trace to permanent ledger:
 - Both `A<N>` and `F<N>` (when written) cross-link each other and carry `debug_job` back to this
   folder.
 
+> **These spines are hand-written by the orchestrator (no `debug` write-verb) — so `spectacular
+> doctor debug` validates them.** It checks `job.json` `status` and `outcome.json` `disposition`
+> against the enums above, and enforces the invariant that a `wont-fix`/`folded-into-request` job
+> logs no `F<N>` (`logged_fixes: []`). An LLM drifts on closed enums — e.g. leaking a `reason` value
+> (`needs-more-context`) into the `status` slot — so this is the guardrail that catches it at check
+> time instead of a resume failure. If you add a status/disposition value here, add it to
+> `check_debug` in `cli/spectacular` too, or doctor will flag valid spines.
+
 ## Lifecycle
 
 1. **Open** — orchestrator scaffolds `debug/<job-slug>/` + writes `job.json` (`status: investigating`

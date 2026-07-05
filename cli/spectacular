@@ -7567,7 +7567,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas policies vision decisions roadmap"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas debug policies vision decisions roadmap"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -7602,6 +7602,7 @@ Areas (run all if omitted):
   sessions      SESSIONS.md frontmatter + open-session invariant + 4h stale warning (v1.5.0+; opt-in)
   feedback      feedback/ entries — frontmatter, stale-open (>30d), orphan back-refs (v1.6.0+)
   ideas         ideas/ entries — frontmatter, stale-exploring (>90d), orphan promoted (v1.7.0+)
+  debug         debug/<slug> trace spines — status/disposition enums + wont-fix/folded⟹no-logged-fixes invariant (v1.26.0+)
   decisions     DECISIONS.md index-mode consistency — orphans, stale files, numbering gaps (v1.17.0+)
 
 Options:
@@ -7628,7 +7629,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) require_value "--format" "${2:-}"; DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|policies|vision|decisions|roadmap)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|debug|policies|vision|decisions|roadmap)
         if [[ -z "$DOC_OPT_AREA" ]]; then
           DOC_OPT_AREA="$1"
         else
@@ -9123,6 +9124,104 @@ check_ideas() {
   fi
 }
 
+# ── check_debug (v1.26.0+) ───────────────────────────────────────────────────
+# Validates debug/<slug> trace spines against the schema enums + the cross-field
+# invariants an LLM orchestrator drifts on (it hand-writes these JSON files — the
+# CLI doesn't scaffold them). Judgment-only, no --fix: catches a bad status/
+# disposition value or a wont-fix/folded job that wrongly logged an F<N>, before
+# it surfaces later as a resume failure. Enums mirror references/debug-trace.md.
+check_debug() {
+  [[ -d ".spectacular" ]] || return 0
+  local top_dir=".spectacular/debug"
+
+  if [[ ! -d "$top_dir" ]]; then
+    doc_add "debug" "info" "$top_dir" "no debug/ folder — opens on the first fleet job (see references/debug-trace.md)" \
+      "skip" "judgment"
+    return 0
+  fi
+
+  # Source-of-truth enums (references/debug-trace.md). Kept as space-lists for a
+  # simple word-membership test — no jq dependency, python only to read JSON.
+  local job_status="investigating researching planning fixing verifying resolved folded wont-fix"
+  local dispositions="resolved folded-into-request wont-fix"
+
+  local job_count=0 bad="" job d slug
+  for d in "$top_dir"/*/; do
+    d="${d%/}"   # strip trailing slash so path joins don't double up
+    [[ -d "$d" ]] || continue
+    slug=$(basename "$d")
+    job="$d/job.json"
+    [[ -f "$job" ]] || { bad=1; doc_add "debug" "warning" "$d" "debug/$slug has no job.json spine" \
+        "every debug job needs a job.json — see references/debug-trace.md, or remove a stray folder" "judgment"; continue; }
+    job_count=$((job_count + 1))
+
+    # Read the fields we validate in one python call (empty string if absent/unparseable).
+    local fields status sclass
+    fields=$(python3 -c '
+import json,sys
+try:
+    d=json.load(open(sys.argv[1]))
+except Exception as e:
+    print("__PARSE_ERROR__"); sys.exit(0)
+print(d.get("status","")); print(d.get("symptom_class",""))
+' "$job" 2>/dev/null)
+
+    if [[ "$fields" == "__PARSE_ERROR__"* ]]; then
+      bad=1; doc_add "debug" "warning" "$job" "debug/$slug/job.json does not parse as JSON" \
+        "fix the JSON syntax; validate with: python3 -m json.tool $job" "judgment"
+      continue
+    fi
+    status=$(printf '%s\n' "$fields" | sed -n '1p')
+    sclass=$(printf '%s\n' "$fields" | sed -n '2p')
+
+    # status enum (this is the field the orchestrator put a reason-value into)
+    if [[ -n "$status" ]] && [[ " $job_status " != *" $status "* ]]; then
+      bad=1; doc_add "debug" "warning" "$job" "debug/$slug: job status '$status' is off-enum" \
+        "use one of: ${job_status// / | } (a 'reason' value like needs-more-context belongs in a hypotheses-only investigation, not job status)" "judgment"
+    fi
+
+    # outcome.json: disposition enum + the no-fix-on-decline invariant
+    local outcome="$d/outcome.json"
+    if [[ -f "$outcome" ]]; then
+      local ofields disp nfixes
+      ofields=$(python3 -c '
+import json,sys
+try:
+    d=json.load(open(sys.argv[1]))
+except Exception:
+    print("__PARSE_ERROR__"); sys.exit(0)
+print(d.get("disposition",""))
+lf=d.get("logged_fixes",[])
+print(len(lf) if isinstance(lf,list) else -1)
+' "$outcome" 2>/dev/null)
+      if [[ "$ofields" == "__PARSE_ERROR__"* ]]; then
+        bad=1; doc_add "debug" "warning" "$outcome" "debug/$slug/outcome.json does not parse as JSON" \
+          "fix the JSON syntax; validate with: python3 -m json.tool $outcome" "judgment"
+      else
+        disp=$(printf '%s\n' "$ofields" | sed -n '1p')
+        nfixes=$(printf '%s\n' "$ofields" | sed -n '2p')
+        if [[ -n "$disp" ]] && [[ " $dispositions " != *" $disp "* ]]; then
+          bad=1; doc_add "debug" "warning" "$outcome" "debug/$slug: disposition '$disp' is off-enum" \
+            "use one of: ${dispositions// / | } — as a bare value; put the why in a separate 'reason' field, not inside the disposition string" "judgment"
+        fi
+        # the invariant the orchestrator has to *remember* (P6/P7): a declined or
+        # relocated job applies nothing, so it graduates no fix.
+        if [[ "$disp" == "wont-fix" || "$disp" == "folded-into-request" ]] && [[ "$nfixes" -gt 0 ]]; then
+          bad=1; doc_add "debug" "warning" "$outcome" "debug/$slug: disposition '$disp' but logged_fixes is non-empty ($nfixes)" \
+            "a wont-fix/folded job applies nothing — logged_fixes must be [] (Step 3 logs only verified fixes)" "judgment"
+        fi
+      fi
+    fi
+  done
+
+  if [[ $job_count -eq 0 ]]; then
+    doc_add "debug" "info" "$top_dir" "no debug jobs yet"
+    return 0
+  fi
+  [[ -z "$bad" ]] && doc_add "debug" "pass" "$top_dir" "$job_count debug job(s); spines conform to schema enums + invariants" \
+    || { [[ -n "$bad" ]] && doc_add "debug" "info" "$top_dir" "$job_count debug job(s) checked — see warnings above"; }
+}
+
 # ── check_vision (v1.15.0+) ──────────────────────────────────────────────────
 # Validates each request's vision/ soft-folder: fragment frontmatter shape,
 # kind-vs-subfolder match, dangling persona refs, manifest-vs-files drift, and
@@ -9575,6 +9674,7 @@ run_areas() {
       sessions)    check_sessions ;;
       feedback)    check_feedback ;;
       ideas)       check_ideas ;;
+      debug)       check_debug ;;
       policies)    check_policies ;;
       vision)      check_vision ;;
       decisions)   check_decisions ;;

@@ -619,6 +619,43 @@ scenario_17_description_length() {
   rm -rf "$dir"
 }
 
+scenario_18_debug_spine_validation() {
+  echo "Scenario 18: debug/ trace spines — enum + invariant validation (v1.26.0+)"
+  local dir="/tmp/doctor-test-18"
+  seed_clean "$dir"
+  mkdir -p "$dir/.spectacular/debug/clean-job" \
+           "$dir/.spectacular/debug/bad-status" \
+           "$dir/.spectacular/debug/bad-invariant"
+
+  # clean spine → passes
+  echo '{"slug":"clean-job","status":"investigating","symptom_class":"runtime_error"}' \
+    > "$dir/.spectacular/debug/clean-job/job.json"
+  # off-enum status (a 'reason' value leaked into the status slot — the real orchestrator bug)
+  echo '{"slug":"bad-status","status":"needs-more-context"}' \
+    > "$dir/.spectacular/debug/bad-status/job.json"
+  # invariant: wont-fix must log no fix
+  echo '{"slug":"bad-invariant","status":"resolved"}' \
+    > "$dir/.spectacular/debug/bad-invariant/job.json"
+  echo '{"disposition":"wont-fix","logged_fixes":["F9"]}' \
+    > "$dir/.spectacular/debug/bad-invariant/outcome.json"
+
+  local out code
+  out=$(cd "$dir" && "$CLI" doctor debug 2>&1) && code=0 || code=$?
+
+  assert_exit_code "1" "$code" "debug drift exits 1 (warnings)"
+  assert_output_contains "$out" "job status 'needs-more-context' is off-enum" "off-enum status flagged"
+  assert_output_contains "$out" "logged_fixes is non-empty" "wont-fix invariant flagged"
+
+  # clean-only workspace passes with exit 0
+  rm -rf "$dir/.spectacular/debug/bad-status" "$dir/.spectacular/debug/bad-invariant"
+  local out_ok code_ok
+  out_ok=$(cd "$dir" && "$CLI" doctor debug 2>&1) && code_ok=0 || code_ok=$?
+  assert_exit_code "0" "$code_ok" "clean debug spine exits 0"
+  assert_output_contains "$out_ok" "conform to schema enums" "clean spine reports pass"
+
+  rm -rf "$dir"
+}
+
 # ── run ───────────────────────────────────────────────────────────────────────
 
 scenario_1_clean_workspace_exits_zero
@@ -639,6 +676,7 @@ scenario_14_migration_chain_gap
 scenario_15_roadmap_shape_detection
 scenario_16_roadmap_icebox_rename
 scenario_17_description_length
+scenario_18_debug_spine_validation
 
 echo ""
 echo "  Asserts: $pass_count passed, $fail_count failed"

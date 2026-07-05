@@ -264,7 +264,7 @@ spectacular policy --principle 7   # reverse: which policies enforce principle 7
 spectacular policy --json          # machine form (skill-consumed)
 ```
 
-Hooks (the locked 8): `@Init`, `@Planning`, `@Implementation`, `@Verification`, `@Archive`, `@Remember`, `@Snapshot`, `@SessionEnd`. A policy blocks a transition only if it declares `severity: block`; `warn` and unset are surface-and-continue. `spectacular advance` prints an advisory at the spine transitions, and `spectacular doctor policies` reports structural + `## Understanding`-gate findings. See [policies-contract](../skills/spectacular/references/policies-contract.md) for the schema.
+Hooks (the locked 9): `@Init`, `@Planning`, `@Implementation`, `@Verification`, `@Archive`, `@Debugging`, `@Remember`, `@Snapshot`, `@SessionEnd`. A policy blocks a transition only if it declares `severity: block`; `warn` and unset are surface-and-continue. `spectacular advance` prints an advisory at the spine transitions, and `spectacular doctor policies` reports structural + `## Understanding`-gate findings. See [policies-contract](../skills/spectacular/references/policies-contract.md) for the schema.
 
 ### `/spectacular doctor [<area>] [--fix]`
 

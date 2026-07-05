@@ -301,7 +301,7 @@ policies:
   scaffold-contract:
     severity: block         # override shipped severity (warn → block)
   no-secrets-in-memory:     # register a custom policy (id = key)
-    hook: "@Remember"       # required for custom: one of the 8 hooks
+    hook: "@Remember"       # required for custom: one of the 9 hooks
     severity: warn
     check: "memory entry contains no API keys, tokens, or passwords"
 ```
@@ -310,7 +310,7 @@ policies:
 
 - **`enabled`** — `true` (default) or `false`. A disabled policy is still listed by `spectacular policy` but marked `[disabled]` and never enforced.
 - **`severity`** — `block` (refuse to proceed) or `warn` (surface + continue). Overrides the value in POLICY.md. **Severity is opt-in to blocking**: a policy hard-stops only with an explicit `block`; absent/`warn`/unrecognized → non-blocking.
-- **`hook`** *(custom only)* — one of `@Init @Planning @Implementation @Verification @Archive @Remember @Snapshot @SessionEnd`. Required to register a policy that isn't in POLICY.md.
+- **`hook`** *(custom only)* — one of `@Init @Planning @Implementation @Verification @Archive @Debugging @Remember @Snapshot @SessionEnd`. Required to register a policy that isn't in POLICY.md.
 - **`check`** — the condition (required for blockers).
 - **`principle`** — optional integer linking the principle this policy enforces; `spectacular policy` pulls that one line alongside it.
 

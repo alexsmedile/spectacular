@@ -1,6 +1,6 @@
 ---
 description: The runtime loop — how the skill retrieves a hook's policies on entering a phase, injects them, evaluates each check, and resolves by severity.
-when_to_use: Entering any work phase that carries a policy gate (init, planning, implementation, verification, archive, remember, snapshot, session-end).
+when_to_use: Entering any work phase that carries a policy gate (init, planning, implementation, debugging, verification, archive, remember, snapshot, session-end).
 ---
 
 # Policy Injection — the runtime loop
@@ -20,6 +20,7 @@ When the skill loads that doc to do the phase, the first thing it reads is the i
 | `@Init` | `init-workflow.md` | `spectacular init` |
 | `@Planning` | `new-request.md` | `spectacular new` / request authoring |
 | `@Implementation` | `active-request.md` + `lifecycle.md` | `planned → active` |
+| `@Debugging` | `bug-workflow.md` | a bug/quirk/regression is reported |
 | `@Verification` | `verify.md` + `lifecycle.md` | `review → verified` |
 | `@Archive` | `archive.md` | `spectacular archive` |
 | `@Remember` | `memory.md` | memory written |
@@ -90,7 +91,7 @@ Enforcement is **skill-side + doctor**, not `hooks.json`. This keeps policies wo
 
 ## Related
 
-- [policies-contract.md](policies-contract.md) — POLICY.md structure + policy anatomy + the 8 hooks
+- [policies-contract.md](policies-contract.md) — POLICY.md structure + policy anatomy + the 9 hooks
 - [policy-rules.md](policy-rules.md) — doc-verb dispatch (grill/refine/review) for POLICY.md
 - [lifecycle.md](lifecycle.md) — the two spine transitions that consult policies
 - [verify.md](verify.md) — the `verification-present` policy's home phase (Part 2, the 2-of-6 rule)

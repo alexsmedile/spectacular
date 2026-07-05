@@ -7,6 +7,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added
+
+- **Debug agent fleet (`.claude/agents/`)** — three read-only-or-closed-contract subagents the orchestrator delegates to during a bug flow: **`debug-investigator`** (discovers *where* + *why* on an open bug, returns ranked findings + plausible-solution space, never prescribes the literal edit), **`debug-fixer`** (applies one *closed* five-slot brief under an apply-only contract — smallest faithful diff, local style, operation-care gradient add<edit≈patch<delete, risk-scaled verify — and bounces the moment execution turns to judgment), and **`debug-researcher`** (searches forums/docs/issues for known-external bugs, returns a cited verdict). Each writes only its own trace artifact; none writes the ledger.
+- **Debug trace schema (`references/debug-trace.md`)** — one folder per live job under `.spectacular/debug/<job-slug>/`, one JSON artifact per agent turn (`job.json` spine + `investigation.json` / `research/` / `fixes/` leaves + `outcome.json`). `job.json` carries `symptom_class` (test_failure · runtime_error · wrong_behavior · build_error · performance · unknown) and the persisted investigation `brief`; `fix-NN.json` carries `changed[]`, `test`, and `risk`. debug/ = the raw pipeline (kept as trace, never pruned); audit/ + fixes/ = the two distilled summaries earned at resolution.
+- **Principle 11 — "Earn each step: no rockets without the launchpad"** (`PRINCIPLES.md`) — the sequence complement to principle 10: build in the *right order*, never pour effort into an impressive far step while the near step it depends on is still missing.
+- **`@Debugging` policy set (`POLICY.md`)** — `check-prior-fixes`, `ceremony-matches-uncertainty`, `fix-root-not-symptom`, `log-only-verified-reusable`, and `use-audit-fix-verbs` (write audit/fix entries via their verbs, never by hand — `prefer-cli-mutator` applied to the debugging phase). Plus new `@Implementation` / `@Planning` policies backing principle 11: `milestones-in-build-order`, `build-order`, `earn-the-verification`, `prefer-cli-mutator`.
+- **Pipeline test suite (`tests/pipeline/`)** — five integration runbooks with real bug fixtures exercising the orchestrator's choreography end-to-end: resolve→ledger graduation, fix-needs-a-request routing, Researcher live run, concurrent-Fixer disjoint trace writes, and the full pipeline capstone. Plus `tests/agents/` judgment fixtures for the fixer/investigator (incl. an unsafe-delete bounce case).
+
+### Changed
+
+- **Bug workflow (`references/bug-workflow.md`)** — rewritten as the orchestrator's full arc: a top-of-doc map (Steps 0→3 with the new **Step 1c "open the job"** and a `status`→step resume crosswalk), a Step 1b fan-out decision table (≥3 independent closed disjoint-file fixes → fan out; else self-serve), same-file serialization rules (serialize inline, never parallel, no git branches), the investigation-brief quality bar, the block↔findings symmetry check, malformed-return backstops, and the channel mechanic (returned block = Agent-tool result; JSON = durable copy). `needs-reproduction` routes to the orchestrator inline / the user — no Reproducer agent (deferred to the Heisenbug case).
+- **CLI policy-hook validation (`cli/spectacular`)** — the nine work-phase hooks (`@Init @Planning @Implementation @Debugging @Verification @Archive @Remember @Snapshot @SessionEnd`) are now the validated set for custom policies.
+
 ## [1.25.0] — 2026-07-04
 
 ### Added

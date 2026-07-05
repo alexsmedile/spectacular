@@ -1,0 +1,25 @@
+{
+  "agent": "debug-investigator",
+  "at": "2026-07-05T12:00:00Z",
+  "status": "root-cause-found",
+  "reason": null,
+  "symptom": "get_user(1) returns stale 'alice' after update_name(1,'bob'). Reported as intermittent ('sometimes') but is in fact deterministic: fails 8/8 runs with AssertionError at line 42.",
+  "root_cause": "get_user memoizes into self._cache on first read; update_name writes self._store[uid] but never invalidates self._cache[uid]. Because the demo reads (caches 'alice') before the update, the stale cache entry survives and the post-update read returns it instead of the new store value. The shared root: get_user is the only method that populates the cache, and no mutator (update_name, create) invalidates it.",
+  "hypotheses": [
+    {"rank": 1, "claim": "cache not invalidated on the write path in update_name", "evidence_for": "state trace: after get_user _cache={1:'alice'}; after update_name _store={1:'bob'} but _cache still {1:'alice'}; next get_user hits the cache branch (line 30-31) and returns 'alice'. Deterministic 8/8.", "evidence_against": null}
+  ],
+  "suspected_sites": [
+    "01-open-cache-staleness.py:23-25 (update_name — writes _store, never touches _cache; the primary fix site)",
+    "01-open-cache-staleness.py:29-34 (get_user — the read-side cache-population point; relevant context, not the fix)"
+  ],
+  "plausible_solutions": [
+    {"approach": "pop-on-write in update_name (invalidate _cache[uid] after the store write)", "tradeoff": "simplest, lowest-risk; next get_user repopulates from store. One extra store read on the following get. Fixes the reported path directly."},
+    {"approach": "write-through in update_name (update both _store and _cache to the new value)", "tradeoff": "saves the repopulation read; but adds a second place that must stay in sync — every future mutator must remember to write both, easy to reintroduce the same class of bug."},
+    {"approach": "centralize a single _invalidate(uid) helper called by every mutator (update_name and create)", "tradeoff": "most robust against the blast-radius issue below and future mutators; slightly more code now. Worth it if more write paths are coming — otherwise premature. Leaning here if create is expected to overwrite existing uids, else pop-on-write is the pragmatic pick for the one reported path."}
+  ],
+  "blast_radius": "create(uid,name) has the identical latent gap — it writes _store without touching _cache. It is safe only by accident in the current demo because create runs before any get_user has cached that uid. A create() that overwrites an already-read (already-cached) uid would go stale by the exact same mechanism. Any future mutator on Users routes through the same uncovered invalidation gap. No other classes/callers exist in this fixture.",
+  "open_questions": [
+    "Is create() ever expected to overwrite an existing uid? If yes, it needs the same invalidation and the centralized-helper approach becomes the clear choice. The fix-planner should decide whether to fix update_name alone (reported path) or close the whole class (both mutators)."
+  ],
+  "evidence": "Ran fixture read-only: AssertionError 'stale cache: got alice' at line 42, exit 1, reproduced 8/8 (deterministic). State trace: create -> _store={1:'alice'} _cache={}; get_user -> caches _cache={1:'alice'}; update_name('bob') -> _store={1:'bob'} _cache still {1:'alice'}; get_user -> returns 'alice' from cache branch (lines 30-31)."
+}

@@ -25,8 +25,8 @@ summary: "Operating policies — the practice layer paired with PRINCIPLES.md"
   Severity is OPT-IN to blocking: a policy blocks ONLY if it explicitly
   says `severity: block`. Absent/warn/unrecognized → non-blocking.
 
-  Hooks (the only valid 8): @Init @Planning @Implementation @Verification
-  @Archive @Remember @Snapshot @SessionEnd.
+  Hooks (the only valid 9): @Init @Planning @Implementation @Verification
+  @Archive @Debugging @Remember @Snapshot @SessionEnd.
 
   Full spec: skill references/policies-contract.md
 -->

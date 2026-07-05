@@ -1,6 +1,6 @@
 ---
-version: 1.1
-updated: 2026-05-31
+version: 1.2
+updated: 2026-07-05
 summary: "Operating principles for Spectacular — and how the skill enforces each at runtime"
 related:
   - PRD.md
@@ -147,6 +147,21 @@ Over-engineering is the failure mode — speculative generality, abstractions fo
 - PLAN milestones are demoable outcomes, not an exhaustive feature list (slot 3 rejects task-lists)
 - Deferred scope goes to ROADMAP as explicit `v2+` — out-of-scope is recorded, not lost
 - Non-goals are a first-class PRD/PLAN slot — saying no is part of the plan, not an omission
+
+---
+
+## 11. Earn each step — no rockets without the launchpad
+
+Work has an order, and skipping a rung doesn't skip the work — it defers it to a worse moment. Don't reach for the moon before the rocket is built; don't start the rocket before the tooling that assembles it exists; don't run an integrity check on a thing that isn't built yet. A verification pass on a stub verifies nothing. A grand plan on an unproven foundation is a wish. Each step is a prerequisite for the next, not a parallel option — do them in the order that makes each one real.
+
+This is the sequence complement to principle 10: #10 says build the *smallest* slice; this says build it in the *right order*. The failure mode is inverted ambition — pouring effort into the impressive far step (the moon shot, the integrity gate, the polish) while the near step it depends on is still missing, so the far step is hollow.
+
+**How the skill enforces this:**
+- Lifecycle is strictly ordered: `planned → active → review → verified` — a request cannot jump to `verified` without passing through the earlier states
+- `@Implementation` policy `build-order` (warn) flags any step built on a stub, mock, or unbuilt prerequisite — build the lower layer first
+- `@Implementation` policy `earn-the-verification` (warn) rejects a green check that exercises a placeholder instead of the real path
+- `@Verification` policy `verification-present` (block) refuses `review → verified` while any check is unmet — `verify` drives the real flow, not the intention
+- PLAN goal must exist before TASKS; TASKS before code — the doc order encodes the build order
 
 ---
 

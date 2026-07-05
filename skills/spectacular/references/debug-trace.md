@@ -1,0 +1,259 @@
+---
+doc-id: debug-trace
+kind: reference
+summary: "Traceability for a live debug job: one folder per job under .spectacular/debug/, one JSON artifact per agent turn. Schemas + writer rules. In-flight process state, distinct from the fixes/audit ledger."
+status: active
+---
+
+# Debug trace — in-flight process state for a debug job
+
+A debug job that runs the fleet (Investigator → orchestrator → Fixer/Researcher) needs a place to
+record *what happened* while it happens — so a resuming agent, the human, or a `doctor` check can
+answer: **what bug, what did each agent find/do, what's the state now, what's the outcome.** That
+place is `.spectacular/debug/<job-slug>/`, holding one JSON artifact per agent turn.
+
+## debug/ vs audit/ vs fixes/ — the pipeline and the two summaries it produces
+
+These three are **not competitors** — `debug/` is the raw pipeline *while a job runs*, and `audit/`
++ `fixes/` are the two permanent summaries *distilled from it* when the job resolves. Different
+question, different lifetime, different curation:
+
+| Folder | Answers | Scope | Lifetime | Curation |
+|---|---|---|---|---|
+| **`debug/<job>/`** | "what's happening **right now** on this live job?" | one in-flight job | **kept as trace** (marked resolved, never pruned) | raw — verbose JSON, per-agent, may be unresolved |
+| **`audit/A<N>.md`** | "what did we find? what was going on?" (the **examination**) | any deep examination, not just bugs | permanent | curated — written only if findings are worth keeping |
+| **`fixes/F<N>.md`** | "have we solved this before?" (the **remedy** / lesson learned) | solved, reusable problems | permanent | curated — written only if reusable |
+
+**debug/ is the workbench; audit/ + fixes/ are the library.** The workbench holds the mess *while
+you work* — 3 Fixer results, a half-finished investigation, jobs still open with no clarity yet.
+audit/ and fixes/ are written **only at resolution**, when clarity exists — that's *why* they're
+separate collections: debug/ tolerates open + messy; the library requires resolved + clean.
+
+`audit` literally means *examination* (from *audire*, "to hear") — it's broader than debugging; you
+can audit a spec for drift or a dependency, no bug involved. Bug investigation is *one kind* of
+audit. `fixes` is the greppable lesson-learned database — signed, searchable, reused next time.
+
+**The two summaries cross-link, and both link back to the trace:** `audit/A<N>` says "remedied by
+`F4`"; `fixes/F<N>` says "found via `A7`"; both carry `debug_job: <job-slug>` back to the raw trace
+that produced them. The library is the distilled record; debug/ is the full feed behind it.
+
+## Trace vs ledger — the write rule
+
+| Layer | Where | Writer | When |
+|---|---|---|---|
+| **Debug trace** | `.spectacular/debug/<job>/*.json` | **each agent writes its own artifact** | live, as the job runs |
+| **Ledger** | `fixes/F<N>.md`, `audit/A<N>.md` | **orchestrator only** (CLI verbs) | at resolution, distilled from the trace |
+
+The invariant is **scoped, not broken**: agents write their own *trace* artifact (the block they
+already return), but **never the ledger** — `F<N>`/`A<N>` stay single-writer via `spectacular
+fix new` / `audit new`. All of `.spectacular/` is **committed to git**, so a live job survives a
+session loss, is team-visible, and a fresh session can resume from it.
+
+## Folder layout
+
+```
+.spectacular/debug/<job-slug>/
+├── job.json              # the spine — orchestrator owns + updates
+├── investigation.json    # Investigator's findings (0 or 1)
+├── research/             # Researcher verdicts (0..n — one per external question)
+│   └── research-01.json
+├── fixes/                # one per fanned-out fix (0..n)
+│   ├── fix-01.json
+│   └── fix-02.json
+└── outcome.json          # final disposition + graduation to the ledger
+```
+
+**The folder's *shape* tells the story before you read anything:** no `investigation.json` → it was
+just-fix, no discovery needed. Three files in `fixes/` → a 3-way fan-out. A `research/` entry → it
+smelled external. Missing `outcome.json` → still in flight.
+
+## Slot assignment — no collision on fan-out
+
+Each agent writes to **a path the orchestrator gives it in the prompt** — the orchestrator owns
+slot assignment (it knows the job folder and the fan-out count), the agent owns the content write.
+When the orchestrator fans out 3 Fixers it hands each its path: `fixes/fix-01.json`,
+`fixes/fix-02.json`, `fixes/fix-03.json`. No agent picks its own index; no coordination needed.
+
+## Schemas
+
+All timestamps ISO-8601 UTC. All paths relative to the job folder. `null` for a slot that doesn't
+apply (not omitted — presence of the key with `null` is explicit).
+
+### `job.json` — the spine (orchestrator writes + updates)
+
+```json
+{
+  "id": "cache-staleness-2026-07-05",
+  "status": "investigating",
+  "symptom_class": "wrong_behavior",
+  "symptom": "get_user returns stale name after update_name",
+  "reported_at": "2026-07-05T12:00:00Z",
+  "reporter": "user",
+  "ceremony": "audit-first",
+  "brief": {
+    "symptom": "get_user returns stale name after update_name; expected the written value",
+    "where_to_look": "users.py cache path — update_name / get_user",
+    "done_means": "root cause + suspected site established"
+  },
+  "artifacts": {
+    "investigation": "investigation.json",
+    "research": ["research/research-01.json"],
+    "fixes": ["fixes/fix-01.json", "fixes/fix-02.json"]
+  },
+  "timeline": [
+    {"at": "2026-07-05T12:01:00Z", "phase": "investigation", "agent": "debug-investigator", "result": "root-cause-found"},
+    {"at": "2026-07-05T12:05:00Z", "phase": "fixing", "agent": "debug-fixer", "result": "applied", "artifact": "fixes/fix-01.json"}
+  ],
+  "outcome": "outcome.json"
+}
+```
+
+- `status`: `investigating | researching | planning | fixing | verifying | resolved | folded | wont-fix`.
+- `symptom_class`: how the bug *surfaces* — `test_failure | runtime_error | wrong_behavior | build_error | performance | unknown`. Orthogonal to routing (which agent) — this is the greppable symptom axis ("show me all perf bugs"). `unknown` is honest; set it at triage and refine if it becomes clear.
+- `reporter`: `user | while-coding`.
+- `ceremony`: `just-fix | audit-first` (from the Step-1 gate).
+- `brief`: the investigation brief the orchestrator handed the Investigator (`symptom` / `where_to_look` / `done_means`) — persisted because the spawn prompt is gone once the window closes. Lets a resuming orchestrator check `investigation.json`'s STATUS against what was actually asked (the symmetry check). `null` for a just-fix job with no investigation.
+- `artifacts`: forward-index to every artifact file (arrays grow as agents write).
+- `timeline`: append-only; one entry per agent turn or status change. The audit trail.
+- `outcome`: path to `outcome.json`, or `null` until resolved.
+
+### `investigation.json` — Investigator findings (Investigator writes)
+
+Mirrors the agent's findings block, one-to-one:
+
+```json
+{
+  "agent": "debug-investigator",
+  "at": "2026-07-05T12:01:00Z",
+  "status": "root-cause-found",
+  "reason": null,
+  "symptom": "get_user returns stale 'alice' after update_name(1,'bob'); deterministic",
+  "root_cause": "update_name writes _store but never invalidates _cache; a key read before the update returns the stale cached value",
+  "hypotheses": [
+    {"rank": 1, "claim": "cache not invalidated on write", "evidence_for": "trace + ran 8x", "evidence_against": null}
+  ],
+  "suspected_sites": ["users.py:23 (update_name)"],
+  "plausible_solutions": [
+    {"approach": "pop-on-write", "tradeoff": "simplest; next read repopulates"},
+    {"approach": "write-through", "tradeoff": "one fewer store read"},
+    {"approach": "centralize _invalidate() helper", "tradeoff": "worth it if more mutators arrive"}
+  ],
+  "blast_radius": "create() has the same latent gap; safe only because it runs before any read caches",
+  "open_questions": [],
+  "evidence": "ran read-only 8x, deterministic AssertionError at line 42; trace: get_user caches alice, update_name sets store only, next get_user hits stale cache"
+}
+```
+
+- `status`: `root-cause-found | hypotheses-only`.
+- `reason`: only non-null when `hypotheses-only` — `needs-reproduction | needs-research | needs-decision | needs-more-context`.
+- `plausible_solutions`: the solution space (approaches + trade-offs) — **never the literal diff**.
+
+### `research/research-NN.json` — Researcher verdict (Researcher writes)
+
+```json
+{
+  "agent": "debug-researcher",
+  "at": "2026-07-05T12:03:00Z",
+  "verdict": "known-platform-bug",
+  "confidence": "high",
+  "summary": "Library X v2.3 has a documented regression matching this signature; fixed in 2.3.1",
+  "evidence": [
+    {"title": "X#1234 cache race", "url": "https://github.com/...", "match": "same error string + version 2.3; maintainer-confirmed"}
+  ],
+  "workaround": "pin X>=2.3.1, or call flush() after write (docs §cache)",
+  "next": "upgrade the dep to 2.3.1"
+}
+```
+
+- `verdict`: `known-platform-bug | genuinely-ours | no-strong-match`.
+- `workaround`: string, or `"none found"`.
+
+### `fixes/fix-NN.json` — Fixer result (Fixer writes)
+
+Mirrors the Fixer's output block:
+
+```json
+{
+  "agent": "debug-fixer",
+  "at": "2026-07-05T12:05:00Z",
+  "verdict": "applied",
+  "site": "users.py:25",
+  "brief": {
+    "problem": "stale cache after update_name",
+    "intended": "read after write returns written value",
+    "root_cause": "update_name doesn't invalidate _cache",
+    "proposed_fix": "self._cache.pop(uid, None) after the store write",
+    "success_criteria": "python3 users.py prints ok, exit 0"
+  },
+  "changed": [
+    {"file": "users.py", "what": "pop uid from _cache after the store write, so the next read repopulates"}
+  ],
+  "diff": "--- a/users.py\n+++ b/users.py\n@@ ...",
+  "test": "none (trivial)",
+  "risk": "low",
+  "verify": {"check": "python3 users.py", "result": "pass"},
+  "bounce_reason": null,
+  "ledger": "not-written"
+}
+```
+
+- `verdict`: `applied | bounced`.
+- `changed`: one entry per file touched — `{file, what}` (the human-readable "explain the change" the diff alone doesn't give). Empty array if bounced.
+- `diff`: the unified diff (empty string if bounced).
+- `test`: the regression test added/updated (`file:name`), or `"none (<reason>)"` — `trivial | no-framework | brief-didn't-ask`. A test that pins the fixed bug is part of the fix, not scope-widening.
+- `risk`: blast radius of the change — `low` (one site, isolated), `medium` (shared helper, few callers), `high` (shared root, wide blast radius). Feeds the orchestrator's fan-out-vs-inline call and flags what to watch on verify. `null` if bounced.
+- `verify.result`: `pass | fail | not-run`.
+- `bounce_reason`: string when bounced, else `null`.
+- `ledger`: always `"not-written"` — the Fixer never writes the ledger.
+
+### `outcome.json` — final disposition (orchestrator writes)
+
+The bridge from trace to permanent ledger:
+
+```json
+{
+  "at": "2026-07-05T12:06:00Z",
+  "disposition": "resolved",
+  "fix_ids": ["fixes/fix-01.json"],
+  "logged_fixes": ["F4"],
+  "audit": null,
+  "note": "single-site cache invalidation; logged as reusable (cache-coherence class)"
+}
+```
+
+- `disposition`: `resolved | folded-into-request | wont-fix`.
+- `logged_fixes`: the `F<N>` ids the reusable remedy graduated into — empty if nothing was reusable
+  (`log-only-verified-reusable`).
+- `audit`: the `A<N>` id if the examination was worth keeping, else `null` (a job may earn neither
+  `audit` nor `logged_fixes`; the trace itself is always retained regardless).
+- `folded-into-request` also carries a `request` slug.
+- Both `A<N>` and `F<N>` (when written) cross-link each other and carry `debug_job` back to this
+  folder.
+
+## Lifecycle
+
+1. **Open** — orchestrator scaffolds `debug/<job-slug>/` + writes `job.json` (`status: investigating`
+   or `fixing` for a just-fix bug that skips investigation).
+2. **Agents append** — each agent writes its artifact to the path the orchestrator assigned; the
+   orchestrator appends a `timeline` entry + updates `status` + the `artifacts` index in `job.json`.
+   Jobs may sit **unresolved** here — the trace holds mid-flight state with no final clarity yet.
+   That's fine; debug/ tolerates open.
+3. **Resolve — summarize into the library (each only if earned).** When clarity exists, the
+   orchestrator writes `outcome.json` and distills the trace into the two permanent summaries:
+   - **`audit/A<N>.md`** — the examination — written **only if the findings are worth keeping**
+     (a non-obvious cause, a real investigation). A shorter, human-facing distillation of
+     `investigation.json`, *not* a copy of it.
+   - **`fixes/F<N>.md`** — the remedy — written **only if reusable** (`log-only-verified-reusable`).
+   Cross-link them (`A<N>` ↔ `F<N>`) and stamp both with `debug_job: <job-slug>`. A trivial job may
+   earn neither. Both go through the CLI verbs (`spectacular audit new` / `fix new`) — the ledger
+   stays single-writer.
+4. **Keep the trace in place.** The resolved `debug/<job>/` is **not pruned** — `job.json` flips to
+   `status: resolved` with `audit`/`fixes` back-links, and the folder stays as the full "how the job
+   ran" record. The library is the distilled summary; debug/ is the durable raw feed behind it.
+
+A `just-fix` 1–2 line bug that never runs the fleet **needs no debug folder** — it's fixed inline
+and, if reusable, logged straight to `F<N>`. The trace exists for jobs that fan out; ceremony scales
+with uncertainty (`ceremony-matches-uncertainty`).
+
+**Related:** [[bug-workflow]] (the flow that writes these), [[fixes-rules]] / [[audit-rules]] (the
+ledger they graduate into), [[soft-db-index]] (where knowledge belongs).

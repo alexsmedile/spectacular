@@ -1,5 +1,5 @@
 ---
-description: POLICY.md structure, policy anatomy, the locked 8-hook set, and the config override surface. Read to author or audit a policy.
+description: POLICY.md structure, policy anatomy, the locked 9-hook set, and the config override surface. Read to author or audit a policy.
 when_to_use: Authoring a custom policy, auditing POLICY.md structure, or understanding how policies are filed under work-phase hooks.
 ---
 
@@ -12,7 +12,7 @@ when_to_use: Authoring a custom policy, auditing POLICY.md structure, or underst
 | `PRINCIPLES.md` | theory | *why we work this way* (beliefs) | optional (kit-triggered) |
 | `POLICY.md` | practice | *how we actually work* (executable rules) | **always-set** (every init) |
 
-The asymmetry is deliberate: theory is optional reading, **practice is the operational floor**. A workspace can hold zero stated principles, but it always ships with a policy contract — 8 prefilled defaults, enabled, from the first `spectacular init`.
+The asymmetry is deliberate: theory is optional reading, **practice is the operational floor**. A workspace can hold zero stated principles, but it always ships with a policy contract — 19 prefilled defaults, enabled, from the first `spectacular init`.
 
 A **policy** is a rule filed under a named **work-phase hook**. When the skill enters a phase, it retrieves *only that hook's* policies and injects them — progressive disclosure (Principle 6) applied to the rule layer itself. The skill never loads all policies at once.
 
@@ -62,7 +62,7 @@ A policy block has four parts:
 
 No `check-kind` field exists. The same policy may even be checked both ways over time.
 
-## The locked hook set (8)
+## The locked hook set (9)
 
 `@` reads "at"; every hook completes "this policy applies **@___**" as natural English. The before/after verb lives in the *policy name*, never the hook.
 
@@ -80,23 +80,26 @@ No `check-kind` field exists. The same policy may even be checked both ways over
 
 | Hook | Reads | Fires at | Maps to |
 |---|---|---|---|
+| `@Debugging` | at debugging | a bug/quirk/regression is reported | `spectacular audit` / `fix`, loads [[bug-workflow]] |
 | `@Remember` | at remember | memory written | `spectacular remember` |
 | `@Snapshot` | at snapshot | canonical doc overwritten | `snapshot` / overwrite |
 | `@SessionEnd` | at session end | skill hands off | `session end` |
 
-These 8 are the **only** valid hooks. `review` on POLICY.md flags any `## @<hook>` section outside this set as an orphan.
+These 9 are the **only** valid hooks. `review` on POLICY.md flags any `## @<hook>` section outside this set as an orphan. `@Debugging` is not part of the lifecycle spine — it's a key-moment hook entered whenever a bug surfaces, independent of a request's lifecycle state.
 
 **Deferred (v2):** `@SessionStart` (wants a real harness runtime), `@Decide`. **Folded:** `@Request`/`@RequestTask` → `@Planning`. **Rejected:** `@Doctor` (circular), `@BeforeCommit` (wrong runtime).
 
-## The 8 prefilled defaults — 4 block · 4 warn
+## The prefilled defaults — 4 block · 15 warn
 
 Every `spectacular init` writes these enabled:
 
 | Hook | Policy | →Principle | Severity |
 |---|---|---|---|
 | `@Init` | `scaffold-contract` | 4 | warn |
-| `@Planning` | `request-shape` | 3 / 7 | warn |
+| `@Planning` | `request-shape` + `scope-down` + `milestones-in-build-order` | 3 / 7 / 10 / 11 | warn |
 | `@Implementation` | **`understand-before-change`** | 7 | **block** |
+| `@Implementation` | `build-order` + `earn-the-verification` + `prefer-cli-mutator` | 11 / 6 | warn |
+| `@Debugging` | `check-prior-fixes` + `ceremony-matches-uncertainty` + `fix-root-not-symptom` + `log-only-verified-reusable` + `use-audit-fix-verbs` | 5 / 11 / 6 | warn |
 | `@Verification` | **`verification-present`** | 7 / 9 | **block** |
 | `@Archive` | `spec-sync` + `memory-propose` | 2 / 5 | warn |
 | `@Remember` | **`confirm-before-write`** | 8 | **block** |

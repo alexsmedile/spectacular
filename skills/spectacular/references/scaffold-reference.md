@@ -112,7 +112,7 @@ summary: "Operating policies — the practice layer paired with PRINCIPLES.md"
 <prose: rationale + the instruction the skill follows when injected>
 ```
 
-**Always-set** (every `spectacular init`) — the practice layer. Ships 8 prefilled policies (4 block / 4 warn) filed under the 8 work-phase hooks. Severity is opt-in to blocking: a policy blocks only if it explicitly says `severity: block`. Full spec: [policies-contract.md](policies-contract.md). Hooks (locked 8): `@Init @Planning @Implementation @Verification @Archive @Remember @Snapshot @SessionEnd`.
+**Always-set** (every `spectacular init`) — the practice layer. Ships 19 prefilled policies (4 block / 15 warn) filed under the 9 work-phase hooks. Severity is opt-in to blocking: a policy blocks only if it explicitly says `severity: block`. Full spec: [policies-contract.md](policies-contract.md). Hooks (locked 9): `@Init @Planning @Implementation @Verification @Archive @Debugging @Remember @Snapshot @SessionEnd`.
 
 ### ARCHITECTURE.md
 ```md

@@ -141,7 +141,7 @@ Self-check of the practice layer (`POLICY.md`, always-set). Structure checks are
 | POLICY.md present | ❌ error | always-set file missing (`--fix` re-scaffolds) |
 | Frontmatter present | ⚠️ | no `---` delimiter at line 1 |
 | Policy blocks defined | ⚠️ | zero `### <id>` blocks (`--fix` restores 8 defaults) |
-| Unknown hook section | ⚠️ | `## @<hook>` outside the locked 8 |
+| Unknown hook section | ⚠️ | `## @<hook>` outside the locked 9 |
 | Blocker missing `check:` | ⚠️ | a `severity: block` policy with no `- check:` line |
 | Invalid severity | ⚠️ | `severity:` value other than `block`/`warn` |
 | understand-before-change | ⚠️ per active request | request is `active` but PLAN § Understanding empty and no `UNDERSTANDING.md` |

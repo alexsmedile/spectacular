@@ -1,0 +1,17 @@
+{
+  "id": "cache-staleness-test",
+  "status": "investigating",
+  "symptom_class": "wrong_behavior",
+  "symptom": "get_user returns stale name after update_name",
+  "reported_at": "2026-07-05T12:00:00Z",
+  "reporter": "user",
+  "ceremony": "audit-first",
+  "brief": {
+    "symptom": "get_user returns stale name after update_name; expected the written value",
+    "where_to_look": "users.py cache path — update_name / get_user",
+    "done_means": "root cause + suspected site established"
+  },
+  "artifacts": {"investigation": null, "research": [], "fixes": []},
+  "timeline": [{"at": "2026-07-05T12:00:00Z", "phase": "open", "agent": "orchestrator", "result": "scaffolded"}],
+  "outcome": null
+}

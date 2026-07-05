@@ -1,6 +1,6 @@
 ---
-version: 1.1
-updated: 2026-05-31
+version: 1.2
+updated: 2026-07-05
 summary: "Operating policies — the practice layer paired with PRINCIPLES.md"
 ---
 
@@ -20,8 +20,8 @@ summary: "Operating policies — the practice layer paired with PRINCIPLES.md"
   Severity is OPT-IN to blocking: blocks ONLY if it explicitly says
   'severity: block'. Absent/warn/unrecognized → non-blocking.
 
-  Valid hooks (8): @Init @Planning @Implementation @Verification @Archive
-  @Remember @Snapshot @SessionEnd.
+  Valid hooks (9): @Init @Planning @Implementation @Debugging @Verification
+  @Archive @Remember @Snapshot @SessionEnd.
 -->
 
 ## @Init
@@ -43,6 +43,13 @@ A new request's PLAN must be well-shaped before work begins: a one-sentence Goal
 - severity: warn
 Before fixing milestones, name the smallest high-impact slice that delivers the core value now, and push the rest to ROADMAP as `v2+`. Prefer a finished MVP of the features actually needed today over a complete build of features that might be. Flag speculative generality and any feature without a current need. Surface the leaner cut; the human chooses the scope.
 
+### milestones-in-build-order
+- principle: 11
+- severity: warn
+- check: milestones are ordered by dependency — M1 is demoable with nothing before it, and no milestone depends on a later one
+
+A plan encodes its own build order. Milestones must be sequenced so each one stands on the one before it: M1 is demoable with no prerequisite, and nothing depends on a milestone that comes after it. An out-of-order milestone list is principle 11's failure written into the plan — reaching for the moon in slot 3 before the launchpad in slot 5. This promotes the refine-time ordering check (was human-only) to a surfaced policy. Surface any milestone whose prerequisite sits later in the list; the human reorders.
+
 ## @Implementation
 
 ### understand-before-change
@@ -51,6 +58,67 @@ Before fixing milestones, name the smallest high-impact slice that delivers the 
 - check: PLAN.md has a filled `## Understanding` section (How it works now / What changes / What stays the same), OR a `UNDERSTANDING.md` exists with the same three subheads
 
 A request must not move `planned → active` until the agent has written down how the system works today, what this change touches, and what it leaves alone. Establish understanding before touching code. Satisfied by either the PLAN slot or a dedicated UNDERSTANDING.md.
+
+### build-order
+- principle: 11
+- severity: warn
+- check: no task depends on a prior task that is still unbuilt or stubbed — each layer stands on a proven one below it
+
+Build in prerequisite order: the thing you're building must stand on something that already works, not on a stub, a mock, or an intention. Don't write the abstraction before the first concrete case runs. Don't add the retry/cache/fallback before the happy path returns a real value. Don't wire integration before the unit it integrates is green. If a step needs a lower step that isn't real yet, build the lower step first — skipping it doesn't remove the work, it defers it to a worse moment. Surface an out-of-order jump; the human decides whether the foundation is actually there.
+
+### earn-the-verification
+- principle: 11
+- severity: warn
+- check: the code path a verification exercises actually exists and runs — no green check on a stub or a mock standing in for the real thing
+
+A passing check on code that isn't built is worse than no check — it reports safety that isn't there. Before claiming a slice verified, confirm the check drives the real path, not a placeholder. An integrity gate on an empty thing has integrity to report about nothing.
+
+### prefer-cli-mutator
+- principle: 6
+- severity: warn
+- check: a structured mutation (lifecycle move, archive, snapshot, memory/decision/idea/audit/fix write) goes through its `spectacular` verb, not a free-form file edit — unless no verb covers it
+
+The CLI is the deterministic mutator; the skill orchestrates, reads, decides, communicates. Whenever a `spectacular` verb exists for a mutation, use it — hand-editing bypasses auto-numbering (`F<N>`/`A<N>`), signature and verified gates, index regeneration (`MEMORY.md`), atomic link-rewriting on archive, and frontmatter bumps, and the drift lands as a `doctor` finding later. Manual edits remain the escape hatch for what no verb covers — that's the exception, not the default. If you catch yourself writing an entry file by hand where a verb exists, stop and run the verb. When a hand-edit already happened and left the substrate malformed, `spectacular doctor <area>` names the drift and `--fix` repairs the mechanical part.
+
+## @Debugging
+
+<!-- Entered when the user reports a bug, quirk, regression, or "why does X do Y".
+     Loads [[bug-workflow]]. These policies gate the steps that doc prescribes. -->
+
+### check-prior-fixes
+- principle: 5
+- severity: warn
+- check: `.spectacular/fixes/` has been searched (fix list + signature grep) before diagnosis begins
+
+Before diagnosing a bug, search the `fixes/` corpus — this is the payoff of operational memory. A solved bug rediscovered from scratch is the exact waste principle 5 exists to prevent. Grep the signatures for the symptom in hand; a match may resolve it immediately or name it as a known class. Surface what the search found (or that it was empty); don't block.
+
+### ceremony-matches-uncertainty
+- principle: 11
+- severity: warn
+- check: an audit is opened only when root cause is unclear OR the fix spans multiple sites; a clear one-site fix is applied directly
+
+Ceremony scales with uncertainty, not with every bug. Open an `audit/` only when the root cause is unknown, the symptom spans multiple callers/subsystems, it's not yet reproduced, or it might be intended behavior. If root cause is clear and the fix is one site, just fix it — an audit there is pure ceremony. Equally, don't skip the audit on a genuinely cross-cutting bug and patch one caller while siblings stay broken. Surface the mismatch; the human picks the ceremony level.
+
+### fix-root-not-symptom
+- principle: 11
+- severity: warn
+- check: a multi-caller bug is fixed once at the shared root, not per-caller; the logged fix names the root cause, not the surface symptom
+
+Fix the bug where all callers route through, not at the one site the report named. A guard in the shared function is a smaller, complete diff; a guard in one caller leaves every sibling still broken. This is the debugging face of principle 11 — the symptom stands on a root cause; fix the layer underneath, not the layer you can see.
+
+### log-only-verified-reusable
+- principle: 5
+- severity: warn
+- check: a `fixes/F<N>.md` entry is written only after the fix is verified AND carries reusable knowledge (non-obvious cause or recurring class), with a `--signature`
+
+A fix entry is earned, not automatic: log only once resolved *and* verified, and only when a future agent would benefit — a non-obvious cause, a recurring class, something that took real investigation. Skip typos, renames, one-off edits. The corpus is valuable because it's curated. The `--signature` is mandatory — it's what makes the entry findable next time (closes the loop back to `check-prior-fixes`).
+
+### use-audit-fix-verbs
+- principle: 6
+- severity: warn
+- check: audit and fix entries are created via `spectacular audit new` / `fix new`, not by hand-writing `A<N>.md` / `F<N>.md` files
+
+Write audit and fix entries with their verbs, never by hand. `spectacular audit new` / `fix new` auto-number (`A<N>`/`F<N>`), stamp frontmatter, enforce the `--signature` and `--verified-by` gates, and `audit resolve --into-fix` copies every slot forward. A hand-written entry skips all of that and lands as a `doctor fixes` finding. This is `prefer-cli-mutator` (@Implementation) applied to the debugging phase — stated here because a bug flow fires `@Debugging`, not `@Implementation`, and this is exactly the moment the temptation to hand-write an entry appears.
 
 ## @Verification
 

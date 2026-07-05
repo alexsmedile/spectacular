@@ -406,7 +406,21 @@ Executable implementation checklist, grouped by milestone. The skill monitors ta
 - `depends_on:` — surface task dependencies
 - `validates:` — link task groups to milestones (closes principle 7's validation loop)
 
-## SESSION.md
+### ID-namespace convention (one letter per entity, project-wide)
+
+Spectacular already uses a family of single-letter + number IDs, each scoped to its own entity type. This has been implicit convention since v1.5.0 — written down here so it doesn't drift or get reinvented per-request:
+
+| Prefix | Entity | Scope | Lives in |
+|---|---|---|---|
+| `M<N>` | Milestone | per-request | `TASKS.md` headings, `PLAN.md` §3/§6 |
+| `D<N>` | Decision | project-wide | `DECISIONS.md` / `decisions/D<N>.md` |
+| `F<N>` | Fix | project-wide | `fixes/F<N>.md` |
+| `b<N>` | Roadmap build id | project-wide | `ROADMAP.md` ledger table |
+| `A<N>` | Debug audit finding | per-debug-job | `debug/<slug>/` trace artifacts |
+
+**Rule:** don't invent a new letter for an existing entity type (e.g. `G1` for a milestone) — reuse the table above so the ID stays greppable by convention across the whole project, not just within one file.
+
+**The ID is a mnemonic, not the link.** The real linkage between a `TASKS.md` milestone and its `PLAN.md` §3/§6 counterpart is the milestone's **name** (the text after the em-dash), not the `M<N>` token. If a heading ever does drift to a non-standard prefix or a renumbered `M<N>`, matching by name still works — `doctor lifecycle` checks both: it flags an off-standard prefix as a fixable warning, but only reports a genuine chain-break when the names *also* fail to line up (so a relettered-but-still-named-the-same milestone doesn't false-positive).
 
 Created automatically when a request moves to `active`. Captures current execution state, blockers, next actions. Committed to git — part of the team's operational record.
 

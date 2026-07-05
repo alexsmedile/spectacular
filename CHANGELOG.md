@@ -7,6 +7,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added
+
+- **`doctor lifecycle` milestone-label alignment check** — flags `M<N>` label drift between a request's `TASKS.md`, `PLAN.md` §3 Milestones, and §6 Validation (advisory `judgment` warning, never blocks). Also flags a non-standard milestone prefix (e.g. `G1` instead of `M1`), but falls back to matching by milestone **name** before declaring a real chain-break — so a relettered-but-same-named milestone doesn't false-positive. Closes a gap surfaced while scoping a "Builder agent" idea (`.spectacular/ideas/coding-agents.md`): the task-row → milestone-block → plan-section chain is only reliably walkable when IDs/names actually agree, and nothing checked that before.
+- **ID-namespace convention documented** — `ARCHITECTURE.md` now has a table of Spectacular's existing single-letter + number ID families (`M<N>` milestones, `D<N>` decisions, `F<N>` fixes, `b<N>` roadmap builds, `A<N>` debug findings), written down for the first time instead of living as implicit tribal convention.
+
+### Fixed
+
+- **`spec-audit-mode` request's `TASKS.md`** — was still the unfilled scaffold template (3 generic milestones vs `PLAN.md`'s 4 real ones); filled in with the actual milestone checklist.
+
 ## [1.26.1] — 2026-07-06
 
 ### Fixed

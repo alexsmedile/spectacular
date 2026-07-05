@@ -8289,6 +8289,57 @@ check_lifecycle() {
         issues=$((issues + 1))
         ;;
     esac
+
+    # Milestone (M<N>) label alignment across TASKS.md / PLAN §3 / PLAN §6.
+    # Advisory only: the chain (task row -> milestone block -> plan section -> validation)
+    # should still be walkable by number+name even when labels drift, so mismatches are a
+    # warning to fix, never a blocker. Two checks:
+    #   1. off-prefix heading (e.g. "### G1 —" instead of "### M1 —") — a real drift risk,
+    #      since M is the project-wide standard for milestones (D<N>=decisions, F<N>=fixes,
+    #      b<N>=roadmap builds all follow the same one-letter-per-namespace convention).
+    #   2. number mismatch — but only reported after a name-based fallback match fails, since
+    #      the milestone NAME (not the M<N> token) is the real stable link between files.
+    local tasks="$d/TASKS.md"
+    if [[ -f "$tasks" ]]; then
+      # Off-standard milestone prefix: any "### <Letter><N> —" heading where Letter != M.
+      local off_prefix
+      off_prefix=$(grep -oE '^#{2,3} [A-Za-z][0-9]+ —' "$tasks" 2>/dev/null | grep -vE '^#{2,3} M[0-9]+ —' | sed -E 's/^#+ //; s/ —$//' | sort -u) || true
+      if [[ -n "$off_prefix" ]]; then
+        doc_add "lifecycle" "warning" "$tasks" \
+          "request '$slug': TASKS.md uses non-standard milestone prefix(es): $(echo "$off_prefix" | xargs)" \
+          "milestones use 'M<N>' project-wide (mirrors D<N>=decisions, F<N>=fixes, b<N>=roadmap builds) — rename to M<N> so the chain stays greppable by convention, not just by name" \
+          "judgment"
+        issues=$((issues + 1))
+      fi
+
+      local ms_tasks ms_plan3 ms_plan6
+      ms_tasks=$(grep -oE '^#{2,3} M[0-9]+ —' "$tasks" 2>/dev/null | grep -oE 'M[0-9]+' | sort -u) || true
+      ms_plan3=$(sed -n '/^## 3\. Milestones/,/^## 4\./p' "$plan" 2>/dev/null | grep -oE '^- M[0-9]+ —' | grep -oE 'M[0-9]+' | sort -u) || true
+      ms_plan6=$(sed -n '/^## 6\. Validation/,/^## 7\./p' "$plan" 2>/dev/null | grep -oE '^- M[0-9]+ —' | grep -oE 'M[0-9]+' | sort -u) || true
+
+      # Name-based fallback: first few words after the "M<N> — " marker (or any "<ID> — " marker),
+      # lowercased, so a renamed/relettered heading can still match by what it's actually called.
+      local names_tasks names_plan3
+      names_tasks=$(grep -oE '^#{2,3} [A-Za-z][0-9]+ — [A-Za-z0-9 ]+' "$tasks" 2>/dev/null | sed -E 's/^#+ [A-Za-z][0-9]+ — //' | awk '{print tolower($1" "$2)}' | sort -u) || true
+      names_plan3=$(sed -n '/^## 3\. Milestones/,/^## 4\./p' "$plan" 2>/dev/null | grep -oE '^- [A-Za-z][0-9]+ — [A-Za-z0-9 ]+' | sed -E 's/^- [A-Za-z][0-9]+ — //' | awk '{print tolower($1" "$2)}' | sort -u) || true
+      local names_match=1
+      [[ "$names_tasks" == "$names_plan3" ]] && names_match=0
+
+      if [[ -n "$ms_tasks" && -n "$ms_plan3" && "$ms_tasks" != "$ms_plan3" && $names_match -ne 0 ]]; then
+        doc_add "lifecycle" "warning" "$tasks" \
+          "request '$slug': milestone labels differ between TASKS.md ($(echo "$ms_tasks" | xargs)) and PLAN §3 ($(echo "$ms_plan3" | xargs)), and names don't line up either" \
+          "renumber so M<N> matches 1:1 across TASKS.md and PLAN.md §3 — a Builder/agent walking the chain by number will otherwise mismatch milestones" \
+          "judgment"
+        issues=$((issues + 1))
+      fi
+      if [[ -n "$ms_plan3" && -n "$ms_plan6" && "$ms_plan3" != "$ms_plan6" ]]; then
+        doc_add "lifecycle" "warning" "$plan" \
+          "request '$slug': milestone labels differ between PLAN §3 Milestones ($(echo "$ms_plan3" | xargs)) and §6 Validation ($(echo "$ms_plan6" | xargs))" \
+          "renumber so M<N> matches 1:1 across §3 and §6 — validation criteria won't map cleanly to their milestone otherwise" \
+          "judgment"
+        issues=$((issues + 1))
+      fi
+    fi
   done
 
   if [[ $issues -eq 0 ]]; then

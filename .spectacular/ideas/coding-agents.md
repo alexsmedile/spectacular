@@ -4,7 +4,7 @@ status: parked
 priority: medium
 owner: alex
 origin: (captured)
-updated: 2026-07-05
+updated: 2026-07-07
 promoted_to: null
 related: []
 ---
@@ -112,6 +112,35 @@ Fan-out shape: one Fix-Applier per **independent** fix site. A multi-caller bug 
 independent sites — it's one root fix (`fix-root-not-symptom`), so it stays single-threaded.
 Delegation parallelizes genuinely-independent closed fixes, not one bug sliced into pieces.
 
+### 5. Inefficiency-Finder Agent
+
+Not correctness (that's Candidate 1) — this agent hunts *needless cost*: O(n²) where O(n)
+exists, redundant re-computation/re-fetch, unbounded growth, blocking calls on a hot path.
+
+1. **Scope the hot path** — profile data if present, else infer from call frequency (loops,
+   request handlers, render paths). Cold/init-only code is out of scope — cost there is noise.
+2. **Pattern-match known smells** — repeated work inside a loop that's loop-invariant, N+1
+   queries, missing memoization/index, synchronous I/O blocking an async caller.
+3. **Quantify, don't vibe** — state the actual complexity class or the repeated-call count, not
+   "this looks slow." No complexity class/count → drop the finding.
+4. **Weigh cost vs risk** — a correct-but-slow function used once a day isn't worth a risky
+   rewrite. Rank by (frequency × cost) vs (diff size × blast radius).
+
+### 6. Dead-Code Finder Agent
+
+Find code with **zero live callers** — not "looks unused," a proven negative.
+
+1. **Build the reachability set** — grep every export/symbol for call sites, including dynamic
+   dispatch (string-based lookups, DI containers, reflection) before concluding "no callers."
+2. **Exclude false positives by construction** — public API surface (library entry points),
+   test-only helpers, framework-required overrides (lifecycle hooks) are not dead even with few
+   callers.
+3. **Confirm negative, not absence-of-search** — "grep found nothing" is a hypothesis; check
+   re-exports, barrel files, and string-interpolated call sites before declaring dead.
+4. **Report removal, not just detection** — dead code left in place accrues drift risk (source
+   of truth confusion, next dev cargo-cults it, out-of-date next to what it once mirrored).
+   Propose the deletion diff, not merely a list of names.
+
 ## Debugging taxonomy — jobs, roles, and the delegation boundary
 
 The debugging fleet isn't "4 agents that seemed useful" — it's *derived*. Classify debug jobs
@@ -189,6 +218,106 @@ bounces rather than freelance. Neither writes the ledger.
 
 Both agents ship as project `.claude/agents/` defs for testing; graduate to plugin agents once
 proven.
+
+### Review-fleet MVP proposal (candidates 5–6, not built yet)
+
+Distinct from the debug fleet above — this is the code-review trio (correctness / inefficiency /
+dead-code). Proposed scope, kept as an idea only:
+
+- **Ship 2, not 3**: Code-Review Agent (candidate 1 — may already overlap with the existing
+  `code-reviewer-lean` subagent, check before building new) + Dead-Code Finder (candidate 6 —
+  reachability is mostly mechanical, verdict is a clean binary, cheapest to get right).
+- **Defer Inefficiency-Finder** (candidate 5) — needs profiling data or frequency inference
+  that's often unavailable, plus a subjective cost/risk weighing step. Ship after the harness
+  shape is proven on the other two.
+- **Reuse the debug fleet's shape**: read-only discover-only agents (findings only, no edits),
+  one adversarial-verify pass per finding (skeptic tries to refute — the noise filter that made
+  the debug fleet trustworthy), main thread ranks + decides whether to act.
+
+### 7. Builder Agent (codes from spec, not from a bug report)
+
+The opposite direction from review/debug: given planned work already captured in
+`.spectacular/requests/<slug>/`, *implement* it — not critique existing code, not fix a bug,
+build the thing the plan describes.
+
+**A bare `TASKS.md` checkbox line is not a closed brief on its own** — it's a fragment. The
+same "can this prompt be closed?" test the debug fleet uses (an agent exists iff its input can
+be a complete, unambiguous brief) says: assemble the brief by walking up the existing chain
+that already exists in every request folder, not by inventing a new context format.
+
+**Context-assembly chain** (each link sourced from a file that already exists per request):
+
+```
+TASK ROW           →  MILESTONE BLOCK      →  PLAN SECTION        →  BRIEF                →  OUTPUT + TESTS
+TASKS.md            TASKS.md's own          PLAN.md §3            synthesized from        implementation +
+one `- [ ]` line     `## M<n> — ...`         milestone entry        all 4 links above:      validation run
+                     header + siblings       ("M3 — CLI writers:    Goal / Constraints /
+                                              implement...")        Expected output /
+                                                                     Success criteria
+```
+
+1. **Task row** — the single checkbox line that triggered the work. Gives *what*, not *why* or
+   *how much*.
+2. **Milestone block** — the `## M<n>` section in `TASKS.md` containing that row plus its
+   sibling `- [ ]` lines. Gives the full ordered step list and scope boundary (what's *in* this
+   milestone vs the next one).
+3. **PLAN section** — the matching milestone description in `PLAN.md` §3 "Milestones", plus
+   §2 "Constraints" (applies to every milestone) and §6 "Validation" (per-milestone acceptance
+   criteria — already written, not invented). This is where *why* and *done means* live.
+4. **Brief** — the orchestrator synthesizes 1–3 into the same shape the Fixer already uses
+   (Problem / Intended / Root cause → **here: Goal / Constraints / Approach** / Proposed
+   change / **Success criteria** — reusing `PLAN.md §6`'s validation line verbatim where
+   possible instead of re-deriving it).
+5. **Expected output** — the deliverable named in `PLAN.md §7` "Deliverables" that this
+   milestone contributes, so the agent knows the artifact shape (a new file? a CLI verb? a
+   doc section?), not just "write some code."
+6. **Tests and validation** — run exactly the check named in `PLAN.md §6` for this milestone
+   (a CLI smoke test, a doctor area going green, a worked example in `discovery.md`) — never
+   invent a new success bar the plan didn't specify.
+
+**Bounce rule (mirrors Fixer):** if the milestone block turns out under-specified — the PLAN
+section is missing, the validation line is vague ("works correctly"), or the task row implies a
+design decision not yet made — the agent **stops and reports back**, same as Fixer bounces on
+judgment. It never freelances a missing spec into existence.
+
+**Why this isn't the same as Fixer:** Fixer's brief is 5 slots because a bug fix is bounded by
+"make this one thing true again." A Builder's brief is bounded by a milestone, which can span
+multiple files/verbs/docs — closer in size to a small PR than a patch. The closed-brief test
+still applies, just at milestone granularity instead of single-fix granularity.
+
+**Chain grep-ability — checked against real requests, mostly holds:** `## M<N>` headers,
+`- [ ]`/`- [x]` checkboxes, and numbered `## <N>. <Section>` headers in PLAN.md are all
+consistently grep/sed-able across every request sampled (`soft-db-substrate`, `spec-audit-mode`,
+others). The one real gap: the link between a TASKS.md milestone and its PLAN.md §3/§6
+counterpart is an **`M<N>` numbering convention, not an enforced ID** — nothing stopped them
+drifting (confirmed: this repo's own `spec-audit-mode` TASKS.md was still the unfilled
+boilerplate template, 3 milestones vs PLAN's 4). Decision: **the chain must stay walkable even
+when M-numbers drift** — don't require alignment as a hard gate, an agent should tolerate
+matching by name/prose if numbers disagree. **Shipped (2026-07-06):** `doctor lifecycle` now
+flags M-label mismatches between TASKS.md ↔ PLAN §3 Milestones ↔ PLAN §6 Validation as an
+advisory `judgment` warning (never blocks) — `check_lifecycle` in `cli/spectacular`, covered by
+`scenario_19_milestone_label_drift` in `tests/cli/doctor.test.sh`. Also flags a non-standard
+milestone ID prefix (e.g. `G1` instead of `M1`) as its own warning — reusing the project-wide
+one-letter-per-entity convention now documented in `ARCHITECTURE.md` (`M`=milestones,
+`D`=decisions, `F`=fixes, `b`=roadmap builds, `A`=debug findings) — **but only escalates to a
+real "chain broken" warning when a name-based fallback match also fails**: it compares the
+milestone's name text (the words after the em-dash) across files first, so a relettered- or
+renumbered-but-same-named milestone is silently tolerated, not false-flagged. Covered by
+`scenario_20_milestone_off_prefix_name_fallback`. This closes the gap for *detecting* drift; a
+Builder agent consuming the chain should still lean on name-matching as its own primary
+strategy, since the doctor check is advisory, not enforced.
+
+**Open, not resolved:**
+- Does the Builder write its own tests, or does a separate agent (existing Test Agent,
+  candidate 2) verify after? Lean: Builder writes the check named in PLAN §6 (that's usually
+  already a testable claim); a heavier suite is Test Agent's job, not duplicated here.
+- Multi-milestone requests: one Builder per milestone (fan-out, since M-blocks are usually
+  sequential/dependent) or a single Builder walking the whole `TASKS.md` in order? Milestones
+  in the wild (see `soft-db-substrate/PLAN.md`) are often sequentially dependent (M2 needs M1's
+  schema) — lean single-threaded per request, fan-out only across independent requests.
+- Ledger discipline: does the Builder ever touch `TASKS.md` checkboxes itself (`- [ ]` → `- [x]`),
+  or does that stay a main-thread write like the debug fleet's ledger rule? Lean: main thread
+  only — mirrors "Fanning out the labor is fine; the ledger write stays single-threaded."
 
 ## Open questions
 

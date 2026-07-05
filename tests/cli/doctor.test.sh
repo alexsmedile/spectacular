@@ -656,6 +656,173 @@ scenario_18_debug_spine_validation() {
   rm -rf "$dir"
 }
 
+scenario_19_milestone_label_drift() {
+  echo "Scenario 19: milestone M<N> labels drift between TASKS.md / PLAN §3 / PLAN §6"
+  local dir="/tmp/doctor-test-19"
+  seed_clean "$dir"
+  mkdir -p "$dir/.spectacular/requests/drifted"
+  cat > "$dir/.spectacular/requests/drifted/PLAN.md" <<'EOF'
+---
+status: planned
+priority: medium
+owner: test
+updated: 2026-07-06
+summary: "test"
+---
+# Plan — drifted
+
+## 3. Milestones
+
+- M1 — first
+- M2 — second
+- M3 — third
+
+## 4. Tasks
+
+See TASKS.md.
+
+## 6. Validation
+
+- M1 — check one
+- M2 — check two
+
+## 7. Deliverables
+EOF
+  cat > "$dir/.spectacular/requests/drifted/TASKS.md" <<'EOF'
+---
+status: planned
+updated: 2026-07-06
+related:
+  - PLAN.md
+---
+# Tasks — drifted
+
+### M1 — first
+- [ ] task
+
+### M2 — second
+- [ ] task
+EOF
+
+  local out code
+  out=$(cd "$dir" && "$CLI" doctor lifecycle 2>&1) && code=0 || code=$?
+
+  assert_exit_code "1" "$code" "milestone drift exits 1 (warning)"
+  assert_output_contains "$out" "milestone labels differ between TASKS.md" "TASKS vs PLAN §3 drift flagged"
+  assert_output_contains "$out" "milestone labels differ between PLAN §3 Milestones" "PLAN §3 vs §6 drift flagged"
+
+  # aligned labels → no drift warning
+  cat > "$dir/.spectacular/requests/drifted/TASKS.md" <<'EOF'
+---
+status: planned
+updated: 2026-07-06
+related:
+  - PLAN.md
+---
+# Tasks — drifted
+
+### M1 — first
+- [ ] task
+
+### M2 — second
+- [ ] task
+
+### M3 — third
+- [ ] task
+EOF
+  cat > "$dir/.spectacular/requests/drifted/PLAN.md" <<'EOF'
+---
+status: planned
+priority: medium
+owner: test
+updated: 2026-07-06
+summary: "test"
+---
+# Plan — drifted
+
+## 3. Milestones
+
+- M1 — first
+- M2 — second
+- M3 — third
+
+## 4. Tasks
+
+See TASKS.md.
+
+## 6. Validation
+
+- M1 — check one
+- M2 — check two
+- M3 — check three
+
+## 7. Deliverables
+EOF
+  local out_ok code_ok
+  out_ok=$(cd "$dir" && "$CLI" doctor lifecycle 2>&1) && code_ok=0 || code_ok=$?
+  assert_exit_code "0" "$code_ok" "aligned milestone labels exit 0"
+  assert_output_lacks "$out_ok" "milestone labels differ" "no drift warning when aligned"
+
+  rm -rf "$dir"
+}
+
+scenario_20_milestone_off_prefix_name_fallback() {
+  echo "Scenario 20: non-standard milestone prefix flagged, but name-match prevents false chain-break"
+  local dir="/tmp/doctor-test-20"
+  seed_clean "$dir"
+  mkdir -p "$dir/.spectacular/requests/relettered"
+  cat > "$dir/.spectacular/requests/relettered/PLAN.md" <<'EOF'
+---
+status: planned
+priority: medium
+owner: test
+updated: 2026-07-06
+summary: "test"
+---
+# Plan — relettered
+
+## 3. Milestones
+
+- M1 — Schema lock: something
+- M2 — Rules files: something else
+
+## 4. Tasks
+
+See TASKS.md.
+
+## 6. Validation
+
+- M1 — check
+- M2 — check
+
+## 7. Deliverables
+EOF
+  cat > "$dir/.spectacular/requests/relettered/TASKS.md" <<'EOF'
+---
+status: planned
+updated: 2026-07-06
+related:
+  - PLAN.md
+---
+# Tasks — relettered
+
+### G1 — Schema lock
+- [ ] task
+
+### G2 — Rules files
+- [ ] task
+EOF
+
+  local out code
+  out=$(cd "$dir" && "$CLI" doctor lifecycle 2>&1) && code=0 || code=$?
+
+  assert_exit_code "1" "$code" "off-prefix milestone exits 1 (warning)"
+  assert_output_contains "$out" "non-standard milestone prefix(es): G1 G2" "off-prefix flagged"
+  assert_output_lacks "$out" "and names don't line up either" "name-match fallback prevents false chain-break"
+
+  rm -rf "$dir"
+}
+
 # ── run ───────────────────────────────────────────────────────────────────────
 
 scenario_1_clean_workspace_exits_zero
@@ -677,6 +844,8 @@ scenario_15_roadmap_shape_detection
 scenario_16_roadmap_icebox_rename
 scenario_17_description_length
 scenario_18_debug_spine_validation
+scenario_19_milestone_label_drift
+scenario_20_milestone_off_prefix_name_fallback
 
 echo ""
 echo "  Asserts: $pass_count passed, $fail_count failed"

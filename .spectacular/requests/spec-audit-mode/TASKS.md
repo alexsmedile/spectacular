@@ -1,6 +1,6 @@
 ---
 status: planned
-updated: 2026-06-26
+updated: 2026-07-06
 related:
   - PLAN.md
 ---
@@ -20,19 +20,20 @@ related:
 
 ## v1
 
-### M1 — <Milestone name>
-- [ ] <Task>
-- [ ] <Task>
-- [ ] <Task>
+### M1 — Orphan capability bullets
+- [ ] Extend `check_specs` to walk SPEC.md's Capabilities bullets against `specs/<slug>/SPEC.md` + archive slug/summary mentions
+- [ ] Info/warn threshold by bullet length (short bullets are allowed to stay spec-file-less)
+- [ ] Test: bullet with no spec file + no archive mention → warning; matching spec file → clean
 
-### M2 — <Milestone name>
-- [ ] <Task>
-- [ ] <Task>
+### M2 — Orphan spec files
+- [ ] Extend `check_specs` to flag `specs/<cap>/SPEC.md` files not referenced anywhere in SPEC.md's body
+- [ ] Test: unreferenced `specs/ghost/SPEC.md` → warning; referenced → clean
 
-### M3 — <Milestone name>
-- [ ] <Task>
+### M3 — Stale capability specs
+- [ ] Extend `check_specs` to compare each `specs/<cap>/SPEC.md`'s `updated` against its newest related archive (via archive PLAN's `related:`)
+- [ ] Test: cap spec older than a related archive → warning
 
-## v2 (deferred)
-
-- [ ] <Deferred task>
-- [ ] <Deferred task>
+### M4 — Docs + JSON summary
+- [ ] `doctor specs --json` includes per-signal findings
+- [ ] Update `doctor-areas.md` (specs table), `status.md` (signal table), `spec-sync.md` (standalone audit trigger)
+- [ ] ROADMAP ledger row mapping build b11 → target version

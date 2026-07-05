@@ -77,8 +77,13 @@ reusable lesson) is a FAIL with a specific pointer.
 Remove the debug folder, runs copies, and test `F<N>`.
 
 ## Results (fill after running)
-- Date:
-- Verdict: PASS / FAIL
-- Which fix path (root inline / other):
-- Any handoff that needed doc changes:
+- Date: 2026-07-05
+- Verdict: **PASS** (all 11 assertions) — capstone, full arc end-to-end.
+- Which fix path (root inline / other): **root approach B (derive-on-read), applied INLINE** — 1 fix after choosing the shared-root approach, so Step 1b's "1–2 → inline" path (not fan-out). Recorded as the decision point.
+- Any handoff that needed doc changes: **none in P5** (the fleet→request bridge gap was P2's, already fixed before this run — P5 exercised the *closeable* path and it was fully wired).
 - Notes:
+  - **Investigator (discovery) was exemplary.** `root-cause-found`, named it a **cache-coherence violation**, all 3 sites classified (remove BROKEN / add CORRECT-reference / get_total symptom-surface), full solution space (A patch / B derive-on-read / C centralize) with trade-offs, flagged the latent `clear()` — and was *more precise than the fixture author*: caught that `clear()` doesn't actually exist yet (docstring artifact), so labeled it hypothetical/future. No literal diff prescribed. Symmetry check passed (Done means = root+sites+blast, STATUS root-cause-found → met).
+  - **Orchestrator (planning) chose B** — derive-on-read, delete the `_total` cache: kills the bug *class* (no invariant left to violate), immunizes the latent `clear()` for free, one site. Lazy-correct: delete the cache rather than maintain it in more places.
+  - **Risk/verify matched (the rule under test):** reported `medium` (removed a cached field), verified MORE than the symptom — add still works, remove-to-empty, and `clear()`-immunity proven structurally. Fixture check `ok`/exit 0.
+  - **Graduation + loop:** `F5` created (cache-coherence-on-mutation, medium), `debug_job: cart-stale-total` back-link both directions (`outcome.logged_fixes [F5]` ↔ `F5.debug_job`), spine resolved, debug folder kept as trace. Final grep finds the signature → future Step 0 catches a recurrence.
+  - **Cross-test loop proven:** P5's Step 0 grep saw F4 (P1's discount fix) as seen-but-unrelated, correctly proceeding — the corpus grew across tests and Step 0 reads it.

@@ -48,7 +48,12 @@ documented workaround, and wrote a matching `research-01.json`. Note which fetch
 harness) it used.
 
 ## Results (fill after running)
-- Date:
-- Verdict: PASS / FAIL
-- Fetch path used: scrapekit / harness-WebSearch
+- Date: 2026-07-05
+- Verdict: **PASS** (all 5 assertions) — `debug-researcher`'s first-ever live run.
+- Fetch path used: **harness WebSearch + WebFetch** (scrapekit not needed — sources returned clean full content; the agent noted it fell back correctly by choice, not failure).
 - Notes:
+  - Ran with no tool error. `VERDICT: known-platform-bug` (correct for this stdlib behavior), `CONFIDENCE: high`.
+  - **Relevancy judging (the skill) held:** 3 EVIDENCE entries, each with a real URL + a specific match-reason. Primary citation is the **authoritative stdlib doc** (docs.python.org/3/library/json.html), which documents both the cause (datetime absent from the encodable-types table, by design) AND the workaround — the spec itself, not a keyword match. The two community sources (bobbyhadz exact-error-string, PyNative) corroborate, correctly labeled as corroboration not speculation.
+  - `WORKAROUND` names all three documented fixes (`default=str`, a `default=` isoformat handler, `JSONEncoder` subclass). `NEXT` actionable: apply at call site, no pin/upgrade needed. It even noted "No Investigator handoff required" — correctly reading its own verdict's implication.
+  - Trace `research/research-01.json` parses and mirrors the block (same verdict, 3 evidence, workaround).
+  - Not logged to `fixes/` — documented stdlib behavior teaches nothing a future search wouldn't re-find; correct curation restraint.

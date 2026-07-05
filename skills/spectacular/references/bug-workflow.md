@@ -185,6 +185,16 @@ The Investigator reports **findings**, and it never proposes the edit — fix-pl
 
 With findings in hand, **you plan the fix(es)** — this is the orchestrator's job, the step the Investigator deliberately doesn't do. Turn the root cause into one or more *closed* fixes (each with the five slots: Problem / Intended / Root cause / Proposed fix / Success criteria). Then the Step 1b decision applies: **≥3 independent, closed, disjoint-file fixes → fan out `debug-fixer`s; 1–2 → fix inline.** Fan-out is usually faster *once the fixes are clear and well-scoped* — which they now are, because the investigation closed the unknowns.
 
+**But first, a fork: can the findings even close into fixes?** Sometimes the investigation reveals the "fix" is *design work* — a schema change, a new policy, a concept the code doesn't have yet, touching every create/read path together (the Investigator will usually flag this as blast-radius + open questions, and size it "not a one-line fix"). You can tell because the five slots won't fill: **Proposed fix** would read "design X," and a Fixer handed that brief would have to *invent* the decisions (a TTL value, a clock source, an eviction policy). That fails the "concrete enough a Fixer applies without judgment" bar — so **do not fan out.** Instead, **fold it into a request** (the fleet→request bridge):
+
+- `spectacular new "<slug>"` to scaffold the request (`PLAN.md`/`TASKS.md`) — the open questions become the plan's decisions.
+- Write the job's `outcome.json` → `disposition: folded-into-request`, `request: <slug>`, `logged_fixes: []` (nothing was fixed — it was planned), flip the spine to `resolved`, keep the debug folder as trace.
+- Optionally `spectacular audit new` first if the investigation earned an examination trail, then fold *that* (`audit resolve <A> --disposition "requests/<slug>"`). But an audit is **not required** to fold — the fleet path can route straight from `investigation.json` to a request. (This is the same fold as line 75's audit→request path, reached from the fleet instead of an open audit.)
+
+This is a real disposition, not a failure: `folded-into-request` closes the debug job cleanly — the work continues in the request lifecycle, not the debug pipeline. **No `F<N>` is logged for a folded job** (Step 3 logs *verified fixes*; a fold has none yet).
+
+**If the findings DO close** — the common case — continue:
+
 Record it: `spectacular audit new` (from the findings) if the investigation earned an audit trail, and `spectacular fix new` per verified fix (Step 3). **The ledger stays single-threaded on the orchestrator** — neither the Investigator nor the Fixers write it (`use-audit-fix-verbs`).
 
 **Pipeline (which role runs each step):** you triage + gate (Steps 0–1, the "Router") → Investigator discovers findings (agent, Step 2b) → **you** plan the fixes (Step 2b) → Fixer applies ×N (agent, Step 1b fan-out) → **you** confirm + write the ledger (Step 3, the "Validator"). "Router" and "Validator" are just *you* wearing the triage hat and the resolve hat — they aren't separate agents; every main-thread box is the orchestrator. The two real agents are delegable labor and keep the honest-fallback invariant: Investigator reports hypotheses-only rather than a fake root cause; Fixer bounces rather than freelance.

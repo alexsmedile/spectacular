@@ -58,6 +58,11 @@ Delete `.spectacular/debug/discount-clamp/` and the test `F<N>` after — this i
 fix. (Or keep as a documented sample; note which in results.)
 
 ## Results (fill after running)
-- Date:
-- Verdict: PASS / FAIL
+- Date: 2026-07-05
+- Verdict: **PASS** (all 8 assertions)
 - Notes:
+  - Real integration run — `debug-fixer` subagent spawned live, applied `max→min`, verified `ok`/exit 0, wrote `fixes/fix-01.json`. Orchestrator graduated to `F4` (severity medium), stamped `debug_job: discount-clamp`, wrote `outcome.json`, flipped spine to `resolved`. Back-links agree both directions; debug folder kept; signature findable → loop closed.
+  - **Agent-contract win (fixture bug found):** the Fixer's FIRST pass correctly **bounced** — the fixture's own `__main__` used exact float equality (`== 10.0` vs `100*(1-0.9) == 9.999...`), a latent test defect independent of the clamp bug. The Fixer applied the exact brief fix, verified honestly, and refused to freelance a second edit the brief didn't authorize. Exactly the apply-only contract working. Fixture corrected to `round(...,2)` tolerance (the clamp bug — what P1 tests — is unchanged), Fixer re-run → `applied`/pass.
+  - **CLI note:** `spectacular fix new --severity` requires the full word (`medium`), not `m`. The `-i` init menu and doctor use `l|m|h` elsewhere — minor inconsistency, not a blocker.
+  - **CLI gap:** `fix new` does not stamp `debug_job:` — the orchestrator adds it to frontmatter manually. Candidate for a `--debug-job <slug>` flag if graduation-from-debug becomes common.
+  - Kept as documented sample (not cleaned up) so P5 has a prior fix to grep against in its Step 0.

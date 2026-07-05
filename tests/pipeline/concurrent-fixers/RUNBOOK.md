@@ -57,7 +57,12 @@ write race.**
 Remove `.spectacular/debug/multi-clamp/` and the `runs/` copies.
 
 ## Results (fill after running)
-- Date:
-- Verdict: PASS / FAIL
-- All 3 trace files distinct + correct? YES / NO
+- Date: 2026-07-05
+- Verdict: **PASS** (all assertions)
+- All 3 trace files distinct + correct? **YES** — fix-01→alpha.py:6, fix-02→beta.js:4, fix-03→gamma.py:4; each parses, each describes only its own fix. No overwrite.
 - Notes:
+  - Real fan-out: 3 `debug-fixer` subagents spawned in ONE message (parallel), all returned `applied` / `VERIFY: pass` / `RISK: low`.
+  - **Collision test held:** disjoint-slot pre-assignment (`artifacts.fixes` seeded before spawn) meant no two Fixers targeted the same trace path. Each wrote its assigned `fix-NN.json`, none clobbered another.
+  - **Isolation held:** diff of each `runs/` copy vs its pristine fixture shows exactly ONE changed line, in that file only — alpha's Fixer never touched beta/gamma, etc. Disjoint-file is what makes parallel safe, confirmed empirically.
+  - Spine collected all 3 (timeline has 3 fix entries), status → resolved. Not graduated to ledger — these are mechanical one-liners (off-by-one / operator / default), not reusable-signature footguns.
+  - Every Fixer independently proposed dropping the now-stale `# bug:` comment alongside its fix — consistent "leave no stale marker" behavior, no prompting.

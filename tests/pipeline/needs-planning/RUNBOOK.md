@@ -53,7 +53,12 @@ The orchestrator recognized the non-mechanical fix, refused to fan out, and rout
 Remove the test request + debug folder after.
 
 ## Results (fill after running)
-- Date:
-- Verdict: PASS / FAIL / FAIL-surfaced-doc-gap
-- Bridge specified in doc? YES / NO
+- Date: 2026-07-05
+- Verdict: **FAIL-surfaced-doc-gap → now FIXED** (all 6 assertions passed on the mechanism; the doc that should have guided step 5 was missing the route — added this run).
+- Bridge specified in doc? **Was NO, now YES.**
 - Notes:
+  - **Investigator was excellent.** `STATUS: root-cause-found`, correctly identified **structural absence** ("a missing feature wearing a bug's clothes"), named all 3 sites (store/create/authenticate), mapped the solution space (lazy expiry / TTL policy / active sweep) *without prescribing a diff*, flagged the 4 open questions as **design decisions**, and explicitly sized it: "not a one-line fix… route it to the request lifecycle (PLAN/TASKS), not a single-site Fixer." The honesty/altitude invariant held perfectly — it discovered, it did not plan.
+  - **The fork worked (assertion 4):** the findings genuinely could not close into 5 slots — "Proposed fix" would be "design session expiry," forcing a Fixer to invent TTL/clock/semantics. Correctly did NOT fan out.
+  - **The gap (the point of P2):** `bug-workflow.md` Step 2b's "Plan the fixes, then fan out" had exactly ONE exit — plan closed fixes → fan-out/inline. **No branch for "findings reveal design work too big to close."** The only fold→request route (line 75) was gated behind an *audit disposition* (`audit resolve <A> --disposition …`), which requires an A<N> the fleet path never opens. So *Investigator-findings → request* was unwired. Notably, the **schema was already fold-ready** (`debug-trace.md` had `disposition: folded-into-request` + `request` slug + `status: folded`) — only the workflow *prose* was blind to the route. Schema-ready, workflow-blind.
+  - **Fix applied this run:** inserted a "can the findings even close into fixes?" fork at the top of Step 2b's "Plan the fixes" section — detects design-work findings, routes to `spectacular new <slug>` + `outcome.disposition: folded-into-request`, notes no `F<N>` is logged for a fold, and that an audit is *not* required to fold from the fleet. Bridge now wired both directions (audit→request AND fleet→request).
+  - Mechanism end-to-end verified: request `session-expiry` scaffolded (PLAN+TASKS, build b19), `outcome.json.disposition == folded-into-request` with `request: session-expiry`, `logged_fixes: []`, no new `F<N>`. Spine flipped to resolved, debug folder kept.

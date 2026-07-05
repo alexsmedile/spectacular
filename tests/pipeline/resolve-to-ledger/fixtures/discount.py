@@ -17,6 +17,8 @@ def apply_discount(price, pct):
 
 if __name__ == "__main__":
     # a 95% coupon should floor at 90% off → pay 10 on a 100 item
-    assert apply_discount(100, 0.95) == 10.0, f"got {apply_discount(100, 0.95)}"
-    assert apply_discount(100, 0.5) == 50.0
+    # round() to dodge IEEE-754 noise (100*(1-0.9) == 9.999...); the bug under
+    # test is clamp-direction, not float equality
+    assert round(apply_discount(100, 0.95), 2) == 10.0, f"got {apply_discount(100, 0.95)}"
+    assert round(apply_discount(100, 0.5), 2) == 50.0
     print("ok")

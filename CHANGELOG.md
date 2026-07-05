@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.26.2] — 2026-07-06
+
 ### Added
 
 - **`doctor lifecycle` milestone-label alignment check** — flags `M<N>` label drift between a request's `TASKS.md`, `PLAN.md` §3 Milestones, and §6 Validation (advisory `judgment` warning, never blocks). Also flags a non-standard milestone prefix (e.g. `G1` instead of `M1`), but falls back to matching by milestone **name** before declaring a real chain-break — so a relettered-but-same-named milestone doesn't false-positive. Closes a gap surfaced while scoping a "Builder agent" idea (`.spectacular/ideas/coding-agents.md`): the task-row → milestone-block → plan-section chain is only reliably walkable when IDs/names actually agree, and nothing checked that before.

@@ -181,6 +181,18 @@ The Investigator reports **findings**, and it never proposes the edit — fix-pl
 
 **The `debug-researcher`** is read-only web/forum/doc search with a debugging protocol (frame the symptom in others' vocabulary → diverse queries → judge relevancy hard → verdict). Use it when a bug smells *external* — a library or platform quirk others may have hit. It returns `VERDICT: known-platform-bug` (apply the documented workaround / pin-or-upgrade) · `genuinely-ours` (route back to an Investigator, external cause now ruled out) · `no-strong-match` (honest dead end). It prefers `scrapekit` for fetching, falls back to the harness `WebSearch`/`WebFetch`. Like the other agents: never writes the ledger.
 
+**Optional: a second opinion from `codex-agent`.** Same read-only contract as the Investigator (Bash/Glob/Grep/Read/WebFetch — no Edit/Write), but a different model — a cross-check, not a replacement for the Investigator. Default is **no** — most `root-cause-found` findings are good enough to plan from as-is. Reach for it only when one of these is true:
+
+| Trigger | Why it earns the spawn |
+|---|---|
+| The fix would be **cross-cutting or high blast-radius** (touches a shared function, many callers, or a hot path) | Planning wrong here is expensive — worth a second read before committing |
+| You've **already looped once** (re-spawned the Investigator with a sharper brief and still got `hypotheses-only`, or `root-cause-found` that didn't hold up on the fix attempt) | Same-model re-spawn already failed to converge; a different reasoning model can break the stall |
+| The root cause is **plausible but you're not confident** — no hard evidence, just the best of several hypotheses | A confirm/refute pass is cheap insurance before planning a fix on a guess |
+
+**Don't** spawn it for a routine `root-cause-found` with solid evidence and a single obvious site — that's the common case, and a second opinion there is pure ceremony (mirrors the `ceremony-matches-uncertainty` policy: match effort to actual uncertainty, not to every bug).
+
+Give it the same evidence the Investigator had (symptom, suspected sites, root cause so far) and ask it to confirm, refute, or propose an alternative — never to fix. Treat its answer like a second `hypotheses-only` opinion: it informs your plan, it doesn't replace your planning. It never writes the ledger.
+
 ### Plan the fixes, then fan out
 
 With findings in hand, **you plan the fix(es)** — this is the orchestrator's job, the step the Investigator deliberately doesn't do. Turn the root cause into one or more *closed* fixes (each with the five slots: Problem / Intended / Root cause / Proposed fix / Success criteria). Then the Step 1b decision applies: **≥3 independent, closed, disjoint-file fixes → fan out `debug-fixer`s; 1–2 → fix inline.** Fan-out is usually faster *once the fixes are clear and well-scoped* — which they now are, because the investigation closed the unknowns.

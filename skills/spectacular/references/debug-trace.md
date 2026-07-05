@@ -226,7 +226,7 @@ The bridge from trace to permanent ledger:
   (`log-only-verified-reusable`).
 - `audit`: the `A<N>` id if the examination was worth keeping, else `null` (a job may earn neither
   `audit` nor `logged_fixes`; the trace itself is always retained regardless).
-- `folded-into-request` also carries a `request` slug.
+- `folded-into-request` also carries a `request` slug. Reached from the fleet when the Investigator's findings are design work too big to close into fix slots — the route is [[bug-workflow]] Step 2b's "can the findings even close?" fork. (A disposition in this schema is only usable once the *workflow* wires a path that reaches it — schema-ready ≠ workflow-ready.)
 - Both `A<N>` and `F<N>` (when written) cross-link each other and carry `debug_job` back to this
   folder.
 

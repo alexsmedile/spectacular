@@ -2366,7 +2366,7 @@ cmd_audit_new() {
       --problem|--symptom) require_value "$1" "${2:-}"; problem="$2"; shift 2 ;;
       --intended)          require_value "--intended" "${2:-}"; intended="$2"; shift 2 ;;
       --dry-run)  dry_run=true; shift ;;
-      --help|-h)  echo "Usage: spectacular audit new \"<title>\" [--severity l|m|h] [--problem <text>] [--intended <text>] [--dry-run]"; exit 0 ;;
+      --help|-h)  echo "Usage: spectacular audit new \"<title>\" [--severity low|medium|high] [--problem <text>] [--intended <text>] [--dry-run]"; exit 0 ;;
       -*) die "Unknown flag for audit new: $1" ;;
       *) [[ -n "$title" ]] && die "audit new: only one <title> argument (quote it)"; title="$1"; shift ;;
     esac
@@ -2563,7 +2563,7 @@ cmd_fix_new() {
       --from-audit)      require_value "--from-audit"  "${2:-}"; f_from_audit="$2"; shift 2 ;;
       --dry-run)         dry_run=true; shift ;;
       --help|-h)
-        echo "Usage: spectacular fix new \"<title>\" [--verified-by <text>] [--problem/--intended/--cause/--fix/--criteria <text>] [--signature <text>] [--from-audit A<N>] [--severity l|m|h] [--dry-run]"; exit 0 ;;
+        echo "Usage: spectacular fix new \"<title>\" [--verified-by <text>] [--problem/--intended/--cause/--fix/--criteria <text>] [--signature <text>] [--from-audit A<N>] [--severity low|medium|high] [--dry-run]"; exit 0 ;;
       -*) die "Unknown flag for fix new: $1" ;;
       *) [[ -n "$f_title" ]] && die "fix new: only one <title> argument (quote it)"; f_title="$1"; shift ;;
     esac

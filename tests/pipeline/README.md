@@ -16,6 +16,8 @@ defs and `bug-workflow.md` are live. They can't be run inline — they need the 
 | P3 | `researcher-run/` | **Researcher actually runs** — an external-smelling bug; debug-researcher returns a verdict with citations |
 | P4 | `concurrent-fixers/` | **concurrent Fixers write disjoint `fix-NN.json`** — 3-way fan-out, no trace collision, spine collects all three |
 | P5 | `full-pipeline/` | **end-to-end** — open bug → Investigator → plan → fan out → verify → resolve → log, one clean run |
+| P6 | `wont-fix-disposition/` | **won't-fix disposition** — a real, one-line-fixable bug the orchestrator deliberately declines (deprecated path, frozen consumer); records `wont-fix` + reason, logs no `F<N>` |
+| P7 | `malformed-return/` | **inbound safety valve** — Investigator returns an honest under-determined block; orchestrator's well-formedness + symmetry backstop fires, no fix fabricated |
 
 ## Convention (same as `tests/agents/`)
 

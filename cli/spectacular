@@ -2492,7 +2492,7 @@ _section_body() {
 
 # Scaffold a fixes/F<N>.md from named slot vars.
 # Reads these locals from the CALLER's scope (set them before calling):
-#   f_title f_from_audit f_severity f_problem f_intended f_cause f_fix
+#   f_title f_from_audit f_debug_job f_severity f_problem f_intended f_cause f_fix
 #   f_criteria f_verified_by f_signature
 # Default: writes the file, echoes the new id.
 # If f_dry=true: writes nothing, echoes the rendered content (for --dry-run).
@@ -2506,6 +2506,7 @@ _fix_scaffold() {
   rendered=$(_render_template "$template" \
     ID "$id" TITLE "${f_title:-untitled}" SEVERITY "${f_severity:-medium}" \
     OPENED "$TODAY" VERIFIED "$verified_date" FROM_AUDIT "${f_from_audit:-null}" \
+    DEBUG_JOB "${f_debug_job:-null}" \
     SIGNATURE "${f_signature:-}" \
     PROBLEM     "${f_problem:-_(fill in)_}" \
     INTENDED    "${f_intended:-_(what SHOULD happen)_}" \
@@ -2536,6 +2537,7 @@ Subcommands:
                                   --verified-by <text>   The check that proves it
                                                            (omitting → verified: null + warn)
                                   --from-audit <A<N>>    Link to originating audit
+                                  --debug-job <slug>     Back-link to debug/<slug> job
                                   --dry-run
   list [--since <Nd>]         List fix entries
 
@@ -2549,7 +2551,7 @@ EOF
 cmd_fix_new() {
   # slot vars use the f_ prefix consumed by _fix_scaffold
   local f_title="" f_severity="medium" f_problem="" f_intended="" f_cause="" f_fix="" \
-        f_criteria="" f_verified_by="" f_from_audit="" f_signature="" dry_run=false
+        f_criteria="" f_verified_by="" f_from_audit="" f_debug_job="" f_signature="" dry_run=false
   while (( $# > 0 )); do
     case "$1" in
       --severity)        require_value "--severity"    "${2:-}"; f_severity="$2"; shift 2 ;;
@@ -2561,9 +2563,10 @@ cmd_fix_new() {
       --verified-by)     require_value "--verified-by" "${2:-}"; f_verified_by="$2"; shift 2 ;;
       --signature)       require_value "--signature"   "${2:-}"; f_signature="$2"; shift 2 ;;
       --from-audit)      require_value "--from-audit"  "${2:-}"; f_from_audit="$2"; shift 2 ;;
+      --debug-job)       require_value "--debug-job"   "${2:-}"; f_debug_job="$2"; shift 2 ;;
       --dry-run)         dry_run=true; shift ;;
       --help|-h)
-        echo "Usage: spectacular fix new \"<title>\" [--verified-by <text>] [--problem/--intended/--cause/--fix/--criteria <text>] [--signature <text>] [--from-audit A<N>] [--severity low|medium|high] [--dry-run]"; exit 0 ;;
+        echo "Usage: spectacular fix new \"<title>\" [--verified-by <text>] [--problem/--intended/--cause/--fix/--criteria <text>] [--signature <text>] [--from-audit A<N>] [--debug-job <slug>] [--severity low|medium|high] [--dry-run]"; exit 0 ;;
       -*) die "Unknown flag for fix new: $1" ;;
       *) [[ -n "$f_title" ]] && die "fix new: only one <title> argument (quote it)"; f_title="$1"; shift ;;
     esac

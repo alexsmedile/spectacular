@@ -193,7 +193,16 @@ With findings in hand, **you plan the fix(es)** — this is the orchestrator's j
 
 This is a real disposition, not a failure: `folded-into-request` closes the debug job cleanly — the work continues in the request lifecycle, not the debug pipeline. **No `F<N>` is logged for a folded job** (Step 3 logs *verified fixes*; a fold has none yet).
 
-**If the findings DO close** — the common case — continue:
+**And a second fork: should the fix even be applied?** Sometimes the findings *do* close into a clean five-slot fix — and the right call is still **not to apply it.** The bug is real and the diff is obvious, but applying it would break a frozen consumer, touch deprecated code with a live alternative, regress a deliberate trade-off, or cost more than the symptom warrants (the Investigator often flags this as blast-radius on a path everything's migrated off). This is **won't-fix** (the third disposition) — a *decision*, not a failure to fix:
+
+- **Do not apply the edit.** Weigh apply-vs-decline explicitly; if decline wins, leave the code untouched.
+- Write the job's `outcome.json` → `disposition: wont-fix`, a **stated `reason`** (why declining beats fixing — and the migration/alternative path if there is one), `logged_fixes: []`, flip the spine to `resolved`, keep the debug folder as trace.
+- **No `F<N>` is logged** — nothing was applied, so nothing graduates (Step 3 logs *verified fixes*; a decline has none). The `reason` is the durable record: a future reader learns *why it wasn't fixed*, which stops the same bug from being "rediscovered" and re-litigated.
+- **Just-fix ceremony** (no debug/ folder was opened)? Record the decline on the audit instead: `spectacular audit new "..."` → `audit resolve <A> --disposition "won't-fix: <reason>"`. Same disposition, recorded where the examination lives. (This is line 77's audit `won't-fix`, reached inline instead of from a fleet job.)
+
+`wont-fix` and `folded-into-request` are the two ways a debug job closes **without** a fix landing — one declines the work, the other relocates it to the request lifecycle. Both are honest resolutions; neither logs an `F<N>`.
+
+**If the findings DO close AND the fix is worth applying** — the common case — continue:
 
 Record it: `spectacular audit new` (from the findings) if the investigation earned an audit trail, and `spectacular fix new` per verified fix (Step 3). **The ledger stays single-threaded on the orchestrator** — neither the Investigator nor the Fixers write it (`use-audit-fix-verbs`).
 

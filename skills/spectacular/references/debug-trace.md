@@ -227,6 +227,7 @@ The bridge from trace to permanent ledger:
 - `audit`: the `A<N>` id if the examination was worth keeping, else `null` (a job may earn neither
   `audit` nor `logged_fixes`; the trace itself is always retained regardless).
 - `folded-into-request` also carries a `request` slug. Reached from the fleet when the Investigator's findings are design work too big to close into fix slots — the route is [[bug-workflow]] Step 2b's "can the findings even close?" fork. (A disposition in this schema is only usable once the *workflow* wires a path that reaches it — schema-ready ≠ workflow-ready.)
+- `wont-fix` carries a stated `reason`. Reached when the findings *do* close into a clean fix but applying it is the wrong call (frozen consumer, deprecated path with a live alternative, a deliberate trade-off, cost > symptom) — the route is [[bug-workflow]] Step 2b's "should the fix even be applied?" fork. `logged_fixes` stays empty: a decline applies nothing, so nothing graduates. The `reason` is the durable why-not, so the bug isn't re-litigated later. (Just-fix ceremony records the same decline on the audit via `audit resolve --disposition "won't-fix: ..."` — no `outcome.json` when no folder was opened.)
 - Both `A<N>` and `F<N>` (when written) cross-link each other and carry `debug_job` back to this
   folder.
 

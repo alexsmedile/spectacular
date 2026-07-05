@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.26.0] — 2026-07-05
+
 ### Added
 
 - **Debug agent fleet (`.claude/agents/`)** — three read-only-or-closed-contract subagents the orchestrator delegates to during a bug flow: **`debug-investigator`** (discovers *where* + *why* on an open bug, returns ranked findings + plausible-solution space, never prescribes the literal edit), **`debug-fixer`** (applies one *closed* five-slot brief under an apply-only contract — smallest faithful diff, local style, operation-care gradient add<edit≈patch<delete, risk-scaled verify — and bounces the moment execution turns to judgment), and **`debug-researcher`** (searches forums/docs/issues for known-external bugs, returns a cited verdict). Each writes only its own trace artifact; none writes the ledger.

@@ -7,6 +7,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.26.1] — 2026-07-06
+
+### Fixed
+
+- **Project docs synced to v1.26.0** — `CLAUDE.md`, `AGENTS.md`, and `README.md` still described pre-debug-fleet state: stale `(Unreleased)` tags on `bug-workflow.md`/`debug-trace.md` references, `AGENTS.md`'s Testing section claiming "no formal test suite exists" (false since `tests/{cli,pipeline,agents}` shipped), and README's `doctor <area>` list + workspace tree missing `debug`/`vision`/`decisions`/`roadmap` and the `debug/`/`audit/`/`fixes/` collections.
+- **`.spectacular/SPEC.md` synced to v1.26.0** — the capabilities index was 9 releases stale (claimed "as of v1.17.x") because v1.25.0 and v1.26.0 shipped via direct commits rather than the request lifecycle, so the doctor's spec-drift check (compares `SPEC.md updated:` against the newest *archived request*) had nothing to trigger on. Added the missing `audit/`+`fixes/` soft-DB collections, debug agent fleet, and `doctor debug` bullets; synced the doctor-area list.
+
 ## [1.26.0] — 2026-07-05
 
 ### Added

@@ -7,6 +7,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.26.3] — 2026-07-06
+
+### Added
+
+- **Workspace provenance tracking** — `config.yaml` now carries `created_with` (the spectacular version that scaffolded the workspace, write-once) and `last_touched_with` (the version that last structurally touched it, bumped by `migrate` and `doctor --fix`), alongside the existing `workspace_schema`. Answers "what version created this workspace, and what version last edited it?" — previously unanswerable. Workspaces predating this get `created_with: "unknown"` backfilled by `doctor --fix` (never a false claim of the current version). See `docs/configuration.md` § workspace_schema + provenance.
+- **`doctor workspace` schema-drift check** — emits a warning when `workspace_schema` is behind the CLI's expected version (→ run `migrate`) or ahead of it (→ update the CLI). The logic existed only behind `status --against-latest`; now a routine `doctor` run surfaces it. Covered by `scenario_21_schema_behind_warning`.
+- **Migration history log** — `migrate` appends to `.spectacular/migrations.log` (`<date>  <from> → <to>  (spectacular <version>)`), making upgrade provenance auditable rather than merely inferable from the current schema.
+
+### Fixed
+
+- **Stale CLI version string** — `SPECTACULAR_VERSION` was hardcoded to `1.24.0` while the plugin manifests shipped `1.26.2`; bumped to `1.26.3` so `spectacular --version` and the provenance stamps report the truth.
+
 ## [1.26.2] — 2026-07-06
 
 ### Added

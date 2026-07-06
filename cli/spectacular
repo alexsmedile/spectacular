@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.24.0"
+SPECTACULAR_VERSION="1.26.3"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -653,6 +653,11 @@ doc_config() {
 # Structural version of .spectacular/ layout. Migrations bump this.
 # Run \`spectacular migrate\` if your skill expects a newer schema.
 workspace_schema: \"${CURRENT_SCHEMA}\"
+
+# Provenance — which spectacular version scaffolded this workspace (write-once)
+# and which last structurally touched it (bumped by migrate / doctor --fix).
+created_with: \"${SPECTACULAR_VERSION}\"
+last_touched_with: \"${SPECTACULAR_VERSION}\"
 
 naming:
   requests: kebab-case
@@ -6085,6 +6090,36 @@ EOF
   fi
 }
 
+# Stamp last_touched_with: to the current CLI version. Called by any verb that
+# structurally mutates the workspace (migrate, doctor --fix). Idempotent — a
+# no-op if the field already matches. Legacy workspaces predating provenance
+# (no field) get one inserted after workspace_schema:. Never touches
+# created_with: (write-once at init). Silent no-op if config.yaml is absent.
+stamp_last_touched() {
+  local cfg=".spectacular/config.yaml"
+  [[ -f "$cfg" ]] || return 0
+  if grep -q "^last_touched_with:" "$cfg"; then
+    grep -q "^last_touched_with: \"${SPECTACULAR_VERSION}\"$" "$cfg" && return 0
+    sed "s/^last_touched_with:.*/last_touched_with: \"${SPECTACULAR_VERSION}\"/" "$cfg" > "$cfg.tmp"
+    mv "$cfg.tmp" "$cfg"
+  else
+    # Legacy workspace: backfill provenance after workspace_schema:. Set
+    # created_with too, best-effort — the true creation version is unknown, so
+    # mark it "unknown" rather than lying with the current version.
+    awk -v v="$SPECTACULAR_VERSION" '
+      { print }
+      /^workspace_schema:/ && !done {
+        print ""
+        print "# Provenance (backfilled — created_with unknown for pre-provenance workspaces)."
+        print "created_with: \"unknown\""
+        print "last_touched_with: \"" v "\""
+        done=1
+      }
+    ' "$cfg" > "$cfg.tmp"
+    mv "$cfg.tmp" "$cfg"
+  fi
+}
+
 # v0.4 → v0.5: rename .spectacular/current/ → .spectacular/specs/ if present.
 # Preserves contents verbatim (flat .md files OR per-capability subfolders).
 # Idempotent: no-op when current/ absent.
@@ -6251,9 +6286,10 @@ EOF
     die "Not inside a Spectacular workspace (no .spectacular/ here)."
   fi
 
-  local current target
+  local current target start_schema
   current="${opt_from:-$(config_workspace_schema)}"
   target="${opt_to:-$CURRENT_SCHEMA}"
+  start_schema="$current"   # captured before the apply loop mutates `current`
 
   if [[ "$current" == "$target" ]]; then
     echo "Workspace is up to date (schema ${current})."
@@ -6314,6 +6350,12 @@ EOF
   if $dry_run; then
     echo "Dry-run complete. Run without --dry-run to apply."
   else
+    stamp_last_touched
+    # Append-only migration history — provenance the current schema alone can't
+    # give: when the upgrade ran, from→to, and which CLI version did it.
+    printf '%s  %s → %s  (spectacular %s)\n' \
+      "$TODAY" "$start_schema" "$current" "$SPECTACULAR_VERSION" \
+      >> ".spectacular/migrations.log"
     echo "Migration complete. workspace_schema is now ${current}."
   fi
 }
@@ -7813,6 +7855,26 @@ except yaml.YAMLError as e:
         "rewrite config.yaml with project name/summary/kit" "judgment"
     else
       doc_add "workspace" "pass" ".spectacular/config.yaml" "config.yaml parses + has project: stanza"
+    fi
+
+    # Schema-behind: workspace_schema older than the CLI's CURRENT_SCHEMA means
+    # this workspace was scaffolded/migrated against an older layout. Advisory —
+    # migrate is the fix, but staying behind isn't broken, just outdated.
+    local declared_schema
+    declared_schema="$(config_workspace_schema)"
+    if [[ -n "$declared_schema" ]]; then
+      if [[ "$declared_schema" == "$CURRENT_SCHEMA" ]]; then
+        doc_add "workspace" "pass" ".spectacular/config.yaml" "workspace_schema ${declared_schema} matches CLI (${CURRENT_SCHEMA})"
+      elif schema_lt "$declared_schema" "$CURRENT_SCHEMA"; then
+        doc_add "workspace" "warning" ".spectacular/config.yaml" \
+          "workspace_schema ${declared_schema} is behind CLI (expects ${CURRENT_SCHEMA})" \
+          "run \`spectacular migrate\` (preview with --dry-run)" "judgment"
+      else
+        # Declared newer than CLI knows — the CLI is stale, not the workspace.
+        doc_add "workspace" "warning" ".spectacular/config.yaml" \
+          "workspace_schema ${declared_schema} is newer than this CLI (${CURRENT_SCHEMA}) — update the CLI" \
+          "run \`spectacular init --update\`" "judgment"
+      fi
     fi
   fi
 
@@ -9774,6 +9836,9 @@ doctor() {
 
 doctor_apply_mechanical_fixes() {
   local applied=0
+  # A --fix run is a structural touch — record which version did it. Idempotent;
+  # also backfills provenance on legacy (pre-provenance) workspaces.
+  stamp_last_touched
   while IFS='|' read -r area sev file msg fix ftype; do
     [[ "$ftype" == "mechanical" ]] || continue
     case "$file" in

@@ -93,6 +93,7 @@ EOF
 project:
   name: test
   summary: "x"
+workspace_schema: "0.6"
 agents:
   file: AGENTS.md
 EOF
@@ -823,6 +824,24 @@ EOF
   rm -rf "$dir"
 }
 
+scenario_21_schema_behind_warning() {
+  echo "Scenario 21: doctor workspace warns when workspace_schema is behind the CLI"
+  local dir="/tmp/doctor-test-21"
+  seed_clean "$dir"
+  # Downgrade the declared schema to an older version.
+  sed -i.bak 's/workspace_schema: "0.6"/workspace_schema: "0.5"/' "$dir/.spectacular/config.yaml"
+
+  local out code
+  out=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
+  code=$?
+
+  assert_exit_code "1" "$code" "behind-schema workspace exits 1 (warning)"
+  assert_output_contains "$out" "is behind CLI" "schema-behind warning surfaced"
+  assert_output_contains "$out" "spectacular migrate" "warning names the fix verb"
+
+  rm -rf "$dir"
+}
+
 # ── run ───────────────────────────────────────────────────────────────────────
 
 scenario_1_clean_workspace_exits_zero
@@ -846,6 +865,7 @@ scenario_17_description_length
 scenario_18_debug_spine_validation
 scenario_19_milestone_label_drift
 scenario_20_milestone_off_prefix_name_fallback
+scenario_21_schema_behind_warning
 
 echo ""
 echo "  Asserts: $pass_count passed, $fail_count failed"

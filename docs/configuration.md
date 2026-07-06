@@ -22,6 +22,14 @@ project:
   name: my-app
   summary: ""
 
+# Structural version of the .spectacular/ layout. Migrations bump this.
+workspace_schema: "0.6"
+
+# Provenance — which spectacular version scaffolded this workspace (write-once)
+# and which last structurally touched it (bumped by migrate / doctor --fix).
+created_with: "1.26.3"
+last_touched_with: "1.26.3"
+
 naming:
   requests: kebab-case
   prefix: ""
@@ -64,6 +72,30 @@ Fields:
 | `summary` | One-sentence project description |
 
 The default `name` is inferred from the current directory when you run `spectacular init`.
+
+---
+
+## `workspace_schema` + provenance *(v1.26.3+)*
+
+Three top-level keys track *what version of Spectacular* built and touched this workspace — distinct from the project's own release version (which lives in `ROADMAP.md` / git tags).
+
+```yaml
+workspace_schema: "0.6"        # structural layout version — migrations bump this
+created_with: "1.26.3"         # CLI/skill version at init (write-once, never changes)
+last_touched_with: "1.26.3"    # version that last structurally touched it
+```
+
+| Field | Meaning | Written by |
+|---|---|---|
+| `workspace_schema` | Structural version of the `.spectacular/` layout. Advances through the migration chain (`0.4 → 0.5 → 0.6 → …`). Decoupled from the CLI version. | `init`, `migrate` |
+| `created_with` | The CLI/skill version that scaffolded this workspace. **Write-once** — never overwritten, so it survives migrations as a permanent origin marker. On workspaces created before v1.26.3 it's backfilled as `"unknown"`. | `init` (once); backfilled by `doctor --fix` |
+| `last_touched_with` | The CLI version that last structurally mutated the workspace. Bumped by `migrate` and `doctor --fix`. Answers "was this edited by a newer version than it was born with?" | `migrate`, `doctor --fix` |
+
+**Checking alignment:**
+
+- `spectacular status --against-latest` — one-line verdict: up-to-date or behind the CLI's expected schema, with the catch-up verb.
+- `spectacular doctor workspace` — emits a warning when `workspace_schema` is behind (run `migrate`) *or* ahead (update the CLI).
+- `.spectacular/migrations.log` — append-only history of every applied migration (`<date>  <from> → <to>  (spectacular <version>)`), so upgrade provenance is auditable, not just inferred from the current schema.
 
 ---
 

@@ -4,12 +4,74 @@ description: Complete .spectacular/ directory spec — every file, frontmatter s
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-05-23
+updated: 2026-07-06
 ---
 
 # Scaffold Reference
 
 The `.spectacular/` directory is the operational workspace for a project. This document specifies every file and directory — what it is, what goes in it, when it is created, and what rules govern it.
+
+---
+
+## File-type catalog
+
+Every file type Spectacular uses, grouped by scope. This table is the quick reference; the detailed per-file sections follow below.
+
+### Canonical top-level docs — `.spectacular/`
+
+| File | Role | Usage |
+|---|---|---|
+| `PRD.md` | Product intent | What / why / for whom. Project-wide — **never** per-request. |
+| `SPEC.md` | System spec (index) | Cheap, always-on index of what's built now; links to `specs/<cap>/SPEC.md`. |
+| `PRINCIPLES.md` | Operating principles | The "why / how we work" beliefs + enforcement hooks. |
+| `POLICY.md` | Practice layer | Prefilled policies under work-phase hooks; gates lifecycle transitions. |
+| `ARCHITECTURE.md` | Workspace structure | Layout, frontmatter conventions, lifecycle, versioning. |
+| `ROADMAP.md` | What's next | Time-ordered direction (v1 / v2 / v3+) + Icebox. |
+| `STACK.md` | Tech choices | Host project's frontend / backend / infra + engineering rules. |
+| `AGENTS.md` | Agent onboarding | How to operate in `.spectacular/`; authoritative context-loading table. |
+| `DECISIONS.md` | Decision log (ADR) | Why A over B. Flat prose, or index mode (`+ decisions/D<N>.md`). |
+| `PERSONAS.md` | Audience profiles | Opt-in — only with `product` / `content` kit or `--with personas`. |
+| `config.yaml` | Machine config | Name, naming rules, agent context, `workspace_schema` + provenance. |
+
+### Per-request files — `requests/<slug>/`
+
+| File | Role | Usage |
+|---|---|---|
+| `PLAN.md` | Request decomposition | 7-slot plan; **owns the lifecycle `status:` field**. Required. |
+| `TASKS.md` | Implementation checklist | Executable milestone blocks (`## M<N>`). Required. |
+| `SESSION.md` | Request working-state | Current-state / blockers / next-actions. Created on `active`. **Singular.** |
+| `VERIFY.md` | Verification checklist | Typed checks for user-visible / high-stakes changes. On demand. |
+| `VERIFY-LOG.md` | Verification evidence | Append-only; one entry per `spectacular verify` walk. |
+| `UNDERSTANDING.md` | Understand-before-change | Optional; alternative to PLAN's Understanding slot; gates `planned → active`. |
+| `RISKS.md` | Risk register | On demand for auth / billing / migration / flagged-sensitive requests. |
+| `VISION.md` | Vision spine | Imagine-mode (`spectacular imagine`), inside `vision/`. Not created by `new`. |
+| `specs/<cap>/SPEC.md` | Per-capability truth | System-truth spec for one capability (distinct from top-level `SPEC.md`). |
+
+### Soft-DB collections — folder of entries + index
+
+Each is a folder of individually-addressable `.md` entries (frontmatter, git-committed, **appended never overwritten**). The index is regenerated from the folder.
+
+| Collection | Index | Role | Write verb |
+|---|---|---|---|
+| `memory/` | `MEMORY.md` | Durable standing facts / "always do X" | `spectacular remember` |
+| `decisions/` | `DECISIONS.md` | ADR — why A over B | `spectacular decide` |
+| `sessions/` | `SESSIONS.md` | Work-session time-log | `spectacular session start\|end` |
+| `ideas/` | — | Pre-commitment sparks (no lifecycle) | `spectacular idea new` → `promote` |
+| `feedback/` | — | Post-ship prototyping signal | `spectacular feedback-loop new` |
+| `audit/` | `A<N>.md` | Bug diagnosis before a fix is planned | `spectacular audit new\|resolve` |
+| `fixes/` | `F<N>.md` | Verified, signed, reusable fix corpus | `spectacular fix new\|list` |
+
+`audit → requests → fixes` form the self-learning bug loop (see the bug-workflow skill reference).
+
+### ⚠ Naming conventions & traps
+
+The rule: **plural filename = a top-level index; singular = one file per request.** Two lexical exceptions and one hard trap:
+
+1. **Two `SESSION`s, opposite scope.** Per-request `SESSION.md` (singular — one request's working state) is **unrelated** to the top-level `SESSIONS.md` + `sessions/` collection (the work-session time-log). Same word, different system. The biggest confusion trap — do not conflate.
+2. **`SPEC.md` is overloaded.** Top-level `SPEC.md` is a lightweight *index*; `specs/<cap>/SPEC.md` are the per-capability *truth* docs. Same filename, different role.
+3. **`MEMORY.md` is singular-form but plays the plural index role** (it indexes `memory/`, exactly as `SESSIONS.md` indexes `sessions/`) — a lexical exception to the plural-means-index rule.
+4. **`VISION.md` is singular but acts as a spine/index** of the `vision/` soft-folder — a mild exception to singular-means-single-file.
+5. `FEEDBACKS.md` at the **repo root** is a Spectacular-repo development artifact, **not** a canonical file type — the canonical feedback store is the `feedback/` folder (no `FEEDBACK.md` index is emitted).
 
 ---
 
@@ -26,11 +88,18 @@ The `.spectacular/` directory is the operational workspace for a project. This d
 ├── DECISIONS.md        # ADR-style decision log (required)
 ├── config.yaml         # machine-readable project config (required)
 │
-├── current/            # canonical system truth — one file per capability
-│   ├── auth.md
+├── SPEC.md             # system spec — index of what's built now (v0.5.0+)
+├── POLICY.md           # practice layer — work-phase hooks that gate transitions
+│
+├── specs/              # canonical system truth — one folder per capability
+│   │                   #   (renamed from current/ in v0.5.0)
+│   ├── auth/SPEC.md
 │   └── billing/
-│       ├── payments.md
-│       └── subscriptions.md
+│       ├── payments/SPEC.md
+│       └── subscriptions/SPEC.md
+│
+├── memory/  decisions/  sessions/  ideas/  feedback/  audit/  fixes/
+│                        # the 7 soft-DB collections (each: folder + index)
 │
 ├── requests/           # active and planned work — one folder per request
 │   └── add-team-billing/
@@ -58,7 +127,7 @@ The `.spectacular/` directory is the operational workspace for a project. This d
 
 | Directory | When created |
 |---|---|
-| `current/` | On `spectacular init` |
+| `specs/` | On `spectacular init` (was `current/` pre-v0.5.0) |
 | `requests/` | On `spectacular init` |
 | `ideas/` | On first idea file |
 | `memory/` | On first `spectacular remember this` |

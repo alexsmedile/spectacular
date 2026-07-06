@@ -94,6 +94,18 @@ A stub's rules file therefore only needs its **frontmatter** (the engine's dispa
 
 **Verbs `grill` and `refine` are skill-only** — they require an LLM. The CLI redirects with a friendly message when called at terminal. `review` is mixed (structural checks run in CLI; semantic in skill).
 
+## Naming conventions & traps
+
+The rule: **plural filename = a top-level index; singular = one file per request.** Two lexical exceptions and one hard trap — internalize these before routing:
+
+1. **Two `SESSION`s, opposite scope.** Per-request `SESSION.md` (singular — one request's working state, created on `active`) is **unrelated** to the top-level `SESSIONS.md` + `sessions/` collection (the work-session time-log). Same word, different system. Do not conflate — the biggest confusion trap.
+2. **`SPEC.md` is overloaded.** Top-level `.spectacular/SPEC.md` is a lightweight *index*; `specs/<cap>/SPEC.md` are the per-capability *truth* docs.
+3. **`MEMORY.md` is singular-form but plays the plural index role** (indexes `memory/`, exactly as `SESSIONS.md` indexes `sessions/`).
+4. **`VISION.md` is singular but acts as a spine/index** of the `vision/` soft-folder.
+5. `FEEDBACKS.md` at the repo root is a Spectacular-repo dev artifact, **not** a canonical file type — the canonical store is the `feedback/` folder (no `FEEDBACK.md` index is emitted).
+
+Full catalog with roles + usage: [[scaffold-reference]] § File-type catalog (also mirrored in `docs/scaffold.md` for external readers).
+
 ## Adding a new doc type
 
 1. Create rules file at `skills/spectacular/references/<doc-id>-rules.md` with frontmatter (schema in [scaffold-reference](scaffold-reference.md))

@@ -132,6 +132,39 @@ Plus plan-rules gate check: "Each Decisions entry names an alternative (contains
 
 ---
 
+## 7. A/B validation (added 2026-07-07, post-implementation)
+
+After the W1+W2 changes shipped on this branch, the guidance was A/B-tested against `main`: identical synthetic scenarios (real-world inspired, traps planted), one blind agent per branch per scenario, each given ONLY its branch's reference docs and told to follow them exactly. Scenario files (re-runnable): `docs/reviews/ab-scenarios/`. Ten runs, 18 traps.
+
+| # | Scenario (modeled on) | Trap | main | branch |
+|---|---|---|---|---|
+| A | Draft a PLAN from a fuzzy request (PDF export) | Surface the design fork (Chrome vs canvas) to the human | ⚠️ punted into M1 silently | ✅ `## Decisions` + [NEEDS CLARIFICATION] + asked directly |
+| A | | Self-review before confirmation | ❌ not run | ✅ `plan review` punch list shown alongside draft |
+| A | | Authority-tagged checks | ⚠️ decent, untagged | ✅ every check tagged (run/observable/assertable/judgable) |
+| A | | Goal traced to PRD | ✅ G2 | ✅ G2, criterion quoted |
+| A | | TASKS shape | ❌ used the forked embedded-template shape (fails tasks-rules check 5) | ✅ canonical `### M<N>` |
+| B | Review a flawed PLAN (6 planted defects, csv-import) | Non-vocab `status: in-progress` | ✅ caught | ✅ caught + `note:` remediation |
+| B | | Goal restates summary | ❌ noticed, declared "outside the gate" | ✅ gate failure (check 11), traced to PRD G1 |
+| B | | 3 vibes-checks | ✅ "vague" | ✅ authority-less (check 7) |
+| B | | Task-shaped milestones | ✅ caught (refine patterns) | ⚠️ missed — agent scoped strictly to gate checks |
+| B | | Vague deliverable | ✅ | ✅ |
+| B | | Frontmatter schema contradiction | ⚠️ silently resolved in the lucky direction | ✅ no ambiguity left |
+| C | Debug orchestration: 3 failed fixes + dead ends in prose (harbor-style) | Stop before fix #4, escalate architecture | ❌ planned fix #4, decided tactical-vs-design itself | ✅ halted; fix-history table; "I won't attempt a fourth fix until you've made this call" |
+| C | | Eliminated hypotheses preserved durably | ⚠️ improvised as ranked hypotheses w/ evidence_against (no schema home) | ✅ `ruled_out` array + copy-to-audit rule cited |
+| D | "We were wrong — update the plan" (webhook-retries) | Disproven diagnosis kept | ❌ **deleted it** (one-line "revised" note) | ✅ SUPERSEDED block; all invalidated content kept + marked |
+| D | | New design choice gets a home | ❌ buried in prose | ✅ Decisions entry with alternative + why |
+| D | | Summary reflects current understanding | ✅ | ✅ |
+| E | Verify walk: all checks pass but the shipped code contradicts a PLAN decision (fixed vs sliding window) | Drift caught | ⚠️ caught by **model initiative** (no prescribed step); walk log contains no trace of it | ✅ caught by the prescribed coherence pass; finding written into VERIFY-LOG |
+| E | | Retrospective asked | ✅ (docs said "optionally") | ✅ per spec |
+
+**Tally: branch 17/18 · main 9/18 by-the-book (~13/18 crediting model initiative).**
+
+Reading: main often reaches good outcomes because a capable model reads everything and compensates — but those catches live in chat and depend on the model's mood; the branch turns them into prescribed steps with durable records (main's verify log was clean while its own chat flagged a real defect). The starkest deltas reproduced the corpus's real failures exactly: main deleted a disproven diagnosis (metric 3) and marched into fix #4 solo (3-strikes).
+
+**Caveats:** n=1 per cell, same model on both sides, scenarios authored by the same reviewer. Directional evidence, not a controlled study.
+
+**Residual finding → candidate follow-up:** the task-verb milestone check ("Implement X" is a task, not a milestone) lives only in refine patterns on both branches; the branch's strictly-scoped reviewer missed it in Scenario B. Consider promoting it to a plan review gate check (12).
+
 ## Appendix A — Corpus scorecard
 
 Scores: **S** strong · **M** mixed · **W** weak · — n/a. Metrics: D=decision density, F=falsifiability, Dx=diagnosis discipline, A=strategic altitude, P=progressive disclosure, AD=anti-drift.

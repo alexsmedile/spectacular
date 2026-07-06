@@ -34,6 +34,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - **`archive-closure-gate` request scaffolded (b22, planned)** — archive blocks (with recorded override) on unticked TASKS / unwalked VERIFY / missing spec delta; spec-sync becomes ADDED/MODIFIED/REMOVED deltas merged mechanically. The fable review's highest-leverage change, routed through the request lifecycle.
 - **Fable review report** at `docs/reviews/fable-spec-quality-review.md` — corpus audit (18 artifacts, 5 workspaces), guidance audit, comparative research (superpowers/gstack/OpenSpec), ranked 15-item change list.
+- **A/B validation of the review changes** — 5 synthetic benchmarks (plan-drafting, flawed-plan review, debug orchestration, plan supersession, verify coherence) run blind against main: branch 17/18 traps vs main 9/18 by-the-book. Report §7; re-runnable scenarios in `docs/reviews/ab-scenarios/`.
 
 ## [1.26.3] — 2026-07-06
 

@@ -7,6 +7,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Fixed (fable review W1 — guidance contradictions)
+
+- **`target_version:` fully retired** — roadmap-rules Slot 6 + full-tier unlock now derive from the ledger (`build → target-version`), the roadmap template comments match, and the broken `idea promote --target-version` flag (passed a flag `spectacular new` never accepted) is removed. The plan-rules ban was already correct; everything now agrees with it.
+- **new-request.md de-forked** — its embedded PLAN/TASKS template blocks (which had drifted from `templates/*/base.md` and even failed tasks-rules' own heading check) are replaced with pointers to the canonical templates.
+- **review.md aligned with per-doc schemas** — base check 3 defers to each doc's rules file (PLAN requires `status`/`updated`/`summary`, not `priority`/`owner`); the ambiguous "check 4+" wording clarified (base checks 1–3 immune, override checks numbered 4+).
+- **TASKS `status:` mirror acknowledged** — SKILL.md/CLAUDE.md no longer claim lifecycle state is "never duplicated"; TASKS mirrors PLAN for skim tooling, PLAN is authoritative, doctor repairs drift.
+- **CLI fallback scaffold** emits the full PLAN shape (placeholders + `## Understanding` + `## Decisions`) — a template-less workspace no longer produces PLANs the placeholder check can't catch.
+
+### Changed (fable review W2 — sharpened spec/plan/strategy rules)
+
+- **PLAN template gains `## Decisions`** (chose X over Y — because Z; rejected alternatives stay) — the destination decisions-rules always pointed at now exists; plan review check 10 verifies entries name an alternative.
+- **Plan-time falsifiability** — PLAN § Validation checks must state an authority (run/assert/judge/observable); aspiration verbs fail; mini-refine pattern + strengthened check 7 (plan-rules, template comment).
+- **PLAN Goal → PRD traceability** — new check 11 + mini-refine: a Goal that only re-words the request summary fails.
+- **Supersession convention** (active-request.md) — sanctioned `## SUPERSEDED <date>` block; disproven content is never deleted; formalizes the pattern healthy projects invented ad hoc.
+- **Autopilot passes the gate** (new-request.md) — a skill-drafted PLAN runs `plan review` and shows the punch list before confirmation.
+- **Lifecycle vocabulary lock** (lifecycle.md) — `status:` is vocab-only; intermediate intent goes in `note:`; kills invented states like `fixed-pending-verify`.
+- **Evidence-before-questions** (grill.md pre-flight) — code-touching grills cite `path:line` in the first technical question; never ask what the code answers.
+- **Bug workflow: disproof ledger + 3-strikes** — investigator returns list ruled-out hypotheses with killing evidence (`ruled_out` field in debug-trace schema, copied to audit entries); after 3 failed fixes, question the architecture with the human.
+- **POLICY armor** (template + this repo's POLICY.md v1.4) — the 4 block policies and 4 @Debugging policies each gain a one-line Law, an Excuse/Reality table, and red-flag self-checks; severities unchanged.
+- **TASKS template acceptance stubs** (`→ check:` per milestone) and **brief placeholder ban** (build-workflow: "TBD"/"appropriate error handling"/"similar to M<N>" are brief failures).
+- **SPEC index check** (spec-rules) — a Capabilities bullet >2 lines or with sub-bullets fails review; spec-sync bullets prefer observable SHALL-strength phrasing, scenarios live in capability specs.
+- **Verify: coherence pass + retrospective default-on** — the walk confirms PLAN Decisions actually shipped (advisory); the retrospective question is asked once instead of "optionally".
+
+### Added
+
+- **`archive-closure-gate` request scaffolded (b22, planned)** — archive blocks (with recorded override) on unticked TASKS / unwalked VERIFY / missing spec delta; spec-sync becomes ADDED/MODIFIED/REMOVED deltas merged mechanically. The fable review's highest-leverage change, routed through the request lifecycle.
+- **Fable review report** at `docs/reviews/fable-spec-quality-review.md` — corpus audit (18 artifacts, 5 workspaces), guidance audit, comparative research (superpowers/gstack/OpenSpec), ranked 15-item change list.
+
 ## [1.26.3] — 2026-07-06
 
 ### Added

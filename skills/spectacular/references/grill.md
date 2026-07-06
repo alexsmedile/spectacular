@@ -57,6 +57,7 @@ Before asking anything:
    - If no: scaffold from `template`. For per-request docs, supply `<slug>` from context (either the user provided it, or this was invoked via `spectacular new`).
 2. If the doc supports kits (`kit-support: true`) and no kit is set in frontmatter, run kit selection per the doc's rules file (see `prd-rules.md` § Kit selection for PRD's flow; contract is documented in [[kits-contract]]).
 3. Confirm or infer project name + per-doc context (e.g. PLAN.md needs a request slug).
+4. **Evidence before questions (code-touching docs: PLAN, ARCHITECTURE, STACK).** Before the first technical question, read at least one piece of evidence from the host repo and cite it as `path:line` in that question. Never ask what the code already answers ("what framework is this?" when `package.json` is right there) — grounded questions earn trust; generic checklists burn it.
 
 ### 2a. Kit application (only when kit-support: true and a kit was selected)
 
@@ -158,7 +159,7 @@ If the user wants to bail mid-grill, accept it — save what's filled, leave `<P
 
 ## What the grill does NOT do
 
-- It does not research the domain. No web searches, no NotebookLM, no source ingestion. The user supplies the content; the grill structures it.
+- It does not research the domain. No web searches, no NotebookLM, no source ingestion. The user supplies the content; the grill structures it. (Reading the **host repo** is not domain research — it's expected, per Pre-flight step 4. The line is external sources, not the code in front of you.)
 - It does not propose substance on its own — only sharper *phrasing*. The grill never invents user personas, success metrics, milestones, etc.
 - It does not loop indefinitely. If the user keeps answering vaguely after 2 nudges per slot, accept the answer and move on. The review gate is the safety net.
 - It does not write other docs. Grilling a PLAN never edits PRD; grilling a PRD never edits PLAN. Cross-doc generation is deferred to v2.

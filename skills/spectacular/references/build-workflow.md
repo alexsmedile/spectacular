@@ -156,6 +156,11 @@ When the table says dispatch:
    it without a decision.** If any slot leaves the Builder something to *decide* — which approach,
    which default, what "done" means — it isn't closed; close it first (Step 0). A slot you can't fill
    concretely means the milestone isn't dispatchable.
+
+   **Placeholder phrases are brief failures.** "TBD", "add appropriate error handling", "similar to
+   M<N>", "as needed" in any slot means the brief isn't closed — the Builder must bounce it, and the
+   orchestrator must not send it. A brief is written for a reader with zero request context; anything
+   that assumes shared context is a placeholder wearing prose.
 2. **Spawn one `spec-builder` per independent milestone, in parallel.** Each reads only its own
    target files, builds only its Approach, verifies against its Success criteria, and returns
    `built+diff` or `bounced+reason`. It never ticks a checkbox or moves lifecycle state.

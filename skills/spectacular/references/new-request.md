@@ -20,6 +20,8 @@ Triggered by: `spectacular new <description>`, or when conversational context cl
 
 Always show the derived slug before writing. User can override before confirmation.
 
+**Autopilot passes through the gate.** When the skill drafts PLAN slot bodies itself (the autopilot row), it must run `plan review` on the draft and show the punch list **alongside** the draft, *before* asking for confirmation — never present an unreviewed draft as ready. (Mirrors [[imagine]]'s rule that a derived PLAN always routes through PLAN review.)
+
 ---
 
 ## Slug rules
@@ -76,76 +78,11 @@ Before finalizing the PLAN.md, the skill should:
 
 ---
 
-## PLAN.md template (7-slot decomposition)
+## PLAN.md + TASKS.md shape
 
-```md
----
-status: planned
-priority: medium
-owner: 
-updated: <today>
-summary: "<one-line description>"
-related:
-  - ../../PRD.md
-  - specs/<capability>/SPEC.md
----
-
-# <Request title>
-
-## Goal
-<One sentence — compressed intent. Traces back to a success criterion in the root PRD.>
-
-## Why (intent)
-<Why now? What problem does this solve? The full why lives in PRD.md — keep this tight.>
-
-## Constraints
-- <What's fixed before starting — budget, tech, policy>
-
-## Milestones
-1. **<Milestone name>** — <demoable outcome, not a task>
-2. ...
-
-## Tasks
-See [TASKS.md](TASKS.md).
-
-## Dependencies
-- <Other requests, skills, blocking decisions — or "none">
-
-## Validation
-| Milestone | How we verify it passed |
-|---|---|
-| 1 | <test, demo, review> |
-
-## Deliverables
-- <Artifact that ships out of this request>
-
-## Open questions
-- <Things you don't know yet>
-```
+The CLI scaffolds both files from the canonical templates — `templates/plan/base.md` (7 numbered slots + `## Understanding` + `## Decisions`) and `templates/tasks/base.md` (`## v1` / `### M<N>` groups). Do **not** reproduce or improvise the shape here; the templates are the single source of truth, and [[scaffold-reference]] documents the frontmatter stubs. A project may override either via `.spectacular/templates/`.
 
 **Anti-pattern:** never create `requests/<slug>/PRD.md`. Product intent is project-wide and lives at `.spectacular/PRD.md`. If a request needs to extend or revise product intent, edit the root PRD (snapshot first) — don't fork it into a request folder.
-
----
-
-## TASKS.md template
-
-```md
----
-updated: <today>
----
-
-# Tasks — <slug>
-
-## <Group name>
-
-- [ ] 
-- [ ] 
-
-## <Group name>
-
-- [ ] 
-- [ ] 
-```
 
 ---
 

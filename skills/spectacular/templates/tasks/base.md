@@ -24,13 +24,16 @@ related:
 - [ ] <Task>
 - [ ] <Task>
 - [ ] <Task>
+- [ ] → check: <how M1 proves itself — see PLAN §6 Validation>
 
 ### M2 — <Milestone name>
 - [ ] <Task>
 - [ ] <Task>
+- [ ] → check: <how M2 proves itself>
 
 ### M3 — <Milestone name>
 - [ ] <Task>
+- [ ] → check: <how M3 proves itself>
 
 ## v2 (deferred)
 

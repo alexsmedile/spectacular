@@ -58,6 +58,17 @@ related:
 
 <!-- The boundary — what this change deliberately leaves alone. -->
 
+## Decisions
+
+<!--
+  Design calls made inside this request. Format: chose X over Y — because Z.
+  Rejected alternatives stay listed; deleting them re-litigates them later.
+  Project-wide calls go to DECISIONS.md via `spectacular decide` instead
+  (see decisions-rules.md routing table). Empty is fine — no decisions yet.
+-->
+
+- <DECISION — chose X over Y because Z>
+
 ## 3. Milestones
 
 <!-- Ordered, demoable checkpoints. Outcomes, not tasks. -->
@@ -82,9 +93,15 @@ See `TASKS.md`.
 
 ## 6. Validation
 
-<!-- How each milestone is verified. Per-milestone checks. -->
+<!--
+  How each milestone is verified. Per-milestone checks.
+  Each check states its AUTHORITY: a run: command, an assertable property,
+  a judgable artifact, or a human-observable behavior (see verify.md kinds).
+  A check with no authority can't fail. Aspiration verbs (improve, enhance,
+  optimize, handle gracefully) are not checks.
+-->
 
-- M1 — <VERIFICATION>
+- M1 — <VERIFICATION — e.g. "run: tests/foo.test.sh exits 0" or "observable: X appears in Y">
 - M2 — <VERIFICATION>
 - M3 — <VERIFICATION>
 

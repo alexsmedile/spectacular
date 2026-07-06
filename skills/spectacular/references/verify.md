@@ -209,6 +209,10 @@ The walk writes to **both**:
 - This is the durable history: who walked, when, what passed, what blocked. Never overwritten — append-only.
 - Scaffold from the stub in § VERIFY-LOG shape below if it doesn't exist.
 
+### 3b. Coherence pass (after the checks, before the gate)
+
+The checks prove the milestones; coherence proves the *plan*. Skim the PLAN's `## Decisions` entries and confirm each shipped decision actually appears in the built artifact — a decision that silently didn't ship (chose X over Y, but the code does Y) is a finding. Grade it like a judgable check: advisory, reported in the walk summary, never a fabricated pass. One or two minutes; skip only when the Decisions section is empty.
+
 ### 4. The gate (end of walk)
 
 After every check is walked, summarize:
@@ -229,9 +233,9 @@ Walk complete — <slug>
 - Report the blocker list (with reasons) and point at the VERIFY-LOG entry.
 - The request returns to `review` with a clear punch list of what's left.
 
-### 5. Retrospective (optional, end of a passing walk)
+### 5. Retrospective (end of a passing walk)
 
-After a successful verify (before or after the promote), optionally ask:
+After a successful verify (before or after the promote), ask once — skipping is fine:
 
 > "Anything surprise you vs. the PRD/PLAN — a wrong assumption, a scope drift, a lesson? (skip to finish)"
 

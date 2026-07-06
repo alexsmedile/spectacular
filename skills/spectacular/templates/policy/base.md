@@ -59,6 +59,15 @@ Before fixing milestones, name the smallest high-impact slice that delivers the 
 
 A request must not move `planned → active` until the agent has written down how the system works today, what this change touches, and what it leaves alone. Establish understanding before touching code — half-understood changes are how regressions enter. Satisfied by either the PLAN slot or a dedicated UNDERSTANDING.md.
 
+**Law: no flip to `active` without written understanding.**
+
+| Excuse | Reality |
+|---|---|
+| "The change is small enough to skip this" | Small changes in half-understood systems are how regressions enter. Smallness is not understanding. |
+| "I'll fill Understanding once I've started" | After you start, it becomes a justification of what you already did, not an analysis. |
+
+Red flags — stop: editing code while `## Understanding` still holds placeholders; describing current behavior with "probably" or "should".
+
 ## @Verification
 
 ### verification-present
@@ -67,6 +76,15 @@ A request must not move `planned → active` until the agent has written down ho
 - check: every check in VERIFY.md (or PLAN § Validation) is satisfied before `review → verified`
 
 A request must not reach `verified` while any verification check is unmet. Verification always happens; the only question is which artifact carries the checks. If VERIFY.md exists it is load-bearing; otherwise PLAN § Validation blocks the transition. (Absorbs verify-walk's gate.)
+
+**Law: no `verified` without every check satisfied — on fresh evidence.**
+
+| Excuse | Reality |
+|---|---|
+| "The tests passed earlier" | Earlier is not now. Run the named check fresh; only its result decides. |
+| "This check is basically covered by that one" | "Basically" means unverified. Each check runs as written. |
+
+Red flags — stop: claiming a pass from memory; "should pass"; skipping a manual check because it's tedious.
 
 ## @Archive
 
@@ -89,6 +107,15 @@ On archiving, propose any operational lesson worth keeping as a memory. Operatio
 
 Memory is team-visible and git-committed. Humans decide, agents propose: never write a memory the user has not seen and confirmed. Show the proposed entry, then write on confirmation.
 
+**Law: no memory write the user hasn't seen.**
+
+| Excuse | Reality |
+|---|---|
+| "It's obviously worth remembering" | Obvious to you is not confirmed by them — memory is team-visible and permanent. |
+| "I'll show it right after writing" | After is not confirmation; it's a fait accompli. |
+
+Red flags — stop: writing to `memory/` in the same turn the lesson emerged, with no draft shown.
+
 ## @Snapshot
 
 ### snapshot-before-overwrite
@@ -97,6 +124,15 @@ Memory is team-visible and git-committed. Humans decide, agents propose: never w
 - check: a `<DOC>@v<N>.md` snapshot exists before a canonical doc is overwritten in place
 
 Canonical documents are never overwritten without a snapshot first. The unversioned filename always points to current; history is preserved. Snapshot, then overwrite.
+
+**Law: no canonical overwrite without a snapshot.**
+
+| Excuse | Reality |
+|---|---|
+| "Tiny edit — git has the history" | Git history is not the workspace convention; `<DOC>@vN.md` snapshots are what agents and humans actually read. |
+| "I'll snapshot if the edit grows" | By then the overwrite already happened. |
+
+Red flags — stop: editing PRD/SPEC/any canonical in place with no `@vN` snapshot created first.
 
 ## @SessionEnd
 

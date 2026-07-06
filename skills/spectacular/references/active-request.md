@@ -21,6 +21,19 @@ When a request transitions from `planned` → `active`:
 
 ---
 
+## Superseding a live plan
+
+When findings invalidate part of an active PLAN (a diagnosis corrected, a milestone made obsolete, an estimate disproven):
+
+1. **Prepend** a block: `## SUPERSEDED <date> — <one line: what changed>` containing the corrected understanding.
+2. Mark the affected original sections `(superseded <date>, kept for history)` — **never delete disproven content.** The disproof trail — what was believed, what evidence killed it — is the plan's most valuable content for anyone (human or agent) who re-approaches the problem later.
+3. Rewrite frontmatter `summary:` to the *current* understanding, ≤2 sentences. The summary reflects now; the body preserves the trail.
+4. New design calls that emerge go to `## Decisions` (chose X over Y — because Z), not into prose.
+
+This is the sanctioned form of the pattern healthy projects invent ad hoc ("CORRECTED DIAGNOSIS … superseding §1–§5 below"). One convention, one shape, no hand-rolled layering.
+
+---
+
 ## SESSION.md template
 
 ```md

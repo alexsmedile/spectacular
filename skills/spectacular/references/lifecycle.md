@@ -9,6 +9,8 @@ State machine: `planned → active → review → verified → archived`
 
 State lives in `PLAN.md` frontmatter: `status: planned | active | review | verified`
 
+**`status:` takes vocabulary values only — never invent states.** Intermediate intent (`fixed-pending-verify`, `in-progress`, `paused`, `deferred-v2`, …) does not go in `status:`; it goes in a free-text `note:` frontmatter field next to it. Real workspaces drift into invented statuses precisely at these in-between moments — the `note:` field is the pressure valve. `doctor lifecycle` flags non-vocab statuses with this remediation.
+
 > **Policy gates on transitions.** Two transitions consult the policy engine before flipping state:
 > - `planned → active` → run `spectacular policy @Implementation` (blocker: `understand-before-change`).
 > - `review → verified` → run `spectacular policy @Verification` (blocker: `verification-present`).

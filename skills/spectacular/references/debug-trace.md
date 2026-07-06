@@ -132,6 +132,9 @@ Mirrors the agent's findings block, one-to-one:
   "hypotheses": [
     {"rank": 1, "claim": "cache not invalidated on write", "evidence_for": "trace + ran 8x", "evidence_against": null}
   ],
+  "ruled_out": [
+    {"hypothesis": "TTL expiry race", "evidence": "cache has no TTL config anywhere; grep 'ttl' → 0 hits"}
+  ],
   "suspected_sites": ["users.py:23 (update_name)"],
   "plausible_solutions": [
     {"approach": "pop-on-write", "tradeoff": "simplest; next read repopulates"},
@@ -146,6 +149,7 @@ Mirrors the agent's findings block, one-to-one:
 
 - `status`: `root-cause-found | hypotheses-only`.
 - `reason`: only non-null when `hypotheses-only` — `needs-reproduction | needs-research | needs-decision | needs-more-context`.
+- `ruled_out`: hypotheses **tested and eliminated**, each with the evidence that killed it. Empty array means nothing was eliminated — suspicious for anything beyond a trivial bug. The orchestrator copies these into the `audit/A<N>` entry so no future walk re-opens a dead end (see [[bug-workflow]] § Coming back).
 - `plausible_solutions`: the solution space (approaches + trade-offs) — **never the literal diff**.
 
 ### `research/research-NN.json` — Researcher verdict (Researcher writes)

@@ -2214,18 +2214,19 @@ EOF
 }
 
 cmd_idea_promote() {
-  local slug="" request_slug="" target_version=""
+  local slug="" request_slug=""
   while (( $# > 0 )); do
     case "$1" in
       --request-slug)   require_value "--request-slug"   "${2:-}"; request_slug="$2"; shift 2 ;;
-      --target-version) require_value "--target-version" "${2:-}"; target_version="$2"; shift 2 ;;
       --help|-h)
         cat <<EOF
 Usage: spectacular idea promote <slug> [options]
 
 Options:
   --request-slug <s>    Override request slug (default: idea's slug)
-  --target-version <v>  Target version for PLAN frontmatter
+
+Version targeting lives in the ROADMAP ledger (build -> target-version),
+never in PLAN frontmatter.
 
 Scaffolds a new request via 'spectacular new', then:
   - Sets the idea's status to 'promoted'
@@ -2271,7 +2272,6 @@ EOF
 
   # Scaffold the request
   local new_args=(--summary "$summary" --priority "$idea_priority")
-  [[ -n "$target_version" ]] && new_args+=(--target-version "$target_version")
   cmd_new "${new_args[@]}" "$request_slug" || die "idea promote: 'spectacular new $request_slug' failed"
 
   # Append a promotion note to the new PLAN.md
@@ -5816,11 +5816,33 @@ related: []
 
 ## 1. Goal
 
-<one sentence>
+<GOAL — one sentence; name the PRD goal it serves>
 
 ## 2. Constraints
 
+- <CONSTRAINT>
+
+## Understanding
+
+### How it works now
+
+<CURRENT BEHAVIOR>
+
+### What changes
+
+<CHANGES>
+
+### What stays the same
+
+<UNCHANGED>
+
+## Decisions
+
+- <DECISION — chose X over Y because Z>
+
 ## 3. Milestones
+
+1. **<MILESTONE>** — <demoable outcome>
 
 ## 4. Tasks
 
@@ -5828,9 +5850,15 @@ See TASKS.md.
 
 ## 5. Dependencies
 
+- <DEPENDENCY or "none">
+
 ## 6. Validation
 
+- M1 — <VERIFICATION>
+
 ## 7. Deliverables
+
+- <DELIVERABLE>
 EOF
   fi
 

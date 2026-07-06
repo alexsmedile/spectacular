@@ -40,8 +40,8 @@ related:
   Alpha/beta/stable qualifier: `Phase: mvp (alpha)`.
 
   Beginner pattern: start at vision tier (one paragraph), graduate to themed
-  when 2nd version exists, unlock full when first request links via
-  target_version: in PLAN frontmatter. See roadmap-rules.md.
+  when 2nd version exists, unlock full when the first ledger row maps a build
+  to a version. See roadmap-rules.md.
 
   See `references/roadmap-rules.md` for the full spec.
 -->
@@ -70,9 +70,9 @@ between Phase (where in the pipeline) and Scope-in (what concretely changes).>
 - [ ] <Minimum one required>
 
 **Linked requests:**
-<!-- Autopopulated by `spectacular roadmap refine`. Reads request PLAN.md
-     frontmatter `target_version: <version>` and renders matching slugs here.
-     Do NOT hand-edit this section — it's regenerated. -->
+<!-- Autopopulated by `spectacular roadmap refine`. Reads the ledger table
+     (build → target-version) and renders slugs whose build maps to this
+     version. Do NOT hand-edit this section — it's regenerated. -->
 - <slug> (<status>)
 
 ---

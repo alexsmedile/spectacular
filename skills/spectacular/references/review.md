@@ -37,7 +37,7 @@ Loaded from the rules file referenced in the registry. Each rules file declares:
 - Heuristic rules (e.g. PRD's "Target users must be singular")
 - Vague-word lists scoped to specific slots
 
-Override checks run **in addition to** base checks. An rules file cannot disable base checks 1 or 2 (placeholder + clarification are universal); it can only add to them or scope check 4+ to specific slots.
+Override checks run **in addition to** base checks. A rules file cannot disable base checks 1–3; its own override checks (numbered 4+) may be scoped to specific slots or exempted per slot.
 
 ## Detection rules (base)
 
@@ -61,9 +61,9 @@ Verb checks must accept common inflections (`-s`, `-es`, `-ed`, `-ing`, `-d`) by
 
 ### Check 3: Frontmatter
 
-Required fields per registry (varies by doc type):
+Required fields come from **the doc's rules file** (`references/<doc-id>-rules.md` § Frontmatter schema) — that file is authoritative, not this list. Current values for orientation:
 - Root docs: `version`, `updated`, `summary`, `related`
-- Per-request PLANs: `status`, `priority`, `owner`, `updated`, `summary`
+- Per-request PLANs: `status`, `updated`, `summary` (per [[plan-rules]]; `priority`/`owner`/`build` are optional)
 - Per-request TASKS: `status`, `updated`, `related`
 
 Missing required field → fails. Punch list says exactly which field.

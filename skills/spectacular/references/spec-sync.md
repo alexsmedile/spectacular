@@ -55,6 +55,8 @@ If a request introduced a net-new capability with no spec in `specs/`:
 
 Propose adding a bullet to `.spectacular/SPEC.md` capabilities list. Only create a per-capability file when that bullet outgrows one line.
 
+**Bullet phrasing:** prefer an observable, SHALL-strength statement of behavior over a feature label — "team-billing — seats are Stripe-backed; a duplicate webhook never double-charges" beats "team-billing support". The acid test: *could someone who has never seen the code tell whether the bullet holds?* An important behavior earns a GIVEN/WHEN/THEN scenario — in the per-capability spec's `## Scenarios` section, never in SPEC.md itself (the index stays one line per capability).
+
 When you do break out per-capability, create `specs/<capability>/SPEC.md` (or `specs/<capability-group>/<capability>/SPEC.md` for nested) with frontmatter:
 
 ```md

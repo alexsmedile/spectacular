@@ -19,7 +19,7 @@ Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `plan` (
 **Slot 1 — Goal**
 > One sentence. What does this request change?
 >
-> Compress the request's intent into a single line. Should align with PRD's Vision or Goals — this is a slice, not a restatement.
+> Compress the request's intent into a single line. Names or references the PRD goal / success criterion it serves — this is a slice, not a restatement (gate check 11).
 >
 > *Example:* "Add a CLI command that scaffolds the minimal `.spectacular/` set, defaulting to PRD + SPEC + requests/ + specs/ + config.yaml + AGENTS.md only."
 
@@ -50,7 +50,7 @@ Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `plan` (
 > *Example:* "Hard dep on [[doc-writer]] (needs registry). Touches [[cli-bootstrap]]."
 
 **Slot 6 — Validation**
-> How each milestone is verified. Per-milestone checks.
+> How each milestone is verified. Per-milestone checks. Each check states its **authority**: a `run:` command, an assertable property, a judgable artifact, or a human-observable behavior (see [[verify]] check kinds). A check with no authority can't fail. Aspiration verbs (`improve`, `enhance`, `optimize`, `handle gracefully`) are not checks.
 >
 > *Example:* "M3 passes when re-running `spectacular init` on an initialized workspace exits 0 with all-skip report."
 
@@ -67,6 +67,12 @@ PLAN has an **optional** `## Understanding` section with three subheads — `###
 
 When the skill is about to promote a request to `active` and the section is empty, it fills it by interviewing: *how does the touched system work today / what does this change / what does it deliberately leave alone?* See [policy-injection.md](policy-injection.md).
 
+## Decisions section (not one of the 7)
+
+PLAN carries an unnumbered `## Decisions` section for **request-scoped** design calls — the destination [[decisions-rules]]'s routing table points at. Format: *chose X over Y — because Z*. Rejected alternatives stay listed; deleting them re-litigates them later. Project-wide calls go to `DECISIONS.md` via `spectacular decide` instead. Empty is valid (gate check 10 only inspects entries that exist).
+
+When findings invalidate part of a live PLAN, don't rewrite history — use the supersession convention in [[active-request]] § Superseding a live plan.
+
 ## Mini-refine patterns
 
 | Pattern | Slots scope | Trigger | Proposed action |
@@ -76,6 +82,8 @@ When the skill is about to promote a request to `active` and the section is empt
 | Tasks-as-milestones | 3 | Milestone text contains `implement`, `write`, `add`, `fix` as first verb | "That sounds like a task. What's the **outcome** that proves M<N> done?" |
 | Missing dep link | 5 | Naked request name without `[[...]]` notation | "Wrap in `[[...]]` so the link is followable." |
 | Empty validation | 6 | < 1 check per milestone | "How will you know M<N> passed?" |
+| Authority-less check | 6 | Check has no run/assert/judge/observable anchor, or leads with an aspiration verb (`improve`, `enhance`, `optimize`) | "What command, property, or observable behavior decides this? A check that can't fail isn't a check." |
+| Goal restates request | 1 | Goal ≈ frontmatter `summary` reworded | "That's the request restated. What does it *change*, traced to which PRD goal?" |
 
 ## Vibe → spec rewrite tables (refine mode)
 
@@ -102,9 +110,11 @@ When the skill is about to promote a request to `active` and the section is empt
 | 4 | Milestones present | Slot 3 has ≥2 ordered items |
 | 5 | TASKS.md exists | File at `requests/<slug>/TASKS.md` exists |
 | 6 | Dependencies use `[[...]]` | All cross-request references wrapped |
-| 7 | Validation per milestone | Slot 6 has ≥1 check per milestone in slot 3 |
+| 7 | Validation per milestone | Slot 6 has ≥1 check per milestone in slot 3, and each check names an authority (a `run:` command, assertable property, judgable artifact, or observable behavior) — a bare aspiration ("works correctly", "improved") fails |
 | 8 | Frontmatter lifecycle field | `status:` is one of `planned | active | review | verified` |
 | 9 | Deliverables non-empty | Slot 7 has ≥1 concrete artifact |
+| 10 | Decisions name alternatives | Each `## Decisions` entry names an alternative (contains "over", "not", or "instead of"). An empty Decisions section passes — no decisions yet is valid |
+| 11 | Goal traces to PRD | Slot 1 names or references the PRD goal/success-criterion it serves; a Goal that only re-words the frontmatter `summary` fails |
 
 ### Milestone-before-tasks ordering
 

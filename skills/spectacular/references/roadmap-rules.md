@@ -52,7 +52,7 @@ Inspired by GitHub Projects, Trello, Notion onboarding patterns and GIST methodo
 
 1. **Start at `vision` tier with one block** — pick a project label (often `v1.0` or just `future`), Tier: vision, Status: planned, Phase: intent. The Direction slot is the only required content. One paragraph: "where is this heading?" That's it.
 2. **Graduate to `themed` when a second version is added** — by then you have enough scope clarity to name Themes for the new version. Outcome becomes required.
-3. **Unlock `full` when the first request links via `target_version:`** — having concrete linked work means you can fill Scope-in / Scope-out / Exit criteria meaningfully. Outcome stays required.
+3. **Unlock `full` when the first ledger row maps a build to this version** — having concrete linked work means you can fill Scope-in / Scope-out / Exit criteria meaningfully. Outcome stays required.
 
 **The skill recommends this progression in prose** when grilling an empty ROADMAP, but doesn't enforce it. Users can always force `--tier full` from day one if they have the clarity.
 
@@ -153,9 +153,9 @@ The skill uses these in the slot loop. One question per slot. Each version block
 > ```
 
 **Slot 6 — Linked requests (autopopulated)**
-> NOT a grilled slot — the skill fills this automatically by scanning `requests/<slug>/PLAN.md` and `archive/<slug>/PLAN.md` for `target_version:` fields matching this version label.
+> NOT a grilled slot — the skill fills this automatically from the **ledger table** (see "The ledger" below): rows whose `target-version` cell matches this version label, with each build id resolved to its request slug via the `build:` field in `requests/<slug>/PLAN.md` / `archive/<slug>/PLAN.md` frontmatter.
 >
-> Read-only render. To add a request to a version, set `target_version: <label>` in that request's PLAN.md frontmatter. To remove, unset.
+> Read-only render. To add a request to a version, set that build's `target-version` cell in the ledger. To remove, reset the cell to `tbd`. Never store the version in the request — [[plan-rules]] bans `target_version:` in PLAN frontmatter.
 >
 > Archived requests render with a `(shipped)` marker; active/review render with their status.
 >

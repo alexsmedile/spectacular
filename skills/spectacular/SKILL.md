@@ -207,7 +207,7 @@ Never read `archive/` during normal operation.
 ## Canonical rules (always apply)
 
 - **Never overwrite canonical documents in place** — snapshot first (`PRD@v1.0.md`). See `references/versioning.md`.
-- **Lifecycle state** lives in `PLAN.md` frontmatter (`status: planned | active | review | verified`).
+- **Lifecycle state** lives in `PLAN.md` frontmatter (`status: planned | active | review | verified`). TASKS.md mirrors it for skim tooling; PLAN is authoritative — `doctor` repairs drift.
 - **Capability state** lives in `specs/<capability>/SPEC.md` frontmatter (`status: stable | draft | deprecated`); the top-level `.spectacular/SPEC.md` is the always-on index.
 - **Slugs** are kebab-case, skill-derived, user-overridable, uniqueness enforced.
 - **Memory** (`spectacular remember this`) writes to `.spectacular/memory/` — git-committed, team-visible. Never to `.claude/` memory.

@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.27.0] — 2026-07-07
+
 ### Fixed (fable review W1 — guidance contradictions)
 
 - **`target_version:` fully retired** — roadmap-rules Slot 6 + full-tier unlock now derive from the ledger (`build → target-version`), the roadmap template comments match, and the broken `idea promote --target-version` flag (passed a flag `spectacular new` never accepted) is removed. The plan-rules ban was already correct; everything now agrees with it.

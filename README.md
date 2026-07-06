@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
 ![Platform](https://img.shields.io/badge/platform-Claude%20%7C%20Codex%20%7C%20Cursor-lightgrey)
-![Version](https://img.shields.io/badge/version-1.26.3-green)
+![Version](https://img.shields.io/badge/version-1.27.0-green)
 
 </div>
 

@@ -67,6 +67,7 @@ A stub's rules file therefore only needs its **frontmatter** (the engine's dispa
 | `migrations-contract` | reference | `skills/spectacular/references/migrations-contract.md` | — |
 | `migration` | reference | `skills/spectacular/references/migrations/v<from>-to-v<to>.md` | — |
 | `bug-workflow` | reference | `skills/spectacular/references/bug-workflow.md` | ties audit/ + fixes/ into the self-learning loop; loaded on any bug report |
+| `build-workflow` | reference | `skills/spectacular/references/build-workflow.md` | **build-direction orchestrator arc** (mirror of bug-workflow) — assemble a closed milestone brief from the request chain, decide build-inline vs dispatch `spec-builder`, confirm + tick the ledger; loaded when implementing a milestone |
 | `soft-db-index` | reference | `skills/spectacular/references/soft-db-index.md` | **canonical routing index** for the 7 soft-DB collections — role, purpose, structure, boundary rules |
 
 ## Mode taxonomy

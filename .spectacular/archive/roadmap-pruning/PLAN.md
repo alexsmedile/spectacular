@@ -1,8 +1,8 @@
 ---
-status: verified
+status: archived
 priority: medium
 owner: alex
-updated: 2026-06-29
+updated: 2026-07-06
 build: b18
 summary: "Stop ROADMAP.md bloating agent context: enforce the already-stated 'shipped history lives in CHANGELOG' principle by pruning shipped prose blocks down to their ledger row (the index), and/or add a decisions-index-style roadmap mode (cheap ledger + per-version files). ~49% of ROADMAP.md is currently past-tense duplication."
 related:
@@ -11,6 +11,7 @@ related:
   - ../../specs/roadmap/SPEC.md
   - ../../ARCHITECTURE.md
 depends-on: roadmap-contract-docs
+archived: 2026-07-06
 ---
 
 # Plan — roadmap-pruning

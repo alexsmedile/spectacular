@@ -1,8 +1,8 @@
 ---
-status: verified
+status: archived
 priority: high
 owner: alex
-updated: 2026-06-29
+updated: 2026-07-06
 build: b17
 summary: "Document the roadmap ledger as a real contract: spec the build-id→version model in specs/roadmap/SPEC.md + SPEC.md, define the `tbd` target-version sentinel (and stop roadmap-rules.md from rejecting it), and add user-facing docs + a short tutorial so build ids ↔ release versions are clear without reading internal ARCHITECTURE.md."
 related:
@@ -11,6 +11,7 @@ related:
   - ../../specs/roadmap/SPEC.md
   - ../../ARCHITECTURE.md
   - ../../ROADMAP.md
+archived: 2026-07-06
 ---
 
 # Plan — roadmap-contract-docs

@@ -69,6 +69,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `/spectacular migrate` (walk judgment migrations) | → `references/migrate.md` |
 | Explain a migration spec or contract | → `references/migrations-contract.md` |
 | Actively working on a request | → `references/active-request.md` |
+| Implementing a milestone — decide build-inline vs dispatch a `spec-builder` | → **`references/build-workflow.md`** — assemble a closed brief from the request chain, apply the worth-it/fan-out gate, confirm + tick the ledger. The build-direction analog of [[bug-workflow]]. |
 
 ### Read verbs (v1.8.0+) — collapse multi-step inspection to one CLI call
 

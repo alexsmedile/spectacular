@@ -21,10 +21,10 @@ related:
 ## v1
 
 ### M1 — POLICY nudge shipped (prose-only)
-- [ ] Add `commit-checkpoint` entry under `@Implementation` in `.spectacular/POLICY.md` (severity: warn, linked principle, soft-nudge prose tied to milestone completion)
-- [ ] Extend `@SessionEnd` prose so summarize-before-handoff also suggests committing outstanding work (or noting why not)
-- [ ] Add a discoverability note in `active-request.md` (or `policy-injection.md`) so the nudge is visible, not just enforced
-- [ ] Verify: `spectacular policy @Implementation` lists it; `spectacular doctor policies` stays green; prose reads as nudge not gate
+- [x] Add `commit-checkpoint` entry under `@Implementation` in `.spectacular/POLICY.md` (severity: warn, linked principle, soft-nudge prose tied to milestone completion)
+- [x] Extend `@SessionEnd` prose so summarize-before-handoff also suggests committing outstanding work (or noting why not)
+- [x] Add a discoverability note in `active-request.md` (or `policy-injection.md`) so the nudge is visible, not just enforced
+- [x] Verify: `spectacular policy @Implementation` lists it; `spectacular doctor policies` stays green; prose reads as nudge not gate
 
 ### M2 — (gated) Wired reminder hook
 > Do not start until M1 has shipped and proven insufficient in practice (P11 — earn the step).

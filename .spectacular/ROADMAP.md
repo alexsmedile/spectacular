@@ -41,6 +41,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b17 | roadmap-contract-docs | Spec + document the roadmap ledger | themed | v1.23.0 | shipped |
 | b18 | roadmap-pruning | Roadmap shipped-history pruning/scaling | themed | v1.23.0 | shipped |
 | b20 | commit-discipline | Soft periodic-commit nudge for in-progress code | themed | tbd | planned |
+| b21 | builder-agent | Builder agent + build-workflow orchestrator arc (build-direction fleet) | themed | tbd | active |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

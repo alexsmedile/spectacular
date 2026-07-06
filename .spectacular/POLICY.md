@@ -1,6 +1,6 @@
 ---
-version: 1.2
-updated: 2026-07-05
+version: 1.3
+updated: 2026-07-06
 summary: "Operating policies — the practice layer paired with PRINCIPLES.md"
 ---
 
@@ -79,6 +79,11 @@ A passing check on code that isn't built is worse than no check — it reports s
 - check: a structured mutation (lifecycle move, archive, snapshot, memory/decision/idea/audit/fix write) goes through its `spectacular` verb, not a free-form file edit — unless no verb covers it
 
 The CLI is the deterministic mutator; the skill orchestrates, reads, decides, communicates. Whenever a `spectacular` verb exists for a mutation, use it — hand-editing bypasses auto-numbering (`F<N>`/`A<N>`), signature and verified gates, index regeneration (`MEMORY.md`), atomic link-rewriting on archive, and frontmatter bumps, and the drift lands as a `doctor` finding later. Manual edits remain the escape hatch for what no verb covers — that's the exception, not the default. If you catch yourself writing an entry file by hand where a verb exists, stop and run the verb. When a hand-edit already happened and left the substrate malformed, `spectacular doctor <area>` names the drift and `--fix` repairs the mechanical part.
+
+### commit-checkpoint
+- principle: 11
+- severity: warn
+Once a milestone's tasks are all checked off, the working tree holds an earned, working step — the natural moment to lock it in with a local `git commit` before starting the next milestone. An uncommitted milestone is a rung not yet earned to stand on: the next milestone builds on code that could still vanish with an errant `git checkout`/`reset`, and a debug session later has no checkpoint to bisect against. Spectacular never commits on your behalf and never blocks the next milestone on a clean tree — it surfaces the reminder at the boundary; committing (or explicitly deferring, with a reason) is the human's or agent's call. Distinct from `spectacular snapshot`, which versions canonical docs, not source.
 
 ## @Debugging
 
@@ -163,4 +168,4 @@ Canonical documents are never overwritten without a snapshot first. The unversio
 
 ### summarize-before-handoff
 - severity: warn
-Before handing off, summarize what changed, what's left, and what's next, so the next session resumes without re-deriving context. Surface the summary; don't block.
+Before handing off, summarize what changed, what's left, and what's next, so the next session resumes without re-deriving context. Surface the summary; don't block. The same handoff moment is also the last natural checkpoint for outstanding source changes: suggest a local `git commit` of the session's work, or have the summary note explicitly why not (e.g. mid-edit, deliberately left uncommitted for review). Spectacular never runs the commit itself — it surfaces the suggestion alongside the summary; the human or agent decides.

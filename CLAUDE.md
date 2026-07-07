@@ -68,7 +68,6 @@ spectacular/
 | `spec-audit-mode` | planned | Content-aware spec audit — orphan bullets/spec files + stale capability specs, beyond the date drift heuristic (b11) |
 | `builder-agent` | active | Builder agent (`spec-builder`) + `build-workflow.md` orchestrator arc — implement planned milestones via subagent, the build-direction analog of the debug fleet (b21) |
 | `commit-discipline` | planned | Soft periodic-commit nudge for in-progress code (POLICY @Implementation/@SessionEnd; wired hook gated as M2) — Spectacular ships zero commit guidance today, and Codex forgets on long jobs (b20) |
-| `archive-closure-gate` | planned | Archive closure gate + delta-based spec-sync — block-with-recorded-override on unticked TASKS / unwalked VERIFY / missing spec delta; ADDED/MODIFIED/REMOVED bullets merged mechanically (fable review #1+#2, b22) |
 | `convention-pack-modules` | planned (gated) | v2 modular packs — gated until composition pain surfaces |
 
 Version targets live in the ROADMAP ledger, not here. For full context on any request see `.spectacular/requests/<slug>/PLAN.md`.

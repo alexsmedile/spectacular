@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.28.0] — 2026-07-07
+
 ### Added — archive closure gate (b22)
 
 - **`spectacular archive` now runs a closure gate** — three mechanical checks block a drifting archive: (1) `tasks` — every TASKS.md milestone box is `[x]`, or `[~]` with a ` — <reason>`; (2) `verify` — if VERIFY.md exists, VERIFY-LOG.md has a passed (`✅`) walk row; (3) `spec` — a `SPEC-DELTA.md` declaring spec impact exists (or `NONE — <why>`). Each block is overridable **once, explicitly** with `--override <check> --reason "<text>"`, which records `archive_overrides:` (a `{check, reason, date}` list) into the archived PLAN — auditable, never a silent bypass. `--force` is unchanged: it clears the status gate only, never a closure check. Closes the corpus's weakest metric (anti-drift) at the lifecycle tail. Fable review #1.
@@ -15,6 +17,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Fixed
 
 - **`fm_unset` block-list orphaning (surfaced by undo)** — `spectacular undo` after an overridden archive now drops the whole `archive_overrides:` block cleanly via a new `_fm_unset_block` helper; previously the list items were re-parented under the preceding `related:` list (valid YAML, wrong data).
+
+### Changed
+
+- **SPEC.md synced** — the archive-closure-gate request archived through its own gate; its `SPEC-DELTA.md` merged the closure-gate + delta-integrity behavior into `SPEC.md` (Lifecycle + Substrate doctor bullets), the first end-to-end use of the new delta-sync flow.
 
 ## [1.27.0] — 2026-07-07
 

@@ -1,5 +1,5 @@
 ---
-status: review
+status: archived
 priority: high
 owner: alex
 updated: 2026-07-07
@@ -8,6 +8,7 @@ related:
   - PRD.md
   - ../../SPEC.md
 summary: "Archive closure gate + delta-based spec-sync: archive blocks (with recorded override) on unticked TASKS, unwalked VERIFY, or missing spec delta; spec impact is declared as ADDED/MODIFIED/REMOVED bullets and merged mechanically."
+archived: 2026-07-07
 ---
 
 # Plan — archive-closure-gate

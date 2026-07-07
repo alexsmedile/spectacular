@@ -26,15 +26,38 @@ For each `related:` entry in the request's `PLAN.md`, and for any capability spe
 
 ---
 
-## Proposal format
+## Proposal format — the spec delta
 
-> "Before archiving, here's what I'd update:
->
-> - `.spectacular/SPEC.md` — add bullet: 'team-billing — Stripe-backed seats with idempotent webhooks'
-> - `specs/billing/SPEC.md` — update to reflect new team tier; change status: draft → stable
-> - `specs/auth/SPEC.md` — no changes needed, still accurate
->
-> Want me to proceed with these updates?"
+The proposal is a **structured delta**, written to `.spectacular/requests/<slug>/SPEC-DELTA.md`, not free-form prose. This is what makes the impact mechanically mergeable and lets `spectacular doctor specs` validate it structurally (was: a date-only drift heuristic). The archive gate (`cmd_archive`) blocks unless this file exists — so writing it is part of the archive flow, not optional polish.
+
+Three sections, each a bullet list of `<file> :: <payload>` lines:
+
+```md
+### ADDED
+- specs/billing/SPEC.md :: team-billing — seats are Stripe-backed; a duplicate webhook never double-charges
+
+### MODIFIED
+- SPEC.md :: "billing — single-seat only" -> "billing — multi-seat, Stripe-backed"
+
+### REMOVED
+- SPEC.md :: "auth — password-only login"
+```
+
+- **ADDED** — payload is the new bullet text. Prefer observable, SHALL-strength phrasing (see § Creating new capability specs below).
+- **MODIFIED** — payload is `"<exact current bullet>" -> "<replacement>"`. The current side is quoted **verbatim** (character-for-character) so the mechanical merge can find and replace it.
+- **REMOVED** — payload is `"<exact current bullet>"`, quoted verbatim.
+
+**Empty impact is valid.** If the request changed nothing a spec should record, the entire file is a single line — no section headings:
+
+```md
+NONE — internal refactor of the retry queue; no capability changed
+```
+
+Present the delta to the human for confirmation before archiving. The merge itself is mechanical (ADDED appends under the file's capabilities list, MODIFIED does a quoted-string replace, REMOVED deletes the quoted line) — you propose, the human confirms, then `cmd_archive` applies it.
+
+> "Before archiving, here's the spec delta I've written to `SPEC-DELTA.md`:
+> [show the file]
+> Confirm to proceed, or tell me what to change."
 
 ---
 
@@ -43,9 +66,9 @@ For each `related:` entry in the request's `PLAN.md`, and for any capability spe
 Always snapshot before editing `.spectacular/SPEC.md` or any `specs/<capability>/SPEC.md`. See `versioning.md`.
 
 Sequence:
-1. Human confirms spec sync proposal
-2. For each file to edit: snapshot → edit → bump version
-3. Then proceed with moving request to archive
+1. Write the delta to `SPEC-DELTA.md` and human confirms it
+2. For each file the delta touches: snapshot → apply the delta's ADDED/MODIFIED/REMOVED lines → bump version
+3. Then proceed with `spectacular archive <slug>` (the gate confirms `SPEC-DELTA.md` is present)
 
 ---
 

@@ -1,5 +1,5 @@
 ---
-status: planned
+status: review
 priority: high
 owner: alex
 updated: 2026-07-07
@@ -50,9 +50,34 @@ Close the lifecycle tail: `spectacular archive` refuses (block-with-recorded-ove
 - Chose **delta blocks (ADDED/MODIFIED/REMOVED)** over free-form proposals — mechanical mergeability is what lets `doctor` validate structurally instead of by date heuristic (OpenSpec-inspired, fable review idea #2).
 - Chose **`[~]`-with-reason as a valid TASKS closure state** over requiring all-`[x]` — deliberate deferral is legitimate (wasabi `sleep-policy` exemplar); only *unexplained* open boxes block.
 
+## Formats
+
+The four on-disk contracts the CLI gate (M2) and doctor (M3) read. Locking them here so the skill side (M1) writes exactly what the CLI side reads — this is the M1↔M2 handoff.
+
+**1. Spec-delta file — `.spectacular/requests/<slug>/SPEC-DELTA.md`.** The skill writes it during the archive walk (M1); the CLI reads it (M2 check 3) and merges it (M3 doctor validates). A proposal in chat is not enough — the CLI can't see chat, so the delta must land in this file before `archive` runs. Shape:
+
+```md
+### ADDED
+- specs/billing/SPEC.md :: team-billing — seats are Stripe-backed; a duplicate webhook never double-charges
+
+### MODIFIED
+- SPEC.md :: "billing — single-seat only" -> "billing — multi-seat, Stripe-backed"
+
+### REMOVED
+- SPEC.md :: "auth — password-only login"
+```
+
+Rules: each line is `<file> :: <payload>`. ADDED payload is the new bullet text. MODIFIED payload is `"<exact current bullet>" -> "<replacement>"` (arrow-separated, current side quoted verbatim so the merge can find it). REMOVED payload is `"<exact current bullet>"`. Empty impact is the single line `NONE — <why>` (no section headings) — a valid, passing delta. The merge is mechanical: ADDED appends under the file's capabilities list, MODIFIED does a quoted-string replace, REMOVED deletes the quoted line.
+
+**2. VERIFY-LOG walk-entry marker.** M2 check 2 ("≥1 walk entry") greps VERIFY-LOG.md for a **result row** — a table line containing `✅` (the pass glyph the walk already writes, see `verify.md` § 3). Presence of ≥1 `✅` row means the walk ran and something passed. A VERIFY-LOG.md that exists but has zero `✅` rows counts as *not walked* (blocks). This reuses the existing recording format — no new marker invented.
+
+**3. `[~]` deferred-task syntax — `- [~] <task> — <reason>`.** An em-dash-or-hyphen-separated reason after the task text. M2 check 1: `- [x]` passes; `- [~]` passes **only if** a ` — ` (space-dash-space) reason follows on the same line; bare `- [ ]` or reasonless `- [~]` blocks, naming the box. The check greps TASKS.md task lines only (under `### M<N>` headings), ignoring the `## v2 (deferred)` section.
+
+**4. `--force` vs `--override` split.** `--force` keeps its **current, single meaning**: bypass the *status gate* only (line 4830) — untouched by this request. The three *new* closure checks are bypassed only by `--override <check> --reason "<text>"`, where `<check>` ∈ `{tasks, verify, spec}`. They do not overlap: `--force` never silences a closure check, `--override` never silences the status gate. Each `--override` stamps `archive_overrides:` into the archived PLAN frontmatter as a list of `{check, reason, date}`. Passing `--override` for a check that would have passed anyway is a no-op (not an error).
+
 ## 3. Milestones
 
-- M1 — Skill-side flow: `archive.md` closure-gate step + `spec-sync.md` delta proposal format shipped; a dry-run archive walk on a fixture request produces a structured delta proposal.
+- M1 — Skill-side flow: `archive.md` closure-gate step + `spec-sync.md` delta proposal format shipped; a dry-run archive walk on a fixture request writes a `SPEC-DELTA.md` in the Formats §1 shape.
 - M2 — CLI gate: `cmd_archive` runs the three closure checks; blocks with actionable messages; `--override <check> --reason` records into archived PLAN frontmatter.
 - M3 — Doctor + tests: `doctor specs` validates delta integrity; `tests/` covers gate-blocks, override-recording, `NONE` delta, and grandfathered legacy archives.
 

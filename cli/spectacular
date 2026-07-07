@@ -780,6 +780,23 @@ fm_unset() {
   ' "$file" > "$tmp" && mv "$tmp" "$file"
 }
 
+# Remove a frontmatter block-list field entirely: the `field:` line plus every
+# indented `- item` line under it (fm_unset only drops the key line, orphaning
+# the items under the previous list). No-op if absent.
+# Usage: _fm_unset_block <file> <field>
+_fm_unset_block() {
+  local file="$1" field="$2"
+  [[ -f "$file" ]] || die "_fm_unset_block: file not found: $file"
+  local tmp; tmp=$(mktemp)
+  awk -v fld="$field" '
+    /^---$/ { fm++; in_blk=0; print; next }
+    fm == 1 && $0 ~ "^"fld":" { in_blk=1; next }
+    in_blk && /^[[:space:]]+-[[:space:]]/ { next }     # drop indented list items
+    in_blk { in_blk=0 }                                 # first non-item ends the block
+    { print }
+  ' "$file" > "$tmp" && mv "$tmp" "$file"
+}
+
 # ── last-mutation breadcrumb (v1.22.0+, for `spectacular undo`) ───────────────
 # Single-level only: each lifecycle mutator overwrites .spectacular/.last-mutation
 # with key=value lines describing how to reverse the last op. Gitignored — session
@@ -4759,20 +4776,80 @@ EOF
   echo ""
 }
 
+# ── Closure gate (v1.28.0+) ───────────────────────────────────────────────────
+# Three mechanical checks run before archive. Each blocks unless satisfied or
+# explicitly overridden. See references/archive.md § The closure gate and the
+# archive-closure-gate PLAN § Formats for the on-disk contracts.
+
+# _closure_check_tasks <dir> — echo a failure message if any milestone TASKS box
+# is open ([ ]) or deferred without a reason ([~] lacking ' — <reason>'). Only
+# scans task lines under '### M<N>' headings; ignores '## v2 (deferred)' sections.
+# Silent (exit 0, no output) when clean or TASKS.md absent.
+_closure_check_tasks() {
+  local tasks="$1/TASKS.md"
+  [[ -f "$tasks" ]] || return 0
+  awk '
+    /^## / { in_v2 = ($0 ~ /deferred/) ? 1 : 0 }
+    in_v2 { next }
+    /^### M/ { in_ms = 1; next }
+    /^#/ { if ($0 !~ /^### M/) in_ms = 0 }
+    in_ms && /^- \[ \]/ {
+      t=$0; sub(/^- \[ \][[:space:]]*/,"",t); print "open: " t; bad=1
+    }
+    in_ms && /^- \[~\]/ {
+      # deferred is OK only with a " — " reason (em-dash or " - " hyphen)
+      if ($0 !~ / — / && $0 !~ / - /) {
+        t=$0; sub(/^- \[~\][[:space:]]*/,"",t); print "deferred without reason: " t; bad=1
+      }
+    }
+    END { exit (bad?1:0) }
+  ' "$tasks"
+}
+
+# _closure_check_verify <dir> — fail if VERIFY.md exists but VERIFY-LOG.md has no
+# passed (✅) walk row (never actually walked). No VERIFY.md → not applicable.
+_closure_check_verify() {
+  local dir="$1"
+  [[ -f "$dir/VERIFY.md" ]] || return 0
+  if [[ ! -f "$dir/VERIFY-LOG.md" ]]; then
+    echo "VERIFY.md exists but no VERIFY-LOG.md — never run through the verify walk"; return 0
+  fi
+  if ! grep -q "✅" "$dir/VERIFY-LOG.md"; then
+    echo "VERIFY-LOG.md has no passed (✅) walk row — verify walk left no green result"
+  fi
+}
+
+# _closure_check_spec <dir> — fail if no SPEC-DELTA.md declaring spec impact.
+_closure_check_spec() {
+  local delta="$1/SPEC-DELTA.md"
+  if [[ ! -f "$delta" ]]; then
+    echo "no SPEC-DELTA.md — declare spec impact (ADDED/MODIFIED/REMOVED, or 'NONE — <why>')"
+  fi
+}
+
 # `spectacular archive <slug> [--force]`
 # Moves request to .spectacular/archive/, rewrites inbound related: links,
 # sets status: archived + archived: <today>. Refuses if not in verified/review
 # without --force.
 cmd_archive() {
   local slug="" opt_force=false opt_skip_doctor=false opt_no_docs_prompt=false
+  # Closure-gate overrides: --override <check> --reason "<text>" (repeatable).
+  # Parallel arrays; ov_check[i] is bypassed with reason ov_reason[i].
+  local -a ov_check=() ov_reason=()
   while (( $# > 0 )); do
     case "$1" in
       --force)           opt_force=true; shift ;;
       --skip-doctor)     opt_skip_doctor=true; shift ;;
       --no-docs-prompt)  opt_no_docs_prompt=true; shift ;;
+      --override)
+        [[ -n "${2:-}" ]] || die "archive: --override requires a check name (tasks|verify|spec)"
+        case "$2" in tasks|verify|spec) ;; *) die "archive: --override check must be tasks|verify|spec, got: $2" ;; esac
+        [[ "${3:-}" == "--reason" && -n "${4:-}" ]] || die "archive: --override $2 requires --reason \"<text>\""
+        ov_check+=("$2"); ov_reason+=("$4"); shift 4 ;;
       --help|-h)
         cat <<EOF
 Usage: spectacular archive <slug> [--force] [--skip-doctor] [--no-docs-prompt]
+                                  [--override <check> --reason "<text>"]...
 
 Move a request from .spectacular/requests/<slug>/ to .spectacular/archive/<slug>/
 and rewrite inbound related: links in other request files to point at the new
@@ -4780,6 +4857,14 @@ location.
 
 Refuses unless status is 'verified' or 'review'. Use --force to override.
 Refuses if doctor finds workspace/specs/links errors. Use --skip-doctor to bypass.
+
+Closure gate — blocks archive unless the request closed itself out:
+  tasks   every TASKS.md box is [x], or [~] with a ' — <reason>'
+  verify  if VERIFY.md exists, VERIFY-LOG.md has a passed (✅) walk row
+  spec    a SPEC-DELTA.md exists (ADDED/MODIFIED/REMOVED, or 'NONE — <why>')
+Bypass one check with --override <check> --reason "<text>" (repeatable). The
+reason is stamped into archive_overrides: in the archived PLAN — auditable, not
+silent. --force does NOT bypass these; it only bypasses the status gate.
 
 If the archived request touched SPEC.md / specs/ / ARCHITECTURE.md / PRD.md AND
 docs/ exists, prints a hint suggesting 'pageworks audit'. Suppress per-call with
@@ -4790,6 +4875,8 @@ Options:
   --force            Skip status-gate check (allow archiving planned/active requests)
   --skip-doctor      Bypass the doctor precondition (use with caution)
   --no-docs-prompt   Suppress the post-archive pageworks suggestion this run
+  --override <check> --reason "<text>"
+                     Bypass one closure check (tasks|verify|spec), recording why
   -h, --help         Show this help
 EOF
         exit 0 ;;
@@ -4832,12 +4919,68 @@ EOF
       ;;
   esac
 
-  # Verify-walk advisory (v1.11.0+): verified without ever being walked.
-  # If status is verified but no VERIFY-LOG.md exists, the request was flipped
-  # verified without running `spectacular verify <slug>`. Advisory, not blocking.
-  if [[ "$status" == "verified" && ! -f "$(dirname "$plan")/VERIFY-LOG.md" ]]; then
-    echo "  ⚠ '$slug' is verified but has no VERIFY-LOG.md — it was never run through the verify walk." >&2
-    echo "    Consider: /spectacular verify $slug  (records evidence + a walk log before archiving)" >&2
+  # ── Closure gate (v1.28.0+) ────────────────────────────────────────────────
+  # Three checks; each blocks unless satisfied or overridden. Collect ALL
+  # failures so the user sees the whole punch list, not one-at-a-time.
+  local -a gate_fail_check=() gate_fail_msg=()
+  local _msg
+  _msg="$(_closure_check_tasks "$src")"  || true
+  [[ -n "$_msg" ]] && { gate_fail_check+=("tasks");  gate_fail_msg+=("$_msg"); }
+  _msg="$(_closure_check_verify "$src")" || true
+  [[ -n "$_msg" ]] && { gate_fail_check+=("verify"); gate_fail_msg+=("$_msg"); }
+  _msg="$(_closure_check_spec "$src")"   || true
+  [[ -n "$_msg" ]] && { gate_fail_check+=("spec");   gate_fail_msg+=("$_msg"); }
+
+  # Resolve each failure against the overrides. An override for check C clears
+  # every failure of check C and records an archive_overrides: entry.
+  local -a blocked_check=() blocked_msg=() override_entry=()
+  local i j overridden reason
+  for i in "${!gate_fail_check[@]}"; do
+    overridden=false; reason=""
+    for j in "${!ov_check[@]}"; do
+      if [[ "${ov_check[$j]}" == "${gate_fail_check[$i]}" ]]; then
+        overridden=true; reason="${ov_reason[$j]}"; break
+      fi
+    done
+    if $overridden; then
+      echo "  ⚠ closure check '${gate_fail_check[$i]}' overridden: ${reason}" >&2
+      override_entry+=("${gate_fail_check[$i]} — ${reason} (${TODAY})")
+    else
+      blocked_check+=("${gate_fail_check[$i]}"); blocked_msg+=("${gate_fail_msg[$i]}")
+    fi
+  done
+
+  # Warn on overrides passed for checks that would have passed anyway (no-op, not an error).
+  for j in "${!ov_check[@]}"; do
+    local matched=false
+    for i in "${!gate_fail_check[@]}"; do
+      [[ "${ov_check[$j]}" == "${gate_fail_check[$i]}" ]] && { matched=true; break; }
+    done
+    $matched || echo "  ⚠ --override ${ov_check[$j]}: that check already passes — ignoring." >&2
+  done
+
+  if (( ${#blocked_check[@]} > 0 )); then
+    echo "archive: '$slug' isn't closed out — the closure gate blocks:" >&2
+    for i in "${!blocked_check[@]}"; do
+      echo "  ✗ ${blocked_check[$i]}: ${blocked_msg[$i]}" >&2
+    done
+    echo "" >&2
+    echo "Fix the above, or bypass a check with:  --override <check> --reason \"<why>\"" >&2
+    exit 1
+  fi
+
+  # Stamp all recorded overrides as one block list (fm_add_to_list can't build a
+  # multi-item list — see its block-list bug; we own this field, so write it whole).
+  # Build the block on stdin (awk -v can't hold newlines on macOS) and insert it
+  # before the closing frontmatter delimiter.
+  if (( ${#override_entry[@]} > 0 )); then
+    local tmp; tmp=$(mktemp)
+    { printf 'archive_overrides:\n'; printf '  - %s\n' "${override_entry[@]}"; } \
+      | awk '
+        NR==FNR { block = block $0 "\n"; next }
+        /^---$/ { fm++; if (fm==2) { printf "%s", block } print; next }
+        { print }
+      ' - "$plan" > "$tmp" && mv "$tmp" "$plan"
   fi
 
   # Capture the pre-archive status for the undo breadcrumb (before we overwrite it).
@@ -5624,7 +5767,9 @@ EOF
       info "  ↩ moved: $arc → $dest"
       # Restore status, drop archived:
       local plan="$dest/PLAN.md"
-      fm_set "$plan" "status" "${prev:-review}"; fm_unset "$plan" "archived"; fm_touch "$plan"
+      fm_set "$plan" "status" "${prev:-review}"; fm_unset "$plan" "archived"
+      _fm_unset_block "$plan" "archive_overrides"   # stale once the archive is reversed
+      fm_touch "$plan"
       local tasks="$dest/TASKS.md"
       [[ -f "$tasks" ]] && { fm_set "$tasks" "status" "${prev:-review}"; fm_touch "$tasks"; }
       # Reverse inbound link rewrites: ../../archive/<slug>/ → ../<slug>/
@@ -8771,6 +8916,55 @@ check_specs() {
       doc_add "specs" "warning" "$contract_doc" "contract doc missing frontmatter delimiter" \
         "add proper frontmatter block" "judgment"
     fi
+  done
+
+  # Delta integrity (v1.28.0+): validate each active request's SPEC-DELTA.md
+  # against the current spec files. MODIFIED/REMOVED must quote a bullet that
+  # exists; ADDED must not duplicate one. NONE is always valid. This replaces the
+  # date heuristic below as the primary drift signal (heuristic stays as backstop).
+  for delta in .spectacular/requests/*/SPEC-DELTA.md; do
+    [[ -f "$delta" ]] || continue
+    local dslug; dslug="$(basename "$(dirname "$delta")")"
+    # NONE line → valid, nothing to check.
+    if grep -qE '^NONE( |$|—|-)' "$delta"; then
+      doc_add "specs" "pass" "$delta" "spec delta declares NONE (no capability change)"
+      continue
+    fi
+    # Must have at least one section heading if not NONE.
+    if ! grep -qE '^### (ADDED|MODIFIED|REMOVED)' "$delta"; then
+      doc_add "specs" "warning" "$delta" "SPEC-DELTA.md has no ADDED/MODIFIED/REMOVED section and isn't NONE" \
+        "declare spec impact as delta sections, or 'NONE — <why>'" "judgment"
+      continue
+    fi
+    local section="" line file payload cur ok=1
+    while IFS= read -r line; do
+      case "$line" in
+        '### ADDED')    section="ADDED";    continue ;;
+        '### MODIFIED') section="MODIFIED"; continue ;;
+        '### REMOVED')  section="REMOVED";  continue ;;
+        '### '*)        section="";         continue ;;
+      esac
+      [[ "$line" =~ ^-\ .*::.* ]] || continue   # only `- <file> :: <payload>` lines
+      file="${line#- }"; file="${file%% ::*}"; file="$(echo "$file" | sed 's/[[:space:]]*$//')"
+      payload="${line#*:: }"
+      local target=".spectacular/$file"
+      [[ -f "$target" ]] || { doc_add "specs" "warning" "$delta" "delta targets missing file: $file (for $dslug)" "fix the file path in SPEC-DELTA.md" "judgment"; ok=0; continue; }
+      case "$section" in
+        MODIFIED|REMOVED)
+          # payload's current side is the first quoted string.
+          cur="$(echo "$payload" | sed -E 's/^"([^"]*)".*/\1/')"
+          if [[ -n "$cur" ]] && ! grep -qF -- "$cur" "$target"; then
+            doc_add "specs" "warning" "$delta" "$section delta quotes a bullet not found in $file: \"$cur\" ($dslug)" \
+              "quote the current bullet verbatim, or fix the delta" "judgment"; ok=0
+          fi ;;
+        ADDED)
+          if grep -qF -- "$payload" "$target"; then
+            doc_add "specs" "warning" "$delta" "ADDED delta duplicates an existing bullet in $file ($dslug)" \
+              "remove the duplicate — it's already present" "judgment"; ok=0
+          fi ;;
+      esac
+    done < "$delta"
+    (( ok == 1 )) && doc_add "specs" "pass" "$delta" "spec delta integrity ok ($dslug)"
   done
 
   # Drift: SPEC.md staler than the newest archived request → it likely missed a

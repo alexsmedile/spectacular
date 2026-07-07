@@ -7,6 +7,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added — archive closure gate (b22)
+
+- **`spectacular archive` now runs a closure gate** — three mechanical checks block a drifting archive: (1) `tasks` — every TASKS.md milestone box is `[x]`, or `[~]` with a ` — <reason>`; (2) `verify` — if VERIFY.md exists, VERIFY-LOG.md has a passed (`✅`) walk row; (3) `spec` — a `SPEC-DELTA.md` declaring spec impact exists (or `NONE — <why>`). Each block is overridable **once, explicitly** with `--override <check> --reason "<text>"`, which records `archive_overrides:` (a `{check, reason, date}` list) into the archived PLAN — auditable, never a silent bypass. `--force` is unchanged: it clears the status gate only, never a closure check. Closes the corpus's weakest metric (anti-drift) at the lifecycle tail. Fable review #1.
+- **Structured spec deltas** — `spec-sync.md` proposals are now `### ADDED` / `### MODIFIED` (`"<current bullet>" -> "<replacement>"`) / `### REMOVED` blocks written to `SPEC-DELTA.md`, mechanically mergeable and machine-validatable. `doctor specs` gains a **delta-integrity check**: MODIFIED/REMOVED must quote a bullet that exists in the target; ADDED must not duplicate one — the primary drift signal, with the old date heuristic kept as a backstop. Fable review #2 (OpenSpec-inspired).
+
+### Fixed
+
+- **`fm_unset` block-list orphaning (surfaced by undo)** — `spectacular undo` after an overridden archive now drops the whole `archive_overrides:` block cleanly via a new `_fm_unset_block` helper; previously the list items were re-parented under the preceding `related:` list (valid YAML, wrong data).
+
 ## [1.27.0] — 2026-07-07
 
 ### Fixed (fable review W1 — guidance contradictions)

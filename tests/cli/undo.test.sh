@@ -54,7 +54,8 @@ scenario_2_undo_archive() {
   (cd "$dir" && "$CLI" new req-b --summary "b" >/dev/null)
   printf '\nrelated:\n  - ../req-a/PLAN.md\n' >> "$dir/.spectacular/requests/req-b/PLAN.md"
   (cd "$dir" && "$CLI" advance req-a --to verified --force >/dev/null)
-  (cd "$dir" && "$CLI" archive req-a --skip-doctor >/dev/null 2>&1)
+  # Closure gate (v1.28.0+): override its checks — this scenario tests undo, not the gate.
+  (cd "$dir" && "$CLI" archive req-a --skip-doctor --override tasks --reason "undo-under-test" --override spec --reason "undo-under-test" >/dev/null 2>&1)
   assert_dir_exists "$dir/.spectacular/archive/req-a"
   assert_dir_absent "$dir/.spectacular/requests/req-a"
   assert_file_contains "$dir/.spectacular/requests/req-b/PLAN.md" "../../archive/req-a/"

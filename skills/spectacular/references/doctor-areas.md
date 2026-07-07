@@ -95,7 +95,8 @@ Mechanical fix: missing gitignore entries are appended by `spectacular doctor --
 | `specs/` dir present | ❌ if missing | `.spectacular/specs/` exists (may contain `.gitkeep` only) |
 | Legacy `current/` migration | ⚠️ + mechanical | `current/` exists alongside `specs/` → propose `git mv current → specs` |
 | Conflict (both `current/` and `specs/` with content) | ❌ | Manual resolution required |
-| SPEC.md drift (v1.18.0+) | ⚠️ judgment | `SPEC.md`'s `updated` predates the newest `archive/*/PLAN.md` `updated` → SPEC may have missed a spec-sync. Date heuristic, not a content diff — routes to [[spec-sync]] to confirm. |
+| Spec-delta integrity (v1.28.0+) | ⚠️ judgment | For each active request's `SPEC-DELTA.md`: `MODIFIED`/`REMOVED` must quote a bullet that exists in the target file; `ADDED` must not duplicate one; a non-`NONE` delta must have at least one `### ADDED/MODIFIED/REMOVED` section. Structural content check — the primary drift signal, replacing the date heuristic below as the main guard. See [[spec-sync]] for the delta format. |
+| SPEC.md drift (v1.18.0+) | ⚠️ judgment | `SPEC.md`'s `updated` predates the newest `archive/*/PLAN.md` `updated` → SPEC may have missed a spec-sync. Date heuristic, not a content diff — a backstop behind the delta-integrity check above. Routes to [[spec-sync]] to confirm. |
 
 ## `docs` (v0.6.0+)
 

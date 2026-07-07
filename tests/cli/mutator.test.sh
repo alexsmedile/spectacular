@@ -52,6 +52,17 @@ seed_workspace() {
   (cd "$dir" && "$CLI" init --kit blank --name "$(basename "$dir")" >/dev/null 2>&1)
 }
 
+# Make a freshly-scaffolded request pass the closure gate (v1.28.0+): tick every
+# TASKS box + declare a NONE spec delta. For scenarios testing archive mechanics
+# (not the gate itself), so the gate doesn't get in the way.
+make_gate_clean() {
+  local dir="$1" slug="$2"
+  local t="$dir/.spectacular/requests/$slug/TASKS.md"
+  [[ -f "$t" ]] && { sed -i.bak 's/^- \[ \]/- [x]/' "$t"; rm -f "$t.bak"; }
+  printf 'NONE — archive-mechanics fixture, spec delta not under test\n' \
+    > "$dir/.spectacular/requests/$slug/SPEC-DELTA.md"
+}
+
 scenario_1_touch_basic() {
   echo "Scenario 1: touch bumps updated; idempotent; refuses non-frontmatter"
   local dir="/tmp/spectacular-mutator-1"
@@ -184,7 +195,8 @@ scenario_5_archive_basic() {
   assert_exit "$code" 1 "planned status refused without --force"
 
   (cd "$dir" && "$CLI" promote req-a --to verified --force >/dev/null)
-  (cd "$dir" && "$CLI" archive req-a >/dev/null)
+  # Closure gate (v1.28.0+): this scenario tests the move, not the gate — override its checks.
+  (cd "$dir" && "$CLI" archive req-a --override tasks --reason "move-under-test" --override spec --reason "move-under-test" >/dev/null)
   assert_dir_absent "$dir/.spectacular/requests/req-a"
   assert_dir_exists "$dir/.spectacular/archive/req-a"
   assert_file_contains "$dir/.spectacular/archive/req-a/PLAN.md" 'status: archived'
@@ -207,6 +219,7 @@ scenario_6_promote_archive_combo() {
   local dir="/tmp/spectacular-mutator-6"
   seed_workspace "$dir"
   (cd "$dir" && "$CLI" new combo --summary "test" >/dev/null)
+  make_gate_clean "$dir" combo
 
   (cd "$dir" && "$CLI" promote combo --to verified --force --archive >/dev/null)
   assert_dir_absent "$dir/.spectacular/requests/combo"
@@ -281,6 +294,7 @@ scenario_9_doctor_precondition_archive() {
   local dir="/tmp/spectacular-mutator-9"
   seed_workspace "$dir"
   (cd "$dir" && "$CLI" new req-broken --summary "test" >/dev/null)
+  make_gate_clean "$dir" req-broken
   (cd "$dir" && "$CLI" promote req-broken --to verified --force >/dev/null)
 
   # Break workspace: delete required AGENTS.md (workspace area error)
@@ -310,6 +324,7 @@ scenario_10_doctor_precondition_clean_passes() {
   local dir="/tmp/spectacular-mutator-10"
   seed_workspace "$dir"
   (cd "$dir" && "$CLI" new req-ok --summary "test" >/dev/null)
+  make_gate_clean "$dir" req-ok
   (cd "$dir" && "$CLI" promote req-ok --to verified --force >/dev/null)
 
   # Clean workspace — archive should succeed without --skip-doctor

@@ -51,6 +51,9 @@ summary: "Touches SPEC.md and specs/ — should trigger pageworks prompt"
 # Plan
 References SPEC.md and specs/foo/ for the capability tracking.
 EOF
+  # Closure gate (v1.28.0+): declare spec impact so archive isn't blocked.
+  printf 'NONE — pageworks-prompt fixture, spec delta not under test\n' \
+    > "$dir/.spectacular/requests/$slug/SPEC-DELTA.md"
 }
 
 setup_request_no_spec_ref() {
@@ -68,6 +71,8 @@ summary: "No spec references at all"
 # Plan
 This plan is purely about internal refactor; no public surface changes.
 EOF
+  printf 'NONE — pageworks-prompt fixture, spec delta not under test\n' \
+    > "$dir/.spectacular/requests/$slug/SPEC-DELTA.md"
 }
 
 scenario_1_prompt_fires() {

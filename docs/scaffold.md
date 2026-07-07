@@ -366,7 +366,7 @@ Canonical system truth. Each file describes what a capability does right now —
 - One file or subdirectory per capability
 - Authoritative and behavior-oriented — what the system does, not how it is implemented
 - Never overwritten in place — skill snapshots before proposing edits
-- Skill proposes updates to `current/` when a request is archived (human confirms)
+- Skill proposes updates when a request is archived, as a structured `SPEC-DELTA.md` the human confirms *(v1.28.0+)* — a missing delta blocks the archive closure gate
 
 ### Frontmatter
 

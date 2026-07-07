@@ -290,6 +290,6 @@ Add capability specs when:
 
 - the project already has stable behavior worth documenting
 - a completed request changes behavior
-- the skill proposes a `current/` sync during archive
+- the skill proposes a `SPEC.md` / `specs/` sync (via `SPEC-DELTA.md`) during archive
 
 Keep `current/` behavior-oriented. It should describe what the system does now, not speculative future plans.

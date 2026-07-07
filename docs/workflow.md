@@ -209,11 +209,11 @@ spectacular archive add-team-billing
 The skill should:
 
 1. review the request state
-2. propose `current/` updates
+2. write a spec delta to `SPEC-DELTA.md` (`### ADDED` / `### MODIFIED` / `### REMOVED`, or `NONE — <why>`) and propose the matching `SPEC.md` / `specs/` updates
 3. propose memory entries if useful
 4. move the request from `requests/` to `archive/`
 
-Archived requests are not deleted. They are also not read during normal `/spectacular` status briefings.
+Archiving runs a **closure gate** *(v1.28.0+)*: it blocks on open `TASKS.md` boxes, an unwalked `VERIFY.md`, or a missing `SPEC-DELTA.md` — each bypassable once with `--override <check> --reason "<text>"`, recorded on the archived plan. Archived requests are not deleted. They are also not read during normal `/spectacular` status briefings.
 
 ---
 
@@ -226,5 +226,5 @@ For long-running projects, a useful rhythm is:
 3. Keep `TASKS.md` and `SESSION.md` current.
 4. Verify before changing request state to `verified`.
 5. Archive completed work.
-6. Update `current/` only when behavior has actually changed.
+6. Update `SPEC.md` / `specs/` (via a `SPEC-DELTA.md`) only when behavior has actually changed.
 7. Write memory only for lessons with future value.

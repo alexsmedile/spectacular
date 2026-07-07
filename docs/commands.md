@@ -67,7 +67,7 @@ spectacular doctor --format json          # JSON report for skill/tool consumpti
 
 Available areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions` *(v0.4.0+)*, `specs` *(v0.5.0+)*, `docs` *(v0.6.0+)*, `personas` *(v1.3.0+)*, `memory` / `sessions` *(v1.5.0+)*, `feedback` *(v1.6.0+)*, `ideas` *(v1.7.0+)*, `policies` *(v1.12.0+)*, `vision` *(v1.15.0+)*, `decisions` *(v1.17.0+)*, `roadmap` *(v1.23.0+)*.
 
-The `specs` area also flags **SPEC.md drift** *(v1.18.0+)* — a `⚠️` warning when `SPEC.md`'s `updated` date predates the newest archived request, signalling a likely missed spec-sync. It's a date heuristic, so it routes to the skill's spec-sync flow to confirm and reconcile content.
+The `specs` area validates **spec-delta integrity** *(v1.28.0+)* — for each active request's `SPEC-DELTA.md`, a `⚠️` warning when a `MODIFIED`/`REMOVED` entry quotes a bullet that doesn't exist in its target file, or an `ADDED` entry duplicates one. This is the primary drift signal. It also keeps the older **SPEC.md date-drift** heuristic *(v1.18.0+)* as a backstop — a `⚠️` when `SPEC.md`'s `updated` date predates the newest archived request, signalling a likely missed spec-sync. Both route to the skill's spec-sync flow to reconcile content.
 
 Exit codes:
 - `0` clean (no warnings, no errors)
@@ -172,10 +172,25 @@ spectacular next
 
 ### `spectacular archive <slug>`
 
-Archives a verified request. The skill proposes `current/` updates and memory entries before moving the request to `.spectacular/archive/`.
+Archives a verified request. The skill proposes `SPEC.md` / `specs/` updates and memory entries, then moves the request to `.spectacular/archive/`.
 
 ```text
 spectacular archive add-team-billing
+```
+
+**Closure gate** *(v1.28.0+)* — before the move, archive runs three checks that block a drifting archive:
+
+| Check | Blocks when |
+|---|---|
+| `tasks` | a `TASKS.md` box is open (`- [ ]`) or deferred without a reason (`- [~]` lacking a ` — <reason>`) |
+| `verify` | `VERIFY.md` exists but `VERIFY-LOG.md` has no passed (`✅`) walk row — never actually walked |
+| `spec` | no `SPEC-DELTA.md` declaring spec impact (`### ADDED` / `### MODIFIED` / `### REMOVED`, or `NONE — <why>`) |
+
+Bypass one check with `--override <check> --reason "<text>"` (repeatable). The reason is recorded in `archive_overrides:` on the archived `PLAN.md` — auditable, never a silent bypass. `--force` is unrelated: it clears the **status gate** only (archiving a non-verified request), never a closure check.
+
+```text
+spectacular archive add-team-billing \
+  --override tasks --reason "deferred to next build"
 ```
 
 ### `spectacular remember this`

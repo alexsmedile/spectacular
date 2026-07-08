@@ -27,17 +27,26 @@ This document defines the **structure of `.spectacular/`** — what each folder 
 ├── PRD.md
 ├── PRINCIPLES.md
 ├── ARCHITECTURE.md
-├── ROADMAP.md
 ├── AGENTS.md
 ├── STACK.md
-├── DECISIONS.md
+├── POLICY.md
 ├── config.yaml
 │
 ├── ideas/
 ├── specs/
+│   ├── index.md
+│   └── <capability>.md
 ├── requests/
 ├── skills/
-├── memory/
+├── memories/
+│   ├── index.md
+│   └── M<N>-<slug>.md
+├── decisions/
+│   ├── index.md
+│   └── D<N>-<slug>.md
+├── sessions/
+│   ├── index.md
+│   └── <slug>.md
 └── archive/
 ```
 

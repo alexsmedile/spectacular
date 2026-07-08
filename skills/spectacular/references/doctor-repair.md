@@ -68,7 +68,7 @@ Per-request files (PLAN.md, TASKS.md, VERIFY.md) typically have `snapshot-on-edi
   [q] quit doctor
 > y
 
-  Appending to .spectacular/DECISIONS.md ... ✓
+  Appending to .spectacular/decisions/index.md ... ✓
   → fixed: gap acknowledged
 ```
 

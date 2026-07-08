@@ -1,7 +1,7 @@
 ---
 doc-id: sessions
 mode: index
-location: .spectacular/SESSIONS.md
+location: .spectacular/sessions/index.md
 entries-dir: .spectacular/sessions/
 scope: project-wide
 template: templates/sessions/entry.md

@@ -42,7 +42,7 @@ Read the `## Detection` section. State to the user: "this migration applies beca
 
 ### Step 3 — Snapshot affected canonical docs
 
-For every path in `affects:` that's a canonical doc (PRD.md, SPEC.md, ARCHITECTURE.md, PRINCIPLES.md, ROADMAP.md, STACK.md, AGENTS.md, DECISIONS.md, or `specs/<cap>/SPEC.md`):
+For every path in `affects:` that's a canonical doc (PRD.md, specs/index.md, ARCHITECTURE.md, PRINCIPLES.md, roadmaps/index.md, STACK.md, AGENTS.md, decisions/index.md, or `specs/<cap>/index.md`):
 
 Run `spectacular snapshot <path>` BEFORE any edit. This creates `<file>@v<N>.md` so the user can compare before/after and revert if needed.
 
@@ -56,7 +56,7 @@ For each numbered step in `## Steps`:
 2. Show the planned change: file path + diff or replacement content.
 3. Ask: `Apply this step? [y/n/q]`
    - `y` → apply, mark step done, advance
-   - `n` → skip step, log to `.spectacular/memory/migration-skips-<date>.md`, advance (NOT recommended; surface the risk: "skipping may leave the workspace in an inconsistent state. Continue? [y/n]")
+   - `n` → skip step, log to `.spectacular/memories/migration-skips-<date>.md`, advance (NOT recommended; surface the risk: "skipping may leave the workspace in an inconsistent state. Continue? [y/n]")
    - `q` → stop walking; leave workspace in whatever partial state; print final state + instructions to resume
 
 ### Step 5 — Bump workspace_schema
@@ -75,7 +75,7 @@ If more judgment migrations are pending, go to Step 1 with the next migration. I
 
 ## Memory write
 
-After a successful judgment walk, write to `.spectacular/memory/migrations-<date>.md`:
+After a successful judgment walk, write to `.spectacular/memories/migrations-<date>.md`:
 
 ```yaml
 ---
@@ -117,4 +117,4 @@ As of v0.6.2, no migration ships with `mechanical: false`. The skill walk is shi
 - [[doctor]] — chain validation in `check_kits` area
 - [[doctor-substrate]] — onboarding flow triggers migrate-check
 - [[versioning]] — snapshot rules for canonical docs (used in Step 3)
-- [[memory]] — write-back pattern (used in Memory write section)
+- [[memory-rules]] — write-back pattern (used in Memory write section)

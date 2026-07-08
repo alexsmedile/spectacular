@@ -11,7 +11,7 @@ Triggered by: archive sequence, when skill detects a request has meaningfully ch
 
 ## Purpose
 
-When a request is completed and archived, `.spectacular/SPEC.md` (and any per-capability `specs/<capability>/SPEC.md`) should reflect the new system truth. The skill proposes what to update — the human confirms before any write.
+When a request is completed and archived, `.spectacular/specs/index.md` (and any per-capability `specs/<capability>.md`) should reflect the new system truth. The skill proposes what to update — the human confirms before any write.
 
 ---
 
@@ -34,7 +34,7 @@ Three sections, each a bullet list of `<file> :: <payload>` lines:
 
 ```md
 ### ADDED
-- specs/billing/SPEC.md :: team-billing — seats are Stripe-backed; a duplicate webhook never double-charges
+- specs/billing.md :: team-billing — seats are Stripe-backed; a duplicate webhook never double-charges
 
 ### MODIFIED
 - SPEC.md :: "billing — single-seat only" -> "billing — multi-seat, Stripe-backed"
@@ -63,7 +63,7 @@ Present the delta to the human for confirmation before archiving. The merge itse
 
 ## Snapshot rule
 
-Always snapshot before editing `.spectacular/SPEC.md` or any `specs/<capability>/SPEC.md`. See `versioning.md`.
+Always snapshot before editing `.spectacular/specs/index.md` or any `specs/<capability>.md`. See `versioning.md`.
 
 Sequence:
 1. Write the delta to `SPEC-DELTA.md` and human confirms it
@@ -76,11 +76,11 @@ Sequence:
 
 If a request introduced a net-new capability with no spec in `specs/`:
 
-Propose adding a bullet to `.spectacular/SPEC.md` capabilities list. Only create a per-capability file when that bullet outgrows one line.
+Propose adding a bullet to `.spectacular/specs/index.md` capabilities list. Only create a per-capability file when that bullet outgrows one line.
 
 **Bullet phrasing:** prefer an observable, SHALL-strength statement of behavior over a feature label — "team-billing — seats are Stripe-backed; a duplicate webhook never double-charges" beats "team-billing support". The acid test: *could someone who has never seen the code tell whether the bullet holds?* An important behavior earns a GIVEN/WHEN/THEN scenario — in the per-capability spec's `## Scenarios` section, never in SPEC.md itself (the index stays one line per capability).
 
-When you do break out per-capability, create `specs/<capability>/SPEC.md` (or `specs/<capability-group>/<capability>/SPEC.md` for nested) with frontmatter:
+When you do break out per-capability, create `specs/<capability>.md` (or `specs/<capability-group>/<capability>.md` for nested) with frontmatter:
 
 ```md
 ---

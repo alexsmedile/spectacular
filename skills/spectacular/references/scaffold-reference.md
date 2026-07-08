@@ -240,8 +240,8 @@ related:
 |---|---|
 | Planning / design | `PRD.md`, `PRINCIPLES.md`, `DECISIONS.md` |
 | Refining intent / PRD work | `PRD.md`, skill refs `grill.md` / `refine.md` / `review.md` + `prd-rules.md` |
-| Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `TASKS.md`, `SPEC.md`, relevant `specs/<capability>/SPEC.md` |
-| Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `specs/<capability>/SPEC.md`, `RISKS.md` |
+| Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `TASKS.md`, `specs/index.md`, relevant `specs/<capability>.md` |
+| Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `specs/<capability>.md`, `RISKS.md` |
 | Onboarding cold | `PRD.md`, `ARCHITECTURE.md`, this file |
 
 ## Available skills
@@ -480,7 +480,7 @@ updated: <today>
 
 ## Specs layer (system truth)
 
-### .spectacular/SPEC.md (always-on index)
+### .spectacular/specs/index.md (always-on index)
 ```md
 ---
 version: 1.0
@@ -497,12 +497,12 @@ related:
 <One paragraph, present tense.>
 
 ## Capabilities
-- <one bullet per capability; link out to specs/<capability>/SPEC.md only when needed>
+- <one bullet per capability; link out to specs/<capability>.md only when needed>
 ```
 
 ### Per-capability layer (optional)
 
-### specs/<capability>/SPEC.md
+### specs/<capability>.md
 ```md
 ---
 status: draft

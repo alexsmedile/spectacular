@@ -56,7 +56,7 @@ Example first briefing (status.md's briefing format + a takeover framing):
 > | Memory   | 1 lesson                                       |
 >
 > `add-team-billing` is active with a SESSION.md — looks like billing implementation is in progress.
-> `specs/billing/SPEC.md` is still `draft`.
+> `specs/billing.md` is still `draft`.
 >
 > Want to pick up where billing left off, or start something new?"
 

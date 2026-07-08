@@ -13,11 +13,11 @@ Triggered by: `spectacular remember this`, or as part of the archive sequence.
 
 ## Memory location
 
-`.spectacular/memory/` — git-committed, team-visible. This is NOT `.claude/` personal memory.
+`.spectacular/memories/` — git-committed, team-visible. This is NOT `.claude/` personal memory.
 
 Default files:
 ```
-memory/
+memories/
 ├── failures.md
 ├── lessons.md
 ├── architecture-traps.md
@@ -34,7 +34,7 @@ Create new files if the content doesn't fit existing categories. Keep files focu
 
 - Do NOT use phrases like "remember that", "note that", "I should remember"
 - Write memory entries as factual operational records, not instructions to an agent
-- Target audience is the team reading `.spectacular/memory/`, not the AI assistant
+- Target audience is the team reading `.spectacular/memories/`, not the AI assistant
 
 ---
 
@@ -86,5 +86,5 @@ Added `stripe_event_id` deduplication table.
 
 ## Reading memory
 
-During normal operation, skill reads `.spectacular/memory/` file list and counts for the status briefing.
+During normal operation, skill reads `.spectacular/memories/` file list and counts for the status briefing.
 Load full memory content only when directly relevant to the current task.

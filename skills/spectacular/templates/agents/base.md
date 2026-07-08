@@ -4,9 +4,7 @@ updated: <DATE>
 summary: "Onboarding doc for any agent or human landing inside .spectacular/"
 related:
   - PRD.md
-  - SPEC.md
-  - PRINCIPLES.md
-  - ARCHITECTURE.md
+  - specs/index.md
 ---
 
 # Working in `.spectacular/`
@@ -26,20 +24,20 @@ This is the onboarding doc for any agent or human landing inside this workspace.
 | Layer | Files | Purpose |
 |---|---|---|
 | Intent | `PRD.md` | What we want and why |
-| Truth | `SPEC.md` + `specs/` | What's built right now (SPEC.md is the always-on index) |
+| Truth | `specs/index.md` + `specs/` | What's built right now (specs/index.md is the always-on index) |
 | Work | `requests/<slug>/` | What's changing next (PLAN.md owns lifecycle state) |
-| Memory | `memory/` | What we learned, kept across sessions |
+| Memory | `memories/` | What we learned, kept across sessions |
 
-Optional canonical docs (`PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`) are scaffolded by kits — not every project needs them.
+Optional canonical docs (`PRINCIPLES.md`, `ARCHITECTURE.md`, `roadmaps/index.md`, `STACK.md`, `decisions/index.md`) are scaffolded by kits — not every project needs them.
 
 ## How to operate
 
 1. **Read frontmatter first**, file bodies second. `status:`, `summary:`, `version:`, `updated:`, `related:` are the navigation layer.
-2. **Load progressively.** The top-level `SPEC.md` is cheap and always relevant. Don't pre-load all of `specs/` or `requests/` — load only what the current task needs (see Context loading below).
-3. **Snapshot before overwrite** on any canonical doc — root layer, `SPEC.md`, `specs/<capability>/SPEC.md`, `config.yaml`. Naming: `<FILE>@vN.md`. The unversioned filename always points to current. Use `spectacular snapshot <file>` to do it.
+2. **Load progressively.** The top-level `specs/index.md` is cheap and always relevant. Don't pre-load all of `specs/` or `requests/` — load only what the current task needs (see Context loading below).
+3. **Snapshot before overwrite** on any canonical doc — root layer, `specs/index.md`, `specs/<capability>.md`, `config.yaml`. Naming: `<FILE>@vN.md`. The unversioned filename always points to current. Use `spectacular snapshot <file>` to do it.
 4. **Propose, don't act** on irreversibles — archives, lifecycle promotions, memory writes, bulk edits >5 files. Confirm with the human first.
 5. **Never read `archive/`** during normal operation. It's write-only from your perspective.
-6. **Write to `memory/` only on explicit confirmation** via `spectacular remember this`. Never autonomously.
+6. **Write to `memories/` only on explicit confirmation** via `spectacular remember this`. Never autonomously.
 
 ## Context loading by task
 
@@ -47,11 +45,11 @@ Load the minimum needed for the task — don't slurp the whole workspace.
 
 | Task type | Load |
 |---|---|
-| Cold onboarding | `PRD.md`, `SPEC.md`, this file |
-| Planning a new request | `PRD.md`, `SPEC.md`, `PRINCIPLES.md` (if present), `DECISIONS.md` (if present) |
+| Cold onboarding | `PRD.md`, `specs/index.md`, this file |
+| Planning a new request | `PRD.md`, `specs/index.md`, `PRINCIPLES.md` (if present), `decisions/index.md` (if present) |
 | Refining intent / PRD work | `PRD.md` + relevant skill refs |
-| Implementing a request | `STACK.md` (if present), `requests/<slug>/PLAN.md`, `TASKS.md`, `SPEC.md`, the specific `specs/<capability>/SPEC.md` files the work touches |
-| Reviewing / QA | `requests/<slug>/VERIFY.md` (if present), affected `specs/<capability>/SPEC.md`, `RISKS.md` (if present) |
+| Implementing a request | `STACK.md` (if present), `requests/<slug>/PLAN.md`, `TASKS.md`, `specs/index.md`, the specific `specs/<capability>.md` files the work touches |
+| Reviewing / QA | `requests/<slug>/VERIFY.md` (if present), affected `specs/<capability>.md`, `RISKS.md` (if present) |
 | Structural questions | `ARCHITECTURE.md` only (if present) |
 
 ## Task tracking — two layers
@@ -84,7 +82,7 @@ The skill derives a kebab-case slug, applies the verification 2-of-6 rule to dec
 
 - Don't touch `archive/` during normal operation
 - Don't overwrite canonical docs in place — snapshot first
-- Don't write to `memory/` autonomously
+- Don't write to `memories/` autonomously
 - Don't create per-request PRDs
 - Don't commit `.spectacular.local/` (it's personal + gitignored)
 
@@ -94,4 +92,4 @@ The skill derives a kebab-case slug, applies the verification 2-of-6 rule to dec
 
 - Update `requests/<slug>/SESSION.md` with current state + next action when stepping away mid-work
 - Surface blockers in the active PLAN.md `Dependencies` slot
-- If a decision was made that future sessions need to know about, propose a `DECISIONS.md` entry
+- If a decision was made that future sessions need to know about, propose a `decisions/index.md` entry

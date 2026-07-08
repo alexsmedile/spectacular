@@ -103,7 +103,7 @@ On archiving, propose any operational lesson worth keeping as a memory. Operatio
 ### confirm-before-write
 - principle: 8
 - severity: block
-- check: the user has confirmed the memory text before it is written to `.spectacular/memory/`
+- check: the user has confirmed the memory text before it is written to `.spectacular/memories/`
 
 Memory is team-visible and git-committed. Humans decide, agents propose: never write a memory the user has not seen and confirmed. Show the proposed entry, then write on confirmation.
 

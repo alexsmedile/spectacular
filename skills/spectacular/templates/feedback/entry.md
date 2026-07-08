@@ -1,6 +1,6 @@
 <!--
-  One feedback entry. Written to .spectacular/feedback/<slug>.md or
-  .spectacular/requests/<request>/feedback/<slug>.md by `spectacular feedback-loop new`.
+  One feedback entry. Written to .spectacular/feedbacks/<slug>.md or
+  .spectacular/requests/<request>/feedbacks/<slug>.md by `spectacular feedback-loop new`.
   Slug is YYYY-MM-DD-<derived-from-target>.
   See references/feedback-loop.md for the full mode spec.
 -->

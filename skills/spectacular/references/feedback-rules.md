@@ -1,9 +1,9 @@
 ---
 doc-id: feedback
 mode: index
-location: .spectacular/feedback/
-entries-dir: .spectacular/feedback/
-alt-location: .spectacular/requests/<slug>/feedback/
+location: .spectacular/feedbacks/
+entries-dir: .spectacular/feedbacks/
+alt-location: .spectacular/requests/<slug>/feedbacks/
 scope: project-wide-and-request-scoped
 template: templates/feedback/entry.md
 snapshot-on-edit: false
@@ -15,7 +15,7 @@ status: active
 
 Soft-folder database of prototyping-mode feedback entries. There is **no top-level `FEEDBACK.md` index file** — folder listing is the canonical view. Each entry is a fully self-contained markdown file.
 
-**Mode: `index`** (no regenerated index file in v1.6.0). Entry files at `entries-dir`. May also live request-scoped under `requests/<slug>/feedback/`.
+**Mode: `index`** (no regenerated index file in v1.6.0). Entry files at `entries-dir`. May also live request-scoped under `requests/<slug>/feedbacks/`.
 
 **Verbs:**
 - `grill` → run a full 5-step feedback loop interactively (pick target → craft proposal → ask user → capture → decide). The primary user-facing verb. Full spec in [[feedback-loop]].
@@ -26,7 +26,7 @@ Soft-folder database of prototyping-mode feedback entries. There is **no top-lev
 - `spectacular feedback-loop new <target>` — scaffold one entry with stub frontmatter + section headers (status `open`)
 - `spectacular feedback-loop list [--status <state>]` — list entries across both locations
 - `spectacular feedback-loop resolve <slug> --next-action <action>` — close entry, optionally auto-promote to memory
-- `spectacular feedback-loop archive <slug>` — move to `.spectacular/archive/feedback/<year>/`
+- `spectacular feedback-loop archive <slug>` — move to `.spectacular/archive/feedbacks/<year>/`
 
 **Aliases (hidden):** `iterate`, `experiment`, `test`, `probe`, `try` — accepted by CLI dispatch, route to `cmd_feedback_loop`, not documented in `--help`.
 

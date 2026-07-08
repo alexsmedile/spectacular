@@ -27,12 +27,12 @@ Created on every init regardless of kit or flags:
 |---|---|
 | `.spectacular/PRD.md` | Product intent — the project's anchor doc |
 | `.spectacular/config.yaml` | Machine-readable config (project name, naming rules, kit identity) |
-| `.spectacular/SPEC.md` | System spec index — what's built, present tense |
+| `.spectacular/specs/index.md` | System spec index — what's built, present tense |
 | `.spectacular/<agents-file>` | Onboarding doc for agents; defaults to `AGENTS.md`, configurable via `--agents-file` |
 | `.spectacular/requests/` | Request folders live here |
 | `.spectacular/specs/` | Per-capability specs (optional; only when a capability outgrows a one-liner in SPEC.md) |
 
-**Rationale:** PRD is the anchor every other doc references. SPEC.md is the always-on index of what's built. config.yaml is how the skill discovers project state. AGENTS.md is the cold-start onboarding doc. requests/ and specs/ are the working surfaces. Without these six, the workspace is unusable.
+**Rationale:** PRD is the anchor every other doc references. specs/index.md is the always-on index of what's built. config.yaml is how the skill discovers project state. AGENTS.md is the cold-start onboarding doc. requests/ and specs/ are the working surfaces. Without these six, the workspace is unusable.
 
 Everything else (`PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`) is opt-in via kit or `--with` flag. Empty stubs of unused docs create *stub fatigue* — the skill still reads them during briefings, diluting signal.
 

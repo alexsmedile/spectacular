@@ -42,7 +42,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular remember this` | → `references/memory.md` (legacy free-text capture) |
 | `spectacular remember "<text>"` | → CLI verb; see [[memory-rules]] for entry shape |
 | `spectacular decide "<decision>" [--context\|--consequences]` | → CLI verb; see [[decisions-rules]] |
-| "record a decision" / "record an ADR" / "architecture decision" | → `spectacular decide`; ADRs live in DECISIONS.md, see [[decisions-rules]] (store-worthy? table) |
+| "record a decision" / "record an ADR" / "architecture decision" | → `spectacular decide`; ADRs live in decisions/index.md, see [[decisions-rules]] (store-worthy? table) |
 | `spectacular session start\|end` | → CLI verb; see [[sessions-rules]] |
 | `spectacular idea new <slug>` | → CLI verb; see [[idea-rules]] for entry shape |
 | `spectacular idea list` | → CLI verb |
@@ -107,7 +107,7 @@ Each doc is described by a rules file at `references/<doc-id>-rules.md`. The rul
 | `spectacular <doc> refine` | → `references/refine.md` (with `<doc-id>-rules.md` context) |
 | `spectacular <doc> review` | → `references/review.md` (with `<doc-id>-rules.md` context) |
 
-**Registered docs:** the live registry is the set of `references/<doc-id>-rules.md` files — each declares one doc's dispatch + behavior. The authoritative catalog (every doc-id, its mode, and location) is `references/doc-index.md`; the per-capability detail for the engine itself is in `.spectacular/specs/doc-engine/SPEC.md`. Don't maintain a hardcoded id list here — it drifts every time a doc ships.
+**Registered docs:** the live registry is the set of `references/<doc-id>-rules.md` files — each declares one doc's dispatch + behavior. The authoritative catalog (every doc-id, its mode, and location) is `references/doc-index.md`; the per-capability detail for the engine itself is in `.spectacular/specs/doc-engine.md`. Don't maintain a hardcoded id list here — it drifts every time a doc ships.
 
 `spectacular prd [grill|refine|review]` is just this handler with `<doc> = prd` (bare `prd` → grill if empty, else review).
 
@@ -194,11 +194,11 @@ The skill never auto-scaffolds VERIFY.md. It is created only when:
 Before any action, read frontmatter from:
 1. `.spectacular/config.yaml` — project config, naming rules
 2. `.spectacular/AGENTS.md` — **authoritative** context-loading rules per task type; follow its table over guessing
-3. Root canonical docs — `PRD.md` (intent), `PRINCIPLES.md` (rules), `ARCHITECTURE.md` (structure), `ROADMAP.md` (time), `STACK.md` (host tech), `DECISIONS.md` (ADR log)
-4. `SPEC.md` (top-level system spec index) + any `specs/<capability>/SPEC.md` (read frontmatter only unless task needs depth)
+3. Root canonical docs — `PRD.md` (intent), `PRINCIPLES.md` (rules), `ARCHITECTURE.md` (structure), `STACK.md` (host tech), `roadmaps/index.md` (time)
+4. `specs/index.md` (top-level system spec index) + any `specs/<capability>.md` (read frontmatter only unless task needs depth)
 5. `requests/*/PLAN.md` — active work (read all frontmatter for status briefing)
 
-Load **only** what the task needs (principle 6 — progressive disclosure). For planning, PRD + PRINCIPLES + DECISIONS. For implementation, STACK + PLAN + TASKS + SPEC + relevant `specs/<capability>/`. For review, VERIFY + RISKS + capability specs. AGENTS.md owns the full table.
+Load **only** what the task needs (principle 6 — progressive disclosure). For planning, PRD + PRINCIPLES + decisions/index.md. For implementation, STACK + PLAN + TASKS + spec index + relevant `specs/<capability>.md`. For review, VERIFY + RISKS + capability specs. AGENTS.md owns the full table.
 
 Never read `archive/` during normal operation.
 
@@ -208,9 +208,9 @@ Never read `archive/` during normal operation.
 
 - **Never overwrite canonical documents in place** — snapshot first (`PRD@v1.0.md`). See `references/versioning.md`.
 - **Lifecycle state** lives in `PLAN.md` frontmatter (`status: planned | active | review | verified`). TASKS.md mirrors it for skim tooling; PLAN is authoritative — `doctor` repairs drift.
-- **Capability state** lives in `specs/<capability>/SPEC.md` frontmatter (`status: stable | draft | deprecated`); the top-level `.spectacular/SPEC.md` is the always-on index.
+- **Capability state** lives in `specs/<capability>.md` frontmatter (`status: stable | draft | deprecated`); the top-level `.spectacular/specs/index.md` is the always-on index.
 - **Slugs** are kebab-case, skill-derived, user-overridable, uniqueness enforced.
-- **Memory** (`spectacular remember this`) writes to `.spectacular/memory/` — git-committed, team-visible. Never to `.claude/` memory.
+- **Memory** (`spectacular remember this`) writes to `.spectacular/memories/` — git-committed, team-visible. Never to `.claude/` memory.
 - Be proactive: surface stale state, propose lifecycle transitions, flag blocked requests.
 - **Know when to write to a collection, not just how.** Each soft-DB collection has a named prompt-moment — see the "When to act" trigger table in [[soft-db-index]]. Reversible/cheap writes (audit note, session, idea) happen on their natural trigger; permanent/team-visible writes (memory, decisions, archive) are **proposed, human confirms, then written** — never autonomous. Archive is the convergence point (spec-sync + memory + fix/audit capture); see [[archive]].
 

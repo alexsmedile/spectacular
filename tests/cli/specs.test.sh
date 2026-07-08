@@ -1,15 +1,5 @@
 #!/usr/bin/env bash
-# tests/cli/specs.test.sh — covers v0.5.0 spec-rename: SPEC.md + specs/ + legacy migration.
-#
-# Scenarios:
-#   1. Fresh init scaffolds SPEC.md + specs/ (with .gitkeep), no legacy current/
-#   2. Init with --kit coding still scaffolds SPEC.md alongside STACK + ARCHITECTURE
-#   3. Doctor `specs` area passes on a clean v0.5.0 workspace
-#   4. Doctor detects legacy current/ (no specs/) → warning, mechanical fix available
-#   5. `doctor specs --fix` migrates current/ → specs/, preserving contents
-#   6. Conflict: both current/ AND specs/ present → error, no auto-fix
-#   7. Per-capability specs/<cap>/SPEC.md is recognized + validated
-#   8. Repeat init is non-destructive (SPEC.md not overwritten)
+# tests/cli/specs.test.sh — covers spec-rename + specs/index.md + flat specs + legacy migration.
 
 set -u
 
@@ -59,7 +49,7 @@ spectacular:
 EOF
 }
 
-# Build a "v0.4.x legacy" workspace (current/ instead of specs/+SPEC.md)
+# Build a "v0.4.x legacy" workspace (current/ instead of specs/+specs/index.md)
 seed_legacy() {
   local dir="$1"
   seed_workspace "$dir"
@@ -97,29 +87,29 @@ run_cli() {
 # ── scenarios ─────────────────────────────────────────────────────────────────
 
 scenario_1_fresh_init_scaffolds_spec() {
-  echo "Scenario 1: fresh init scaffolds SPEC.md + specs/ (no current/)"
+  echo "Scenario 1: fresh init scaffolds specs/index.md + specs/ (no current/)"
   local dir="/tmp/spectacular-specs-test-1"
   seed_workspace "$dir"
 
   run_cli "$dir" init >/dev/null
 
-  assert_file_exists "$dir/.spectacular/SPEC.md"
+  assert_file_exists "$dir/.spectacular/specs/index.md"
   assert_dir_exists "$dir/.spectacular/specs"
   assert_file_exists "$dir/.spectacular/specs/.gitkeep"
   assert_dir_absent "$dir/.spectacular/current"
-  assert_file_contains "$dir/.spectacular/SPEC.md" "System Spec"
+  assert_file_contains "$dir/.spectacular/specs/index.md" "System Spec"
 
   rm -rf "$dir"
 }
 
 scenario_2_kit_coding_still_has_spec() {
-  echo "Scenario 2: --kit coding scaffolds SPEC.md alongside STACK + ARCHITECTURE"
+  echo "Scenario 2: --kit coding scaffolds specs/index.md alongside STACK + ARCHITECTURE"
   local dir="/tmp/spectacular-specs-test-2"
   seed_workspace "$dir"
 
   run_cli "$dir" init --kit coding >/dev/null
 
-  assert_file_exists "$dir/.spectacular/SPEC.md"
+  assert_file_exists "$dir/.spectacular/specs/index.md"
   assert_file_exists "$dir/.spectacular/STACK.md"
   assert_file_exists "$dir/.spectacular/ARCHITECTURE.md"
   assert_dir_exists "$dir/.spectacular/specs"
@@ -128,7 +118,7 @@ scenario_2_kit_coding_still_has_spec() {
 }
 
 scenario_3_doctor_specs_clean() {
-  echo "Scenario 3: doctor specs passes on v0.5.0 workspace"
+  echo "Scenario 3: doctor specs passes on clean workspace"
   local dir="/tmp/spectacular-specs-test-3"
   seed_workspace "$dir"
   run_cli "$dir" init >/dev/null
@@ -140,8 +130,8 @@ scenario_3_doctor_specs_clean() {
   assert_exit "$exit_code" 0 "doctor specs on clean workspace"
   if echo "$output" | grep -q "specs/ directory present"; then pass_count=$((pass_count + 1))
   else echo "    ✗ expected pass message"; fail_count=$((fail_count + 1)); fi
-  if echo "$output" | grep -q "SPEC.md present"; then pass_count=$((pass_count + 1))
-  else echo "    ✗ expected SPEC.md pass"; fail_count=$((fail_count + 1)); fi
+  if echo "$output" | grep -q "specs/index.md present"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected specs/index.md pass"; fail_count=$((fail_count + 1)); fi
 
   rm -rf "$dir"
 }
@@ -207,8 +197,8 @@ scenario_6_conflict_both_dirs_no_autofix() {
   rm -rf "$dir"
 }
 
-scenario_7_per_capability_spec_validated() {
-  echo "Scenario 7: per-capability specs/<cap>/SPEC.md is recognized + validated"
+scenario_7_nested_capability_warns() {
+  echo "Scenario 7: nested capability directories trigger warning in doctor"
   local dir="/tmp/spectacular-specs-test-7"
   seed_workspace "$dir"
   run_cli "$dir" init >/dev/null
@@ -224,25 +214,19 @@ EOF
 
   local output
   output=$(run_cli "$dir" doctor specs)
-  if echo "$output" | grep -q "billing/SPEC.md.*capability spec present"; then pass_count=$((pass_count + 1))
-  else echo "    ✗ expected per-capability pass"; fail_count=$((fail_count + 1)); fi
-
-  # Capability without SPEC.md → warning
-  mkdir -p "$dir/.spectacular/specs/auth"
-  output=$(run_cli "$dir" doctor specs)
-  if echo "$output" | grep -q "auth.*missing SPEC.md"; then pass_count=$((pass_count + 1))
-  else echo "    ✗ expected missing-SPEC warning"; fail_count=$((fail_count + 1)); fi
+  if echo "$output" | grep -q "nested directory found in specs/"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected nested directory warning"; fail_count=$((fail_count + 1)); fi
 
   rm -rf "$dir"
 }
 
-scenario_9_flat_contract_docs_valid() {
-  echo "Scenario 9: flat contract docs (top-level .md in specs/) are valid alongside subfolders"
+scenario_9_flat_capability_specs_valid() {
+  echo "Scenario 9: flat capability specs (top-level .md in specs/) are valid"
   local dir="/tmp/spectacular-specs-test-9"
   seed_workspace "$dir"
   run_cli "$dir" init >/dev/null
 
-  # Octopus-shape: flat SCHEMA-*.md files
+  # flat SCHEMA-*.md files
   cat > "$dir/.spectacular/specs/SCHEMA-TASK.md" <<'EOF'
 ---
 name: schema-task
@@ -260,62 +244,51 @@ EOF
   cat > "$dir/.spectacular/specs/BROKEN.md" <<'EOF'
 # no frontmatter
 EOF
-  # Mixed: also add a capability subfolder
-  mkdir -p "$dir/.spectacular/specs/task-management"
-  cat > "$dir/.spectacular/specs/task-management/SPEC.md" <<'EOF'
----
-name: task-management
----
-# Task management
-EOF
 
   local output
   output=$(run_cli "$dir" doctor specs)
 
-  if echo "$output" | grep -q "SCHEMA-TASK.md.*contract doc present"; then pass_count=$((pass_count + 1))
-  else echo "    ✗ expected SCHEMA-TASK.md to be a passing contract doc"; fail_count=$((fail_count + 1)); fi
+  if echo "$output" | grep -q "SCHEMA-TASK.md.*capability spec present"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected SCHEMA-TASK.md to be a passing capability spec"; fail_count=$((fail_count + 1)); fi
 
-  if echo "$output" | grep -q "AXIS-MODEL.md.*contract doc present"; then pass_count=$((pass_count + 1))
-  else echo "    ✗ expected AXIS-MODEL.md to be a passing contract doc"; fail_count=$((fail_count + 1)); fi
+  if echo "$output" | grep -q "AXIS-MODEL.md.*capability spec present"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected AXIS-MODEL.md to be a passing capability spec"; fail_count=$((fail_count + 1)); fi
 
   if echo "$output" | grep -q "BROKEN.md.*missing frontmatter"; then pass_count=$((pass_count + 1))
   else echo "    ✗ expected BROKEN.md to warn about frontmatter"; fail_count=$((fail_count + 1)); fi
-
-  if echo "$output" | grep -q "task-management/SPEC.md.*capability spec present"; then pass_count=$((pass_count + 1))
-  else echo "    ✗ expected mixed-mode capability spec to validate"; fail_count=$((fail_count + 1)); fi
 
   rm -rf "$dir"
 }
 
 scenario_8_repeat_init_nondestructive() {
-  echo "Scenario 8: repeat init is non-destructive (SPEC.md not overwritten)"
+  echo "Scenario 8: repeat init is non-destructive (specs/index.md not overwritten)"
   local dir="/tmp/spectacular-specs-test-8"
   seed_workspace "$dir"
   run_cli "$dir" init >/dev/null
 
-  echo "USER CONTENT" >> "$dir/.spectacular/SPEC.md"
-  local sentinel="$(md5sum "$dir/.spectacular/SPEC.md" 2>/dev/null | cut -d' ' -f1)"
-  [[ -z "$sentinel" ]] && sentinel="$(md5 -q "$dir/.spectacular/SPEC.md" 2>/dev/null)"
+  echo "USER CONTENT" >> "$dir/.spectacular/specs/index.md"
+  local sentinel="$(md5sum "$dir/.spectacular/specs/index.md" 2>/dev/null | cut -d' ' -f1)"
+  [[ -z "$sentinel" ]] && sentinel="$(md5 -q "$dir/.spectacular/specs/index.md" 2>/dev/null)"
 
   run_cli "$dir" init >/dev/null
 
-  local after="$(md5sum "$dir/.spectacular/SPEC.md" 2>/dev/null | cut -d' ' -f1)"
-  [[ -z "$after" ]] && after="$(md5 -q "$dir/.spectacular/SPEC.md" 2>/dev/null)"
+  local after="$(md5sum "$dir/.spectacular/specs/index.md" 2>/dev/null | cut -d' ' -f1)"
+  [[ -z "$after" ]] && after="$(md5 -q "$dir/.spectacular/specs/index.md" 2>/dev/null)"
 
   if [[ "$sentinel" == "$after" ]]; then pass_count=$((pass_count + 1))
-  else echo "    ✗ SPEC.md was overwritten on re-init"; fail_count=$((fail_count + 1)); fi
+  else echo "    ✗ specs/index.md was overwritten on re-init"; fail_count=$((fail_count + 1)); fi
 
   rm -rf "$dir"
 }
 
 scenario_10_spec_drift_vs_archive() {
-  echo "Scenario 10: SPEC.md drift flagged when an archived request is newer"
+  echo "Scenario 10: specs/index.md drift flagged when an archived request is newer"
   local dir="/tmp/spectacular-specs-test-10"
   seed_workspace "$dir"
   run_cli "$dir" init >/dev/null
 
-  # Pin SPEC.md updated to an old date
-  local spec="$dir/.spectacular/SPEC.md"
+  # Pin specs/index.md updated to an old date
+  local spec="$dir/.spectacular/specs/index.md"
   perl -0pi -e 's/^updated:.*$/updated: 2026-01-01/m' "$spec"
 
   # Archive a request with a newer updated date
@@ -324,7 +297,7 @@ scenario_10_spec_drift_vs_archive() {
 ---
 status: verified
 updated: 2026-03-01
-summary: "shipped later than SPEC.md was touched"
+summary: "shipped later than specs/index.md was touched"
 ---
 # Late Feature
 EOF
@@ -333,11 +306,11 @@ EOF
   if echo "$out" | grep -q "may be stale.*late-feature"; then pass_count=$((pass_count + 1))
   else echo "    ✗ drift not flagged"; echo "$out" | grep -i spec; fail_count=$((fail_count + 1)); fi
 
-  # Now bump SPEC.md newer than the archive → no drift warning
+  # Now bump specs/index.md newer than the archive → no drift warning
   perl -0pi -e 's/^updated:.*$/updated: 2026-04-01/m' "$spec"
   out="$(run_cli "$dir" doctor specs)"
   if echo "$out" | grep -q "may be stale"; then
-    echo "    ✗ drift still flagged after SPEC.md bumped newer"; fail_count=$((fail_count + 1))
+    echo "    ✗ drift still flagged after specs/index.md bumped newer"; fail_count=$((fail_count + 1))
   else pass_count=$((pass_count + 1)); fi
 
   rm -rf "$dir"
@@ -351,9 +324,9 @@ scenario_3_doctor_specs_clean
 scenario_4_detects_legacy_current
 scenario_5_fix_migrates_current_to_specs
 scenario_6_conflict_both_dirs_no_autofix
-scenario_7_per_capability_spec_validated
+scenario_7_nested_capability_warns
 scenario_8_repeat_init_nondestructive
-scenario_9_flat_contract_docs_valid
+scenario_9_flat_capability_specs_valid
 scenario_10_spec_drift_vs_archive
 
 echo ""

@@ -1,7 +1,7 @@
 ---
 doc-id: decisions
 mode: index | flat
-location: .spectacular/DECISIONS.md (flat) | .spectacular/DECISIONS.md + .spectacular/decisions/D<N>.md (index)
+location: .spectacular/decisions/index.md (flat) | .spectacular/decisions/index.md + .spectacular/decisions/D<N>-<slug>.md (index)
 scope: project-wide
 template: templates/decisions/entry.md
 snapshot-on-edit: false
@@ -83,10 +83,10 @@ When `DECISIONS.md` grows past ~50 entries the flat file becomes a context-tax. 
 
 ```
 .spectacular/
-├── DECISIONS.md          ← index only: one line per decision
 └── decisions/
-    ├── D1.md
-    ├── D2.md
+    ├── index.md          ← index only: one line per decision
+    ├── D1-<slug>.md
+    ├── D2-<slug>.md
     └── ...
 ```
 
@@ -97,7 +97,7 @@ When `DECISIONS.md` grows past ~50 entries the flat file becomes a context-tax. 
 
 Three parts separated by ` — `: D-number (bold), short title, one-sentence rationale. No trailing period.
 
-**Per-entry file format** (`decisions/D42.md`):
+**Per-entry file format** (`decisions/D42-<slug>.md`):
 ```markdown
 # D42 — Reject field-mode storage for v1
 
@@ -109,8 +109,8 @@ Three parts separated by ` — `: D-number (bold), short title, one-sentence rat
 
 Heading format: `# D<N> — Title` (same title as the index line's short title). Sections follow the ADR schema (Context / Decision / Consequences). Session link is optional.
 
-**Agent read pattern:** always load `DECISIONS.md` (index, cheap — ~1 line per decision). Load `decisions/D<N>.md` on demand when that specific decision is directly relevant to current work. Never load all per-entry files at once.
+**Agent read pattern:** always load `DECISIONS.md` (index, cheap — ~1 line per decision). Load `decisions/D<N>-<slug>.md` on demand when that specific decision is directly relevant to current work. Never load all per-entry files at once.
 
-**Migration:** `spectacular decisions migrate` reads flat `DECISIONS.md`, splits each `## YYYY-MM-DD —` block into `decisions/D<N>.md`, then rewrites `DECISIONS.md` as the one-liner index. `--dry-run` previews without writing. Idempotent if `decisions/` already exists.
+**Migration:** `spectacular decisions migrate` reads flat `DECISIONS.md`, splits each `## YYYY-MM-DD —` block into `decisions/D<N>-<slug>.md`, then rewrites `DECISIONS.md` as the one-liner index. `--dry-run` previews without writing. Idempotent if `decisions/` already exists.
 
 **Detected by:** presence of `decisions/` subfolder next to `DECISIONS.md`. Absence = flat mode (backwards compat).

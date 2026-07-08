@@ -103,7 +103,7 @@ The `--force` flag is intentionally awkward — backward moves should be rare an
 
 ## Capability spec states
 
-`specs/<capability>/SPEC.md` frontmatter tracks its own state: `status: stable | draft | deprecated`
+`specs/<capability>.md` frontmatter tracks its own state: `status: stable | draft | deprecated`
 
 - `draft` — capability spec exists but is being developed (often tied to an active request)
 - `stable` — current canonical truth, no active changes

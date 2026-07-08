@@ -153,7 +153,7 @@ spectacular decisions
   Why: Zero install dependencies, works on macOS/Linux out of the box
   Tradeoffs: No Windows support without WSL; harder to test than TypeScript
 
-  Appending entry to .spectacular/DECISIONS.md ... ✓
+  Appending entry to .spectacular/decisions/index.md ... ✓
 ```
 
 ## What refine does NOT do

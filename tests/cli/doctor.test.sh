@@ -69,7 +69,7 @@ assert_file_contains() {
 seed_clean() {
   local dir="$1"
   rm -rf "$dir"
-  mkdir -p "$dir/.spectacular/requests" "$dir/.spectacular/specs" "$dir/.agents/skills"
+  mkdir -p "$dir/.spectacular/requests" "$dir/.spectacular/specs" "$dir/.spectacular/decisions" "$dir/.spectacular/memories" "$dir/.spectacular/sessions" "$dir/.agents/skills"
   touch "$dir/.spectacular/specs/.gitkeep"
   ln -s "$LOCAL_SKILL" "$dir/.agents/skills/spectacular"
   cat > "$dir/.spectacular/PRD.md" <<EOF
@@ -81,19 +81,49 @@ kit: blank
 ---
 # Test
 EOF
-  cat > "$dir/.spectacular/SPEC.md" <<EOF
+  cat > "$dir/.spectacular/specs/index.md" <<EOF
 ---
 version: 1.0
 updated: 2026-05-22
 summary: "Index of what this system actually is right now"
+related:
+  - ../PRD.md
 ---
 # Test — System Spec
+EOF
+  cat > "$dir/.spectacular/decisions/index.md" <<EOF
+---
+type: decisions
+doc: decisions
+updated: 2026-05-22
+---
+# Decisions
+EOF
+  cat > "$dir/.spectacular/memories/index.md" <<EOF
+---
+type: index
+doc: memory
+version: 1.0
+updated: 2026-05-22
+summary: "Operational memory index"
+---
+# Memory
+EOF
+  cat > "$dir/.spectacular/sessions/index.md" <<EOF
+---
+type: index
+doc: sessions
+version: 1.0
+updated: 2026-05-22
+summary: "Sessions index"
+---
+# Sessions
 EOF
   cat > "$dir/.spectacular/config.yaml" <<EOF
 project:
   name: test
   summary: "x"
-workspace_schema: "0.6"
+workspace_schema: "2.0"
 agents:
   file: AGENTS.md
 EOF
@@ -139,6 +169,12 @@ scenario_1_clean_workspace_exits_zero() {
   local out
   out=$(cd "$dir" && "$CLI" doctor 2>&1)
   local code=$?
+
+  if [[ "$code" -ne 0 ]]; then
+    echo "DEBUG: CLI exited with $code"
+    echo "DEBUG OUTPUT:"
+    echo "$out"
+  fi
 
   assert_exit_code "0" "$code" "clean workspace exits 0"
   assert_output_contains "$out" "0 error(s)" "no errors reported"
@@ -546,7 +582,8 @@ scenario_12_v06_scaffold_suggestion() {
     "info line does not list files that exist"
 
   # All three present → silent
-  echo "---" > "$dir/.spectacular/ROADMAP.md"
+  mkdir -p "$dir/.spectacular/roadmaps"
+  echo "---" > "$dir/.spectacular/roadmaps/index.md"
   local out_none
   out_none=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
   assert_output_lacks "$out_none" "v0.6+ conventional files missing" \
@@ -624,21 +661,21 @@ scenario_18_debug_spine_validation() {
   echo "Scenario 18: debug/ trace spines — enum + invariant validation (v1.26.0+)"
   local dir="/tmp/doctor-test-18"
   seed_clean "$dir"
-  mkdir -p "$dir/.spectacular/debug/clean-job" \
-           "$dir/.spectacular/debug/bad-status" \
-           "$dir/.spectacular/debug/bad-invariant"
+  mkdir -p "$dir/.spectacular/debugs/clean-job" \
+           "$dir/.spectacular/debugs/bad-status" \
+           "$dir/.spectacular/debugs/bad-invariant"
 
   # clean spine → passes
   echo '{"slug":"clean-job","status":"investigating","symptom_class":"runtime_error"}' \
-    > "$dir/.spectacular/debug/clean-job/job.json"
+    > "$dir/.spectacular/debugs/clean-job/job.json"
   # off-enum status (a 'reason' value leaked into the status slot — the real orchestrator bug)
   echo '{"slug":"bad-status","status":"needs-more-context"}' \
-    > "$dir/.spectacular/debug/bad-status/job.json"
+    > "$dir/.spectacular/debugs/bad-status/job.json"
   # invariant: wont-fix must log no fix
   echo '{"slug":"bad-invariant","status":"resolved"}' \
-    > "$dir/.spectacular/debug/bad-invariant/job.json"
+    > "$dir/.spectacular/debugs/bad-invariant/job.json"
   echo '{"disposition":"wont-fix","logged_fixes":["F9"]}' \
-    > "$dir/.spectacular/debug/bad-invariant/outcome.json"
+    > "$dir/.spectacular/debugs/bad-invariant/outcome.json"
 
   local out code
   out=$(cd "$dir" && "$CLI" doctor debug 2>&1) && code=0 || code=$?
@@ -648,7 +685,7 @@ scenario_18_debug_spine_validation() {
   assert_output_contains "$out" "logged_fixes is non-empty" "wont-fix invariant flagged"
 
   # clean-only workspace passes with exit 0
-  rm -rf "$dir/.spectacular/debug/bad-status" "$dir/.spectacular/debug/bad-invariant"
+  rm -rf "$dir/.spectacular/debugs/bad-status" "$dir/.spectacular/debugs/bad-invariant"
   local out_ok code_ok
   out_ok=$(cd "$dir" && "$CLI" doctor debug 2>&1) && code_ok=0 || code_ok=$?
   assert_exit_code "0" "$code_ok" "clean debug spine exits 0"
@@ -829,7 +866,7 @@ scenario_21_schema_behind_warning() {
   local dir="/tmp/doctor-test-21"
   seed_clean "$dir"
   # Downgrade the declared schema to an older version.
-  sed -i.bak 's/workspace_schema: "0.6"/workspace_schema: "0.5"/' "$dir/.spectacular/config.yaml"
+  sed -i.bak 's/workspace_schema: "2.0"/workspace_schema: "0.6"/' "$dir/.spectacular/config.yaml"
 
   local out code
   out=$(cd "$dir" && "$CLI" doctor workspace 2>&1)

@@ -28,7 +28,7 @@ A `feedback-loop` session is a structured 5-step interaction. The skill is the o
 | **Mode** | Exploratory, open-ended | Confirmatory, closed-ended | Confirmatory, closed-ended |
 | **Output** | Insight + decision (qualitative) | Pass/fail assertions | Gate-check findings |
 | **Terminates?** | Never — same target can be probed again later | Yes — at `verified` | Yes — at next refine |
-| **Lives where?** | `.spectacular/feedback/` or `.spectacular/requests/<slug>/feedback/` | `.spectacular/requests/<slug>/VERIFY.md` | In-place against the doc |
+| **Lives where?** | `.spectacular/feedbacks/` or `.spectacular/requests/<slug>/feedbacks/` | `.spectacular/requests/<slug>/VERIFY.md` | In-place against the doc |
 
 `feedback-loop` can pass while `verify` fails (we built the wrong thing correctly). `verify` can pass while `feedback-loop` reveals trouble (we built the right thing but it doesn't work in practice). They probe orthogonal axes.
 
@@ -36,8 +36,8 @@ A `feedback-loop` session is a structured 5-step interaction. The skill is the o
 
 Feedback files live at one of two locations:
 
-- **Request-scoped (common case):** `.spectacular/requests/<slug>/feedback/<YYYY-MM-DD>-<short-slug>.md`
-- **System-level:** `.spectacular/feedback/<YYYY-MM-DD>-<short-slug>.md`
+- **Request-scoped (common case):** `.spectacular/requests/<slug>/feedbacks/<YYYY-MM-DD>-<short-slug>.md`
+- **System-level:** `.spectacular/feedbacks/<YYYY-MM-DD>-<short-slug>.md`
 
 Frontmatter:
 
@@ -51,7 +51,7 @@ opened: YYYY-MM-DD
 resolved: YYYY-MM-DD | null
 proposal_summary: "<one-line summary of what was proposed to the user>"
 next_action: ship-as-is | new-request:<slug> | park | memory:<entry> | tbd
-request: <slug> | null              # set when feedback lives under requests/<slug>/feedback/
+request: <slug> | null              # set when feedback lives under requests/<slug>/feedbacks/
 spawned_request: <slug> | null      # set when next_action triggers a new request
 promoted_to: memory/<slug>.md | null # set when feedback resolves to a durable preference
 related: []
@@ -96,7 +96,7 @@ Body sections (all required):
 - `spectacular feedback-loop new <target>` — scaffold a new entry (stub frontmatter + section headers, status `open`)
 - `spectacular feedback-loop list [--status open|resolved|parked]` — list entries
 - `spectacular feedback-loop resolve <slug> --next-action <action>` — close an entry with a decision; auto-promotes to memory if action signals durable preference
-- `spectacular feedback-loop archive <slug>` — move to `.spectacular/archive/feedback/<year>/`
+- `spectacular feedback-loop archive <slug>` — move to `.spectacular/archive/feedbacks/<year>/`
 
 **Hidden aliases (route to `feedback-loop`):** `iterate`, `experiment`, `test`, `probe`, `try`. These work if typed but do not appear in `--help` output. Only `feedback-loop` is documented as the official mode name.
 
@@ -118,7 +118,7 @@ When a feedback loop resolves with a **durable preference signal** — phrases l
 
 1. Skill explicitly confirms the promotion in its closing turn: "This sounds like a durable preference — I'll write it to memory as well. OK?"
 2. On confirm, skill calls `spectacular remember "<distilled preference>" --tag feedback,<scope>`.
-3. Feedback file's frontmatter gets `promoted_to: memory/<slug>.md`.
+3. Feedback file's frontmatter gets `promoted_to: memories/<slug>.md`.
 
 No silent promotions. If the user declines, the feedback file stays as the only record.
 
@@ -128,7 +128,7 @@ Single-loop insights → feedback file only. Multi-loop convergent insights (sam
 
 `spectacular doctor feedback` (judgment-only, no `--fix`):
 
-- Scan `.spectacular/feedback/*.md` and `.spectacular/requests/*/feedback/*.md`
+- Scan `.spectacular/feedbacks/*.md` and `.spectacular/requests/*/feedbacks/*.md`
 - For each entry with `status: open`:
   - If `opened` is more than 30 days ago → `warning`: "open feedback entry stale (opened YYYY-MM-DD)"
   - Suggested action: "resolve with `spectacular feedback-loop resolve <slug>` or mark `parked`"
@@ -143,15 +143,15 @@ User just ticked M2 in `.spectacular/requests/grill-each-rewrite/TASKS.md`. Skil
 
 > M2 done — want to feedback-loop the grill-each rewrite before moving on?
 
-User accepts. Skill picks target ("grill-each rewrite UX on long PRDs"), drafts proposal (run rewrite on the live PRD + show a before/after slot comparison), asks one question via AskUserQuestion with previews. Captures response to `.spectacular/requests/grill-each-rewrite/feedback/2026-05-25-m2-grill-each-ux.md`. Decision: `ship-as-is`. PLAN.md's frontmatter gets `feedback: [feedback/2026-05-25-m2-grill-each-ux.md]`.
+User accepts. Skill picks target ("grill-each rewrite UX on long PRDs"), drafts proposal (run rewrite on the live PRD + show a before/after slot comparison), asks one question via AskUserQuestion with previews. Captures response to `.spectacular/requests/grill-each-rewrite/feedbacks/2026-05-25-m2-grill-each-ux.md`. Decision: `ship-as-is`. PLAN.md's frontmatter gets `feedback: [feedbacks/2026-05-25-m2-grill-each-ux.md]`.
 
 ### Example 2 — system-level feedback spawning a new request
 
-During the same loop, user reveals "actually the bigger issue is that grill-loop never narrows down — it keeps re-asking the same slots". Skill captures this as a *separate* feedback entry at `.spectacular/feedback/2026-05-25-grill-loop-doesnt-narrow.md` (system-level, no request scope), decision `new-request:grill-loop-narrowing`. New request scaffolded; its PLAN.md frontmatter gets `spawned_by_feedback: ../../feedback/2026-05-25-grill-loop-doesnt-narrow.md`.
+During the same loop, user reveals "actually the bigger issue is that grill-loop never narrows down — it keeps re-asking the same slots". Skill captures this as a *separate* feedback entry at `.spectacular/feedbacks/2026-05-25-grill-loop-doesnt-narrow.md` (system-level, no request scope), decision `new-request:grill-loop-narrowing`. New request scaffolded; its PLAN.md frontmatter gets `spawned_by_feedback: ../../feedbacks/2026-05-25-grill-loop-doesnt-narrow.md`.
 
 ### Example 3 — auto-promoted to memory
 
-User during loop says "I always want grill-each to skip empty optional slots without asking." Skill confirms: "Should I write this as a durable preference?" → user accepts. Skill runs `spectacular remember "grill-each should skip empty optional slots without asking" --tag feedback,grill`. Feedback file gets `promoted_to: memory/grill-each-skip-empty-optional-slots.md`. Both files now cross-reference.
+User during loop says "I always want grill-each to skip empty optional slots without asking." Skill confirms: "Should I write this as a durable preference?" → user accepts. Skill runs `spectacular remember "grill-each should skip empty optional slots without asking" --tag feedback,grill`. Feedback file gets `promoted_to: memories/grill-each-skip-empty-optional-slots.md`. Both files now cross-reference.
 
 ## Related references
 

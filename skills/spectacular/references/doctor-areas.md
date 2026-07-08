@@ -16,7 +16,7 @@ Per-area check tables. Load when explaining a specific finding, implementing a n
 | skills.lock present | ⚠️ if missing | `.spectacular/skills.lock` |
 | skills.lock consistent | ⚠️ if drift | `ref:` matches installed version (best-effort) |
 | SKILL.md parseable | ❌ if malformed | Top of install path; frontmatter loads |
-| description length | ❌ if >1024 · ⚠️ if >1000 | `description` frontmatter vs Codex's 1024-char cap. Codex skips any skill over the cap; Claude Code's 1536 limit masks it. Measures `description` alone (not `description`+`when_to_use`). Same logic in `scripts/check-skill-desc.sh` powers the pre-commit guard. See [[D7]]. |
+| description length | ❌ if >1024 · ⚠️ if >1000 | `description` frontmatter vs Codex's 1024-char cap. Codex skips any skill over the cap; Claude Code's 1536 limit masks it. Measures `description` alone (not `description`+`when_to_use`). Same logic in `scripts/check-skill-desc.sh` powers the pre-commit guard. See [[D7-skill-description-length-check-gates-on]]. |
 
 ## `workspace`
 
@@ -91,7 +91,7 @@ Mechanical fix: missing gitignore entries are appended by `spectacular doctor --
 
 | Check | Severity | Detects |
 |---|---|---|
-| `SPEC.md` present | ❌ if missing | `.spectacular/SPEC.md` exists |
+| `SPEC.md` present | ❌ if missing | `.spectacular/specs/index.md` exists |
 | `specs/` dir present | ❌ if missing | `.spectacular/specs/` exists (may contain `.gitkeep` only) |
 | Legacy `current/` migration | ⚠️ + mechanical | `current/` exists alongside `specs/` → propose `git mv current → specs` |
 | Conflict (both `current/` and `specs/` with content) | ❌ | Manual resolution required |
@@ -110,7 +110,7 @@ Mechanical fix: missing gitignore entries are appended by `spectacular doctor --
 
 ## `feedback` (v1.6.0+)
 
-Judgment-only area — no `--fix`. Scans `.spectacular/feedback/*.md` and `.spectacular/requests/*/feedback/*.md`.
+Judgment-only area — no `--fix`. Scans `.spectacular/feedbacks/*.md` and `.spectacular/requests/*/feedbacks/*.md`.
 
 | Check | Severity | Detects |
 |---|---|---|

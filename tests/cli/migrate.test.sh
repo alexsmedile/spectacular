@@ -94,16 +94,16 @@ scenario_2_v04_full_migration() {
 
   local out code
   out=$(cd "$dir" && "$CLI" migrate 2>&1) && code=0 || code=$?
-  assert_exit "$code" 0 "migrate v0.4 → v0.6 exits 0"
+  assert_exit "$code" 0 "migrate v0.4 → v2.0 exits 0"
   assert_output_contains "$out" "renamed .spectacular/current/ → .spectacular/specs/"
-  assert_output_contains "$out" "workspace_schema is now 0.6"
+  assert_output_contains "$out" "workspace_schema is now 2.0"
 
   # State assertions
   assert_dir_absent "$dir/.spectacular/current"
   assert_dir_exists "$dir/.spectacular/specs"
   assert_file_exists "$dir/.spectacular/specs/SCHEMA-TASK.md"
   assert_file_exists "$dir/.spectacular/specs/AXIS-MODEL.md"
-  assert_file_contains "$dir/.spectacular/config.yaml" 'workspace_schema: "0.6"'
+  assert_file_contains "$dir/.spectacular/config.yaml" 'workspace_schema: "2.0"'
 
   rm -rf "$dir"
 }
@@ -186,8 +186,10 @@ scenario_8_list_flag() {
   assert_output_contains "$out" "Registered migrations"
   assert_output_contains "$out" "v04-to-v05"
   assert_output_contains "$out" "v05-to-v06"
+  assert_output_contains "$out" "v06-to-v20"
   assert_output_contains "$out" "0.4 → 0.5"
   assert_output_contains "$out" "0.5 → 0.6"
+  assert_output_contains "$out" "0.6 → 2.0"
 }
 
 scenario_9_to_flag() {
@@ -222,6 +224,133 @@ scenario_10_downgrade_refused() {
   rm -rf "$dir"
 }
 
+seed_v06_workspace() {
+  # A v0.6-shape workspace carrying every OKF-migration input: singular dirs,
+  # root index files, nested capability specs, unprefixed decisions, and links
+  # (wikilinks + md) that Step 5 must rewrite — plus prose that must NOT change.
+  local dir="$1"
+  rm -rf "$dir"
+  mkdir -p "$dir/.spectacular"/{requests,memory,roadmap,decisions,specs/auth}
+  cat > "$dir/.spectacular/config.yaml" <<EOF
+project:
+  name: $(basename "$dir")
+workspace_schema: "0.6"
+EOF
+  echo "---" > "$dir/.spectacular/PRD.md"
+  # Root index files (get relocated into subfolders)
+  echo "# Decisions" > "$dir/.spectacular/DECISIONS.md"
+  echo "# Memory" > "$dir/.spectacular/MEMORY.md"
+  echo "# Sessions" > "$dir/.spectacular/SESSIONS.md"
+  echo "# Roadmap" > "$dir/.spectacular/roadmap.tmp"; mv "$dir/.spectacular/roadmap.tmp" "$dir/.spectacular/ROADMAP.md"
+  # SPEC.md with links that exercise every rewrite + a prose landmine +
+  # frontmatter related: targets (old root-index paths, must be rewritten).
+  cat > "$dir/.spectacular/SPEC.md" <<EOF
+---
+related:
+  - ROADMAP.md
+  - DECISIONS.md
+---
+# System Spec
+See [[specs/auth/SPEC]] and [ROADMAP.md](ROADMAP.md) and [[DECISIONS]].
+Also [mem](memory/M-note.md).
+This SPECIFICATION mentions debugging and in-memory caches (prose, keep intact).
+EOF
+  # Nested capability spec (flattened to specs/auth.md). Its related: uses
+  # ../../ (correct from specs/auth/) which must become ../ after flattening
+  # up one level to specs/auth.md.
+  cat > "$dir/.spectacular/specs/auth/SPEC.md" <<EOF
+---
+related:
+  - ../../ROADMAP.md
+---
+# Auth spec
+EOF
+  # Unprefixed decision with an H1 to slug from
+  echo "# D1 — Use-the-hyphenated-name approach" > "$dir/.spectacular/decisions/D1.md"
+  # Memory entry with a date for stable sort
+  cat > "$dir/.spectacular/memory/M-note.md" <<EOF
+---
+date: 2026-01-01
+---
+# note
+EOF
+}
+
+scenario_11_v06_okf_migration() {
+  echo "Scenario 11: v0.6 → v2.0 OKF migration transforms + rewrites links correctly"
+  local dir="/tmp/spectacular-migrate-test-11"
+  seed_v06_workspace "$dir"
+
+  local out code
+  out=$(cd "$dir" && "$CLI" migrate 2>&1) && code=0 || code=$?
+  assert_exit "$code" 0 "v0.6 → v2.0 migrate exits 0"
+  assert_file_contains "$dir/.spectacular/config.yaml" 'workspace_schema: "2.0"'
+
+  # Plural dirs + relocated index files
+  assert_dir_exists "$dir/.spectacular/memories"
+  assert_dir_exists "$dir/.spectacular/roadmaps"
+  assert_dir_absent "$dir/.spectacular/memory"
+  assert_dir_absent "$dir/.spectacular/roadmap"
+  assert_file_exists "$dir/.spectacular/decisions/index.md"
+  assert_file_exists "$dir/.spectacular/memories/index.md"
+  assert_file_exists "$dir/.spectacular/roadmaps/index.md"
+  assert_file_exists "$dir/.spectacular/specs/index.md"
+  # Flattened capability spec
+  assert_file_exists "$dir/.spectacular/specs/auth.md"
+  assert_dir_absent "$dir/.spectacular/specs/auth"
+  # Prefixed decision, hyphenated title preserved (H1 over-strip regression)
+  assert_file_exists "$dir/.spectacular/decisions/D1-use-the-hyphenated-name-approach.md"
+
+  # Link rewrite: correct targets, NO corruption
+  local spec="$dir/.spectacular/specs/index.md"
+  assert_file_contains "$spec" "[[specs/auth]]"
+  assert_file_contains "$spec" "(roadmaps/index.md)"
+  assert_file_contains "$spec" "[[decisions/index]]"
+  # Frontmatter related: targets rewritten AND depth-corrected — specs/index.md
+  # lives in specs/, so sibling collections are reached via ../ (leading spaces
+  # keep grep from parsing the YAML "- " as an option flag).
+  assert_file_contains "$spec" "  - ../roadmaps/index.md"
+  assert_file_contains "$spec" "  - ../decisions/index.md"
+  # Flattened spec: ../../ROADMAP.md (from specs/auth/) → ../roadmaps/index.md
+  # (from specs/auth.md, one level up)
+  assert_file_contains "$dir/.spectacular/specs/auth.md" "  - ../roadmaps/index.md"
+  # Prose landmines untouched
+  assert_file_contains "$spec" "This SPECIFICATION mentions debugging and in-memory caches"
+  # No corruption artifacts anywhere in the workspace
+  if grep -rqE '\(\(|specs/index\]\]|/-rules|specs/[a-z]+/specs/index|memories//' "$dir/.spectacular"; then
+    echo "    ✗ link-rewrite corruption artifact found:"
+    grep -rnE '\(\(|specs/index\]\]|/-rules|specs/[a-z]+/specs/index|memories//' "$dir/.spectacular" | head -5
+    fail_count=$((fail_count + 1))
+  else
+    pass_count=$((pass_count + 1))
+  fi
+
+  rm -rf "$dir"
+}
+
+scenario_12_v06_idempotent() {
+  echo "Scenario 12: re-running the OKF migration on a migrated tree changes nothing"
+  local dir="/tmp/spectacular-migrate-test-12"
+  seed_v06_workspace "$dir"
+
+  (cd "$dir" && "$CLI" migrate >/dev/null 2>&1)
+  local before after
+  before=$(cd "$dir" && find .spectacular -type f | sort && echo "---" && cat $(find "$dir/.spectacular" -name '*.md' | sort))
+  # Force a full re-run of the OKF apply-fn on the already-migrated tree
+  local out code
+  out=$(cd "$dir" && "$CLI" migrate --from 0.6 2>&1) && code=0 || code=$?
+  assert_exit "$code" 0 "forced re-run exits 0"
+  after=$(cd "$dir" && find .spectacular -type f | sort && echo "---" && cat $(find "$dir/.spectacular" -name '*.md' | sort))
+  if [[ "$before" == "$after" ]]; then pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ re-running OKF migration mutated the tree (not idempotent)"
+    diff <(echo "$before") <(echo "$after") | head -20
+    fail_count=$((fail_count + 1))
+  fi
+
+  rm -rf "$dir"
+}
+
 scenario_7_help_flag() {
   echo "Scenario 7: migrate --help shows usage"
   local out code
@@ -245,6 +374,8 @@ scenario_7_help_flag
 scenario_8_list_flag
 scenario_9_to_flag
 scenario_10_downgrade_refused
+scenario_11_v06_okf_migration
+scenario_12_v06_idempotent
 
 echo ""
 echo "Results: ${pass_count} passed, ${fail_count} failed"

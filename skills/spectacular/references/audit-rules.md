@@ -1,8 +1,8 @@
 ---
 doc-id: audit
 mode: index
-location: .spectacular/audit/
-entries-dir: .spectacular/audit/
+location: .spectacular/audits/
+entries-dir: .spectacular/audits/
 scope: project-wide
 template: templates/audit/entry.md
 snapshot-on-edit: false

@@ -14,7 +14,7 @@ Canonical documents are **never overwritten in place**. Always snapshot first.
 ## What counts as canonical
 
 - Root layer files: `PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `AGENTS.md`, `STACK.md`, `DECISIONS.md`
-- `SPEC.md` (always-on index) + `specs/<capability>/SPEC.md` (per-capability)
+- `specs/index.md` (always-on index) + `specs/<capability>.md` (per-capability)
 - `DESIGN.md` — snapshot-able even though Spectacular doesn't otherwise manage it (b16). Usually has no `version:` field, so it uses the counter (see below).
 - `config.yaml`
 
@@ -30,12 +30,12 @@ Snapshots live in a dedicated tree: `.spectacular/<store>/<DOC>/@v<ver>.md`.
 - Folder name **matches the canonical filename stem** (uppercase preserved): `_snapshots/PRD/`, `_snapshots/ROADMAP/`.
 - **Filename couples to the version the content IS** (v1.24.0+): a doc at `version: 1.3` snapshots to `@v1.3.md`, *then* the live doc bumps to `1.4`. The `@v` label and the `version:` field never drift apart.
 - **Version-less docs use a plain `@v<N>` counter** and are not version-bumped: `DESIGN.md` (no `version:` frontmatter) → `@v1.md`, `@v2.md`, … The live doc's frontmatter is left untouched.
-- Sub-doc snapshots **mirror their path**: `specs/cli/SPEC.md` → `_snapshots/specs/cli/SPEC/@v1.0.md`. Avoids slug collisions.
+- Sub-doc snapshots **mirror their path**: `specs/cli.md` → `_snapshots/specs/cli/SPEC/@v1.0.md`. Avoids slug collisions.
 
 Examples:
 - `PRD.md` at `1.3` → `_snapshots/PRD/@v1.3.md` (live doc → `1.4`)
 - `DESIGN.md` (no version) → `_snapshots/DESIGN/@v1.md`, then `@v2.md`, …
-- `specs/auth/SPEC.md` at `1.0` → `_snapshots/specs/auth/SPEC/@v1.0.md`
+- `specs/auth.md` at `1.0` → `_snapshots/specs/auth/SPEC/@v1.0.md`
 
 The unversioned filename at root (`PRD.md`) always points to the **latest** version.
 

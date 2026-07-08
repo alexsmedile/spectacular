@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
-# tests/cli/init.test.sh — covers the 6 VERIFY.md scenarios for smart-init.
-#
-# Each scenario runs the CLI against an isolated /tmp dir + asserts file presence.
-# Skill install step (curl + tarball fetch) is bypassed by pre-creating a stub
-# .agents/skills/spectacular/ symlink to this repo's local skill — keeps tests
-# offline + fast.
+# tests/cli/init.test.sh — smoke tests for `spectacular init` CLI.
 
 set -u
 
@@ -12,60 +7,55 @@ REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 CLI="$REPO_ROOT/cli/spectacular"
 LOCAL_SKILL="$REPO_ROOT/skills/spectacular"
 
-# ── helpers ───────────────────────────────────────────────────────────────────
 fail_count=0
 pass_count=0
 
 assert_file_exists() {
-  local path="$1"
+  local path="$1" desc="$2"
   if [[ -f "$path" ]]; then
     pass_count=$((pass_count + 1))
   else
-    echo "    ✗ expected file: $path"
+    echo "    ✗ $desc — expected file: $path"
     fail_count=$((fail_count + 1))
   fi
 }
 
 assert_file_absent() {
-  local path="$1"
+  local path="$1" desc="$2"
   if [[ ! -e "$path" ]]; then
     pass_count=$((pass_count + 1))
   else
-    echo "    ✗ expected absent: $path"
+    echo "    ✗ $desc — expected absent: $path"
     fail_count=$((fail_count + 1))
   fi
 }
 
 assert_dir_exists() {
-  local path="$1"
+  local path="$1" desc="$2"
   if [[ -d "$path" ]]; then
     pass_count=$((pass_count + 1))
   else
-    echo "    ✗ expected dir: $path"
+    echo "    ✗ $desc — expected directory: $path"
     fail_count=$((fail_count + 1))
   fi
 }
 
 assert_file_contains() {
-  local path="$1" pattern="$2"
+  local path="$1" pattern="$2" desc="$3"
   if [[ -f "$path" ]] && grep -qF "$pattern" "$path"; then
     pass_count=$((pass_count + 1))
   else
-    echo "    ✗ expected '$path' to contain '$pattern'"
+    echo "    ✗ $desc — '$path' should contain '$pattern'"
     fail_count=$((fail_count + 1))
   fi
 }
 
-# Bypass skill download: pre-create the local skill symlink so install_skill()
-# detects the existing directory and skips fetching from GitHub.
 seed_workspace() {
   local dir="$1"
   rm -rf "$dir"
   mkdir -p "$dir/.agents/skills"
   ln -s "$LOCAL_SKILL" "$dir/.agents/skills/spectacular"
-  # Pre-write a skills.lock so install_skill is short-circuited
-  mkdir -p "$dir/.spectacular"
-  cat > "$dir/.spectacular/skills.lock" <<EOF
+  cat > "$dir/.agents/skills.lock" <<EOF
 spectacular:
   ref: local-dev
   sha: local
@@ -87,23 +77,23 @@ scenario_1_bare_init() {
 
   run_cli "$dir" >/dev/null
 
-  assert_file_exists "$dir/.spectacular/PRD.md"
-  assert_file_exists "$dir/.spectacular/config.yaml"
-  assert_file_exists "$dir/.spectacular/AGENTS.md"
-  assert_dir_exists "$dir/.spectacular/requests"
-  assert_dir_exists "$dir/.spectacular/specs"
-  assert_file_exists "$dir/.spectacular/SPEC.md"
+  assert_file_exists "$dir/.spectacular/PRD.md" "PRD.md created"
+  assert_file_exists "$dir/.spectacular/config.yaml" "config.yaml created"
+  assert_file_exists "$dir/.spectacular/AGENTS.md" "AGENTS.md created"
+  assert_dir_exists "$dir/.spectacular/requests" "requests dir created"
+  assert_dir_exists "$dir/.spectacular/specs" "specs dir created"
+  assert_file_exists "$dir/.spectacular/specs/index.md" "specs/index.md created"
 
-  assert_file_absent "$dir/.spectacular/PRINCIPLES.md"
-  assert_file_absent "$dir/.spectacular/ARCHITECTURE.md"
-  assert_file_absent "$dir/.spectacular/ROADMAP.md"
-  assert_file_absent "$dir/.spectacular/STACK.md"
-  assert_file_absent "$dir/.spectacular/DECISIONS.md"
+  assert_file_absent "$dir/.spectacular/PRINCIPLES.md" "PRINCIPLES.md absent"
+  assert_file_absent "$dir/.spectacular/ARCHITECTURE.md" "ARCHITECTURE.md absent"
+  assert_file_absent "$dir/.spectacular/roadmaps/index.md" "roadmaps/index.md absent"
+  assert_file_absent "$dir/.spectacular/STACK.md" "STACK.md absent"
+  assert_file_absent "$dir/.spectacular/decisions/index.md" "decisions/index.md absent"
 
-  assert_file_contains "$dir/.spectacular/PRD.md" "kit: blank"
-  assert_file_contains "$dir/.spectacular/config.yaml" "kit: blank"
-  assert_file_contains "$dir/.spectacular/config.yaml" 'workspace_schema: "0.6"'
-  assert_file_contains "$dir/.gitignore" ".spectacular.local/"
+  assert_file_contains "$dir/.spectacular/PRD.md" "kit: blank" "PRD kit is blank"
+  assert_file_contains "$dir/.spectacular/config.yaml" "kit: blank" "config kit is blank"
+  assert_file_contains "$dir/.spectacular/config.yaml" 'workspace_schema: "2.0"' "workspace_schema is 2.0"
+  assert_file_contains "$dir/.gitignore" ".spectacular.local/" ".gitignore contains spectacular.local"
 
   rm -rf "$dir"
 }
@@ -115,18 +105,18 @@ scenario_2_kit_coding() {
 
   run_cli "$dir" --kit coding >/dev/null
 
-  assert_file_exists "$dir/.spectacular/PRD.md"
-  assert_file_exists "$dir/.spectacular/config.yaml"
-  assert_file_exists "$dir/.spectacular/AGENTS.md"
+  assert_file_exists "$dir/.spectacular/PRD.md" "PRD.md created"
+  assert_file_exists "$dir/.spectacular/config.yaml" "config.yaml created"
+  assert_file_exists "$dir/.spectacular/AGENTS.md" "AGENTS.md created"
 
-  assert_file_exists "$dir/.spectacular/STACK.md"
-  assert_file_exists "$dir/.spectacular/ARCHITECTURE.md"
+  assert_file_exists "$dir/.spectacular/STACK.md" "STACK.md created"
+  assert_file_exists "$dir/.spectacular/ARCHITECTURE.md" "ARCHITECTURE.md created"
 
-  assert_file_absent "$dir/.spectacular/PRINCIPLES.md"
-  assert_file_absent "$dir/.spectacular/ROADMAP.md"
-  assert_file_absent "$dir/.spectacular/DECISIONS.md"
+  assert_file_absent "$dir/.spectacular/PRINCIPLES.md" "PRINCIPLES.md absent"
+  assert_file_absent "$dir/.spectacular/roadmaps/index.md" "roadmaps/index.md absent"
+  assert_file_absent "$dir/.spectacular/decisions/index.md" "decisions/index.md absent"
 
-  assert_file_contains "$dir/.spectacular/PRD.md" "kit: coding"
+  assert_file_contains "$dir/.spectacular/PRD.md" "kit: coding" "PRD kit is coding"
 
   rm -rf "$dir"
 }
@@ -136,18 +126,15 @@ scenario_3_interactive() {
   local dir="/tmp/spectacular-test-3"
   seed_workspace "$dir"
 
-  # Interactive prompts (in order):
-  #   name (default), summary (empty), agents-file (default), scope (default),
-  #   kit=2 (coding), then per-suggested-doc y/n, then final "Proceed?" confirm.
-  # Coding kit suggests 5 docs: principles, roadmap, decisions, memory, sessions.
+  # Interactive prompts: Coding kit suggests principles, roadmap, decisions, memory, sessions.
   # Answer principles=y, roadmap=n, decisions=y, memory=n, sessions=n, then y to confirm.
   (cd "$dir" && printf '\n\n\n\n2\ny\nn\ny\nn\nn\ny\n' | "$CLI" init -i 2>&1) >/dev/null || true
 
-  assert_file_exists "$dir/.spectacular/STACK.md"
-  assert_file_exists "$dir/.spectacular/ARCHITECTURE.md"
-  assert_file_exists "$dir/.spectacular/PRINCIPLES.md"
-  assert_file_absent "$dir/.spectacular/ROADMAP.md"
-  assert_file_exists "$dir/.spectacular/DECISIONS.md"
+  assert_file_exists "$dir/.spectacular/STACK.md" "STACK.md created"
+  assert_file_exists "$dir/.spectacular/ARCHITECTURE.md" "ARCHITECTURE.md created"
+  assert_file_exists "$dir/.spectacular/PRINCIPLES.md" "PRINCIPLES.md created"
+  assert_file_absent "$dir/.spectacular/roadmaps/index.md" "roadmaps/index.md absent"
+  assert_file_exists "$dir/.spectacular/decisions/index.md" "decisions/index.md created"
 
   rm -rf "$dir"
 }
@@ -192,12 +179,12 @@ scenario_5_with_flag() {
 
   run_cli "$dir" --with principles,roadmap >/dev/null
 
-  assert_file_exists "$dir/.spectacular/PRINCIPLES.md"
-  assert_file_exists "$dir/.spectacular/ROADMAP.md"
+  assert_file_exists "$dir/.spectacular/PRINCIPLES.md" "PRINCIPLES.md created"
+  assert_file_exists "$dir/.spectacular/roadmaps/index.md" "roadmaps/index.md created"
 
-  assert_file_absent "$dir/.spectacular/STACK.md"
-  assert_file_absent "$dir/.spectacular/ARCHITECTURE.md"
-  assert_file_absent "$dir/.spectacular/DECISIONS.md"
+  assert_file_absent "$dir/.spectacular/STACK.md" "STACK.md absent"
+  assert_file_absent "$dir/.spectacular/ARCHITECTURE.md" "ARCHITECTURE.md absent"
+  assert_file_absent "$dir/.spectacular/decisions/index.md" "decisions/index.md absent"
 
   # Unknown doc ID errors cleanly
   seed_workspace "$dir"
@@ -218,14 +205,14 @@ scenario_6_minimal_overrides_kit() {
 
   run_cli "$dir" --kit coding --minimal >/dev/null
 
-  assert_file_exists "$dir/.spectacular/PRD.md"
-  assert_file_exists "$dir/.spectacular/config.yaml"
-  assert_file_exists "$dir/.spectacular/AGENTS.md"
+  assert_file_exists "$dir/.spectacular/PRD.md" "PRD.md created"
+  assert_file_exists "$dir/.spectacular/config.yaml" "config.yaml created"
+  assert_file_exists "$dir/.spectacular/AGENTS.md" "AGENTS.md created"
 
-  assert_file_absent "$dir/.spectacular/STACK.md"
-  assert_file_absent "$dir/.spectacular/ARCHITECTURE.md"
+  assert_file_absent "$dir/.spectacular/STACK.md" "STACK.md absent"
+  assert_file_absent "$dir/.spectacular/ARCHITECTURE.md" "ARCHITECTURE.md absent"
 
-  assert_file_contains "$dir/.spectacular/PRD.md" "kit: coding"
+  assert_file_contains "$dir/.spectacular/PRD.md" "kit: coding" "PRD kit is coding"
 
   rm -rf "$dir"
 }
@@ -239,11 +226,11 @@ scenario_7_interactive_abort() {
   (cd "$dir" && printf '\n\n\n\n2\ny\nn\ny\nn\n' | "$CLI" init -i 2>&1) >/dev/null || true
 
   # No canonical doc files should exist
-  assert_file_absent "$dir/.spectacular/PRD.md"
-  assert_file_absent "$dir/.spectacular/config.yaml"
-  assert_file_absent "$dir/.spectacular/AGENTS.md"
-  assert_file_absent "$dir/.spectacular/STACK.md"
-  assert_file_absent "$dir/.spectacular/PRINCIPLES.md"
+  assert_file_absent "$dir/.spectacular/PRD.md" "PRD.md absent"
+  assert_file_absent "$dir/.spectacular/config.yaml" "config.yaml absent"
+  assert_file_absent "$dir/.spectacular/AGENTS.md" "AGENTS.md absent"
+  assert_file_absent "$dir/.spectacular/STACK.md" "STACK.md absent"
+  assert_file_absent "$dir/.spectacular/PRINCIPLES.md" "PRINCIPLES.md absent"
 
   rm -rf "$dir"
 }
@@ -262,11 +249,11 @@ EOF
   (cd "$fake_home/project" && HOME="$fake_home" "$CLI" init --skill-scope global) >/dev/null
 
   # Workspace scaffolded in project dir
-  assert_file_exists "$fake_home/project/.spectacular/PRD.md"
-  assert_file_exists "$fake_home/project/.spectacular/config.yaml"
-  assert_file_exists "$fake_home/project/.spectacular/AGENTS.md"
+  assert_file_exists "$fake_home/project/.spectacular/PRD.md" "PRD.md created"
+  assert_file_exists "$fake_home/project/.spectacular/config.yaml" "config.yaml created"
+  assert_file_exists "$fake_home/project/.spectacular/AGENTS.md" "AGENTS.md created"
 
-  # Skill resolves under fake HOME (symlink seeded by us)
+  # Skill resolves under fake HOME
   if [[ -L "$fake_home/.agents/skills/spectacular" ]]; then
     pass_count=$((pass_count + 1))
   else
@@ -301,8 +288,6 @@ scenario_9_flag_eat() {
 
 scenario_10_skill_verb_stubs() {
   echo "Scenario 10: remaining skill-only verbs print interactive-flow message"
-  # As of v0.8.0, archive/new/snapshot/promote moved to CLI mutator verbs.
-  # Only status + remember remain as skill stubs.
   local out code
   for verb in status remember; do
     out=$("$CLI" "$verb" 2>&1) && code=0 || code=$?
@@ -357,20 +342,6 @@ scenario_11_status_against_latest() {
 
   rm -rf "$dir"
 }
-
-# ── run ───────────────────────────────────────────────────────────────────────
-
-scenario_1_bare_init
-scenario_2_kit_coding
-scenario_3_interactive
-scenario_4_idempotent_rerun
-scenario_5_with_flag
-scenario_6_minimal_overrides_kit
-scenario_7_interactive_abort
-scenario_8_global_flag
-scenario_9_flag_eat
-scenario_10_skill_verb_stubs
-scenario_11_status_against_latest
 
 scenario_12_status_since() {
   echo "Scenario 12: status --since filters by frontmatter updated: field"
@@ -461,6 +432,19 @@ scenario_12_status_since() {
   rm -rf "$dir"
 }
 
+# ── run ───────────────────────────────────────────────────────────────────────
+
+scenario_1_bare_init
+scenario_2_kit_coding
+scenario_3_interactive
+scenario_4_idempotent_rerun
+scenario_5_with_flag
+scenario_6_minimal_overrides_kit
+scenario_7_interactive_abort
+scenario_8_global_flag
+scenario_9_flag_eat
+scenario_10_skill_verb_stubs
+scenario_11_status_against_latest
 scenario_12_status_since
 
 echo ""

@@ -17,18 +17,18 @@ Human catalog of every document type in a Spectacular workspace.
 | `principles` | stub | `.spectacular/PRINCIPLES.md` | [principles-rules](principles-rules.md) |
 | `policy` | structured (always-set) | `.spectacular/POLICY.md` | [policy-rules](policy-rules.md) |
 | `architecture` | stub | `.spectacular/ARCHITECTURE.md` | [architecture-rules](architecture-rules.md) |
-| `spec` | stub | `.spectacular/SPEC.md` | [spec-rules](spec-rules.md) |
-| `roadmap` | grill-each | `.spectacular/ROADMAP.md` | [roadmap-rules](roadmap-rules.md) |
+| `spec` | stub | `.spectacular/specs/index.md` | [spec-rules](spec-rules.md) |
+| `roadmap` | grill-each | `.spectacular/roadmaps/index.md` | [roadmap-rules](roadmap-rules.md) |
 | `stack` | stub | `.spectacular/STACK.md` | [stack-rules](stack-rules.md) |
 | `agents` | stub | `.spectacular/AGENTS.md` | [agents-rules](agents-rules.md) |
-| `decisions` | append | `.spectacular/DECISIONS.md` | [decisions-rules](decisions-rules.md) — **ADR / architecture-decision log**; write with `spectacular decide` |
-| `memory` | index | `.spectacular/MEMORY.md` + `memory/` | [memory-rules](memory-rules.md) |
-| `sessions` | index | `.spectacular/SESSIONS.md` + `sessions/` | [sessions-rules](sessions-rules.md) |
+| `decisions` | append | `.spectacular/decisions/index.md` | [decisions-rules](decisions-rules.md) — **ADR / architecture-decision log**; write with `spectacular decide` |
+| `memory` | index | `.spectacular/memories/index.md` + `memories/` | [memory-rules](memory-rules.md) |
+| `sessions` | index | `.spectacular/sessions/index.md` + `sessions/` | [sessions-rules](sessions-rules.md) |
 | `personas` | grill-each | `.spectacular/PERSONAS.md` | [personas-rules](personas-rules.md) |
-| `feedback` | index | `.spectacular/feedback/` (+ `requests/<slug>/feedback/`) | [feedback-rules](feedback-rules.md) |
-| `idea` | index | `.spectacular/ideas/` | [idea-rules](idea-rules.md) |
-| `audit` | index | `.spectacular/audit/` | [audit-rules](audit-rules.md) — **bug investigation** before a fix is planned; write with `spectacular audit new\|list\|resolve` (v1.25.0) |
-| `fixes` | index | `.spectacular/fixes/` | [fixes-rules](fixes-rules.md) — **verified-fix log**; write only once resolved, with `spectacular fix new\|list` (v1.25.0) |
+| `feedback` | index | `.spectacular/feedbacks/index.md` + `feedbacks/` | [feedback-rules](feedback-rules.md) |
+| `idea` | index | `.spectacular/ideas/index.md` + `ideas/` | [idea-rules](idea-rules.md) |
+| `audit` | index | `.spectacular/audits/index.md` + `audits/` | [audit-rules](audit-rules.md) — **bug investigation** before a fix is planned; write with `spectacular audit new\|list\|resolve` (v1.25.0) |
+| `fixes` | index | `.spectacular/fixes/index.md` + `fixes/` | [fixes-rules](fixes-rules.md) — **verified-fix log**; write only once resolved, with `spectacular fix new\|list` (v1.25.0) |
 
 ## Per-request docs
 
@@ -95,15 +95,17 @@ A stub's rules file therefore only needs its **frontmatter** (the engine's dispa
 
 **Verbs `grill` and `refine` are skill-only** — they require an LLM. The CLI redirects with a friendly message when called at terminal. `review` is mixed (structural checks run in CLI; semantic in skill).
 
-## Naming conventions & traps
+## Naming conventions under OKF
 
-The rule: **plural filename = a top-level index; singular = one file per request.** Two lexical exceptions and one hard trap — internalize these before routing:
+The rule: **Plural folder name = a category directory containing either an index.md index file and sequential entry files (soft-DB collections), or sub-directories representing execution tasks/traces.** 
 
-1. **Two `SESSION`s, opposite scope.** Per-request `SESSION.md` (singular — one request's working state, created on `active`) is **unrelated** to the top-level `SESSIONS.md` + `sessions/` collection (the work-session time-log). Same word, different system. Do not conflate — the biggest confusion trap.
-2. **`SPEC.md` is overloaded.** Top-level `.spectacular/SPEC.md` is a lightweight *index*; `specs/<cap>/SPEC.md` are the per-capability *truth* docs.
-3. **`MEMORY.md` is singular-form but plays the plural index role** (indexes `memory/`, exactly as `SESSIONS.md` indexes `sessions/`).
-4. **`VISION.md` is singular but acts as a spine/index** of the `vision/` soft-folder.
-5. `FEEDBACKS.md` at the repo root is a Spectacular-repo dev artifact, **not** a canonical file type — the canonical store is the `feedback/` folder (no `FEEDBACK.md` index is emitted).
+1. **Two `SESSION`s, opposite scope:** Per-request `SESSION.md` (singular — one request's working state, created on `active`) is **unrelated** to the top-level `sessions/` category folder and its `sessions/index.md` (the work-session time-log).
+2. **Consolidated Specs:** Capability specifications are stored as flat files inside the `specs/` directory (e.g., `specs/cli.md`, `specs/skill.md`), indexed by `specs/index.md`. There are no nested spec folders.
+3. **Plural Folders:** All collection and execution folders are strictly plural (`memories/`, `roadmaps/`, `decisions/`, `sessions/`, `audits/`, `fixes/`, `feedbacks/`, `ideas/`, `requests/`, `debugs/`).
+4. **Soft-DB Index-Logged Collections vs. Execution Trees**:
+   - **Soft-DB Collections** (`memories/`, `decisions/`, `sessions/`, `audits/`, `fixes/`, `feedbacks/`, `ideas/`, `roadmaps/`) contain a central `index.md` and flat, sequential/date-logged `.md` entries.
+   - **Execution Trees** (`requests/`, `debugs/`) contain sub-directories (`requests/<slug>/`, `debugs/<slug>/`) holding active state files or run logs rather than simple flat document entries.
+5. **Sequential Prefix Identifiers:** Collection entry files under `decisions/` and `memories/` are prefixed with their ID sequence: `decisions/D<N>-<slug>.md` and `memories/M<N>-<slug>.md`.
 
 Full catalog with roles + usage: [[scaffold-reference]] § File-type catalog (also mirrored in `docs/scaffold.md` for external readers).
 

@@ -1,7 +1,7 @@
 ---
 doc-id: debug-trace
 kind: reference
-summary: "Traceability for a live debug job: one folder per job under .spectacular/debug/, one JSON artifact per agent turn. Schemas + writer rules. In-flight process state, distinct from the fixes/audit ledger."
+summary: "Traceability for a live debug job: one folder per job under .spectacular/debugs/, one JSON artifact per agent turn. Schemas + writer rules. In-flight process state, distinct from the fixes/audit ledger."
 status: active
 ---
 
@@ -10,39 +10,39 @@ status: active
 A debug job that runs the fleet (Investigator → orchestrator → Fixer/Researcher) needs a place to
 record *what happened* while it happens — so a resuming agent, the human, or a `doctor` check can
 answer: **what bug, what did each agent find/do, what's the state now, what's the outcome.** That
-place is `.spectacular/debug/<job-slug>/`, holding one JSON artifact per agent turn.
+place is `.spectacular/debugs/<job-slug>/`, holding one JSON artifact per agent turn.
 
-## debug/ vs audit/ vs fixes/ — the pipeline and the two summaries it produces
+## debugs/ vs audits/ vs fixes/ — the pipeline and the two summaries it produces
 
-These three are **not competitors** — `debug/` is the raw pipeline *while a job runs*, and `audit/`
+These three are **not competitors** — `debugs/` is the raw pipeline *while a job runs*, and `audits/`
 + `fixes/` are the two permanent summaries *distilled from it* when the job resolves. Different
 question, different lifetime, different curation:
 
 | Folder | Answers | Scope | Lifetime | Curation |
 |---|---|---|---|---|
-| **`debug/<job>/`** | "what's happening **right now** on this live job?" | one in-flight job | **kept as trace** (marked resolved, never pruned) | raw — verbose JSON, per-agent, may be unresolved |
-| **`audit/A<N>.md`** | "what did we find? what was going on?" (the **examination**) | any deep examination, not just bugs | permanent | curated — written only if findings are worth keeping |
+| **`debugs/<job>/`** | "what's happening **right now** on this live job?" | one in-flight job | **kept as trace** (marked resolved, never pruned) | raw — verbose JSON, per-agent, may be unresolved |
+| **`audits/A<N>.md`** | "what did we find? what was going on?" (the **examination**) | any deep examination, not just bugs | permanent | curated — written only if findings are worth keeping |
 | **`fixes/F<N>.md`** | "have we solved this before?" (the **remedy** / lesson learned) | solved, reusable problems | permanent | curated — written only if reusable |
 
-**debug/ is the workbench; audit/ + fixes/ are the library.** The workbench holds the mess *while
+**debugs/ is the workbench; audits/ + fixes/ are the library.** The workbench holds the mess *while
 you work* — 3 Fixer results, a half-finished investigation, jobs still open with no clarity yet.
-audit/ and fixes/ are written **only at resolution**, when clarity exists — that's *why* they're
-separate collections: debug/ tolerates open + messy; the library requires resolved + clean.
+audits/ and fixes/ are written **only at resolution**, when clarity exists — that's *why* they're
+separate collections: debugs/ tolerates open + messy; the library requires resolved + clean.
 
 `audit` literally means *examination* (from *audire*, "to hear") — it's broader than debugging; you
 can audit a spec for drift or a dependency, no bug involved. Bug investigation is *one kind* of
 audit. `fixes` is the greppable lesson-learned database — signed, searchable, reused next time.
 
-**The two summaries cross-link, and both link back to the trace:** `audit/A<N>` says "remedied by
+**The two summaries cross-link, and both link back to the trace:** `audits/A<N>` says "remedied by
 `F4`"; `fixes/F<N>` says "found via `A7`"; both carry `debug_job: <job-slug>` back to the raw trace
-that produced them. The library is the distilled record; debug/ is the full feed behind it.
+that produced them. The library is the distilled record; debugs/ is the full feed behind it.
 
 ## Trace vs ledger — the write rule
 
 | Layer | Where | Writer | When |
 |---|---|---|---|
-| **Debug trace** | `.spectacular/debug/<job>/*.json` | **each agent writes its own artifact** | live, as the job runs |
-| **Ledger** | `fixes/F<N>.md`, `audit/A<N>.md` | **orchestrator only** (CLI verbs) | at resolution, distilled from the trace |
+| **Debug trace** | `.spectacular/debugs/<job>/*.json` | **each agent writes its own artifact** | live, as the job runs |
+| **Ledger** | `fixes/F<N>.md`, `audits/A<N>.md` | **orchestrator only** (CLI verbs) | at resolution, distilled from the trace |
 
 The invariant is **scoped, not broken**: agents write their own *trace* artifact (the block they
 already return), but **never the ledger** — `F<N>`/`A<N>` stay single-writer via `spectacular
@@ -52,7 +52,7 @@ session loss, is team-visible, and a fresh session can resume from it.
 ## Folder layout
 
 ```
-.spectacular/debug/<job-slug>/
+.spectacular/debugs/<job-slug>/
 ├── job.json              # the spine — orchestrator owns + updates
 ├── investigation.json    # Investigator's findings (0 or 1)
 ├── research/             # Researcher verdicts (0..n — one per external question)
@@ -245,24 +245,24 @@ The bridge from trace to permanent ledger:
 
 ## Lifecycle
 
-1. **Open** — orchestrator scaffolds `debug/<job-slug>/` + writes `job.json` (`status: investigating`
+1. **Open** — orchestrator scaffolds `debugs/<job-slug>/` + writes `job.json` (`status: investigating`
    or `fixing` for a just-fix bug that skips investigation).
 2. **Agents append** — each agent writes its artifact to the path the orchestrator assigned; the
    orchestrator appends a `timeline` entry + updates `status` + the `artifacts` index in `job.json`.
    Jobs may sit **unresolved** here — the trace holds mid-flight state with no final clarity yet.
-   That's fine; debug/ tolerates open.
+   That's fine; debugs/ tolerates open.
 3. **Resolve — summarize into the library (each only if earned).** When clarity exists, the
    orchestrator writes `outcome.json` and distills the trace into the two permanent summaries:
-   - **`audit/A<N>.md`** — the examination — written **only if the findings are worth keeping**
+   - **`audits/A<N>.md`** — the examination — written **only if the findings are worth keeping**
      (a non-obvious cause, a real investigation). A shorter, human-facing distillation of
      `investigation.json`, *not* a copy of it.
    - **`fixes/F<N>.md`** — the remedy — written **only if reusable** (`log-only-verified-reusable`).
    Cross-link them (`A<N>` ↔ `F<N>`) and stamp both with `debug_job: <job-slug>`. A trivial job may
    earn neither. Both go through the CLI verbs (`spectacular audit new` / `fix new`) — the ledger
    stays single-writer.
-4. **Keep the trace in place.** The resolved `debug/<job>/` is **not pruned** — `job.json` flips to
-   `status: resolved` with `audit`/`fixes` back-links, and the folder stays as the full "how the job
-   ran" record. The library is the distilled summary; debug/ is the durable raw feed behind it.
+4. **Keep the trace in place.** The resolved `debugs/<job>/` is **not pruned** — `job.json` flips to
+   `status: resolved` with `audits`/`fixes` back-links, and the folder stays as the full "how the job
+   ran" record. The library is the distilled summary; debugs/ is the durable raw feed behind it.
 
 A `just-fix` 1–2 line bug that never runs the fleet **needs no debug folder** — it's fixed inline
 and, if reusable, logged straight to `F<N>`. The trace exists for jobs that fan out; ceremony scales

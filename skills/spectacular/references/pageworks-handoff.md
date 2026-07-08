@@ -40,7 +40,7 @@ If the user has expressed preference for a specific install tool earlier in the 
 
 When `spectacular archive <slug>` runs, spectacular inspects the archived request's tracked files. If any of these changed (per `git diff` against the previous archive snapshot, or by file mtime if no git):
 
-- `.spectacular/SPEC.md`
+- `.spectacular/specs/index.md`
 - `.spectacular/specs/**`
 - `.spectacular/ARCHITECTURE.md` (when present)
 - `.spectacular/PRD.md` (when present)
@@ -86,7 +86,7 @@ Do not duplicate pageworks's briefing surface — spectacular reports presence, 
 
 ## The reverse direction (pageworks → spectacular)
 
-Pageworks's `maintenance.md` § "Common spec sources" knows that `.spectacular/specs/<x>/SPEC.md` is a typical source for `synced_from:` frontmatter. That's the only cross-reference pageworks makes back to spectacular; it never invokes spectacular's CLI.
+Pageworks's `maintenance.md` § "Common spec sources" knows that `.spectacular/specs/<x>.md` is a typical source for `synced_from:` frontmatter. That's the only cross-reference pageworks makes back to spectacular; it never invokes spectacular's CLI.
 
 If pageworks is installed but spectacular isn't, that's fine — pageworks's `synced_from:` works against any file path, not just `.spectacular/`.
 

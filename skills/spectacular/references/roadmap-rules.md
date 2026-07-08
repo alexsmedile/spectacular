@@ -1,7 +1,7 @@
 ---
 doc-id: roadmap
 mode: grill-each
-location: .spectacular/ROADMAP.md
+location: .spectacular/roadmaps/index.md
 scope: project-wide
 template: templates/roadmap/base.md
 slots: [Status, Phase, Scope (in), Scope (out), Exit criteria, Linked requests]
@@ -18,7 +18,7 @@ This file declares everything roadmap-specific. The skill handles the rest.
 
 ## What this doc produces
 
-A `.spectacular/ROADMAP.md` containing:
+A `.spectacular/roadmaps/index.md` containing:
 
 1. One **version block** per planned/active/shipped release, each tagged with a **precision tier** (`full | themed | vision`) that controls which slots are required
 2. An optional **Icebox section** at the end for ideas not yet tied to any version
@@ -60,10 +60,10 @@ Inspired by GitHub Projects, Trello, Notion onboarding patterns and GIST methodo
 
 ## Pre-flight (before slot loop)
 
-1. **Resolve target** — `.spectacular/ROADMAP.md`. Scaffold from `templates/roadmap/base.md` if absent.
+1. **Resolve target** — `.spectacular/roadmaps/index.md`. Scaffold from `templates/roadmap/base.md` if absent.
 2. **Detect existing version blocks** — parse current ROADMAP for `## v<...>` headings. List them. Ask user which version block to grill (existing or new).
 3. **For new version blocks** — ask the version label first (e.g. `v0.7.1`, `v1.0.0`, `v2.x`). Use the label as the section heading.
-4. **Snapshot rule** — per registry override: ROADMAP is `snapshot-on-edit: true`. The skill snapshots `.spectacular/ROADMAP.md` via `spectacular snapshot` before any structural change.
+4. **Snapshot rule** — per registry override: ROADMAP is `snapshot-on-edit: true`. The skill snapshots `.spectacular/roadmaps/index.md` via `spectacular snapshot` before any structural change.
 
 ## Per-version slot prompts
 
@@ -374,7 +374,7 @@ Placeholder check (no `<TODO>`, `<TBD>`, `???` in any **prose slot**), clarifica
 
 ## The ledger (build → version)
 
-Above the first version block, ROADMAP.md carries a **ledger table** — the single source of truth mapping each build id (`b1..bN`) to its `target-version`. Schema, columns, and the human-adds-rows / gaps-are-normal rules are canonical in `ARCHITECTURE.md` § Roadmap ledger; the two-layer model is summarized in [[specs/roadmap/SPEC]].
+Above the first version block, ROADMAP.md carries a **ledger table** — the single source of truth mapping each build id (`b1..bN`) to its `target-version`. Schema, columns, and the human-adds-rows / gaps-are-normal rules are canonical in `ARCHITECTURE.md` § Roadmap ledger; the two-layer model is summarized in [[specs/roadmap]].
 
 **`tbd` rule (behavioral):** when a build is real and prioritized but you don't yet know which release it lands in, set its `target-version` to **`tbd`** — not a guessed version, not a blank, not a `<TBD>` placeholder. `tbd` is a committed "slotted, not pinned" state; pin it to a concrete `vX.Y.Z` when the release is decided (a one-row edit). Prefer `tbd` over inventing a speculative version number — false precision on unpinned work is the exact anti-pattern the precision gradient exists to prevent.
 

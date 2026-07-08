@@ -25,7 +25,7 @@ TODAY="$(date +%Y-%m-%d)"
 # Workspace schema version — bumped only when .spectacular/ structure changes.
 # Decoupled from CLI/skill version. Migrations advance workspace_schema through
 # the chain (v0.4 → v0.5 → v0.6 → ...). See requests/workspace-migrations/PLAN.md.
-CURRENT_SCHEMA="0.6"
+CURRENT_SCHEMA="2.0"
 
 # ── defaults ─────────────────────────────────────────────────────────────────
 OPT_NAME=""
@@ -225,7 +225,7 @@ Read verbs (v1.8.0+ — collapse multi-step inspection to one call):
 
 Skill verbs (run via /spectacular in your AI agent):
   status [--against-latest|--since <date>]    Briefing of project state
-  remember               Write an operational lesson to .spectacular/memory/
+  remember               Write an operational lesson to .spectacular/memories/
 
 Top-level:
   -v, --version          Print version and exit
@@ -999,8 +999,8 @@ _render_template() {
 # Regenerate MEMORY.md index from .spectacular/memory/*.md entries.
 # Newest first by date in frontmatter.
 _regen_memory_index() {
-  local index=".spectacular/MEMORY.md"
-  local entries_dir=".spectacular/memory"
+  local index=".spectacular/memories/index.md"
+  local entries_dir=".spectacular/memories"
   [[ -d "$entries_dir" ]] || return 0
 
   {
@@ -1023,6 +1023,7 @@ EOF
     for file in "$entries_dir"/*.md; do
       [[ -f "$file" ]] || continue
       slug=$(basename "$file" .md)
+      [[ "$slug" == "index" ]] && continue
       date=$(fm_get "$file" "date")
       summary=$(fm_get "$file" "summary")
       # tags: read inline list; fall back to empty
@@ -1030,14 +1031,14 @@ EOF
         val=$0; sub(/^tags:[[:space:]]*/,"",val); print val; exit }' "$file")
       tags="${tags_inline:-[]}"
       printf '%s\t%s\t%s\t%s\n' "${date:-0000-00-00}" "$slug" "$tags" "$summary"
-    done | sort -r | awk -F'\t' '{printf "| %s | [[memory/%s]] | %s | %s |\n", $1, $2, $3, $4}'
+    done | sort -r | awk -F'\t' '{printf "| %s | [[memories/%s]] | %s | %s |\n", $1, $2, $3, $4}'
   } > "$index"
 }
 
 # Regenerate SESSIONS.md index from .spectacular/sessions/*.md entries.
 # Newest first by start_date. Status column shows open|closed.
 _regen_sessions_index() {
-  local index=".spectacular/SESSIONS.md"
+  local index=".spectacular/sessions/index.md"
   local entries_dir=".spectacular/sessions"
   [[ -d "$entries_dir" ]] || return 0
 
@@ -1060,6 +1061,7 @@ EOF
     for file in "$entries_dir"/*.md; do
       [[ -f "$file" ]] || continue
       slug=$(basename "$file" .md)
+      [[ "$slug" == "index" ]] && continue
       start=$(fm_get "$file" "start_date")
       status=$(fm_get "$file" "status")
       dcount=$(fm_get "$file" "decisions_count")
@@ -1083,8 +1085,8 @@ cmd_remember() {
         cat <<EOF
 Usage: spectacular remember "<text>" [--tag a,b] [--dry-run]
 
-Write one memory entry to .spectacular/memory/<slug>.md and regenerate
-MEMORY.md index. Auto-derives slug + summary. If a session is open,
+Write one memory entry to .spectacular/memories/M<N>-<slug>.md and regenerate
+memories/index.md index. Auto-derives slug + summary. If a session is open,
 the entry links to it via frontmatter session: field.
 EOF
         exit 0 ;;
@@ -1099,10 +1101,19 @@ EOF
   [[ -d ".spectacular" ]] || die "remember: not inside a Spectacular workspace"
 
   local base_slug slug entry_dir entry_path summary tags_yaml session
-  base_slug=$(_slug_from_text "$text")
-  [[ -z "$base_slug" ]] && die "remember: could not derive slug from text"
-  entry_dir=".spectacular/memory"
+  entry_dir=".spectacular/memories"
   mkdir -p "$entry_dir"
+
+  # Auto-number: find highest M<N> in memories/ dir
+  local next_n
+  next_n=$(_next_entry_num "$entry_dir" M)
+  local mnum="M${next_n}"
+
+  local raw_slug
+  raw_slug=$(_slug_from_text "$text")
+  [[ -z "$raw_slug" ]] && die "remember: could not derive slug from text"
+  base_slug="${mnum}-${raw_slug}"
+
   slug=$(_resolve_slug_collision "$entry_dir" "$base_slug" "md")
   entry_path="$entry_dir/$slug.md"
   summary=$(_summary_from_text "$text")
@@ -1121,10 +1132,10 @@ EOF
   local template rendered
   template=$(_resolve_template "memory/entry.md") || die_recover \
     "remember: memory entry template not found" \
-    "Create .spectacular/memory/${base_slug}.md with frontmatter:" \
+    "Create .spectacular/memories/${base_slug}.md with frontmatter:" \
     "  type: memory / date: $TODAY / tags: [...] / summary: \"...\" / session: null" \
     "then add the body text below the frontmatter." \
-    "It will appear in MEMORY.md on the next successful 'spectacular remember'."
+    "It will appear in memories/index.md on the next successful 'spectacular remember'."
   rendered=$(_render_template "$template" \
     DATE "$TODAY" \
     TAGS "$tags_yaml" \
@@ -1135,14 +1146,14 @@ EOF
   if $dry_run; then
     echo "── would write $entry_path ──"
     echo "$rendered"
-    echo "── would regenerate MEMORY.md ──"
+    echo "── would regenerate memories/index.md ──"
     return 0
   fi
 
   echo "$rendered" > "$entry_path"
   created "$entry_path"
   _regen_memory_index
-  info "  ✓  MEMORY.md regenerated"
+  info "  ✓  memories/index.md regenerated"
   if [[ -n "$session" ]]; then
     info "  ↳ linked to session: $session"
   fi
@@ -1162,14 +1173,12 @@ cmd_decide() {
         cat <<EOF
 Usage: spectacular decide "<decision>" [--context "..."] [--consequences "..."] [--dry-run]
 
-Append one ADR-style entry to .spectacular/DECISIONS.md (Context / Decision /
+Append one ADR-style entry to .spectacular/decisions/index.md (Context / Decision /
 Consequences). The positional argument fills **Decision:**. Auto-derives a
 title from the first ~6 words of the decision. If a session is open, the entry
 includes a Session: link to the active session.
 
-In index mode (detected by presence of .spectacular/decisions/), writes full
-ADR prose to decisions/D<N>.md and appends one index line to DECISIONS.md.
-In flat mode, appends the full block directly to DECISIONS.md.
+Writes full ADR prose to decisions/D<N>-<slug>.md and appends one index line to decisions/index.md.
 
   --context "..."        fill the **Context:** section (situation forcing the decision)
   --consequences "..."   fill the **Consequences:** section (what it enables/forecloses)
@@ -1191,91 +1200,56 @@ EOF
   title=$(_summary_from_text "$text")
   session=$(_active_session_slug)
 
-  local decisions=".spectacular/DECISIONS.md"
+  local decisions=".spectacular/decisions/index.md"
   local decisions_dir=".spectacular/decisions"
 
+  # Enforce index mode under OKF: bootstrap decisions/ directory if absent
+  mkdir -p "$decisions_dir"
+
   # ── Index mode ──────────────────────────────────────────────────────────────
-  if [[ -d "$decisions_dir" ]]; then
-    # Auto-number: find highest D<N> in decisions/ dir
-    local next_n=1
-    local f num
-    for f in "$decisions_dir"/D*.md; do
-      [[ -f "$f" ]] || continue
-      num=$(basename "$f" .md)
-      num="${num#D}"
-      [[ "$num" =~ ^[0-9]+$ ]] && (( num >= next_n )) && next_n=$(( num + 1 ))
-    done
+  # Auto-number: find highest D<N> in decisions/ dir
+  local next_n=1
+  local f num
+  for f in "$decisions_dir"/D*.md; do
+    [[ -f "$f" ]] || continue
+    num=$(basename "$f" .md)
+    num="${num#D}"
+    num="${num%%-*}"
+    [[ "$num" =~ ^[0-9]+$ ]] && (( num >= next_n )) && next_n=$(( num + 1 ))
+  done
 
-    local dnum="D${next_n}"
-    local entry_path="${decisions_dir}/${dnum}.md"
+  local dnum="D${next_n}"
+  local entry_slug="${dnum}-$(_slug_from_text "$text")"
+  local entry_path="${decisions_dir}/${entry_slug}.md"
 
-    # Build the index line: - **D<N>** — Title — one-sentence rationale
-    # Title comes from the decision text; rationale from consequences if provided.
-    local rationale="${consequences:-${context:-}}"
-    local index_line
-    if [[ -n "$rationale" ]]; then
-      index_line="- **${dnum}** — ${title} — ${rationale}"
-    else
-      index_line="- **${dnum}** — ${title}"
-    fi
-
-    # Build full ADR prose for the per-entry file
-    local prose
-    prose=$(printf '# %s — %s\n\n**Context:**\n%s\n\n**Decision:**\n%s\n\n**Consequences:**\n%s\n' \
-      "$dnum" "$title" "$context" "$text" "$consequences")
-    if [[ -n "$session" ]]; then
-      prose+="$(printf '\n**Session:** [[sessions/%s]]\n' "$session")"
-    fi
-
-    if $dry_run; then
-      echo "── would write ${entry_path} ──"
-      echo "$prose"
-      echo ""
-      echo "── would append to ${decisions} (index line) ──"
-      echo "$index_line"
-      return 0
-    fi
-
-    # Ensure DECISIONS.md exists (bootstrap if absent in an index-mode workspace)
-    if [[ ! -f "$decisions" ]]; then
-      cat > "$decisions" <<EOF
----
-type: decisions
-doc: decisions
-updated: $TODAY
----
-
-# Decisions
-
-EOF
-      created "$decisions"
-    fi
-
-    printf '%s\n' "$prose" > "$entry_path"
-    created "$entry_path"
-    printf '%s\n' "$index_line" >> "$decisions"
-    fm_touch "$decisions"
-    info "  ✓  decision ${dnum}: $title"
-    [[ -n "$session" ]] && info "  ↳ linked to session: $session"
-    return 0
+  # Build the index line: - **D<N>** — Title — one-sentence rationale
+  # Title comes from the decision text; rationale from consequences if provided.
+  local rationale="${consequences:-${context:-}}"
+  local index_line
+  if [[ -n "$rationale" ]]; then
+    index_line="- **${dnum}** — ${title} — ${rationale}"
+  else
+    index_line="- **${dnum}** — ${title}"
   fi
 
-  # ── Flat mode (original behavior) ───────────────────────────────────────────
-  local entry
-  entry=$(printf '\n## %s — %s\n\n**Context:**\n%s\n\n**Decision:**\n%s\n\n**Consequences:**\n%s\n' \
-    "$TODAY" "$title" "$context" "$text" "$consequences")
+  # Build full ADR prose for the per-entry file
+  local prose
+  prose=$(printf '# %s — %s\n\n**Context:**\n%s\n\n**Decision:**\n%s\n\n**Consequences:**\n%s\n' \
+    "$dnum" "$title" "$context" "$text" "$consequences")
   if [[ -n "$session" ]]; then
-    entry+="$(printf '\n**Session:** [[sessions/%s]]\n' "$session")"
+    prose+="$(printf '\n**Session:** [[sessions/%s]]\n' "$session")"
   fi
 
   if $dry_run; then
-    [[ -f "$decisions" ]] || echo "── would create $decisions ──"
-    echo "── would append to $decisions ──"
-    echo "$entry"
+    echo "── would write ${entry_path} ──"
+    echo "$prose"
+    echo ""
+    echo "── would append to ${decisions} (index line) ──"
+    echo "$index_line"
     return 0
   fi
 
-  # Bootstrap DECISIONS.md if absent
+  # Ensure decisions/index.md exists
   if [[ ! -f "$decisions" ]]; then
     cat > "$decisions" <<EOF
 ---
@@ -1290,9 +1264,11 @@ EOF
     created "$decisions"
   fi
 
-  printf '%s' "$entry" >> "$decisions"
+  printf '%s\n' "$prose" > "$entry_path"
+  created "$entry_path"
+  printf '%s\n' "$index_line" >> "$decisions"
   fm_touch "$decisions"
-  info "  ✓  appended decision: $title"
+  info "  ✓  decision ${dnum}: $title"
   [[ -n "$session" ]] && info "  ↳ linked to session: $session"
   return 0
 }
@@ -1394,10 +1370,11 @@ EOF
     local i
     for ((i=0; i<total; i++)); do
       local dnum="D$((i+1))"
-      echo "  would write: ${decisions_dir}/${dnum}.md  (${titles[$i]})"
+      local dslug; dslug=$(_slug_from_text "${titles[$i]}")
+      echo "  would write: ${decisions_dir}/${dnum}-${dslug}.md  (${titles[$i]})"
     done
     echo ""
-    echo "── dry-run: would rewrite $decisions as index ──"
+    echo "── dry-run: would write ${decisions_dir}/index.md as index and remove $decisions ──"
     for ((i=0; i<total; i++)); do
       local dnum="D$((i+1))"
       echo "- **${dnum}** — ${titles[$i]}"
@@ -1405,12 +1382,13 @@ EOF
     return 0
   fi
 
-  # Write per-entry files (all before touching DECISIONS.md — no data loss on partial run)
+  # Write per-entry files (all before touching index — no data loss on partial run)
   mkdir -p "$decisions_dir"
   local i
   for ((i=0; i<total; i++)); do
     local dnum="D$((i+1))"
-    local entry_path="${decisions_dir}/${dnum}.md"
+    local dslug; dslug=$(_slug_from_text "${titles[$i]}")
+    local entry_path="${decisions_dir}/${dnum}-${dslug}.md"
     local body="${blocks[$i]}"
     # Strip leading/trailing blank lines from body
     body=$(printf '%s' "$body" | sed -e '/./,$!d' -e 's/[[:space:]]*$//')
@@ -1418,7 +1396,8 @@ EOF
     created "$entry_path"
   done
 
-  # Now rewrite DECISIONS.md as index
+  # Now write index
+  local target_index="${decisions_dir}/index.md"
   {
     cat <<FM
 ---
@@ -1435,12 +1414,14 @@ FM
       local dnum="D$((i+1))"
       echo "- **${dnum}** — ${titles[$i]}"
     done
-  } > "${decisions}.tmp.$$" && mv "${decisions}.tmp.$$" "$decisions"
+  } > "${target_index}.tmp.$$" && mv "${target_index}.tmp.$$" "$target_index"
 
-  fm_touch "$decisions"
+  fm_touch "$target_index"
+  rm -f "$decisions"
   info "  ✓  migrated $total decisions to index mode"
   info "  ↳  full entries in: $decisions_dir/"
-  info "  ↳  index: $decisions"
+  info "  ↳  index: $target_index"
+  info "  ↳  removed flat file: $decisions"
 }
 
 # ── cmd_session: spectacular session start|end ──────────────────────────────
@@ -1625,18 +1606,30 @@ is_canonical_doc() {
   local file="$1"
   local base
   base=$(basename "$file")
-  case "$base" in
-    SPEC.md)
-      # top-level SPEC.md or a per-capability specs/<capability>/SPEC.md
-      [[ "$file" == ".spectacular/$base" ]] || [[ "$file" == "./.spectacular/$base" ]] || \
-      [[ "$file" == .spectacular/specs/*/SPEC.md ]] || [[ "$file" == ./.spectacular/specs/*/SPEC.md ]]
-      ;;
-    PRD.md|ARCHITECTURE.md|PRINCIPLES.md|ROADMAP.md|STACK.md|DECISIONS.md|AGENTS.md|DESIGN.md|config.yaml)
-      # DESIGN.md is snapshot-able even though Spectacular doesn't otherwise manage it (b16).
-      [[ "$file" == ".spectacular/$base" ]] || [[ "$file" == "./.spectacular/$base" ]]
-      ;;
-    *) return 1 ;;
-  esac
+  local dir
+  dir=$(dirname "$file")
+  dir="${dir#./}"
+
+  # Legacy and OKF root docs
+  if [[ "$dir" == ".spectacular" ]]; then
+    case "$base" in
+      PRD.md|ARCHITECTURE.md|PRINCIPLES.md|STACK.md|AGENTS.md|DESIGN.md|POLICY.md|config.yaml|PERSONAS.md|SPEC.md|ROADMAP.md|DECISIONS.md|MEMORY.md|SESSIONS.md)
+        return 0
+        ;;
+      *) return 1 ;;
+    esac
+  elif [[ "$dir" == ".spectacular/specs" ]] || [[ "$dir" == ".spectacular/roadmaps" ]] || [[ "$dir" == ".spectacular/decisions" ]] || [[ "$dir" == ".spectacular/memories" ]] || [[ "$dir" == ".spectacular/sessions" ]]; then
+    return 0
+  elif [[ "$dir" == ".spectacular/specs/"* ]]; then
+    # Legacy capability subfolders (e.g. specs/auth/SPEC.md)
+    if [[ "$base" == "SPEC.md" ]]; then
+      return 0
+    fi
+  elif [[ "$dir" == ".spectacular/roadmap" ]] || [[ "$dir" == ".spectacular/memory" ]] || [[ "$dir" == ".spectacular/session" ]]; then
+    # Legacy folders
+    return 0
+  fi
+  return 1
 }
 
 # ── config.yaml parsers ───────────────────────────────────────────────────────
@@ -1753,23 +1746,23 @@ EOF
 _feedback_dir() {
   local request="${1:-}"
   if [[ -n "$request" ]]; then
-    echo ".spectacular/requests/$request/feedback"
+    echo ".spectacular/requests/$request/feedbacks"
   else
-    echo ".spectacular/feedback"
+    echo ".spectacular/feedbacks"
   fi
 }
 
 # Walk all feedback locations and emit one path per line
 _feedback_iter_all() {
   local f
-  if [[ -d ".spectacular/feedback" ]]; then
-    for f in .spectacular/feedback/*.md; do
+  if [[ -d ".spectacular/feedbacks" ]]; then
+    for f in .spectacular/feedbacks/*.md; do
       [[ -f "$f" ]] && echo "$f"
     done
   fi
   if [[ -d ".spectacular/requests" ]]; then
     local d
-    for d in .spectacular/requests/*/feedback; do
+    for d in .spectacular/requests/*/feedbacks; do
       [[ -d "$d" ]] || continue
       for f in "$d"/*.md; do
         [[ -f "$f" ]] && echo "$f"
@@ -2017,7 +2010,7 @@ EOF
 
   local year archive_dir target
   year=$(date +%Y)
-  archive_dir=".spectacular/archive/feedback/$year"
+  archive_dir=".spectacular/archive/feedbacks/$year"
   mkdir -p "$archive_dir"
   target="$archive_dir/$(basename "$src")"
 
@@ -2071,10 +2064,17 @@ EOF
 # Shared by ideas, decisions, memory, sessions (single-folder collections).
 # feedback is NOT one of these — it spans two locations (see _feedback_iter_all).
 _iter_md() {
-  local dir=".spectacular/$1" f
+  local name="$1"
+  case "$name" in
+    audit) name="audits" ;;
+    memory) name="memories" ;;
+  esac
+  local dir=".spectacular/$name" f
   [[ -d "$dir" ]] || return 0
   for f in "$dir"/*.md; do
-    [[ -f "$f" ]] && echo "$f"
+    [[ -f "$f" ]] || continue
+    [[ "$(basename "$f")" == "index.md" ]] && continue
+    echo "$f"
   done
 }
 
@@ -2341,6 +2341,7 @@ _next_entry_num() {
   for f in "$dir/$prefix"*.md; do
     [[ -f "$f" ]] || continue
     num=$(basename "$f" .md); num="${num#$prefix}"
+    num="${num%%-*}"
     [[ "$num" =~ ^[0-9]+$ ]] && (( num >= next_n )) && next_n=$(( num + 1 ))
   done
   echo "$next_n"
@@ -2397,9 +2398,12 @@ cmd_audit_new() {
   [[ -d ".spectacular" ]] || die "audit new: not inside a Spectacular workspace"
   _validate_severity "$severity" "audit new"
 
-  local dir=".spectacular/audit"
-  local id="A$(_next_entry_num "$dir" A)"
-  local entry_path="$dir/$id.md"
+  local dir=".spectacular/audits"
+  mkdir -p "$dir"
+  local num="$(_next_entry_num "$dir" A)"
+  local id="A${num}"
+  local slug; slug=$(_slug_from_text "$title")
+  local entry_path="$dir/${id}-${slug}.md"
 
   local template rendered
   template=$(_resolve_template "audit/entry.md") \
@@ -2410,7 +2414,6 @@ cmd_audit_new() {
     INTENDED "${intended:-_(what SHOULD happen instead — the contract the bug violates)_}")
 
   if $dry_run; then echo "── would write $entry_path ──"; echo "$rendered"; return 0; fi
-  mkdir -p "$dir"
   echo "$rendered" > "$entry_path"
   created "$entry_path"
   info "  → status: open · severity: $severity"
@@ -2464,7 +2467,21 @@ cmd_audit_resolve() {
   [[ -z "$disposition" ]] && die "audit resolve: --disposition \"<text>\" required"
   [[ -d ".spectacular" ]] || die "audit resolve: not inside a Spectacular workspace"
 
-  local entry_path=".spectacular/audit/$id.md"
+  local dir=".spectacular/audits"
+  local entry_path="$dir/$id.md"
+  if [[ ! -f "$entry_path" ]]; then
+    local matches=()
+    shopt -s nullglob
+    for match in "$dir/${id}"*.md; do
+      matches+=("$match")
+    done
+    shopt -u nullglob
+    if (( ${#matches[@]} == 1 )); then
+      entry_path="${matches[0]}"
+    elif (( ${#matches[@]} > 1 )); then
+      die "audit resolve: multiple matches found for '$id'"
+    fi
+  fi
   [[ -f "$entry_path" ]] || die "audit resolve: '$id' not found at $entry_path"
 
   # --into-fix graduates the audit into a verified-fix entry, copying every
@@ -2538,7 +2555,10 @@ _fix_scaffold() {
     VERIFIED_BY "${f_verified_by:-_(fill in — name the check)_}")
   if [[ "${f_dry:-false}" == true ]]; then echo "$rendered"; return 0; fi
   mkdir -p "$dir"
-  echo "$rendered" > "$dir/$id.md"
+  local fslug; fslug=$(_slug_from_text "${f_title:-untitled}")
+  local entry_path="$dir/${id}-${fslug}.md"
+  echo "$rendered" > "$entry_path"
+  _FIX_SCAFFOLD_PATH="$entry_path"
   echo "$id"
 }
 
@@ -2596,20 +2616,30 @@ cmd_fix_new() {
   [[ -z "$f_title" ]] && die "fix new: <title> argument required (quote it)"
   [[ -d ".spectacular" ]] || die "fix new: not inside a Spectacular workspace"
   _validate_severity "$f_severity" "fix new"
-  if [[ -n "$f_from_audit" && ! -f ".spectacular/audit/$f_from_audit.md" ]]; then
-    die "fix new: --from-audit '$f_from_audit' not found at .spectacular/audit/$f_from_audit.md"
+  if [[ -n "$f_from_audit" ]]; then
+    local audit_found=false
+    local match
+    for match in ".spectacular/audits/${f_from_audit}"*.md; do
+      [[ -f "$match" ]] && audit_found=true && break
+    done
+    if ! $audit_found; then
+      die "fix new: --from-audit '$f_from_audit' not found under .spectacular/audits/"
+    fi
   fi
   [[ -z "$f_verified_by" ]] && warn "no --verified-by — entry marked unverified; fill 'Verified by' before trusting it"
 
   if $dry_run; then
-    echo "── would write .spectacular/fixes/F$(_next_entry_num .spectacular/fixes F).md ──"
+    local fslug; fslug=$(_slug_from_text "$f_title")
+    echo "── would write .spectacular/fixes/F$(_next_entry_num .spectacular/fixes F)-${fslug}.md ──"
     local f_dry=true; _fix_scaffold || die "fix new: could not render fixes template"
     return 0
   fi
 
-  local id
+  local id fslug entry_path
   id=$(_fix_scaffold) || die "fix new: could not render fixes template"
-  created ".spectacular/fixes/$id.md"
+  fslug=$(_slug_from_text "${f_title:-untitled}")
+  entry_path=".spectacular/fixes/${id}-${fslug}.md"
+  created "$entry_path"
   if [[ -n "$f_verified_by" ]]; then info "  → verified: $TODAY · by: $f_verified_by"; else info "  → verified: null (unverified)"; fi
   [[ -n "$f_from_audit" ]] && info "  ↳ linked to audit: $f_from_audit"
   return 0
@@ -3759,7 +3789,7 @@ EOF
   local _graph_dir
   _graph_dir=$(mktemp -d)
 
-  for _s in "${active_slugs[@]}"; do
+  for _s in ${active_slugs[@]+"${active_slugs[@]}"}; do
     local _plan=".spectacular/requests/$_s/PLAN.md"
     [[ -f "$_plan" ]] || continue
     local _deps _blks _rels_raw
@@ -3783,7 +3813,7 @@ EOF
   # ── 3. Compute inverses ────────────────────────────────────────────────────
   # For each A deps-on B → append A to B.req_by
   # For each A blocks B → append A to B.blk_by
-  for _s in "${active_slugs[@]}"; do
+  for _s in ${active_slugs[@]+"${active_slugs[@]}"}; do
     if [[ -f "$_graph_dir/$_s.dep" ]]; then
       while IFS= read -r _t; do
         [[ -z "$_t" ]] && continue
@@ -3819,7 +3849,7 @@ EOF
     fi
     render_slugs=("$slug")
   else
-    for _s in "${active_slugs[@]}"; do
+    for _s in ${active_slugs[@]+"${active_slugs[@]}"}; do
       if $all || _links_has_edges "$_s"; then
         render_slugs+=("$_s")
       fi
@@ -3830,7 +3860,7 @@ EOF
   if $json; then
     printf '{"graph":['
     local _first_node=true
-    for _s in "${render_slugs[@]}"; do
+    for _s in ${render_slugs[@]+"${render_slugs[@]}"}; do
       $_first_node && _first_node=false || printf ','
       printf '{"slug":"%s"' "$(_json_escape "$_s")"
 
@@ -3884,7 +3914,7 @@ EOF
     return 0
   fi
 
-  for _s in "${render_slugs[@]}"; do
+  for _s in ${render_slugs[@]+"${render_slugs[@]}"}; do
     local _st; _st=$(_links_status "$_s")
     printf "%-30s  [%s]\n" "$_s" "$_st"
 
@@ -4030,16 +4060,26 @@ EOF
   local path
   case "$doctype" in
     prd)          path=".spectacular/PRD.md" ;;
-    spec)         path=".spectacular/SPEC.md" ;;
+    spec)
+      if [[ -f ".spectacular/specs/index.md" ]]; then path=".spectacular/specs/index.md"; else path=".spectacular/SPEC.md"; fi
+      ;;
     principles)   path=".spectacular/PRINCIPLES.md" ;;
     policy)       path=".spectacular/POLICY.md" ;;
     architecture) path=".spectacular/ARCHITECTURE.md" ;;
-    roadmap)      path=".spectacular/ROADMAP.md" ;;
+    roadmap)
+      if [[ -f ".spectacular/roadmaps/index.md" ]]; then path=".spectacular/roadmaps/index.md"; else path=".spectacular/ROADMAP.md"; fi
+      ;;
     stack)        path=".spectacular/STACK.md" ;;
     agents)       path=".spectacular/AGENTS.md" ;;
-    decisions)    path=".spectacular/DECISIONS.md" ;;
-    memory)       path=".spectacular/MEMORY.md" ;;
-    sessions)     path=".spectacular/SESSIONS.md" ;;
+    decisions)
+      if [[ -f ".spectacular/decisions/index.md" ]]; then path=".spectacular/decisions/index.md"; else path=".spectacular/DECISIONS.md"; fi
+      ;;
+    memory)
+      if [[ -f ".spectacular/memories/index.md" ]]; then path=".spectacular/memories/index.md"; else path=".spectacular/MEMORY.md"; fi
+      ;;
+    sessions)
+      if [[ -f ".spectacular/sessions/index.md" ]]; then path=".spectacular/sessions/index.md"; else path=".spectacular/SESSIONS.md"; fi
+      ;;
     personas)     path=".spectacular/PERSONAS.md" ;;
     *) die "show: unknown doctype '$doctype'. Run 'spectacular show --help' for the list." ;;
   esac
@@ -4265,20 +4305,20 @@ EOF
   )
   local -a vals=(
     ".spectacular/PRD.md"
-    ".spectacular/SPEC.md"
+    ".spectacular/specs/index.md"
     ".spectacular/PRINCIPLES.md"
     ".spectacular/ARCHITECTURE.md"
-    ".spectacular/ROADMAP.md"
+    ".spectacular/roadmaps/index.md"
     ".spectacular/STACK.md"
     ".spectacular/AGENTS.md"
     ".spectacular/PERSONAS.md"
-    ".spectacular/DECISIONS.md"
+    ".spectacular/decisions/index.md"
     ".spectacular/decisions/"
-    ".spectacular/MEMORY.md"
-    ".spectacular/memory/"
-    ".spectacular/SESSIONS.md"
+    ".spectacular/memories/index.md"
+    ".spectacular/memories/"
+    ".spectacular/sessions/index.md"
     ".spectacular/sessions/"
-    ".spectacular/feedback/"
+    ".spectacular/feedbacks/"
     ".spectacular/ideas/"
     ".spectacular/requests/"
     ".spectacular/archive/"
@@ -4532,8 +4572,8 @@ EOF
   [[ "$keep" =~ ^[0-9]+$ ]] || die "roadmap migrate: --keep must be a non-negative integer"
   [[ -d ".spectacular" ]] || die "roadmap migrate: not inside a Spectacular workspace"
 
-  local roadmap=".spectacular/ROADMAP.md"
-  local roadmap_dir=".spectacular/roadmap"
+  local roadmap=".spectacular/roadmaps/index.md"
+  local roadmap_dir=".spectacular/roadmaps"
   [[ -f "$roadmap" ]] || die "roadmap migrate: $roadmap not found"
 
   # 1. Parse ## v<X.Y.Z> blocks in document order. Capture heading, body span, and
@@ -4586,12 +4626,12 @@ EOF
     echo ""
     echo "── dry-run: would add to '## Shipped' index in $roadmap ──"
     for i in "${move_idx[@]}"; do
-      echo "- ${blk_ver[$i]} → roadmap/${blk_ver[$i]}.md"
+      echo "- ${blk_ver[$i]} → roadmaps/${blk_ver[$i]}.md"
     done
     return 0
   fi
 
-  # 4. Write per-version files (all before rewriting ROADMAP.md — no data loss).
+  # 4. Write per-version files (all before rewriting roadmaps/index.md — no data loss).
   mkdir -p "$roadmap_dir"
   for i in "${move_idx[@]}"; do
     local v="${blk_ver[$i]}"
@@ -4603,18 +4643,18 @@ EOF
     created "${roadmap_dir}/${v}.md"
   done
 
-  # 5. Build the "## Shipped" index from every v*.md in roadmap/ (sorted), into a
+  # 5. Build the "## Shipped" index from every v*.md in roadmaps/ (sorted), into a
   #    temp file (awk reads it — avoids the newline-in-`-v` limitation).
   local idx_file="${roadmap}.idx.$$"
   {
     echo "## Shipped"
     echo ""
-    echo "> Older shipped versions — full prose moved to per-version files (\`roadmap/v*.md\`); the most recent stay inline above. Facts also live in \`CHANGELOG.md\`."
+    echo "> Older shipped versions — full prose moved to per-version files (\`roadmaps/v*.md\`); the most recent stay inline above. Facts also live in \`CHANGELOG.md\`."
     echo ""
     local f vv
     while IFS= read -r f; do
       vv=$(basename "$f" .md)
-      echo "- ${vv} → roadmap/${vv}.md"
+      echo "- ${vv} → roadmaps/${vv}.md"
     done < <(ls "$roadmap_dir"/v*.md 2>/dev/null | sort -V)
   } > "$idx_file"
 
@@ -4691,8 +4731,9 @@ EOF
     esac
   done
 
-  local roadmap=".spectacular/ROADMAP.md"
-  [[ -f "$roadmap" ]] || die "roadmap: ROADMAP.md not found at $roadmap"
+  local roadmap=".spectacular/roadmaps/index.md"
+  [[ -f "$roadmap" ]] || roadmap=".spectacular/ROADMAP.md"
+  [[ -f "$roadmap" ]] || die "roadmap: roadmap index not found at $roadmap"
 
   # Parse ledger table → emit pipe-delimited: build|slug|title|tier|version|status
   # Ledger format: | build | slug | title | tier | target-version | status |
@@ -5821,7 +5862,12 @@ EOF
         info ""
         info "  The scaffolded request still exists: $req_dir"
         printf "  Remove it too? [y/N] "
-        local ans; read -r ans </dev/tty 2>/dev/null || ans="n"
+        local ans
+        if [[ -t 0 && -t 1 ]]; then
+          read -r ans </dev/tty 2>/dev/null || ans="n"
+        else
+          read -r ans 2>/dev/null || ans="n"
+        fi
         if [[ "$ans" == "y" || "$ans" == "Y" ]]; then
           rm -rf "$req_dir"; info "  ↩ removed scaffolded request: $req_dir"
         else
@@ -6351,6 +6397,326 @@ migration_apply_v05_to_v06() {
   bump_workspace_schema "0.6"
 }
 
+# v0.6 → v2.0: OKF restructing and pluralization
+migration_apply_v06_to_v20() {
+  local dry="$1"
+  echo "  • Running v0.6→v2.0 migration (OKF Restructure)..."
+
+  # Define paths
+  local root_dir=".spectacular"
+
+  # Step 1: Dry run preview
+  if [[ "$dry" == "true" ]]; then
+    echo "  [dry-run] Would pluralize folders:"
+    echo "    - memory/ -> memories/"
+    echo "    - roadmap/ -> roadmaps/"
+    echo "    - feedback/ -> feedbacks/"
+    echo "    - audit/ -> audits/"
+    echo "    - debug/ -> debugs/"
+    echo "    - requests/*/feedback -> feedbacks"
+    echo "  [dry-run] Would relocate index files:"
+    echo "    - DECISIONS.md -> decisions/index.md"
+    echo "    - MEMORY.md -> memories/index.md"
+    echo "    - SESSIONS.md -> sessions/index.md"
+    echo "    - ROADMAP.md -> roadmaps/index.md"
+    echo "    - SPEC.md -> specs/index.md"
+    echo "  [dry-run] Would flatten specs/<capability>/SPEC.md to specs/<capability>.md"
+    echo "  [dry-run] Would rename decisions/D<N>.md to D<N>-<slug>.md"
+    echo "  [dry-run] Would prefix memories/*.md to M<N>-<slug>.md"
+    echo "  [dry-run] Would rewrite markdown links in all workspace files"
+    return 0
+  fi
+
+  # Step 2: Mechanical execution
+
+  # 2a. Relocate/Pluralize Top-level Folders
+  local src_dir dest_dir
+  for pair in "memory:memories" "roadmap:roadmaps" "feedback:feedbacks" "audit:audits" "debug:debugs"; do
+    src_dir="$root_dir/${pair%%:*}"
+    dest_dir="$root_dir/${pair#*:}"
+    if [[ -d "$src_dir" && ! -d "$dest_dir" ]]; then
+      mv "$src_dir" "$dest_dir"
+      echo "  ✓ Renamed $src_dir -> $dest_dir"
+    fi
+  done
+
+  # 2b. Relocate requests-nested feedbacks
+  local req feedbacks_src feedbacks_dest
+  shopt -s nullglob
+  for req in "$root_dir"/requests/*/ "$root_dir"/archive/*/; do
+    [[ -d "$req" ]] || continue
+    feedbacks_src="${req}feedback"
+    feedbacks_dest="${req}feedbacks"
+    if [[ -d "$feedbacks_src" && ! -d "$feedbacks_dest" ]]; then
+      mv "$feedbacks_src" "$feedbacks_dest"
+      echo "  ✓ Renamed $feedbacks_src -> $feedbacks_dest"
+    fi
+  done
+  shopt -u nullglob
+
+  # 2c. Relocate Index Files
+  local idx_src idx_dest_dir idx_dest_file
+  for pair in "DECISIONS.md:decisions/index.md" "MEMORY.md:memories/index.md" "SESSIONS.md:sessions/index.md" "ROADMAP.md:roadmaps/index.md" "SPEC.md:specs/index.md"; do
+    idx_src="$root_dir/${pair%%:*}"
+    idx_dest_file="$root_dir/${pair#*:}"
+    idx_dest_dir="$(dirname "$idx_dest_file")"
+    if [[ -f "$idx_src" ]]; then
+      mkdir -p "$idx_dest_dir"
+      mv "$idx_src" "$idx_dest_file"
+      echo "  ✓ Moved $idx_src -> $idx_dest_file"
+    fi
+  done
+
+  # 2d. Flatten nested specs/
+  local specs_dir="$root_dir/specs"
+  if [[ -d "$specs_dir" ]]; then
+    local subdir spec_file cap_name new_spec
+    shopt -s nullglob
+    for subdir in "$specs_dir"/*/; do
+      subdir="${subdir%/}"
+      spec_file="$subdir/SPEC.md"
+      cap_name="$(basename "$subdir")"
+      if [[ -f "$spec_file" ]]; then
+        new_spec="$specs_dir/${cap_name}.md"
+        mv "$spec_file" "$new_spec"
+        rmdir "$subdir" 2>/dev/null || rm -rf "$subdir"
+        echo "  ✓ Flattened $spec_file -> $new_spec"
+      fi
+    done
+    shopt -u nullglob
+  fi
+
+  # 2e. Rename decisions/D<N>.md to D<N>-<slug>.md
+  # Also build a replacement map for link-rewriting
+  local decs_dir="$root_dir/decisions"
+  local -a dec_old_links=()
+  local -a dec_new_links=()
+  if [[ -d "$decs_dir" ]]; then
+    local f bname num dslug new_name h1_title
+    shopt -s nullglob
+    for f in "$decs_dir"/D[0-9]*.md; do
+      bname="$(basename "$f" .md)"
+      # If already contains a dash after the number, skip renaming but record link mapping
+      if [[ "$bname" =~ ^D[0-9]+- ]]; then
+        dec_old_links+=("decisions/${bname%%-*}")
+        dec_new_links+=("decisions/${bname}")
+        continue
+      fi
+      num="${bname#D}"
+      h1_title=""
+      if [[ -f "$f" ]]; then
+        # Extract H1 title
+        h1_title=$(grep -m1 '^#' "$f" || true)
+        h1_title="${h1_title#\#}"
+        # Strip a leading "D<N> — " / "D<N> - " label only (anchored), not every
+        # hyphen — a hyphenated title must survive intact.
+        h1_title="$(printf '%s' "$h1_title" | sed -E 's/^[[:space:]]*D[0-9]+[[:space:]]*[—-][[:space:]]*//; s/^[[:space:]]*//; s/[[:space:]]*$//')"
+      fi
+      dslug=$(_slug_from_text "${h1_title:-decision-${num}}")
+      local dec_base
+      dec_base=$(_resolve_slug_collision "$decs_dir" "D${num}-${dslug}" "md")
+      new_name="${decs_dir}/${dec_base}.md"
+      mv "$f" "$new_name"
+      echo "  ✓ Renamed $f -> $new_name"
+      dec_old_links+=("decisions/D${num}")
+      dec_new_links+=("decisions/${dec_base}")
+    done
+    shopt -u nullglob
+  fi
+
+  # 2f. Rename memories/*.md to sequential M<N>-<slug>.md
+  # Also build replacement map for memories
+  local mems_dir="$root_dir/memories"
+  local -a mem_old_links=()
+  local -a mem_new_links=()
+  if [[ -d "$mems_dir" ]]; then
+    local mfiles=() f bname num mslug new_name m_title
+    # Collect all memory files (excluding index.md)
+    shopt -s nullglob
+    for f in "$mems_dir"/*.md; do
+      [[ "$(basename "$f")" == "index.md" ]] && continue
+      mfiles+=("$f")
+    done
+    shopt -u nullglob
+
+    # Sort files by updated date in frontmatter (or date in frontmatter)
+    local sorted_mfiles=()
+    local mfile mdate item
+    for mfile in "${mfiles[@]}"; do
+      mdate=$(fm_get "$mfile" "date" 2>/dev/null || true)
+      [[ -z "$mdate" ]] && mdate=$(fm_get "$mfile" "updated" 2>/dev/null || true)
+      [[ -z "$mdate" ]] && mdate="0000-00-00"
+      sorted_mfiles+=("${mdate}|${mfile}")
+    done
+    IFS=$'\n' read -r -d '' -a sorted_mfiles < <(printf '%s\n' "${sorted_mfiles[@]}" | sort; printf '\0')
+
+    # Stable numbering: a file already prefixed M<N>- KEEPS its N (re-runs must
+    # not renumber, or existing links break). Unprefixed files get fresh numbers
+    # continuing past the current max — never reusing a taken slot.
+    local max_n=0 mn
+    for item in "${sorted_mfiles[@]}"; do
+      mn="$(basename "${item#*|}" .md)"
+      if [[ "$mn" =~ ^M([0-9]+)- ]]; then
+        (( BASH_REMATCH[1] > max_n )) && max_n="${BASH_REMATCH[1]}"
+      fi
+    done
+    local next_n=$((max_n + 1))
+    for item in "${sorted_mfiles[@]}"; do
+      mfile="${item#*|}"
+      bname="$(basename "$mfile" .md)"
+      local orig_slug="$bname" this_n
+      if [[ "$bname" =~ ^M([0-9]+)- ]]; then
+        this_n="${BASH_REMATCH[1]}"
+        orig_slug="${bname#M[0-9]*-}"
+      else
+        this_n="$next_n"
+        next_n=$((next_n + 1))
+      fi
+      new_name="${mems_dir}/M${this_n}-${orig_slug}.md"
+      # Only rename if it's different
+      if [[ "$mfile" != "$new_name" ]]; then
+        mv "$mfile" "$new_name"
+        echo "  ✓ Renamed $mfile -> $new_name"
+      fi
+      mem_old_links+=("memory/${bname}")
+      mem_new_links+=("memories/M${this_n}-${orig_slug}")
+    done
+  fi
+
+  # 2g. Rewrite markdown links across all files in .spectacular/
+  local md_files=() f
+  while IFS= read -r f; do
+    [[ -f "$f" ]] && md_files+=("$f")
+  done < <(find "$root_dir" -name "*.md")
+
+  local md_file
+  for md_file in "${md_files[@]}"; do
+    local content temp_file
+    temp_file="${md_file}.tmp.$$"
+    content=$(cat "$md_file")
+
+    echo "$content" > "$temp_file"
+    # Link-only rewrite: operate strictly inside wikilink ([[...]]) and markdown
+    # link ((...) / ](...)) targets — NOT over bare prose. Anchored + idempotent:
+    # matches only the OLD target, so a second run is a no-op. See migration bugs
+    # A/B (over-broad ${//} substring replace) fixed here.
+    python3 -c '
+import sys, re
+content = open(sys.argv[1]).read()
+
+# Nested capability spec must run BEFORE the generic SPEC.md rename, or
+# specs/<cap>/SPEC.md would become specs/<cap>/specs/index.md.
+content = re.sub(r"specs/([A-Za-z0-9_-]+)/SPEC\.md", r"specs/\1.md", content)
+content = re.sub(r"specs/([A-Za-z0-9_-]+)/SPEC(?=[\]) ]|$)", r"specs/\1", content)
+
+# Root index relocations — only rewrite a link TARGET, i.e. a token that is
+# the whole content of [[...]] or the whole (...) of a markdown link.
+INDEX = {
+    "DECISIONS": "decisions/index",
+    "MEMORY":    "memories/index",
+    "SESSIONS":  "sessions/index",
+    "ROADMAP":   "roadmaps/index",
+    "SPEC":      "specs/index",
+}
+def sub_targets(text, old_stem, new_target):
+    # [[OLD]] / [[OLD.md]]  ->  [[NEW]] / [[NEW.md]]
+    text = re.sub(r"\[\[" + old_stem + r"(\.md)?\]\]", "[[" + new_target + r"\1]]", text)
+    # ](OLD) / ](OLD.md) and (OLD) / (OLD.md) as a link target
+    text = re.sub(r"\((" + old_stem + r")(\.md)?\)",
+                  lambda m: "(" + new_target + (m.group(2) or "") + ")", text)
+    return text
+for stem, target in INDEX.items():
+    content = sub_targets(content, stem, target)
+
+# Pluralize singular dir segments — only where they head a link path.
+PLURAL = {"memory": "memories", "roadmap": "roadmaps", "feedback": "feedbacks",
+          "audit": "audits", "debug": "debugs"}
+for sing, plur in PLURAL.items():
+    content = re.sub(r"\[\[" + sing + r"/", "[[" + plur + "/", content)
+    content = re.sub(r"\]\(" + sing + r"/", "](" + plur + "/", content)
+
+# Frontmatter link fields (related:/depends-on:/blocks:) carry relative-path
+# targets as YAML list items ("  - ../../SPEC.md"). Two fixes: (1) rename the
+# old root-index filename, (2) fix the ../ DEPTH — a moved file (root->subdir,
+# or specs/<cap>/SPEC.md->specs/<cap>.md) changed level, so the old relative
+# path no longer resolves. We resolve each target to a real file on disk (by
+# basename, searching the workspace) and re-express it relative to this file.
+import os, posixpath
+this_file = sys.argv[2]                       # real destination path of the doc
+root      = sys.argv[3].rstrip("/")           # .spectacular root
+# Directory of this file, expressed relative to root (posix, "" == root).
+this_reldir = os.path.relpath(os.path.dirname(this_file), root).replace(os.sep, "/")
+if this_reldir == ".":
+    this_reldir = ""
+# The canonical docs a related: field points at (ARCHITECTURE, PRD, the renamed
+# index files, flattened specs) are all addressed FROM ROOT. So: normalize each
+# target to root-relative, then re-express relative to the file dir. This is
+# depth-correct for every move (root->subdir AND specs/<cap>/SPEC.md->specs/<cap>.md)
+# and has no basename ambiguity (unlike matching bare "index.md").
+# Root-level canonical docs a related: field may point at (besides the renamed
+# index files). Only THESE bare filenames get re-rooted — a bare "index.md" must
+# not (it is a subdir index and would be re-expressed wrongly / non-idempotently).
+ROOT_DOCS = {"PRD.md", "PRINCIPLES.md", "ARCHITECTURE.md", "STACK.md",
+             "AGENTS.md", "POLICY.md", "PERSONAS.md", "CAPABILITIES.md",
+             "VISION.md", "RISKS.md", "DESIGN.md"}
+def fix_fm_target(m):
+    prefix, path = m.group(1), m.group(2)
+    base = path.rsplit("/", 1)[-1]            # basename with .md
+    stem = base[:-3]
+    if stem in INDEX:                          # old root-index name -> new location
+        root_rel = INDEX[stem] + ".md"
+    elif base in ROOT_DOCS:                     # "ARCHITECTURE.md" / "../../ARCHITECTURE.md"
+        root_rel = base                        # a root-level canonical doc
+    else:
+        return m.group(0)                      # subpath or non-root file — leave it
+    rel = posixpath.relpath(root_rel, this_reldir or ".")
+    return prefix + rel
+content = re.sub(r"^(\s*-\s*)((?:\.\./)*[A-Za-z0-9_-]+\.md)\s*$",
+                 fix_fm_target, content, flags=re.M)
+
+open(sys.argv[1], "w").write(content)
+' "$temp_file" "$md_file" "$root_dir"
+
+    local i
+    for ((i=0; i<${#dec_old_links[@]}; i++)); do
+      python3 -c '
+import sys
+content = open(sys.argv[1]).read()
+old = sys.argv[2]
+new = sys.argv[3]
+content = content.replace("[[" + old + "]]", "[[" + new + "]]")
+content = content.replace("[[" + old + ".md]]", "[[" + new + ".md]]")
+content = content.replace("(" + old + ")", "(" + new + ")")
+content = content.replace("(" + old + ".md)", "(" + new + ".md)")
+open(sys.argv[1], "w").write(content)
+' "$temp_file" "${dec_old_links[$i]}" "${dec_new_links[$i]}"
+    done
+
+    for ((i=0; i<${#mem_old_links[@]}; i++)); do
+      python3 -c '
+import sys
+content = open(sys.argv[1]).read()
+old = sys.argv[2]
+new = sys.argv[3]
+content = content.replace("[[" + old + "]]", "[[" + new + "]]")
+content = content.replace("[[" + old + ".md]]", "[[" + new + ".md]]")
+content = content.replace("(" + old + ")", "(" + new + ")")
+content = content.replace("(" + old + ".md)", "(" + new + ".md)")
+open(sys.argv[1], "w").write(content)
+' "$temp_file" "${mem_old_links[$i]}" "${mem_new_links[$i]}"
+    done
+
+    mv "$temp_file" "$md_file"
+  done
+
+  # Regenerate index files
+  _regen_memory_index
+  _regen_sessions_index
+
+  bump_workspace_schema "2.0"
+  echo "  ✓ Upgraded workspace to schema 2.0"
+}
+
 # Compare two schema versions (e.g. "0.4", "0.5"). Returns 0 if $1 < $2, else 1.
 # Simple lexicographic comparison via sort -V.
 schema_lt() {
@@ -6489,6 +6855,11 @@ EOF
   fi
   echo ""
 
+  # On-disk schema before we mutate anything — used to gate the history-log
+  # write so a forced `--from` re-run on an up-to-date workspace doesn't dup-log.
+  local disk_schema_before
+  disk_schema_before="$(config_workspace_schema)"
+
   # Apply chain — for each registry entry where from >= current AND to <= target.
   local entry from to id mech applyfn path
   for entry in "${registry[@]}"; do
@@ -6526,9 +6897,14 @@ EOF
     stamp_last_touched
     # Append-only migration history — provenance the current schema alone can't
     # give: when the upgrade ran, from→to, and which CLI version did it.
-    printf '%s  %s → %s  (spectacular %s)\n' \
-      "$TODAY" "$start_schema" "$current" "$SPECTACULAR_VERSION" \
-      >> ".spectacular/migrations.log"
+    # Guard on the ON-DISK schema captured before the apply loop: a forced re-run
+    # (`--from` on an already-migrated workspace) re-applies idempotently but must
+    # NOT append a duplicate log line. Only log a genuine advance.
+    if schema_lt "$disk_schema_before" "$target"; then
+      printf '%s  %s → %s  (spectacular %s)\n' \
+        "$TODAY" "$start_schema" "$current" "$SPECTACULAR_VERSION" \
+        >> ".spectacular/migrations.log"
+    fi
     echo "Migration complete. workspace_schema is now ${current}."
   fi
 }
@@ -7372,24 +7748,25 @@ related:
 
 doc_spec() {
   local name="$1"
-  write_if_missing ".spectacular/SPEC.md" "---
+  mkdir -p ".spectacular/specs"
+  write_if_missing ".spectacular/specs/index.md" "---
 version: 1.0
 updated: ${TODAY}
 summary: \"Index of what this system actually is and how it behaves right now\"
 related:
-  - PRD.md
-  - ARCHITECTURE.md
+  - ../PRD.md
+  - ../ARCHITECTURE.md
 ---
 
 # ${name} — System Spec
 
 <!--
-  SPEC.md is the always-on index of system truth.
+  specs/index.md is the always-on index of system truth.
   PRD says what we want. ARCHITECTURE says how the workspace is shaped.
   This file says what's actually built and how it actually behaves right now.
 
   Keep it short. For small projects, one bullet list is enough.
-  For complex projects, break out per-capability files at specs/<capability>/SPEC.md
+  For complex projects, break out per-capability files at specs/<capability>.md
   and reference them from here.
 -->
 
@@ -7401,27 +7778,28 @@ related:
 ## Capabilities
 
 <Bullet list. One line each. Each bullet is something the system can do right now.
-Link out to \`specs/<capability>/SPEC.md\` only when a capability needs more than one line.>
+Link out to \`specs/<capability>.md\` only when a capability needs more than one line.>
 
 - _no capabilities yet — write the first one when the first request ships_
 
 ## How to extend this file
 
 - Add a bullet when a new capability ships (request → verified)
-- Promote a bullet to \`specs/<capability>/SPEC.md\` when it grows past one line
-- Snapshot before major rewrites: \`spectacular snapshot .spectacular/SPEC.md\`
+- Promote a bullet to \`specs/<capability>.md\` when it grows past one line
+- Snapshot before major rewrites: \`spectacular snapshot .spectacular/specs/index.md\`
 "
 }
 
 doc_roadmap() {
   local name="$1"
-  write_if_missing ".spectacular/ROADMAP.md" "---
+  mkdir -p ".spectacular/roadmaps"
+  write_if_missing ".spectacular/roadmaps/index.md" "---
 version: 1.0
 updated: ${TODAY}
 summary: \"${name} roadmap — v1 status, v2 features, v3+ direction\"
 related:
-  - PRD.md
-  - ARCHITECTURE.md
+  - ../PRD.md
+  - ../ARCHITECTURE.md
 ---
 
 # ${name} — Roadmap
@@ -7452,25 +7830,20 @@ summary: \"Technology stack and engineering rules\"
 }
 
 doc_decisions() {
-  write_if_missing ".spectacular/DECISIONS.md" "---
-version: 1.0
+  mkdir -p ".spectacular/decisions"
+  write_if_missing ".spectacular/decisions/index.md" "---
+type: decisions
+doc: decisions
 updated: ${TODAY}
-summary: \"Architectural and product decisions log\"
 ---
 
 # Decisions
-
-## ${TODAY}
-
-**Context:**
-**Decision:**
-**Consequences:**
 "
 }
 
 doc_memory() {
-  mkdir -p ".spectacular/memory"
-  write_if_missing ".spectacular/MEMORY.md" "---
+  mkdir -p ".spectacular/memories"
+  write_if_missing ".spectacular/memories/index.md" "---
 type: index
 doc: memory
 version: 1.0
@@ -7487,7 +7860,7 @@ summary: \"Operational memory index — auto-regenerated by spectacular remember
 
 doc_sessions() {
   mkdir -p ".spectacular/sessions"
-  write_if_missing ".spectacular/SESSIONS.md" "---
+  write_if_missing ".spectacular/sessions/index.md" "---
 type: index
 doc: sessions
 version: 1.0
@@ -7810,15 +8183,15 @@ Areas (run all if omitted):
   lifecycle     request status vs required verification artifacts
   kits          bundled + project-local kit files parse cleanly
   conventions   active convention_pack resolves; gitignore drift in scaffold/enforce modes
-  specs         SPEC.md present + parseable; specs/ dir present; legacy current/ migration; SPEC.md drift vs newest archive (v1.18.0+)
+  specs         specs/index.md present + parseable; specs/ dir present; flat files; index drift vs newest archive
   docs          docs.yaml + frontmatter validation across the docs/ tree (v0.6.0+)
   personas      PERSONAS.md frontmatter + persona blocks + stories (v1.3.0+; opt-in)
-  memory        MEMORY.md frontmatter + index ↔ entries drift (v1.5.0+; opt-in)
-  sessions      SESSIONS.md frontmatter + open-session invariant + 4h stale warning (v1.5.0+; opt-in)
-  feedback      feedback/ entries — frontmatter, stale-open (>30d), orphan back-refs (v1.6.0+)
-  ideas         ideas/ entries — frontmatter, stale-exploring (>90d), orphan promoted (v1.7.0+)
-  debug         debug/<slug> trace spines — status/disposition enums + wont-fix/folded⟹no-logged-fixes invariant (v1.26.0+)
-  decisions     DECISIONS.md index-mode consistency — orphans, stale files, numbering gaps (v1.17.0+)
+  memory        memories/index.md frontmatter + index ↔ entries drift; prefix naming
+  sessions      sessions/index.md frontmatter + open-session invariant + 4h stale warning
+  feedback      feedbacks/ entries — frontmatter, stale-open (>30d), orphan back-refs
+  ideas         ideas/ entries — frontmatter, stale-exploring (>90d), orphan promoted
+  debug         debugs/<slug> trace spines — status/disposition enums
+  decisions     decisions/index.md index-mode consistency — orphans, stale files, prefix naming, numbering gaps
 
 Options:
   --fix              Apply mechanical fixes (gitignore append, missing dirs,
@@ -7983,7 +8356,7 @@ check_workspace() {
     [[ -n "$cfg_agents" ]] && agents_file="$cfg_agents"
   fi
 
-  local always_set=("PRD.md" "SPEC.md" "config.yaml" "POLICY.md" "$agents_file")
+  local always_set=("PRD.md" "config.yaml" "POLICY.md" "$agents_file")
   for f in "${always_set[@]}"; do
     if [[ -f ".spectacular/$f" ]]; then
       doc_add "workspace" "pass" ".spectacular/$f" "always-set file present"
@@ -8071,8 +8444,14 @@ except yaml.YAMLError as e:
   # error, no warning, just discoverability for projects scaffolded against
   # older kits or that initialized with --kit blank.
   local missing_v06=()
-  for v06_file in PRINCIPLES.md ARCHITECTURE.md ROADMAP.md; do
-    [[ -f ".spectacular/$v06_file" ]] || missing_v06+=("${v06_file%.md}")
+  local path
+  for v06_name in PRINCIPLES ARCHITECTURE ROADMAP; do
+    if [[ "$v06_name" == "ROADMAP" ]]; then
+      path=".spectacular/roadmaps/index.md"
+    else
+      path=".spectacular/${v06_name}.md"
+    fi
+    [[ -f "$path" ]] || missing_v06+=("$v06_name")
   done
   if (( ${#missing_v06[@]} > 0 )); then
     local v06_list with_arg
@@ -8087,7 +8466,8 @@ except yaml.YAMLError as e:
   # v0.9+ ROADMAP shape detection: structured roadmaps have `**Phase:**` markers
   # and `**Scope (in):**` slots. Pre-v0.9 freeform roadmaps have only `**Status:**`
   # plus loose bullet lists. Surface as info — never error.
-  local roadmap=".spectacular/ROADMAP.md"
+  local roadmap=".spectacular/roadmaps/index.md"
+  [[ -f "$roadmap" ]] || roadmap=".spectacular/ROADMAP.md"
   if [[ -f "$roadmap" ]]; then
     if grep -q "^## v" "$roadmap" 2>/dev/null && ! grep -q "^\*\*Phase:\*\*" "$roadmap" 2>/dev/null; then
       doc_add "workspace" "info" "$roadmap" \
@@ -8840,7 +9220,7 @@ check_conventions() {
 check_specs() {
   [[ -d ".spectacular" ]] || return 0
 
-  local spec_file=".spectacular/SPEC.md"
+  local spec_file=".spectacular/specs/index.md"
   local specs_dir=".spectacular/specs"
   local legacy_dir=".spectacular/current"
 
@@ -8868,55 +9248,45 @@ check_specs() {
       "mkdir -p .spectacular/specs (mechanical fix available)" "mechanical"
   fi
 
-  # SPEC.md present + parseable
+  # index.md present + parseable
   if [[ -f "$spec_file" ]]; then
     if head -1 "$spec_file" | grep -q '^---$'; then
-      doc_add "specs" "pass" "$spec_file" "SPEC.md present with frontmatter"
+      doc_add "specs" "pass" "$spec_file" "specs/index.md present with frontmatter"
     else
-      doc_add "specs" "error" "$spec_file" "SPEC.md missing frontmatter delimiter" \
+      doc_add "specs" "error" "$spec_file" "specs/index.md missing frontmatter delimiter" \
         "add proper frontmatter block" "judgment"
     fi
   else
-    doc_add "specs" "error" "$spec_file" "SPEC.md missing" \
+    doc_add "specs" "error" "$spec_file" "specs/index.md missing" \
       "re-scaffold via 'spectacular doctor --fix' or 'spectacular init'" "mechanical"
   fi
 
-  # Per-capability subfolders: optional; if present, each must hold a SPEC.md
+  # Check: No nested subdirectories under specs/ (OKF flat specs rule)
+  local nested_dirs=()
   shopt -s nullglob
   for subdir in "$specs_dir"/*/; do
-    local cap_spec="${subdir}SPEC.md"
-    if [[ -f "$cap_spec" ]]; then
-      if head -1 "$cap_spec" | grep -q '^---$'; then
-        doc_add "specs" "pass" "$cap_spec" "capability spec present"
-      else
-        doc_add "specs" "warning" "$cap_spec" "capability spec missing frontmatter delimiter" \
-          "add proper frontmatter block" "judgment"
-      fi
-    else
-      doc_add "specs" "warning" "$subdir" "capability folder missing SPEC.md" \
-        "create ${cap_spec} or remove the empty folder" "judgment"
-    fi
+    nested_dirs+=("$subdir")
   done
+  shopt -u nullglob
+  if (( ${#nested_dirs[@]} > 0 )); then
+    doc_add "specs" "warning" "$specs_dir/" "nested directory found in specs/ (OKF specs must be flat concept files): ${nested_dirs[*]}" \
+      "flatten directories by moving SPEC.md files to flat concept files and removing subdirectories" "judgment"
+  fi
 
-  # Flat contract docs (v0.6.1+): top-level .md files in specs/ are valid alongside
-  # capability subfolders. Convention: kebab-case names (e.g. SCHEMA-TASK.md,
-  # AXIS-MODEL.md), not "SPEC.md" (which lives one level up at .spectacular/).
+  # Flat contract docs: top-level .md files in specs/ (excluding index.md)
+  shopt -s nullglob
   for contract_doc in "$specs_dir"/*.md; do
     local basename
     basename="$(basename "$contract_doc")"
-    # SPEC.md doesn't belong at specs/ root (it's at .spectacular/SPEC.md). Flag it.
-    if [[ "$basename" == "SPEC.md" ]]; then
-      doc_add "specs" "warning" "$contract_doc" "SPEC.md belongs at .spectacular/SPEC.md, not under specs/" \
-        "move to .spectacular/SPEC.md or rename if intended as a contract doc" "judgment"
-      continue
-    fi
+    [[ "$basename" == "index.md" ]] && continue
     if head -1 "$contract_doc" 2>/dev/null | grep -q '^---$'; then
-      doc_add "specs" "pass" "$contract_doc" "contract doc present (top-level .md in specs/)"
+      doc_add "specs" "pass" "$contract_doc" "capability spec present (flat file in specs/)"
     else
-      doc_add "specs" "warning" "$contract_doc" "contract doc missing frontmatter delimiter" \
+      doc_add "specs" "warning" "$contract_doc" "capability spec missing frontmatter delimiter" \
         "add proper frontmatter block" "judgment"
     fi
   done
+  shopt -u nullglob
 
   # Delta integrity (v1.28.0+): validate each active request's SPEC-DELTA.md
   # against the current spec files. MODIFIED/REMOVED must quote a bullet that
@@ -8967,9 +9337,7 @@ check_specs() {
     (( ok == 1 )) && doc_add "specs" "pass" "$delta" "spec delta integrity ok ($dslug)"
   done
 
-  # Drift: SPEC.md staler than the newest archived request → it likely missed a
-  # spec-sync. ponytail: date heuristic, not a content diff — a request archived
-  # without touching any capability false-positives, hence "may be stale".
+  # Drift: specs/index.md staler than the newest archived request
   if [[ -f "$spec_file" ]] && head -1 "$spec_file" | grep -q '^---$'; then
     local spec_updated newest_arch="" newest_epoch=0 spec_epoch
     spec_updated=$(fm_get "$spec_file" "updated")
@@ -8986,8 +9354,8 @@ check_specs() {
     done
     if (( newest_epoch > 0 && spec_epoch > 0 && newest_epoch > spec_epoch )); then
       doc_add "specs" "warning" "$spec_file" \
-        "SPEC.md (updated $spec_updated) may be stale — request '$newest_arch' archived more recently; run spec-sync to confirm it's reflected" \
-        "review SPEC.md against archive/$newest_arch and update if a capability is missing" "judgment"
+        "specs/index.md (updated $spec_updated) may be stale — request '$newest_arch' archived more recently; run spec-sync to confirm it's reflected" \
+        "review specs/index.md against archive/$newest_arch and update if a capability is missing" "judgment"
     fi
   fi
 
@@ -9119,24 +9487,24 @@ check_personas() {
 # Soft-DB self-check: index ↔ entries drift, frontmatter shape.
 check_memory() {
   [[ -d ".spectacular" ]] || return 0
-  local idx=".spectacular/MEMORY.md" dir=".spectacular/memory"
+  local idx=".spectacular/memories/index.md" dir=".spectacular/memories"
 
   if [[ ! -f "$idx" ]] && [[ ! -d "$dir" ]]; then
-    doc_add "memory" "info" "$idx" "MEMORY.md not scaffolded — opt-in via 'spectacular init --with memory' or coding kit" \
+    doc_add "memory" "info" "$idx" "memories/index.md not scaffolded — opt-in via 'spectacular init --with memory' or coding kit" \
       "skip" "judgment"
     return 0
   fi
 
   if [[ ! -f "$idx" ]]; then
-    doc_add "memory" "warning" "$idx" "memory/ directory exists but MEMORY.md index is missing" \
-      "run 'spectacular remember \"...\"' to regenerate the index, or scaffold MEMORY.md manually" "judgment"
+    doc_add "memory" "warning" "$idx" "memories/ directory exists but memories/index.md index is missing" \
+      "run 'spectacular remember \"...\"' to regenerate the index, or scaffold memories/index.md manually" "judgment"
     return 0
   fi
 
   if head -1 "$idx" | grep -q '^---$'; then
-    doc_add "memory" "pass" "$idx" "MEMORY.md present with frontmatter"
+    doc_add "memory" "pass" "$idx" "memories/index.md present with frontmatter"
   else
-    doc_add "memory" "warning" "$idx" "MEMORY.md missing frontmatter delimiter" \
+    doc_add "memory" "warning" "$idx" "memories/index.md missing frontmatter delimiter" \
       "add proper frontmatter block (type: index, doc: memory, updated: <date>)" "judgment"
   fi
 
@@ -9145,6 +9513,8 @@ check_memory() {
   if [[ -d "$dir" ]]; then
     for file in "$dir"/*.md; do
       [[ -f "$file" ]] || continue
+      # Don't count index.md as a memory entry file
+      [[ "$(basename "$file")" == "index.md" ]] && continue
       entry_count=$((entry_count + 1))
     done
   fi
@@ -9156,26 +9526,24 @@ check_memory() {
 
   # Detect index ↔ entries drift
   local index_links
-  index_links=$(grep -oE '\[\[memory/[^]]+\]\]' "$idx" 2>/dev/null | sed 's/\[\[memory\///; s/\]\]//' | sort -u || true)
+  index_links=$(grep -oE '\[\[memories/[^]]+\]\]' "$idx" 2>/dev/null | sed 's/\[\[memories\///; s/\]\]//' | sort -u || true)
   local index_link_count
   index_link_count=$(echo "$index_links" | grep -c . || true)
 
   if [[ $entry_count -ne $index_link_count ]]; then
-    doc_add "memory" "warning" "$idx" "drift: ${entry_count} entries on disk vs ${index_link_count} links in MEMORY.md" \
+    doc_add "memory" "warning" "$idx" "drift: ${entry_count} entries on disk vs ${index_link_count} links in memories/index.md" \
       "regenerate by writing or removing an entry — any 'spectacular remember' call rebuilds the index" "judgment"
   else
     doc_add "memory" "pass" "$dir" "${entry_count} memory entries; index ↔ entries in sync"
   fi
 
   # Staleness check (v1.16.0+): flag memory entries older than 180 days.
-  # Memory holds durable facts; 180d is a conservative nudge to review and
-  # prune obsolete entries before they mislead. Gradient: sessions 4h <
-  # feedback 30d < ideas 90d < memory 180d.
   local _stale_count=0 _stale_slugs="" _now_epoch _entry_epoch _age_days _updated
   _now_epoch=$(date "+%s")
   if [[ -d "$dir" ]]; then
     for file in "$dir"/*.md; do
       [[ -f "$file" ]] || continue
+      [[ "$(basename "$file")" == "index.md" ]] && continue
       _updated=$(fm_get "$file" "updated" 2>/dev/null || true)
       [[ -z "$_updated" ]] && continue
       # Parse ISO date YYYY-MM-DD; skip if not that shape
@@ -9195,30 +9563,47 @@ check_memory() {
       "${_stale_count} memory $([ $_stale_count -eq 1 ] && echo entry || echo entries) older than 180 days: ${_stale_slugs}" \
       "review and update or archive stale entries" "judgment"
   fi
+
+  # Check 5: Prefix naming pattern M<N>-<slug>.md
+  local invalid_prefix_count=0 invalid_prefix_files=""
+  for file in "$dir"/*.md; do
+    [[ -f "$file" ]] || continue
+    local bname; bname=$(basename "$file")
+    [[ "$bname" == "index.md" ]] && continue
+    if [[ ! "$bname" =~ ^M[0-9]+-[a-z0-9-]+.md$ ]]; then
+      invalid_prefix_count=$((invalid_prefix_count + 1))
+      invalid_prefix_files="${invalid_prefix_files:+$invalid_prefix_files, }$bname"
+    fi
+  done
+  if [[ $invalid_prefix_count -gt 0 ]]; then
+    doc_add "memory" "warning" "$dir" \
+      "$invalid_prefix_count memory file(s) missing sequential M<N>-<slug> prefix: $invalid_prefix_files" \
+      "rename files to follow the M<N>-<slug>.md pattern" "judgment"
+  fi
 }
 
 # ── check_sessions (v1.5.0+) ─────────────────────────────────────────────────
 # Soft-DB + lifecycle: at most one open, 4h stale-open warning.
 check_sessions() {
   [[ -d ".spectacular" ]] || return 0
-  local idx=".spectacular/SESSIONS.md" dir=".spectacular/sessions"
+  local idx=".spectacular/sessions/index.md" dir=".spectacular/sessions"
 
   if [[ ! -f "$idx" ]] && [[ ! -d "$dir" ]]; then
-    doc_add "sessions" "info" "$idx" "SESSIONS.md not scaffolded — opt-in via 'spectacular init --with sessions' or coding kit" \
+    doc_add "sessions" "info" "$idx" "sessions/index.md not scaffolded — opt-in via 'spectacular init --with sessions' or coding kit" \
       "skip" "judgment"
     return 0
   fi
 
   if [[ ! -f "$idx" ]]; then
-    doc_add "sessions" "warning" "$idx" "sessions/ directory exists but SESSIONS.md index is missing" \
+    doc_add "sessions" "warning" "$idx" "sessions/ directory exists but sessions/index.md index is missing" \
       "run 'spectacular session start' to regenerate the index" "judgment"
     return 0
   fi
 
   if head -1 "$idx" | grep -q '^---$'; then
-    doc_add "sessions" "pass" "$idx" "SESSIONS.md present with frontmatter"
+    doc_add "sessions" "pass" "$idx" "sessions/index.md present with frontmatter"
   else
-    doc_add "sessions" "warning" "$idx" "SESSIONS.md missing frontmatter delimiter" \
+    doc_add "sessions" "warning" "$idx" "sessions/index.md missing frontmatter delimiter" \
       "add proper frontmatter block (type: index, doc: sessions, updated: <date>)" "judgment"
   fi
 
@@ -9227,6 +9612,7 @@ check_sessions() {
   if [[ -d "$dir" ]]; then
     for file in "$dir"/*.md; do
       [[ -f "$file" ]] || continue
+      [[ "$(basename "$file")" == "index.md" ]] && continue
       entry_count=$((entry_count + 1))
       status=$(fm_get "$file" "status")
       if [[ "$status" == "open" ]]; then
@@ -9275,7 +9661,7 @@ check_sessions() {
   index_link_count=$(echo "$index_links" | grep -c . || true)
 
   if [[ $entry_count -ne $index_link_count ]]; then
-    doc_add "sessions" "warning" "$idx" "drift: ${entry_count} entries on disk vs ${index_link_count} links in SESSIONS.md" \
+    doc_add "sessions" "warning" "$idx" "drift: ${entry_count} entries on disk vs ${index_link_count} links in sessions/index.md" \
       "regenerate by running any 'spectacular session start' or 'session end' — both rebuild the index" "judgment"
   else
     doc_add "sessions" "pass" "$dir" "${entry_count} session entries; index ↔ entries in sync"
@@ -9291,15 +9677,15 @@ check_sessions() {
 check_feedback() {
   [[ -d ".spectacular" ]] || return 0
 
-  local top_dir=".spectacular/feedback"
+  local top_dir=".spectacular/feedbacks"
   local has_any=false
 
-  if [[ -d "$top_dir" ]] || ls -d .spectacular/requests/*/feedback >/dev/null 2>&1; then
+  if [[ -d "$top_dir" ]] || ls -d .spectacular/requests/*/feedbacks >/dev/null 2>&1; then
     has_any=true
   fi
 
   if ! $has_any; then
-    doc_add "feedback" "info" ".spectacular/feedback/" "no feedback entries yet — start one with 'spectacular feedback-loop new <target>'" \
+    doc_add "feedback" "info" ".spectacular/feedbacks/" "no feedback entries yet — start one with 'spectacular feedback-loop new <target>'" \
       "skip" "judgment"
     return 0
   fi
@@ -9467,10 +9853,10 @@ check_ideas() {
 # it surfaces later as a resume failure. Enums mirror references/debug-trace.md.
 check_debug() {
   [[ -d ".spectacular" ]] || return 0
-  local top_dir=".spectacular/debug"
+  local top_dir=".spectacular/debugs"
 
   if [[ ! -d "$top_dir" ]]; then
-    doc_add "debug" "info" "$top_dir" "no debug/ folder — opens on the first fleet job (see references/debug-trace.md)" \
+    doc_add "debug" "info" "$top_dir" "no debugs/ folder — opens on the first fleet job (see references/debug-trace.md)" \
       "skip" "judgment"
     return 0
   fi
@@ -9486,7 +9872,7 @@ check_debug() {
     [[ -d "$d" ]] || continue
     slug=$(basename "$d")
     job="$d/job.json"
-    [[ -f "$job" ]] || { bad=1; doc_add "debug" "warning" "$d" "debug/$slug has no job.json spine" \
+    [[ -f "$job" ]] || { bad=1; doc_add "debug" "warning" "$d" "debugs/$slug has no job.json spine" \
         "every debug job needs a job.json — see references/debug-trace.md, or remove a stray folder" "judgment"; continue; }
     job_count=$((job_count + 1))
 
@@ -9502,7 +9888,7 @@ print(d.get("status","")); print(d.get("symptom_class",""))
 ' "$job" 2>/dev/null)
 
     if [[ "$fields" == "__PARSE_ERROR__"* ]]; then
-      bad=1; doc_add "debug" "warning" "$job" "debug/$slug/job.json does not parse as JSON" \
+      bad=1; doc_add "debug" "warning" "$job" "debugs/$slug/job.json does not parse as JSON" \
         "fix the JSON syntax; validate with: python3 -m json.tool $job" "judgment"
       continue
     fi
@@ -9511,7 +9897,7 @@ print(d.get("status","")); print(d.get("symptom_class",""))
 
     # status enum (this is the field the orchestrator put a reason-value into)
     if [[ -n "$status" ]] && [[ " $job_status " != *" $status "* ]]; then
-      bad=1; doc_add "debug" "warning" "$job" "debug/$slug: job status '$status' is off-enum" \
+      bad=1; doc_add "debug" "warning" "$job" "debugs/$slug: job status '$status' is off-enum" \
         "use one of: ${job_status// / | } (a 'reason' value like needs-more-context belongs in a hypotheses-only investigation, not job status)" "judgment"
     fi
 
@@ -9530,19 +9916,19 @@ lf=d.get("logged_fixes",[])
 print(len(lf) if isinstance(lf,list) else -1)
 ' "$outcome" 2>/dev/null)
       if [[ "$ofields" == "__PARSE_ERROR__"* ]]; then
-        bad=1; doc_add "debug" "warning" "$outcome" "debug/$slug/outcome.json does not parse as JSON" \
+        bad=1; doc_add "debug" "warning" "$outcome" "debugs/$slug/outcome.json does not parse as JSON" \
           "fix the JSON syntax; validate with: python3 -m json.tool $outcome" "judgment"
       else
         disp=$(printf '%s\n' "$ofields" | sed -n '1p')
         nfixes=$(printf '%s\n' "$ofields" | sed -n '2p')
         if [[ -n "$disp" ]] && [[ " $dispositions " != *" $disp "* ]]; then
-          bad=1; doc_add "debug" "warning" "$outcome" "debug/$slug: disposition '$disp' is off-enum" \
+          bad=1; doc_add "debug" "warning" "$outcome" "debugs/$slug: disposition '$disp' is off-enum" \
             "use one of: ${dispositions// / | } — as a bare value; put the why in a separate 'reason' field, not inside the disposition string" "judgment"
         fi
         # the invariant the orchestrator has to *remember* (P6/P7): a declined or
         # relocated job applies nothing, so it graduates no fix.
         if [[ "$disp" == "wont-fix" || "$disp" == "folded-into-request" ]] && [[ "$nfixes" -gt 0 ]]; then
-          bad=1; doc_add "debug" "warning" "$outcome" "debug/$slug: disposition '$disp' but logged_fixes is non-empty ($nfixes)" \
+          bad=1; doc_add "debug" "warning" "$outcome" "debugs/$slug: disposition '$disp' but logged_fixes is non-empty ($nfixes)" \
             "a wont-fix/folded job applies nothing — logged_fixes must be [] (Step 3 logs only verified fixes)" "judgment"
         fi
       fi
@@ -9778,32 +10164,26 @@ check_policies() {
   fi
 }
 
-# ── area: decisions ──────────────────────────────────────────────────────────
-# v1.17.0: check DECISIONS.md index-mode consistency.
-# Only runs when decisions/ folder exists (index mode). Flat mode: skip.
 check_decisions() {
   [[ -d ".spectacular" ]] || return 0
-  local decisions=".spectacular/DECISIONS.md"
+  local decisions=".spectacular/decisions/index.md"
   local decisions_dir=".spectacular/decisions"
 
-  # Flat mode — skip. All checks are index-mode only.
-  if [[ ! -d "$decisions_dir" ]]; then
-    doc_add "decisions" "pass" "$decisions" "flat mode — no decisions/ folder (index checks skipped)"
+  if [[ ! -d "$decisions_dir" ]] || [[ ! -f "$decisions" ]]; then
+    doc_add "decisions" "warning" "$decisions" "decisions/ index-mode folder or index.md missing" \
+      "run 'spectacular decide' to bootstrap the decisions soft-DB" "judgment"
     return 0
   fi
 
-  # Check 1: mode consistency — DECISIONS.md must not contain prose blocks
+  # Check 1: mode consistency — decisions/index.md must not contain prose blocks
   if [[ -f "$decisions" ]]; then
     if grep -q "^\*\*Context:\*\*\|^\*\*Decision:\*\*\|^\*\*Consequences:\*\*" "$decisions"; then
       doc_add "decisions" "warning" "$decisions" \
-        "DECISIONS.md contains prose blocks but decisions/ folder exists — file is not a pure index" \
+        "decisions/index.md contains prose blocks — file is not a pure index" \
         "run 'spectacular decisions migrate' to convert the remaining prose to per-entry files" "judgment"
     else
-      doc_add "decisions" "pass" "$decisions" "DECISIONS.md is index-only (no prose blocks)"
+      doc_add "decisions" "pass" "$decisions" "decisions/index.md is index-only (no prose blocks)"
     fi
-  else
-    doc_add "decisions" "info" "$decisions" "DECISIONS.md missing (index-mode workspace has decisions/ but no root index)" \
-      "run 'spectacular decide' to create the first entry — it will bootstrap the index" "judgment"
   fi
 
   # Collect index entries: lines matching "- **D<N>**"
@@ -9817,13 +10197,14 @@ check_decisions() {
     done < "$decisions"
   fi
 
-  # Collect file entries: D<N>.md in decisions/
+  # Collect file entries: D<N>-*.md in decisions/
   local -a file_nums=()
   local f num
   for f in "$decisions_dir"/D*.md; do
     [[ -f "$f" ]] || continue
     num=$(basename "$f" .md)
     num="${num#D}"
+    num="${num%%-*}"
     [[ "$num" =~ ^[0-9]+$ ]] && file_nums+=("$num")
   done
 
@@ -9833,23 +10214,28 @@ check_decisions() {
   # Check 2: no orphan index lines (index entry with no corresponding file)
   local orphans=""
   local n
-  for n in "${index_nums[@]}"; do
-    [[ -f "${decisions_dir}/D${n}.md" ]] || orphans="${orphans:+$orphans, }D${n}"
+  for n in ${index_nums[@]+"${index_nums[@]}"}; do
+    local has_file=false
+    local match
+    for match in "${decisions_dir}/D${n}"*.md; do
+      [[ -f "$match" ]] && has_file=true && break
+    done
+    $has_file || orphans="${orphans:+$orphans, }D${n}"
   done
   if [[ -n "$orphans" ]]; then
     doc_add "decisions" "warning" "$decisions_dir" \
       "orphan index line(s) with no file: $orphans" \
-      "create the missing decisions/D<N>.md files or remove the stale index lines" "judgment"
+      "create the missing decisions/D<N>-<slug>.md files or remove the stale index lines" "judgment"
   else
     (( idx_count > 0 )) && doc_add "decisions" "pass" "$decisions_dir" "all $idx_count index lines have a corresponding file"
   fi
 
   # Check 3: no stale files (file with no corresponding index line)
   local stale=""
-  for n in "${file_nums[@]}"; do
+  for n in ${file_nums[@]+"${file_nums[@]}"}; do
     local found=false
     local idx_n
-    for idx_n in "${index_nums[@]}"; do
+    for idx_n in ${index_nums[@]+"${index_nums[@]}"}; do
       [[ "$n" == "$idx_n" ]] && found=true && break
     done
     $found || stale="${stale:+$stale, }D${n}"
@@ -9857,7 +10243,7 @@ check_decisions() {
   if [[ -n "$stale" ]]; then
     doc_add "decisions" "warning" "$decisions_dir" \
       "stale file(s) with no index line: $stale" \
-      "add a '- **D<N>** — Title — rationale' line to DECISIONS.md for each" "judgment"
+      "add a '- **D<N>** — Title — rationale' line to decisions/index.md for each" "judgment"
   else
     (( file_count > 0 )) && doc_add "decisions" "pass" "$decisions_dir" "all $file_count per-entry files have a corresponding index line"
   fi
@@ -9866,7 +10252,7 @@ check_decisions() {
   if [[ $file_count -gt 0 ]]; then
     # Sort numerically
     local sorted_nums
-    sorted_nums=$(printf '%s\n' "${file_nums[@]}" | sort -n)
+    sorted_nums=$(printf '%s\n' ${file_nums[@]+"${file_nums[@]}"} | sort -n)
     local prev=0 gap="" dup="" seen_list=""
     while IFS= read -r n; do
       # Duplicate check
@@ -9901,6 +10287,22 @@ check_decisions() {
       doc_add "decisions" "pass" "$decisions_dir" "D-numbers are sequential with no gaps or duplicates (1–${prev})"
     fi
   fi
+
+  # Check 5: Prefix naming pattern D<N>-<slug>.md
+  local invalid_prefix_count=0 invalid_prefix_files=""
+  for f in "$decisions_dir"/D*.md; do
+    [[ -f "$f" ]] || continue
+    local bname; bname=$(basename "$f")
+    if [[ ! "$bname" =~ ^D[0-9]+-[a-z0-9-]+.md$ ]]; then
+      invalid_prefix_count=$((invalid_prefix_count + 1))
+      invalid_prefix_files="${invalid_prefix_files:+$invalid_prefix_files, }$bname"
+    fi
+  done
+  if [[ $invalid_prefix_count -gt 0 ]]; then
+    doc_add "decisions" "warning" "$decisions_dir" \
+      "$invalid_prefix_count decision file(s) missing sequential D<N>-<slug> prefix: $invalid_prefix_files" \
+      "rename files to follow the D<N>-<slug>.md pattern" "judgment"
+  fi
 }
 
 # ── check_roadmap (v1.23.0+, b18) ─────────────────────────────────────────────
@@ -9911,9 +10313,9 @@ check_decisions() {
 #     beyond the keep-window are still inline (prunable via `roadmap migrate`).
 check_roadmap() {
   [[ -d ".spectacular" ]] || return 0
-  local roadmap=".spectacular/ROADMAP.md"
-  local roadmap_dir=".spectacular/roadmap"
-  [[ -f "$roadmap" ]] || { doc_add "roadmap" "info" "$roadmap" "ROADMAP.md not present — skipped"; return 0; }
+  local roadmap=".spectacular/roadmaps/index.md"
+  local roadmap_dir=".spectacular/roadmaps"
+  [[ -f "$roadmap" ]] || { doc_add "roadmap" "info" "$roadmap" "roadmaps/index.md not present — skipped"; return 0; }
 
   # Count inline shipped prose blocks: ## v-blocks whose body has **Status:** shipped.
   # On each new ## heading, bank the previous block if it was a shipped v-block.
@@ -9928,49 +10330,56 @@ check_roadmap() {
     END { if (inv && shipped) c++; print c+0 }
   ' "$roadmap")
 
-  # Flat mode — no roadmap/ folder. Only nudge if many shipped blocks sit inline.
-  if [[ ! -d "$roadmap_dir" ]]; then
+  # Flat mode — no per-version files yet. Only nudge if many shipped blocks sit inline.
+  # Flat mode detection: no version files matching v*.md on disk.
+  local vfiles=()
+  shopt -s nullglob
+  for f in "$roadmap_dir"/v*.md; do
+    vfiles+=("$f")
+  done
+  shopt -u nullglob
+
+  if (( ${#vfiles[@]} == 0 )); then
     if (( inline_shipped > ROADMAP_KEEP_DEFAULT )); then
       doc_add "roadmap" "info" "$roadmap" \
         "$inline_shipped shipped prose blocks inline (flat mode) — beyond keep=$ROADMAP_KEEP_DEFAULT" \
-        "run 'spectacular roadmap migrate' to move older shipped prose into roadmap/v*.md behind a Shipped index" "judgment"
+        "run 'spectacular roadmap migrate' to move older shipped prose into roadmaps/v*.md behind a Shipped index" "judgment"
     else
-      doc_add "roadmap" "pass" "$roadmap" "flat mode — $inline_shipped shipped block(s) inline (no roadmap/ folder)"
+      doc_add "roadmap" "pass" "$roadmap" "flat mode — $inline_shipped shipped block(s) inline (no roadmaps/v*.md files)"
     fi
     return 0
   fi
 
-  # Index mode. Collect index lines (- vX.Y.Z → roadmap/vX.Y.Z.md) and files.
+  # Index mode. Collect index lines (- vX.Y.Z → roadmaps/vX.Y.Z.md) and files.
   local -a idx_vers file_vers
   local line v
   while IFS= read -r line; do
-    if [[ "$line" =~ ^-[[:space:]]+(v[0-9]+\.[0-9]+\.[0-9]+)[[:space:]]+.*roadmap/ ]]; then
+    if [[ "$line" =~ ^-[[:space:]]+(v[0-9]+\.[0-9]+\.[0-9]+)[[:space:]]+.*roadmaps/ ]]; then
       idx_vers+=("${BASH_REMATCH[1]}")
     fi
   done < "$roadmap"
   local f
-  for f in "$roadmap_dir"/v*.md; do
-    [[ -f "$f" ]] || continue
+  for f in "${vfiles[@]}"; do
     v=$(basename "$f" .md)
     file_vers+=("$v")
   done
 
   # Orphan index lines (index entry, no file).
   local orphans=""
-  for v in "${idx_vers[@]}"; do
+  for v in ${idx_vers[@]+"${idx_vers[@]}"}; do
     [[ -f "${roadmap_dir}/${v}.md" ]] || orphans="${orphans:+$orphans, }$v"
   done
   if [[ -n "$orphans" ]]; then
     doc_add "roadmap" "warning" "$roadmap_dir" "orphan Shipped index line(s) with no file: $orphans" \
-      "create the missing roadmap/<v>.md files or remove the stale index lines" "judgment"
+      "create the missing roadmaps/<v>.md files or remove the stale index lines" "judgment"
   elif (( ${#idx_vers[@]} > 0 )); then
     doc_add "roadmap" "pass" "$roadmap" "all ${#idx_vers[@]} Shipped index line(s) have a corresponding file"
   fi
 
   # Stale files (file, no index line). Build a padded set of index versions.
-  local idx_set=" "; for v in "${idx_vers[@]}"; do idx_set+="$v "; done
+  local idx_set=" "; for v in ${idx_vers[@]+"${idx_vers[@]}"}; do idx_set+="$v "; done
   local stale=""
-  for v in "${file_vers[@]}"; do
+  for v in ${file_vers[@]+"${file_vers[@]}"}; do
     [[ "$idx_set" == *" $v "* ]] || stale="${stale:+$stale, }$v"
   done
   if [[ -n "$stale" ]]; then
@@ -9984,7 +10393,7 @@ check_roadmap() {
   if (( inline_shipped > ROADMAP_KEEP_DEFAULT )); then
     doc_add "roadmap" "info" "$roadmap" \
       "$inline_shipped shipped block(s) still inline — beyond keep=$ROADMAP_KEEP_DEFAULT" \
-      "run 'spectacular roadmap migrate' to move the older ones into roadmap/" "judgment"
+      "run 'spectacular roadmap migrate' to move the older ones into roadmaps/" "judgment"
   fi
 }
 
@@ -10255,18 +10664,28 @@ doctor_apply_mechanical_fixes() {
       continue
     fi
 
-    # Missing always-set file → re-scaffold using doc_<id>
-    if [[ "$file" == ".spectacular/PRD.md" || "$file" == ".spectacular/SPEC.md" || "$file" == ".spectacular/config.yaml" || "$file" == ".spectacular/POLICY.md" || "$file" == ".spectacular/AGENTS.md" || "$file" == ".spectacular/CLAUDE.md" ]]; then
-      local fname
+    # Missing always-set or index file → re-scaffold using doc_<id>
+    if [[ "$file" == ".spectacular/PRD.md" || "$file" == ".spectacular/specs/index.md" || "$file" == ".spectacular/config.yaml" || "$file" == ".spectacular/POLICY.md" || "$file" == ".spectacular/AGENTS.md" || "$file" == ".spectacular/CLAUDE.md" || "$file" == ".spectacular/roadmaps/index.md" || "$file" == ".spectacular/decisions/index.md" || "$file" == ".spectacular/memories/index.md" || "$file" == ".spectacular/sessions/index.md" ]]; then
+      local fname fdir name
       fname=$(basename "$file")
-      local name="${OPT_NAME:-$(slug_from_dir)}"
-      case "$fname" in
-        PRD.md)        doc_prd "$name" "blank" ;;
-        SPEC.md)       doc_spec "$name" ;;
-        config.yaml)   doc_config "$name" "" "AGENTS.md" "blank" ;;
-        POLICY.md)     doc_policy "$name" ;;
-        AGENTS.md|CLAUDE.md) doc_agents "$name" "$fname" ;;
-      esac
+      fdir=$(basename "$(dirname "$file")")
+      name="${OPT_NAME:-$(slug_from_dir)}"
+      if [[ "$fname" == "index.md" ]]; then
+        case "$fdir" in
+          specs)     doc_spec "$name" ;;
+          roadmaps)  doc_roadmap "$name" ;;
+          decisions) doc_decisions ;;
+          memories)  doc_memory ;;
+          sessions)  doc_sessions ;;
+        esac
+      else
+        case "$fname" in
+          PRD.md)        doc_prd "$name" "blank" ;;
+          config.yaml)   doc_config "$name" "" "AGENTS.md" "blank" ;;
+          POLICY.md)     doc_policy "$name" ;;
+          AGENTS.md|CLAUDE.md) doc_agents "$name" "$fname" ;;
+        esac
+      fi
       echo "  ✓ fixed [workspace]: re-scaffolded $file"
       applied=$((applied + 1))
       continue

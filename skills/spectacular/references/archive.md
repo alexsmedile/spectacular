@@ -19,7 +19,7 @@ Triggered by: `spectacular archive <slug>`, or skill proposing archive after req
 4. **Propose bug-lifecycle captures** — if this request fixed a bug: offer a `fixes/` entry (`spectacular fix new … --signature …`) so the resolution is reusable next time (see [[bug-workflow]] Step 3). If it closes an open `audit/`, resolve it (`spectacular audit resolve <A> --disposition "requests/<slug>"`) so no investigation is left dangling. Skip silently when neither applies — most requests aren't bugs.
 5. **Human confirms** the spec delta, memory, and bug-lifecycle proposals before any writes
 6. **Run `spectacular archive <slug>`** — the CLI verb (v0.7.0+) runs the **closure gate**, then does the move + frontmatter bump + inbound link rewriting atomically. Do NOT manually `git mv` and then sed link paths — that's fragile and easy to leave half-broken.
-7. Update any `specs/<capability>/SPEC.md` files (and a bullet in `SPEC.md`) that reference this request
+7. Update any `specs/<capability>.md` files (and a bullet in `SPEC.md`) that reference this request
 
 ### What `spectacular archive <slug>` does
 
@@ -81,7 +81,7 @@ Propose concrete, specific entries. Avoid vague lessons. If nothing notable happ
 > **Spec delta** (written to `SPEC-DELTA.md`):
 > ```
 > ### ADDED
-> - specs/billing/SPEC.md :: team-billing — Stripe-backed seats; a duplicate webhook never double-charges
+> - specs/billing.md :: team-billing — Stripe-backed seats; a duplicate webhook never double-charges
 > ### MODIFIED
 > - SPEC.md :: "billing — single-seat only" -> "billing — multi-seat, Stripe-backed"
 > ```

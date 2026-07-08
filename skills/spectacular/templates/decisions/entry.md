@@ -1,5 +1,5 @@
 <!--
-  Single ADR-style entry. Appended to .spectacular/DECISIONS.md by `spectacular decide`.
+  Single ADR-style entry. Appended to .spectacular/decisions/index.md by `spectacular decide`.
   This is NOT a whole-file template — it's the shape of ONE entry.
 
   Schema: Context / Decision / Consequences (Michael Nygard ADR shape).

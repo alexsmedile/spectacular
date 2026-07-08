@@ -1,8 +1,8 @@
 ---
 doc-id: memory
 mode: index
-location: .spectacular/MEMORY.md
-entries-dir: .spectacular/memory/
+location: .spectacular/memories/index.md
+entries-dir: .spectacular/memories/
 scope: project-wide
 template: templates/memory/entry.md
 snapshot-on-edit: false
@@ -12,7 +12,7 @@ status: active
 
 # MEMORY Rules
 
-Soft-folder database. The index file (`MEMORY.md`) is regenerated from individual entry files (`memory/<slug>.md`) — never hand-edited as a flat log.
+Soft-folder database. The index file (`memories/index.md`) is regenerated from individual entry files (`memories/M<N>-<slug>.md`) — never hand-edited as a flat log.
 
 **Mode: `index`** — the canonical content lives in `entries-dir`. The root file is a table-of-contents derived from entry frontmatter. Editing the index directly is a smell; `spectacular doctor memory` will flag drift between index and entries.
 

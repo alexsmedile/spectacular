@@ -17,7 +17,7 @@ When a request transitions from `planned` → `active`:
 
 1. Update `PLAN.md` frontmatter: `status: active`, `updated: <today>`
 2. Create `SESSION.md` if it doesn't exist (see template below)
-3. Load the full request context: `PLAN.md`, `TASKS.md`, `SESSION.md`, `SPEC.md`, relevant `specs/<capability>/SPEC.md`
+3. Load the full request context: `PLAN.md`, `TASKS.md`, `SESSION.md`, `specs/index.md`, relevant `specs/<capability>.md`
 
 ---
 
@@ -79,7 +79,7 @@ Load by task type:
 
 | Task type | Load |
 |---|---|
-| Planning/design | `PLAN.md`, `PRD.md`, `DECISIONS.md`, `SPEC.md`, relevant `specs/<capability>/SPEC.md` |
+| Planning/design | `PLAN.md`, `PRD.md`, `decisions/index.md`, `specs/index.md`, relevant `specs/<capability>.md` |
 | Implementation | `STACK.md`, `PLAN.md`, `TASKS.md`, local capability specs |
 | Review/QA | `VERIFY.md`, capability specs, `RISKS.md` |
 

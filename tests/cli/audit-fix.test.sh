@@ -27,9 +27,9 @@ scenario_autonumber() {
     "$CLI" audit new "one"   >/dev/null
     "$CLI" audit new "two"   >/dev/null
     "$CLI" audit new "three" >/dev/null )
-  assert_file "$d/.spectacular/audit/A1.md"
-  assert_file "$d/.spectacular/audit/A2.md"
-  assert_file "$d/.spectacular/audit/A3.md"
+  assert_file "$d/.spectacular/audits/A1-one.md"
+  assert_file "$d/.spectacular/audits/A2-two.md"
+  assert_file "$d/.spectacular/audits/A3-three.md"
   rm -rf "$d"
 }
 
@@ -40,10 +40,9 @@ scenario_verified_gate() {
   local code
   ( cd "$d" && "$CLI" fix new "unproven" >/dev/null 2>&1 ) && code=0 || code=$?
   assert_exit "$code" 0 "fix new without --verified-by still exits 0"
-  assert_contains "$d/.spectacular/fixes/F1.md" "verified: null"
+  assert_contains "$d/.spectacular/fixes/F1-unproven.md" "verified: null"
   ( cd "$d" && "$CLI" fix new "proven" --verified-by "tests/x.sh" >/dev/null 2>&1 )
-  # verified fix carries a real date (not the literal null)
-  grep -q "verified: null" "$d/.spectacular/fixes/F2.md" && fail "F2 should be verified" || pass
+  grep -q "verified: null" "$d/.spectacular/fixes/F2-proven.md" && fail "F2 should be verified" || pass
   rm -rf "$d"
 }
 
@@ -63,7 +62,7 @@ scenario_skeleton() {
   local d="/tmp/spec-af-skel"; new_ws "$d"
   ( cd "$d" && "$CLI" fix new "skel" --problem P --intended I --cause C --fix X \
       --criteria K --verified-by V --signature "sig words" >/dev/null 2>&1 )
-  local file="$d/.spectacular/fixes/F1.md"
+  local file="$d/.spectacular/fixes/F1-skel.md"
   assert_contains "$file" "## Problem"
   assert_contains "$file" "## Intended behavior"
   assert_contains "$file" "## Success criteria"
@@ -78,17 +77,18 @@ scenario_into_fix() {
   local d="/tmp/spec-af-into"; new_ws "$d"
   ( cd "$d" && "$CLI" audit new "bug title" --problem "the problem" --intended "the intent" >/dev/null )
   # fill the audit's root cause so the copy-forward is exercised
-  sed -i '' 's|_(the actual cause, once found — or "not yet found")_|the real cause|' "$d/.spectacular/audit/A1.md"
+  sed -i.bak 's|_(the actual cause, once found — or "not yet found")_|the real cause|' "$d/.spectacular/audits/A1-bug-title.md"
+  rm -f "$d/.spectacular/audits/A1-bug-title.md.bak"
   ( cd "$d" && "$CLI" audit resolve A1 --disposition "user phrasing" --into-fix --verified-by "repro" >/dev/null )
-  assert_file "$d/.spectacular/fixes/F1.md"
-  assert_contains "$d/.spectacular/audit/A1.md" "status: resolved"
+  assert_file "$d/.spectacular/fixes/F1-bug-title.md"
+  assert_contains "$d/.spectacular/audits/A1-bug-title.md" "status: resolved"
   # disposition owned by --into-fix (no doubling of the user's phrasing)
-  assert_contains "$d/.spectacular/audit/A1.md" "disposition: became fix F1"
-  assert_contains "$d/.spectacular/fixes/F1.md"  "from_audit: A1"
+  assert_contains "$d/.spectacular/audits/A1-bug-title.md" "disposition: became fix F1"
+  assert_contains "$d/.spectacular/fixes/F1-bug-title.md"  "from_audit: A1"
   # slots copied forward from the audit
-  assert_contains "$d/.spectacular/fixes/F1.md"  "the problem"
-  assert_contains "$d/.spectacular/fixes/F1.md"  "the intent"
-  assert_contains "$d/.spectacular/fixes/F1.md"  "the real cause"
+  assert_contains "$d/.spectacular/fixes/F1-bug-title.md"  "the problem"
+  assert_contains "$d/.spectacular/fixes/F1-bug-title.md"  "the intent"
+  assert_contains "$d/.spectacular/fixes/F1-bug-title.md"  "the real cause"
   rm -rf "$d"
 }
 

@@ -6,9 +6,9 @@ updated: 2026-07-06
 build: b18
 summary: "Stop ROADMAP.md bloating agent context: enforce the already-stated 'shipped history lives in CHANGELOG' principle by pruning shipped prose blocks down to their ledger row (the index), and/or add a decisions-index-style roadmap mode (cheap ledger + per-version files). ~49% of ROADMAP.md is currently past-tense duplication."
 related:
-  - PRD.md
-  - ../../ROADMAP.md
-  - ../../specs/roadmap/SPEC.md
+  - ../../PRD.md
+  - ../../roadmaps/index.md
+  - ../../specs/roadmap.md
   - ../../ARCHITECTURE.md
 depends-on: roadmap-contract-docs
 archived: 2026-07-06
@@ -19,7 +19,7 @@ archived: 2026-07-06
 > **Origin (2026-06-28):** ROADMAP.md is **525 lines, ~49% past-tense** — 12 shipped
 > per-version prose blocks (~230 lines) plus a "Recently shipped" section (~26 lines) that
 > **duplicates CHANGELOG.md outright**. An agent loading ROADMAP.md to make a planning
-> decision pays for all of it. The kicker: both `specs/roadmap/SPEC.md:16` and
+> decision pays for all of it. The kicker: both `specs/roadmap.md:16` and
 > `ARCHITECTURE.md:257` already state *"shipped history lives in CHANGELOG"* — the live file
 > just doesn't obey it. There's no pruning/archiving mechanism, and no roadmap analog to the
 > already-shipped **decisions-index** pattern (cheap root index + per-entry files for large
@@ -39,7 +39,7 @@ information needed to make planning choices**:
 - **Depends on `roadmap-contract-docs` (b17).** The ledger must be properly specced first, since this request makes the ledger the load-bearing index and prunes the prose around it. Build b17 → then b18.
 - **Bash CLI only; deterministic mutator → CLI-owned.** Pruning/archiving is a mutation; the skill may suggest, the CLI performs. Doctor detects the bloat; `--fix` (or a dedicated verb) prunes.
 - **Never lose information.** Shipped detail must survive somewhere authoritative — CHANGELOG.md (already the stated home) or per-version `roadmap/` files. Prune is a move/dedup, never a delete of unrecoverable content. Snapshot ROADMAP.md before restructuring.
-- **Don't break the prose-block spec.** `specs/roadmap/SPEC.md` specs per-version blocks; whichever approach wins must update that spec, not silently violate it.
+- **Don't break the prose-block spec.** `specs/roadmap.md` specs per-version blocks; whichever approach wins must update that spec, not silently violate it.
 - **Reversible / dry-run first.** Show what would be pruned before doing it (mirror the snapshot-retention + archive patterns).
 
 ## Understanding
@@ -47,7 +47,7 @@ information needed to make planning choices**:
 ### How it works now (from the audit)
 
 - 525 lines. ~230 in 12 shipped prose blocks (v1.9–v1.22), ~26 in a "Recently shipped" CHANGELOG mirror (ROADMAP.md:490-515, even links to CHANGELOG). Combined ~256 lines ≈ 49% past-tense.
-- Stated-but-violated principle: `specs/roadmap/SPEC.md:16` + `ARCHITECTURE.md:257` say shipped history belongs in CHANGELOG. The live file keeps full shipped prose *and* the mirror anyway.
+- Stated-but-violated principle: `specs/roadmap.md:16` + `ARCHITECTURE.md:257` say shipped history belongs in CHANGELOG. The live file keeps full shipped prose *and* the mirror anyway.
 - No pruning mechanism anywhere. Doctor's roadmap checks only flag legacy shape (pre-v0.7.x), not bloat. The one soft guard — review-gate check 17 (roadmap-rules.md:366) — warns on too many *full-tier* blocks, but shipped blocks are mostly `themed`, so it doesn't catch this.
 - **Decisions-index precedent exists and is fully specced** (`decisions-rules.md:55-89`): flat mode default; index mode for large projects = cheap one-line root index + per-entry files. Shipped in v1.17. No roadmap equivalent.
 
@@ -67,7 +67,7 @@ The ledger table (grows one row per build forever — cheap), forward-looking pr
 
 ### M1 — Decide approach + spec it
 - Choose A (prune-to-ledger) vs B (roadmap-index mode); resolve M-questions.
-- Update `specs/roadmap/SPEC.md` + ARCHITECTURE.md to describe the chosen retention/pruning model (so the stated principle is finally enforced, not just asserted).
+- Update `specs/roadmap.md` + ARCHITECTURE.md to describe the chosen retention/pruning model (so the stated principle is finally enforced, not just asserted).
 
 ### M2 — Detection (doctor)
 - `doctor roadmap` (or extend the roadmap area): flag shipped prose blocks beyond the keep-window / the "Recently shipped" duplicate mirror as prunable. Info/warning; relayed by `status`.

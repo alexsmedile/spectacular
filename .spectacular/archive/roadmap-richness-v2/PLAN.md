@@ -6,7 +6,7 @@ updated: 2026-05-23
 target_version: 0.7.2
 summary: "Apply roadmap-research findings: add Outcome slot, rename Icebox, date guards on themed/vision, row-cap tiered warning, scope-out warning when scope-in>3, meta-phase aliases, beginner-mode docs, icebox-promotion ritual docs"
 related:
-  - PRD.md
+  - ../../PRD.md
   - ../../archive/roadmap-richness/PLAN.md
   - ../../../skills/spectacular/references/roadmap-overrides.md
 provenance:

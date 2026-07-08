@@ -14,7 +14,7 @@ live repo, all run before claiming.
 ## M1 — Approach + spec
 
 - **{judge}** Design call: **B (roadmap-index mode)**, keep newest 3 inline (decisions 1-2 in PLAN). ✅
-- **{assert}** `specs/roadmap/SPEC.md` gained "## Index mode — shipped-history scaling" (migrate verb, per-version files, Shipped index, mode detection, safety, enforces history→CHANGELOG); snapshotted @v2, version 1.2. ✅
+- **{assert}** `specs/roadmap.md` gained "## Index mode — shipped-history scaling" (migrate verb, per-version files, Shipped index, mode detection, safety, enforces history→CHANGELOG); snapshotted @v2, version 1.2. ✅
 - **{assert}** `ARCHITECTURE.md` planned-runway rule updated: shipped prose → `roadmap/v*.md` once migrated, pointing at the migrate verb + spec. ✅
 
 ## M2 — Doctor `roadmap` area

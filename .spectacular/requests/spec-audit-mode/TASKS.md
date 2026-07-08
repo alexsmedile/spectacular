@@ -27,7 +27,7 @@ related:
 
 ### M2 — Orphan spec files
 - [ ] Extend `check_specs` to flag `specs/<cap>/SPEC.md` files not referenced anywhere in SPEC.md's body
-- [ ] Test: unreferenced `specs/ghost/SPEC.md` → warning; referenced → clean
+- [ ] Test: unreferenced `specs/ghost.md` → warning; referenced → clean
 
 ### M3 — Stale capability specs
 - [ ] Extend `check_specs` to compare each `specs/<cap>/SPEC.md`'s `updated` against its newest related archive (via archive PLAN's `related:`)

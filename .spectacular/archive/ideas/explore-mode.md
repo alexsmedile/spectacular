@@ -6,10 +6,10 @@ owner: alex
 updated: 2026-05-31
 origin: chat 2026-05-31 — "/spectacular imagine": imagination-backed planning (expands the framework's core thesis)
 related:
-  - ../PRD.md
-  - ../ROADMAP.md
-  - ../ARCHITECTURE.md
-  - ../PERSONAS.md
+  - ../../PRD.md
+  - ../../roadmaps/index.md
+  - ../../ARCHITECTURE.md
+  - ../../PERSONAS.md
   - ../../skills/spectacular/references/doc-index.md
   - ../../skills/spectacular/references/plan-rules.md
   - ../../skills/spectacular/references/idea-rules.md
@@ -151,7 +151,7 @@ Per the `scope-down` policy: name the smallest high-impact slice, push the rest 
 - **Derivation = Build only.** At the end, `imagine` drafts/refines `PLAN.md` *from* the approved vision. **Defer Compare/reconcile to v2** — the diff engine is the hard half; prove Build first.
 - CLI mutators to add fragments so a vision grows without hand-editing the manifest.
 
-**Deferred to v2+ (ROADMAP), in rough order:**
+**Deferred to v2+ (roadmaps/index), in rough order:**
 - **Compare/reconcile derivation** (§5) — diff an existing PRD/PLAN against the vision. The valuable-but-hard half.
 - **Project altitude** — `imagine` before/around PRD (§1 entry points 1 & 2), output at `.spectacular/vision/`. Needs the PRD-overlap question (§8 Q5) resolved first.
 - Rich diagram *types* beyond box/flow (sequence, state).

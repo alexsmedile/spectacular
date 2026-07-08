@@ -75,12 +75,12 @@ spectacular init
 - `PRD.md` — *what* the product is and *why*
 - `PRINCIPLES.md` — operating principles + runtime enforcement hooks
 - `ARCHITECTURE.md` — the workspace structure itself
-- `ROADMAP.md` — versioned future work
+- `roadmaps/index.md` — versioned future work
 - `STACK.md` — host project's tech choices
-- `DECISIONS.md` — ADR-style decision log
+- `decisions/index.md` — ADR-style decision log
 - `AGENTS.md` — onboarding doc for any agent landing in `.spectacular/`
 
-Agents load only what the current task needs (planning loads PRD + PRINCIPLES + DECISIONS; implementation loads STACK + PLAN + TASKS).
+Agents load only what the current task needs (planning loads PRD + PRINCIPLES + decisions/index.md; implementation loads STACK + PLAN + TASKS).
 
 **Current truth** — reflects actual system behavior right now. Modular capability specs (auth, billing, editor). Never overwritten in place — the skill snapshots before proposing edits.
 
@@ -102,7 +102,7 @@ New here? Two things to understand. First, what lives at the top of `.spectacula
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/workspace-tree-dark.svg" />
-  <img src="docs/assets/workspace-tree-light.svg" width="100%" alt=".spectacular/ holds three things: PRD.md (the intent), SPEC.md (the truth), and requests/ (the work)" />
+  <img src="docs/assets/workspace-tree-light.svg" width="100%" alt=".spectacular/ holds three things: PRD.md (the intent), specs/index.md (the truth), and requests/ (the work)" />
 </picture>
 
 And second, what's inside any one request:
@@ -116,28 +116,28 @@ That's the whole idea. The full layout, once a project fills in:
 
 ```
 .spectacular/
-│   ── always-set (created by every init) ─────────────────────────────
 ├── PRD.md              # product intent — what & why & for whom
-├── SPEC.md             # system spec — index of what's built right now (present tense)
+├── POLICY.md           # practice layer / merged policy contract
 ├── config.yaml         # naming, kit identity, agent file overrides
 ├── AGENTS.md           # onboarding doc for agents working in this folder
 ├── requests/           # active and planned work
-└── specs/              # per-capability specs (optional; SPEC.md is the index)
-
+├── specs/              # per-capability specs + index.md system spec
+ 
 │   ── opt-in (scaffolded by kit declaration or --with flag) ──────────
 ├── PRINCIPLES.md       # operating principles + enforcement hooks
 ├── ARCHITECTURE.md     # .spectacular/ structure, frontmatter, lifecycle, versioning
-├── ROADMAP.md          # time-ordered "what's next"
+├── roadmaps/           # roadmap/index.md + shipped v*.md files
 ├── STACK.md            # host project's tech choices
-├── DECISIONS.md        # ADR-style decision log
-
+├── decisions/          # ADR decision index + D*.md files
+ 
 │   ── created on demand ─────────────────────────────────────────────
-├── memory/             # long-term operational learning (git-committed)
-├── feedback/           # prototyping-mode feedback entries (v1.6.0+)
+├── memories/           # long-term operational learning (git-committed)
+├── feedbacks/          # prototyping-mode feedback entries (v1.6.0+)
 ├── ideas/              # thinking scratchpad — not acted on automatically (v1.7.0+)
-├── debug/              # live debug-job traces — one folder per bug (v1.26.0+)
-├── audit/              # diagnostic examinations earned at resolution (v1.25.0+)
+├── debugs/             # live debug-job traces — one folder per bug (v1.26.0+)
+├── audits/             # diagnostic examinations earned at resolution (v1.25.0+)
 ├── fixes/              # reusable verified-fix library, greppable (v1.25.0+)
+├── sessions/           # work time-log sessions/index.md + S*.md files
 └── archive/            # completed requests (never deleted)
 ```
 
@@ -157,8 +157,8 @@ A typical coding project (`spectacular init --kit coding`) scaffolds the always-
 | `spectacular promote <slug>` | Advance lifecycle: `planned → active → review → verified` |
 | `spectacular snapshot <file>` | Snapshot a canonical document before editing |
 | `spectacular touch <file>` | Bump `updated:` on a canonical doc |
-| `spectacular archive <slug>` | Archive a completed request; propose `SPEC.md`/`specs/` sync + memory entries |
-| `spectacular remember this` | Write an insight to `memory/` immediately |
+| `spectacular archive <slug>` | Archive a completed request; propose `specs/index.md` sync + memory entries |
+| `spectacular remember this` | Write an insight to `memories/` immediately |
 | `spectacular decide "<decision>"` | Append an ADR entry; `--context`/`--consequences` fill the other sections (v1.8.4+) |
 | `spectacular feedback-loop` | Prototyping-mode human-feedback loop — pick target, craft proposal, ask user, capture, decide (v1.6.0+) |
 | `spectacular idea` | Thinking-scratchpad ideas — `new\|list\|promote`. Promotion scaffolds a request + archives the idea (v1.7.0+) |
@@ -171,7 +171,7 @@ A typical coding project (`spectacular init --kit coding`) scaffolds the always-
 | `spectacular show <doctype>` | Dump canonical doc (`prd\|spec\|principles\|...`); `--section <h2>` filters (v1.8.0+) |
 | `spectacular progress <slug>` | Milestone tick rate from TASKS.md (v1.8.0+) |
 | `spectacular paths` | JSON map of conventional workspace paths (v1.8.0+) |
-| _(bug report to `/spectacular`)_ | Debug agent fleet — the skill checks prior `fixes/`, decides audit-first vs just-fix, delegates to read-only `debug-investigator` / apply-only `debug-fixer` / `debug-researcher`, then graduates a verified fix to the library. Traces land in `debug/`; reusable remedies in `fixes/` (v1.26.0+) |
+| _(bug report to `/spectacular`)_ | Debug agent fleet — the skill checks prior `fixes/`, decides audit-first vs just-fix, delegates to read-only `debug-investigator` / apply-only `debug-fixer` / `debug-researcher`, then graduates a verified fix to the library. Traces land in `debugs/`; reusable remedies in `fixes/` (v1.26.0+) |
 | `spectacular fix new` / `audit new` | Log a verified fix / open a diagnostic audit (the debug-fleet library verbs); `fix new --debug-job <slug>` back-links the trace (v1.25.0+, `--debug-job` v1.26.0) |
 
 > [!NOTE]
@@ -257,7 +257,7 @@ convention_pack:
 Full schema in [`skills/spectacular/references/packs-contract.md`](skills/spectacular/references/packs-contract.md). App-store packs live in [`packs/`](packs/).
 
 > [!TIP]
-> Init scaffolds the **6-file always-set** by default (`PRD.md`, `SPEC.md`, `config.yaml`, `<agents-file>`, `requests/`, `specs/`). Kits add docs they need. Use `--with` for explicit extras. Use `--minimal` to ignore the kit's defaults. (v0.4.x scaffolded `current/` instead of `SPEC.md` + `specs/` — see [CHANGELOG](CHANGELOG.md) for the migration.)
+> Init scaffolds the **6-file always-set** by default (`PRD.md`, `POLICY.md`, `config.yaml`, `<agents-file>`, `requests/`, `specs/index.md`). Kits add docs they need. Use `--with` for explicit extras. Use `--minimal` to ignore the kit's defaults. (v0.4.x scaffolded `current/` instead of `specs/index.md` + `specs/` — see [CHANGELOG](CHANGELOG.md) for the migration.)
 
 > [!TIP]
 > Claude-only team? Use `--agents-file CLAUDE.md`. Multi-tool team? Keep `AGENTS.md` as primary and add `tool_overrides.claude: CLAUDE.md` to `config.yaml` — the skill will surface both.

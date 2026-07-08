@@ -5,8 +5,8 @@ owner: alex
 updated: 2026-07-07
 build: b22
 related:
-  - PRD.md
-  - ../../SPEC.md
+  - ../../PRD.md
+  - ../../specs/index.md
 summary: "Archive closure gate + delta-based spec-sync: archive blocks (with recorded override) on unticked TASKS, unwalked VERIFY, or missing spec delta; spec impact is declared as ADDED/MODIFIED/REMOVED bullets and merged mechanically."
 archived: 2026-07-07
 ---
@@ -59,7 +59,7 @@ The four on-disk contracts the CLI gate (M2) and doctor (M3) read. Locking them 
 
 ```md
 ### ADDED
-- specs/billing/SPEC.md :: team-billing — seats are Stripe-backed; a duplicate webhook never double-charges
+- specs/billing.md :: team-billing — seats are Stripe-backed; a duplicate webhook never double-charges
 
 ### MODIFIED
 - SPEC.md :: "billing — single-seat only" -> "billing — multi-seat, Stripe-backed"

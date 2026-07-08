@@ -133,8 +133,7 @@ agents:
   default_context:
     - PRD.md
     - STACK.md
-    - DECISIONS.md
-
+    - decisions/index.md
 skills:
   symlink_on_init: []         # project skills to auto-symlink into .claude/skills/
 ```
@@ -177,7 +176,7 @@ owner: alex
 updated: 2026-05-11
 summary: "What this request changes"
 related:
-  - specs/auth/SPEC.md
+  - specs/auth.md
 depends-on:
   - other-slug
 blocks:
@@ -256,7 +255,7 @@ These are **distinct from request lifecycle** (`planned | active | review | veri
 - **Grouped builds:** two requests targeting the same version = two rows with the same `target-version` value. Flat table; the render groups visually at read time.
 - **Human-adds-rows:** `spectacular new` stamps `build: bN` on the PLAN.md and increments `last_build:` in `config.yaml`, but does **not** insert a ledger row. The human adds the row to ROADMAP.md when slotting the request into a version.
 - **Gaps are normal:** if a build id is skipped (request merged into another release, abandoned), that gap is fine — like skipped Xcode build numbers.
-- **Planned runway only:** the ledger tracks future/in-progress work. Shipped history lives in `CHANGELOG.md` (facts) and, as per-version planning prose, under `roadmap/v<X.Y.Z>.md` once migrated — not in the ledger. The ledger keeps one row per build (past + future) as the compact index; see `spectacular roadmap migrate` + `specs/roadmap/SPEC.md` § Index mode for how shipped prose blocks are aged out of ROADMAP.md to bound context cost.
+- **Planned runway only:** the ledger tracks future/in-progress work. Shipped history lives in `CHANGELOG.md` (facts) and, as per-version planning prose, under `roadmap/v<X.Y.Z>.md` once migrated — not in the ledger. The ledger keeps one row per build (past + future) as the compact index; see `spectacular roadmap migrate` + `specs/roadmap.md` § Index mode for how shipped prose blocks are aged out of ROADMAP.md to bound context cost.
 
 #### `build:` in PLAN.md frontmatter
 
@@ -595,7 +594,7 @@ Canonical documents are **never overwritten in place**.
 - skill always proposes a snapshot before editing any canonical document
 - snapshot location (v1.24.0+): `_snapshots/<DOC>/@v<ver>.md` — store dir configurable via `config.yaml` `snapshots.folder` (default `_snapshots`; pre-v1.24 default was `snapshots/`), folder per canonical doc, uppercase preserved
 - **filename couples to the content's version** (v1.24.0+): a doc at `version: 1.3` snapshots to `@v1.3.md`, *then* the live doc bumps to `1.4` — the `@v` label and `version:` never drift. Docs without a `version:` field (e.g. `DESIGN.md`) use a plain `@v<N>` counter and are not version-bumped.
-- sub-doc snapshots mirror their path: `specs/cli/SPEC.md` → `_snapshots/specs/cli/SPEC/@v1.0.md`
+- sub-doc snapshots mirror their path: `specs/cli.md` → `_snapshots/specs/cli/SPEC/@v1.0.md`
 - version tracked in frontmatter: `version: 1.0`
 - the unversioned filename at root (`PRD.md`) always points to the current version
 - applies to: root layer files, `SPEC.md`, `specs/<capability>/SPEC.md` capability specs, `DESIGN.md`, `config.yaml`
@@ -655,5 +654,5 @@ Re-running init on an initialized workspace is always safe — no file is ever o
 
 - [PRD.md](PRD.md) — why Spectacular exists
 - [PRINCIPLES.md](PRINCIPLES.md) — the principles this architecture implements
-- [ROADMAP.md](ROADMAP.md) — v2+ structural additions (workspaces, nested workspaces, workflows)
+- [ROADMAP.md](roadmaps/index.md) — v2+ structural additions (workspaces, nested workspaces, workflows)
 - [AGENTS.md](AGENTS.md) — how to operate inside this structure

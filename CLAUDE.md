@@ -19,14 +19,16 @@ spectacular/
 ├── .spectacular/              # Live workspace (this project uses its own system)
 │   ├── config.yaml            # Project config, naming rules, agents.file + tool_overrides
 │   ├── PRD.md                 # Product intent — what & why & for whom
-│   ├── SPEC.md                # System spec — index of what's built right now (v0.5.0+)
 │   ├── PRINCIPLES.md          # Operating principles + runtime enforcement hooks
 │   ├── ARCHITECTURE.md        # .spectacular/ structure, frontmatter, lifecycle, versioning
-│   ├── ROADMAP.md             # Time-ordered "what's next"
 │   ├── AGENTS.md              # Onboarding doc for agents working in .spectacular/
 │   ├── STACK.md               # Host project's tech choices
-│   ├── DECISIONS.md           # ADR-style decision log
-│   ├── specs/                 # Per-capability specs (optional; SPEC.md is the index)
+│   ├── POLICY.md              # practice layer / merged policy contract
+│   ├── specs/                 # Per-capability specs + index.md system spec
+│   ├── roadmaps/              # roadmap/index.md + shipped v*.md files
+│   ├── decisions/             # ADR decision index + D*.md files
+│   ├── memories/              # Durable facts memory index + M*.md files
+│   ├── sessions/              # work time-log sessions/index.md + S*.md files
 │   ├── requests/              # Active and planned work
 │   └── archive/               # Completed requests (never deleted)
 ├── .claude-plugin/            # Claude Code plugin manifest + marketplace.json
@@ -99,16 +101,15 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 | `doc-index.md` | Human-readable catalog of every doc type. Dispatch lives in each `<doc>-rules.md` frontmatter (since v1.4.0; was `doc-registry.md` pre-v1.4.0) |
 | `soft-db-index.md` | Canonical routing index for the 7 soft-DB collections (memory/decisions/sessions/ideas/feedback/audit/fixes) — role, purpose, structure, boundary rules. Loaded when deciding *where* knowledge belongs (v1.25.0) |
 | `bug-workflow.md` | Bug handling — check prior fixes first, decide audit-first vs just-fix, log a reusable fix. Ties audit/ + fixes/ into a self-learning loop (v1.25.0). Orchestrator arc + debug-agent fleet routing; Step 2b's two no-fix disposition forks (`folded-into-request`, `wont-fix`) (v1.26.0) |
-| `debug-trace.md` | In-flight trace schema for a debug job — one folder per job under `.spectacular/debug/<slug>/`, one JSON artifact per agent turn. Distinct from the audit/fixes ledger. Spines are CLI-validated by `doctor debug` (v1.26.0) |
-| `grill.md` / `refine.md` / `review.md` | Generic engine for any registered doc (driven by registry + per-doc overrides) |
-| `prd-overrides.md` | PRD-specific rules: kit selection, slot prompts, vague-word list, gate checks |
-| `plan-overrides.md` / `tasks-overrides.md` | PLAN/TASKS-specific rules consumed by the same engine |
-| `pack-overrides.md` | Convention-pack-specific grill rules — slot prompts, source-ingestion (`--from`), reserved pack-ids |
+| `debug-trace.md` | In-flight trace schema for a debug job — one folder per job under `.spectacular/debugs/<slug>/`, one JSON artifact per agent turn. Distinct from the audit/fixes ledger. Spines are CLI-validated by `doctor debug` (v1.26.0) |
+| `grill.md` / `refine.md` / `review.md` | Generic engine for any registered doc (driven by registry + per-doc rules) |
+| `prd-rules.md` | PRD-specific rules: kit selection, slot prompts, vague-word list, gate checks (superseded legacy `prd-grill.md` / `prd-refine.md` / `prd-review.md`) |
+| `plan-rules.md` / `tasks-rules.md` | PLAN/TASKS-specific rules consumed by the same engine |
+| `pack-rules.md` | Convention-pack-specific grill rules — slot prompts, source-ingestion (`--from`), reserved pack-ids |
 | `kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs |
 | `packs-contract.md` | Convention-pack schema: 6 rule categories, 4-tier scope precedence, modular-pack v2 sketch |
 | `verify.md` | Single verification reference (v1.20.0): Part 1 the interactive walk · Part 2 the 2-of-6 rule (was `verification.md`) · Part 3 promoting checks to scripts (was `verify-tests.md`) |
 | `doctor.md` | Substrate self-check spec — areas, severity model, repair flow (CLI mechanical + skill judgment) |
-| `prd-grill.md` / `prd-refine.md` / `prd-review.md` | Legacy — superseded by generic engine + `prd-overrides.md` |
 
 ## Key Conventions
 
@@ -116,9 +117,9 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 
 **Lifecycle state lives in `PLAN.md` frontmatter** (`status: planned | active | review | verified`). TASKS.md carries a mirror for skim tooling; PLAN is authoritative and `doctor` repairs drift.
 
-**Canonical documents are never overwritten in place** — always snapshot first (`PRD@v1.0.md` naming). The unversioned filename always points to current.
+**ReadOnly docs are never overwritten in place** — always snapshot first (`PRD@v1.0.md` naming). The unversioned filename always points to current.
 
-**Memory (`spectacular remember this`) writes to `.spectacular/memory/`** — git-committed, team-visible. Never to `.claude/` personal memory.
+**Memory (`spectacular remember this`) writes to `.spectacular/memories/`** — git-committed, team-visible. Never to `.claude/` personal memory.
 
 **`.spectacular/`** is fully committed to git. **`.spectacular.local/`** is always gitignored.
 
@@ -131,9 +132,9 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 | Task type | Load |
 |---|---|
 | Planning / design | PRD.md, PRINCIPLES.md, DECISIONS.md |
-| Refining intent / PRD work | PRD.md, skill refs prd-grill.md / prd-refine.md / prd-review.md |
-| Skill implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, SPEC.md, specs/skill/SPEC.md |
-| CLI implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, SPEC.md, specs/cli/SPEC.md |
+| Refining intent / PRD work | PRD.md, skill refs prd-rules.md / grill.md / refine.md / review.md |
+| Skill implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, SPEC.md, CAPABILITIES.md, capabilities/skill.md |
+| CLI implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, SPEC.md, CAPABILITIES.md, capabilities/cli.md |
 | Review / QA | VERIFY.md, SPEC.md, specs/<capability>/SPEC.md, RISKS.md |
 | Onboarding cold | PRD.md, SPEC.md, ARCHITECTURE.md, .spectacular/AGENTS.md |
 

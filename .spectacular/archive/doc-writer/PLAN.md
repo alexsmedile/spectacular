@@ -54,7 +54,7 @@ The all-in-one skill decision (2026-05-21) makes this the right shape: one orche
   - `spectacular <doc> grill` — interactive slot-fill
   - `spectacular <doc> refine` — vibe→spec rewrite
   - `spectacular <doc> review` — quality gate
-- Mode field in registry: `grill` (default) | `append` (DECISIONS) | `freeform` (no slot enforcement)
+- Mode field in registry: `grill` (default) | `append` (decisions/index) | `freeform` (no slot enforcement)
 - Backwards compatibility: `spectacular prd` / `spectacular prd grill` / `spectacular prd refine` / `spectacular prd review` keep working as registry-driven aliases
 
 **Out of scope (v2)**

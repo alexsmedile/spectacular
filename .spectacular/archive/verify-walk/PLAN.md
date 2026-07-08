@@ -5,9 +5,9 @@ owner: alex
 updated: 2026-05-30
 summary: "Skill-side /spectacular verify <slug> walk — guides each VERIFY.md check interactively, flips review→verified, closes Principle 7"
 related:
-  - PRD.md
+  - ../../PRD.md
   - ../../PRINCIPLES.md
-  - ../../ROADMAP.md
+  - ../../roadmaps/index.md
 target_version: v1.11.0
 archived: 2026-05-30
 ---

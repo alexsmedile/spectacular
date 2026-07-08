@@ -6,7 +6,7 @@ updated: 2026-05-26
 target_version: v1.3.0
 summary: "Add PERSONAS.md as an opt-in canonical doc for proto-audience profiles + user stories; register in doc-registry so grill/refine/review work."
 related:
-  - ../../SPEC.md
+  - ../../specs/index.md
   - ../../ARCHITECTURE.md
 archived: 2026-05-26
 ---
@@ -72,7 +72,7 @@ version: 1.0
 updated: <date>
 summary: "Audience profiles and the user stories that drive build decisions"
 related:
-  - PRD.md
+  - ../../PRD.md
 ---
 
 # Personas

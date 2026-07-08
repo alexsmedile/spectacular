@@ -6,9 +6,9 @@ updated: 2026-05-25
 target_version: v1.5.0
 summary: "Move canonical-doc snapshots (PRD@v1.2.md, ROADMAP@v4.md, etc.) out of .spectacular/ root into snapshots/<DOC>/v<x.y>.md to keep the workspace root clean. Add doctor area + --fix migration; update snapshot verb to write to new location."
 related:
-  - ../../ROADMAP.md
+  - ../../roadmaps/index.md
   - ../../ARCHITECTURE.md
-  - ../../SPEC.md
+  - ../../specs/index.md
 archived: 2026-05-25
 ---
 

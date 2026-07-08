@@ -3,9 +3,9 @@ version: 3.12
 updated: 2026-06-30
 summary: "Per-version scope, phase, and exit criteria. Shipped through v1.23.0 (roadmap ledger docs + index-mode pruning, b17+b18). Next up — priority order: cli-debt-removal → skill-desc-length-check → snapshot-retention → spec-audit-mode, all ahead of the contract-prep ladder (①→②→③, target tbd) → v2.0.0 major. Long-term gets fuzzier on purpose. (v3.12: contract ladder un-pinned to tbd — generic, so reslotting never forces a renumber.)"
 related:
-  - PRD.md
-  - ARCHITECTURE.md
-  - SPEC.md
+  - ../PRD.md
+  - ../ARCHITECTURE.md
+  - ../specs/index.md
 ---
 
 # Spectacular — Roadmap
@@ -124,11 +124,11 @@ Spectacular gains a reverse gear: `spectacular undo` reverts the last mutation �
 **Linked requests:** `roadmap-contract-docs` (b17) + `roadmap-pruning` (b18)
 
 **Outcome:**
-The roadmap's own build→version model is now documented and the file is kept lean as history grows. b17 specced the ledger (build ids, `target-version` single-source, the `tbd` sentinel, ledger-status-vs-request-lifecycle) in `specs/roadmap/SPEC.md` + user docs, and made ADRs discoverable (DECISIONS.md is the home; store-worthy routing table). b18 added `spectacular roadmap migrate` + a `doctor roadmap` area — index mode that moves old shipped prose into `roadmap/v*.md` behind a `## Shipped` index, keeping the newest 3 inline. Dogfooded here: ROADMAP.md 528 → 410 lines.
+The roadmap's own build→version model is now documented and the file is kept lean as history grows. b17 specced the ledger (build ids, `target-version` single-source, the `tbd` sentinel, ledger-status-vs-request-lifecycle) in `specs/roadmap.md` + user docs, and made ADRs discoverable (DECISIONS.md is the home; store-worthy routing table). b18 added `spectacular roadmap migrate` + a `doctor roadmap` area — index mode that moves old shipped prose into `roadmap/v*.md` behind a `## Shipped` index, keeping the newest 3 inline. Dogfooded here: ROADMAP.md 528 → 410 lines.
 
 **Shipped:**
 - `spectacular roadmap migrate [--dry-run] [--keep N]` + `doctor roadmap` area (orphan/stale/prune-nudge)
-- `specs/roadmap/SPEC.md` ledger + index-mode sections; `docs/versioning.md` ledger walkthrough; `last_build:` documented
+- `specs/roadmap.md` ledger + index-mode sections; `docs/versioning.md` ledger walkthrough; `last_build:` documented
 - `tbd` sentinel documented; placeholder check scoped to prose slots
 - ADR store-worthy routing table in `decisions-rules.md`; doc-index + SKILL triggers grep-match "ADR"
 - `tests/cli/roadmap-migrate.test.sh` (22 assertions)
@@ -146,16 +146,16 @@ The roadmap's own build→version model is now documented and the file is kept l
 **Phase:** intent
 
 **Outcome:**
-The v2 `.spectacular/` file format is fully *designed and frozen on paper* before any code changes — shipped as the first real per-capability spec under `specs/workspace-v2/SPEC.md` plus an ARCHITECTURE.md update — so the contract is reviewed and agreed before implementation, and `workspace-v2-fields`, `workspace-v2-migration`, and the major just execute against a fixed target.
+The v2 `.spectacular/` file format is fully *designed and frozen on paper* before any code changes — shipped as the first real per-capability spec under `specs/workspace-v2.md` plus an ARCHITECTURE.md update — so the contract is reviewed and agreed before implementation, and `workspace-v2-fields`, `workspace-v2-migration`, and the major just execute against a fixed target.
 
 **Themes:**
-- `specs/workspace-v2/SPEC.md` — the v2 file-format contract (new/changed frontmatter fields, file layout, what breaks vs. what's additive)
+- `specs/workspace-v2.md` — the v2 file-format contract (new/changed frontmatter fields, file layout, what breaks vs. what's additive)
 - ARCHITECTURE.md updated with the v2 layout + the v1→v2 delta
 - DECISIONS ADR per breaking element (what breaks, why, migration path) — written now, while it's a design discussion, not a code rush
 - No code change — this is the design-freeze milestone (also the first inhabitant of the now-empty `specs/`, dovetailing with v1.10's spec-promotion pattern)
 
 **Exit criteria:**
-- `specs/workspace-v2/SPEC.md` ships; `doctor specs` validates it (frontmatter + non-empty body)
+- `specs/workspace-v2.md` ships; `doctor specs` validates it (frontmatter + non-empty body)
 - ARCHITECTURE.md reflects the v2 contract + delta
 - 1 ADR per breaking change in DECISIONS.md
 - CHANGELOG entry; plugin bump to the target release
@@ -368,6 +368,6 @@ Ideas worth capturing but not yet tied to any version. Promoting an item via the
 ## Related
 
 - [PRD.md](PRD.md) — what Spectacular is
-- [SPEC.md](SPEC.md) — what's built right now
+- [SPEC.md](specs/index.md) — what's built right now
 - [ARCHITECTURE.md](ARCHITECTURE.md) — structures that v0.x+ items extend
 - [PRINCIPLES.md](PRINCIPLES.md) — principles every future addition must respect

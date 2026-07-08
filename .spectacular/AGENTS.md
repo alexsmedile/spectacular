@@ -136,4 +136,4 @@ When ending a session or handing off to another agent:
 - [PRD.md](PRD.md) — what Spectacular is, what we're building
 - [ARCHITECTURE.md](ARCHITECTURE.md) — the structure you're operating inside
 - [PRINCIPLES.md](PRINCIPLES.md) — the rules behind the conventions
-- [ROADMAP.md](ROADMAP.md) — what's coming next
+- [ROADMAP.md](roadmaps/index.md) — what's coming next

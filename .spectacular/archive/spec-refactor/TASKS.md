@@ -17,7 +17,7 @@ related:
 
 ## M2 — Justification per pick
 
-- [x] For each pick, write a one-paragraph rationale: *why this one, why now* → recorded in `specs/doc-engine/SPEC.md` § Decisions (doc-engine = densest, highest agent-load friction; roadmap = most multi-axis)
+- [x] For each pick, write a one-paragraph rationale: *why this one, why now* → recorded in `specs/doc-engine.md` § Decisions (doc-engine = densest, highest agent-load friction; roadmap = most multi-axis)
 - [x] Record the rationales — single source is the spec's Decisions log (not duplicated here)
 - [x] Sanity check: would promotion *actually* improve agent ergonomics, or is it cosmetic? → real: both bullets were 5-6 lines, multi-axis
 

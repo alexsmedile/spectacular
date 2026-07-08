@@ -6,7 +6,7 @@ updated: 2026-06-30
 build: b10
 summary: "Doctor + pre-commit check flagging skill SKILL.md descriptions over Codex's 1024-char limit"
 related:
-  - PRD.md
+  - ../../PRD.md
 archived: 2026-06-30
 ---
 

@@ -9,7 +9,7 @@ summary: "Rename doc-registry → doc-index (human catalog), move dispatch into 
 related:
   - discovery.md
   - ../../ARCHITECTURE.md
-  - ../../SPEC.md
+  - ../../specs/index.md
   - ../../../skills/spectacular/references/doc-index.md
 archived: 2026-05-26
 ---

@@ -13,9 +13,9 @@ of the written artifacts + doctor integrity, not executable tests.
 
 ## M1 — Spec the ledger
 
-- **{assert}** `.spectacular/specs/roadmap/SPEC.md` snapshotted before edit → `snapshots/specs/roadmap/SPEC/@v1.md` exists; live spec frontmatter is now `status: published`, `version: 1.1`, `updated: 2026-06-28`. ✅
+- **{assert}** `.spectacular/specs/roadmap.md` snapshotted before edit → `snapshots/specs/roadmap/SPEC/@v1.md` exists; live spec frontmatter is now `status: published`, `version: 1.1`, `updated: 2026-06-28`. ✅
 - **{assert}** Spec now carries a "The ledger (build → version)" section covering build ids, target-version single-source, `tbd`, and status-vs-lifecycle; opens with the two-layer (ledger + prose) framing. ✅
-- **{assert}** `.spectacular/SPEC.md` structured-ROADMAP bullet names the ledger + `tbd` and links `[[specs/roadmap/SPEC]]`, `[[ARCHITECTURE]]`, `[[roadmap-rules]]`. Stale `[[roadmap-overrides]]` link removed (in SPEC.md bullet + spec body). ✅
+- **{assert}** `.spectacular/SPEC.md` structured-ROADMAP bullet names the ledger + `tbd` and links `[[specs/roadmap]]`, `[[ARCHITECTURE]]`, `[[roadmap-rules]]`. Stale `[[roadmap-overrides]]` link removed (in SPEC.md bullet + spec body). ✅
 - **{judge}** M-question 1 resolved: ARCHITECTURE.md remains the **canonical** schema home; the spec *summarizes + points to it* (explicit "does not fork a second authoritative copy" note) — no drift risk. ✅
 - **`run: ./cli/spectacular doctor specs`** → specs area green (roadmap + doc-engine capability specs present, SPEC.md parses). ✅
 
@@ -34,7 +34,7 @@ of the written artifacts + doctor integrity, not executable tests.
 
 ## Doctor / integrity
 
-- **`run: ./cli/spectacular doctor specs links docs`** → 0 errors. Fixed a pre-existing stale `related: ../../specs/cli/SPEC.md` link in the snapshot-retention PLAN (that spec doesn't exist yet) surfaced during this verify. ✅
+- **`run: ./cli/spectacular doctor specs links docs`** → 0 errors. Fixed a pre-existing stale `related: ../../specs/cli.md` link in the snapshot-retention PLAN (that spec doesn't exist yet) surfaced during this verify. ✅
 - Remaining doctor warnings are unrelated/transient: (1) this request `active without SESSION.md` (workflow signal, not a docs defect); (2) the known SPEC-drift date heuristic (clears on spec-sync/re-run). ✅
 
 ## Result

@@ -6,7 +6,7 @@ updated: 2026-05-30
 target_version: v1.10.0
 summary: "Audit SPEC.md, promote 1-2 dense capability bullets to specs/<capability>/SPEC.md (target: v1.10.0 — retargeted from v1.9.0, which shipped the versioning doc instead)"
 related:
-  - ../../SPEC.md
+  - ../../specs/index.md
   - ../../ARCHITECTURE.md
 archived: 2026-05-30
 ---
@@ -79,7 +79,7 @@ These were open questions — resolved here so M3 has no ambiguity:
 A: Yes. Each new `specs/<capability>/SPEC.md` gets snapshotted before its first substantive edit, same as root-level canonical docs. Naming: `specs/<capability>/SPEC@v1.md` (or managed via `spectacular snapshot`).
 
 **Q: Bullet style when compressed — what vs that-it-exists?**
-A: Retain *what*. The compressed one-liner in SPEC.md should still convey the capability's core behavior (one clause), plus a link to the spec file. Example: `- **Read verbs (v1.8.0+)** — 11 read-only CLI verbs for cheap cold-start. See [[specs/read-verbs/SPEC]].`
+A: Retain *what*. The compressed one-liner in SPEC.md should still convey the capability's core behavior (one clause), plus a link to the spec file. Example: `- **Read verbs (v1.8.0+)** — 11 read-only CLI verbs for cheap cold-start. See [[specs/read-verbs]].`
 
 **Q: ARCHITECTURE.md update?**
 A: No change needed. ARCHITECTURE.md documents the `.spectacular/` directory structure and file contract — not individual capabilities. The new `specs/<capability>/` files already fit the documented pattern.

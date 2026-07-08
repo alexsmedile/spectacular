@@ -3,8 +3,8 @@ status: draft
 updated: 2026-05-29
 summary: "Registry-driven engine that grills/refines/reviews any registered canonical doc through one set of skill flows"
 related:
-  - ../../SPEC.md
-  - ../../ARCHITECTURE.md
+  - index.md
+  - ../ARCHITECTURE.md
 ---
 
 # Doc-writing engine

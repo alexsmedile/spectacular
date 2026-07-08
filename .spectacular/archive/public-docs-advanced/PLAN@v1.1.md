@@ -9,7 +9,7 @@ summary: "Renderer adapters (MkDocs Material + Docusaurus) for the docs/ surface
 supersedes: PLAN@v1.0.md
 related:
   - ../../archive/public-docs-foundation/PLAN.md
-  - ../../specs/cli/SPEC.md
+  - ../../specs/cli.md
   - ../../../skills/spectacular/references/docs-contract.md
 ---
 

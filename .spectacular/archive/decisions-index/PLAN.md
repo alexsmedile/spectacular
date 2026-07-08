@@ -6,8 +6,8 @@ updated: 2026-06-28
 build: b9
 summary: "Split DECISIONS.md into a cheap index + per-entry files when it grows large — agents load only the index by default, fetch individual entries on demand."
 related:
-  - PRD.md
-  - ../../ROADMAP.md
+  - ../../PRD.md
+  - ../../roadmaps/index.md
 archived: 2026-06-28
 ---
 

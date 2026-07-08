@@ -8,7 +8,7 @@ summary: "Add a `feedback-loop` mode — a deliberate human-feedback strategy fo
 related:
   - ../../PRINCIPLES.md
   - ../../ARCHITECTURE.md
-  - ../../ROADMAP.md
+  - ../../roadmaps/index.md
 feedback:
   - feedback/2026-05-25-feedback-loop-cli-ergonomics-after-m0-m4.md
 archived: 2026-05-25

@@ -10,9 +10,9 @@ related:
 ## v1
 
 ### M1 — Spec the ledger
-- [x] `spectacular snapshot .spectacular/specs/roadmap/SPEC.md` → @v1 (canonical doc, snapshot first)
-- [x] Add Ledger section to specs/roadmap/SPEC.md (build ids, table schema, target-version single-source, status-vs-lifecycle, tbd); frontmatter published/1.1; fixed stale roadmap-overrides ref
-- [x] SPEC.md structured-ROADMAP bullet names the ledger + links specs/roadmap/SPEC + ARCHITECTURE + roadmap-rules (fixed stale roadmap-overrides link)
+- [x] `spectacular snapshot .spectacular/specs/roadmap.md` → @v1 (canonical doc, snapshot first)
+- [x] Add Ledger section to specs/roadmap.md (build ids, table schema, target-version single-source, status-vs-lifecycle, tbd); frontmatter published/1.1; fixed stale roadmap-overrides ref
+- [x] SPEC.md structured-ROADMAP bullet names the ledger + links specs/roadmap + ARCHITECTURE + roadmap-rules (fixed stale roadmap-overrides link)
 - [x] M-question 1 resolved: ARCHITECTURE is canonical schema home; spec summarizes + points to it (no forked copy)
 - [x] `doctor specs` green
 

@@ -6,9 +6,9 @@ updated: 2026-07-06
 build: b20
 summary: "Add a soft periodic-commit nudge for in-progress code work — Spectacular currently ships zero commit guidance"
 related:
-  - PRD.md
-  - POLICY.md
-  - PRINCIPLES.md
+  - ../../PRD.md
+  - ../../POLICY.md
+  - ../../PRINCIPLES.md
 ---
 
 # Plan — commit-discipline

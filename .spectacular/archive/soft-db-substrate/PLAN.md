@@ -6,8 +6,8 @@ updated: 2026-05-26
 target_version: v1.5.0
 summary: "Promote decisions, memory, and sessions from flat files to soft-folder databases (index.md + entries/), and add mutator verbs: spectacular decide, spectacular remember, spectacular session start|end"
 related:
-  - ../../ROADMAP.md
-  - ../../SPEC.md
+  - ../../roadmaps/index.md
+  - ../../specs/index.md
   - ../../PRINCIPLES.md
 archived: 2026-05-26
 ---

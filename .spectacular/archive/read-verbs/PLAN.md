@@ -7,7 +7,7 @@ target_version: v1.8.0
 summary: "Add read-only listing + detail verbs (requests, decisions, memories, sessions, show, summary, progress, paths) to collapse multi-step agent workflows into single deterministic calls."
 related:
   - ../../ARCHITECTURE.md
-  - ../../SPEC.md
+  - ../../specs/index.md
 archived: 2026-05-26
 ---
 

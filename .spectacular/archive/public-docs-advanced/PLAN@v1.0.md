@@ -91,7 +91,7 @@ Don't start work until **2 of 3**:
 - `docs export mintlify --out _mintlify/` produces working `mint.json` that Mintlify renders
 - Same for docusaurus / fumadocs / mkdocs (smoke test each)
 - `docs publish 0.5.0` snapshots cleanly; re-running is idempotent
-- `docs sync-from-spec .spectacular/specs/auth/SPEC.md` produces a draft page; running again after spec edit warns about drift
+- `docs sync-from-spec .spectacular/specs/auth.md` produces a draft page; running again after spec edit warns about drift
 - Pack with `docs-layout` enforces required sections via doctor
 
 ## Milestones (provisional)

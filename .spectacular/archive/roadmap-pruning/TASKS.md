@@ -13,7 +13,7 @@ related:
 
 ### M1 — Decide approach + spec it
 - [x] Approach B (roadmap-index mode), keep newest 3 inline — resolved at design call (decisions 1-2)
-- [x] specs/roadmap/SPEC.md § "Index mode" + ARCHITECTURE.md ledger rule updated (enforces "history → CHANGELOG"); spec snapshotted @v2, 1.2
+- [x] specs/roadmap.md § "Index mode" + ARCHITECTURE.md ledger rule updated (enforces "history → CHANGELOG"); spec snapshotted @v2, 1.2
 
 ### M2 — Detection (doctor)
 - [x] New `doctor roadmap` area: orphan index lines, stale per-version files, flat/index prune nudge beyond keep-window. Registered in DOC_AREAS + dispatch + arg validation.

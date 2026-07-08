@@ -6,8 +6,8 @@ updated: 2026-06-28
 build: b12
 summary: "A reverse gear for lifecycle mutations — `spectacular undo` reverts the last state transition or move (advance/archive/idea promote) so a mis-step doesn't require manual file surgery."
 related:
-  - PRD.md
-  - ../../ROADMAP.md
+  - ../../PRD.md
+  - ../../roadmaps/index.md
   - ../../PRINCIPLES.md
 archived: 2026-06-28
 ---
@@ -89,7 +89,7 @@ See `TASKS.md`.
 - `.gitignore` entry for `.last-mutation`.
 - Skill hints in `lifecycle.md` + `archive.md`.
 - `tests/cli/undo.test.sh` covering M1–M4.
-- SPEC.md + `specs/cli/SPEC.md` sync at archive time.
+- SPEC.md + `specs/cli.md` sync at archive time.
 
 ## Open questions (resolve during grill)
 

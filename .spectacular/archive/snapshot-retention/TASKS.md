@@ -35,7 +35,7 @@ related:
 
 ### M5 — Doctor retention check + docs
 - [ ] `check_snapshots`: flag docs exceeding `keep` (info/warning), relayed by `status`
-- [ ] Docs: commands.md, configuration.md (`snapshots:` block — folder/keep/gitignore), ARCHITECTURE.md versioning + path mentions, SPEC.md + specs/cli/SPEC.md
+- [ ] Docs: commands.md, configuration.md (`snapshots:` block — folder/keep/gitignore), ARCHITECTURE.md versioning + path mentions, SPEC.md + specs/cli.md
 - [ ] VERIFY-LOG
 
 ## v2 (deferred)

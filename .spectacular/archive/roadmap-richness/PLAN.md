@@ -6,7 +6,7 @@ updated: 2026-05-23
 target_version: 0.7.x
 summary: "Promote ROADMAP from freeform → structured grill with per-version scope-in/out + release-phase taxonomy + alpha/beta/stable axis + exit criteria"
 related:
-  - ../../ROADMAP.md
+  - ../../roadmaps/index.md
   - ../../../skills/spectacular/references/doc-registry.md
   - ../../../skills/spectacular/templates/roadmap/base.md
 archived: 2026-05-23

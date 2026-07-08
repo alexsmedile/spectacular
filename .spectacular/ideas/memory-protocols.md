@@ -6,8 +6,8 @@ owner: alex
 updated: 2026-05-26
 origin: requests/memory-protocols (abandoned 2026-05-26 — too broad; a narrower spec request will replace it)
 related:
-  - ../ROADMAP.md
-  - ../SPEC.md
+  - ../roadmaps/index.md
+  - ../specs/index.md
   - ../../_research/agent-memory/REPORT.md
   - ../../_research/agent-memory/REPORT-v2.md
 ---

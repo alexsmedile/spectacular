@@ -5,8 +5,8 @@ owner: alex
 updated: 2026-06-28
 summary: "ASCII rendering layer — progress bars, roadmap render, summary dashboard, app-UI mockup blocks; shared ascii-render helper, --format/NO_COLOR aware"
 related:
-  - PRD.md
-  - ../../ROADMAP.md
+  - ../../PRD.md
+  - ../../roadmaps/index.md
   - ../../ARCHITECTURE.md
 build: b8
 archived: 2026-06-28

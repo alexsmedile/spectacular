@@ -4,13 +4,13 @@ project:
 
 # Structural version of .spectacular/ layout. Migrations bump this.
 # Run `spectacular migrate` if your skill expects a newer schema.
-workspace_schema: "0.6"
+workspace_schema: "2.0"
 
 # Provenance — which spectacular version scaffolded this workspace (write-once)
 # and which last structurally touched it (bumped by migrate / doctor --fix).
 # created_with is "unknown" here: this workspace predates provenance tracking.
 created_with: "unknown"
-last_touched_with: "1.26.3"
+last_touched_with: "1.28.0"
 
 naming:
   requests: kebab-case

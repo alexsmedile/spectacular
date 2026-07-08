@@ -6,9 +6,9 @@ updated: 2026-06-26
 build: b11
 summary: "Spec-audit mode: cross-check SPEC.md bullets ↔ specs/ files ↔ archives so status answers 'is the spec current?', not just 'what's the lifecycle?'"
 related:
-  - PRD.md
-  - ../../SPEC.md
-  - ../../ROADMAP.md
+  - ../../PRD.md
+  - ../../specs/index.md
+  - ../../roadmaps/index.md
 ---
 
 # Plan — spec-audit-mode
@@ -59,7 +59,7 @@ See `TASKS.md`.
 ## 6. Validation
 
 - M1 — test: SPEC.md with a bullet for a capability that has no spec file and no archive → warning; with a matching spec file → clean.
-- M2 — test: a `specs/ghost/SPEC.md` not named in SPEC.md body → warning; referenced → clean.
+- M2 — test: a `specs/ghost.md` not named in SPEC.md body → warning; referenced → clean.
 - M3 — test: cap spec `updated` older than a related archive → warning.
 - M4 — `doctor specs --json` includes per-signal findings; status briefing relays them.
 

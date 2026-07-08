@@ -8,9 +8,9 @@ related:
   - ../../PRD.md
   - ../../PRINCIPLES.md
   - ../../ARCHITECTURE.md
-  - ../../ROADMAP.md
+  - ../../roadmaps/index.md
   - ../../AGENTS.md
-  - ../../DECISIONS.md
+  - ../../decisions/index.md
   - ../prd-craft/PLAN.md
 ---
 

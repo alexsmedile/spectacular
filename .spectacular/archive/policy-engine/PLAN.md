@@ -5,10 +5,10 @@ owner: alex
 updated: 2026-05-31
 summary: "POLICY.md — a practice-layer doc paired with PRINCIPLES.md. Policies are filed under named work-phase hooks (@Init, @Planning, @Implementation, @Verification, @Archive, @Remember, @Snapshot, @SessionEnd); the skill retrieves only the active hook's policies and injects them. Ships always-set with 8 prefilled defaults (4 block, 4 warn)."
 related:
-  - PRD.md
+  - ../../PRD.md
   - ../../PRINCIPLES.md
   - ../../ARCHITECTURE.md
-  - ../../ROADMAP.md
+  - ../../roadmaps/index.md
 target_version: v1.12.0
 archived: 2026-05-31
 ---

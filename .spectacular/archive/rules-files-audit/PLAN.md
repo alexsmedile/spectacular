@@ -7,7 +7,7 @@ build: b13
 summary: "Reduce skill-reference doc sprawl: audit the 18 <doc>-rules.md files for empty/duplicated bodies (thin vs fold vs write), and collapse the verify-doc trio (verification.md + verify.md + verify-tests.md) into one."
 related:
   - ../../ARCHITECTURE.md
-  - ../../SPEC.md
+  - ../../specs/index.md
 archived: 2026-06-28
 ---
 

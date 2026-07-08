@@ -7,7 +7,7 @@ build: b15
 summary: "Resolve verb naming inconsistencies (feedback-loop→feedback, lifecycle promote→advance, drop convention-pack alias) and add contextual next-step suggestion (tier-reveal) plus a `spectacular next` verb."
 related:
   - ../../PRINCIPLES.md
-  - ../../SPEC.md
+  - ../../specs/index.md
 archived: 2026-06-28
 ---
 

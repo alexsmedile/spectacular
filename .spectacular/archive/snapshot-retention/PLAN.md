@@ -6,10 +6,10 @@ updated: 2026-06-30
 build: b16
 summary: "Snapshot system: bound the canonical allowlist (add DESIGN.md), couple @vN to frontmatter version: so they stop drifting, add configurable retention (default keep 3) with a doctor-driven prune, and rename the store to _snapshots/ with a configurable folder name + opt-in gitignore so the history layer stops bloating both the tree and git."
 related:
-  - PRD.md
+  - ../../PRD.md
   - ../../ARCHITECTURE.md
-  - ../../ROADMAP.md
-  - ../../SPEC.md
+  - ../../roadmaps/index.md
+  - ../../specs/index.md
 archived: 2026-06-30
 ---
 
@@ -118,7 +118,7 @@ The allowlist model (still closed, one entry added), the `<store>/<DOC>/@v<N>.md
 
 ### M5 — Doctor retention check + docs
 - `check_snapshots`: flag docs over `keep`.
-- Update `docs/commands.md`, `docs/configuration.md` (new `snapshots:` block — folder/keep/period/gitignore + the tiered-retention explanation), ARCHITECTURE.md versioning section + any `snapshots/` path mentions, SPEC.md verb list (+ `specs/cli/SPEC.md` if a CLI capability spec exists by then).
+- Update `docs/commands.md`, `docs/configuration.md` (new `snapshots:` block — folder/keep/period/gitignore + the tiered-retention explanation), ARCHITECTURE.md versioning section + any `snapshots/` path mentions, SPEC.md verb list (+ `specs/cli.md` if a CLI capability spec exists by then).
 - VERIFY-LOG.
 
 ## Decisions (resolved at grill, 2026-06-28)

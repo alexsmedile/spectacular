@@ -17,7 +17,7 @@ The grill engine should offer a **decision-tree style** for tasks that carry sev
 
 ## Context
 
-Surfaced 2026-05-29 while expanding `specs/doc-engine/SPEC.md`. The doc-engine work threw off ~6 open decisions at once (mode count, families, freeform handling, registry count, planned-work framing). Batching them was unfollowable; switching to one-question-at-a-time, topic-by-topic made the decision tree legible and auditable.
+Surfaced 2026-05-29 while expanding `specs/doc-engine.md`. The doc-engine work threw off ~6 open decisions at once (mode count, families, freeform handling, registry count, planned-work framing). Batching them was unfollowable; switching to one-question-at-a-time, topic-by-topic made the decision tree legible and auditable.
 
 Today's grill modes are all **slot-driven** — the agent walks a fixed `slots:` list. This idea is a new interaction *shape* where the agent surfaces decisions as they emerge from analysis, recaps each topic's resolution, and queues remaining themes. It mirrors the existing "one question at a time" core principle of `grill.md` but applies it to open-ended design decisions rather than form-filling.
 

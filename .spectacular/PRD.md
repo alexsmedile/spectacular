@@ -5,9 +5,9 @@ summary: "AI-native operational workspace for software projects — convention, 
 related:
   - PRINCIPLES.md
   - ARCHITECTURE.md
-  - ROADMAP.md
+  - roadmaps/index.md
   - AGENTS.md
-  - DECISIONS.md
+  - decisions/index.md
   - STACK.md
 ---
 
@@ -115,7 +115,7 @@ Full text + enforcement hooks in [PRINCIPLES.md](PRINCIPLES.md).
 
 - [PRINCIPLES.md](PRINCIPLES.md) — operating principles + how the skill enforces each
 - [ARCHITECTURE.md](ARCHITECTURE.md) — `.spectacular/` structure, layers, request files, lifecycle, versioning, frontmatter
-- [ROADMAP.md](ROADMAP.md) — v2+ features (workspaces, nested workspaces, multi-agent, workflows)
+- [ROADMAP.md](roadmaps/index.md) — v2+ features (workspaces, nested workspaces, multi-agent, workflows)
 - [AGENTS.md](AGENTS.md) — how agents operate inside `.spectacular/`; context loading per task type
-- [DECISIONS.md](DECISIONS.md) — architectural decision log
+- [DECISIONS.md](decisions/index.md) — architectural decision log
 - [STACK.md](STACK.md) — host-project technology choices (distinct from Spectacular's own architecture)

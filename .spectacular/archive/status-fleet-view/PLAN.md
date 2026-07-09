@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 priority: medium
 owner: alex
 updated: 2026-07-09
@@ -7,6 +7,7 @@ build: b23
 summary: "Enforce a strict PLAN/TASKS structure on active requests (unnumbered fixed headings, ### M milestones, flush-left checkboxes), then render spectacular status / status <slug> / status --json from that structure — frontmatter plus grep-safe body signals (Goal line, x/total progress, current milestone). doctor errors on structure drift for active requests (archive skipped). status --json is the agent opt-in contract; retires the hand-cached CLAUDE.md Active Requests table."
 related:
   - PRD.md
+archived: 2026-07-09
 ---
 
 # Plan — status-fleet-view

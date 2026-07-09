@@ -25,7 +25,7 @@ spectacular/
 │   ├── STACK.md               # Host project's tech choices
 │   ├── POLICY.md              # practice layer / merged policy contract
 │   ├── specs/                 # Per-capability specs + index.md system spec
-│   ├── roadmaps/              # roadmap/index.md + shipped v*.md files
+│   ├── roadmaps/              # roadmaps/index.md + shipped v*.md files
 │   ├── decisions/             # ADR decision index + D*.md files
 │   ├── memories/              # Durable facts memory index + M*.md files
 │   ├── sessions/              # work time-log sessions/index.md + S*.md files
@@ -91,7 +91,7 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 | `active-request.md` | Actively working on a request |
 | `lifecycle.md` | Lifecycle transitions |
 | `archive.md` | `spectacular archive <slug>` |
-| `spec-sync.md` | Proposing `SPEC.md` + `specs/` updates during archive (was `current-sync.md` pre-v0.5.0) |
+| `spec-sync.md` | Proposing `specs/index.md` + `specs/` updates during archive (was `current-sync.md` pre-v0.5.0) |
 | `memory.md` | `spectacular remember this` |
 | `versioning.md` | `spectacular snapshot <file>` |
 | `init-workflow.md` | `spectacular init` (CLI context) |
@@ -131,14 +131,14 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 
 | Task type | Load |
 |---|---|
-| Planning / design | PRD.md, PRINCIPLES.md, DECISIONS.md |
+| Planning / design | PRD.md, PRINCIPLES.md, decisions/index.md |
 | Refining intent / PRD work | PRD.md, skill refs prd-rules.md / grill.md / refine.md / review.md |
-| Skill implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, SPEC.md, CAPABILITIES.md, capabilities/skill.md |
-| CLI implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, SPEC.md, CAPABILITIES.md, capabilities/cli.md |
-| Review / QA | VERIFY.md, SPEC.md, specs/<capability>/SPEC.md, RISKS.md |
-| Onboarding cold | PRD.md, SPEC.md, ARCHITECTURE.md, .spectacular/AGENTS.md |
+| Skill implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, specs/index.md, specs/doc-engine.md |
+| CLI implementation | STACK.md, ARCHITECTURE.md, PLAN.md, TASKS.md, specs/index.md, relevant specs/<capability>.md |
+| Review / QA | VERIFY.md, specs/index.md, relevant specs/<capability>.md, RISKS.md |
+| Onboarding cold | PRD.md, specs/index.md, ARCHITECTURE.md, .spectacular/AGENTS.md |
 
-Load only the capability spec relevant to the current task, not all of `specs/`. The top-level `SPEC.md` is cheap and always relevant. Never read `archive/` during normal operation. The authoritative loading table is `.spectacular/AGENTS.md`.
+Load only the capability spec relevant to the current task, not all of `specs/`. The top-level `specs/index.md` is cheap and always relevant. Never read `archive/` during normal operation. The authoritative loading table is `.spectacular/AGENTS.md`.
 
 ## CLI
 

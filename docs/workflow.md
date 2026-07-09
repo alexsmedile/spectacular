@@ -54,9 +54,9 @@ Before asking an agent to do serious work, add concise grounding to the seven ca
 - `.spectacular/PRD.md` — product intent (Vision, Problem, Target users, Deliverable, Goals & success criteria, Non-goals, Constraints, First milestone). Run `spectacular prd` for an interactive 8-slot grill if starting from scratch.
 - `.spectacular/PRINCIPLES.md` — operating principles + how the skill enforces each at runtime
 - `.spectacular/ARCHITECTURE.md` — the workspace structure itself (frontmatter, lifecycle, versioning)
-- `.spectacular/ROADMAP.md` — versioned future work (v1 / v2 / v3+)
+- `.spectacular/roadmaps/index.md` — versioned future work (v1 / v2 / v3+)
 - `.spectacular/STACK.md` — host project's technology choices and engineering rules
-- `.spectacular/DECISIONS.md` — ADR-style log of decisions and tradeoffs
+- `.spectacular/decisions/index.md` — ADR-style log of decisions and tradeoffs
 - `.spectacular/AGENTS.md` — onboarding doc for any agent landing in `.spectacular/`; defines context loading by task type
 
 These files should stay short and focused. They are not a wiki — their job is to keep agents oriented and let each one load only what the current task needs (progressive disclosure).
@@ -159,12 +159,12 @@ The skill can propose transitions, but the human should confirm them.
 
 ## 7. Update system truth after completion
 
-`SPEC.md` (and any per-capability `specs/<capability>/SPEC.md` files) describe what the system does now. They should be updated after a request changes real behavior.
+`specs/index.md` (and any per-capability `specs/<capability>.md` files) describe what the system does now. They should be updated after a request changes real behavior.
 
 When archiving a completed request, the skill should propose updates such as:
 
-- add or update a bullet in `SPEC.md`
-- create a new `specs/<capability>/SPEC.md` (only when the bullet outgrows one line)
+- add or update a bullet in `specs/index.md`
+- create a new `specs/<capability>.md` (only when the bullet outgrows one line)
 - update an existing capability spec
 - change a capability status from `draft` to `stable`
 - leave unaffected specs unchanged
@@ -194,7 +194,7 @@ Good memory entries include:
 - architectural lessons
 - project-specific debugging patterns
 
-Memory is team-visible and committed to git under `.spectacular/memory/`. Do not use it for personal notes or secrets.
+Memory is team-visible and committed to git under `.spectacular/memories/`. Do not use it for personal notes or secrets.
 
 ---
 
@@ -209,7 +209,7 @@ spectacular archive add-team-billing
 The skill should:
 
 1. review the request state
-2. write a spec delta to `SPEC-DELTA.md` (`### ADDED` / `### MODIFIED` / `### REMOVED`, or `NONE — <why>`) and propose the matching `SPEC.md` / `specs/` updates
+2. write a spec delta to `SPEC-DELTA.md` (`### ADDED` / `### MODIFIED` / `### REMOVED`, or `NONE — <why>`) and propose the matching `specs/index.md` / `specs/` updates
 3. propose memory entries if useful
 4. move the request from `requests/` to `archive/`
 
@@ -226,5 +226,5 @@ For long-running projects, a useful rhythm is:
 3. Keep `TASKS.md` and `SESSION.md` current.
 4. Verify before changing request state to `verified`.
 5. Archive completed work.
-6. Update `SPEC.md` / `specs/` (via a `SPEC-DELTA.md`) only when behavior has actually changed.
+6. Update `specs/index.md` / `specs/` (via a `SPEC-DELTA.md`) only when behavior has actually changed.
 7. Write memory only for lessons with future value.

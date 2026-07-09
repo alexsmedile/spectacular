@@ -157,9 +157,9 @@ It does not rewrite:
 - `.spectacular/PRD.md`
 - `.spectacular/PRINCIPLES.md`
 - `.spectacular/ARCHITECTURE.md`
-- `.spectacular/ROADMAP.md`
+- `.spectacular/roadmaps/index.md`
 - `.spectacular/STACK.md`
-- `.spectacular/DECISIONS.md`
+- `.spectacular/decisions/index.md`
 - `.spectacular/AGENTS.md`
 - `.spectacular/config.yaml`
 - existing request folders
@@ -264,12 +264,12 @@ Canonical docs should be snapshotted before edits:
 - `.spectacular/PRD.md`
 - `.spectacular/PRINCIPLES.md`
 - `.spectacular/ARCHITECTURE.md`
-- `.spectacular/ROADMAP.md`
+- `.spectacular/roadmaps/index.md`
 - `.spectacular/STACK.md`
-- `.spectacular/DECISIONS.md`
+- `.spectacular/decisions/index.md`
 - `.spectacular/AGENTS.md`
 - `.spectacular/config.yaml`
-- `.spectacular/SPEC.md`
+- `.spectacular/specs/index.md`
 - `.spectacular/specs/**`
 
 Use the skill trigger:
@@ -290,6 +290,6 @@ Add capability specs when:
 
 - the project already has stable behavior worth documenting
 - a completed request changes behavior
-- the skill proposes a `SPEC.md` / `specs/` sync (via `SPEC-DELTA.md`) during archive
+- the skill proposes a `specs/index.md` / `specs/` sync (via `SPEC-DELTA.md`) during archive
 
 Keep `current/` behavior-oriented. It should describe what the system does now, not speculative future plans.

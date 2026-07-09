@@ -29,7 +29,7 @@ spectacular doctor [<area>] [options]
 
 ### `spectacular init`
 
-Scaffolds `.spectacular/` and installs the skill. As of v0.5.0, init scaffolds the **6-file always-set** by default — `PRD.md`, `SPEC.md`, `config.yaml`, `<agents-file>` (default `AGENTS.md`), `requests/`, `specs/`. Extra docs come from the selected kit or explicit `--with` flag. (v0.3.0–v0.4.x scaffolded `current/` instead of `SPEC.md` + `specs/`; legacy workspaces are auto-migrated by `spectacular doctor specs --fix`.)
+Scaffolds `.spectacular/` and installs the skill. As of v0.5.0, init scaffolds the **6-file always-set** by default — `PRD.md`, `specs/index.md`, `config.yaml`, `<agents-file>` (default `AGENTS.md`), `requests/`, `specs/`. Extra docs come from the selected kit or explicit `--with` flag. (v0.3.0–v0.4.x scaffolded `current/` instead of `specs/index.md` + `specs/`; legacy workspaces are auto-migrated by `spectacular doctor specs --fix`.)
 
 ```bash
 spectacular init                              # always-set + blank kit
@@ -67,7 +67,7 @@ spectacular doctor --format json          # JSON report for skill/tool consumpti
 
 Available areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions` *(v0.4.0+)*, `specs` *(v0.5.0+)*, `docs` *(v0.6.0+)*, `personas` *(v1.3.0+)*, `memory` / `sessions` *(v1.5.0+)*, `feedback` *(v1.6.0+)*, `ideas` *(v1.7.0+)*, `policies` *(v1.12.0+)*, `vision` *(v1.15.0+)*, `decisions` *(v1.17.0+)*, `roadmap` *(v1.23.0+)*.
 
-The `specs` area validates **spec-delta integrity** *(v1.28.0+)* — for each active request's `SPEC-DELTA.md`, a `⚠️` warning when a `MODIFIED`/`REMOVED` entry quotes a bullet that doesn't exist in its target file, or an `ADDED` entry duplicates one. This is the primary drift signal. It also keeps the older **SPEC.md date-drift** heuristic *(v1.18.0+)* as a backstop — a `⚠️` when `SPEC.md`'s `updated` date predates the newest archived request, signalling a likely missed spec-sync. Both route to the skill's spec-sync flow to reconcile content.
+The `specs` area validates **spec-delta integrity** *(v1.28.0+)* — for each active request's `SPEC-DELTA.md`, a `⚠️` warning when a `MODIFIED`/`REMOVED` entry quotes a bullet that doesn't exist in its target file, or an `ADDED` entry duplicates one. This is the primary drift signal. It also keeps the older **spec date-drift** heuristic *(v1.18.0+)* as a backstop — a `⚠️` when `specs/index.md`'s `updated` date predates the newest archived request, signalling a likely missed spec-sync. Both route to the skill's spec-sync flow to reconcile content.
 
 Exit codes:
 - `0` clean (no warnings, no errors)
@@ -172,7 +172,7 @@ spectacular next
 
 ### `spectacular archive <slug>`
 
-Archives a verified request. The skill proposes `SPEC.md` / `specs/` updates and memory entries, then moves the request to `.spectacular/archive/`.
+Archives a verified request. The skill proposes `specs/index.md` / `specs/` updates and memory entries, then moves the request to `.spectacular/archive/`.
 
 ```text
 spectacular archive add-team-billing
@@ -195,11 +195,11 @@ spectacular archive add-team-billing \
 
 ### `spectacular remember this`
 
-Writes an operational lesson to `.spectacular/memory/` after human confirmation. Team-visible — not for personal notes or secrets. **Skill flow** — runs inside Claude Code/Codex.
+Writes an operational lesson to `.spectacular/memories/` after human confirmation. Team-visible — not for personal notes or secrets. **Skill flow** — runs inside Claude Code/Codex.
 
 ### `spectacular remember "<text>" [--tag a,b]` (v1.5.0+)
 
-CLI mutator. Writes one memory entry to `.spectacular/memory/<slug>.md` and regenerates `MEMORY.md` index. Auto-derives slug + summary. If a session is open, the entry frontmatter gets `session: <slug>` automatically.
+CLI mutator. Writes one memory entry to `.spectacular/memories/M<N>-<slug>.md` and regenerates the `memories/index.md` index. Auto-derives slug + summary. If a session is open, the entry frontmatter gets `session: <slug>` automatically.
 
 ```text
 spectacular remember "haiku is fast enough for slug generation" --tag perf,cli
@@ -208,7 +208,7 @@ spectacular remember "..." --dry-run    # preview without writing
 
 ### `spectacular decide "<decision>" [--context "..."] [--consequences "..."]` (v1.5.0+)
 
-CLI mutator. Appends one ADR-style entry (**Context / Decision / Consequences**) to `.spectacular/DECISIONS.md`. The positional argument fills `**Decision:**`; auto-derives a title slug from the first ~6 words of the decision. If a session is open, the entry includes a `Session:` link.
+CLI mutator. Appends one ADR-style entry (**Context / Decision / Consequences**) to `.spectacular/decisions/index.md`. The positional argument fills `**Decision:**`; auto-derives a title slug from the first ~6 words of the decision. If a session is open, the entry includes a `Session:` link.
 
 `--context` and `--consequences` (v1.8.4+) populate those sections at write time. Omitted sections are emitted as empty headers to fill in later — never invented from the decision text.
 
@@ -229,7 +229,7 @@ spectacular session start --tag substrate-work     # open
 spectacular session end                            # close, recompute linked counts
 ```
 
-At most **one** session can be open at a time. At `end`, the writer scans `DECISIONS.md` + `memory/*.md` for entries with matching `session: <slug>` and appends Linked-decisions / Linked-memories sections to the session body. `spectacular doctor sessions` warns on sessions open >4h.
+At most **one** session can be open at a time. At `end`, the writer scans `decisions/index.md` + `memories/*.md` for entries with matching `session: <slug>` and appends Linked-decisions / Linked-memories sections to the session body. `spectacular doctor sessions` warns on sessions open >4h.
 
 ### `spectacular snapshot <file>`
 
@@ -242,7 +242,7 @@ spectacular snapshot .spectacular/PRD.md --major  # → (X+1).0 instead of X.(Y+
 
 The snapshot filename **couples to the version the copied content is** (a doc at `1.3` produces `@v1.3.md`), so the `@v` label and the `version:` field never drift. Docs without a `version:` field (e.g. `DESIGN.md`) use a plain `@v<N>` counter and the live doc is left untouched. Idempotent — re-running with no body change since the last snapshot is a no-op.
 
-Canonical files: `PRD.md`, `SPEC.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`, `AGENTS.md`, `DESIGN.md`, `config.yaml`, and `specs/<capability>/SPEC.md`.
+Canonical files: `PRD.md`, `specs/index.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `roadmaps/index.md`, `STACK.md`, `decisions/index.md`, `AGENTS.md`, `DESIGN.md`, `config.yaml`, and `specs/<capability>.md`.
 
 The store directory, retention, and gitignoring are configured via the [`snapshots`](configuration.md#snapshots-v1240) block in `config.yaml` (default store `_snapshots/`).
 
@@ -329,7 +329,7 @@ Legacy aliases (backwards-compatible from v0.2.x): `spectacular prd`, `spectacul
 
 ### `spectacular roadmap` — the ledger + version mapping *(v1.17.0+)*
 
-`spectacular roadmap` grills/renders `.spectacular/ROADMAP.md`, which has **two layers**:
+`spectacular roadmap` grills/renders `.spectacular/roadmaps/index.md`, which has **two layers**:
 
 - a **build-id ledger** (a table mapping each build `b1..bN` → its `target-version`) — the single source of truth for which build ships in which version, and
 - **per-version prose blocks** with the precision-graded planning detail.
@@ -345,7 +345,7 @@ Canonical schema: `.spectacular/ARCHITECTURE.md` § Roadmap ledger.
 
 **`spectacular roadmap migrate [--dry-run] [--keep N]`** *(v1.23.0+)* — index mode for
 shipped-history scaling. Moves shipped per-version prose blocks into per-version files
-(`.spectacular/roadmap/v<X.Y.Z>.md`) behind a `## Shipped` index, keeping the most-recent
+(`.spectacular/roadmaps/v<X.Y.Z>.md`) behind a `## Shipped` index, keeping the most-recent
 N (default 3) shipped blocks inline. Only `shipped` blocks move; planned/active/vision
 stay. Snapshot-safe, idempotent, dry-run first. The `doctor roadmap` area checks index
 integrity (orphan index lines / stale files) and nudges when prunable blocks remain inline.

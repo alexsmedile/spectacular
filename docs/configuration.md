@@ -46,7 +46,7 @@ agents:
   default_context:
     - PRD.md
     - STACK.md
-    - DECISIONS.md
+    - decisions/index.md
 
 skills:
   symlink_on_init: []
@@ -157,7 +157,7 @@ agents:
   default_context:
     - PRD.md
     - STACK.md
-    - DECISIONS.md
+    - decisions/index.md
 ```
 
 ### `agents.file`
@@ -208,7 +208,7 @@ agents:
   default_context:
     - PRD.md
     - STACK.md
-    - DECISIONS.md
+    - decisions/index.md
 ```
 
 Keep this list small. Spectacular works best when agents load targeted context instead of the full project history.

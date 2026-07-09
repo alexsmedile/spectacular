@@ -22,14 +22,14 @@ Every file type Spectacular uses, grouped by scope. This table is the quick refe
 | File | Role | Usage |
 |---|---|---|
 | `PRD.md` | Product intent | What / why / for whom. Project-wide — **never** per-request. |
-| `SPEC.md` | System spec (index) | Cheap, always-on index of what's built now; links to `specs/<cap>/SPEC.md`. |
+| `specs/index.md` | System spec (index) | Cheap, always-on index of what's built now; links to `specs/<cap>.md`. |
 | `PRINCIPLES.md` | Operating principles | The "why / how we work" beliefs + enforcement hooks. |
 | `POLICY.md` | Practice layer | Prefilled policies under work-phase hooks; gates lifecycle transitions. |
 | `ARCHITECTURE.md` | Workspace structure | Layout, frontmatter conventions, lifecycle, versioning. |
-| `ROADMAP.md` | What's next | Time-ordered direction (v1 / v2 / v3+) + Icebox. |
+| `roadmaps/index.md` | What's next | Time-ordered direction (v1 / v2 / v3+) + Icebox. |
 | `STACK.md` | Tech choices | Host project's frontend / backend / infra + engineering rules. |
 | `AGENTS.md` | Agent onboarding | How to operate in `.spectacular/`; authoritative context-loading table. |
-| `DECISIONS.md` | Decision log (ADR) | Why A over B. Flat prose, or index mode (`+ decisions/D<N>.md`). |
+| `decisions/index.md` | Decision log (ADR) | Why A over B. Flat prose, or index mode (`+ decisions/D<N>.md`). |
 | `PERSONAS.md` | Audience profiles | Opt-in — only with `product` / `content` kit or `--with personas`. |
 | `config.yaml` | Machine config | Name, naming rules, agent context, `workspace_schema` + provenance. |
 
@@ -45,7 +45,7 @@ Every file type Spectacular uses, grouped by scope. This table is the quick refe
 | `UNDERSTANDING.md` | Understand-before-change | Optional; alternative to PLAN's Understanding slot; gates `planned → active`. |
 | `RISKS.md` | Risk register | On demand for auth / billing / migration / flagged-sensitive requests. |
 | `VISION.md` | Vision spine | Imagine-mode (`spectacular imagine`), inside `vision/`. Not created by `new`. |
-| `specs/<cap>/SPEC.md` | Per-capability truth | System-truth spec for one capability (distinct from top-level `SPEC.md`). |
+| `specs/<cap>.md` | Per-capability truth | System-truth spec for one capability (distinct from top-level `specs/index.md`). |
 
 ### Soft-DB collections — folder of entries + index
 
@@ -53,25 +53,25 @@ Each is a folder of individually-addressable `.md` entries (frontmatter, git-com
 
 | Collection | Index | Role | Write verb |
 |---|---|---|---|
-| `memory/` | `MEMORY.md` | Durable standing facts / "always do X" | `spectacular remember` |
-| `decisions/` | `DECISIONS.md` | ADR — why A over B | `spectacular decide` |
-| `sessions/` | `SESSIONS.md` | Work-session time-log | `spectacular session start\|end` |
+| `memories/` | `memories/index.md` | Durable standing facts / "always do X" | `spectacular remember` |
+| `decisions/` | `decisions/index.md` | ADR — why A over B | `spectacular decide` |
+| `sessions/` | `sessions/index.md` | Work-session time-log | `spectacular session start\|end` |
 | `ideas/` | — | Pre-commitment sparks (no lifecycle) | `spectacular idea new` → `promote` |
-| `feedback/` | — | Post-ship prototyping signal | `spectacular feedback-loop new` |
-| `audit/` | `A<N>.md` | Bug diagnosis before a fix is planned | `spectacular audit new\|resolve` |
+| `feedbacks/` | — | Post-ship prototyping signal | `spectacular feedback-loop new` |
+| `audits/` | `A<N>.md` | Bug diagnosis before a fix is planned | `spectacular audit new\|resolve` |
 | `fixes/` | `F<N>.md` | Verified, signed, reusable fix corpus | `spectacular fix new\|list` |
 
 `audit → requests → fixes` form the self-learning bug loop (see the bug-workflow skill reference).
 
 ### ⚠ Naming conventions & traps
 
-The rule: **plural filename = a top-level index; singular = one file per request.** Two lexical exceptions and one hard trap:
+The rule: **a plural folder name is a category directory** — it holds either an `index.md` plus sequential entry files (soft-DB collections) or per-item sub-directories (execution trees).
 
-1. **Two `SESSION`s, opposite scope.** Per-request `SESSION.md` (singular — one request's working state) is **unrelated** to the top-level `SESSIONS.md` + `sessions/` collection (the work-session time-log). Same word, different system. The biggest confusion trap — do not conflate.
-2. **`SPEC.md` is overloaded.** Top-level `SPEC.md` is a lightweight *index*; `specs/<cap>/SPEC.md` are the per-capability *truth* docs. Same filename, different role.
-3. **`MEMORY.md` is singular-form but plays the plural index role** (it indexes `memory/`, exactly as `SESSIONS.md` indexes `sessions/`) — a lexical exception to the plural-means-index rule.
-4. **`VISION.md` is singular but acts as a spine/index** of the `vision/` soft-folder — a mild exception to singular-means-single-file.
-5. `FEEDBACKS.md` at the **repo root** is a Spectacular-repo development artifact, **not** a canonical file type — the canonical feedback store is the `feedback/` folder (no `FEEDBACK.md` index is emitted).
+1. **Two `SESSION`s, opposite scope.** Per-request `SESSION.md` (singular — one request's working state, created on `active`) is **unrelated** to the top-level `sessions/` category folder and its `sessions/index.md` (the work-session time-log). Same word, different system — the biggest confusion trap.
+2. **Consolidated specs.** Capability specs are flat files inside `specs/` (e.g. `specs/cli.md`, `specs/doc-engine.md`), indexed by `specs/index.md`. There are no nested spec folders.
+3. **Plural folders.** All collection and execution folders are strictly plural: `memories/`, `roadmaps/`, `decisions/`, `sessions/`, `audits/`, `fixes/`, `feedbacks/`, `ideas/`, `requests/`, `debugs/`.
+4. **Collections vs. execution trees.** Soft-DB collections (`memories/`, `decisions/`, `sessions/`, `audits/`, `fixes/`, `feedbacks/`, `ideas/`, `roadmaps/`) hold a central `index.md` plus flat sequential/date-logged entries. Execution trees (`requests/`, `debugs/`) hold per-item sub-directories (`requests/<slug>/`, `debugs/<slug>/`) with state files or run logs.
+5. **Sequential prefixes.** Entry files under `decisions/` and `memories/` carry an ID prefix: `decisions/D<N>-<slug>.md`, `memories/M<N>-<slug>.md`.
 
 ---
 
@@ -82,23 +82,22 @@ The rule: **plural filename = a top-level index; singular = one file per request
 ├── PRD.md              # product intent — what & why & for whom (required)
 ├── PRINCIPLES.md       # operating principles + enforcement hooks (required)
 ├── ARCHITECTURE.md     # workspace structure, frontmatter, lifecycle, versioning (required)
-├── ROADMAP.md          # time-ordered "what's next" (required)
+├── roadmaps/index.md   # time-ordered "what's next" (required)
 ├── AGENTS.md           # onboarding doc for any agent in .spectacular/ (required)
 ├── STACK.md            # host project's technology choices (required)
-├── DECISIONS.md        # ADR-style decision log (required)
+├── decisions/index.md  # ADR-style decision log (required)
 ├── config.yaml         # machine-readable project config (required)
 │
-├── SPEC.md             # system spec — index of what's built now (v0.5.0+)
+├── specs/index.md      # system spec — index of what's built now (v0.5.0+)
 ├── POLICY.md           # practice layer — work-phase hooks that gate transitions
 │
-├── specs/              # canonical system truth — one folder per capability
+├── specs/              # canonical system truth — one file per capability
 │   │                   #   (renamed from current/ in v0.5.0)
-│   ├── auth/SPEC.md
-│   └── billing/
-│       ├── payments/SPEC.md
-│       └── subscriptions/SPEC.md
+│   ├── auth.md
+│   ├── payments.md
+│   └── subscriptions.md
 │
-├── memory/  decisions/  sessions/  ideas/  feedback/  audit/  fixes/
+├── memories/  decisions/  sessions/  ideas/  feedbacks/  audits/  fixes/
 │                        # the 7 soft-DB collections (each: folder + index)
 │
 ├── requests/           # active and planned work — one folder per request
@@ -111,7 +110,7 @@ The rule: **plural filename = a top-level index; singular = one file per request
 │       └── specs/      # per-request capability specs
 │
 ├── ideas/              # thinking scratchpad — not acted on automatically
-├── memory/             # long-term operational learning (git-committed)
+├── memories/           # long-term operational learning (git-committed)
 ├── skills/             # project-specific reusable skills
 └── archive/            # completed requests and promoted ideas
     └── add-team-billing/
@@ -130,7 +129,7 @@ The rule: **plural filename = a top-level index; singular = one file per request
 | `specs/` | On `spectacular init` (was `current/` pre-v0.5.0) |
 | `requests/` | On `spectacular init` |
 | `ideas/` | On first idea file |
-| `memory/` | On first `spectacular remember this` |
+| `memories/` | On first `spectacular remember this` |
 | `skills/` | On first project skill |
 | `archive/` | On first archived request |
 | `archive/ideas/` | On first promoted idea |
@@ -155,9 +154,9 @@ summary: "One-sentence description of this file's purpose"
 related:
   - PRINCIPLES.md
   - ARCHITECTURE.md
-  - ROADMAP.md
+  - roadmaps/index.md
   - AGENTS.md
-  - DECISIONS.md
+  - decisions/index.md
   - STACK.md
 ---
 ```
@@ -215,7 +214,7 @@ Sections: Layout, Root layer, Frontmatter conventions, Ideas / Current / Request
 
 ---
 
-### `ROADMAP.md`
+### `roadmaps/index.md`
 
 Time-ordered "what's next". Coarse targets, not commitments. Detail for in-flight work lives in `requests/<slug>/`.
 
@@ -250,7 +249,7 @@ Sections: Frontend, Backend, Infrastructure, Rules.
 
 ---
 
-### `DECISIONS.md`
+### `decisions/index.md`
 
 Architectural decision log. Each entry records a decision, the reasoning behind it, and the tradeoffs accepted.
 
@@ -299,10 +298,10 @@ Standard sections:
 
 | Task type | Load |
 |---|---|
-| Planning / design | PRD.md, PRINCIPLES.md, DECISIONS.md |
+| Planning / design | PRD.md, PRINCIPLES.md, decisions/index.md |
 | Refining intent / PRD work | PRD.md, skill refs prd-grill.md / prd-refine.md / prd-review.md |
-| Implementing a request | STACK.md, requests/<slug>/PLAN.md, TASKS.md, SPEC.md, relevant specs/<capability>/SPEC.md |
-| Reviewing / QA | requests/<slug>/VERIFY.md, relevant specs/<capability>/SPEC.md, RISKS.md |
+| Implementing a request | STACK.md, requests/<slug>/PLAN.md, TASKS.md, specs/index.md, relevant specs/<capability>.md |
+| Reviewing / QA | requests/<slug>/VERIFY.md, relevant specs/<capability>.md, RISKS.md |
 | Onboarding cold | PRD.md, ARCHITECTURE.md, this file |
 
 ## Available skills
@@ -349,7 +348,7 @@ agents:
   default_context:
     - PRD.md
     - STACK.md
-    - DECISIONS.md
+    - decisions/index.md
     # Full per-task context map lives in .spectacular/AGENTS.md
 
 skills:
@@ -520,7 +519,7 @@ Use for: raw thoughts, market observations, UX experiments, discarded approaches
 
 ---
 
-## `memory/` — operational learning
+## `memories/` — operational learning
 
 Long-term lessons from the project. Git-committed and team-visible — survives agent changes, tool changes, and team changes.
 
@@ -550,7 +549,7 @@ The skill does not read `archive/` during normal operation.
 
 ## Versioning
 
-Canonical documents (`PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`, `AGENTS.md`, `config.yaml`, `current/` specs) are never overwritten in place.
+Canonical documents (`PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `roadmaps/index.md`, `STACK.md`, `decisions/index.md`, `AGENTS.md`, `config.yaml`, `current/` specs) are never overwritten in place.
 
 **Convention:** snapshot before editing, using the `@version` suffix:
 

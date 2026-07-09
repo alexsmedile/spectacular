@@ -75,7 +75,7 @@ For MINOR and PATCH with no roadmap milestone in play: **don't ask, just increme
 ## The roadmap ledger — how builds map to versions
 
 Before a change set *becomes* a release, it lives in the **roadmap ledger** — a table
-at the top of `.spectacular/ROADMAP.md` that is the **single source of truth for which
+at the top of `.spectacular/roadmaps/index.md` that is the **single source of truth for which
 build ships in which version.** Understanding it is how you read "what's planned for
 v1.x" without grepping.
 
@@ -119,7 +119,7 @@ stored copy.
 
 Canonical schema (columns, tier legend, all the rules): `.spectacular/ARCHITECTURE.md`
 § Roadmap ledger. The two-layer roadmap model (ledger + per-version prose blocks):
-`.spectacular/specs/roadmap/SPEC.md`.
+`.spectacular/specs/roadmap.md`.
 
 ---
 
@@ -275,5 +275,5 @@ contract.
 
 - [commands.md](commands.md) — the CLI/skill surface that MAJOR protects
 - [configuration.md](configuration.md) — `config.yaml` schema (a file-contract surface)
-- `.spectacular/ROADMAP.md` — where optional milestone narratives live
+- `.spectacular/roadmaps/index.md` — where optional milestone narratives live
 - `CHANGELOG.md` — the human-readable record of every version

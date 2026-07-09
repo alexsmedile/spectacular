@@ -7,6 +7,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Fixed — v0.6 → v2.0 (OKF) migration link-rewriter
+
+- **`migration_apply_v06_to_v20` link rewrite rebuilt** — the old step used over-broad bash `${//}` substring substitution: it injected doubled parens/backslashes into wikilinks and matched inside prose words (`SPEC` → `specs/index` inside `SPECIFICATION`; `debugging` → `debugs/s/ging`), corrupting ~10 live docs. Replaced with one anchored, link-only Python pass that rewrites only inside `[[…]]`/`(…)` targets and YAML `related:`/`depends-on:`/`blocks:` fields — never bare prose — and is idempotent (matches the old target only, so re-runs are no-ops).
+- **`related:` rewriting is now depth-aware** — a relocated file's relative targets resolve at its new location (a flattened `specs/<cap>/SPEC.md` → `specs/<cap>.md` no longer overshoots with `../../ARCHITECTURE.md`). Closed all 13 `doctor links` warnings on the migrated workspace.
+- **Decision renames use `_resolve_slug_collision`** — two decisions with colliding H1 slugs no longer clobber each other via an unchecked `mv`.
+- **Memory `M<N>` numbering is stable across re-runs** — already-prefixed entries keep their number; fresh entries continue past the current max (was: renumbered every run by date sort, silently breaking links).
+- **H1-slug derivation no longer over-strips** — a hyphenated decision title survives intact (only a leading `D<N> —` label is stripped), producing fuller slugs (e.g. `D6-remove-docs-verbs-deprecation-notice`).
+- **`migrations.log` no longer double-logs** — a forced `spectacular migrate --from <ver>` re-run on an already-migrated workspace re-applies idempotently without appending a duplicate history line.
+
+### Changed
+
+- **Skill references + templates synced to the v2.0 (OKF) layout** — `location:` frontmatter and path references across ~20 skill docs/templates now point at the new layout (`SPEC.md` → `specs/index.md`, `ROADMAP.md` → `roadmaps/index.md`, `DECISIONS.md`/`MEMORY.md`/`SESSIONS.md` → their `<dir>/index.md`, `specs/<cap>/SPEC.md` → `specs/<cap>.md`, singular collection dirs → plural), and two broken wikilinks (`[[D7]]`, `[[specs/roadmap/SPEC]]`) were repaired.
+- **This repo's `.spectacular/` workspace migrated to v2.0** — plural collection dirs, root index files relocated into their folders as `index.md`, capability specs flattened, decision/memory entries sequentially prefixed. `doctor`: 0 errors, 0 link warnings.
+
+### Added
+
+- **`migrate.test.sh` v0.6 → v2.0 coverage** — a real OKF migration scenario asserting every transform + depth-correct link/`related:` rewrites + prose-safety, plus a byte-identical idempotency scenario (forces a re-run, asserts the tree is unchanged). Previously the migration's behavior was untested (only its registry entry was checked).
+
 ## [1.28.0] — 2026-07-07
 
 ### Added — archive closure gate (b22)

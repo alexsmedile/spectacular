@@ -126,7 +126,7 @@ That's the whole idea. The full layout, once a project fills in:
 │   ── opt-in (scaffolded by kit declaration or --with flag) ──────────
 ├── PRINCIPLES.md       # operating principles + enforcement hooks
 ├── ARCHITECTURE.md     # .spectacular/ structure, frontmatter, lifecycle, versioning
-├── roadmaps/           # roadmap/index.md + shipped v*.md files
+├── roadmaps/           # roadmaps/index.md + shipped v*.md files
 ├── STACK.md            # host project's tech choices
 ├── decisions/          # ADR decision index + D*.md files
  
@@ -199,7 +199,7 @@ spectacular doctor --fix                      # apply mechanical fixes (gitignor
 spectacular doctor --format json              # JSON report for the skill or other tools
 
 spectacular feedback-loop new <target>        # scaffold a feedback entry (status: open); --request <slug> to scope
-spectacular feedback-loop list                # list entries across .spectacular/feedback/ + per-request folders
+spectacular feedback-loop list                # list entries across .spectacular/feedbacks/ + per-request folders
 spectacular feedback-loop resolve <slug> --next-action <a>   # close with a decision (required flag)
 spectacular feedback-loop archive <slug>      # move to .spectacular/archive/feedback/<year>/
 

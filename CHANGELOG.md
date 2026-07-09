@@ -7,6 +7,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added — `hold:` request modifier (deferred/blocked without polluting the lifecycle)
+
+- **A request can now carry an orthogonal `hold:` field** (`deferred`, `blocked`, or any short reason) that pauses it *without* adding a sixth lifecycle status. The five-state chain (`planned → active → review → verified → archived`) stays pure; the hold is a modifier on whatever stage the request is actually in. `spectacular status` surfaces it everywhere — fleet column shows `planned(deferred)`, the card shows `(hold: deferred)`, and `--json` gains a `"hold"` field (the agent contract). `spectacular advance` **refuses** to move a held request until the field is cleared (deleted or set to `none`). Sort rank keys off the raw lifecycle status, so a held request still sorts by its real stage.
+- This supersedes the earlier expedient of setting `status: parked` on a request — which duplicated the `parked` value already used by the `ideas`/`feedback` collections and broke the documented five-state invariant. `commit-discipline` was migrated to `status: planned` + `hold: deferred`. Documented in `ARCHITECTURE.md` (PLAN frontmatter schema) and `lifecycle.md`; 5 new assertions in `tests/cli/status.test.sh` (23/23).
+
+### Changed — reconciled builder-agent (b21) ledger drift
+
+- **`builder-agent`'s TASKS/PLAN were reconciled to reality and advanced `active → review`.** M1 (the `spec-builder` agent) and M2 (`build-workflow.md` orchestrator arc) shipped 2026-07-06 and were verified live (built `commit-discipline` M1; a deliberately-vague brief bounced), but the checkboxes were never ticked and the PLAN still named the working title `debug-builder.md`. Fixed: M1/M2 tasks checked, the `debug-builder → spec-builder` rename recorded, frontmatter + roadmap row updated. The only open work is the ≥3-parallel fan-out walkthrough (the `review → verified` item) and the gated M3 trace/CLI signal.
+
 ### Added — `doctor specs` frontmatter schema check (spec-audit-mode, b11)
 
 - **`doctor specs` now validates the frontmatter of each flat capability spec** (`specs/*.md`, excluding `index.md`): required keys `status, updated, summary, related` present; `updated` in ISO `YYYY-MM-DD`; `status` in the closed enum `draft | published | deprecated`; and `version:` present **iff** `status: published` (a published spec is a contract and must be versioned; a draft has nothing to version). All findings are `warning`-class, mirroring the `frontmatter` area's severity model. Mechanical only — no semantic matching, no false positives.

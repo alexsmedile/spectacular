@@ -9,7 +9,9 @@ State machine: `planned → active → review → verified → archived`
 
 State lives in `PLAN.md` frontmatter: `status: planned | active | review | verified`
 
-**`status:` takes vocabulary values only — never invent states.** Intermediate intent (`fixed-pending-verify`, `in-progress`, `paused`, `deferred-v2`, …) does not go in `status:`; it goes in a free-text `note:` frontmatter field next to it. Real workspaces drift into invented statuses precisely at these in-between moments — the `note:` field is the pressure valve. `doctor lifecycle` flags non-vocab statuses with this remediation.
+**`status:` takes vocabulary values only — never invent states.** Intermediate intent (`fixed-pending-verify`, `in-progress`, `deferred-v2`, …) does not go in `status:`; it goes in a free-text `note:` frontmatter field next to it. Real workspaces drift into invented statuses precisely at these in-between moments — `note:` is the pressure valve. `doctor lifecycle` flags non-vocab statuses with this remediation.
+
+**Pausing/blocking → `hold:`, not a status.** The specific case of "this request is real but must wait" (deferred by choice, or blocked externally) has its own first-class modifier: keep the true `status:` and add `hold: deferred | blocked | <reason>`. `spectacular status` surfaces it (`planned(deferred)` in the fleet, `(hold: …)` on the card, a `hold` field in `--json`) and `spectacular advance` **refuses** to move a held request until you clear the field (delete it or set `hold: none`). This keeps the five-state chain pure — a hold is orthogonal to the stage, not a sixth state. See [[ARCHITECTURE]] § requests/ PLAN.md.
 
 > **Policy gates on transitions.** Two transitions consult the policy engine before flipping state:
 > - `planned → active` → run `spectacular policy @Implementation` (blocker: `understand-before-change`).

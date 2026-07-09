@@ -40,8 +40,8 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b16 | snapshot-retention | Snapshot retention + version coupling | themed | v1.24.0 | shipped |
 | b17 | roadmap-contract-docs | Spec + document the roadmap ledger | themed | v1.23.0 | shipped |
 | b18 | roadmap-pruning | Roadmap shipped-history pruning/scaling | themed | v1.23.0 | shipped |
-| b20 | commit-discipline | Soft periodic-commit nudge for in-progress code (M1 shipped; M2 hook parked) | themed | tbd | parked |
-| b21 | builder-agent | Builder agent + build-workflow orchestrator arc (build-direction fleet) | themed | tbd | active |
+| b20 | commit-discipline | Soft periodic-commit nudge for in-progress code (M1 shipped; M2 hook deferred) | themed | tbd | planned |
+| b21 | builder-agent | Builder agent + build-workflow orchestrator arc (build-direction fleet) — M1+M2 shipped as `spec-builder`; fan-out walkthrough pending | themed | tbd | review |
 | b22 | archive-closure-gate | Archive closure gate + delta-based spec-sync (fable review #1+#2) | themed | v1.28.0 | shipped |
 | b23 | status-fleet-view | Deterministic `spectacular status` fleet view + enforced PLAN/TASKS structure | themed | v1.29.0 | shipped |
 

@@ -1,8 +1,9 @@
 ---
-status: parked
+status: planned
+hold: deferred
 priority: low
 owner: alex
-updated: 2026-07-09
+updated: 2026-07-10
 build: b20
 summary: "Add a soft periodic-commit nudge for in-progress code work — Spectacular currently ships zero commit guidance"
 related:
@@ -13,12 +14,15 @@ related:
 
 # Plan — commit-discipline
 
-> **Parked (2026-07-09).** M1 (the prose-only POLICY nudge) **shipped** and is
-> live — `commit-checkpoint` under `@Implementation` + extended `@SessionEnd`.
-> M2 (the wired `Stop`/`SessionEnd` reminder hook) is **parked, not cancelled**:
-> it was always gated on M1 proving insufficient (P11), and there's no current
-> demand for it. Unpark by cutting M2 as its own small request if the prose nudge
-> ever proves too weak in practice. Nothing to do until then.
+> **Deferred (2026-07-10)** — `status: planned` + `hold: deferred`. M1 (the
+> prose-only POLICY nudge) **shipped** and is live — `commit-checkpoint` under
+> `@Implementation` + extended `@SessionEnd`. M2 (the wired `Stop`/`SessionEnd`
+> reminder hook) is **held, not cancelled**: it was always gated on M1 proving
+> insufficient (P11), and there's no current demand. `advance` refuses while the
+> hold is set; clear `hold:` in this frontmatter to resume. (Represented as a
+> hold rather than `status: parked` to keep the five-state lifecycle pure — holds
+> are orthogonal modifiers, matching how the substrate keeps non-lifecycle states
+> out of the linear chain.)
 
 ## Goal
 

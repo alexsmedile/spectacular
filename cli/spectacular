@@ -5632,6 +5632,16 @@ EOF
   current="$(fm_get "$plan" "status")"
   [[ -z "$current" ]] && die "promote: PLAN.md has no status: field"
 
+  # Refuse to advance a held request. `hold:` (e.g. `deferred`, `blocked`) is an
+  # orthogonal modifier on any lifecycle stage — the five-state lifecycle stays
+  # pure, but a held request can't move until the hold is cleared. Mirrors how
+  # the substrate keeps non-lifecycle states out of the linear chain.
+  local hold
+  hold="$(fm_get "$plan" "hold")"
+  if [[ -n "$hold" && "$hold" != "none" ]]; then
+    die "promote: '$slug' is held (hold: $hold) — clear the hold in PLAN.md before advancing (remove the \`hold:\` field or set it to 'none')."
+  fi
+
   # Compute target if --to omitted
   local target
   if [[ -n "$opt_to" ]]; then
@@ -7058,7 +7068,12 @@ cmd_status_fleet() {
     goal=$(_status_goal_line "$f")
     progress=$(_status_progress_fmt "$(dirname "$f")/TASKS.md")
     milestone=$(_status_current_milestone "$(dirname "$f")/TASKS.md")
+    # Rank on the raw lifecycle status; a hold is an orthogonal modifier that
+    # doesn't change sort order (a held planned request still ranks as planned).
     rank=$(_status_sort_rank "$status")
+    # Fold an active hold into the displayed status: planned(deferred).
+    local hold; hold=$(fm_get "$f" "hold")
+    [[ -n "$hold" && "$hold" != "none" ]] && status="${status}(${hold})"
     rows+=("${rank}|${slug}|${status}|${priority}|${build}|${updated}|${progress}|${milestone}|${goal}")
   done < <(_request_iter_all)
 
@@ -7071,8 +7086,8 @@ cmd_status_fleet() {
   local sorted
   sorted=$(printf '%s\n' "${rows[@]}" | sort -t'|' -k1,1n -k2,2)
 
-  printf "%-26s  %-9s  %-7s  %-6s  %-8s  %s\n" "SLUG" "STATUS" "PRI" "BUILD" "PROGRESS" "MILESTONE / GOAL"
-  printf "%-26s  %-9s  %-7s  %-6s  %-8s  %s\n" "----" "------" "---" "-----" "--------" "----------------"
+  printf "%-26s  %-18s  %-7s  %-6s  %-8s  %s\n" "SLUG" "STATUS" "PRI" "BUILD" "PROGRESS" "MILESTONE / GOAL"
+  printf "%-26s  %-18s  %-7s  %-6s  %-8s  %s\n" "----" "------" "---" "-----" "--------" "----------------"
   local line
   while IFS='|' read -r rank slug status priority build updated progress milestone goal; do
     local slug_disp="$slug"
@@ -7080,7 +7095,7 @@ cmd_status_fleet() {
     # Right column: current milestone if present, else the goal line, truncated.
     local right="${milestone:-$goal}"
     (( ${#right} > 42 )) && right="${right:0:39}..."
-    printf "%-26s  %-9s  %-7s  %-6s  %-8s  %s\n" \
+    printf "%-26s  %-18s  %-7s  %-6s  %-8s  %s\n" \
       "$slug_disp" "$status" "$priority" "$build" "$progress" "$right"
   done <<< "$sorted"
 
@@ -7095,8 +7110,9 @@ cmd_status_card() {
   local plan="$dir/PLAN.md"
   [[ -f "$plan" ]] || die "status: no request '$slug' (looked for $plan)"
 
-  local status priority build updated summary goal progress milestone
+  local status priority build updated summary goal progress milestone hold
   status=$(fm_get "$plan" "status"); [[ -z "$status" ]] && status="?"
+  hold=$(fm_get "$plan" "hold"); [[ "$hold" == "none" ]] && hold=""
   priority=$(fm_get "$plan" "priority"); [[ -z "$priority" ]] && priority="—"
   build=$(fm_get "$plan" "build")
   updated=$(fm_get "$plan" "updated")
@@ -7121,7 +7137,7 @@ cmd_status_card() {
     stale="  ⚠ stale (${age}d since update)"
   fi
 
-  printf "┌─ %s · %s%s\n" "$slug" "$status" "$stale"
+  printf "┌─ %s · %s%s%s\n" "$slug" "$status" "${hold:+ (hold: $hold)}" "$stale"
   if [[ -n "$goal" ]];    then printf "│ goal       %s\n" "$goal"; fi
   if [[ -n "$summary" ]]; then printf "│ summary    %s\n" "$summary"; fi
   printf "│ priority   %s" "$priority"
@@ -7147,6 +7163,7 @@ cmd_status_json() {
     local dir; dir=$(dirname "$f")
     slug=$(basename "$dir")
     status=$(fm_get "$f" "status")
+    local hold; hold=$(fm_get "$f" "hold"); [[ "$hold" == "none" ]] && hold=""
     priority=$(fm_get "$f" "priority")
     build=$(fm_get "$f" "build")
     updated=$(fm_get "$f" "updated")
@@ -7155,8 +7172,8 @@ cmd_status_json() {
     milestone=$(_status_current_milestone "$dir/TASKS.md")
     _status_progress "$dir/TASKS.md"
     if (( i > 0 )); then printf ','; fi
-    printf '{"slug":"%s","status":"%s","priority":"%s","build":"%s","updated":"%s","summary":"%s","goal":"%s","progress":{"done":%d,"open":%d,"deferred":%d,"total":%d},"current_milestone":"%s"}' \
-      "$(_json_escape "$slug")" "$(_json_escape "$status")" "$(_json_escape "$priority")" \
+    printf '{"slug":"%s","status":"%s","hold":"%s","priority":"%s","build":"%s","updated":"%s","summary":"%s","goal":"%s","progress":{"done":%d,"open":%d,"deferred":%d,"total":%d},"current_milestone":"%s"}' \
+      "$(_json_escape "$slug")" "$(_json_escape "$status")" "$(_json_escape "$hold")" "$(_json_escape "$priority")" \
       "$(_json_escape "$build")" "$(_json_escape "$updated")" "$(_json_escape "$summary")" \
       "$(_json_escape "$goal")" "$_ST_DONE" "$_ST_OPEN" "$_ST_DEFERRED" "$_ST_TOTAL" \
       "$(_json_escape "$milestone")"

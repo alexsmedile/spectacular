@@ -1,8 +1,8 @@
 ---
-status: active
+status: review
 priority: medium
 owner: alex
-updated: 2026-07-06
+updated: 2026-07-10
 build: b21
 summary: "Add a Builder agent + build-workflow orchestrator arc — implement planned request milestones via subagent, the build-direction analog of the debug fleet"
 related:
@@ -63,8 +63,9 @@ against real requests; the M-label drift gap it flagged was closed by the
 
 ### What changes
 
-- New agent def `.claude/agents/debug-builder.md` (project scope for testing;
-  graduates to a plugin agent once proven, like the debug fleet).
+- New agent def `.claude/agents/spec-builder.md` (project scope for testing;
+  graduates to a plugin agent once proven, like the debug fleet). *(Shipped as
+  `spec-builder` — build-from-spec — not the working title `debug-builder`.)*
 - New orchestrator reference `skills/spectacular/references/build-workflow.md` —
   mirrors `bug-workflow.md`'s arc for the build direction: context-assembly chain,
   worth-it/fan-out gate, bounce rule, ledger discipline.
@@ -80,11 +81,11 @@ against real requests; the M-label drift gap it flagged was closed by the
 
 ## Milestones
 
-- M1 — **Builder agent def shipped.** `debug-builder.md` exists, matches the
+- M1 — **Builder agent def shipped.** ✅ `spec-builder.md` exists, matches the
   debug-fixer contract shape (frontmatter, protocol, bounce rail, output block), and
   reads as apply-from-spec not investigate. A worked closed brief runs end-to-end
-  against a real milestone.
-- M2 — **build-workflow orchestrator arc shipped.** `build-workflow.md` mirrors
+  against a real milestone. *(Verified 2026-07-06: built commit-discipline M1; bounce case passed.)*
+- M2 — **build-workflow orchestrator arc shipped.** ✅ `build-workflow.md` mirrors
   `bug-workflow.md`: the context-assembly chain, the worth-it/fan-out decision table
   (when to dispatch vs build inline), the bounce rule, ledger discipline. SKILL.md +
   doc-index wired so it's discoverable.
@@ -113,6 +114,6 @@ See `TASKS.md`.
 
 ## Deliverables
 
-- `.claude/agents/debug-builder.md` — the Builder agent prompt.
-- `skills/spectacular/references/build-workflow.md` — the orchestrator arc.
-- SKILL.md trigger row + `doc-index.md` row wiring the ref in.
+- `.claude/agents/spec-builder.md` — the Builder agent prompt. ✅
+- `skills/spectacular/references/build-workflow.md` — the orchestrator arc. ✅
+- SKILL.md trigger row + `doc-index.md` row wiring the ref in. ✅

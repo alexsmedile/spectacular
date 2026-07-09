@@ -171,6 +171,7 @@ summary: "What this capability does"
 ```yaml
 ---
 status: planned | active | review | verified
+hold: deferred | blocked        # optional — an orthogonal hold on the current stage
 priority: high | medium | low
 owner: alex
 updated: 2026-05-11
@@ -189,6 +190,19 @@ blocks:
 - Other fields are optional; skill warns but does not block
 - `PLAN.md` frontmatter is the **single source of lifecycle state** for a request
 - Capability specs at `specs/<capability>.md` track their own state independently
+
+**`hold:` — orthogonal hold (b21-adjacent, 2026-07-10).** The lifecycle is a
+**pure five-state chain** (`planned → active → review → verified → archived`). A
+request that must pause — deferred by choice, or blocked on something external —
+does **not** get a sixth status; instead it keeps its real lifecycle stage and
+carries an optional `hold:` modifier (`deferred`, `blocked`, or any short reason).
+This keeps the linear chain uncluttered, mirroring how the substrate keeps
+non-lifecycle states (`ideas`, `feedback`) in their own collections rather than
+in the request enum. Behavior: `spectacular status` renders the hold everywhere
+(fleet column `planned(deferred)`, card `(hold: deferred)`, `--json` `"hold"`
+field); `spectacular advance` **refuses** to move a held request until the hold
+is cleared (remove the field or set `hold: none`). Sort rank keys off the raw
+lifecycle status, so a held request sorts by its real stage.
 
 ### Cross-request relationship fields (v1.16.0+)
 

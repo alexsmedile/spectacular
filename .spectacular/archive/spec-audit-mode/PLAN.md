@@ -1,5 +1,5 @@
 ---
-status: review
+status: archived
 priority: medium
 owner: alex
 updated: 2026-07-09
@@ -9,6 +9,9 @@ related:
   - ../../PRD.md
   - ../../specs/index.md
   - ../../roadmaps/index.md
+archive_overrides:
+  - tasks — Only open task is the tbd roadmap target-version, assigned at release time — not build work (2026-07-09)
+archived: 2026-07-09
 ---
 
 # Plan — spec-audit-mode (frontmatter schema check)

@@ -193,11 +193,42 @@ scenario_4_card_missing_slug() {
   rm -rf "$dir"
 }
 
+# Scenario 5: a `hold:` modifier is surfaced across all three surfaces and blocks
+# advance. hold is orthogonal to the five-state lifecycle (keeps it pure).
+scenario_5_hold_modifier() {
+  echo "Scenario 5: hold: modifier renders + blocks advance"
+  local dir="/tmp/status-test-5"
+  seed_ws "$dir"
+  seed_request "$dir" "held-req" "planned" "low" "b1" "2026-07-01" "held one" "goal h"
+  # Inject a hold: field into the seeded PLAN.
+  perl -0pi -e 's/^(status: planned)$/$1\nhold: deferred/m' "$dir/.spectacular/requests/held-req/PLAN.md"
+
+  # Fleet table folds it into the status column.
+  local out; out=$(cd "$dir" && "$CLI" status 2>&1)
+  assert_output_contains "$out" "planned(deferred)" "fleet folds hold into status column"
+
+  # Card shows it.
+  out=$(cd "$dir" && "$CLI" status held-req 2>&1)
+  assert_output_contains "$out" "(hold: deferred)" "card surfaces hold"
+
+  # JSON contract carries the hold field.
+  out=$(cd "$dir" && "$CLI" status --json 2>&1)
+  assert_output_contains "$out" '"hold":"deferred"' "json emits hold field"
+
+  # advance refuses while held.
+  local code
+  out=$(cd "$dir" && "$CLI" advance held-req 2>&1) && code=0 || code=$?
+  assert_exit_code "1" "$code" "advance refuses a held request"
+  assert_output_contains "$out" "is held" "advance explains the hold block"
+  rm -rf "$dir"
+}
+
 echo "═══ status.test.sh ═══"
 scenario_1_fleet_table
 scenario_2_body_signals
 scenario_3_json_contract
 scenario_4_card_missing_slug
+scenario_5_hold_modifier
 
 echo ""
 echo "  Asserts: $pass_count passed, $fail_count failed"

@@ -1,6 +1,6 @@
 ---
-status: active
-updated: 2026-07-06
+status: review
+updated: 2026-07-10
 related:
   - PLAN.md
   - TASKS.md

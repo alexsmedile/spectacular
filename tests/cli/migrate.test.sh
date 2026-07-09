@@ -274,6 +274,13 @@ date: 2026-01-01
 ---
 # note
 EOF
+  # Nested request file with relative links in markdown body
+  mkdir -p "$dir/.spectacular/requests/req-1"
+  cat > "$dir/.spectacular/requests/req-1/PLAN.md" <<EOF
+# Plan
+See [Roadmap](../../ROADMAP.md) and [[../../DECISIONS.md]].
+Also [Decision](../../decisions/D1.md) and [[../../memory/M-note.md]].
+EOF
 }
 
 scenario_11_v06_okf_migration() {
@@ -300,6 +307,13 @@ scenario_11_v06_okf_migration() {
   assert_dir_absent "$dir/.spectacular/specs/auth"
   # Prefixed decision, hyphenated title preserved (H1 over-strip regression)
   assert_file_exists "$dir/.spectacular/decisions/D1-use-the-hyphenated-name-approach.md"
+
+  # Check nested relative link rewrites in markdown body
+  local req_plan="$dir/.spectacular/requests/req-1/PLAN.md"
+  assert_file_contains "$req_plan" "[Roadmap](../../roadmaps/index.md)"
+  assert_file_contains "$req_plan" "[[../../decisions/index.md]]"
+  assert_file_contains "$req_plan" "[Decision](../../decisions/D1-use-the-hyphenated-name-approach.md)"
+  assert_file_contains "$req_plan" "[[../../memories/M1-note.md]]"
 
   # Link rewrite: correct targets, NO corruption
   local spec="$dir/.spectacular/specs/index.md"

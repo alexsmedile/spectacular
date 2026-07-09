@@ -6496,13 +6496,14 @@ migration_apply_v06_to_v20() {
     shopt -s nullglob
     for f in "$decs_dir"/D[0-9]*.md; do
       bname="$(basename "$f" .md)"
-      # If already contains a dash after the number, skip renaming but record link mapping
-      if [[ "$bname" =~ ^D[0-9]+- ]]; then
+      # Skip only if name matches strictly formatted clean D<N>-<slug>
+      if [[ "$bname" =~ ^D[0-9]+-[a-z0-9-]+$ ]]; then
         dec_old_links+=("decisions/${bname%%-*}")
         dec_new_links+=("decisions/${bname}")
         continue
       fi
       num="${bname#D}"
+      num="${num%%-*}"
       h1_title=""
       if [[ -f "$f" ]]; then
         # Extract H1 title
@@ -6561,6 +6562,10 @@ migration_apply_v06_to_v20() {
       fi
     done
     local next_n=$((max_n + 1))
+
+    # Two-pass rename to prevent collision overwrites and normalize slugs
+    local idx=1
+    local -a tmp_mfiles=()
     for item in "${sorted_mfiles[@]}"; do
       mfile="${item#*|}"
       bname="$(basename "$mfile" .md)"
@@ -6568,18 +6573,28 @@ migration_apply_v06_to_v20() {
       if [[ "$bname" =~ ^M([0-9]+)- ]]; then
         this_n="${BASH_REMATCH[1]}"
         orig_slug="${bname#M[0-9]*-}"
+      elif [[ "$bname" =~ ^M- ]]; then
+        this_n="$next_n"
+        next_n=$((next_n + 1))
+        orig_slug="${bname#M-}"
       else
         this_n="$next_n"
         next_n=$((next_n + 1))
       fi
-      new_name="${mems_dir}/M${this_n}-${orig_slug}.md"
-      # Only rename if it's different
-      if [[ "$mfile" != "$new_name" ]]; then
-        mv "$mfile" "$new_name"
-        echo "  ✓ Renamed $mfile -> $new_name"
-      fi
+      orig_slug=$(_slug_from_text "$orig_slug")
+      local tmp_name="${mems_dir}/tmp-M${this_n}-${orig_slug}.md"
+      mv "$mfile" "$tmp_name"
+      tmp_mfiles+=("$tmp_name")
       mem_old_links+=("memory/${bname}")
       mem_new_links+=("memories/M${this_n}-${orig_slug}")
+    done
+
+    # Move to final names
+    for f in "${tmp_mfiles[@]}"; do
+      local b; b=$(basename "$f")
+      local final_name="${mems_dir}/${b#tmp-}"
+      mv "$f" "$final_name"
+      echo "  ✓ Renamed $b -> ${b#tmp-}"
     done
   fi
 
@@ -6589,6 +6604,17 @@ migration_apply_v06_to_v20() {
     [[ -f "$f" ]] && md_files+=("$f")
   done < <(find "$root_dir" -name "*.md")
 
+  # Serialize mappings into environment variables for single Python call
+  local dec_mapping_str="" mem_mapping_str="" i
+  for ((i=0; i<${#dec_old_links[@]}; i++)); do
+    dec_mapping_str+="${dec_old_links[$i]}->${dec_new_links[$i]},"
+  done
+  for ((i=0; i<${#mem_old_links[@]}; i++)); do
+    mem_mapping_str+="${mem_old_links[$i]}->${mem_new_links[$i]},"
+  done
+  export DEC_MAPPINGS="$dec_mapping_str"
+  export MEM_MAPPINGS="$mem_mapping_str"
+
   local md_file
   for md_file in "${md_files[@]}"; do
     local content temp_file
@@ -6596,12 +6622,8 @@ migration_apply_v06_to_v20() {
     content=$(cat "$md_file")
 
     echo "$content" > "$temp_file"
-    # Link-only rewrite: operate strictly inside wikilink ([[...]]) and markdown
-    # link ((...) / ](...)) targets — NOT over bare prose. Anchored + idempotent:
-    # matches only the OLD target, so a second run is a no-op. See migration bugs
-    # A/B (over-broad ${//} substring replace) fixed here.
     python3 -c '
-import sys, re
+import sys, os, re
 content = open(sys.argv[1]).read()
 
 # Nested capability spec must run BEFORE the generic SPEC.md rename, or
@@ -6618,22 +6640,25 @@ INDEX = {
     "ROADMAP":   "roadmaps/index",
     "SPEC":      "specs/index",
 }
-def sub_targets(text, old_stem, new_target):
-    # [[OLD]] / [[OLD.md]]  ->  [[NEW]] / [[NEW.md]]
-    text = re.sub(r"\[\[" + old_stem + r"(\.md)?\]\]", "[[" + new_target + r"\1]]", text)
-    # ](OLD) / ](OLD.md) and (OLD) / (OLD.md) as a link target
-    text = re.sub(r"\((" + old_stem + r")(\.md)?\)",
-                  lambda m: "(" + new_target + (m.group(2) or "") + ")", text)
-    return text
 for stem, target in INDEX.items():
-    content = sub_targets(content, stem, target)
+    # Wikilinks: [[ROADMAP]] or [[../../ROADMAP.md]]
+    def sub_wikilink(m):
+        prefix, ext, display = m.group(1), m.group(2) or "", m.group(3) or ""
+        return f"[[{prefix}{target}{ext}{display}]]"
+    content = re.sub(r"\[\[([^\]|]*?)" + stem + r"(\.md)?(\|[^\]]*)?\]\]", sub_wikilink, content)
+
+    # Standard Markdown Links: (ROADMAP) or (../../ROADMAP.md#section-1)
+    def sub_mdlink(m):
+        prefix, ext, anchor = m.group(1), m.group(2) or "", m.group(3) or ""
+        return f"({prefix}{target}{ext}{anchor})"
+    content = re.sub(r"\(([^)]*?)" + stem + r"(\.md)?(#\S+)?\)", sub_mdlink, content)
 
 # Pluralize singular dir segments — only where they head a link path.
 PLURAL = {"memory": "memories", "roadmap": "roadmaps", "feedback": "feedbacks",
           "audit": "audits", "debug": "debugs"}
 for sing, plur in PLURAL.items():
-    content = re.sub(r"\[\[" + sing + r"/", "[[" + plur + "/", content)
-    content = re.sub(r"\]\(" + sing + r"/", "](" + plur + "/", content)
+    content = re.sub(r"(\[\[[^\]|]*?)" + sing + r"/", r"\1" + plur + r"/", content)
+    content = re.sub(r"(\([^)]*?)" + sing + r"/", r"\1" + plur + r"/", content)
 
 # Frontmatter link fields (related:/depends-on:/blocks:) carry relative-path
 # targets as YAML list items ("  - ../../SPEC.md"). Two fixes: (1) rename the
@@ -6641,7 +6666,7 @@ for sing, plur in PLURAL.items():
 # or specs/<cap>/SPEC.md->specs/<cap>.md) changed level, so the old relative
 # path no longer resolves. We resolve each target to a real file on disk (by
 # basename, searching the workspace) and re-express it relative to this file.
-import os, posixpath
+import posixpath
 this_file = sys.argv[2]                       # real destination path of the doc
 root      = sys.argv[3].rstrip("/")           # .spectacular root
 # Directory of this file, expressed relative to root (posix, "" == root).
@@ -6674,37 +6699,32 @@ def fix_fm_target(m):
 content = re.sub(r"^(\s*-\s*)((?:\.\./)*[A-Za-z0-9_-]+\.md)\s*$",
                  fix_fm_target, content, flags=re.M)
 
+# Rewrite decisions links
+dec_mappings = os.environ.get("DEC_MAPPINGS", "")
+if dec_mappings:
+    for pair in dec_mappings.split(","):
+        if not pair: continue
+        old, new = pair.split("->")
+        old_stem, new_stem = old.split("/")[-1], new.split("/")[-1]
+        content = re.sub(r"(\[\[[^\]|]*?decisions/)" + old_stem + r"(\.md)?(\|[^\]]*)?\]\]",
+                         r"\1" + new_stem + r"\2\3]]", content)
+        content = re.sub(r"(\([^)]*?decisions/)" + old_stem + r"(\.md)?(#\S+)?\)",
+                         r"\1" + new_stem + r"\2\3)", content)
+
+# Rewrite memories links
+mem_mappings = os.environ.get("MEM_MAPPINGS", "")
+if mem_mappings:
+    for pair in mem_mappings.split(","):
+        if not pair: continue
+        old, new = pair.split("->")
+        old_slug, new_slug = old.split("/")[-1], new.split("/")[-1]
+        content = re.sub(r"(\[\[[^\]|]*?memories/)" + old_slug + r"(\.md)?(\|[^\]]*)?\]\]",
+                         r"\1" + new_slug + r"\2\3]]", content)
+        content = re.sub(r"(\([^)]*?memories/)" + old_slug + r"(\.md)?(#\S+)?\)",
+                         r"\1" + new_slug + r"\2\3)", content)
+
 open(sys.argv[1], "w").write(content)
 ' "$temp_file" "$md_file" "$root_dir"
-
-    local i
-    for ((i=0; i<${#dec_old_links[@]}; i++)); do
-      python3 -c '
-import sys
-content = open(sys.argv[1]).read()
-old = sys.argv[2]
-new = sys.argv[3]
-content = content.replace("[[" + old + "]]", "[[" + new + "]]")
-content = content.replace("[[" + old + ".md]]", "[[" + new + ".md]]")
-content = content.replace("(" + old + ")", "(" + new + ")")
-content = content.replace("(" + old + ".md)", "(" + new + ".md)")
-open(sys.argv[1], "w").write(content)
-' "$temp_file" "${dec_old_links[$i]}" "${dec_new_links[$i]}"
-    done
-
-    for ((i=0; i<${#mem_old_links[@]}; i++)); do
-      python3 -c '
-import sys
-content = open(sys.argv[1]).read()
-old = sys.argv[2]
-new = sys.argv[3]
-content = content.replace("[[" + old + "]]", "[[" + new + "]]")
-content = content.replace("[[" + old + ".md]]", "[[" + new + ".md]]")
-content = content.replace("(" + old + ")", "(" + new + ")")
-content = content.replace("(" + old + ".md)", "(" + new + ".md)")
-open(sys.argv[1], "w").write(content)
-' "$temp_file" "${mem_old_links[$i]}" "${mem_new_links[$i]}"
-    done
 
     mv "$temp_file" "$md_file"
   done

@@ -53,7 +53,7 @@ spectacular/
 ├── CONTRIBUTING.md
 ├── LICENSE
 ├── CLAUDE.md                  # This file
-└── AGENTS.md                  # Agent onboarding pointer
+└── AGENTS.md                  # Contributor + agent guide (repo map, dev commands, conventions)
 ```
 
 > **Note on the two `hooks/` directories:** `hooks/` at repo root contains
@@ -67,6 +67,7 @@ spectacular/
 
 | Slug | Status | Summary |
 |---|---|---|
+| `cli-path-abstraction` | planned | Centralized path-variable registry at the top of the CLI, so functions stop hardcoding `.spectacular/` paths |
 | `spec-audit-mode` | planned | Content-aware spec audit — orphan bullets/spec files + stale capability specs, beyond the date drift heuristic (b11) |
 | `builder-agent` | active | Builder agent (`spec-builder`) + `build-workflow.md` orchestrator arc — implement planned milestones via subagent, the build-direction analog of the debug fleet (b21) |
 | `commit-discipline` | planned | Soft periodic-commit nudge for in-progress code (POLICY @Implementation/@SessionEnd; wired hook gated as M2) — Spectacular ships zero commit guidance today, and Codex forgets on long jobs (b20) |

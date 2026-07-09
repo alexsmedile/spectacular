@@ -6563,8 +6563,19 @@ migration_apply_v06_to_v20() {
     done
     local next_n=$((max_n + 1))
 
-    # Two-pass rename to prevent collision overwrites and normalize slugs
-    local idx=1
+    # Two-pass rename to prevent collision overwrites and normalize slugs.
+    # The final names don't exist on disk yet during the tmp pass, so on-disk
+    # collision detection (_resolve_slug_collision statting the dir) can't see a
+    # pending duplicate. Track taken final bases in-memory instead, so two
+    # malformed inputs that normalize to the same M<N>-<slug> (e.g. duplicate
+    # M1-Foo.md + M1-foo.md) get de-duped (-2, -3, ...) rather than one silently
+    # clobbering the other. The resolved base is baked into the tmp name so the
+    # second pass just strips the "tmp-" prefix, keeping disk name and the
+    # mem_new_links mapping in lockstep.
+    # taken_bases: a newline-delimited membership string (macOS ships bash 3.2,
+    # which has no associative arrays). Each claimed final base is one line;
+    # membership is a fixed-string, whole-line grep.
+    local taken_bases=$'\n'
     local -a tmp_mfiles=()
     for item in "${sorted_mfiles[@]}"; do
       mfile="${item#*|}"
@@ -6582,11 +6593,21 @@ migration_apply_v06_to_v20() {
         next_n=$((next_n + 1))
       fi
       orig_slug=$(_slug_from_text "$orig_slug")
-      local tmp_name="${mems_dir}/tmp-M${this_n}-${orig_slug}.md"
+      # Resolve final-base collisions against bases already claimed this run.
+      local final_base="M${this_n}-${orig_slug}" n=2
+      while printf '%s' "$taken_bases" | grep -qxF "$final_base"; do
+        final_base="M${this_n}-${orig_slug}-${n}"
+        n=$((n + 1))
+      done
+      if [[ "$final_base" != "M${this_n}-${orig_slug}" ]]; then
+        echo "  ⚠  memory slug collision: 'M${this_n}-${orig_slug}' → '${final_base}'" >&2
+      fi
+      taken_bases+="${final_base}"$'\n'
+      local tmp_name="${mems_dir}/tmp-${final_base}.md"
       mv "$mfile" "$tmp_name"
       tmp_mfiles+=("$tmp_name")
       mem_old_links+=("memory/${bname}")
-      mem_new_links+=("memories/M${this_n}-${orig_slug}")
+      mem_new_links+=("memories/${final_base}")
     done
 
     # Move to final names
@@ -6622,6 +6643,14 @@ migration_apply_v06_to_v20() {
     content=$(cat "$md_file")
 
     echo "$content" > "$temp_file"
+    # Link-only rewrite. Every regex below is deliberately anchored to link
+    # syntax — the whole of a [[...]] wikilink or the (...) of a markdown link —
+    # and the non-greedy [^\]|]*? / [^)]*? prefixes exist ONLY to admit relative
+    # path segments (../../) and a |alias display, NOT to match bare prose. A
+    # previous over-broad `${//}` substring replace corrupted live docs (matched
+    # inside words like SPECIFICATION / debugging — migration bugs A/B). Do not
+    # loosen the anchoring or drop the [[ / ( guards; that regression is why this
+    # is Python-anchored and not a shell substring swap.
     python3 -c '
 import sys, os, re
 content = open(sys.argv[1]).read()

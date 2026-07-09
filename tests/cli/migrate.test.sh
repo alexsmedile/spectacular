@@ -254,6 +254,8 @@ related:
 See [[specs/auth/SPEC]] and [ROADMAP.md](ROADMAP.md) and [[DECISIONS]].
 Also [mem](memory/M-note.md).
 This SPECIFICATION mentions debugging and in-memory caches (prose, keep intact).
+Parenthetical prose (the ROADMAP is authoritative) must survive untouched.
+Identifier foo(SPEC_VERSION) in a code sentence must survive untouched.
 EOF
   # Nested capability spec (flattened to specs/auth.md). Its related: uses
   # ../../ (correct from specs/auth/) which must become ../ after flattening
@@ -328,8 +330,11 @@ scenario_11_v06_okf_migration() {
   # Flattened spec: ../../ROADMAP.md (from specs/auth/) → ../roadmaps/index.md
   # (from specs/auth.md, one level up)
   assert_file_contains "$dir/.spectacular/specs/auth.md" "  - ../roadmaps/index.md"
-  # Prose landmines untouched
+  # Prose landmines untouched — the relaxed [^)]*? / [^\]|]*? regexes must NOT
+  # rewrite stems that appear in bare prose, parentheticals, or identifiers.
   assert_file_contains "$spec" "This SPECIFICATION mentions debugging and in-memory caches"
+  assert_file_contains "$spec" "(the ROADMAP is authoritative)"
+  assert_file_contains "$spec" "foo(SPEC_VERSION)"
   # No corruption artifacts anywhere in the workspace
   if grep -rqE '\(\(|specs/index\]\]|/-rules|specs/[a-z]+/specs/index|memories//' "$dir/.spectacular"; then
     echo "    ✗ link-rewrite corruption artifact found:"
@@ -365,6 +370,59 @@ scenario_12_v06_idempotent() {
   rm -rf "$dir"
 }
 
+scenario_13_v06_memory_collision() {
+  echo "Scenario 13: two legacy memories that normalize to the same slug are de-duped, not clobbered"
+  local dir="/tmp/spectacular-migrate-test-13"
+  rm -rf "$dir"
+  mkdir -p "$dir/.spectacular/memory"
+  cat > "$dir/.spectacular/config.yaml" <<EOF
+project:
+  name: $(basename "$dir")
+workspace_schema: "0.6"
+EOF
+  echo "---" > "$dir/.spectacular/PRD.md"
+  # Two malformed duplicate-numbered memories whose slugs normalize identically
+  # (both → M1-foo-note). Without a collision guard the second mv clobbers the
+  # first — a silent data-loss bug.
+  cat > "$dir/.spectacular/memory/M1-Foo Note.md" <<EOF
+---
+date: 2026-01-01
+---
+# first note body A
+EOF
+  cat > "$dir/.spectacular/memory/M1-foo-note.md" <<EOF
+---
+date: 2026-01-02
+---
+# second note body B
+EOF
+
+  local out code
+  out=$(cd "$dir" && "$CLI" migrate 2>&1) && code=0 || code=$?
+  assert_exit "$code" 0 "collision migrate exits 0"
+
+  # Both survive as distinct files — one keeps the base, the other is de-duped.
+  assert_file_exists "$dir/.spectacular/memories/M1-foo-note.md"
+  assert_file_exists "$dir/.spectacular/memories/M1-foo-note-2.md"
+  # No file was lost: exactly two memory entries (index.md is separate).
+  local n_mem
+  n_mem=$(find "$dir/.spectacular/memories" -maxdepth 1 -name 'M1-*.md' | wc -l | tr -d ' ')
+  if [[ "$n_mem" == "2" ]]; then pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ expected 2 M1-* memory files after collision, found $n_mem"
+    fail_count=$((fail_count + 1))
+  fi
+  # Both original bodies preserved (nothing silently overwritten).
+  if grep -rqF "body A" "$dir/.spectacular/memories" && grep -rqF "body B" "$dir/.spectacular/memories"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ a memory body was lost to a silent clobber"
+    fail_count=$((fail_count + 1))
+  fi
+
+  rm -rf "$dir"
+}
+
 scenario_7_help_flag() {
   echo "Scenario 7: migrate --help shows usage"
   local out code
@@ -390,6 +448,7 @@ scenario_9_to_flag
 scenario_10_downgrade_refused
 scenario_11_v06_okf_migration
 scenario_12_v06_idempotent
+scenario_13_v06_memory_collision
 
 echo ""
 echo "Results: ${pass_count} passed, ${fail_count} failed"

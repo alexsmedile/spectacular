@@ -58,7 +58,9 @@ This is distinct from `STACK.md` — STACK describes the **host project's** tech
 
 # Root layer
 
-The root layer is stable project grounding. These files change infrequently, stay concise, avoid implementation details, and are **never overwritten in place** — snapshot before editing (see § Versioning).
+The root layer is the set of **project-wide anchors** — files that describe the whole project, not any single capability or request. They are the *only* files that live loose at the root of `.spectacular/`; everything else lives inside a category folder (`specs/`, `decisions/`, `requests/`, …). This minimal-root invariant is what the OKF v2.0 layout enforces: root holds anchors plus category directories, nothing else.
+
+The anchors are stable project grounding. They change infrequently, stay concise, avoid implementation details, and are **never overwritten in place** — snapshot before editing (see § Versioning).
 
 | File | Purpose |
 |---|---|

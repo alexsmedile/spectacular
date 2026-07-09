@@ -7,12 +7,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.28.1] — 2026-07-09
+
 ### Fixed — v0.6 → v2.0 (OKF) migration link-rewriter
 
 - **`migration_apply_v06_to_v20` link rewrite rebuilt** — the old step used over-broad bash `${//}` substring substitution: it injected doubled parens/backslashes into wikilinks and matched inside prose words (`SPEC` → `specs/index` inside `SPECIFICATION`; `debugging` → `debugs/s/ging`), corrupting ~10 live docs. Replaced with one anchored, link-only Python pass that rewrites only inside `[[…]]`/`(…)` targets and YAML `related:`/`depends-on:`/`blocks:` fields — never bare prose — and is idempotent (matches the old target only, so re-runs are no-ops).
 - **`related:` rewriting is now depth-aware** — a relocated file's relative targets resolve at its new location (a flattened `specs/<cap>/SPEC.md` → `specs/<cap>.md` no longer overshoots with `../../ARCHITECTURE.md`). Closed all 13 `doctor links` warnings on the migrated workspace.
 - **Decision renames use `_resolve_slug_collision`** — two decisions with colliding H1 slugs no longer clobber each other via an unchecked `mv`.
 - **Memory `M<N>` numbering is stable across re-runs** — already-prefixed entries keep their number; fresh entries continue past the current max (was: renumbered every run by date sort, silently breaking links).
+- **Memory renames are collision-safe** — the two-pass rename now de-dups colliding final bases instead of silently clobbering. Two malformed inputs that normalize to the same `M<N>-<slug>` (e.g. `M1-Foo.md` + `M1-foo.md`) become `M1-foo.md` + `M1-foo-2.md`, both bodies preserved, with a `stderr` warning — restoring the guard the decisions path already had. Uses a bash-3.2-safe membership string (macOS system bash has no associative arrays).
 - **H1-slug derivation no longer over-strips** — a hyphenated decision title survives intact (only a leading `D<N> —` label is stripped), producing fuller slugs (e.g. `D6-remove-docs-verbs-deprecation-notice`).
 - **`migrations.log` no longer double-logs** — a forced `spectacular migrate --from <ver>` re-run on an already-migrated workspace re-applies idempotently without appending a duplicate history line.
 
@@ -24,6 +27,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Added
 
 - **`migrate.test.sh` v0.6 → v2.0 coverage** — a real OKF migration scenario asserting every transform + depth-correct link/`related:` rewrites + prose-safety, plus a byte-identical idempotency scenario (forces a re-run, asserts the tree is unchanged). Previously the migration's behavior was untested (only its registry entry was checked).
+- **Prose-safety + collision regression tests** — explicit assertions that the relaxed link regexes leave prose stems untouched (`(the ROADMAP is authoritative)`, `foo(SPEC_VERSION)` survive verbatim), plus a memory-collision scenario proving two entries that normalize to the same slug both survive as distinct files with bodies intact. 75/75 `migrate.test.sh`, 15/15 suite areas.
 
 ## [1.28.0] — 2026-07-07
 

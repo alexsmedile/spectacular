@@ -1,14 +1,15 @@
 ---
-status: planned
+status: archived
 priority: high
 owner: alex
-updated: 2026-07-07
+updated: 2026-07-09
 build: b23
 summary: "Restructure the .spectacular/ workspace to align with Open Knowledge Format (OKF) layout, rename folders to plural, move indexes inside category folders, and update the CLI, Skill, and migrations."
 related:
   - ../../PRD.md
   - ../../ARCHITECTURE.md
   - ../../PRINCIPLES.md
+archived: 2026-07-09
 ---
 
 # Plan — okf-restructure

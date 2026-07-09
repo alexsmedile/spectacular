@@ -42,7 +42,8 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b18 | roadmap-pruning | Roadmap shipped-history pruning/scaling | themed | v1.23.0 | shipped |
 | b20 | commit-discipline | Soft periodic-commit nudge for in-progress code | themed | tbd | planned |
 | b21 | builder-agent | Builder agent + build-workflow orchestrator arc (build-direction fleet) | themed | tbd | active |
-| b22 | archive-closure-gate | Archive closure gate + delta-based spec-sync (fable review #1+#2) | themed | tbd | planned |
+| b22 | archive-closure-gate | Archive closure gate + delta-based spec-sync (fable review #1+#2) | themed | v1.28.0 | shipped |
+| b23 | status-fleet-view | Deterministic `spectacular status` fleet view + enforced PLAN/TASKS structure | themed | v1.29.0 | shipped |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.29.0] — 2026-07-09
+
 ### Added — deterministic `spectacular status` fleet view (status-fleet-view, b23)
 
 - **`spectacular status` renders the active-request fleet from PLAN/TASKS** — an aligned table (slug · status · priority · build · progress · milestone/goal) built directly from each `requests/<slug>/PLAN.md` frontmatter plus grep-safe body signals, sorted active→planned. No doc hand-caches that table anymore. `spectacular status <slug>` prints a single request card (goal · summary · progress · current milestone · `related:` deps · stale flag); `spectacular status --json` emits the machine-readable fleet — the **agent opt-in contract** for discovering requests without opening files.

@@ -125,7 +125,7 @@ Spectacular gains a reverse gear: `spectacular undo` reverts the last mutation �
 **Linked requests:** `roadmap-contract-docs` (b17) + `roadmap-pruning` (b18)
 
 **Outcome:**
-The roadmap's own build→version model is now documented and the file is kept lean as history grows. b17 specced the ledger (build ids, `target-version` single-source, the `tbd` sentinel, ledger-status-vs-request-lifecycle) in `specs/roadmap.md` + user docs, and made ADRs discoverable (DECISIONS.md is the home; store-worthy routing table). b18 added `spectacular roadmap migrate` + a `doctor roadmap` area — index mode that moves old shipped prose into `roadmap/v*.md` behind a `## Shipped` index, keeping the newest 3 inline. Dogfooded here: ROADMAP.md 528 → 410 lines.
+The roadmap's own build→version model is now documented and the file is kept lean as history grows. b17 specced the ledger (build ids, `target-version` single-source, the `tbd` sentinel, ledger-status-vs-request-lifecycle) in `specs/roadmap.md` + user docs, and made ADRs discoverable (DECISIONS.md is the home; store-worthy routing table). b18 added `spectacular roadmap migrate` + a `doctor roadmap` area — index mode that moves old shipped prose into `roadmaps/v*.md` behind a `## Shipped` index, keeping the newest 3 inline. Dogfooded here: ROADMAP.md 528 → 410 lines.
 
 **Shipped:**
 - `spectacular roadmap migrate [--dry-run] [--keep N]` + `doctor roadmap` area (orphan/stale/prune-nudge)
@@ -308,42 +308,17 @@ Spectacular as the substrate for coordinated agent teams operating on long-runni
 
 ## Shipped
 
-> Older shipped versions — full prose moved to per-version files (`roadmap/v*.md`); the most recent stay inline above. Facts also live in `CHANGELOG.md`.
+> Older shipped versions — full prose moved to per-version files (`roadmaps/v*.md`); the most recent stay inline above. Facts also live in `CHANGELOG.md`.
 
-- v1.9.0 → roadmap/v1.9.0.md
-- v1.10.0 → roadmap/v1.10.0.md
-- v1.11.0 → roadmap/v1.11.0.md
-- v1.12.0 → roadmap/v1.12.0.md
-- v1.15.0 → roadmap/v1.15.0.md
-- v1.16.0 → roadmap/v1.16.0.md
-- v1.19.0 → roadmap/v1.19.0.md
-
-## Shipped
-
-> Older shipped versions — full prose moved to per-version files (`roadmap/v*.md`); the most recent stay inline above. Facts also live in `CHANGELOG.md`.
-
-- v1.9.0 → roadmap/v1.9.0.md
-- v1.10.0 → roadmap/v1.10.0.md
-- v1.11.0 → roadmap/v1.11.0.md
-- v1.12.0 → roadmap/v1.12.0.md
-- v1.15.0 → roadmap/v1.15.0.md
-- v1.16.0 → roadmap/v1.16.0.md
-- v1.19.0 → roadmap/v1.19.0.md
-- v1.20.0 → roadmap/v1.20.0.md
-
-## Shipped
-
-> Older shipped versions — full prose moved to per-version files (`roadmap/v*.md`); the most recent stay inline above. Facts also live in `CHANGELOG.md`.
-
-- v1.9.0 → roadmap/v1.9.0.md
-- v1.10.0 → roadmap/v1.10.0.md
-- v1.11.0 → roadmap/v1.11.0.md
-- v1.12.0 → roadmap/v1.12.0.md
-- v1.15.0 → roadmap/v1.15.0.md
-- v1.16.0 → roadmap/v1.16.0.md
-- v1.17.0 → roadmap/v1.17.0.md
-- v1.19.0 → roadmap/v1.19.0.md
-- v1.20.0 → roadmap/v1.20.0.md
+- v1.9.0 → roadmaps/v1.9.0.md
+- v1.10.0 → roadmaps/v1.10.0.md
+- v1.11.0 → roadmaps/v1.11.0.md
+- v1.12.0 → roadmaps/v1.12.0.md
+- v1.15.0 → roadmaps/v1.15.0.md
+- v1.16.0 → roadmaps/v1.16.0.md
+- v1.17.0 → roadmaps/v1.17.0.md
+- v1.19.0 → roadmaps/v1.19.0.md
+- v1.20.0 → roadmaps/v1.20.0.md
 
 ## Icebox
 

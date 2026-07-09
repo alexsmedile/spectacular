@@ -29,7 +29,7 @@ If the read below finds **no requests** and the canonical docs are still templat
 1. Read `.spectacular/config.yaml` for project name and config.
 2. Read frontmatter from all root layer files: `PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `roadmaps/index.md`, `AGENTS.md`, `STACK.md`, `decisions/index.md`. Older workspaces may only have `PRD.md` + `STACK.md` + `decisions/index.md` + `AGENTS.md` — treat the four newer docs as optional.
 3. Read `.spectacular/specs/index.md` (top-level index).
-4. Read frontmatter from all `requests/*/PLAN.md` files.
+4. Run `spectacular status --json` to get the request fleet — one object per request with frontmatter (status/priority/build/updated/summary) **plus** grep-safe body signals (goal line, `progress: {done, open, deferred, total}`, `current_milestone`). This is the deterministic mechanical read; you layer judgment (signal detection below) on top. Don't hand-parse `requests/*/PLAN.md` frontmatter yourself — the CLI owns that extraction (status-fleet-view, b23). Fall back to reading the files only if the CLI is unavailable.
 5. Read `.spectacular/memories/` file list and rough counts (not full content).
 6. Run `spectacular doctor specs` and capture any specs/index.md drift warning (the CLI compares specs/index.md's `updated` against the newest archived request — see signal table below). This is the one archive read you delegate to the CLI; you still don't read `archive/` bodies yourself.
 

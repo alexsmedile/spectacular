@@ -105,7 +105,17 @@ tmpdir="$(mktemp -d)" && cd "$tmpdir" && /path/to/repo/cli/spectacular init --na
 **How the workspace system works** (durable — the same rules the skill enforces)
 
 - **Frontmatter is the signal layer.** The skill reads frontmatter, not full
-  file content, during briefings.
+  file content, during briefings. To discover the active-request fleet without
+  opening files, run **`spectacular status --json`** — it emits one object per
+  request (frontmatter + grep-safe body signals: goal, `x/total` progress,
+  current milestone). This is the agent opt-in contract; prefer it over
+  hand-parsing `requests/*/PLAN.md`.
+- **PLAN/TASKS have an enforced structure.** PLAN uses unnumbered canonical
+  headings in order (`## Goal / ## Constraints / ## Milestones / ## Tasks /
+  ## Dependencies / ## Validation / ## Deliverables`; extra sections allowed
+  between). TASKS groups by `### M<N>` with flush-left `- [ ]`/`- [x]`/`- [~]`
+  checkboxes. `doctor` errors on drift for active requests (archive skipped);
+  `doctor --fix` de-numbers legacy headings.
 - **Lifecycle state lives in `PLAN.md` frontmatter** (`status: planned | active
   | review | verified`). `TASKS.md` carries a mirror for skim tooling; PLAN is
   authoritative and `doctor` repairs drift.
@@ -151,6 +161,10 @@ spectacular init --minimal          # always-set only; kit identity preserved
 spectacular init --name my-app --agents-file CLAUDE.md
 spectacular init --global           # install to ~/.agents/ and ~/.claude/
 spectacular init --update           # re-download latest skill release
+
+spectacular status                  # deterministic active-request fleet table
+spectacular status <slug>           # single request card (goal · progress · deps · stale)
+spectacular status --json           # machine-readable fleet (agent opt-in contract)
 
 spectacular doctor                  # substrate self-check (all areas)
 spectacular doctor <area>           # scoped: skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|debug|policies|vision|decisions|roadmap

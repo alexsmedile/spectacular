@@ -13,13 +13,13 @@ related:
 
 # Plan — commit-discipline
 
-## 1. Goal
+## Goal
 
 Give Spectacular a soft, non-blocking nudge to commit in-progress code at natural
 checkpoints (milestone boundaries and session end), so long agent runs don't end
 with hours of uncommitted work — closing a gap that hits Codex harder than Claude.
 
-## 2. Constraints
+## Constraints
 
 - **Soft, never blocking.** This is a `warn`-severity nudge, never a `block` gate. Committing is the user's call; Spectacular reminds, it does not gate transitions on a clean tree (P8 — humans decide, agents propose).
 - **No git mutation by Spectacular.** The skill/CLI must never run `git commit` itself. It surfaces the nudge; the agent (Claude/Codex) or human decides and acts. Auto-committing user code is out of scope and out of character.
@@ -64,7 +64,7 @@ PRINCIPLES.md, and all skill references):
 - `snapshot` semantics untouched.
 - No auto-commit, ever. No new CLI verb. No config field.
 
-## 3. Milestones
+## Milestones
 
 - M1 — **POLICY nudge shipped (prose-only).** A `commit-checkpoint` entry under
   `@Implementation` + extended `@SessionEnd` prose. `spectacular policy @Implementation`
@@ -73,17 +73,17 @@ PRINCIPLES.md, and all skill references):
   `hooks.json` + `hooks-codex.json` that fires a dirty-tree reminder. Gated on M1
   proving insufficient — do not build speculatively (P11).
 
-## 4. Tasks
+## Tasks
 
 See `TASKS.md`.
 
-## 5. Dependencies
+## Dependencies
 
 - None. POLICY.md is always-set and already structured for new work-phase entries;
   `spectacular policy` already reads it. `doctor policies` already validates the
   POLICY schema, so M1 needs no new plumbing.
 
-## 6. Validation
+## Validation
 
 - M1 — `spectacular policy @Implementation` lists `commit-checkpoint` with its
   linked principle; `spectacular policy @SessionEnd` shows the extended guidance;
@@ -93,7 +93,7 @@ See `TASKS.md`.
   both a Claude and a Codex run; with a clean tree, silence. Hook is present and
   identical in both hook files (`doctor` — or a diff — confirms parity).
 
-## 7. Deliverables
+## Deliverables
 
 - A `commit-checkpoint` policy entry in `.spectacular/POLICY.md` under `@Implementation`.
 - Extended `@SessionEnd` prose in the same file.

@@ -7,6 +7,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added — deterministic `spectacular status` fleet view (status-fleet-view, b23)
+
+- **`spectacular status` renders the active-request fleet from PLAN/TASKS** — an aligned table (slug · status · priority · build · progress · milestone/goal) built directly from each `requests/<slug>/PLAN.md` frontmatter plus grep-safe body signals, sorted active→planned. No doc hand-caches that table anymore. `spectacular status <slug>` prints a single request card (goal · summary · progress · current milestone · `related:` deps · stale flag); `spectacular status --json` emits the machine-readable fleet — the **agent opt-in contract** for discovering requests without opening files.
+- **Body signals**: the `## Goal` line, `x/total` top-level task progress (`- [~]` counted separately as deferred, e.g. `5/8 (+1 def)`; indented sub-bullets not counted), and the current milestone (first `### M<N>` with an open top-level task).
+- **`tests/cli/status.test.sh`** — covers the fleet table (sort + columns), body-signal edge cases (indented subtasks ignored, `[~]` deferred, milestone advance), `--json` validity, and the unknown-slug error path.
+
+### Changed — enforced PLAN/TASKS structure
+
+- **PLAN sections are now canonical + unnumbered** (`## Goal / ## Constraints / ## Milestones / ## Tasks / ## Dependencies / ## Validation / ## Deliverables`, in order; extra sections allowed between). The PLAN template, `plan-rules.md`, and `tasks-rules.md` were updated; the legacy numbered form (`## 1. Goal`) is now a fixable error.
+- **`doctor` (lifecycle area) enforces the structure on active requests** — errors on missing/mis-ordered required PLAN sections, missing `### M` milestone headings, and malformed checkbox states; `.spectacular/archive/` is skipped. `doctor --fix` de-numbers legacy PLAN headings. `- [~]` is now a documented deferred checkbox state.
+- **CLAUDE.md Active Requests table retired** → a one-line `spectacular status` pointer (it had already drifted once). `status.md` now consumes `status --json` and layers its judgment/signal detection on top. The repo's own 6 active requests were converted to the canonical schema.
+- **Fixed a latent BSD-sed bug** in the milestone-drift check — `\?` in BRE silently failed on macOS; switched the range greps to `sed -nE` (ERE).
+
 ## [1.28.1] — 2026-07-09
 
 ### Fixed — v0.6 → v2.0 (OKF) migration link-rewriter

@@ -14,6 +14,27 @@ status: active
 
 Loaded by `grill.md` / `refine.md` / `review.md` when the active doc is `plan` (per doc-index).
 
+## Canonical section headings (enforced)
+
+The 7 required sections use **unnumbered** headings and must appear **in order**:
+
+```
+## Goal
+## Constraints
+## Milestones
+## Tasks
+## Dependencies
+## Validation
+## Deliverables
+```
+
+Extra sections (`## Understanding`, `## Decisions`, or request-specific ones) may
+appear **between** them. `doctor` (lifecycle area) **errors** on an active request
+whose PLAN is missing a required heading or has them out of order; `archive/` is
+skipped. `doctor --fix` rewrites the legacy numbered form (`## 1. Goal`) to the
+unnumbered form. The "Slot N" labels below are authoring ordinals, not heading
+text — the heading is `## Goal`, not `## 1. Goal`.
+
 ## Slot prompts
 
 **Slot 1 — Goal**

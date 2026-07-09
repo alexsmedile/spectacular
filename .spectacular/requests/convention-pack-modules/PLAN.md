@@ -103,6 +103,21 @@ This request stays `planned` until at least one of these signals fires:
 
 Until one of these fires, the v1 monolithic + `overrides:` escape hatch is the simpler design.
 
+## Validation
+
+Per-milestone checks (see also `## Verification routing` above for the 2-of-6
+scoring that scaffolds VERIFY.md):
+
+- M1 — `packs-contract.md` documents the module file shape + thin-manifest; a
+  reviewer can author a modular pack from the doc alone.
+- M2 — run: a pack with `modules/<cat>.yaml` loads identically to its inline
+  `rules.<cat>:` equivalent (fallback path covered).
+- M3 — `alex-default` split into modules; v1 snapshot regression passes.
+- M4 — `pack module list/show` and `pack install --modules <subset>` work.
+- M5 — `convention_pack.compose:` composes modules; later-wins conflict rule holds.
+- M6 — `doctor conventions` flags a missing/invalid module file.
+- M7 — `tests/cli/pack.test.sh` covers v1-still-works + composition + subset install.
+
 ## Deliverables
 
 - Updated `skills/spectacular/references/packs-contract.md` — module file shape + thin-manifest format + backwards-compat rule

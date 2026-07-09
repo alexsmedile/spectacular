@@ -288,8 +288,11 @@ scenario_9_flag_eat() {
 
 scenario_10_skill_verb_stubs() {
   echo "Scenario 10: remaining skill-only verbs print interactive-flow message"
+  # Note: `status` is no longer a pure skill stub — bare `status` now renders
+  # the deterministic fleet table (status-fleet-view, b23). Its behavior is
+  # covered by tests/cli/status.test.sh. Only genuinely skill-only verbs remain.
   local out code
-  for verb in status remember; do
+  for verb in remember; do
     out=$("$CLI" "$verb" 2>&1) && code=0 || code=$?
     if [[ "$code" -ne 0 ]] && echo "$out" | grep -q "interactive skill flow"; then
       pass_count=$((pass_count + 1))

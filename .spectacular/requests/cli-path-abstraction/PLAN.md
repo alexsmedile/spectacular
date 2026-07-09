@@ -11,11 +11,11 @@ related:
 
 # Plan — cli-path-abstraction
 
-## 1. Goal
+## Goal
 
 Introduce a centralized path variable registry at the top of the spectacular CLI to avoid hardcoding `.spectacular/...` paths inside commands and functions.
 
-## 2. Constraints
+## Constraints
 
 - **Bash 3.2 Compatibility**: Do not use associative arrays (`declare -A`), as they are not supported in Bash 3.2 (macOS default shell). Use standard uppercase variables instead.
 - **Compatibility**: All CLI subcommands and options must function identically; no change to user-facing outputs or exit codes.
@@ -39,26 +39,26 @@ All logic checking for schemas, bootstrapping files, doctor validations, and sna
 
 - **Flat variables over associative arrays**: Chose plain variables (e.g. `PATH_MEMORIES_DIR`) over associative arrays (`PATH_MAP[memories]`) because Spectacular requires Bash 3.2 compatibility.
 
-## 3. Milestones
+## Milestones
 
 - M1 — Centralized variable declaration & audit pass
 - M2 — Migrate CLI commands to path variables
 - M3 — Full verification and regression check
 
-## 4. Tasks
+## Tasks
 
 See `TASKS.md`.
 
-## 5. Dependencies
+## Dependencies
 
 None.
 
-## 6. Validation
+## Validation
 
 - M1 — run: `bash -n cli/spectacular` check passes.
 - M2 — run: `bash -n cli/spectacular` passes and all paths are fully verified.
 - M3 — run: `bash tests/run.sh` passes 100% green.
 
-## 7. Deliverables
+## Deliverables
 
 - Centralized variable block in [spectacular](../../../cli/spectacular).

@@ -298,6 +298,7 @@ scenario_7_lifecycle_active_without_session() {
   local dir="/tmp/doctor-test-7"
   seed_clean "$dir"
   mkdir -p "$dir/.spectacular/requests/bar"
+  # Canonical structure so only the SESSION.md warning fires (not a structure error).
   cat > "$dir/.spectacular/requests/bar/PLAN.md" <<EOF
 ---
 status: active
@@ -308,8 +309,31 @@ summary: "test"
 ---
 # Bar
 
+## Goal
+g
+## Constraints
+- c
+## Milestones
+- M1 — x
+## Tasks
+See TASKS.md
+## Dependencies
+- none
 ## Validation
-- something
+- M1 — run: true
+## Deliverables
+- thing
+EOF
+  cat > "$dir/.spectacular/requests/bar/TASKS.md" <<EOF
+---
+status: active
+updated: 2026-05-22
+related:
+  - PLAN.md
+---
+# Tasks — bar
+### M1 — x
+- [ ] a
 EOF
 
   local out
@@ -699,6 +723,8 @@ scenario_19_milestone_label_drift() {
   local dir="/tmp/doctor-test-19"
   seed_clean "$dir"
   mkdir -p "$dir/.spectacular/requests/drifted"
+  # Canonical unnumbered structure (so only milestone DRIFT fires, not a
+  # structure error). Validation intentionally omits M3 → §3-vs-§6 drift.
   cat > "$dir/.spectacular/requests/drifted/PLAN.md" <<'EOF'
 ---
 status: planned
@@ -709,22 +735,29 @@ summary: "test"
 ---
 # Plan — drifted
 
-## 3. Milestones
+## Goal
+g
+## Constraints
+- c
+## Milestones
 
 - M1 — first
 - M2 — second
 - M3 — third
 
-## 4. Tasks
+## Tasks
 
 See TASKS.md.
 
-## 6. Validation
+## Dependencies
+- none
+## Validation
 
 - M1 — check one
 - M2 — check two
 
-## 7. Deliverables
+## Deliverables
+- thing
 EOF
   cat > "$dir/.spectacular/requests/drifted/TASKS.md" <<'EOF'
 ---
@@ -746,8 +779,8 @@ EOF
   out=$(cd "$dir" && "$CLI" doctor lifecycle 2>&1) && code=0 || code=$?
 
   assert_exit_code "1" "$code" "milestone drift exits 1 (warning)"
-  assert_output_contains "$out" "milestone labels differ between TASKS.md" "TASKS vs PLAN §3 drift flagged"
-  assert_output_contains "$out" "milestone labels differ between PLAN §3 Milestones" "PLAN §3 vs §6 drift flagged"
+  assert_output_contains "$out" "milestone labels differ between TASKS.md" "TASKS vs PLAN Milestones drift flagged"
+  assert_output_contains "$out" "milestone labels differ between PLAN Milestones" "PLAN Milestones vs Validation drift flagged"
 
   # aligned labels → no drift warning
   cat > "$dir/.spectacular/requests/drifted/TASKS.md" <<'EOF'
@@ -778,23 +811,30 @@ summary: "test"
 ---
 # Plan — drifted
 
-## 3. Milestones
+## Goal
+g
+## Constraints
+- c
+## Milestones
 
 - M1 — first
 - M2 — second
 - M3 — third
 
-## 4. Tasks
+## Tasks
 
 See TASKS.md.
 
-## 6. Validation
+## Dependencies
+- none
+## Validation
 
 - M1 — check one
 - M2 — check two
 - M3 — check three
 
-## 7. Deliverables
+## Deliverables
+- thing
 EOF
   local out_ok code_ok
   out_ok=$(cd "$dir" && "$CLI" doctor lifecycle 2>&1) && code_ok=0 || code_ok=$?
@@ -819,21 +859,28 @@ summary: "test"
 ---
 # Plan — relettered
 
-## 3. Milestones
+## Goal
+g
+## Constraints
+- c
+## Milestones
 
 - M1 — Schema lock: something
 - M2 — Rules files: something else
 
-## 4. Tasks
+## Tasks
 
 See TASKS.md.
 
-## 6. Validation
+## Dependencies
+- none
+## Validation
 
 - M1 — check
 - M2 — check
 
-## 7. Deliverables
+## Deliverables
+- thing
 EOF
   cat > "$dir/.spectacular/requests/relettered/TASKS.md" <<'EOF'
 ---
@@ -854,8 +901,11 @@ EOF
   local out code
   out=$(cd "$dir" && "$CLI" doctor lifecycle 2>&1) && code=0 || code=$?
 
-  assert_exit_code "1" "$code" "off-prefix milestone exits 1 (warning)"
+  # A G-prefixed TASKS file now triggers BOTH the off-prefix warning AND the
+  # structure error (no ### M headings) → exit 2. Both signals must appear.
+  assert_exit_code "2" "$code" "off-prefix milestone exits 2 (warning + no-### M structure error)"
   assert_output_contains "$out" "non-standard milestone prefix(es): G1 G2" "off-prefix flagged"
+  assert_output_contains "$out" "no '### M<N>' milestone headings" "no-milestone structure error flagged"
   assert_output_lacks "$out" "and names don't line up either" "name-match fallback prevents false chain-break"
 
   rm -rf "$dir"

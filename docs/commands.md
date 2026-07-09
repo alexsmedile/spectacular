@@ -132,7 +132,24 @@ If the skill can't parse the workspace state, it auto-runs `spectacular doctor w
 
 ### `spectacular status`
 
-Same as `/spectacular`.
+Deterministic active-request fleet view, rendered directly from each
+`requests/<slug>/PLAN.md` frontmatter plus grep-safe body signals — no hand-cached
+table drifts out of sync (status-fleet-view, b23).
+
+```text
+spectacular status            # aligned fleet table (slug · status · pri · build · progress · milestone/goal)
+spectacular status <slug>     # single request card (goal · summary · progress · current milestone · related · stale flag)
+spectacular status --json     # machine-readable fleet — the agent opt-in contract
+```
+
+Body signals assume the enforced PLAN/TASKS schema (canonical `## Goal`, `### M`
+milestones, flush-left checkboxes; `doctor` enforces it on active requests).
+Progress counts flush-left `- [ ]`/`- [x]` only; `- [~]` is deferred, shown
+separately (`5/8 (+1 def)`); indented sub-bullets are not counted.
+
+The bare/`<slug>`/`--json` forms are CLI-mechanical. The richer conversational
+briefing (`/spectacular` with signal detection) still runs in the agent, and
+`--against-latest` / `--since` remain as before.
 
 ### `spectacular new <description>`
 

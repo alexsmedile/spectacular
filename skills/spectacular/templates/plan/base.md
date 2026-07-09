@@ -18,23 +18,30 @@ related:
   Rules:
   - PLAN is per-request. PRD is project-wide. Never put a PRD inside requests/.
   - This file's frontmatter `status:` is the single source of lifecycle state for the request.
-  - All 7 required slots must be filled before this PLAN is considered usable.
+  - The 7 required sections must appear IN ORDER, unnumbered:
+      ## Goal, ## Constraints, ## Milestones, ## Tasks, ## Dependencies, ## Validation, ## Deliverables
+    Extra sections (## Understanding, ## Decisions, request-specific) may appear
+    BETWEEN them; doctor enforces the required set's presence + order, not a closed list.
+  - All 7 required sections must be filled before this PLAN is considered usable.
   - Replace every <placeholder> with concrete content.
 -->
 
-## 1. Goal
+## Goal
 
 <!-- One sentence. What does this request change? -->
 <!-- Compress the request's intent. Aligns with PRD's Vision or Goals — this is a slice, not a restatement. -->
 
 <GOAL>
 
-## 2. Constraints
+## Constraints
 
 <!-- What's fixed before you start? Inherited from PRD/STACK/PRINCIPLES + request-specific limits. -->
 
 - <CONSTRAINT 1>
 - <CONSTRAINT 2>
+
+<!-- ## Understanding and ## Decisions below are OPTIONAL extra sections,
+     allowed between Constraints and Milestones. -->
 
 ## Understanding
 
@@ -69,7 +76,7 @@ related:
 
 - <DECISION — chose X over Y because Z>
 
-## 3. Milestones
+## Milestones
 
 <!-- Ordered, demoable checkpoints. Outcomes, not tasks. -->
 <!-- 3-7 milestones for a typical request. Each is something someone can see working. -->
@@ -78,20 +85,20 @@ related:
 - M2 — <DEMOABLE OUTCOME>
 - M3 — <DEMOABLE OUTCOME>
 
-## 4. Tasks
+## Tasks
 
 <!-- Pointer. The executable checklist lives in TASKS.md, grouped by milestone. -->
 
 See `TASKS.md`.
 
-## 5. Dependencies
+## Dependencies
 
 <!-- Other requests, skills, blocking decisions. Use [[request-slug]] notation. -->
 
 - <DEPENDENCY 1>
 - <DEPENDENCY 2>
 
-## 6. Validation
+## Validation
 
 <!--
   How each milestone is verified. Per-milestone checks.
@@ -105,7 +112,7 @@ See `TASKS.md`.
 - M2 — <VERIFICATION>
 - M3 — <VERIFICATION>
 
-## 7. Deliverables
+## Deliverables
 
 <!-- Artifacts that ship out of this request. Concrete files, docs, behaviors. -->
 

@@ -6958,6 +6958,214 @@ EOF
   fi
 }
 
+# ── spectacular status — deterministic fleet view (status-fleet-view, b23) ────
+# Renders the active-request fleet from PLAN/TASKS: frontmatter fields plus
+# grep-safe body signals. Assumes the enforced schema (doctor guarantees the
+# canonical unnumbered ## Goal heading + ### M milestones on active requests):
+#   - Goal line          → the paragraph after `## Goal`
+#   - progress x/total    → flush-left `- [ ]`/`- [x]` counts; `- [~]` deferred
+#   - current milestone   → first `### M<N>` with an open top-level `- [ ]`
+# Three surfaces: bare (fleet table), <slug> (card), --json (agent contract).
+
+# Extract the Goal line: first non-blank content line under `## Goal`
+# (accepts the legacy `## 1. Goal` too). Stdout: one line, empty if absent.
+_status_goal_line() {
+  local plan="$1"
+  awk '
+    /^## ([0-9]+\. )?Goal[[:space:]]*$/ { ingoal=1; next }
+    ingoal && /^## / { exit }
+    ingoal && /^<!--/ { next }
+    ingoal && NF { print; exit }
+  ' "$plan" 2>/dev/null
+}
+
+# Count top-level checkbox progress in a TASKS file. Sets globals:
+#   _ST_DONE _ST_OPEN _ST_DEFERRED _ST_TOTAL  (total = done+open, deferred separate)
+# Only flush-left `- [ ]` counted; indented `  - [ ]` sub-bullets ignored.
+_status_progress() {
+  local tasks="$1"
+  _ST_DONE=0; _ST_OPEN=0; _ST_DEFERRED=0; _ST_TOTAL=0
+  [[ -f "$tasks" ]] || return 0
+  # grep -c exits 1 on zero matches and still prints "0"; the trailing `|| true`
+  # keeps that non-zero status from being fatal under `set -e`. (A `|| echo 0`
+  # here would double-print "0\n0" — do not use it.)
+  _ST_DONE=$(grep -cE '^- \[x\]' "$tasks" 2>/dev/null || true)
+  _ST_OPEN=$(grep -cE '^- \[ \]' "$tasks" 2>/dev/null || true)
+  _ST_DEFERRED=$(grep -cE '^- \[~\]' "$tasks" 2>/dev/null || true)
+  _ST_TOTAL=$(( _ST_DONE + _ST_OPEN ))
+}
+
+# Format the progress signal as a short string (e.g. "3/8" or "3/8 (+1 def)").
+_status_progress_fmt() {
+  local tasks="$1"
+  _status_progress "$tasks"
+  local out
+  if (( _ST_TOTAL == 0 && _ST_DEFERRED == 0 )); then
+    out="—"
+  else
+    out="${_ST_DONE}/${_ST_TOTAL}"
+    (( _ST_DEFERRED > 0 )) && out="${out} (+${_ST_DEFERRED} def)"
+  fi
+  printf '%s' "$out"
+}
+
+# Current milestone: first `### M<N>` heading that has an open top-level `- [ ]`
+# task beneath it (before the next `### ` heading). Stdout: e.g. "M2 — signals".
+_status_current_milestone() {
+  local tasks="$1"
+  [[ -f "$tasks" ]] || return 0
+  awk '
+    /^### M[0-9]+/ {
+      # flush the previous milestone: if it had an open task, we already printed
+      cur=$0; sub(/^### /, "", cur); has_open=0; next
+    }
+    /^### / { cur=""; next }
+    cur != "" && /^- \[ \]/ {
+      print cur; exit
+    }
+  ' "$tasks" 2>/dev/null
+}
+
+# Days since a YYYY-MM-DD date; echoes a large sentinel if unparseable.
+_status_age_days() {
+  local d="$1" e
+  e=$(_date_to_epoch "$d")
+  (( e == 0 )) && { echo 999999; return 0; }
+  echo $(( ( $(date +%s) - e ) / 86400 ))
+}
+
+# Sort key by lifecycle status: active first, then review, planned, then rest.
+_status_sort_rank() {
+  case "$1" in
+    active) echo 0 ;; review) echo 1 ;; planned) echo 2 ;;
+    verified) echo 3 ;; *) echo 4 ;;
+  esac
+}
+
+# `spectacular status` (bare) → aligned fleet table, sorted active→planned.
+cmd_status_fleet() {
+  [[ -d ".spectacular" ]] || die "status: not inside a Spectacular workspace"
+
+  # Collect rows: rank|slug|status|priority|build|updated|progress|milestone|goal
+  local rows=() f slug status priority build updated goal progress milestone rank
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    slug=$(basename "$(dirname "$f")")
+    status=$(fm_get "$f" "status"); [[ -z "$status" ]] && status="?"
+    priority=$(fm_get "$f" "priority"); [[ -z "$priority" ]] && priority="—"
+    build=$(fm_get "$f" "build"); [[ -z "$build" ]] && build="—"
+    updated=$(fm_get "$f" "updated"); [[ -z "$updated" ]] && updated="?"
+    goal=$(_status_goal_line "$f")
+    progress=$(_status_progress_fmt "$(dirname "$f")/TASKS.md")
+    milestone=$(_status_current_milestone "$(dirname "$f")/TASKS.md")
+    rank=$(_status_sort_rank "$status")
+    rows+=("${rank}|${slug}|${status}|${priority}|${build}|${updated}|${progress}|${milestone}|${goal}")
+  done < <(_request_iter_all)
+
+  if (( ${#rows[@]} == 0 )); then
+    info "No requests yet. Start one with: spectacular new \"<description>\""
+    return 0
+  fi
+
+  # Sort by rank (stable within rank by slug via the join).
+  local sorted
+  sorted=$(printf '%s\n' "${rows[@]}" | sort -t'|' -k1,1n -k2,2)
+
+  printf "%-26s  %-9s  %-7s  %-6s  %-8s  %s\n" "SLUG" "STATUS" "PRI" "BUILD" "PROGRESS" "MILESTONE / GOAL"
+  printf "%-26s  %-9s  %-7s  %-6s  %-8s  %s\n" "----" "------" "---" "-----" "--------" "----------------"
+  local line
+  while IFS='|' read -r rank slug status priority build updated progress milestone goal; do
+    local slug_disp="$slug"
+    (( ${#slug_disp} > 26 )) && slug_disp="${slug_disp:0:23}..."
+    # Right column: current milestone if present, else the goal line, truncated.
+    local right="${milestone:-$goal}"
+    (( ${#right} > 42 )) && right="${right:0:39}..."
+    printf "%-26s  %-9s  %-7s  %-6s  %-8s  %s\n" \
+      "$slug_disp" "$status" "$priority" "$build" "$progress" "$right"
+  done <<< "$sorted"
+
+  return 0
+}
+
+# `spectacular status <slug>` → single request card.
+cmd_status_card() {
+  local slug="$1"
+  [[ -d ".spectacular" ]] || die "status: not inside a Spectacular workspace"
+  local dir=".spectacular/requests/$slug"
+  local plan="$dir/PLAN.md"
+  [[ -f "$plan" ]] || die "status: no request '$slug' (looked for $plan)"
+
+  local status priority build updated summary goal progress milestone
+  status=$(fm_get "$plan" "status"); [[ -z "$status" ]] && status="?"
+  priority=$(fm_get "$plan" "priority"); [[ -z "$priority" ]] && priority="—"
+  build=$(fm_get "$plan" "build")
+  updated=$(fm_get "$plan" "updated")
+  summary=$(fm_get "$plan" "summary")
+  goal=$(_status_goal_line "$plan")
+  progress=$(_status_progress_fmt "$dir/TASKS.md")
+  milestone=$(_status_current_milestone "$dir/TASKS.md")
+
+  # related: entries (list items in frontmatter)
+  local related
+  related=$(awk '
+    /^---$/ { c++; next }
+    c==1 && /^related:/ { inrel=1; next }
+    c==1 && inrel && /^[[:space:]]*-[[:space:]]/ { sub(/^[[:space:]]*-[[:space:]]*/,""); print; next }
+    c==1 && inrel && /^[^[:space:]]/ { inrel=0 }
+  ' "$plan" 2>/dev/null | tr '\n' ' ')
+
+  # Stale: active + updated >14d ago.
+  local stale="" age
+  age=$(_status_age_days "$updated")
+  if [[ "$status" == "active" ]] && (( age > 14 && age < 999999 )); then
+    stale="  ⚠ stale (${age}d since update)"
+  fi
+
+  printf "┌─ %s · %s%s\n" "$slug" "$status" "$stale"
+  if [[ -n "$goal" ]];    then printf "│ goal       %s\n" "$goal"; fi
+  if [[ -n "$summary" ]]; then printf "│ summary    %s\n" "$summary"; fi
+  printf "│ priority   %s" "$priority"
+  if [[ -n "$build" ]];   then printf "   build %s" "$build"; fi
+  if [[ -n "$updated" ]]; then printf "   updated %s" "$updated"; fi
+  printf "\n"
+  printf "│ progress   %s" "$progress"
+  if [[ -n "$milestone" ]]; then printf "   · current: %s" "$milestone"; fi
+  printf "\n"
+  if [[ -n "${related// }" ]]; then printf "│ related    %s\n" "$(echo "$related" | xargs)"; fi
+  printf "└─\n"
+  return 0
+}
+
+# `spectacular status --json` → structured fleet for the skill / agents (contract).
+cmd_status_json() {
+  [[ -d ".spectacular" ]] || die "status: not inside a Spectacular workspace"
+  local f slug status priority build updated summary goal milestone
+  printf '['
+  local i=0
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    local dir; dir=$(dirname "$f")
+    slug=$(basename "$dir")
+    status=$(fm_get "$f" "status")
+    priority=$(fm_get "$f" "priority")
+    build=$(fm_get "$f" "build")
+    updated=$(fm_get "$f" "updated")
+    summary=$(fm_get "$f" "summary")
+    goal=$(_status_goal_line "$f")
+    milestone=$(_status_current_milestone "$dir/TASKS.md")
+    _status_progress "$dir/TASKS.md"
+    if (( i > 0 )); then printf ','; fi
+    printf '{"slug":"%s","status":"%s","priority":"%s","build":"%s","updated":"%s","summary":"%s","goal":"%s","progress":{"done":%d,"open":%d,"deferred":%d,"total":%d},"current_milestone":"%s"}' \
+      "$(_json_escape "$slug")" "$(_json_escape "$status")" "$(_json_escape "$priority")" \
+      "$(_json_escape "$build")" "$(_json_escape "$updated")" "$(_json_escape "$summary")" \
+      "$(_json_escape "$goal")" "$_ST_DONE" "$_ST_OPEN" "$_ST_DEFERRED" "$_ST_TOTAL" \
+      "$(_json_escape "$milestone")"
+    i=$((i + 1))
+  done < <(_request_iter_all)
+  printf ']\n'
+  return 0
+}
+
 # `spectacular status --against-latest` — one-line workspace-schema verdict.
 # Prints whether the workspace is up-to-date or behind the CLI's CURRENT_SCHEMA,
 # plus the suggested verb to catch up. Always exits 0 (informational), unless
@@ -8861,6 +9069,86 @@ check_links() {
   fi
 }
 
+# PLAN/TASKS canonical structure enforcement (schema-enforcement change).
+# Appends doc_add findings and bumps the global _STRUCT_ISSUES counter. Called
+# per-request from check_lifecycle, which only iterates .spectacular/requests/
+# (never archive/), so this errors on active requests and skips archive by
+# construction. Required PLAN sections, unnumbered + in order:
+#   Goal, Constraints, Milestones, Tasks, Dependencies, Validation, Deliverables
+# (extra sections allowed between them). TASKS must have ≥1 ### M heading and no
+# malformed checkbox. The legacy numbered form (## 1. Goal) is a fixable error.
+_STRUCT_ISSUES=0
+_PLAN_REQUIRED_SECTIONS="Goal Constraints Milestones Tasks Dependencies Validation Deliverables"
+_check_request_structure() {
+  local slug="$1" plan="$2" tasks="$3"
+
+  if [[ -f "$plan" ]]; then
+    # Detect legacy numbered headings (## 1. Goal …) — fixable.
+    if grep -qE '^## [0-9]+\. (Goal|Constraints|Milestones|Tasks|Dependencies|Validation|Deliverables)' "$plan"; then
+      doc_add "lifecycle" "error" "$plan" \
+        "request '$slug': PLAN uses legacy numbered section headings (## 1. Goal …)" \
+        "run \`spectacular doctor --fix\` to rewrite them to the unnumbered canonical form (## Goal …)" \
+        "mechanical"
+      _STRUCT_ISSUES=$((_STRUCT_ISSUES + 1))
+    fi
+
+    # Required sections present + in order. Collect the canonical headings that
+    # appear (accepting both unnumbered and legacy numbered), in file order.
+    local seen order_ok=1 prev_idx=0 missing=""
+    local sec idx line
+    # Build the ordered list of required headings found.
+    local found_order
+    found_order=$(grep -oE '^## ([0-9]+\. )?(Goal|Constraints|Milestones|Tasks|Dependencies|Validation|Deliverables)$' "$plan" 2>/dev/null \
+      | sed -E 's/^## ([0-9]+\. )?//')
+    for sec in $_PLAN_REQUIRED_SECTIONS; do
+      if ! echo "$found_order" | grep -qx "$sec"; then
+        missing="$missing $sec"
+      fi
+    done
+    if [[ -n "$missing" ]]; then
+      doc_add "lifecycle" "error" "$plan" \
+        "request '$slug': PLAN missing required section(s):$missing" \
+        "add the missing ## <Section> heading(s) — canonical order: Goal, Constraints, Milestones, Tasks, Dependencies, Validation, Deliverables" \
+        "judgment"
+      _STRUCT_ISSUES=$((_STRUCT_ISSUES + 1))
+    else
+      # All present — verify order matches the canonical sequence.
+      local expected="Goal Constraints Milestones Tasks Dependencies Validation Deliverables"
+      local got
+      got=$(echo "$found_order" | tr '\n' ' ' | sed -E 's/ +/ /g; s/^ //; s/ $//')
+      if [[ "$got" != "$expected" ]]; then
+        doc_add "lifecycle" "error" "$plan" \
+          "request '$slug': PLAN sections out of canonical order (got: $got)" \
+          "reorder to: Goal, Constraints, Milestones, Tasks, Dependencies, Validation, Deliverables" \
+          "judgment"
+        _STRUCT_ISSUES=$((_STRUCT_ISSUES + 1))
+      fi
+    fi
+  fi
+
+  if [[ -f "$tasks" ]]; then
+    # Must group by ### M<N> milestones.
+    if ! grep -qE '^### M[0-9]+' "$tasks"; then
+      doc_add "lifecycle" "error" "$tasks" \
+        "request '$slug': TASKS has no '### M<N>' milestone headings" \
+        "group tasks under '### M1 — <name>' headings so status can read the current milestone" \
+        "judgment"
+      _STRUCT_ISSUES=$((_STRUCT_ISSUES + 1))
+    fi
+    # Malformed checkbox states (typos). Valid: [ ] [x] [~]. Flag anything else
+    # inside a leading "- [.]"-shaped bullet, flush-left or indented.
+    if grep -qE '^[[:space:]]*- \[[^ x~]\]' "$tasks"; then
+      local bad
+      bad=$(grep -oE '^[[:space:]]*- \[[^ x~]\]' "$tasks" | sort -u | tr '\n' ' ' | xargs)
+      doc_add "lifecycle" "error" "$tasks" \
+        "request '$slug': TASKS has malformed checkbox state(s): $bad" \
+        "use only '- [ ]' (open), '- [x]' (done), or '- [~]' (deferred)" \
+        "judgment"
+      _STRUCT_ISSUES=$((_STRUCT_ISSUES + 1))
+    fi
+  fi
+}
+
 # ── area: lifecycle ───────────────────────────────────────────────────────────
 # For each request, check status frontmatter against required artifacts.
 check_lifecycle() {
@@ -8976,34 +9264,48 @@ check_lifecycle() {
         issues=$((issues + 1))
       fi
 
+      # Milestone/Validation sections use UNNUMBERED headings (## Milestones,
+      # ## Validation) since the schema-enforcement change; fall back to the
+      # legacy numbered form (## 3. Milestones) for not-yet-converted requests.
+      # Use `sed -nE` (ERE): BSD sed does not support `\?` in BRE, so the
+      # optional numbered-prefix group must be `(3\. )?` under -E.
       local ms_tasks ms_plan3 ms_plan6
       ms_tasks=$(grep -oE '^#{2,3} M[0-9]+ —' "$tasks" 2>/dev/null | grep -oE 'M[0-9]+' | sort -u) || true
-      ms_plan3=$(sed -n '/^## 3\. Milestones/,/^## 4\./p' "$plan" 2>/dev/null | grep -oE '^- M[0-9]+ —' | grep -oE 'M[0-9]+' | sort -u) || true
-      ms_plan6=$(sed -n '/^## 6\. Validation/,/^## 7\./p' "$plan" 2>/dev/null | grep -oE '^- M[0-9]+ —' | grep -oE 'M[0-9]+' | sort -u) || true
+      ms_plan3=$(sed -nE '/^## (3\. )?Milestones/,/^## (4\. )?Tasks/p' "$plan" 2>/dev/null | grep -oE '^- M[0-9]+ —' | grep -oE 'M[0-9]+' | sort -u) || true
+      ms_plan6=$(sed -nE '/^## (6\. )?Validation/,/^## (7\. )?Deliverables/p' "$plan" 2>/dev/null | grep -oE '^- M[0-9]+ —' | grep -oE 'M[0-9]+' | sort -u) || true
 
       # Name-based fallback: first few words after the "M<N> — " marker (or any "<ID> — " marker),
       # lowercased, so a renamed/relettered heading can still match by what it's actually called.
       local names_tasks names_plan3
       names_tasks=$(grep -oE '^#{2,3} [A-Za-z][0-9]+ — [A-Za-z0-9 ]+' "$tasks" 2>/dev/null | sed -E 's/^#+ [A-Za-z][0-9]+ — //' | awk '{print tolower($1" "$2)}' | sort -u) || true
-      names_plan3=$(sed -n '/^## 3\. Milestones/,/^## 4\./p' "$plan" 2>/dev/null | grep -oE '^- [A-Za-z][0-9]+ — [A-Za-z0-9 ]+' | sed -E 's/^- [A-Za-z][0-9]+ — //' | awk '{print tolower($1" "$2)}' | sort -u) || true
+      names_plan3=$(sed -nE '/^## (3\. )?Milestones/,/^## (4\. )?Tasks/p' "$plan" 2>/dev/null | grep -oE '^- [A-Za-z][0-9]+ — [A-Za-z0-9 ]+' | sed -E 's/^- [A-Za-z][0-9]+ — //' | awk '{print tolower($1" "$2)}' | sort -u) || true
       local names_match=1
       [[ "$names_tasks" == "$names_plan3" ]] && names_match=0
 
       if [[ -n "$ms_tasks" && -n "$ms_plan3" && "$ms_tasks" != "$ms_plan3" && $names_match -ne 0 ]]; then
         doc_add "lifecycle" "warning" "$tasks" \
-          "request '$slug': milestone labels differ between TASKS.md ($(echo "$ms_tasks" | xargs)) and PLAN §3 ($(echo "$ms_plan3" | xargs)), and names don't line up either" \
-          "renumber so M<N> matches 1:1 across TASKS.md and PLAN.md §3 — a Builder/agent walking the chain by number will otherwise mismatch milestones" \
+          "request '$slug': milestone labels differ between TASKS.md ($(echo "$ms_tasks" | xargs)) and PLAN Milestones ($(echo "$ms_plan3" | xargs)), and names don't line up either" \
+          "renumber so M<N> matches 1:1 across TASKS.md and PLAN Milestones — a Builder/agent walking the chain by number will otherwise mismatch milestones" \
           "judgment"
         issues=$((issues + 1))
       fi
       if [[ -n "$ms_plan3" && -n "$ms_plan6" && "$ms_plan3" != "$ms_plan6" ]]; then
         doc_add "lifecycle" "warning" "$plan" \
-          "request '$slug': milestone labels differ between PLAN §3 Milestones ($(echo "$ms_plan3" | xargs)) and §6 Validation ($(echo "$ms_plan6" | xargs))" \
-          "renumber so M<N> matches 1:1 across §3 and §6 — validation criteria won't map cleanly to their milestone otherwise" \
+          "request '$slug': milestone labels differ between PLAN Milestones ($(echo "$ms_plan3" | xargs)) and Validation ($(echo "$ms_plan6" | xargs))" \
+          "renumber so M<N> matches 1:1 across Milestones and Validation — validation criteria won't map cleanly to their milestone otherwise" \
           "judgment"
         issues=$((issues + 1))
       fi
     fi
+
+    # ── PLAN/TASKS structure enforcement (schema-enforcement change) ──────────
+    # Errors on ACTIVE requests only; archive/ is never reached (this loop only
+    # iterates .spectacular/requests/). The 7 required PLAN sections must appear
+    # unnumbered and in order; TASKS must group by ### M and use valid checkbox
+    # syntax. --fix rewrites the numbered legacy form.
+    _STRUCT_ISSUES=0
+    _check_request_structure "$slug" "$plan" "$d/TASKS.md"
+    issues=$((issues + _STRUCT_ISSUES))
   done
 
   if [[ $issues -eq 0 ]]; then
@@ -10580,6 +10882,20 @@ doctor_apply_mechanical_fixes() {
       fi
     fi
 
+    # Legacy numbered PLAN headings → unnumbered canonical form (lifecycle area).
+    # "## 1. Goal" → "## Goal", etc. Only the 7 canonical section names, so a
+    # numbered heading that isn't a required section is left untouched.
+    if [[ "$area" == "lifecycle" && "$msg" == *"legacy numbered section headings"* ]]; then
+      if [[ -f "$file" ]]; then
+        local tmp="${file}.tmp.$$"
+        sed -E 's/^## [0-9]+\. (Goal|Constraints|Milestones|Tasks|Dependencies|Validation|Deliverables)$/## \1/' \
+          "$file" > "$tmp" && mv "$tmp" "$file"
+        echo "  ✓ fixed [lifecycle]: de-numbered PLAN section headings in $file"
+        applied=$((applied + 1))
+      fi
+      continue
+    fi
+
     # Pack-driven gitignore drift (from check_conventions in scaffold/enforce modes)
     # Findings have area=conventions and msg containing "requires gitignore entry: 'X'"
     if [[ "$area" == "conventions" && "$msg" == *"gitignore entry:"* ]]; then
@@ -11146,7 +11462,7 @@ main() {
     archive)  shift; cmd_archive "$@"; exit $? ;;
     status)
       shift
-      # Intercept CLI-mechanical flags before falling through to the skill stub.
+      # Intercept CLI-mechanical flags/args before falling through to the skill stub.
       local _i=0
       while (( _i < $# )); do
         _i=$((_i + 1))
@@ -11162,8 +11478,15 @@ main() {
             cmd_status_since "${arg#--since=}"
             exit $?
             ;;
+          --json) cmd_status_json; exit $? ;;
         esac
       done
+      # Positional: bare `status` → fleet table; `status <slug>` → request card.
+      if [[ $# -eq 0 ]]; then
+        cmd_status_fleet; exit $?
+      elif [[ $# -eq 1 && "$1" != -* ]]; then
+        cmd_status_card "$1"; exit $?
+      fi
       skill_verb_message "status" "Briefing of project state — frontmatter only, no full-file reads." "$@"
       ;;
     new)      shift; cmd_new "$@"; exit $? ;;

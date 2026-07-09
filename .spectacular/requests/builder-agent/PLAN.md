@@ -13,14 +13,14 @@ related:
 
 # Plan — builder-agent
 
-## 1. Goal
+## Goal
 
 Give Spectacular a **Builder** agent that implements a planned request milestone from
 its already-written PLAN/TASKS chain, plus a `build-workflow.md` orchestrator arc that
 decides *when* to dispatch it (and when not) — the build-direction analog of the
 existing debug fleet.
 
-## 2. Constraints
+## Constraints
 
 - **Reuse the debug fleet's shape, don't invent a new one.** Same closed-brief test,
   same bounce-on-judgment rail, same ledger discipline (agent never writes state; the
@@ -78,7 +78,7 @@ against real requests; the M-label drift gap it flagged was closed by the
 - The trace substrate (`debug/<slug>/`) is a debug concept; whether Builder jobs get
   their own trace folder is an M2 question, not assumed.
 
-## 3. Milestones
+## Milestones
 
 - M1 — **Builder agent def shipped.** `debug-builder.md` exists, matches the
   debug-fixer contract shape (frontmatter, protocol, bounce rail, output block), and
@@ -91,17 +91,17 @@ against real requests; the M-label drift gap it flagged was closed by the
 - M3 — **(gated) trace + CLI signal.** Only if M1/M2 prove the fan-out earns a durable
   trace or a `--delegable`-style CLI emit. Deferred per P11 — don't build speculatively.
 
-## 4. Tasks
+## Tasks
 
 See `TASKS.md`.
 
-## 5. Dependencies
+## Dependencies
 
 - None blocking. Builds on shipped substrate: the debug fleet contract, `bug-workflow.md`,
   and the `doctor lifecycle` M-label drift check (2026-07-06). Reads the idea doc
   `.spectacular/ideas/coding-agents.md` §7 as the spec source.
 
-## 6. Validation
+## Validation
 
 - M1 — the agent def parses as a valid `.claude/agents/*.md`; a hand-written closed
   brief (assembled from an existing request's milestone) dispatched to it produces a
@@ -111,7 +111,7 @@ See `TASKS.md`.
   worth-it gate on a real multi-milestone request produces the right dispatch/inline call.
 - M3 — n/a until gated open.
 
-## 7. Deliverables
+## Deliverables
 
 - `.claude/agents/debug-builder.md` — the Builder agent prompt.
 - `skills/spectacular/references/build-workflow.md` — the orchestrator arc.

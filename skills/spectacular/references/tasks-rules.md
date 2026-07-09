@@ -17,15 +17,32 @@ Loaded by `refine.md` / `review.md` when the active doc is `tasks` (per doc-inde
 
 TASKS.md is created when a request is scaffolded (via `spectacular new`). The skill pre-populates it from `templates/tasks/base.md`. Users edit directly; the skill only intervenes when `spectacular tasks review` is called.
 
+## Checkbox schema (enforced)
+
+Three checkbox states, all **flush-left** (no leading indent):
+
+| Syntax | Meaning | Counted in progress |
+|---|---|---|
+| `- [ ]` | open | yes — denominator |
+| `- [x]` | done | yes — numerator + denominator |
+| `- [~]` | deferred | shown separately (`5/8 (+1 deferred)`), excluded from the open/done split |
+
+**Indented `  - [ ]` sub-bullets are allowed** as a nested acceptance checklist
+under a parent task, but are **not counted** — `status` progress counts top-level
+checkboxes only, so `x/total` stays comparable across requests. Milestones group
+tasks with `### M<N> — <name>` headings. `doctor` (lifecycle area) **errors** on an
+active request missing `### M` headings or using a malformed checkbox (`- [.]`,
+`- [-]`); `archive/` is skipped.
+
 ## Review gate checks (in addition to base)
 
 | # | Check | How |
 |---|---|---|
-| 4 | Checklist format | All non-heading bullets use `- [ ]` or `- [x]` (not `- ` or `* `) |
-| 5 | Milestone groupings | At least one `### M<N>` or `### <name>` heading present |
+| 4 | Checklist format | Flush-left task bullets use `- [ ]`, `- [x]`, or `- [~]` (not `- ` or `* `). Indented `  - [ ]` sub-bullets are allowed |
+| 5 | Milestone groupings | At least one `### M<N>` heading present |
 | 6 | Frontmatter status | `status:` matches the parent PLAN.md's status |
 | 7 | Frontmatter related | `related:` includes `PLAN.md` |
-| 8 | No abandoned checkboxes | No half-checked items like `- [.]`, `- [-]` (typos) |
+| 8 | No abandoned checkboxes | No malformed items like `- [.]`, `- [-]` (typos). `- [~]` is a valid deferred state, not a typo |
 
 ## Refine patterns (freeform refine)
 

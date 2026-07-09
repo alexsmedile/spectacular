@@ -13,7 +13,11 @@ related:
 
   Rules:
   - Group tasks by milestone using `### M<N> — <name>` headings.
-  - Use `- [ ]` for open, `- [x]` for done. No other bullet syntax.
+  - Flush-left checkboxes are the COUNTED units: `- [ ]` open, `- [x]` done,
+    `- [~]` deferred (not-open-not-done; shown separately in progress).
+  - Indented `  - [ ]` sub-bullets are allowed as a nested acceptance checklist
+    under a task, but are NOT counted — progress counts top-level only, so
+    x/total stays comparable across requests.
   - `status:` in frontmatter should match parent PLAN.md.
   - Tasks are owned by the user. Engine never adds/removes/reorders tasks.
 -->

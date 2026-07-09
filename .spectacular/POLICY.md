@@ -78,7 +78,7 @@ A passing check on code that isn't built is worse than no check — it reports s
 - severity: warn
 - check: a structured mutation (lifecycle move, archive, snapshot, memory/decision/idea/audit/fix write) goes through its `spectacular` verb, not a free-form file edit — unless no verb covers it
 
-The CLI is the deterministic mutator; the skill orchestrates, reads, decides, communicates. Whenever a `spectacular` verb exists for a mutation, use it — hand-editing bypasses auto-numbering (`F<N>`/`A<N>`), signature and verified gates, index regeneration (`MEMORY.md`), atomic link-rewriting on archive, and frontmatter bumps, and the drift lands as a `doctor` finding later. Manual edits remain the escape hatch for what no verb covers — that's the exception, not the default. If you catch yourself writing an entry file by hand where a verb exists, stop and run the verb. When a hand-edit already happened and left the substrate malformed, `spectacular doctor <area>` names the drift and `--fix` repairs the mechanical part.
+The CLI is the deterministic mutator; the skill orchestrates, reads, decides, communicates. Whenever a `spectacular` verb exists for a mutation, use it — hand-editing bypasses auto-numbering (`F<N>`/`A<N>`), signature and verified gates, index regeneration (`memories/index.md`), atomic link-rewriting on archive, and frontmatter bumps, and the drift lands as a `doctor` finding later. Manual edits remain the escape hatch for what no verb covers — that's the exception, not the default. If you catch yourself writing an entry file by hand where a verb exists, stop and run the verb. When a hand-edit already happened and left the substrate malformed, `spectacular doctor <area>` names the drift and `--fix` repairs the mechanical part.
 
 ### commit-checkpoint
 - principle: 11
@@ -163,7 +163,7 @@ A request must not reach `verified` while any verification check is unmet. Verif
 ### spec-sync
 - principle: 2
 - severity: warn
-On archiving a request, propose the SPEC.md / `specs/` updates the shipped work implies. Intent and truth are different files — keep truth current. The human confirms.
+On archiving a request, propose the specs/index.md / `specs/` updates the shipped work implies. Intent and truth are different files — keep truth current. The human confirms.
 
 ### memory-propose
 - principle: 5
@@ -175,7 +175,7 @@ On archiving, propose any operational lesson worth keeping as a memory. Operatio
 ### confirm-before-write
 - principle: 8
 - severity: block
-- check: the user has confirmed the memory text before it is written to `.spectacular/memory/`
+- check: the user has confirmed the memory text before it is written to `.spectacular/memories/`
 
 Memory is team-visible and git-committed. Humans decide, agents propose: never write a memory the user has not seen and confirmed.
 

@@ -19,7 +19,7 @@ You just entered a Spectacular workspace. This doc tells you how to operate insi
 `.spectacular/` is an AI-native operational workspace. It separates:
 
 - **Intent** (what we want) — `PRD.md`, `PRINCIPLES.md`
-- **Structure** (how it's organized) — `ARCHITECTURE.md`, `ROADMAP.md`
+- **Structure** (how it's organized) — `ARCHITECTURE.md`, `roadmaps/index.md`
 - **Truth** (what currently exists) — `current/`
 - **Work** (what's changing) — `requests/`
 - **Memory** (what we learned) — `memory/`
@@ -32,8 +32,8 @@ Read [PRD.md](PRD.md) before planning anything. Read [ARCHITECTURE.md](ARCHITECT
 ## How to operate
 
 1. **Read frontmatter first**, file bodies second. Status, summary, version, related — these are the navigation layer.
-2. **Load progressively.** Don't pre-load `specs/` or `requests/` wholesale; load only what the current task needs (see Context loading below). The top-level `SPEC.md` is cheap and always relevant.
-3. **Snapshot before overwrite** on any canonical doc (root layer + `SPEC.md` + `specs/`). The snapshot name is `FILE@vN.md`. This is non-optional.
+2. **Load progressively.** Don't pre-load `specs/` or `requests/` wholesale; load only what the current task needs (see Context loading below). The top-level `specs/index.md` is cheap and always relevant.
+3. **Snapshot before overwrite** on any canonical doc (root layer + `specs/index.md` + `specs/`). The snapshot name is `FILE@vN.md`. This is non-optional.
 4. **Propose, don't act**, on irreversibles: archive, lifecycle promote, memory writes, bulk edits >5 files. Confirm with the human first.
 5. **Never read `archive/`** during normal operation. It's write-only from your perspective.
 6. **Write to `memory/` only on confirmation.** Never autonomously.
@@ -46,14 +46,14 @@ Load only what the task needs. Don't load the entire repository.
 
 | Task type | Load |
 |---|---|
-| Planning / design | `PRD.md`, `PRINCIPLES.md`, `DECISIONS.md` |
+| Planning / design | `PRD.md`, `PRINCIPLES.md`, `decisions/index.md` |
 | Refining intent / writing a PRD | `PRD.md`, skill references `prd-grill.md` / `prd-refine.md` / `prd-review.md` |
-| Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `requests/<slug>/TASKS.md`, `SPEC.md`, relevant `specs/<capability>/SPEC.md` |
-| Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `specs/<capability>/SPEC.md`, `requests/<slug>/RISKS.md` |
+| Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `requests/<slug>/TASKS.md`, `specs/index.md`, relevant `specs/<capability>.md` |
+| Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `specs/<capability>.md`, `requests/<slug>/RISKS.md` |
 | Onboarding cold | `PRD.md`, `ARCHITECTURE.md`, this file |
 | Structural questions | `ARCHITECTURE.md` only |
 | Principles questions | `PRINCIPLES.md` only |
-| Roadmap questions | `ROADMAP.md` only |
+| Roadmap questions | `roadmaps/index.md` only |
 
 ---
 
@@ -101,7 +101,7 @@ Anti-pattern: copying every line from `TASKS.md` into the harness one-for-one. T
 - **Don't write to `memory/` autonomously.** Propose; human confirms.
 - **Don't create `requests/<slug>/PRD.md`.** It's an explicit anti-pattern.
 - **Don't load `.spectacular/` wholesale.** Read frontmatter; load bodies on demand.
-- **Don't trigger Claude Code's auto-memory** when writing to `.spectacular/memory/` — they're separate systems and double-capture is a bug.
+- **Don't trigger Claude Code's auto-memory** when writing to `.spectacular/memories/` — they're separate systems and double-capture is a bug.
 - **Don't write into `docs/`.** That's [pageworks](https://github.com/alexsmedile/pageworks)' surface — spectacular's awareness ends at "does docs/ exist?" + "is a manifest present?". For schema, page authoring, renderer adapters, or maintenance: install pageworks and delegate. See `skills/spectacular/references/pageworks-handoff.md`.
 
 ---
@@ -117,7 +117,7 @@ Two skills, one workspace:
 
 Spectacular's CLI keeps the `docs init`/`docs export`/etc. verbs working for backward compatibility (deprecated in v1.2.0, removed in v2.0.0). New work goes through pageworks.
 
-After `spectacular archive <slug>` where the request touched SPEC.md, specs/, ARCHITECTURE.md, or PRD.md, spectacular prints a hint suggesting `pageworks audit` (suppress with `--no-docs-prompt` or per-project `docs.prompt_on_archive: false` in config.yaml).
+After `spectacular archive <slug>` where the request touched specs/index.md, specs/, ARCHITECTURE.md, or PRD.md, spectacular prints a hint suggesting `pageworks audit` (suppress with `--no-docs-prompt` or per-project `docs.prompt_on_archive: false` in config.yaml).
 
 ---
 
@@ -126,7 +126,7 @@ After `spectacular archive <slug>` where the request touched SPEC.md, specs/, AR
 When ending a session or handing off to another agent:
 
 - Update `requests/<slug>/SESSION.md` with current state, blockers, next actions
-- Summarize decisions made; if any are architectural, propose a `DECISIONS.md` entry
+- Summarize decisions made; if any are architectural, propose a `decisions/index.md` entry
 - Surface any insights worth remembering via `spectacular remember this`
 
 ---
@@ -136,4 +136,4 @@ When ending a session or handing off to another agent:
 - [PRD.md](PRD.md) — what Spectacular is, what we're building
 - [ARCHITECTURE.md](ARCHITECTURE.md) — the structure you're operating inside
 - [PRINCIPLES.md](PRINCIPLES.md) — the rules behind the conventions
-- [ROADMAP.md](roadmaps/index.md) — what's coming next
+- [roadmaps/index.md](roadmaps/index.md) — what's coming next

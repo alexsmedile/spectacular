@@ -24,25 +24,23 @@ This is distinct from `STACK.md` — STACK describes the **host project's** tech
 ├── PRD.md              # product intent (this project)
 ├── PRINCIPLES.md       # operating principles
 ├── ARCHITECTURE.md     # this file
-├── ROADMAP.md          # time-ordered "what's next"
 ├── AGENTS.md           # how to operate inside .spectacular/
 ├── STACK.md            # host project's tech choices
-├── DECISIONS.md        # ADR-style decision log
 ├── config.yaml         # machine-readable project config
-│
-├── SPEC.md             # system spec — index of what's built right now (v0.5.0+)
 ├── POLICY.md           # practice layer — policies under work-phase hooks (v1.12.0+)
 │
-├── specs/              # per-capability specs — specs/<capability>/SPEC.md (v0.5.0+; replaced current/)
+├── specs/              # system spec — specs/index.md (index) + specs/<capability>.md (v2.0 OKF; flat files)
+├── roadmaps/           # time-ordered "what's next" — roadmaps/index.md + shipped v*.md (v2.0 OKF)
+├── decisions/          # ADR log — decisions/index.md + D<N>-<slug>.md entries (v2.0 OKF)
+├── memories/           # long-term operational learning — memories/index.md + M<N>-<slug>.md (v2.0 OKF)
+├── sessions/           # work-session log — sessions/index.md + entries (v1.5.0+; v2.0 OKF)
 ├── ideas/              # exploratory scratchpad — not acted on by skill
 ├── requests/           # active and planned work
 ├── skills/             # project-specific reusable skills
-├── memory/             # long-term operational learning (index.md + entries)
-├── sessions/           # work-session log (index.md + entries; v1.5.0+)
-├── decisions/          # ADR entries when DECISIONS.md is in index mode (v1.17.0+)
-├── feedback/           # prototyping-mode feedback entries (v1.6.0+; system-level)
-├── audit/              # bug investigations — diagnose before planning a fix (A<N>.md; v1.25.0+, `spectacular audit`)
-├── fixes/              # verified-fix log — logged only once resolved (F<N>.md; v1.25.0+, `spectacular fix`)
+├── feedbacks/          # prototyping-mode feedback entries (v1.6.0+; v2.0 OKF)
+├── audits/             # bug investigations — diagnose before planning a fix (A<N>.md; v1.25.0+)
+├── fixes/              # verified-fix log — logged only once resolved (F<N>.md; v1.25.0+)
+├── debugs/             # in-flight debug-job traces — debugs/<slug>/ (v1.26.0+; v2.0 OKF)
 ├── _snapshots/         # versioned snapshots of canonical docs (store name configurable; default _snapshots since v1.24.0)
 │   ├── PRD/            # one folder per canonical doc, uppercase preserved
 │   │   └── @v1.2.md    # filename = the content's version (couples to version:)
@@ -67,10 +65,10 @@ The root layer is stable project grounding. These files change infrequently, sta
 | `PRD.md` | Product intent — what Spectacular (or the host project) is, for whom, why |
 | `PRINCIPLES.md` | Operating principles + runtime enforcement hooks |
 | `ARCHITECTURE.md` | This file — `.spectacular/` structure and conventions |
-| `ROADMAP.md` | Versioned future work |
+| `roadmaps/index.md` | Versioned future work |
 | `AGENTS.md` | Onboarding doc for any agent landing in `.spectacular/` |
 | `STACK.md` | **Host project** technology and architecture choices |
-| `DECISIONS.md` | ADR-style log — one decision per entry, immutable |
+| `decisions/index.md` | ADR-style log — one decision per entry, immutable |
 | `config.yaml` | Machine-readable project config |
 
 ## STACK.md vs ARCHITECTURE.md
@@ -92,9 +90,9 @@ Spectacular-specific. Distinct from the repo-root `CLAUDE.md` / `AGENTS.md`. Tel
 
 Humans write it; the skill proposes updates when new skills or capabilities are added.
 
-## DECISIONS.md
+## decisions/index.md
 
-ADR-style log. One decision per entry. Immutable once written. Each entry contains:
+ADR-style log. One decision per entry (`decisions/D<N>-<slug>.md`), indexed by `decisions/index.md`. Immutable once written. Each entry contains:
 
 ```md
 ## YYYY-MM-DD — <short title>
@@ -144,7 +142,7 @@ skills:
 
 Frontmatter is the skill's primary signal for reading project state. Every canonical document includes frontmatter.
 
-## Root files (PRD, PRINCIPLES, ARCHITECTURE, ROADMAP, AGENTS, STACK, DECISIONS)
+## Root files (PRD, PRINCIPLES, ARCHITECTURE, roadmaps/index, AGENTS, STACK, decisions/index)
 
 ```yaml
 ---
@@ -156,7 +154,7 @@ related:
 ---
 ```
 
-## specs/<capability>/SPEC.md capability specs
+## specs/<capability>.md capability specs
 
 ```yaml
 ---
@@ -188,7 +186,7 @@ blocks:
 - `status`, `updated`, `summary` are required
 - Other fields are optional; skill warns but does not block
 - `PLAN.md` frontmatter is the **single source of lifecycle state** for a request
-- Capability specs in `specs/<capability>/` track their own state independently
+- Capability specs at `specs/<capability>.md` track their own state independently
 
 ### Cross-request relationship fields (v1.16.0+)
 
@@ -208,7 +206,7 @@ blocks:
 
 ### Roadmap ledger (v1.17.0+)
 
-The ledger is a single markdown table at the **top of `ROADMAP.md`**, above the first version block. It is the **only place a target version number is written** — request frontmatter carries a stable `build:` id instead; all prose references requests by slug or build id.
+The ledger is a single markdown table at the **top of `roadmaps/index.md`**, above the first version block. It is the **only place a target version number is written** — request frontmatter carries a stable `build:` id instead; all prose references requests by slug or build id.
 
 #### Schema
 
@@ -253,9 +251,9 @@ These are **distinct from request lifecycle** (`planned | active | review | veri
 
 - **Version-is-derived:** the `target-version` column is the single source of truth. No version number is written anywhere else (not in PLAN frontmatter, not in prose, not in milestone text).
 - **Grouped builds:** two requests targeting the same version = two rows with the same `target-version` value. Flat table; the render groups visually at read time.
-- **Human-adds-rows:** `spectacular new` stamps `build: bN` on the PLAN.md and increments `last_build:` in `config.yaml`, but does **not** insert a ledger row. The human adds the row to ROADMAP.md when slotting the request into a version.
+- **Human-adds-rows:** `spectacular new` stamps `build: bN` on the PLAN.md and increments `last_build:` in `config.yaml`, but does **not** insert a ledger row. The human adds the row to `roadmaps/index.md` when slotting the request into a version.
 - **Gaps are normal:** if a build id is skipped (request merged into another release, abandoned), that gap is fine — like skipped Xcode build numbers.
-- **Planned runway only:** the ledger tracks future/in-progress work. Shipped history lives in `CHANGELOG.md` (facts) and, as per-version planning prose, under `roadmap/v<X.Y.Z>.md` once migrated — not in the ledger. The ledger keeps one row per build (past + future) as the compact index; see `spectacular roadmap migrate` + `specs/roadmap.md` § Index mode for how shipped prose blocks are aged out of ROADMAP.md to bound context cost.
+- **Planned runway only:** the ledger tracks future/in-progress work. Shipped history lives in `CHANGELOG.md` (facts) and, as per-version planning prose, under `roadmaps/v<X.Y.Z>.md` once migrated — not in the ledger. The ledger keeps one row per build (past + future) as the compact index; see `spectacular roadmap migrate` + `specs/roadmap.md` § Index mode for how shipped prose blocks are aged out of `roadmaps/index.md` to bound context cost.
 
 #### `build:` in PLAN.md frontmatter
 
@@ -296,29 +294,29 @@ ideas/
 
 ---
 
-# Spec layer (SPEC.md + specs/)
+# Spec layer (specs/index.md + specs/)
 
-The spec layer represents canonical system truth — what the product *actually does* right now. As of v0.5.0 it is **`SPEC.md` (the index) + `specs/<capability>/SPEC.md` (per-capability detail)**, replacing the pre-v0.5.0 `current/` folder.
+The spec layer represents canonical system truth — what the product *actually does* right now. It is **`specs/index.md` (the index) + `specs/<capability>.md` (per-capability detail, flat files)**. The pre-v0.5.0 `current/` folder was replaced by this spec layer in v0.5.0.
 
 ```txt
-SPEC.md                 # the index — dense capability bullets, each pointing to a spec file when promoted
 specs/
-├── cli/SPEC.md         # one folder per capability, each with its own SPEC.md + frontmatter state
-├── doc-engine/SPEC.md
-└── roadmap/SPEC.md
+├── index.md            # the index — dense capability bullets, each pointing to a spec file when promoted
+├── cli.md              # one flat file per capability, each with its own frontmatter state
+├── doc-engine.md
+└── roadmap.md
 ```
 
 **Purpose:** defines current behavior, active capabilities, security requirements, performance expectations, user-visible behavior.
 
 **Rules:**
-- authoritative — `SPEC.md` is always relevant + cheap to load; capability specs load on demand
-- current only — no past state, no future plans (future lives in ROADMAP.md)
+- authoritative — `specs/index.md` is always relevant + cheap to load; capability specs load on demand
+- current only — no past state, no future plans (future lives in `roadmaps/index.md`)
 - behavior-oriented, not implementation-oriented
-- modular — one capability per `specs/<capability>/SPEC.md`; promote a dense `SPEC.md` bullet into its own file only when it earns it (see the v1.10.0 density refactor)
+- modular — one flat file per capability, `specs/<capability>.md`; promote a dense `specs/index.md` bullet into its own file only when it earns it (see the v1.10.0 density refactor)
 - **never overwritten in place** — skill snapshots before proposing edits (`_snapshots/specs/<capability>/SPEC/@v<ver>.md`)
-- skill proposes `SPEC.md` + `specs/` updates when a request is archived; humans confirm (the spec-sync flow)
+- skill proposes `specs/index.md` + `specs/` updates when a request is archived; humans confirm (the spec-sync flow)
 
-**Capability spec structure** — each `specs/<capability>/SPEC.md` contains:
+**Capability spec structure** — each `specs/<capability>.md` contains:
 - purpose
 - requirements
 - scenarios
@@ -412,10 +410,10 @@ Spectacular already uses a family of single-letter + number IDs, each scoped to 
 | Prefix | Entity | Scope | Lives in |
 |---|---|---|---|
 | `M<N>` | Milestone | per-request | `TASKS.md` headings, `PLAN.md` §3/§6 |
-| `D<N>` | Decision | project-wide | `DECISIONS.md` / `decisions/D<N>.md` |
+| `D<N>` | Decision | project-wide | `decisions/D<N>-<slug>.md` |
 | `F<N>` | Fix | project-wide | `fixes/F<N>.md` |
-| `b<N>` | Roadmap build id | project-wide | `ROADMAP.md` ledger table |
-| `A<N>` | Debug audit finding | per-debug-job | `debug/<slug>/` trace artifacts |
+| `b<N>` | Roadmap build id | project-wide | `roadmaps/index.md` ledger table |
+| `A<N>` | Debug audit finding | per-debug-job | `debugs/<slug>/` trace artifacts |
 
 **Rule:** don't invent a new letter for an existing entity type (e.g. `G1` for a milestone) — reuse the table above so the ID stays greppable by convention across the whole project, not just within one file.
 
@@ -518,14 +516,15 @@ skills/
 
 # Memory layer
 
-`.spectacular/memory/` stores long-term operational learning.
+`.spectacular/memories/` stores long-term operational learning — `memories/index.md` + `M<N>-<slug>.md` entries.
 
 ```txt
-memory/
-├── failures.md
-├── lessons.md
-├── architecture-traps.md
-└── recurring-bugs.md
+memories/
+├── index.md
+├── M1-failures.md
+├── M2-lessons.md
+├── M3-architecture-traps.md
+└── M4-recurring-bugs.md
 ```
 
 **Rules:**
@@ -571,12 +570,12 @@ review    → implementation complete, VERIFY.md checklist being run
   ↓
 verified  → all checks passed
   ↓
-archived  → moved to archive/, SPEC.md + specs/ updated, memory proposed
+archived  → moved to archive/, specs/index.md + specs/ updated, memory proposed
 ```
 
 **State storage:**
 - `status:` in `PLAN.md` frontmatter = request lifecycle state
-- `status:` in `specs/<capability>/SPEC.md` = capability state (`stable | draft | deprecated`); top-level `SPEC.md` carries no per-capability status — it's the index
+- `status:` in `specs/<capability>.md` = capability state (`stable | draft | deprecated`); top-level `specs/index.md` carries no per-capability status — it's the index
 - `status:` in `requests/<slug>/specs/` = individual spec development state
 
 **Transition rules:**
@@ -597,7 +596,7 @@ Canonical documents are **never overwritten in place**.
 - sub-doc snapshots mirror their path: `specs/cli.md` → `_snapshots/specs/cli/SPEC/@v1.0.md`
 - version tracked in frontmatter: `version: 1.0`
 - the unversioned filename at root (`PRD.md`) always points to the current version
-- applies to: root layer files, `SPEC.md`, `specs/<capability>/SPEC.md` capability specs, `DESIGN.md`, `config.yaml`
+- applies to: root layer files, `specs/index.md`, `specs/<capability>.md` capability specs, `DESIGN.md`, `config.yaml`
 - this is **default behavior** — not opt-in
 - legacy snapshots at root (`PRD@v1.0.md`) continue to be read; `spectacular doctor snapshots` warns until migrated via `--fix`
 - **retention (v1.24.0+):** snapshots are bounded by tiered retention — origin (`@v1`) + periodic (newest per `month`/`week` bucket) + recent (newest `keep`, default 3). `spectacular snapshot prune` removes the rest (git-rm if tracked, else `.trash/`); configured via the `snapshots:` block. `doctor snapshots` nudges when prunable snapshots accumulate.
@@ -614,11 +613,11 @@ As of v0.3.0, init scaffolds **only what the project needs**, not all root docs.
 
 **Always-set** (6 files + 2 dirs, scaffolded unconditionally — v0.5.0+):
 - `.spectacular/PRD.md` — anchor doc; every other doc references it
-- `.spectacular/SPEC.md` — system spec index (what's built right now, present tense)
+- `.spectacular/specs/index.md` — system spec index (what's built right now, present tense)
 - `.spectacular/config.yaml` — project name, kit identity, naming rules
 - `.spectacular/<agents-file>` — onboarding doc (defaults to `AGENTS.md`)
 - `.spectacular/requests/` — request folders
-- `.spectacular/specs/` — per-capability specs (optional content; only when a capability outgrows a one-liner in SPEC.md)
+- `.spectacular/specs/` — per-capability specs (optional content; only when a capability outgrows a one-liner in `specs/index.md`)
 
 > v0.4.0 and earlier scaffolded `.spectacular/current/` instead of `SPEC.md` + `specs/`. The legacy folder is auto-migrated via `spectacular doctor specs --fix`.
 
@@ -654,5 +653,5 @@ Re-running init on an initialized workspace is always safe — no file is ever o
 
 - [PRD.md](PRD.md) — why Spectacular exists
 - [PRINCIPLES.md](PRINCIPLES.md) — the principles this architecture implements
-- [ROADMAP.md](roadmaps/index.md) — v2+ structural additions (workspaces, nested workspaces, workflows)
+- [roadmaps/index.md](roadmaps/index.md) — v2+ structural additions (workspaces, nested workspaces, workflows)
 - [AGENTS.md](AGENTS.md) — how to operate inside this structure

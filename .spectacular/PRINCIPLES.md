@@ -69,7 +69,7 @@ The repository should remain readable by humans, structured for agents, supporti
 The system should preserve lessons, failures, architectural traps, recurring bugs, and implementation patterns. Agents should not repeatedly rediscover solved problems.
 
 **How the skill enforces this:**
-- `.spectacular/memory/` is git-committed and team-visible
+- `.spectacular/memories/` is git-committed and team-visible
 - On archive, skill reviews the completed request and proposes memory entries
 - `spectacular remember this` captures insights mid-session on confirmation
 - Skill never writes to memory autonomously — humans confirm every entry
@@ -123,7 +123,7 @@ Irreversible or canonical-state-changing actions require human confirmation. Rev
 Three distinct activities, often conflated, must stay separate:
 
 - **Verification** — "did we ship what PLAN said?" Request-scoped, confirmatory, closed-ended. Lives in `VERIFY.md`. Terminates at `verified`.
-- **Feedback loop** — "was that the right thing to ship?" System-scoped, exploratory, open-ended. Lives in `.spectacular/feedback/` or `requests/<slug>/feedback/`. Compounds over time. Never terminates.
+- **Feedback loop** — "was that the right thing to ship?" System-scoped, exploratory, open-ended. Lives in `.spectacular/feedbacks/` or `requests/<slug>/feedbacks/`. Compounds over time. Never terminates.
 - **Benchmark** — quantitative grading against a fixed task suite. Spectacular has no benchmarks and ships none. The word "evals" is intentionally avoided — it carries HumanEval/MMLU/accuracy-% baggage and pulls the wrong way.
 
 A feature can be `verified` while feedback reveals we built the wrong thing. Feedback can be glowing while VERIFY fails on one missed assertion. The axes are orthogonal — both must be exercised on user-visible changes.
@@ -173,7 +173,7 @@ Agents operating in a Spectacular workspace should:
 - Prefer local capability reasoning over loading siblings
 - Summarize state before any handoff (session, agent, or human)
 - Avoid giant prompts — route to specific reference docs
-- Preserve continuity through `.spectacular/memory/`, not chat scrollback
+- Preserve continuity through `.spectacular/memories/`, not chat scrollback
 - Never read `archive/` during normal operation — write-only from the agent's perspective
 
 ---
@@ -196,9 +196,9 @@ These are the maintenance rules that keep the workspace from rotting:
 
 You are not designing a documentation system. You are designing a **temporal operational model**.
 
-The names should express what's there. `SPEC.md` / `specs/` is what is true *now*; `requests/` is what is changing *next*; `memory/` is what was learned *before*.
+The names should express what's there. `specs/index.md` / `specs/` is what is true *now*; `requests/` is what is changing *next*; `memories/` is what was learned *before*.
 
-- System truth → `load SPEC.md` (always) → drill into `specs/auth.md` only if needed
+- System truth → `load specs/index.md` (always) → drill into `specs/auth.md` only if needed
 - Active work → `load requests/add-team-billing/`
 - Past learning → `load memory/lessons.md`
 

@@ -24,4 +24,4 @@ summary: "Technology stack and conventions for the Spectacular project"
 - Skill reads frontmatter, not full file content, during briefings
 - Small files over monolithic documents
 - Never overwrite canonical documents — snapshot first
-- State lives in frontmatter (PLAN.md for requests, specs/*/SPEC.md for per-capability state; top-level SPEC.md is the index)
+- State lives in frontmatter (PLAN.md for requests, specs/*.md for per-capability state; top-level specs/index.md is the index)

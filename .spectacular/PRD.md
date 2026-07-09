@@ -115,7 +115,7 @@ Full text + enforcement hooks in [PRINCIPLES.md](PRINCIPLES.md).
 
 - [PRINCIPLES.md](PRINCIPLES.md) — operating principles + how the skill enforces each
 - [ARCHITECTURE.md](ARCHITECTURE.md) — `.spectacular/` structure, layers, request files, lifecycle, versioning, frontmatter
-- [ROADMAP.md](roadmaps/index.md) — v2+ features (workspaces, nested workspaces, multi-agent, workflows)
+- [roadmaps/index.md](roadmaps/index.md) — v2+ features (workspaces, nested workspaces, multi-agent, workflows)
 - [AGENTS.md](AGENTS.md) — how agents operate inside `.spectacular/`; context loading per task type
-- [DECISIONS.md](decisions/index.md) — architectural decision log
+- [decisions/index.md](decisions/index.md) — architectural decision log
 - [STACK.md](STACK.md) — host-project technology choices (distinct from Spectacular's own architecture)

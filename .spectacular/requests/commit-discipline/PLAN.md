@@ -1,8 +1,8 @@
 ---
-status: planned
-priority: medium
+status: parked
+priority: low
 owner: alex
-updated: 2026-07-06
+updated: 2026-07-09
 build: b20
 summary: "Add a soft periodic-commit nudge for in-progress code work — Spectacular currently ships zero commit guidance"
 related:
@@ -12,6 +12,13 @@ related:
 ---
 
 # Plan — commit-discipline
+
+> **Parked (2026-07-09).** M1 (the prose-only POLICY nudge) **shipped** and is
+> live — `commit-checkpoint` under `@Implementation` + extended `@SessionEnd`.
+> M2 (the wired `Stop`/`SessionEnd` reminder hook) is **parked, not cancelled**:
+> it was always gated on M1 proving insufficient (P11), and there's no current
+> demand for it. Unpark by cutting M2 as its own small request if the prose nudge
+> ever proves too weak in practice. Nothing to do until then.
 
 ## Goal
 

@@ -32,7 +32,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b8 | visual-layer | Visual layer | full | v1.15.0 | shipped |
 | b9 | decisions-index | Decisions index mode | full | v1.17.0 | shipped |
 | b10 | skill-desc-length-check | Skill description length guard | themed | v1.23.3 | shipped |
-| b11 | spec-audit-mode | Content-aware spec audit | themed | tbd | planned |
+| b11 | spec-audit-mode | Spec frontmatter schema check (pivoted from semantic audit) | themed | tbd | review |
 | b15 | naming-coherence | Naming coherence (advance/feedback/pack/next) | themed | v1.19.0 | shipped |
 | b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | shipped |
 | b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | shipped |
@@ -40,7 +40,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b16 | snapshot-retention | Snapshot retention + version coupling | themed | v1.24.0 | shipped |
 | b17 | roadmap-contract-docs | Spec + document the roadmap ledger | themed | v1.23.0 | shipped |
 | b18 | roadmap-pruning | Roadmap shipped-history pruning/scaling | themed | v1.23.0 | shipped |
-| b20 | commit-discipline | Soft periodic-commit nudge for in-progress code | themed | tbd | planned |
+| b20 | commit-discipline | Soft periodic-commit nudge for in-progress code (M1 shipped; M2 hook parked) | themed | tbd | parked |
 | b21 | builder-agent | Builder agent + build-workflow orchestrator arc (build-direction fleet) | themed | tbd | active |
 | b22 | archive-closure-gate | Archive closure gate + delta-based spec-sync (fable review #1+#2) | themed | v1.28.0 | shipped |
 | b23 | status-fleet-view | Deterministic `spectacular status` fleet view + enforced PLAN/TASKS structure | themed | v1.29.0 | shipped |
@@ -60,7 +60,7 @@ this order as each is cut; the contract-prep ladder (`tbd`, ordered ①→②→
 | ✅ | b4 | `cli-debt-removal` | review → **shipped v1.23.2** | Verified live; swept a missed dead `templates/docs/` dir on archive. |
 | ✅ | b10 | `skill-desc-length-check` | review → **shipped v1.23.3** | Verified live (53/53 tests, guard fires on commit); awk duplication reviewed + accepted (install boundary). |
 | ✅ | b16 | `snapshot-retention` | planned → **shipped v1.24.0** | Version coupling + tiered retention + `_snapshots/` rename; dogfooded on this repo. |
-| 1 | b11 | `spec-audit-mode` | planned | Medium; heuristic design still to settle. |
+| 1 | b11 | `spec-audit-mode` | review | Pivoted to a mechanical frontmatter schema check (semantic audit dropped); code + 7 tests shipped, awaiting archive. |
 | — | b3 | `convention-pack-modules` | planned (gated) | Deferred until pack-composition pain surfaces. |
 
 Then the runway: **contract-prep ①→②→③** (`target: tbd` — they take the next

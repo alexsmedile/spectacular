@@ -316,6 +316,152 @@ EOF
   rm -rf "$dir"
 }
 
+# ── spec-audit-mode (b11): frontmatter schema check ───────────────────────────
+# Required set for capability specs: status, updated, summary, related.
+# Closed status enum: draft | published | deprecated. version: required iff
+# status: published. index.md is skipped (different doc-class). related:
+# resolution is check_links' job — here only presence is asserted.
+
+# Helper: a fully-valid draft capability spec.
+_write_valid_spec() {
+  cat > "$1" <<'EOF'
+---
+status: draft
+updated: 2026-07-09
+summary: "a valid capability spec"
+related:
+  - index.md
+---
+# Cap
+EOF
+}
+
+scenario_11_schema_clean_draft() {
+  echo "Scenario 11: valid draft spec (all keys, ISO date, no version) → clean"
+  local dir="/tmp/spectacular-specs-test-11"
+  seed_workspace "$dir"; run_cli "$dir" init >/dev/null
+  _write_valid_spec "$dir/.spectacular/specs/CAP.md"
+  local out; out="$(run_cli "$dir" doctor specs)"
+  if echo "$out" | grep -q "CAP.md.*missing required field\|CAP.md.*not in ISO\|CAP.md.*outside allowed"; then
+    echo "    ✗ valid draft spec should produce no schema warnings"; echo "$out" | grep CAP.md; fail_count=$((fail_count + 1))
+  else pass_count=$((pass_count + 1)); fi
+  rm -rf "$dir"
+}
+
+scenario_12_missing_summary() {
+  echo "Scenario 12: spec missing summary: → warning"
+  local dir="/tmp/spectacular-specs-test-12"
+  seed_workspace "$dir"; run_cli "$dir" init >/dev/null
+  cat > "$dir/.spectacular/specs/CAP.md" <<'EOF'
+---
+status: draft
+updated: 2026-07-09
+related:
+  - index.md
+---
+# Cap
+EOF
+  local out; out="$(run_cli "$dir" doctor specs)"
+  if echo "$out" | grep -q "CAP.md.*missing required field: summary"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected missing-summary warning"; fail_count=$((fail_count + 1)); fi
+  rm -rf "$dir"
+}
+
+scenario_13_non_iso_date() {
+  echo "Scenario 13: spec with non-ISO updated: → warning"
+  local dir="/tmp/spectacular-specs-test-13"
+  seed_workspace "$dir"; run_cli "$dir" init >/dev/null
+  cat > "$dir/.spectacular/specs/CAP.md" <<'EOF'
+---
+status: draft
+updated: 2026/07/09
+summary: "bad date"
+related:
+  - index.md
+---
+# Cap
+EOF
+  local out; out="$(run_cli "$dir" doctor specs)"
+  if echo "$out" | grep -q "CAP.md.*not in ISO format"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected non-ISO date warning"; fail_count=$((fail_count + 1)); fi
+  rm -rf "$dir"
+}
+
+scenario_14_status_outside_enum() {
+  echo "Scenario 14: spec with status outside enum → warning"
+  local dir="/tmp/spectacular-specs-test-14"
+  seed_workspace "$dir"; run_cli "$dir" init >/dev/null
+  cat > "$dir/.spectacular/specs/CAP.md" <<'EOF'
+---
+status: wip
+updated: 2026-07-09
+summary: "bad status"
+related:
+  - index.md
+---
+# Cap
+EOF
+  local out; out="$(run_cli "$dir" doctor specs)"
+  if echo "$out" | grep -q "CAP.md.*outside allowed set"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected status-enum warning"; fail_count=$((fail_count + 1)); fi
+  rm -rf "$dir"
+}
+
+scenario_15_published_without_version() {
+  echo "Scenario 15: status: published but no version: → warning"
+  local dir="/tmp/spectacular-specs-test-15"
+  seed_workspace "$dir"; run_cli "$dir" init >/dev/null
+  cat > "$dir/.spectacular/specs/CAP.md" <<'EOF'
+---
+status: published
+updated: 2026-07-09
+summary: "published, unversioned"
+related:
+  - index.md
+---
+# Cap
+EOF
+  local out; out="$(run_cli "$dir" doctor specs)"
+  if echo "$out" | grep -q "CAP.md.*published.*no \`version:\`\|CAP.md.*must be versioned"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected published-without-version warning"; echo "$out" | grep CAP.md; fail_count=$((fail_count + 1)); fi
+  rm -rf "$dir"
+}
+
+scenario_16_published_with_version_clean() {
+  echo "Scenario 16: status: published WITH version: → clean (conditional, other branch)"
+  local dir="/tmp/spectacular-specs-test-16"
+  seed_workspace "$dir"; run_cli "$dir" init >/dev/null
+  cat > "$dir/.spectacular/specs/CAP.md" <<'EOF'
+---
+status: published
+version: 1.0
+updated: 2026-07-09
+summary: "published and versioned"
+related:
+  - index.md
+---
+# Cap
+EOF
+  local out; out="$(run_cli "$dir" doctor specs)"
+  if echo "$out" | grep -q "CAP.md.*must be versioned\|CAP.md.*no \`version:\`"; then
+    echo "    ✗ published+versioned spec should not warn about version"; fail_count=$((fail_count + 1))
+  else pass_count=$((pass_count + 1)); fi
+  rm -rf "$dir"
+}
+
+scenario_17_index_skipped() {
+  echo "Scenario 17: specs/index.md lacking status: → clean (index is skipped)"
+  local dir="/tmp/spectacular-specs-test-17"
+  seed_workspace "$dir"; run_cli "$dir" init >/dev/null
+  # Scaffolded index.md carries no status: by design. Assert no schema warning
+  # is attributed to index.md — the regression guard for the doc-class skip.
+  local out; out="$(run_cli "$dir" doctor specs)"
+  if echo "$out" | grep -q "index.md.*missing required field: status\|index.md.*outside allowed set"; then
+    echo "    ✗ index.md should be skipped by the capability-spec schema check"; fail_count=$((fail_count + 1))
+  else pass_count=$((pass_count + 1)); fi
+  rm -rf "$dir"
+}
+
 # ── run all ───────────────────────────────────────────────────────────────────
 echo "=== specs.test.sh ==="
 scenario_1_fresh_init_scaffolds_spec
@@ -328,6 +474,13 @@ scenario_7_nested_capability_warns
 scenario_8_repeat_init_nondestructive
 scenario_9_flat_capability_specs_valid
 scenario_10_spec_drift_vs_archive
+scenario_11_schema_clean_draft
+scenario_12_missing_summary
+scenario_13_non_iso_date
+scenario_14_status_outside_enum
+scenario_15_published_without_version
+scenario_16_published_with_version_clean
+scenario_17_index_skipped
 
 echo ""
 echo "Results: ${pass_count} passed, ${fail_count} failed"

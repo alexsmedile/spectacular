@@ -9624,17 +9624,73 @@ check_specs() {
       "flatten directories by moving SPEC.md files to flat concept files and removing subdirectories" "judgment"
   fi
 
-  # Flat contract docs: top-level .md files in specs/ (excluding index.md)
+  # Flat contract docs: top-level .md files in specs/ (excluding index.md).
+  # Two layers per file: (1) structural — frontmatter delimiter present
+  # (error-class, mirrors check_frontmatter); (2) schema — required keys, ISO
+  # date, closed status enum, conditional version (warning-class).
+  #
+  # Schema note (spec-audit-mode, b11): capability specs use their OWN required
+  # set — status, updated, summary, related — which deliberately differs from the
+  # root-anchor set in check_frontmatter (version, updated, summary). Specs make
+  # `version:` conditional on `status: published` (a draft has no contract to
+  # version) and add `related:`. This fork is intentional and NOT unified with
+  # check_frontmatter — findings surface under `specs`, where a user running
+  # `doctor specs` expects them. `related:` *resolution* stays with check_links
+  # (root-aware target checks); here we only assert the key is present. index.md
+  # is a different doc-class (catalog, not capability) and is skipped — it
+  # legitimately carries no `status:`.
+  local spec_required_fields="status updated summary related"
+  local spec_status_enum="draft published deprecated"
   shopt -s nullglob
   for contract_doc in "$specs_dir"/*.md; do
     local basename
     basename="$(basename "$contract_doc")"
     [[ "$basename" == "index.md" ]] && continue
-    if head -1 "$contract_doc" 2>/dev/null | grep -q '^---$'; then
-      doc_add "specs" "pass" "$contract_doc" "capability spec present (flat file in specs/)"
-    else
+
+    # (1) Structural: frontmatter delimiter (error if broken — matches
+    # check_frontmatter's delimiter=error / key=warning split).
+    if ! head -1 "$contract_doc" 2>/dev/null | grep -q '^---$'; then
       doc_add "specs" "warning" "$contract_doc" "capability spec missing frontmatter delimiter" \
         "add proper frontmatter block" "judgment"
+      continue
+    fi
+    doc_add "specs" "pass" "$contract_doc" "capability spec present (flat file in specs/)"
+
+    # Extract frontmatter block (between the first two ---).
+    local sfm
+    sfm=$(awk '/^---$/ { count++; if (count == 2) exit; next } count == 1' "$contract_doc")
+
+    # (2a) Required keys present.
+    local field
+    for field in $spec_required_fields; do
+      if ! echo "$sfm" | grep -q "^${field}:"; then
+        doc_add "specs" "warning" "$contract_doc" "capability spec missing required field: ${field}" \
+          "add \`${field}:\` to frontmatter" "judgment"
+      fi
+    done
+
+    # (2b) ISO date on updated: (reuses the check_frontmatter pattern).
+    local s_updated
+    s_updated=$(echo "$sfm" | awk -F': ' '/^updated:/ { print $2; exit }' | tr -d '"' | tr -d "'")
+    if [[ -n "$s_updated" ]] && ! [[ "$s_updated" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+      doc_add "specs" "warning" "$contract_doc" "\`updated:\` not in ISO format (got: $s_updated)" \
+        "use YYYY-MM-DD format" "judgment"
+    fi
+
+    # (2c) Closed status enum + (2d) conditional version.
+    local s_status
+    s_status=$(echo "$sfm" | awk -F': ' '/^status:/ { print $2; exit }' | tr -d '"' | tr -d "'" | xargs)
+    if [[ -n "$s_status" ]]; then
+      case " $spec_status_enum " in
+        *" $s_status "*) ;;
+        *) doc_add "specs" "warning" "$contract_doc" "\`status: $s_status\` outside allowed set ($spec_status_enum)" \
+             "use one of: ${spec_status_enum// /, }" "judgment" ;;
+      esac
+      # version required iff published.
+      if [[ "$s_status" == "published" ]] && ! echo "$sfm" | grep -q "^version:"; then
+        doc_add "specs" "warning" "$contract_doc" "\`status: published\` but no \`version:\` — a published spec is a contract and must be versioned" \
+          "add \`version:\` to frontmatter" "judgment"
+      fi
     fi
   done
   shopt -u nullglob

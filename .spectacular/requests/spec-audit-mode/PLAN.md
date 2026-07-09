@@ -1,52 +1,91 @@
 ---
-status: planned
+status: review
 priority: medium
 owner: alex
-updated: 2026-06-26
+updated: 2026-07-09
 build: b11
-summary: "Spec-audit mode: cross-check SPEC.md bullets ↔ specs/ files ↔ archives so status answers 'is the spec current?', not just 'what's the lifecycle?'"
+summary: "Spec frontmatter schema check: doctor specs validates required keys, ISO date, closed status enum, and conditional version on flat specs/<cap>.md files — mechanical, deterministic, no semantic NLP"
 related:
   - ../../PRD.md
   - ../../specs/index.md
   - ../../roadmaps/index.md
 ---
 
-# Plan — spec-audit-mode
+# Plan — spec-audit-mode (frontmatter schema check)
+
+> **Pivot (2026-07-09, grill-me).** This request was originally a *semantic
+> coverage audit* (orphan capability bullets / orphan spec files / stale specs —
+> heuristic, fuzzy, and written against the pre-OKF `specs/<slug>/SPEC.md`
+> layout). That design never settled ("heuristics still to settle") and its paths
+> went stale after the OKF v2.0 restructure flattened specs to `specs/<cap>.md`.
+> Grilled down to what "good `doctor specs`" actually means: a **mechanical
+> frontmatter/format schema check** — deterministic, high-confidence, zero false
+> positives, no NLP. The semantic audit is dropped, not deferred.
 
 ## Goal
 
-Give Spectacular a real answer to "is my spec current with what's built?" — beyond the single date heuristic shipped in the drift check (build b10/b11), which only compares SPEC.md's `updated` against the newest archive. A user opening status to "review specs, files, requests" should see *where* SPEC.md and `specs/` have fallen out of sync with reality, not just a smoke-alarm date warning.
+Give `spectacular doctor specs` a real answer to "is this spec file *well-formed*?"
+— validate the frontmatter schema of each flat capability spec so drift in the
+signal layer (missing keys, bad dates, typo'd status, unversioned published
+contracts) is caught mechanically, the way `doctor` catches substrate problems
+everywhere else.
 
 ## Constraints
 
-- Bash CLI only — no new runtime deps (STACK.md).
-- Doctor checks the **substrate**, content reconciliation stays with the skill + spec-sync. This request adds *detection* signals to `doctor specs`; the *fixes* remain judgment (skill walks them, never auto-edits SPEC.md).
-- Must not duplicate the existing date-drift check — extend the same `check_specs` area.
-- Heuristics, not semantic NLP. Slug/name matching at most; flag for human, never auto-resolve.
+- **Mechanical only.** No semantic matching, no NLP. Every finding is a
+  deterministic frontmatter fact — the class of check with zero false positives.
+- **Consistency with existing code governs.** Severity model mirrors
+  `check_frontmatter`: broken/unparseable frontmatter = `error`; missing key or
+  bad value = `warning`. No stricter bar for specs than the rest of `doctor`.
+- **Findings surface under `specs`.** A user running `doctor specs` sees spec
+  problems — so this extends `check_specs`, not `check_frontmatter`.
+- **No `related:` resolution here.** Path resolution is already fully owned by
+  `check_links` (root-aware target checks). We assert the key is *present*, never
+  re-resolve targets — no duplication.
+- **Two-schema fork is intentional and permanent.** Capability specs use their
+  own required set (`status, updated, summary, related`, conditional `version`),
+  which deliberately differs from the root-anchor set in `check_frontmatter`
+  (`version, updated, summary`). Inlined into `check_specs`, no shared helper, no
+  schema-unify debt marker — we accept the fork.
+- Bash CLI only, no new runtime deps (STACK.md).
 
 ## Understanding
 
 ### How it works now
 
-`doctor specs` (build b11) checks: SPEC.md present + parseable, specs/ dir present, per-capability SPEC.md frontmatter, flat contract docs, and **one** drift signal — SPEC.md `updated` older than newest `archive/*/PLAN.md`. `status` relays that warning. spec-sync reconciles content, but only fires at archive time (per-request).
+`check_specs` validates specs/ *structure* (dir present, index.md parseable, flat
+OKF layout, SPEC-DELTA integrity, date-drift vs archive) and checks that each flat
+`specs/*.md` merely *has* a frontmatter delimiter — but never validates the keys
+inside it. `check_frontmatter` validates key contents, but scans **only
+`.spectacular/*.md`** root anchors; it never descends into `specs/`. So the
+frontmatter *contents* of capability specs are unvalidated — a real gap, already
+visible in the live repo (`doc-engine.md` has no `version:`, `roadmap.md` does).
 
 ### What changes
 
-Add three content-aware audit signals to `check_specs`, each a `⚠️ judgment` finding routing to spec-sync:
-1. **Orphan capability bullet** — a `**Name**` bullet in SPEC.md's Capabilities list with no matching `specs/<slug>/SPEC.md` *and* no archived request whose slug/summary mentions it. (Tunable: bullets are allowed to be spec-file-less until they outgrow one line — so this is info-level unless the bullet is long.)
-2. **Orphan spec file** — a `specs/<cap>/SPEC.md` not referenced anywhere in SPEC.md's body. Dead capability doc.
-3. **Stale capability spec** — a `specs/<cap>/SPEC.md` whose own `updated` predates the newest archive touching it (per the archive PLAN's `related:`).
+`check_specs`'s flat-file loop gains a schema layer per `specs/*.md` (excluding
+`index.md`):
+
+1. **Required keys** — `status, updated, summary, related` present → `warning` if missing.
+2. **ISO date** — `updated` matches `YYYY-MM-DD` → `warning` if not (reuses the `check_frontmatter` pattern).
+3. **Closed status enum** — `status ∈ {draft, published, deprecated}` → `warning` if outside.
+4. **Conditional version** — `version:` required **iff** `status: published` (a published spec is a contract; a draft has nothing to version) → `warning` if published-without-version.
+
+Structurally-broken frontmatter (no delimiter) stays the existing `warning`
+(delimiter branch) — the file can't be parsed for keys, so it short-circuits.
 
 ### What stays the same
 
-The date-drift check, spec-sync's content logic, the CLI-mutates/skill-orchestrates split, and the rule that doctor never edits SPEC.md. `status` keeps relaying — it just has more signals to relay.
+Structure checks, SPEC-DELTA integrity, the date-drift signal, `check_links`
+owning `related:` resolution, `check_frontmatter` owning root anchors, and the
+rule that `doctor` never edits SPEC files. `index.md` is skipped — it's a catalog
+doc-class, not a capability, and legitimately carries no `status:`.
 
 ## Milestones
 
-- M1 — `doctor specs` flags orphan capability bullets (SPEC.md bullet ↔ no spec file ↔ no archive mention), info/warn by bullet length.
-- M2 — `doctor specs` flags orphan spec files (specs/<cap> not referenced in SPEC.md body).
-- M3 — `doctor specs` flags stale per-capability specs (cap SPEC.md older than its newest related archive).
-- M4 — `status` + spec-sync reference docs updated; `--json` audit summary so CI can gate on spec coverage.
+- M1 — **Schema check shipped.** `check_specs` validates required keys + ISO date
+  + closed status enum + conditional version on flat `specs/*.md`; `index.md`
+  skipped. This is the whole feature — one mechanical slice.
 
 ## Tasks
 
@@ -54,18 +93,22 @@ See `TASKS.md`.
 
 ## Dependencies
 
-- Builds on the SPEC.md date-drift heuristic already shipped in `check_specs` (build b11) — shares the same area + `_date_to_epoch`. No separate request; that work landed ad-hoc.
+- Reuses the frontmatter-extraction + ISO-date pattern already in
+  `check_frontmatter` (copied inline, not shared — see the two-schema constraint).
+- `check_links` continues to own `related:` resolution.
 
 ## Validation
 
-- M1 — test: SPEC.md with a bullet for a capability that has no spec file and no archive → warning; with a matching spec file → clean.
-- M2 — test: a `specs/ghost.md` not named in SPEC.md body → warning; referenced → clean.
-- M3 — test: cap spec `updated` older than a related archive → warning.
-- M4 — `doctor specs --json` includes per-signal findings; status briefing relays them.
+- 7 scenarios in `tests/cli/specs.test.sh` (one failing case per rule, both
+  branches of conditional-version, + an index-skip regression guard):
+  clean draft · missing summary · non-ISO date · status outside enum · published
+  without version · published with version (clean) · index.md lacking status (clean).
+- End-to-end: `doctor specs` on this repo — `doc-engine.md` (draft, no version) →
+  clean; `roadmap.md` (published, versioned) → clean; `index.md` → skipped.
 
 ## Deliverables
 
-- Extended `check_specs` in `cli/spectacular` (3 new signals).
-- New scenarios in `tests/cli/specs.test.sh`.
-- Updated `doctor-areas.md` (specs table), `status.md` (signal table), `spec-sync.md` (standalone audit trigger).
-- ROADMAP ledger row mapping build → version.
+- Extended `check_specs` in `cli/spectacular` (schema layer on the flat-file loop). ✅
+- 7 new scenarios in `tests/cli/specs.test.sh` (11–17). ✅
+- ROADMAP ledger row mapping build b11 → target version.
+- Doc note in `doctor` area reference (specs table) describing the schema.

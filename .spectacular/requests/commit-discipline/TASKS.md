@@ -1,6 +1,6 @@
 ---
-status: planned
-updated: 2026-07-06
+status: parked
+updated: 2026-07-09
 related:
   - PLAN.md
 ---

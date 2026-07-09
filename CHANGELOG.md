@@ -7,6 +7,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added — `doctor specs` frontmatter schema check (spec-audit-mode, b11)
+
+- **`doctor specs` now validates the frontmatter of each flat capability spec** (`specs/*.md`, excluding `index.md`): required keys `status, updated, summary, related` present; `updated` in ISO `YYYY-MM-DD`; `status` in the closed enum `draft | published | deprecated`; and `version:` present **iff** `status: published` (a published spec is a contract and must be versioned; a draft has nothing to version). All findings are `warning`-class, mirroring the `frontmatter` area's severity model. Mechanical only — no semantic matching, no false positives.
+- The capability-spec required set **deliberately differs** from the root-anchor set in the `frontmatter` area (`version, updated, summary`): specs make `version` conditional and add `related`. `related:` *resolution* is left to the `links` area — not re-checked here. `index.md` is skipped (catalog doc-class, not a capability).
+- **7 new scenarios** in `tests/cli/specs.test.sh` (one per rule, both branches of conditional-`version`, plus an `index.md`-skip regression guard). Full suite: 36/36.
+- **Pivot note:** `spec-audit-mode` (b11) originally scoped a semantic coverage audit (orphan bullets/files, stale specs) written against the pre-OKF `specs/<slug>/SPEC.md` layout; that design never settled and its paths went stale after the OKF flattening. Regrilled into this mechanical schema check — the semantic audit was dropped, not deferred.
+
 ## [1.29.0] — 2026-07-09
 
 ### Added — deterministic `spectacular status` fleet view (status-fleet-view, b23)

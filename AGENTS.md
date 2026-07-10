@@ -47,7 +47,7 @@ spectacular/
 ├── agents/                    # ★ Subagent defs — SOURCE OF TRUTH (edit here, not .claude/agents/)
 │                              #   fleet = discover/apply/review × fix/build + specialists:
 │                              #   debug-{investigator,fixer,researcher} · repo-explorer · spec-builder
-│                              #   · code-reviewer · test-verifier
+│                              #   · code-reviewer (code) · spec-reviewer (docs) · test-verifier
 │                              #   .claude/agents/*.md are relative symlinks → ../../agents/<name>.md
 ├── packs/                     # App-store convention packs (alex-default)
 ├── hooks/                     # ⚠ Claude/Codex PLUGIN event handlers (plugin runtime)

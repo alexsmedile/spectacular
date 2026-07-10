@@ -48,7 +48,8 @@ spectacular/
 │   ├── debug-researcher.md    #   research — known-external-bug verdict (read-only, web)
 │   ├── repo-explorer.md       #   discover · build — map a subsystem before planning (read-only)
 │   ├── spec-builder.md        #   apply · build — a closed milestone brief (apply-only)
-│   ├── code-reviewer.md       #   review — 5-lens findings over a diff (read-only)
+│   ├── code-reviewer.md       #   review · code — 5-lens findings over a diff (read-only)
+│   ├── spec-reviewer.md       #   review · docs — punch list vs a doc's rules-file rubric (read-only)
 │   └── test-verifier.md       #   verify — run a check / write a test to spec (apply-only, tests)
 │                              #   .claude/agents/*.md are relative symlinks → ../../agents/
 ├── packs/                     # App-store convention packs (alex-default)

@@ -7,6 +7,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added — `spec-reviewer` agent (the doc-review analog of code-reviewer)
+
+- **A read-only reviewer for Spectacular docs** (PRD, PLAN, PRINCIPLES, ROADMAP, capability specs). It's the dispatchable, own-window embodiment of the doc engine's `review` mode: it reads the target doc **plus that doc's own `<doc-id>-rules.md` rubric** (the vague-word list, the aspiration-verb ban on validation lines, the "each check states its authority" rule, the required-slot/ordering gates) and returns a **pass/fail punch list** ranked gate-failure → weakness → suggestion. It reviews against the doc's *own contract*, not the reviewer's taste — so it stays in sync with the engine instead of drifting into a second opinion.
+- Preserves the fleet boundary exactly like `code-reviewer`: read-only, findings-only. `grill` (interactive interrogation) and `refine` (mutation) stay on the orchestrator/main thread; `spec-reviewer` is the read-only gate that tells the orchestrator whether either is needed. Conforms to the Claude Code subagent spec; symlinked into `.claude/agents/`. The fleet is now 8 agents across discover / apply / review (code + docs) / verify.
+
 ### Added — the three new agents wired into the workflow arcs (fleet-arc-wiring, b25)
 
 - **The skill now dispatches `repo-explorer`, `code-reviewer`, and `test-verifier`** — they existed in `agents/` but no workflow arc routed to them, so the orchestrator never reached for them. Wired as **optional, judgment-gated** steps (same worth-it economics as the fan-out gate — not a step every change passes through):

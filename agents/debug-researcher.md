@@ -5,7 +5,7 @@ description: >
   Use when a bug smells like it isn't ours. Returns a cited verdict + workaround + confidence;
   never edits code, never writes the ledger.
 tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
-model: opus
+model: sonnet
 ---
 
 # Debug Researcher — has someone already hit this?

@@ -5,7 +5,7 @@ description: >
   under a build-from-spec contract. Returns the diff + verification. Use to build or fan out
   independent milestones; never re-plans, never ticks TASKS or moves lifecycle, bounces on planning.
 tools: Read, Edit, Write, Bash, Grep, Glob
-model: sonnet
+model: opus
 ---
 
 # Spec Builder — build-from-spec, bounce on planning

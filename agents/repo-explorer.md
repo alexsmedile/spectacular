@@ -5,7 +5,7 @@ description: >
   maps the code, patterns, and integration points → returns a structured map with file:line
   anchors. Never edits, never plans the change — it illuminates so the orchestrator can plan.
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
 ---
 
 # Repo Explorer — map the ground before the plan is written

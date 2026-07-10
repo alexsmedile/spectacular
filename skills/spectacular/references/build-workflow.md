@@ -212,7 +212,7 @@ records it:
 1. **Confirm the diff.** Read what the Builder returned; it's your change now. Don't record a
    milestone you didn't confirm from the returned diff + verify.
 2. **Run (or re-run) the Success criteria** if you didn't watch it run. Real check, real output.
-2a. **Optional — arms-length review + verify (judgment-gated).** Before you tick, consider dispatching
+3. **Optional — arms-length review + verify (judgment-gated).** Before you tick, consider dispatching
    the review/verify agents. Same worth-it economics as fan-out: skip for trivial changes; reach for
    them when the change earns it.
    - **[[code-reviewer]]** (read-only) — when the milestone diff is **substantial or medium+ blast
@@ -227,12 +227,12 @@ records it:
      the milestone as not-done: plan the fix, don't tick.
    Both are **optional** — the default path (you confirm the diff + run the check yourself) stands for
    ordinary work. They earn their dispatch on risk, not by default.
-3. **Tick the checkbox.** `- [ ]` → `- [x]` for the milestone's completed tasks in `TASKS.md`. This
+4. **Tick the checkbox.** `- [ ]` → `- [x]` for the milestone's completed tasks in `TASKS.md`. This
    is a main-thread write, never a subagent's — the same invariant that keeps the debug fleet's
    `fixes/`/`audit/` writes single-threaded (`use-audit-fix-verbs` in spirit: the labor fans out, the
    state write doesn't). A `code-reviewer` finding or a `test-verifier` `fail` blocks the tick until
    resolved — reviewer/verifier inform the record; they never write it.
-4. **Decide the lifecycle move.** All of the request's milestones done → the request is ready for
+5. **Decide the lifecycle move.** All of the request's milestones done → the request is ready for
    `active → review` (via `spectacular advance <slug>`; verification runs at `review → verified` per
    [[verify]]). A single milestone done mid-request → no status move, just the checkbox. The status
    move is a judgment call and a mutation — both yours.

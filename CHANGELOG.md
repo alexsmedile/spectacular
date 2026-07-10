@@ -7,10 +7,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
-### Added — `spec-reviewer` agent (the doc-review analog of code-reviewer)
+## [1.30.0] — 2026-07-10
 
-- **A read-only reviewer for Spectacular docs** (PRD, PLAN, PRINCIPLES, ROADMAP, capability specs). It's the dispatchable, own-window embodiment of the doc engine's `review` mode: it reads the target doc **plus that doc's own `<doc-id>-rules.md` rubric** (the vague-word list, the aspiration-verb ban on validation lines, the "each check states its authority" rule, the required-slot/ordering gates) and returns a **pass/fail punch list** ranked gate-failure → weakness → suggestion. It reviews against the doc's *own contract*, not the reviewer's taste — so it stays in sync with the engine instead of drifting into a second opinion.
-- Preserves the fleet boundary exactly like `code-reviewer`: read-only, findings-only. `grill` (interactive interrogation) and `refine` (mutation) stay on the orchestrator/main thread; `spec-reviewer` is the read-only gate that tells the orchestrator whether either is needed. Conforms to the Claude Code subagent spec; symlinked into `.claude/agents/`. The fleet is now 8 agents across discover / apply / review (code + docs) / verify.
+### The Agent Fleet update
+
+v1.30.0 turns Spectacular's agent story from a single debug fleet into a coherent
+**8-agent fleet** spanning *discover / apply / review / verify* across the *fix* and
+*build* directions, all obeying one boundary — closed handoff in, findings/diff/pass-fail
+out, **the orchestrator is the only mutator**. Agent defs now live in `agents/` at the
+plugin root (source of truth; `.claude/agents/*.md` are relative symlinks), all conform
+to the Claude Code subagent spec, and every agent is reachable by the skill via the
+workflow arcs or the spec-sync flow.
+
+### Added — `spec-reviewer` agent (the specs' guardian)
+
+- **A read-only guardian of the spec files** (`specs/index.md` + `specs/*.md`), the doc-review analog of `code-reviewer`. Its primary job is keeping the spec **true to the code**: alongside spec-writing quality (well-formed, concrete, no vague theme-gestures), it runs a **currency** check — for each capability the spec claims, it greps the code/CLI/tests for evidence the claim still holds and cross-checks the roadmap/CHANGELOG ledger, classifying drift as **stale** (spec claims a capability the code lost/changed), **gap** (shipped code the spec omits), or **premature** (spec claims something unshipped). Every currency finding cites its evidence, so "this is stale" is a fact, not an opinion. Coherence-vs-intent (contradicts PRD/PRINCIPLES/personas) is a secondary axis; user-fitness is an optional low-confidence NOTE, not a verdict.
+- Returns a ranked punch list, never rewrites. Preserves the fleet boundary: `grill` (interactive) and `refine` (mutation) stay on the orchestrator/main thread; `spec-reviewer` is the read-only gate that tells the orchestrator whether either is needed. Wired into the `spec-sync`/archive flow as an optional currency pass before a SPEC-DELTA is written. Dogfooded on this repo's own `specs/index.md` — caught 6 real drift issues (5 unmentioned agents, a shipped-but-described-as-future check, a `hold:` gap, `debug/`→`debugs/`, `memory/`→`memories/`, and a lagging CLI version constant), all fixed + re-verified clean.
 
 ### Added — the three new agents wired into the workflow arcs (fleet-arc-wiring, b25)
 

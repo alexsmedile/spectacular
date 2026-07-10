@@ -24,6 +24,8 @@ For each `related:` entry in the request's `PLAN.md`, and for any capability spe
 3. Is the per-capability spec still accurate given what was built? If not, propose updating it.
 4. Should the `status` change? (e.g., `draft` → `stable` after implementation)
 
+> **Optional — dispatch [[spec-reviewer]] for an arms-length currency pass (judgment-gated).** Before you write the delta, consider dispatching `spec-reviewer` over `specs/index.md` (and any touched `specs/<cap>.md`). It greps each capability claim against the code and cross-checks the roadmap/CHANGELOG ledger, returning a punch list of **stale / gap / premature** claims with cited evidence. This matters most when the request shipped a substantial capability or the spec hasn't been reviewed in a while — you write the SPEC-DELTA against a *known-current* baseline instead of one that may have drifted from earlier requests. It's the specs' guardian doing the currency check you'd otherwise do by hand; it returns findings, you (the orchestrator) fold them into the delta. Same worth-it economics as the other optional fleet gates — skip it for a one-line spec touch. It never edits the spec; that's your `refine` / delta write.
+
 ---
 
 ## Proposal format — the spec delta

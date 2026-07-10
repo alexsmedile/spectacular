@@ -38,7 +38,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `/spectacular` with no args | → `references/status.md` (empty workspace → `references/guided-first-run.md`) |
 | `spectacular status` | → `references/status.md` |
 | `spectacular new <description>` | → `references/new-request.md` (then run `spectacular new <slug>`) |
-| `spectacular archive <slug>` | → CLI verb (no skill flow); see [[archive]] for context |
+| `spectacular archive <slug>` | → CLI verb (no skill flow); see [[archive]] for context. The archive flow's spec-sync step may dispatch `spec-reviewer` for an arms-length currency check of `specs/` before the SPEC-DELTA is written — see [[spec-sync]]. |
 | `spectacular remember this` | → `references/memory.md` (legacy free-text capture) |
 | `spectacular remember "<text>"` | → CLI verb; see [[memory-rules]] for entry shape |
 | `spectacular decide "<decision>" [--context\|--consequences]` | → CLI verb; see [[decisions-rules]] |

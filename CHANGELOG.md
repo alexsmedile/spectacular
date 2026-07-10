@@ -7,6 +7,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Changed — agents/ is now the source of truth (plugin-root convention)
+
+- **The four fleet agents moved from `.claude/agents/` to a root `agents/` directory** (`debug-investigator`, `debug-fixer`, `debug-researcher`, `spec-builder`), matching the plugin-root convention (agents belong at the plugin root alongside `skills/`, not in the Claude-local dir). `.claude/agents/*.md` are now **relative symlinks** (`../../agents/<name>.md`, git-tracked as mode 120000) so Claude Code still loads them. Edit the real files in `agents/`. Repo maps in `CLAUDE.md` + `AGENTS.md` updated; plugin validation passes.
+
 ### Added — `hold:` request modifier (deferred/blocked without polluting the lifecycle)
 
 - **A request can now carry an orthogonal `hold:` field** (`deferred`, `blocked`, or any short reason) that pauses it *without* adding a sixth lifecycle status. The five-state chain (`planned → active → review → verified → archived`) stays pure; the hold is a modifier on whatever stage the request is actually in. `spectacular status` surfaces it everywhere — fleet column shows `planned(deferred)`, the card shows `(hold: deferred)`, and `--json` gains a `"hold"` field (the agent contract). `spectacular advance` **refuses** to move a held request until the field is cleared (deleted or set to `none`). Sort rank keys off the raw lifecycle status, so a held request still sorts by its real stage.

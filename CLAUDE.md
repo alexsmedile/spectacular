@@ -41,6 +41,12 @@ spectacular/
 │   ├── references/            # Reference docs loaded on demand by the skill
 │   ├── templates/             # Canonical templates (PRD kits, base)
 │   └── versions/              # Historical SKILL.md snapshots
+├── agents/                    # ★ Subagent defs — SOURCE OF TRUTH (plugin-root convention)
+│   ├── debug-investigator.md  #   debug fleet: discovers where+why (read-only)
+│   ├── debug-fixer.md         #   debug fleet: applies a closed fix (apply-only)
+│   ├── debug-researcher.md    #   debug fleet: known-external-bug research (read-only)
+│   └── spec-builder.md        #   build fleet: implements a closed milestone brief
+│                              #   .claude/agents/*.md are relative symlinks → ../../agents/
 ├── packs/                     # App-store convention packs (alex-default)
 ├── hooks/                     # ⚠ Claude Code / Codex PLUGIN event handlers
 │                              #   (loaded by the plugin runtime when installed)

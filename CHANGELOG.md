@@ -7,6 +7,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added — three new fleet agents (repo-explorer, code-reviewer, test-verifier)
+
+- **The agent fleet now spans a discover / apply / review grid across both directions (fix / build), plus specialists.** Three agents added to `agents/`, each conforming to the Claude Code subagent spec (aliased model, scannable `description`, restricted tools, no plugin-unsupported fields) and symlinked into `.claude/agents/`:
+  - **`repo-explorer`** (read-only, opus) — the build-side analog of `debug-investigator`. Maps an unfamiliar subsystem before a milestone is planned: entry points, the sibling pattern to mirror, integration seams, blast radius — returns a structured map with `file:line` anchors. Illuminates; never plans the change.
+  - **`code-reviewer`** (read-only, opus) — reviews a bounded diff across five lenses (correctness, structure, security, perf, dead-code), **all by default or a `FOCUS` subset**. Returns severity-ranked findings with fix *direction*, never the fix. Folds five waterfall-roster roles into one lens-parametric agent.
+  - **`test-verifier`** (apply-only, sonnet) — independently confirms a change: runs a named check, or writes a test to a *closed* behavioural spec in the project's own test style, and reports honest pass/fail with real output. `Write`/`Edit` touch test files only — never the code under test, never the ledger. Bounces when verifying would become deciding.
+- Design rationale (which of the 14 archived `_archive/agent-fleet/` roles to adopt vs cut) is captured in the fleet decision doc: most archived roles were either the orchestrator itself, duplicates of `spec-builder`, or review *lenses* masquerading as standing agents — folded into `code-reviewer`. Repo maps in `CLAUDE.md` + `AGENTS.md` updated; all 7 agents validate.
+
 ### Changed — agents/ is now the source of truth (plugin-root convention)
 
 - **The four fleet agents moved from `.claude/agents/` to a root `agents/` directory** (`debug-investigator`, `debug-fixer`, `debug-researcher`, `spec-builder`), matching the plugin-root convention (agents belong at the plugin root alongside `skills/`, not in the Claude-local dir). `.claude/agents/*.md` are now **relative symlinks** (`../../agents/<name>.md`, git-tracked as mode 120000) so Claude Code still loads them. Edit the real files in `agents/`. Repo maps in `CLAUDE.md` + `AGENTS.md` updated; plugin validation passes.

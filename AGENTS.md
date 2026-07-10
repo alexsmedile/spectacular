@@ -45,7 +45,9 @@ spectacular/
 │   ├── templates/             # Canonical templates (PRD kits, base)
 │   └── versions/              # Historical SKILL.md snapshots — never overwrite
 ├── agents/                    # ★ Subagent defs — SOURCE OF TRUTH (edit here, not .claude/agents/)
-│                              #   debug fleet (investigator/fixer/researcher) + build fleet (spec-builder)
+│                              #   fleet = discover/apply/review × fix/build + specialists:
+│                              #   debug-{investigator,fixer,researcher} · repo-explorer · spec-builder
+│                              #   · code-reviewer · test-verifier
 │                              #   .claude/agents/*.md are relative symlinks → ../../agents/<name>.md
 ├── packs/                     # App-store convention packs (alex-default)
 ├── hooks/                     # ⚠ Claude/Codex PLUGIN event handlers (plugin runtime)

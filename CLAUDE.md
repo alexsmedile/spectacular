@@ -42,10 +42,14 @@ spectacular/
 │   ├── templates/             # Canonical templates (PRD kits, base)
 │   └── versions/              # Historical SKILL.md snapshots
 ├── agents/                    # ★ Subagent defs — SOURCE OF TRUTH (plugin-root convention)
-│   ├── debug-investigator.md  #   debug fleet: discovers where+why (read-only)
-│   ├── debug-fixer.md         #   debug fleet: applies a closed fix (apply-only)
-│   ├── debug-researcher.md    #   debug fleet: known-external-bug research (read-only)
-│   └── spec-builder.md        #   build fleet: implements a closed milestone brief
+│   │                          #   fleet grid: discover / apply / review × fix / build
+│   ├── debug-investigator.md  #   discover · fix — where+why on an open bug (read-only)
+│   ├── debug-fixer.md         #   apply · fix — a closed single-site fix (apply-only)
+│   ├── debug-researcher.md    #   research — known-external-bug verdict (read-only, web)
+│   ├── repo-explorer.md       #   discover · build — map a subsystem before planning (read-only)
+│   ├── spec-builder.md        #   apply · build — a closed milestone brief (apply-only)
+│   ├── code-reviewer.md       #   review — 5-lens findings over a diff (read-only)
+│   └── test-verifier.md       #   verify — run a check / write a test to spec (apply-only, tests)
 │                              #   .claude/agents/*.md are relative symlinks → ../../agents/
 ├── packs/                     # App-store convention packs (alex-default)
 ├── hooks/                     # ⚠ Claude Code / Codex PLUGIN event handlers

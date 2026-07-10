@@ -147,6 +147,23 @@ A typical coding project (`spectacular init --kit coding`) scaffolds the always-
 
 ---
 
+### The agent fleet (v1.30.0)
+
+Spectacular ships a fleet of focused subagents the skill delegates to — so heavy, self-contained work runs in its own context window instead of crowding the main thread. Every agent obeys one boundary: **a closed handoff in, findings / a diff / a pass-fail out — and the orchestrator is the only thing that mutates state** (ticks a checkbox, moves lifecycle, writes the ledger). Agents propose; the orchestrator decides and records.
+
+The fleet is a **discover → apply → review → verify** grid across the two directions of work — fixing a bug and building a milestone — plus specialists:
+
+| | **discover** | **apply** | **review** |
+|---|---|---|---|
+| **fix a bug** | `debug-investigator` — where + why | `debug-fixer` — a closed fix → diff | `code-reviewer` — a diff, 5 lenses |
+| **build a milestone** | `repo-explorer` — map the subsystem | `spec-builder` — a closed milestone → diff | `spec-reviewer` — a spec vs. the code |
+
+Plus **`debug-researcher`** (is this a known *external* bug?) and **`test-verifier`** (independently run a check or write a test → honest pass/fail). The two reviewers are read-only and never fix what they find; `code-reviewer` guards code, `spec-reviewer` guards the spec files — checking each claim in `specs/` still matches what the code actually does.
+
+Agent definitions live in `agents/` at the repo root (the source of truth); the skill dispatches them through its bug- and build-workflow arcs, always as **optional, judgment-gated** steps — a trivial change never pays for a review it doesn't need.
+
+---
+
 ## Skill commands
 
 | Command | What happens |

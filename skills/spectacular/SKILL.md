@@ -47,7 +47,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular idea new <slug>` | → CLI verb; see [[idea-rules]] for entry shape |
 | `spectacular idea list` | → CLI verb |
 | `spectacular idea promote <slug>` | → CLI verb; scaffolds request, moves source to `archive/ideas/` |
-| A bug/quirk/regression is reported (any "why does X do Y", "this is broken") | → **`references/bug-workflow.md`** — check prior fixes first, then decide audit-first vs just-fix. Load this before diagnosing. |
+| A bug/quirk/regression is reported (any "why does X do Y", "this is broken") | → **`references/bug-workflow.md`** — check prior fixes first, then decide audit-first vs just-fix. Routes the debug fleet (`debug-investigator`/`debug-fixer`/`debug-researcher`) + optional `code-reviewer`/`test-verifier` arms-length pass before a fix is called resolved. Load this before diagnosing. |
 | `spectacular audit new\|list\|resolve` | → CLI verb; bug investigation before a fix. `resolve --into-fix` graduates to a fix (copies all slots). See [[audit-rules]], [[bug-workflow]] |
 | `spectacular fix new\|list` | → CLI verb; log a **verified, signed** fix. See [[fixes-rules]], [[bug-workflow]] |
 | "record a fix" / "log this fix" / "the bug is fixed and verified" | → `spectacular fix new` once resolved+verified, **with `--signature`**; see [[fixes-rules]] |
@@ -69,7 +69,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `/spectacular migrate` (walk judgment migrations) | → `references/migrate.md` |
 | Explain a migration spec or contract | → `references/migrations-contract.md` |
 | Actively working on a request | → `references/active-request.md` |
-| Implementing a milestone — decide build-inline vs dispatch a `spec-builder` | → **`references/build-workflow.md`** — assemble a closed brief from the request chain, apply the worth-it/fan-out gate, confirm + tick the ledger. The build-direction analog of [[bug-workflow]]. |
+| Implementing a milestone — decide build-inline vs dispatch a `spec-builder` | → **`references/build-workflow.md`** — assemble a closed brief from the request chain, apply the worth-it/fan-out gate, confirm + tick the ledger. Also routes the optional fleet: `repo-explorer` (map unfamiliar ground before planning), `code-reviewer` + `test-verifier` (arms-length review/verify before recording). The build-direction analog of [[bug-workflow]]. |
 
 ### Read verbs (v1.8.0+) — collapse multi-step inspection to one CLI call
 

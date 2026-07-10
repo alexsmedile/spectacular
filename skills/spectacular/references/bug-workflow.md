@@ -228,6 +228,20 @@ Record it: `spectacular audit new` (from the findings) if the investigation earn
 
 ## Step 3 — Log a fix? (build the corpus without spamming it)
 
+> **Before you call it verified — optional arms-length review + verify (judgment-gated).** When a
+> `debug-fixer` **self-reported the pass**, or the fix touched a **shared module / schema / widely-used
+> helper** (medium+ blast radius), consider a fresh-window confirmation before treating the bug as
+> resolved — same worth-it economics as fan-out; skip it for a trivial one-site fix.
+> - **[[code-reviewer]]** (read-only) over the fix diff — did the fix introduce a *new* problem
+>   (a regression, an insecure path, dead code)? Returns severity-ranked findings; you triage and,
+>   if needed, dispatch another `debug-fixer`.
+> - **[[test-verifier]]** (apply-only, tests only) — independent pass/fail on the fix's check, or a
+>   regression test written to the (now closed) reproduction spec. *The agent that wrote the fix
+>   shouldn't be the only one to grade it.* On `fail`, the bug isn't resolved — plan the next fix.
+>
+> Both optional; the default (you confirm the Fixer's diff + verify yourself) stands for ordinary
+> fixes. They inform resolution; the ledger write below stays yours.
+
 After a bug is **resolved and verified**, decide whether it earns a `fixes/` entry. Log it when the fix carries **reusable knowledge** — a future agent or project would benefit:
 
 - non-obvious root cause (a footgun, a platform quirk, an ordering trap)

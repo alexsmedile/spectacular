@@ -44,6 +44,8 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b21 | builder-agent | Builder agent + build-workflow orchestrator arc (build-direction fleet) — M1+M2 shipped as `spec-builder`; fan-out walkthrough pending | themed | tbd | review |
 | b22 | archive-closure-gate | Archive closure gate + delta-based spec-sync (fable review #1+#2) | themed | v1.28.0 | shipped |
 | b23 | status-fleet-view | Deterministic `spectacular status` fleet view + enforced PLAN/TASKS structure | themed | v1.29.0 | shipped |
+| b24 | cli-path-abstraction | Centralized path/variable declaration in the CLI | themed | tbd | planned |
+| b25 | fleet-arc-wiring | Wire repo-explorer/code-reviewer/test-verifier into the workflow arcs (optional judgment-gated dispatch) | themed | tbd | planned |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

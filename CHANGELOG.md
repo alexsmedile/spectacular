@@ -7,6 +7,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added — the three new agents wired into the workflow arcs (fleet-arc-wiring, b25)
+
+- **The skill now dispatches `repo-explorer`, `code-reviewer`, and `test-verifier`** — they existed in `agents/` but no workflow arc routed to them, so the orchestrator never reached for them. Wired as **optional, judgment-gated** steps (same worth-it economics as the fan-out gate — not a step every change passes through):
+  - **`repo-explorer`** → `build-workflow.md` gains a **Step 0a — map unfamiliar ground**: when the orchestrator can't write a milestone's Approach because the subsystem is unfamiliar, dispatch the explorer for a structured map, then plan. The build-side mirror of the debug Investigator; the build↔bug comparison table's "discover role" is now honest.
+  - **`code-reviewer`** → an optional review at Step 3 of **both** arcs (before ticking / before logging a fix), and at the `review → verified` gate over the full request diff. Returns findings; the orchestrator triages and routes fixes.
+  - **`test-verifier`** → an optional arms-length verify at Step 3 of both arcs — dispatched when a builder/fixer *self-reported* the pass or blast radius is medium+ ("the agent that built it shouldn't be the only one to grade it").
+- `SKILL.md` trigger rows + `doc-index.md` updated so the routing is discoverable. Doc-only change; `doctor` 0 errors. Tracked as request `fleet-arc-wiring` (b25).
+
 ### Added — three new fleet agents (repo-explorer, code-reviewer, test-verifier)
 
 - **The agent fleet now spans a discover / apply / review grid across both directions (fix / build), plus specialists.** Three agents added to `agents/`, each conforming to the Claude Code subagent spec (aliased model, scannable `description`, restricted tools, no plugin-unsupported fields) and symlinked into `.claude/agents/`:

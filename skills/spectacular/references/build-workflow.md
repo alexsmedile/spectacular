@@ -25,12 +25,13 @@ open brief) and **mutation** (the checkbox tick + status move). Verbs, no overla
 The steps, in order:
 
 ```
+0a  Map unfamiliar?    can't write the Approach because the subsystem is unknown? → dispatch repo-explorer → then plan   (optional)
 0   Chain closes?      walk task-row → M-block → PLAN §2/§3/§6/§7 → can the 5 slots fill? → else bounce-to-planning
 1   Worth-it gate      milestone closed AND independent? → dispatch; else build inline
 1b  Fan-out gate       ≥3 independent closed disjoint-file milestones → fan out; else self-serve
 2a  Build inline       apply the milestone yourself, verify                          (no dispatch)
 2b  Dispatch           spawn spec-builder(s) with closed brief(s), collect results
-3   Confirm + record   confirm diff · run Success criteria · tick TASKS checkbox · decide lifecycle move
+3   Confirm + record   confirm diff · run Success criteria · [opt. code-reviewer / test-verifier] · tick TASKS checkbox · decide lifecycle move
 ```
 
 > **@Implementation policy gate.** First, run `spectacular policy @Implementation` and follow every
@@ -39,6 +40,26 @@ The steps, in order:
 > (P11 — build the milestone the plan ordered, not a later one). All are `warn`. See [[policy-injection]].
 
 ---
+
+## Step 0a — Map unfamiliar ground first (optional — dispatch `repo-explorer`)
+
+Sometimes the chain won't close in Step 0 not because the *plan* is open, but because **you don't yet
+understand the subsystem well enough to write the Approach**. You can't name the seams a milestone
+touches, the sibling pattern it should mirror, or its blast radius — so any brief you'd write would be
+a guess. That's not a planning gap in the request; it's a *knowledge* gap in you.
+
+When that happens, and the subsystem is large enough that reading it inline would crowd the main
+context window, **dispatch [[repo-explorer]]** — the build-side mirror of [[bug-workflow]]'s
+Investigator. Give it a scoped question ("how does the CLI register a doctor area? what would a new
+`spectacular <verb>` touch?"); it reads in its own window and returns a **structured map**: entry
+points, the precedent to mirror, the integration seams (`file:line`), and blast radius. You then plan
+Step 0 against that map.
+
+This step is **optional and judgment-gated** — skip it when you already know the ground (most
+milestones in a familiar request). It earns its dispatch only when the exploration is substantial
+enough that a fresh window beats reading inline. Like the Investigator, `repo-explorer` **maps, it
+doesn't plan**: it names the seams and the precedent; *you* decide what the milestone is and write the
+Approach. The map informs the brief; it isn't the brief.
 
 ## Step 0 — Does the chain close into a brief? (the context-assembly chain)
 
@@ -191,14 +212,36 @@ records it:
 1. **Confirm the diff.** Read what the Builder returned; it's your change now. Don't record a
    milestone you didn't confirm from the returned diff + verify.
 2. **Run (or re-run) the Success criteria** if you didn't watch it run. Real check, real output.
+2a. **Optional — arms-length review + verify (judgment-gated).** Before you tick, consider dispatching
+   the review/verify agents. Same worth-it economics as fan-out: skip for trivial changes; reach for
+   them when the change earns it.
+   - **[[code-reviewer]]** (read-only) — when the milestone diff is **substantial or medium+ blast
+     radius** (touches a shared module, a schema, a widely-imported helper), dispatch it over the diff.
+     It returns severity-ranked findings across five lenses (correctness/structure/security/perf/
+     dead-code) with fix *direction*, never the fix. You triage: route real findings to a `debug-fixer`
+     (single-site) or `spec-builder` (larger) with a closed brief, or accept them as known trade-offs.
+   - **[[test-verifier]]** (apply-only, tests only) — when the Builder **self-reported the pass** or
+     blast radius is medium+, dispatch it for *independent* pass/fail instead of trusting the self-check
+     — *the agent that built it shouldn't be the only one to grade it*. It runs the named check (or
+     writes a test to a closed spec) in its own window and returns honest pass/fail. On `fail`, treat
+     the milestone as not-done: plan the fix, don't tick.
+   Both are **optional** — the default path (you confirm the diff + run the check yourself) stands for
+   ordinary work. They earn their dispatch on risk, not by default.
 3. **Tick the checkbox.** `- [ ]` → `- [x]` for the milestone's completed tasks in `TASKS.md`. This
-   is a main-thread write, never the Builder's — the same invariant that keeps the debug fleet's
+   is a main-thread write, never a subagent's — the same invariant that keeps the debug fleet's
    `fixes/`/`audit/` writes single-threaded (`use-audit-fix-verbs` in spirit: the labor fans out, the
-   state write doesn't).
+   state write doesn't). A `code-reviewer` finding or a `test-verifier` `fail` blocks the tick until
+   resolved — reviewer/verifier inform the record; they never write it.
 4. **Decide the lifecycle move.** All of the request's milestones done → the request is ready for
    `active → review` (via `spectacular advance <slug>`; verification runs at `review → verified` per
    [[verify]]). A single milestone done mid-request → no status move, just the checkbox. The status
    move is a judgment call and a mutation — both yours.
+
+   **At the `review → verified` gate**, a full-request-diff pass is worth considering even when you
+   skipped per-milestone review: dispatch [[code-reviewer]] over the whole request's diff (a coherent
+   review the per-milestone passes can't give), and/or [[test-verifier]] over the request's acceptance
+   check — arms-length confirmation before the request is called done. Optional, but this is the
+   highest-leverage place to spend a review dispatch.
 
 **What never happens in this step by a subagent:** ticking a checkbox, moving `status:`, writing a
 decision or memory. The Builder returns `LEDGER: not-written` precisely because this step is the
@@ -226,7 +269,7 @@ Same substrate, opposite direction:
 |---|---|---|
 | Trigger | a bug / quirk reported | a planned milestone to implement |
 | Input | a symptom (unknown cause/site) | a closed milestone chain (known plan) |
-| Discover role | `debug-investigator` (open → findings) | none — the plan *is* the findings |
+| Discover role | `debug-investigator` (open bug → why/where findings) | `repo-explorer` (unfamiliar subsystem → seams/precedent map, *for planning*) — optional; when the ground is known, the plan *is* the findings |
 | Apply role | `debug-fixer` (closed fix → applied) | `spec-builder` (closed milestone → built) |
 | Brief size | 5 slots, single-fix | 5 slots, milestone (≈ small PR) |
 | Fan-out gate | ≥3 independent closed disjoint-file fixes | ≥3 independent closed disjoint-file milestones |

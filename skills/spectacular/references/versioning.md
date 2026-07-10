@@ -46,9 +46,16 @@ The unversioned filename at root (`PRD.md`) always points to the **latest** vers
 
 ---
 
-## Snapshot sequence (via CLI verb)
+## Snapshot and Touch sequence (via CLI verbs)
 
-Use **`spectacular snapshot <file>`** — never do this by hand. The CLI verb:
+Use **`spectacular snapshot <file>`** or **`spectacular touch <file>`** — never do this by hand.
+
+### Argument Constraints: Path vs. Slug
+Both verbs require literal, cwd-relative file paths (e.g. `.spectacular/PRD.md` or `.spectacular/requests/slug/PLAN.md`). They do not accept a request slug or automatically resolve paths. Note the differences:
+- `touch <file>`: accepts **any** file containing a frontmatter block (including request plans like `PLAN.md`).
+- `snapshot <file>`: accepts **only** registered canonical docs. Request plans are not snapshot-eligible.
+
+The snapshot sequence CLI verb:
 
 1. Validates `<file>` is a registered canonical doc; refuses otherwise
 2. Resolves the store dir from config; scans existing snapshots (new tree + legacy) for the counter fallback + idempotence
@@ -58,7 +65,7 @@ Use **`spectacular snapshot <file>`** — never do this by hand. The CLI verb:
 6. Bumps `version:` in the live doc (minor by default; `--major` for `(X+1).0`) — **skipped for version-less docs**
 7. Sets `updated:` to today
 
-Manual snapshotting (cp + sed) is fragile and gets the version bump wrong. The verb has tests; ad-hoc shell doesn't.
+Manual snapshotting/touching is fragile and prone to path errors. These verbs have automated diagnostic heuristics and tests.
 
 ---
 

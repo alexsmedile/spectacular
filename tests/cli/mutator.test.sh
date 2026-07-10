@@ -86,6 +86,71 @@ scenario_1_touch_basic() {
   rm -rf "$dir"
 }
 
+scenario_1b_touch_path_suggestions() {
+  echo "Scenario 1b: touch/snapshot path resolution suggestion diagnostics"
+  local dir="/tmp/spectacular-mutator-1b"
+  seed_workspace "$dir"
+
+  # Create a dummy request so requests/feature-x/PLAN.md and the directory feature-x exist
+  (cd "$dir" && "$CLI" new feature-x --summary "test feature" >/dev/null)
+
+  # 1. Root cwd + touch requests/feature-x/PLAN.md -> prefix suggestion (.spectacular/requests/feature-x/PLAN.md)
+  local out code
+  out=$(cd "$dir" && "$CLI" touch requests/feature-x/PLAN.md 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "invalid path touch rejected"
+  assert_output_contains "$out" "did you mean .spectacular/requests/feature-x/PLAN.md?"
+
+  # 2. Root cwd + touch feature-x -> request-PLAN suggestion
+  out=$(cd "$dir" && "$CLI" touch feature-x 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "slug-only touch rejected"
+  assert_output_contains "$out" "feature-x is a request directory; did you mean .spectacular/requests/feature-x/PLAN.md?"
+
+  # 2b. Root cwd + touch requests/feature-x/PLAN -> PLAN.md suggestion
+  out=$(cd "$dir" && "$CLI" touch requests/feature-x/PLAN 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "plan-no-ext touch rejected"
+  assert_output_contains "$out" "did you mean .spectacular/requests/feature-x/PLAN.md?"
+
+  # 3. .spectacular/ cwd + touch requests/feature-x/PLAN.md -> success
+  out=$(cd "$dir/.spectacular" && "$CLI" touch requests/feature-x/PLAN.md 2>&1) && code=0 || code=$?
+  assert_exit "$code" 0 "touch relative to .spectacular/ succeeded"
+
+  # 4. snapshot .spectacular/requests/feature-x/PLAN.md -> canonical-doc rejection plus touch guidance
+  out=$(cd "$dir" && "$CLI" snapshot .spectacular/requests/feature-x/PLAN.md 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "snapshot on request plan rejected"
+  assert_output_contains "$out" "is a request plan and not eligible for snapshotting"
+  assert_output_contains "$out" "use: spectacular touch .spectacular/requests/feature-x/PLAN.md"
+
+  # 4b. snapshot requests/feature-x/PLAN.md -> not-eligible-request prefix suggestion
+  out=$(cd "$dir" && "$CLI" snapshot requests/feature-x/PLAN.md 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "snapshot on wrong-path request plan rejected"
+  assert_output_contains "$out" "not eligible for snapshotting"
+  assert_output_contains "$out" "use: spectacular touch .spectacular/requests/feature-x/PLAN.md"
+
+  # 4c. snapshot on existing non-plan request file -> generic canonical rejection
+  touch "$dir/.spectacular/requests/feature-x/NOTES.md"
+  out=$(cd "$dir" && "$CLI" snapshot .spectacular/requests/feature-x/NOTES.md 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "snapshot on existing non-plan request file rejected"
+  assert_output_contains "$out" "is not a registered canonical doc"
+  if echo "$out" | grep -qF "not eligible for snapshotting"; then
+    echo "    ✗ expected output to NOT contain 'not eligible for snapshotting'"
+    fail_count=$((fail_count + 1))
+  else
+    pass_count=$((pass_count + 1))
+  fi
+
+  # 4d. snapshot on missing non-plan request file (with prefix missing) -> prefix canonical warning
+  out=$(cd "$dir" && "$CLI" snapshot requests/feature-x/NOTES.md 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "snapshot on missing non-plan request file rejected"
+  assert_output_contains "$out" "Note: .spectacular/requests/feature-x/NOTES.md is not a registered canonical doc."
+
+  # 5. snapshot PRD.md from repo root -> .spectacular/PRD.md suggestion
+  out=$(cd "$dir" && "$CLI" snapshot PRD.md 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "snapshot wrong path PRD rejected"
+  assert_output_contains "$out" "did you mean .spectacular/PRD.md?"
+
+  rm -rf "$dir"
+}
+
 scenario_2_new_basic() {
   echo "Scenario 2: new scaffolds PLAN+TASKS; refuses duplicates and invalid slugs"
   local dir="/tmp/spectacular-mutator-2"
@@ -338,6 +403,7 @@ scenario_10_doctor_precondition_clean_passes() {
 
 echo "=== mutator.test.sh ==="
 scenario_1_touch_basic
+scenario_1b_touch_path_suggestions
 scenario_2_new_basic
 scenario_3_promote_basic
 scenario_4_snapshot_basic

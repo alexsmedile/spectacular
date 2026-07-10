@@ -1632,6 +1632,74 @@ is_canonical_doc() {
   return 1
 }
 
+# Diagnoses path errors for touch / snapshot commands.
+# Returns type classification on stdout line 1, and suggested path on line 2.
+# Usage: diagnose_path_error <verb> <provided_path>
+diagnose_path_error() {
+  local verb="$1"
+  local file="$2"
+  local clean_file="${file%/}"
+
+  # 1. Prefix missing check
+  if [[ -f ".spectacular/$clean_file" ]]; then
+    local suggested=".spectacular/$clean_file"
+    if [[ "$verb" == "snapshot" ]] && ! is_canonical_doc "$suggested"; then
+      if [[ "$suggested" == */PLAN.md ]]; then
+        echo "not-eligible-request"
+        echo "$suggested"
+      else
+        echo "not-eligible-other"
+        echo "$suggested"
+      fi
+    else
+      echo "prefix-missing"
+      echo "$suggested"
+    fi
+    return 0
+  fi
+
+  # 2. Slug check (e.g., requests/slug, slug)
+  local slug=""
+  local p1='^requests/([^/]+)/PLAN$'
+  local p2='^requests/([^/]+)/PLAN\.md$'
+  local p3='^requests/([^/]+)$'
+  local p4='^([^/]+)/PLAN$'
+  local p5='^([^/]+)/PLAN\.md$'
+  local p6='^([^/]+)$'
+
+  if [[ "$clean_file" =~ $p1 ]] || [[ "$clean_file" =~ $p2 ]] || [[ "$clean_file" =~ $p3 ]]; then
+    slug="${BASH_REMATCH[1]}"
+  elif [[ "$clean_file" =~ $p4 ]] || [[ "$clean_file" =~ $p5 ]]; then
+    slug="${BASH_REMATCH[1]}"
+  elif [[ "$clean_file" =~ $p6 ]]; then
+    if [[ -d ".spectacular/requests/$clean_file" ]] || [[ -d "requests/$clean_file" ]]; then
+      slug="$clean_file"
+    fi
+  fi
+
+  if [[ -n "$slug" ]]; then
+    local plan_candidate=""
+    if [[ -f ".spectacular/requests/$slug/PLAN.md" ]]; then
+      plan_candidate=".spectacular/requests/$slug/PLAN.md"
+    elif [[ -f "requests/$slug/PLAN.md" ]]; then
+      plan_candidate="requests/$slug/PLAN.md"
+    fi
+
+    if [[ -n "$plan_candidate" ]]; then
+      if [[ "$verb" == "snapshot" ]]; then
+        echo "not-eligible-request"
+        echo "$plan_candidate"
+      else
+        echo "slug-to-plan"
+        echo "$plan_candidate"
+      fi
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
 # ── config.yaml parsers ───────────────────────────────────────────────────────
 # Read workspace_schema: top-level key from .spectacular/config.yaml.
 # Stdout: declared schema (e.g. "0.6"); defaults to "0.4" if field absent
@@ -5266,10 +5334,33 @@ EOF
   done
 
   [[ -z "$file" ]] && die "snapshot: <file> argument required. See: spectacular snapshot --help"
-  [[ -f "$file" ]] || die "snapshot: file not found: $file"
+  if [[ ! -f "$file" ]]; then
+    local diag_output
+    if diag_output=$(diagnose_path_error "snapshot" "$file"); then
+      local diagnosis suggested_path
+      diagnosis=$(echo "$diag_output" | head -n 1)
+      suggested_path=$(echo "$diag_output" | tail -n 1)
+      case "$diagnosis" in
+        prefix-missing)
+          die "snapshot: file not found: $file (did you mean $suggested_path?)"
+          ;;
+        not-eligible-request)
+          die "snapshot: file not found: $file. Note: request plans are not eligible for snapshotting. If you only meant to update the updated: date, use: spectacular touch $suggested_path"
+          ;;
+        not-eligible-other)
+          die "snapshot: file not found: $file. Note: $suggested_path is not a registered canonical doc."
+          ;;
+      esac
+    fi
+    die "snapshot: file not found: $file"
+  fi
 
   if ! is_canonical_doc "$file"; then
-    die "snapshot: $file is not a registered canonical doc. Use plain cp for other files."
+    if [[ "$file" == */PLAN.md ]]; then
+      die "snapshot: $file is a request plan and not eligible for snapshotting. If you only meant to update the updated: date, use: spectacular touch $file"
+    else
+      die "snapshot: $file is not a registered canonical doc. Use plain cp for other files."
+    fi
   fi
 
   if ! head -1 "$file" | grep -q '^---$'; then
@@ -6162,7 +6253,23 @@ EOF
   done
 
   [[ -z "$file" ]] && die "touch: <file> argument required. See: spectacular touch --help"
-  [[ -f "$file" ]] || die "touch: file not found: $file"
+  if [[ ! -f "$file" ]]; then
+    local diag_output
+    if diag_output=$(diagnose_path_error "touch" "$file"); then
+      local diagnosis suggested_path
+      diagnosis=$(echo "$diag_output" | head -n 1)
+      suggested_path=$(echo "$diag_output" | tail -n 1)
+      case "$diagnosis" in
+        prefix-missing)
+          die "touch: file not found: $file (did you mean $suggested_path?)"
+          ;;
+        slug-to-plan)
+          die "touch: file not found: $file ($file is a request directory; did you mean $suggested_path?)"
+          ;;
+      esac
+    fi
+    die "touch: file not found: $file"
+  fi
   if ! head -1 "$file" | grep -q '^---$'; then
     die "touch: $file has no frontmatter delimiter"
   fi

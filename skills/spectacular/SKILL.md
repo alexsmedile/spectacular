@@ -54,10 +54,10 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | "investigate this bug" / "audit this quirk" before planning | → `spectacular audit new`; see [[audit-rules]] |
 | "have we seen this bug before?" / starting to diagnose | → **[[bug-workflow]] Step 0** — grep `.spectacular/fixes/` signatures first (self-learning loop) |
 | `spectacular advance <slug>` | → CLI verb (no skill flow); lifecycle move-forward (was `promote`, still an alias); see [[lifecycle]] |
-| `spectacular snapshot <file>` | → CLI verb (no skill flow); see [[versioning]] for snapshot rules |
+| `spectacular snapshot <file>` | → CLI verb (no skill flow); see [[versioning]] for snapshot rules. Requires a literal path relative to working directory (canonical docs only). |
 | `spectacular policy [@hook\|<id>\|--principle N\|--json]` | → CLI verb; read the merged policy contract. See [[policy-injection]] for the runtime loop, [[policies-contract]] for the schema |
 | Entering any work phase (init/planning/implementation/verification/archive/remember/snapshot/session-end) | → the phase ref doc's **@\<hook\> policy gate** runs `spectacular policy @<hook>` first; see [[policy-injection]] |
-| `spectacular touch <file>` | → CLI verb; trivial — just bumps `updated:` |
+| `spectacular touch <file>` | → CLI verb; trivial — just bumps `updated:`. Requires a literal path relative to working directory, not a slug. |
 | First invocation on existing `.spectacular/` project *with prior work* | → `references/onboarding.md` |
 | First invocation on a *fresh/empty* `.spectacular/` (init ran, no requests) | → `references/guided-first-run.md` |
 | `spectacular init` (CLI context) | → `references/init-workflow.md` |

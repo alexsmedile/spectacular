@@ -280,6 +280,17 @@ Three tiers, unioned (a snapshot kept by **any** tier survives):
 
 This bounds a doc's snapshot count to roughly `1 + periods_alive + keep`. `doctor snapshots` surfaces an info nudge when prunable snapshots accumulate.
 
+### `spectacular touch <file>`
+
+Updates the frontmatter `updated:` date of `<file>` to today. Idempotent — running on a file already current is a clean no-op. Refuses files without a YAML frontmatter block.
+
+```text
+spectacular touch .spectacular/PRD.md
+spectacular touch .spectacular/requests/add-team-billing/PLAN.md
+```
+
+Unlike `snapshot`, which is restricted strictly to registered canonical documents, `touch` accepts **any** file with a YAML frontmatter block, including request plans. Both commands are path-based and require a literal, cwd-relative file path argument; they do not resolve request slugs.
+
 ### `spectacular idea promote <idea>`
 
 Promotes an idea file into a full request and moves the original to `.spectacular/archive/ideas/`.
@@ -409,22 +420,37 @@ Runs the PRD quality gate — 10 checks total (8 base + 2 kit-aware). Reports a 
 
 ---
 
-## Common confusion
+## CLI vs. Skill boundary
 
-Do not run skill triggers in your shell:
+To keep operation deterministic, Spectacular uses a clear division of labor:
+
+- **CLI mutator verbs** (run in the terminal: `init`, `doctor`, `pack`, `migrate`, `new`, `advance`, `undo`, `next`, `snapshot`, `archive`, `touch`, `decide`, `remember`, `session`, `feedback`, `idea`):
+  - These commands run locally in your shell and handle mechanical scaffolding, file moves, and structured data entry edits.
+  - Some commands (like `touch` and `snapshot`) are **path-based** and expect literal, cwd-relative file paths. They do not resolve request slugs automatically.
+  - Other commands (like `advance` and `archive`) are **slug-based** and accept request slugs directly.
+- **Agent skill triggers** (run via `/spectacular <cmd>` inside your AI agent):
+  - These commands require an LLM to perform interactive interviews, content reviews, and validation walks.
+
+### Common confusion
+
+A request slug is valid for lifecycle commands such as `advance` and `archive`, but **not** for path-based mutator commands like `touch` and `snapshot`.
 
 ```bash
-spectacular new add team billing      # ✗ shell doesn't implement this
+# ✗ Error: touch expects a file path, not a slug
+spectacular touch multi-account-readiness
+
+# ✓ Correct: touch expects a literal file path relative to current working directory
+spectacular touch .spectacular/requests/multi-account-readiness/PLAN.md
 ```
 
-The shell CLI implements only `init` and `doctor`. Everything else is a skill trigger for your coding agent.
+Additionally, remember the contract difference between `touch` and `snapshot`:
+- `touch` works on **any** file with a YAML frontmatter block (including request plans).
+- `snapshot` works **only** on registered canonical documents. Request plans are not snapshot-eligible.
 
 ```bash
-spectacular init                       # ✓ shell
-spectacular doctor                     # ✓ shell
+# ✓ Correct: touch accepts request plan paths
+spectacular touch .spectacular/requests/multi-account-readiness/PLAN.md
 
-/spectacular                           # ✓ agent
-spectacular new add team billing       # ✓ agent
-spectacular archive add-team-billing   # ✓ agent
-spectacular prd                        # ✓ agent
+# ✗ Error: snapshot rejects request plans
+spectacular snapshot .spectacular/requests/multi-account-readiness/PLAN.md
 ```

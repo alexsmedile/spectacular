@@ -1,6 +1,6 @@
 ---
 version: 3.12
-updated: 2026-06-30
+updated: 2026-07-11
 summary: "Per-version scope, phase, and exit criteria. Shipped through v1.23.0 (roadmap ledger docs + index-mode pruning, b17+b18). Next up — priority order: cli-debt-removal → skill-desc-length-check → snapshot-retention → spec-audit-mode, all ahead of the contract-prep ladder (①→②→③, target tbd) → v2.0.0 major. Long-term gets fuzzier on purpose. (v3.12: contract ladder un-pinned to tbd — generic, so reslotting never forces a renumber.)"
 related:
   - ../PRD.md
@@ -46,6 +46,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b23 | status-fleet-view | Deterministic `spectacular status` fleet view + enforced PLAN/TASKS structure | themed | v1.29.0 | shipped |
 | b24 | cli-path-abstraction | Centralized path/variable declaration in the CLI | themed | tbd | planned |
 | b25 | fleet-arc-wiring | Wire repo-explorer/code-reviewer/test-verifier into the workflow arcs (optional judgment-gated dispatch) | themed | tbd | planned |
+| b26 | stance-layer | architectural-stance @Planning policy + grade label (severity dial rejected; decisions pre-locked in ideas/stance-layer) | themed | tbd | planned |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

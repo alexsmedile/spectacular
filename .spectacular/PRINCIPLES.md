@@ -1,6 +1,6 @@
 ---
-version: 1.2
-updated: 2026-07-05
+version: 1.3
+updated: 2026-07-11
 summary: "Operating principles for Spectacular — and how the skill enforces each at runtime"
 related:
   - PRD.md
@@ -138,6 +138,8 @@ A feature can be `verified` while feedback reveals we built the wrong thing. Fee
 
 ## 10. Build the smallest verified slice, full scope in mind
 
+> **#10 vs #11 — don't conflate them.** #10 is about *how much* (scope): build the **smallest** slice. #11 is about *what order* (sequence): build it in the **right order**. Different failure modes — #10's is over-building; #11's is building the far step before the near one it needs.
+
 The highest-impact version of a thing is rarely the most complete one. Default to the minimum slice that delivers the core value now — then verify it, learn, and extend. Build *less*, but build it as a finished block, not a stub: scoped down, not half-done. Hold the full scope in mind so today's slice stays future-proof; ship only the part you actually need today.
 
 Over-engineering is the failure mode — speculative generality, abstractions for a second case that may never come, features nobody has asked for yet. An agent's instinct is to *build*; the discipline is to choose to build less, and to record what was deferred rather than building it now "while we're here."
@@ -151,6 +153,8 @@ Over-engineering is the failure mode — speculative generality, abstractions fo
 ---
 
 ## 11. Earn each step — no rockets without the launchpad
+
+> **#11 vs #10 — don't conflate them.** #11 is about *what order* (sequence): build each step on a proven one below it. #10 is about *how much* (scope): build the smallest slice. Different failure modes — #11's is inverted ambition (the far step before its prerequisite); #10's is over-building.
 
 Work has an order, and skipping a rung doesn't skip the work — it defers it to a worse moment. Don't reach for the moon before the rocket is built; don't start the rocket before the tooling that assembles it exists; don't run an integrity check on a thing that isn't built yet. A verification pass on a stub verifies nothing. A grand plan on an unproven foundation is a wish. Each step is a prerequisite for the next, not a parallel option — do them in the order that makes each one real.
 

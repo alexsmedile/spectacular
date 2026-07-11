@@ -7619,6 +7619,7 @@ _policy_principle_line() {
       while ((getline line) > 0) {
         if (line ~ /^##[[:space:]]/) break          # next heading → no body
         if (line ~ /^[[:space:]]*$/) continue       # skip blank lines
+        if (line ~ /^[[:space:]]*>/) continue       # skip leading blockquote (e.g. #10/#11 contrast box)
         body=line; got=1; break
       }
       sub(/^[[:space:]]+/, "", body)

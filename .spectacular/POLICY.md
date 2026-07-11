@@ -1,6 +1,6 @@
 ---
-version: 1.4
-updated: 2026-07-07
+version: 1.5
+updated: 2026-07-11
 summary: "Operating policies — the practice layer paired with PRINCIPLES.md"
 ---
 
@@ -49,6 +49,8 @@ Before fixing milestones, name the smallest high-impact slice that delivers the 
 | "While I'm in here anyway, I'll add…" | "While I'm here" is how a scoped request becomes a sprawl. The extra feature has no current need — it goes to ROADMAP `v2+`, not into this milestone. |
 Red flag — stop: a milestone list that grows a feature nobody asked for *today*.
 
+**Override:** legitimate to include more than the minimum when a later need is *already committed* and building it now is strictly cheaper than a second pass (a known migration, a schema both slices share). Name the committed need in the plan; "might need it" is not one.
+
 ### milestones-in-build-order
 - principle: 11
 - severity: warn
@@ -85,6 +87,8 @@ Build in prerequisite order: the thing you're building must stand on something t
 | "The stub's good enough to build on." | A stub is an intention wearing a return type. The layer you stack on it inherits its emptiness — and you'll rebuild both when the stub becomes real. Build the lower layer first; skipping it defers the work to a worse moment. |
 Red flag — stop: writing the abstraction (or the retry/cache/integration) before its first concrete case runs green.
 
+**Override:** legitimate to build against a stub when the lower layer is *external and contract-frozen* (a documented third-party API, a spec you can't run yet) — the stub encodes a real contract, not a guess. Note the frozen contract; a stub for your *own* unbuilt code is never this case.
+
 ### earn-the-verification
 - principle: 11
 - severity: warn
@@ -97,6 +101,8 @@ A passing check on code that isn't built is worse than no check — it reports s
 |---|---|
 | "It's green, so it works." | Green proves the *check* ran, not that the *real path* did. A test hitting a mock is green and hollow. Trace the assertion to the real code before you call it verified — a false green is worse than a red. |
 Red flag — stop: claiming "verified" when the check's target is a stub, mock, or not-yet-built path.
+
+**Override:** a mock is legitimate when it stands in for something *genuinely out of scope to exercise* (a paid external call, a destructive side effect) AND a separate real-path check covers the seam. State what the mock replaces and where the real path is verified instead; "the real thing is hard to set up" is not this case.
 
 ### prefer-cli-mutator
 - principle: 6

@@ -7,6 +7,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.30.1] — 2026-07-11
+
+### Rule-layer legibility for mixed-model agents
+
+A patch pass making `PRINCIPLES.md` + `POLICY.md` legible to lower-intelligence
+agents that pattern-match surface tokens instead of resolving cross-references —
+without softening anything for frontier models, which read the added redundancy
+as confirmation. All changes are additive prose; no severity logic changed.
+
+### Changed — POLICY.md (v1.4 → v1.5) + PRINCIPLES.md (v1.2 → v1.3)
+
+- **Blocking gates are now visually unmissable.** The 4 block-severity policies (`understand-before-change`, `verification-present`, `confirm-before-write`, `snapshot-before-overwrite`) carry a `⛔ **BLOCKING**` body line naming the exact consequence. The marker sits on a body line, *not* the heading — the heading is the parsed policy id, so a suffix would corrupt `_policy_lookup` + config overrides. Warns stay unmarked so the marker means something.
+- **Excuse/Reality tables extended to the highest-temptation warns** (`scope-down`, `build-order`, `earn-the-verification`, `understand-before-change`) — the pattern previously reserved to `@Debugging`. Each names the *specific* rationalization an agent reaches for, plus a Law and a Red-flag line.
+- **Legitimate-override clauses** (`**Override:**`) on 3 warns, so a frontier model knows when a skip is policy-sanctioned rather than guessing.
+- **`@Debugging` `Law:` lines now inline their mechanism** (`spectacular fix list`, grep-the-callers) instead of asserting the rule and leaving the how one bullet away.
+- **PRINCIPLES #10 vs #11** each gained a scope-vs-sequence contrast box so the two restraint principles stop collapsing into "do less" for weaker readers.
+- `_policy_principle_line` (CLI) now skips a leading blockquote so the new #10/#11 boxes don't leak into the rendered principle summary. `spectacular policy` already renders the block/warn split natively (`⛔` vs `·`).
+
+### Added — `stance-layer` request (b26, planned)
+
+- Records the six-note improvement triage + all grill decisions in `ideas/stance-layer.md`, and cuts the `stance-layer` request: an `architectural-stance` `@Planning` warn policy (fires only on a real architectural fork; offers `spectacular decide`, never forces) + a `grade` label for PLAN frontmatter (`prototype | mvp | standard | production`) that `status` surfaces so prototype-green never reads as production-green. The severity *dial* was deliberately rejected as over-engineering. Planned, not built.
+
+### Fixed — CLI snapshot path scoping
+
+- Snapshot ineligibility for PLAN files is now scoped to request plans only (`requests/*/PLAN.md`); a `PLAN.md` elsewhere (e.g. `docs/PLAN.md`) falls through to the generic "not a registered canonical doc" path. Tightens both `diagnose_path_error` and the snapshot guard, with a covering mutator test scenario.
+- Follows `78a4af0`'s path-error-suggestion work for CLI mutators and the touch/snapshot contract split.
+
 ## [1.30.0] — 2026-07-10
 
 ### The Agent Fleet update

@@ -6064,12 +6064,25 @@ EOF
 
   # Assign build id (v1.17.0+): read last_build: from config.yaml (missing = 0),
   # compute next id, stamp build: bN on PLAN.md, write last_build: N+1 back.
+  # The counter self-heals against ledger drift (v1.30.2+): if the roadmap
+  # ledger's max bN runs ahead of config's last_build (a request slotted into
+  # the ledger without last_build catching up), reconcile to the ledger max so
+  # `new` never re-issues an id the ledger already uses.
   local _last_build=0 _build_id=""
   if [[ -f ".spectacular/config.yaml" ]]; then
     local _lb
     _lb=$(awk '/^last_build:/ { sub(/^last_build:[[:space:]]*/, ""); print; exit }' .spectacular/config.yaml)
     [[ "$_lb" =~ ^[0-9]+$ ]] && _last_build="$_lb"
   fi
+  # Reconcile against the roadmap ledger's highest bN (index.md, or legacy ROADMAP.md).
+  local _ledger="" _ledger_max=0
+  if [[ -f ".spectacular/roadmaps/index.md" ]]; then _ledger=".spectacular/roadmaps/index.md"
+  elif [[ -f ".spectacular/ROADMAP.md" ]]; then _ledger=".spectacular/ROADMAP.md"; fi
+  if [[ -n "$_ledger" ]]; then
+    _ledger_max=$(grep -oE '\| *b[0-9]+' "$_ledger" | grep -oE '[0-9]+' | sort -n | tail -1)
+    [[ "$_ledger_max" =~ ^[0-9]+$ ]] || _ledger_max=0
+  fi
+  (( _ledger_max > _last_build )) && _last_build="$_ledger_max"
   local _next_build=$(( _last_build + 1 ))
   _build_id="b${_next_build}"
 

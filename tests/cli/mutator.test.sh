@@ -316,6 +316,28 @@ scenario_8_new_build_id() {
   rm -rf "$dir"
 }
 
+scenario_8b_new_build_id_ledger_drift() {
+  echo "Scenario 8b: new reconciles build id against ledger max when config.last_build drifts behind (F4)"
+  local dir="/tmp/spectacular-mutator-8b"
+  seed_workspace "$dir"
+
+  # Simulate drift: config says last_build 5, but the roadmap ledger already
+  # carries b9. The buggy path issued b6 (a duplicate of a slotted id); the
+  # fix must issue b10 = max(5,9)+1 and heal the counter.
+  mkdir -p "$dir/.spectacular/roadmaps"
+  printf 'last_build: 5\n' >> "$dir/.spectacular/config.yaml"
+  printf '# Roadmap\n\n| build | slug |\n|---|---|\n| b7 | foo |\n| b9 | bar |\n' \
+    > "$dir/.spectacular/roadmaps/index.md"
+
+  (cd "$dir" && "$CLI" new drift-req --summary "drift" >/dev/null)
+  assert_file_contains "$dir/.spectacular/requests/drift-req/PLAN.md" "build: b10"
+  assert_file_lacks    "$dir/.spectacular/requests/drift-req/PLAN.md" "build: b6"
+  # counter healed to the id just issued
+  assert_file_contains "$dir/.spectacular/config.yaml" "last_build: 10"
+
+  rm -rf "$dir"
+}
+
 scenario_7_help_flags() {
   echo "Scenario 7: each verb --help exits 0 with usage line"
   local out code
@@ -420,6 +442,7 @@ scenario_7_help_flags
 scenario_7b_advance_alias
 scenario_7c_next
 scenario_8_new_build_id
+scenario_8b_new_build_id_ledger_drift
 scenario_9_doctor_precondition_archive
 scenario_10_doctor_precondition_clean_passes
 

@@ -7,6 +7,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Fixed
+
+- **`spectacular new` no longer re-issues a duplicate build id when `config.last_build` drifts behind the roadmap ledger.** The counter previously trusted only `config.yaml`; if a request was slotted into the ledger without `last_build` catching up, `new` handed out a `bN` the ledger already used. It now reconciles to `max(config.last_build, ledger_max) + 1`, self-healing regardless of how the drift arose. Regression test + fix log `F4`.
+
 ## [1.30.1] — 2026-07-11
 
 ### Rule-layer legibility for mixed-model agents

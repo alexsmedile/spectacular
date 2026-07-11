@@ -30,9 +30,9 @@ The steps, in order:
 1   Worth-it gate      milestone closed AND independent? → dispatch; else build inline
 1b  Fan-out gate       ≥3 independent closed disjoint-file milestones → fan out; else self-serve
 1.5 Size-and-decompose one coherent pass, or multi-phase? multi-phase → nested sub-steps, one at a time, checkpoint between  (optional)
-2a  Build inline       apply the milestone yourself, verify                          (no dispatch)
+2a  Build inline       apply the milestone yourself, verify → straight to 3         (no dispatch, no 2c)
 2b  Dispatch           spawn spec-builder(s) with closed brief(s), collect results
-2c  Critical-check plan (dispatched work only) name the 1–2 things you'll verify first on return — the risky seam / the shared interface / the security line
+2c  Critical-check plan (only after 2b) name the 1–2 things you'll verify first on return — the risky seam / the shared interface / the security line
 3   Confirm + record   confirm diff (hit the 2c checks first; delegated ⇒ harder than self-built) · run Success criteria · [opt. code-reviewer / test-verifier] · tick TASKS checkbox · decide lifecycle move
 ```
 
@@ -221,8 +221,9 @@ No sub-steps, no nested bullets. The gate cost you one sizing judgment and nothi
 ## Step 2a — Build inline
 
 The self-serve path (Step 1's default column). Read the milestone's chain, build the Approach,
-run the Success criteria, verify. Then Step 3 (confirm + record). This is the common case — most
-requests are a handful of sequentially-dependent milestones you build one at a time.
+run the Success criteria, verify. Then go straight to Step 3 (confirm + record) — **skip Step 2c;
+the critical-check plan is for dispatched work, and here you *are* the check.** This is the common
+case — most requests are a handful of sequentially-dependent milestones you build one at a time.
 
 ## Step 2b — Dispatch spec-builder(s)
 

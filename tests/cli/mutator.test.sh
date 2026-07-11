@@ -143,6 +143,13 @@ scenario_1b_touch_path_suggestions() {
   assert_exit "$code" 1 "snapshot on missing non-plan request file rejected"
   assert_output_contains "$out" "Note: .spectacular/requests/feature-x/NOTES.md is not a registered canonical doc."
 
+  # 4e. A PLAN.md outside requests/ is not described as a request plan.
+  mkdir -p "$dir/docs"
+  printf '%s\n' '---' 'updated: 2026-01-01' '---' > "$dir/docs/PLAN.md"
+  out=$(cd "$dir" && "$CLI" snapshot docs/PLAN.md 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "snapshot on non-request PLAN file rejected"
+  assert_output_contains "$out" "is not a registered canonical doc"
+
   # 5. snapshot PRD.md from repo root -> .spectacular/PRD.md suggestion
   out=$(cd "$dir" && "$CLI" snapshot PRD.md 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "snapshot wrong path PRD rejected"

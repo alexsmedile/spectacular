@@ -1644,7 +1644,7 @@ diagnose_path_error() {
   if [[ -f ".spectacular/$clean_file" ]]; then
     local suggested=".spectacular/$clean_file"
     if [[ "$verb" == "snapshot" ]] && ! is_canonical_doc "$suggested"; then
-      if [[ "$suggested" == */PLAN.md ]]; then
+      if [[ "$suggested" == .spectacular/requests/*/PLAN.md ]]; then
         echo "not-eligible-request"
         echo "$suggested"
       else
@@ -5356,7 +5356,7 @@ EOF
   fi
 
   if ! is_canonical_doc "$file"; then
-    if [[ "$file" == */PLAN.md ]]; then
+    if [[ "$file" == .spectacular/requests/*/PLAN.md ]] || [[ "$file" == requests/*/PLAN.md ]]; then
       die "snapshot: $file is a request plan and not eligible for snapshotting. If you only meant to update the updated: date, use: spectacular touch $file"
     else
       die "snapshot: $file is not a registered canonical doc. Use plain cp for other files."

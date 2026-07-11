@@ -47,6 +47,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b24 | cli-path-abstraction | Centralized path/variable declaration in the CLI | themed | tbd | planned |
 | b25 | fleet-arc-wiring | Wire repo-explorer/code-reviewer/test-verifier into the workflow arcs (optional judgment-gated dispatch) | themed | v1.30.0 | shipped |
 | b26 | stance-layer | architectural-stance @Planning policy + grade label (severity dial rejected; decisions pre-locked in ideas/stance-layer) | themed | tbd | planned |
+| b27 | milestone-decomposition | Step 1.5 size-and-decompose gate + decompose-large-milestone policy — visible sub-steps inside a fat milestone (decisions pre-locked in ideas/milestone-decomposition) | themed | tbd | planned |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

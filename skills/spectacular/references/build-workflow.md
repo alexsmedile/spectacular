@@ -32,7 +32,8 @@ The steps, in order:
 1.5 Size-and-decompose one coherent pass, or multi-phase? multi-phase → nested sub-steps, one at a time, checkpoint between  (optional)
 2a  Build inline       apply the milestone yourself, verify                          (no dispatch)
 2b  Dispatch           spawn spec-builder(s) with closed brief(s), collect results
-3   Confirm + record   confirm diff · run Success criteria · [opt. code-reviewer / test-verifier] · tick TASKS checkbox · decide lifecycle move
+2c  Critical-check plan (dispatched work only) name the 1–2 things you'll verify first on return — the risky seam / the shared interface / the security line
+3   Confirm + record   confirm diff (hit the 2c checks first; delegated ⇒ harder than self-built) · run Success criteria · [opt. code-reviewer / test-verifier] · tick TASKS checkbox · decide lifecycle move
 ```
 
 > **@Implementation policy gate.** First, run `spectacular policy @Implementation` and follow every
@@ -260,13 +261,53 @@ When in doubt, self-serve — the table's default column is the safe one.
 
 ---
 
+## Step 2c — Critical-check plan (dispatched work only)
+
+**When you dispatch, you didn't watch the code happen.** A milestone you built inline (Step 2a),
+you saw take shape — you already know where it's sound. A milestone a Builder returns, you have
+**only the diff**, and a diff can be long enough that reading it end-to-end at equal attention is how
+a subtle break slips past. So before the Builder returns — *at dispatch time, while it runs* — decide
+**the 1–2 things you will check first and hardest on return.** Keep them in mind; they're what Step 3
+confirms against.
+
+This step is **only for dispatched work.** If you built the milestone yourself, skip it — you were
+the check. This is the concrete form of *delegated work is confirmed harder than self-built*: the
+plan is the extra scrutiny delegation earns.
+
+**What goes in the plan — the sharp points, not a re-review.** Name the parts where a *plausible-looking
+diff could still be wrong* and it would matter most:
+- **The risky seam** — where this milestone meets code it didn't write (the integration point, the
+  call into a shared module, the assumption about an upstream return value).
+- **The shared interface** — anything other code depends on: a signature, a schema, an exported
+  contract. A Builder working in its own window can get its *own* files right and still break a caller
+  it never saw.
+- **The security- or correctness-critical line** — the auth check, the boundary condition, the money
+  math, the destructive operation. The place where "looks fine" isn't good enough.
+- **The Success-criteria gap** — anything the milestone's check *doesn't* actually exercise. If the
+  brief's Success criteria passes but wouldn't catch a specific failure, that failure is a 2c item.
+
+Pick the **one or two** that matter for *this* milestone — a plan that lists ten things is a
+re-review, not a critical-check plan. The test: *"if this diff is subtly wrong, where would the
+damage be, and what's the fastest thing I can look at to find out?"* That's your plan.
+
+**Fan-out note:** with N dispatched milestones, each gets its own short plan (they touch different
+seams). Write them as you write each brief in Step 2b — the brief says what to build, the plan says
+what you'll distrust on return. A [[code-reviewer]] dispatch (Step 3) *complements* the plan for a
+big/risky diff — it doesn't replace it: the plan is *your* targeted first look, the reviewer is a
+broad independent one.
+
+---
+
 ## Step 3 — Confirm + record (the ledger stays yours)
 
 After a milestone is **built and verified**, the orchestrator — and *only* the orchestrator —
 records it:
 
-1. **Confirm the diff.** Read what the Builder returned; it's your change now. Don't record a
-   milestone you didn't confirm from the returned diff + verify.
+1. **Confirm the diff — hit your critical-check plan first.** Read what the Builder returned; it's
+   your change now. For dispatched work, start with the 1–2 points you named in [[#step-2c--critical-check-plan-dispatched-work-only|Step 2c]] — verify *those* before a general read, because that's
+   where a plausible-looking diff would hurt. **Delegated work is confirmed harder than self-built:**
+   inline, you watched it happen; delegated, the diff is all you have, so the scrutiny is higher.
+   Don't record a milestone you didn't confirm from the returned diff + verify.
 2. **Run (or re-run) the Success criteria** if you didn't watch it run. Real check, real output.
 3. **Optional — arms-length review + verify (judgment-gated).** Before you tick, consider dispatching
    the review/verify agents. Same worth-it economics as fan-out: skip for trivial changes; reach for
@@ -309,7 +350,8 @@ orchestrator's alone.
 
 **chain closes? (assemble brief) → worth-it gate (inline vs dispatch) → self-serve or fan out (≥3
 independent closed disjoint-file milestones → N× spec-builder) → size-and-decompose (multi-phase →
-sequential sub-steps, checkpoint between) → confirm diff + run check + tick checkbox + decide
+sequential sub-steps, checkpoint between) → critical-check plan (dispatched ⇒ name what to distrust
+on return) → confirm diff against it + run check + tick checkbox + decide
 lifecycle move.**
 
 The orchestrator bookends the fleet: **you plan (close the brief) → Builder builds → you record

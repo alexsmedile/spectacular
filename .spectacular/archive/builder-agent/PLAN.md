@@ -1,12 +1,13 @@
 ---
-status: review
+status: archived
 priority: medium
 owner: alex
-updated: 2026-07-10
+updated: 2026-07-11
 build: b21
 summary: "Add a Builder agent + build-workflow orchestrator arc — implement planned request milestones via subagent, the build-direction analog of the debug fleet"
 related:
   - ../../PRD.md
+archived: 2026-07-11
 ---
 <!-- Spec source: .spectacular/ideas/coding-agents.md §7 (cited in prose below; not a related: target — cross-folder paths don't resolve from the request dir). -->
 

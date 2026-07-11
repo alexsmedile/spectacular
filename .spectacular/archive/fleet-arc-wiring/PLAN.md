@@ -1,12 +1,13 @@
 ---
-status: review
+status: archived
 priority: medium
 owner: alex
-updated: 2026-07-10
+updated: 2026-07-11
 build: b25
 summary: "Wire repo-explorer, code-reviewer, and test-verifier into the workflow arcs (build-workflow.md, bug-workflow.md) + SKILL triggers so the skill actually dispatches them — as optional, judgment-gated steps"
 related:
   - PRD.md
+archived: 2026-07-11
 ---
 
 # Plan — fleet-arc-wiring

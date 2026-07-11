@@ -1,11 +1,11 @@
 ---
 type: idea
-status: parked
+status: promoted
 priority: medium
 owner: alex
 updated: 2026-07-11
 origin: user pain (2026-07-11) — spec-builder runs for hours with no orchestrator visibility
-promoted_to: null
+promoted_to: archive/milestone-decomposition (b27, shipped + archived 2026-07-11 same session)
 related:
   - ../../skills/spectacular/references/build-workflow.md
   - ../AGENTS.md

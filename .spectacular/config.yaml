@@ -10,7 +10,7 @@ workspace_schema: "2.0"
 # and which last structurally touched it (bumped by migrate / doctor --fix).
 # created_with is "unknown" here: this workspace predates provenance tracking.
 created_with: "unknown"
-last_touched_with: "1.28.0"
+last_touched_with: "1.30.0"
 
 naming:
   requests: kebab-case

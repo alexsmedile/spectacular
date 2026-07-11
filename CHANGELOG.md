@@ -7,6 +7,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added
+
+- **Size-and-decompose gate (build-workflow Step 1.5 + `decompose-large-milestone` @Implementation policy).** When a milestone spans multiple verify-points, the orchestrator now breaks it into sequential sub-steps — nested `- [ ]` TASKS checkpoints mirrored as harness tasks — built or dispatched one at a time, confirming at each boundary, instead of handing a `spec-builder` one fat brief that runs for hours as an opaque block. The visibility comes from the sub-step boundaries (no live trace on a running agent, so no platform fight). Reuses existing substrate (nested bullets + the two-layer task model); no new files, no CLI change. Warn-severity — a single-phase milestone skips the gate. The smaller-slice alternative to a per-agent trace folder. (b27, milestone-decomposition)
+
 ### Fixed
 
 - **`spectacular new` no longer re-issues a duplicate build id when `config.last_build` drifts behind the roadmap ledger.** The counter previously trusted only `config.yaml`; if a request was slotted into the ledger without `last_build` catching up, `new` handed out a `bN` the ledger already used. It now reconciles to `max(config.last_build, ledger_max) + 1`, self-healing regardless of how the drift arose. Regression test + fix log `F4`.

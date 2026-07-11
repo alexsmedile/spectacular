@@ -1,5 +1,5 @@
 ---
-status: planned
+status: archived
 priority: medium
 owner: alex
 updated: 2026-07-11
@@ -11,6 +11,7 @@ related:
   - ../../../skills/spectacular/references/build-workflow.md
   - ../../POLICY.md
   - ../../AGENTS.md
+archived: 2026-07-11
 ---
 
 # Plan — milestone-decomposition

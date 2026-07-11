@@ -29,6 +29,7 @@ The steps, in order:
 0   Chain closes?      walk task-row → M-block → PLAN §2/§3/§6/§7 → can the 5 slots fill? → else bounce-to-planning
 1   Worth-it gate      milestone closed AND independent? → dispatch; else build inline
 1b  Fan-out gate       ≥3 independent closed disjoint-file milestones → fan out; else self-serve
+1.5 Size-and-decompose one coherent pass, or multi-phase? multi-phase → nested sub-steps, one at a time, checkpoint between  (optional)
 2a  Build inline       apply the milestone yourself, verify                          (no dispatch)
 2b  Dispatch           spawn spec-builder(s) with closed brief(s), collect results
 3   Confirm + record   confirm diff · run Success criteria · [opt. code-reviewer / test-verifier] · tick TASKS checkbox · decide lifecycle move
@@ -161,6 +162,61 @@ gets one careful serial hand.
 
 ---
 
+## Step 1.5 — Size the milestone: one pass, or several? (the size-and-decompose gate)
+
+Step 1 decided *who* builds this milestone (you inline, or a dispatched Builder). This step decides
+*how big the unit of work is* — and it's the answer to the failure you'll otherwise hit: **a fat
+milestone built as one atomic pass runs for a long time as an opaque block.** Whether you're
+building inline or dispatching, if the milestone is one coherent change you proceed as-is; if it
+**spans several phases that each have their own verify point**, you break it into sub-steps and do
+them one at a time, confirming between each. The sub-step boundaries *are* the checkpoints — that's
+where you see progress, catch a wrong turn early, and keep any single unit short.
+
+### The sizing test
+
+A milestone is **multi-phase** when it contains two or more phases that each end at their own
+runnable check — e.g.:
+- schema → CLI wiring → tests (three verify points)
+- parser → renderer → doctor validation
+- new data model → the code that reads it → the migration
+
+A milestone is **single-phase** (skip this gate) when it's one coherent change with one verify point
+— a focused edit, a single function + its test, a doc section. **Most small milestones are
+single-phase.** Don't manufacture sub-steps for a change that's already one pass — that's ceremony,
+and the `decompose-large-milestone` policy is a `warn` precisely so a coherent one-pass milestone
+sails through.
+
+### If multi-phase — decompose into sequential sub-steps
+
+1. **Write the sub-steps as nested `- [ ]` bullets** under this milestone's `### M<n>` block in
+   `TASKS.md`. These are the existing "nested acceptance checklist" bullets ([[tasks-rules]]) put to
+   a second use: **decomposition checkpoints.** They're not counted in progress (top-level milestones
+   still own the `x/total`), so they add visible structure without distorting the ledger. Mirror them
+   as harness `TaskCreate` items too — that's the *live* signal (drives the CLI progress UI); the
+   nested bullets are the *durable* record. This is the two-layer task model ([[AGENTS]] § Task
+   tracking) applied one level below the milestone.
+2. **Do one sub-step at a time**, in order. Build (or dispatch) it, run its check, **report the
+   result and tick its nested bullet before starting the next.** Each sub-step is short and visible;
+   nothing runs unwatched for long. The checkpoint between sub-steps is where you confirm the phase
+   landed and re-plan the next against the new state (an earlier sub-step may have moved lines).
+3. **When dispatching a multi-phase milestone, send one closed sub-brief per sub-step in sequence** —
+   confirm each returned diff before dispatching the next. Never hand a Builder the whole fat
+   milestone as one brief that runs for hours; that's the exact opacity this gate exists to prevent.
+   Ordered sub-steps within one milestone are the **same-file / ordered case** from Step 1 —
+   **serialize, never parallelize** (they share the milestone's files and build on each other).
+
+### If single-phase — proceed to Step 2
+
+One coherent pass, one check → go straight to Step 2a (inline) or 2b (dispatch) as Step 1 decided.
+No sub-steps, no nested bullets. The gate cost you one sizing judgment and nothing more.
+
+> **Why this isn't a live-trace on a running agent.** The visibility comes from *shortening the
+> units and checkpointing between them* — not from watching a Builder mid-run (the platform spawns
+> subagents fire-and-forget; you can't stream from inside one). Decomposition turns one long opaque
+> dispatch into several short confirmable ones. That's the whole mechanism.
+
+---
+
 ## Step 2a — Build inline
 
 The self-serve path (Step 1's default column). Read the milestone's chain, build the Approach,
@@ -252,8 +308,9 @@ orchestrator's alone.
 ## The loop, in one line
 
 **chain closes? (assemble brief) → worth-it gate (inline vs dispatch) → self-serve or fan out (≥3
-independent closed disjoint-file milestones → N× spec-builder) → confirm diff + run check + tick
-checkbox + decide lifecycle move.**
+independent closed disjoint-file milestones → N× spec-builder) → size-and-decompose (multi-phase →
+sequential sub-steps, checkpoint between) → confirm diff + run check + tick checkbox + decide
+lifecycle move.**
 
 The orchestrator bookends the fleet: **you plan (close the brief) → Builder builds → you record
 (tick + move).** The Builder is delegable labor with the honest-fallback invariant — it bounces to

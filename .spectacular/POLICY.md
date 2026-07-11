@@ -1,5 +1,5 @@
 ---
-version: 1.5
+version: 1.6
 updated: 2026-07-11
 summary: "Operating policies — the practice layer paired with PRINCIPLES.md"
 ---
@@ -115,6 +115,13 @@ The CLI is the deterministic mutator; the skill orchestrates, reads, decides, co
 - principle: 11
 - severity: warn
 Once a milestone's tasks are all checked off, the working tree holds an earned, working step — the natural moment to lock it in with a local `git commit` before starting the next milestone. An uncommitted milestone is a rung not yet earned to stand on: the next milestone builds on code that could still vanish with an errant `git checkout`/`reset`, and a debug session later has no checkpoint to bisect against. Spectacular never commits on your behalf and never blocks the next milestone on a clean tree — it surfaces the reminder at the boundary; committing (or explicitly deferring, with a reason) is the human's or agent's call. Distinct from `spectacular snapshot`, which versions canonical docs, not source.
+
+### decompose-large-milestone
+- principle: 10
+- severity: warn
+- check: a milestone that spans multiple verify-points is built/dispatched as sequential sub-steps (nested `- [ ]` TASKS bullets + harness tasks) with a checkpoint between each — not as one unbounded pass
+
+A milestone that spans several phases — each with its own verify point (schema → CLI wiring → tests; parser → renderer → doctor check) — is built one visible sub-step at a time, confirming at each boundary, not dispatched as a single opaque brief that runs for hours. Decompose it into nested `- [ ]` checkpoints under its `### M<n>` block (mirrored as harness tasks for the live signal), build or dispatch them sequentially, and report between each. The sub-step boundaries are the visibility — a fat milestone handed to one Builder as one brief disappears until it returns. See [[build-workflow]] Step 1.5. **Override:** a genuinely single-phase milestone — one coherent change, one check — needs no sub-steps; don't manufacture ceremony for a one-pass change.
 
 ## @Debugging
 

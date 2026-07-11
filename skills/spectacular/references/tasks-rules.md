@@ -27,8 +27,10 @@ Three checkbox states, all **flush-left** (no leading indent):
 | `- [x]` | done | yes — numerator + denominator |
 | `- [~]` | deferred | shown separately (`5/8 (+1 deferred)`), excluded from the open/done split |
 
-**Indented `  - [ ]` sub-bullets are allowed** as a nested acceptance checklist
-under a parent task, but are **not counted** — `status` progress counts top-level
+**Indented `  - [ ]` sub-bullets are allowed** — as a nested acceptance checklist
+under a parent task, *or* as **decomposition checkpoints** when an orchestrator breaks
+a large multi-phase milestone into sequential sub-steps ([[build-workflow]] Step 1.5).
+Either way they are **not counted** — `status` progress counts top-level
 checkboxes only, so `x/total` stays comparable across requests. Milestones group
 tasks with `### M<N> — <name>` headings. `doctor` (lifecycle area) **errors** on an
 active request missing `### M` headings or using a malformed checkbox (`- [.]`,

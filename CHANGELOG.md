@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.32.0] — 2026-07-11
+
 ### Build-workflow: routing doctrine, the [join] principle, and a four-phase rewrite
 
 The build-workflow reference gained an explicit framework for *how to maneuver the development* — monolithic-self vs decompose-and-delegate — and was rewritten from 11 patchwork-numbered fragments (`0a·0·0.5·1·1b·1.5·2a·2b·2c·2d·3`) into **four coherent phases** without losing any scope or content. Fills the gap where "self vs dispatch" was framed only as economics (1–2 vs 3+), with no doctrine for independence, parallelism, and — the load-bearing new idea — *who owns the interface between delegated pieces.*

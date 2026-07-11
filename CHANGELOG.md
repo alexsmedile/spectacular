@@ -7,6 +7,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Build-workflow: routing doctrine, the [join] principle, and a four-phase rewrite
+
+The build-workflow reference gained an explicit framework for *how to maneuver the development* — monolithic-self vs decompose-and-delegate — and was rewritten from 11 patchwork-numbered fragments (`0a·0·0.5·1·1b·1.5·2a·2b·2c·2d·3`) into **four coherent phases** without losing any scope or content. Fills the gap where "self vs dispatch" was framed only as economics (1–2 vs 3+), with no doctrine for independence, parallelism, and — the load-bearing new idea — *who owns the interface between delegated pieces.*
+
+### Added
+
+- **The [join] principle — the orchestrator owns the interface between pieces.** When work fans out, *how the pieces fit together is a design decision, and it's the orchestrator's, never a builder's* — a builder sees only its own piece and cannot invent the contract it shares with a sibling it never saw. Hand two agents "a puzzle piece each" without specifying the join and you've delegated a design problem, not the work; it returns as pieces that don't fit. The shared contract (signature / key / protocol) is now **designed up front (Phase A), written into every brief (Phase C), and verified held (Phase D)** — a single spine threaded through the doc and flagged `[join]` at each touchpoint.
+- **Routing doctrine — two axes + three gates, monolithic-self as default (Phase A, "Route the shape").** **Decomposability** (one hard coupled thing → build inline; separable pieces → split) and **independence** (coupled/ordered → serialize inline, one serial writer; disjoint → decompose-and-delegate) decide the shape; delegation must then clear **benefit-of-delegation**, **plan-readiness**, and **module-clarity** (can you *state the join?*) gates. Default is monolithic-self — delegation is the earned exception. Reference doctrine, not a new policy; `decompose-large-milestone` stays the enforceable teeth.
+- **Reconcile step (Phase D, parallel disjoint fan-out only).** After N builders run in parallel on disjoint files — each blind to its siblings — a reconciliation pass confirms the pieces actually **compose**: the [join] contract matches on both producer and consumer side, the seams fit (no collision/duplication/gap), and the assembled whole passes an integration check no single piece's Success criteria exercised. A mismatch is **the orchestrator's to stitch** (it lives in the seam *between* briefs — the join it owned — not a builder bounce); no parallel checkbox ticks until the pieces reconcile. Self-built and serial sub-step work skip it: one serial writer, nothing to reconcile.
+
+### Changed
+
+- **build-workflow.md rewritten into four phases (A Frame · B Decide · C Execute · D Reconcile+record)** with clean sub-step labels (A1–A3 / B1–B2 / C1–C3 / D1–D2), replacing the accreted `0a…3` numbering (including a "Step 1b" that was never a real section). Every prior concept preserved — the @Implementation policy gate, context-assembly chain + 5 brief slots, match-by-name, self-vs-dispatch economics + ≥3 threshold, same-file serialize rule, multi-phase decompose mechanics, critical-check plan, the code-reviewer/test-verifier optional passes, and the ledger-stays-yours invariant — re-homed under the phase that owns it. Verified content-complete by an arms-length `spec-reviewer` pass against the prior version.
+
 ## [1.31.0] — 2026-07-11
 
 ### Orchestrator visibility into delegated work

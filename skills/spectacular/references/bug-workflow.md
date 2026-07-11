@@ -231,13 +231,13 @@ Record it: `spectacular audit new` (from the findings) if the investigation earn
 > **Multi-phase fix? Decompose it too.** A fix is usually one site (that's what makes it a fix), but
 > occasionally the root cause spans several phases each with its own verify point (change the shared
 > function → update each caller's expectation → add the regression test). When it does, apply the
-> same discipline as [[build-workflow]] Step 1.5: break it into sequential sub-steps (nested `- [ ]`
+> same discipline as [[build-workflow]] B2: break it into sequential sub-steps (nested `- [ ]`
 > checkpoints + harness tasks), do them one at a time, and confirm between each — don't dispatch one
 > opaque multi-phase brief. Rarer on the fix side than the build side, same rule.
 
 > **Before you call it verified — optional arms-length review + verify (judgment-gated).** Consider a
 > fresh-window confirmation before treating the bug as resolved — same worth-it economics as fan-out;
-> skip it for a trivial one-site fix. Two independent triggers (mirrors [[build-workflow]] Step 3):
+> skip it for a trivial one-site fix. Two independent triggers (mirrors [[build-workflow]] D2):
 > - **[[code-reviewer]]** (read-only) — when the fix diff is **substantial or medium+ blast radius**
 >   (touches a shared module / schema / widely-used helper), over the fix diff — did the fix introduce a *new* problem
 >   (a regression, an insecure path, dead code)? Returns severity-ranked findings; you triage and,

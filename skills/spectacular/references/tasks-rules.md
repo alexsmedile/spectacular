@@ -29,7 +29,7 @@ Three checkbox states, all **flush-left** (no leading indent):
 
 **Indented `  - [ ]` sub-bullets are allowed** — as a nested acceptance checklist
 under a parent task, *or* as **decomposition checkpoints** when an orchestrator breaks
-a large multi-phase milestone into sequential sub-steps ([[build-workflow]] Step 1.5).
+a large multi-phase milestone into sequential sub-steps ([[build-workflow]] B2).
 Either way they are **not counted** — `status` progress counts top-level
 checkboxes only, so `x/total` stays comparable across requests. Milestones group
 tasks with `### M<N> — <name>` headings. `doctor` (lifecycle area) **errors** on an

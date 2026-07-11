@@ -88,7 +88,7 @@ The two layers complement each other:
 - Harness micro-tasks **silence the runtime's "task tools haven't been used" warning** while preserving the live progress signal in the CLI UI.
 - On-disk `TASKS.md` items are **never duplicated** as harness tasks one-to-one. Harness tasks are *finer* — they decompose a single TASKS.md milestone into the concrete edits / commits / tests that complete it.
 - When a session ends, harness tasks evaporate; their results live on in committed code + ticked on-disk TASKS items.
-- **Decomposing a large milestone** ([[build-workflow]] Step 1.5): when a milestone spans several verify-points, record its sub-steps as **nested `- [ ]` bullets** under its `### M<n>` block (durable checkpoints, not counted in progress) *and* mirror them as harness tasks (the live signal). The nested bullets are the persisted record a human reads; the harness tasks drive the CLI progress UI. This is the same two-layer split applied one level below the milestone — the checkpoints that keep a fat milestone from running as one opaque block.
+- **Decomposing a large milestone** ([[build-workflow]] B2): when a milestone spans several verify-points, record its sub-steps as **nested `- [ ]` bullets** under its `### M<n>` block (durable checkpoints, not counted in progress) *and* mirror them as harness tasks (the live signal). The nested bullets are the persisted record a human reads; the harness tasks drive the CLI progress UI. This is the same two-layer split applied one level below the milestone — the checkpoints that keep a fat milestone from running as one opaque block.
 
 Anti-pattern: copying every line from `TASKS.md` into the harness one-for-one. That defeats the granularity split and creates duplicate maintenance.
 

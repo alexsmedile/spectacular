@@ -7,6 +7,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.31.0] — 2026-07-11
+
+### Orchestrator visibility into delegated work
+
+Two additions to the build-workflow arc close the gap the user hit: a dispatched
+`spec-builder` running for a long time as an opaque block the orchestrator can't
+see into or confirm well. Both keep the fleet's core invariant — the orchestrator
+plans, the Builder builds, the orchestrator confirms + records.
+
 ### Added
 
 - **Critical-check plan (build-workflow Step 2c, dispatched work only).** At dispatch time — while a `spec-builder` runs — the orchestrator now names the 1–2 sharpest things it will verify *first and hardest* on return (the risky seam where the milestone meets code it didn't write, the shared interface a caller depends on, the security/correctness-critical line, or a gap the Success criteria doesn't exercise). Step 3's "confirm the diff" hits those checks first. Encodes **delegated work is confirmed harder than self-built** — inline, the orchestrator watched the code happen; delegated, it holds only the diff, so scrutiny is higher. Self-built milestones skip the step. Complements (doesn't replace) an optional `code-reviewer` dispatch: the plan is the orchestrator's targeted first look, the reviewer is a broad independent one.

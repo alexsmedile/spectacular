@@ -1,5 +1,5 @@
 ---
-status: verified
+status: archived
 priority: high
 owner: alex
 updated: 2026-07-12
@@ -7,6 +7,7 @@ build: b29
 summary: "CLI-side fixes for the b28 dogfood findings 1–3: policy gate injects each policy's new one-sentence directive (warn=directive+title, block=directive+full, --full restores), advance planned→active scaffolds SESSION.md, doctor repeats non-pass findings after the summary."
 related:
   - PRD.md
+archived: 2026-07-12
 ---
 
 # Plan — cli-gate-ergonomics

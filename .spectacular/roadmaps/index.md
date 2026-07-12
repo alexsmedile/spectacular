@@ -1,6 +1,6 @@
 ---
-version: 3.12
-updated: 2026-07-11
+version: 3.13
+updated: 2026-07-12
 summary: "Per-version scope, phase, and exit criteria. Shipped through v1.23.0 (roadmap ledger docs + index-mode pruning, b17+b18). Next up — priority order: cli-debt-removal → skill-desc-length-check → snapshot-retention → spec-audit-mode, all ahead of the contract-prep ladder (①→②→③, target tbd) → v2.0.0 major. Long-term gets fuzzier on purpose. (v3.12: contract ladder un-pinned to tbd — generic, so reslotting never forces a renumber.)"
 related:
   - ../PRD.md
@@ -47,7 +47,10 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b24 | cli-path-abstraction | Centralized path/variable declaration in the CLI | themed | tbd | planned |
 | b25 | fleet-arc-wiring | Wire repo-explorer/code-reviewer/test-verifier into the workflow arcs (optional judgment-gated dispatch) | themed | v1.30.0 | shipped |
 | b26 | stance-layer | architectural-stance @Planning policy + grade label (severity dial rejected; decisions pre-locked in ideas/stance-layer) | themed | tbd | planned |
-| b27 | milestone-decomposition | Step 1.5 size-and-decompose gate + decompose-large-milestone policy — visible sub-steps inside a fat milestone (decisions pre-locked in ideas/milestone-decomposition) | themed | tbd | shipped |
+| b27 | milestone-decomposition | Step 1.5 size-and-decompose gate + decompose-large-milestone policy — visible sub-steps inside a fat milestone (decisions pre-locked in ideas/milestone-decomposition) | themed | v1.32.0 | shipped |
+| b28 | self-healing-optimization | Journey-audit self-healing pass — SKILL.md routing-only trim, coherence fixes, 2-of-6 extraction | themed | v1.33.0 | shipped |
+| b29 | cli-gate-ergonomics | Policy directives at gates (tiered output, --full), advance scaffolds SESSION.md, doctor findings block | themed | v1.34.0 | shipped |
+| b30 | verify-split | verify.md walk-only + verify-authoring.md (2-of-6 canonical); TASKS template `- [~]` deferred rows | themed | v1.34.0 | shipped |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

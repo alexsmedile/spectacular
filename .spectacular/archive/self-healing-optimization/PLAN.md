@@ -1,5 +1,5 @@
 ---
-status: review
+status: archived
 priority: medium
 owner: alex
 updated: 2026-07-12
@@ -7,6 +7,7 @@ build: b28
 summary: "Self-healing pass from the journey audit: trim SKILL.md to routing-only (~2k tok saved on every invocation), fix two coherence bugs, and extract the 2-of-6 rule so scaffolding stops loading the 6.2k verify.md."
 related:
   - PRD.md
+archived: 2026-07-12
 ---
 
 # Plan — self-healing-optimization

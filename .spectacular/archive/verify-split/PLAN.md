@@ -1,5 +1,5 @@
 ---
-status: verified
+status: archived
 priority: medium
 owner: alex
 updated: 2026-07-12
@@ -7,6 +7,7 @@ build: b30
 summary: "Split verify.md into walk-only core (loads at review→verified, ~half today's 6.2k) + verify-authoring.md (2-of-6 canonical, fold patterns, promoting checks to scripts); patch the TASKS template so v2-deferred items scaffold as - [~]."
 related:
   - PRD.md
+archived: 2026-07-12
 ---
 
 # Plan — verify-split

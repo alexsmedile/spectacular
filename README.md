@@ -82,7 +82,7 @@ spectacular init
 
 Agents load only what the current task needs (planning loads PRD + PRINCIPLES + decisions/index.md; implementation loads STACK + PLAN + TASKS).
 
-**Current truth** — reflects actual system behavior right now. Modular capability specs (auth, billing, editor). Never overwritten in place — the skill snapshots before proposing edits.
+**Current truth** — `specs/index.md` is the cheap, always-on index of what the system does now; promote a dense bullet to a flat `specs/<capability>.md` only when it earns the detail. Never overwrite either in place — snapshot before editing.
 
 **Active work** — temporary. Each request gets a folder with `PLAN.md` (intent + 7-slot decomposition: goal, constraints, milestones, tasks, dependencies, validation, deliverables) and `TASKS.md` (execution checklist). Archived on completion, not deleted.
 
@@ -92,7 +92,7 @@ Agents load only what the current task needs (planning loads PRD + PRINCIPLES + 
 
 <img src="docs/assets/lifecycle-flow.svg" width="100%" alt="Request lifecycle: planned → active → review → verified → archived" />
 
-State lives in `PLAN.md` frontmatter. The skill reads it on every invocation and surfaces the highest-priority next action. When all tasks are checked, it proposes moving to `review`. When the checklist passes, it proposes `archived` — and offers to update `current/` with anything that changed.
+State lives in `PLAN.md` frontmatter. The skill reads it on every invocation and surfaces the highest-priority next action. When all tasks are checked, it proposes moving to `review`. When the checklist passes, it proposes `archived` — and offers to update `specs/index.md` and any affected capability specs.
 
 ---
 
@@ -171,7 +171,7 @@ Agent definitions live in `agents/` at the repo root (the source of truth); the 
 | `/spectacular` | Project briefing — active requests, draft capabilities, next action |
 | `spectacular status` | Same as no-arg invocation |
 | `spectacular new <slug>` | Scaffold a new request (PLAN.md + TASKS.md) |
-| `spectacular promote <slug>` | Advance lifecycle: `planned → active → review → verified` |
+| `spectacular advance <slug>` | Advance lifecycle: `planned → active → review → verified` (`promote` remains a deprecated alias) |
 | `spectacular snapshot <file>` | Snapshot a canonical document before editing |
 | `spectacular touch <file>` | Bump `updated:` on a canonical doc |
 | `spectacular archive <slug>` | Archive a completed request; propose `specs/index.md` sync + memory entries |

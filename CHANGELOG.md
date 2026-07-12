@@ -7,6 +7,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Documentation
+
+- Refresh the README diagrams and active guides to the OKF v2 layout: `specs/index.md` + flat
+  capability specs replace the retired `current/` / `SPEC.md` model, and collection paths use
+  their current plural names.
+
 ## [1.33.0] — 2026-07-12
 
 ### Documentation

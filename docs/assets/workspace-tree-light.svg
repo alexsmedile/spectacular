@@ -1,49 +1,11 @@
 <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace">
-
-  <!-- background -->
   <rect width="720" height="300" fill="#ffffff" rx="12"/>
-
-  <!-- ── root folder ── -->
   <rect x="270" y="28" width="180" height="56" rx="8" fill="#f6f8fa" stroke="#0969da" stroke-width="1.5"/>
   <text x="360" y="56" text-anchor="middle" fill="#0969da" font-size="14" font-weight="600">📁 .spectacular/</text>
-  <text x="360" y="74" text-anchor="middle" fill="#8c959f" font-size="10">your project's brain</text>
-
-  <!-- ── connectors: root → three children ── -->
-  <line x1="360" y1="84" x2="360" y2="108" stroke="#d0d7de" stroke-width="1.5"/>
-  <line x1="120" y1="108" x2="600" y2="108" stroke="#d0d7de" stroke-width="1.5"/>
-  <line x1="120" y1="108" x2="120" y2="132" stroke="#d0d7de" stroke-width="1.5"/>
-  <line x1="360" y1="108" x2="360" y2="132" stroke="#d0d7de" stroke-width="1.5"/>
-  <line x1="600" y1="108" x2="600" y2="132" stroke="#d0d7de" stroke-width="1.5"/>
-
-  <!-- ── child: PRD.md ── -->
-  <rect x="40" y="132" width="160" height="92" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
-  <text x="58" y="162" fill="#8c959f" font-size="11">📄</text>
-  <text x="76" y="162" fill="#1f2328" font-size="13" font-weight="600">PRD.md</text>
-  <text x="58" y="186" fill="#6e7781" font-size="10">what you're building</text>
-  <text x="58" y="202" fill="#6e7781" font-size="10">— and why</text>
-  <text x="58" y="218" fill="#1a7f37" font-size="10">the intent</text>
-
-  <!-- ── child: SPEC.md ── -->
-  <rect x="280" y="132" width="160" height="92" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
-  <text x="298" y="162" fill="#8c959f" font-size="11">📄</text>
-  <text x="316" y="162" fill="#1f2328" font-size="13" font-weight="600">SPEC.md</text>
-  <text x="298" y="186" fill="#6e7781" font-size="10">what's actually</text>
-  <text x="298" y="202" fill="#6e7781" font-size="10">built right now</text>
-  <text x="298" y="218" fill="#0969da" font-size="10">the truth</text>
-
-  <!-- ── child: requests/ ── -->
-  <rect x="520" y="132" width="160" height="92" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
-  <text x="538" y="162" fill="#8c959f" font-size="11">📁</text>
-  <text x="556" y="162" fill="#1f2328" font-size="13" font-weight="600">requests/</text>
-  <text x="538" y="186" fill="#6e7781" font-size="10">one folder per</text>
-  <text x="538" y="202" fill="#6e7781" font-size="10">piece of work</text>
-  <text x="538" y="218" fill="#9a6700" font-size="10">the work ↓</text>
-
-  <!-- hint that requests/ nests further -->
-  <line x1="600" y1="224" x2="600" y2="244" stroke="#d0d7de" stroke-width="1.5" stroke-dasharray="4,3"/>
-  <text x="600" y="258" text-anchor="middle" fill="#8c959f" font-size="10">&lt;request&gt;/ …</text>
-
-  <!-- caption -->
-  <text x="280" y="280" text-anchor="middle" fill="#8c959f" font-size="10">three things to know · the rest fills in as you go</text>
-
+  <text x="360" y="74" text-anchor="middle" fill="#8c959f" font-size="10">your project's operational workspace</text>
+  <line x1="360" y1="84" x2="360" y2="108" stroke="#d0d7de" stroke-width="1.5"/><line x1="120" y1="108" x2="600" y2="108" stroke="#d0d7de" stroke-width="1.5"/><line x1="120" y1="108" x2="120" y2="132" stroke="#d0d7de" stroke-width="1.5"/><line x1="360" y1="108" x2="360" y2="132" stroke="#d0d7de" stroke-width="1.5"/><line x1="600" y1="108" x2="600" y2="132" stroke="#d0d7de" stroke-width="1.5"/>
+  <rect x="40" y="132" width="160" height="92" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/><text x="58" y="162" fill="#8c959f" font-size="11">📄</text><text x="76" y="162" fill="#1f2328" font-size="13" font-weight="600">PRD.md</text><text x="58" y="186" fill="#6e7781" font-size="10">what you're building</text><text x="58" y="202" fill="#6e7781" font-size="10">— and why</text><text x="58" y="218" fill="#1a7f37" font-size="10">the intent</text>
+  <rect x="280" y="132" width="160" height="92" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/><text x="298" y="162" fill="#8c959f" font-size="11">📄</text><text x="316" y="162" fill="#1f2328" font-size="12" font-weight="600">specs/index.md</text><text x="298" y="186" fill="#6e7781" font-size="10">what's actually</text><text x="298" y="202" fill="#6e7781" font-size="10">built right now</text><text x="298" y="218" fill="#0969da" font-size="10">the truth</text>
+  <rect x="520" y="132" width="160" height="92" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/><text x="538" y="162" fill="#8c959f" font-size="11">📁</text><text x="556" y="162" fill="#1f2328" font-size="13" font-weight="600">requests/</text><text x="538" y="186" fill="#6e7781" font-size="10">one folder per</text><text x="538" y="202" fill="#6e7781" font-size="10">piece of work</text><text x="538" y="218" fill="#9a6700" font-size="10">the work ↓</text>
+  <line x1="600" y1="224" x2="600" y2="244" stroke="#d0d7de" stroke-width="1.5" stroke-dasharray="4,3"/><text x="600" y="258" text-anchor="middle" fill="#8c959f" font-size="10">&lt;request&gt;/ …</text><text x="360" y="280" text-anchor="middle" fill="#8c959f" font-size="10">intent · truth · active work — the rest fills in on demand</text>
 </svg>

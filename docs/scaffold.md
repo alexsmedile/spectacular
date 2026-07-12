@@ -4,7 +4,7 @@ description: Complete .spectacular/ directory spec — every file, frontmatter s
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-07-06
+updated: 2026-07-12
 ---
 
 # Scaffold Reference
@@ -314,7 +314,7 @@ Use `spectacular new <description>`. Never create requests/<slug>/PRD.md — ant
 - Don't touch archive/
 - Don't duplicate truth
 - Don't overwrite canonical docs in place
-- Don't write to memory/ autonomously
+- Don't write to memories/ autonomously
 - Don't create per-request PRDs
 ```
 
@@ -357,12 +357,12 @@ skills:
 
 ---
 
-## `current/` — capability specs
+## `specs/index.md` + `specs/` — capability specs
 
-Canonical system truth. Each file describes what a capability does right now — not what it will do, not what it did. The skill reads `current/` to understand the current state of the system.
+Canonical system truth. `specs/index.md` is the cheap, always-on index; flat `specs/<capability>.md` files hold detail only when a capability outgrows its index bullet. They describe what the system does right now — not what it will do, not what it did.
 
 **Rules:**
-- One file or subdirectory per capability
+- Keep the index concise; use one flat file per detailed capability (never nested folders)
 - Authoritative and behavior-oriented — what the system does, not how it is implemented
 - Never overwritten in place — skill snapshots before proposing edits
 - Skill proposes updates when a request is archived, as a structured `SPEC-DELTA.md` the human confirms *(v1.28.0+)* — a missing delta blocks the archive closure gate
@@ -436,7 +436,7 @@ updated: 2026-05-21
 summary: "One-line description of what this request changes"
 related:
   - ../../PRD.md
-  - current/auth
+  - specs/auth.md
 ---
 ```
 
@@ -505,7 +505,7 @@ Sections: Manual QA checklist, Edge cases to verify, Regression checklist, Rollb
 
 ### `specs/` (on demand)
 
-Per-request capability specs. Same frontmatter schema as `current/` specs, but scoped to this request. Tracks its own state independently.
+Per-request capability specs. Same frontmatter schema as top-level `specs/<capability>.md`, but scoped to this request. Tracks its own state independently.
 
 ---
 
@@ -549,7 +549,7 @@ The skill does not read `archive/` during normal operation.
 
 ## Versioning
 
-Canonical documents (`PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `roadmaps/index.md`, `STACK.md`, `decisions/index.md`, `AGENTS.md`, `config.yaml`, `current/` specs) are never overwritten in place.
+Canonical documents (`PRD.md`, `PRINCIPLES.md`, `ARCHITECTURE.md`, `roadmaps/index.md`, `STACK.md`, `decisions/index.md`, `AGENTS.md`, `config.yaml`, `specs/index.md`, and capability specs) are never overwritten in place.
 
 **Convention:** snapshot before editing, using the `@version` suffix:
 

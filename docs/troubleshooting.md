@@ -282,9 +282,9 @@ Then edit the current file.
 
 ---
 
-## `current/` feels empty after init
+## `specs/` feels empty after init
 
-That is normal. `current/` starts empty because Spectacular should not invent system truth.
+That is normal. `specs/index.md` starts as a compact index and `specs/` has no capability files until the project earns them; Spectacular should not invent system truth.
 
 Add capability specs when:
 
@@ -292,4 +292,4 @@ Add capability specs when:
 - a completed request changes behavior
 - the skill proposes a `specs/index.md` / `specs/` sync (via `SPEC-DELTA.md`) during archive
 
-Keep `current/` behavior-oriented. It should describe what the system does now, not speculative future plans.
+Keep `specs/index.md` and `specs/<capability>.md` behavior-oriented. They describe what the system does now, not speculative future plans.

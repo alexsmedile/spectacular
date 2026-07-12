@@ -50,7 +50,7 @@ cd your-project
 spectacular init
 ```
 
-This scaffolds the 6-file always-set (`PRD.md`, `SPEC.md`, `config.yaml`, an agents file, `requests/`, `specs/`) and installs the skill locally into `.agents/skills/spectacular/` with a symlink at `.claude/skills/spectacular/`.
+This scaffolds the 6-file always-set (`PRD.md`, `POLICY.md`, `config.yaml`, an agents file, `requests/`, `specs/index.md`) and installs the skill locally into `.agents/skills/spectacular/` with a symlink at `.claude/skills/spectacular/`.
 
 Pass `-i` for interactive setup or `--kit coding` for a kit with `STACK.md` + `ARCHITECTURE.md`.
 

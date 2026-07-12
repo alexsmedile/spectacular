@@ -4,7 +4,7 @@ description: The normal Spectacular loop after installation — init, briefing, 
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-05-23
+updated: 2026-07-12
 ---
 
 # Workflow Guide
@@ -21,21 +21,20 @@ From the project root:
 spectacular init
 ```
 
-This creates the required workspace files:
+This creates the always-set workspace files:
 
 ```text
 .spectacular/
 ├── PRD.md              # product intent
-├── PRINCIPLES.md       # operating principles
-├── ARCHITECTURE.md     # workspace structure
-├── ROADMAP.md          # versioned future work
-├── STACK.md            # host tech choices
-├── DECISIONS.md        # ADR log
+├── POLICY.md           # practice-layer policies
 ├── AGENTS.md           # onboarding for agents
 ├── config.yaml
-├── current/
+├── specs/
+│   └── index.md        # current system truth
 └── requests/
 ```
+
+Kits or `--with` add focused context such as `STACK.md`, `ARCHITECTURE.md`, `PRINCIPLES.md`, `roadmaps/index.md`, and `decisions/index.md` when the project needs them.
 
 It also installs the Spectacular skill into `.agents/skills/spectacular/` and symlinks it for Claude Code at `.claude/skills/spectacular/`.
 
@@ -121,7 +120,7 @@ During implementation, the request folder is the operational center:
 - `RISKS.md` is useful for sensitive work such as auth, billing, data migrations, or security changes.
 - `VERIFY.md` is useful when user-visible behavior or regressions need explicit checks.
 
-Keep request docs focused on the request. Do not prematurely rewrite `current/` while work is still in progress.
+Keep request docs focused on the request. Do not prematurely rewrite `specs/index.md` or capability specs while work is still in progress.
 
 ---
 
@@ -172,8 +171,8 @@ When archiving a completed request, the skill should propose updates such as:
 Canonical docs and `specs/` files should be snapshotted before edits:
 
 ```text
-current/billing/plans.md
-current/billing/plans@v1.0.md
+specs/billing.md
+_snapshots/specs/billing/SPEC/@v1.0.md
 ```
 
 ---

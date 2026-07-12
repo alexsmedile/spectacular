@@ -104,7 +104,7 @@ Shipped versions are hidden by default. Use `--all` to include them.
 
 ## App-UI mockup blocks
 
-The skill can render an ASCII mockup of an application screen, dialog, or output surface directly in a request's `PLAN.md` or `SPEC.md`. The format uses light box-drawing characters and a consistent layout convention so mockups are readable in any markdown viewer.
+The skill can render an ASCII mockup of an application screen, dialog, or output surface directly in a request's `PLAN.md` or a capability spec under `specs/<capability>.md`. The format uses light box-drawing characters and a consistent layout convention so mockups are readable in any markdown viewer.
 
 ### Format
 
@@ -156,7 +156,7 @@ This mockup lives in `.spectacular/requests/visual-layer/vision/ui/dashboard.md`
 
 ### When to use
 
-- In a request `PLAN.md § Validation` or `SPEC.md` to sketch the expected output of a new CLI verb or surface
+- In a request `PLAN.md § Validation` or `specs/<capability>.md` to sketch the expected output of a new CLI verb or surface
 - As a vision fragment (`vision/ui/<name>.md`) during `spectacular imagine` — the render→react→derive loop uses these as artifacts for human approval
 - Never in `CHANGELOG.md` or `README.md` — those are prose documents, not spec artifacts
 

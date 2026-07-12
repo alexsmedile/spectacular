@@ -7,6 +7,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.33.0] — 2026-07-12
+
+### Documentation
+
+- Correct the Codex plugin instructions: install `spectacular@spectacular` after adding or
+  upgrading the marketplace, and document recovery from a stale local marketplace registration.
+
 ### Self-healing optimization (b28) — journey audit follow-through
 
 A full walk of the skill's highest-frequency journeys (status open, new request, active work, bug)

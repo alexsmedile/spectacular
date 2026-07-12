@@ -4,7 +4,7 @@ description: Install, upgrade, and uninstall Spectacular (CLI, Claude Code plugi
 section: getting-started
 type: how-to
 status: stable
-updated: 2026-05-24
+updated: 2026-07-12
 ---
 
 # Installation
@@ -118,25 +118,29 @@ After install, `/spectacular` is available in any Claude Code session.
 
 ### Install
 
-Open Codex, run `/plugins`, add the marketplace, then install/enable `spectacular`:
-
-```text
-alexsmedile/spectacular
-```
-
-Codex CLI builds with marketplace commands:
+Add the marketplace, then install the plugin:
 
 ```bash
 codex plugin marketplace add alexsmedile/spectacular
+codex plugin add spectacular@spectacular
 ```
 
 ### Upgrade
 
 ```bash
 codex plugin marketplace upgrade spectacular
+codex plugin add spectacular@spectacular
 ```
 
-Then re-enable in `/plugins`.
+If adding the marketplace fails after a prior install, clear its stale local registration and add it again:
+
+```bash
+codex plugin marketplace remove spectacular
+codex plugin marketplace add alexsmedile/spectacular
+codex plugin add spectacular@spectacular
+```
+
+Codex's `/plugins` screen offers the same marketplace and plugin-management actions.
 
 ### Uninstall
 

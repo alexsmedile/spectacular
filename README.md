@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
 ![Platform](https://img.shields.io/badge/platform-Claude%20%7C%20Codex%20%7C%20Cursor-lightgrey)
-![Version](https://img.shields.io/badge/version-1.32.0-green)
+![Version](https://img.shields.io/badge/version-1.33.0-green)
 
 </div>
 
@@ -339,25 +339,29 @@ claude plugin marketplace add alexsmedile/spectacular
 claude plugin install spectacular@spectacular
 ```
 
-**Codex plugin** — from Codex, open `/plugins`, add this marketplace, then install or enable `spectacular`:
-
-```text
-alexsmedile/spectacular
-```
-
-Codex CLI builds that expose marketplace commands can add the marketplace first:
+**Codex plugin** — add the marketplace, then install the plugin:
 
 ```bash
 codex plugin marketplace add alexsmedile/spectacular
+codex plugin add spectacular@spectacular
 ```
 
-To update an already-added marketplace:
+To update an existing install, refresh its marketplace snapshot, then install the refreshed plugin:
 
 ```bash
 codex plugin marketplace upgrade spectacular
+codex plugin add spectacular@spectacular
 ```
 
-Then open Codex and use `/plugins` to install or enable `spectacular`.
+If adding the marketplace fails after a previous install, remove its stale local registration and add it again:
+
+```bash
+codex plugin marketplace remove spectacular
+codex plugin marketplace add alexsmedile/spectacular
+codex plugin add spectacular@spectacular
+```
+
+You can also manage the marketplace and plugin from Codex's `/plugins` screen.
 
 **Skill only** (no CLI, no plugin marketplace):
 

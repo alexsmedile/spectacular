@@ -64,11 +64,17 @@ links         ⚠️ requests/foo/PLAN.md → "../bar/PLAN.md" target missing
               → propose: remove the stale link (requires agent)
 kits          ✅ 5 bundled kits parse; no project-local overrides
 
-0 errors, 2 warnings, 0 info
+0 error(s), 2 warning(s), 0 info
+
+── findings ──
+⚠️  frontmatter · .spectacular/STACK.md — missing required field: version → add `version: 1.0`
+⚠️  links · requests/foo/PLAN.md — "../bar/PLAN.md" target missing → remove the stale link
 
 Run `spectacular doctor --fix` for mechanical repairs.
 Run `/spectacular doctor --fix` for agent-driven repairs.
 ```
+
+The `── findings ──` block repeats every non-pass row compactly after the summary line, so a long run of ✅ rows never buries them — `spectacular doctor | tail` always surfaces what needs attention. A fully clean run prints no block.
 
 ### JSON (`--format json`)
 

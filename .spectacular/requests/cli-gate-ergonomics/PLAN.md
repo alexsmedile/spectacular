@@ -1,5 +1,5 @@
 ---
-status: planned
+status: verified
 priority: high
 owner: alex
 updated: 2026-07-12

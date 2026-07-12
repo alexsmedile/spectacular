@@ -7,6 +7,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### CLI gate ergonomics (b29) — the policy gate speaks practice, not theory
+
+The b28 dogfood run showed the policy gate injecting ~90-word principle paragraphs (the theory
+layer) at every phase entry while the policy bodies — designed as "the instruction injected into
+context" — never printed. Tracked as request `cli-gate-ergonomics`.
+
+### Added
+
+- **`- directive:` policy field** — one imperative sentence per policy, now the lead line of every
+  gate row. All 21 bundled policies authored. Tiered trailer: `block` rows keep the full principle
+  line (a refusal carries its reasoning), `warn` rows show `P<n> — <title>`; title-only fallback
+  when a policy has no directive yet (per-policy incremental migration). `spectacular policy --full`
+  restores full paragraphs; `--json` gains a `directive` key. New `tests/cli/policy-output.test.sh`
+  (18 asserts). Schema documented in `policies-contract.md` + the policy template.
+- **`spectacular advance` scaffolds `SESSION.md`** on `planned → active` when absent (prints
+  `✓ scaffolded: SESSION.md`, never overwrites) — closes the create→warn→repair loop where every
+  fresh active request started life as a `doctor lifecycle` warning.
+- **`doctor` `── findings ──` block** — every non-pass finding repeats compactly after the summary
+  count line, so `spectacular doctor | tail` surfaces what needs attention without grepping past
+  the pass rows. Clean runs print no block.
+
 ### Documentation
 
 - Refresh the README diagrams and active guides to the OKF v2 layout: `specs/index.md` + flat

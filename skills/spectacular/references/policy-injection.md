@@ -44,13 +44,17 @@ When the skill loads that doc to do the phase, the first thing it reads is the i
 
 ## Retrieving
 
-`spectacular policy @<Hook>` is the workhorse. It returns the hook's **enabled** policies (config overrides already merged) plus, for each, the one linked principle line — not the whole PRINCIPLES.md.
+`spectacular policy @<Hook>` is the workhorse. It returns the hook's **enabled** policies (config overrides already merged), each led by its own `directive:` one-liner (the practice-layer instruction) with a tiered principle trailer: **block** rows carry the full principle line (a refusal must carry its reasoning), **warn** rows just `P<n> — <title>`. A policy with no authored directive falls back to the principle title. `--full` restores full principle paragraphs on every row.
 
 ```
 $ spectacular policy @Implementation
 @Implementation
   ⛔ understand-before-change     block
+      — Write the three Understanding subheads — How it works now / What changes / What stays the same — before moving `planned → active`.
       → P7. Three layers: intent → execution → validation — Every unit of work passes through all three.
+  · build-order                  warn
+      — Build the lower layer first — never stack work on a stub, mock, or intention of your own code.
+      → P11 — Earn each step — no rockets without the launchpad
 ```
 
 For machine consumption use `--json`:
@@ -58,7 +62,8 @@ For machine consumption use `--json`:
 ```json
 [{"hook":"@Implementation","id":"understand-before-change","principle":"7",
   "severity":"block","blocking":true,"enabled":true,
-  "check":"PLAN.md has a filled `## Understanding` section …"}]
+  "check":"PLAN.md has a filled `## Understanding` section …",
+  "directive":"Write the three Understanding subheads … before moving `planned → active`."}]
 ```
 
 A policy with `"enabled": false` (disabled via config) is still listed but marked — **do not enforce it**.

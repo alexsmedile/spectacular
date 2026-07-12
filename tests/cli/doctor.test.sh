@@ -929,6 +929,37 @@ scenario_21_schema_behind_warning() {
   rm -rf "$dir"
 }
 
+scenario_22_findings_block() {
+  echo "Scenario 22: non-pass findings repeat in a ── findings ── block after the summary"
+  local dir="/tmp/doctor-test-22"
+  seed_clean "$dir"
+
+  # Clean scoped run → no findings block. Guard: in environments where the
+  # config YAML check itself can't run (no python yaml module) the seed is
+  # never clean — skip the clean-half rather than report a false failure.
+  local out
+  out=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
+  if echo "$out" | grep -q "^0 error(s), 0 warning(s), 0 info"; then
+    assert_output_lacks "$out" "── findings ──" "clean run prints no findings block"
+  else
+    echo "    (skip: seed not clean in this environment — clean-run half not assertable)"
+  fi
+
+  # 1 error (always-set file missing) + 1 warning (schema behind CLI)
+  rm "$dir/.spectacular/AGENTS.md"
+  sed -i.bak 's/workspace_schema: "2.0"/workspace_schema: "0.6"/' "$dir/.spectacular/config.yaml"
+  out=$(cd "$dir" && "$CLI" doctor workspace 2>&1)
+  assert_output_contains "$out" "── findings ──" "findings block present"
+  local block
+  block=$(echo "$out" | grep -A 10 -- "── findings ──")
+  assert_output_contains "$block" "❌ workspace · .spectacular/AGENTS.md" "error row repeated in block"
+  assert_output_contains "$block" "⚠️  workspace" "warning row repeated in block"
+  # Block sits after the summary count line, not interleaved
+  assert_output_contains "$(echo "$out" | grep -B 2 -- "── findings ──")" "error(s)" "block follows the summary count line"
+
+  rm -rf "$dir"
+}
+
 # ── run ───────────────────────────────────────────────────────────────────────
 
 scenario_1_clean_workspace_exits_zero
@@ -953,6 +984,7 @@ scenario_18_debug_spine_validation
 scenario_19_milestone_label_drift
 scenario_20_milestone_off_prefix_name_fallback
 scenario_21_schema_behind_warning
+scenario_22_findings_block
 
 echo ""
 echo "  Asserts: $pass_count passed, $fail_count failed"

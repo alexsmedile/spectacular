@@ -5788,6 +5788,35 @@ EOF
     fm_set "$tasks" "status" "$target"
     fm_touch "$tasks"
   fi
+  # planned → active: scaffold SESSION.md so the request never starts life as a
+  # doctor lifecycle warning. Never overwrites — an existing SESSION.md is kept.
+  # (Mirrors the template in references/active-request.md — keep the two in sync.)
+  if [[ "$current" == "planned" && "$target" == "active" ]]; then
+    local session=".spectacular/requests/$slug/SESSION.md"
+    if [[ ! -f "$session" ]]; then
+      cat > "$session" <<EOF
+---
+updated: ${TODAY}
+---
+
+# Session — ${slug}
+
+## Current state
+<What's been done so far>
+
+## Active task
+<What's being worked on right now>
+
+## Blockers
+<Anything blocking progress>
+
+## Next actions
+-
+-
+EOF
+      echo "  ✓ scaffolded: SESSION.md"
+    fi
+  fi
   # Breadcrumb for `spectacular undo` (single-level). Records prior status so undo
   # can restore it. Skipped when chaining into archive (--archive overwrites it next).
   $opt_archive || _breadcrumb_write "advance" "$slug" "prev_status=$current"
@@ -7531,12 +7560,12 @@ _policy_records() {
 
   # 1) Parse POLICY.md blocks.
   awk '
-    BEGIN { hook=""; id=""; principle=""; severity=""; check=""; US=sprintf("%c",31) }
+    BEGIN { hook=""; id=""; principle=""; severity=""; check=""; directive=""; US=sprintf("%c",31) }
     function flush() {
       if (id != "") {
-        printf "%s%s%s%s%s%s%s%s%s%s%s\n", hook, US, id, US, principle, US, severity, US, "true", US, check
+        printf "%s%s%s%s%s%s%s%s%s%s%s%s%s\n", hook, US, id, US, principle, US, severity, US, "true", US, check, US, directive
       }
-      id=""; principle=""; severity=""; check=""
+      id=""; principle=""; severity=""; check=""; directive=""
     }
     /^##[[:space:]]+@/ {
       flush()
@@ -7551,15 +7580,16 @@ _policy_records() {
     /^-[[:space:]]+principle:/ { v=$0; sub(/^-[[:space:]]+principle:[[:space:]]*/, "", v); sub(/[[:space:]]+$/, "", v); principle=v; next }
     /^-[[:space:]]+severity:/  { v=$0; sub(/^-[[:space:]]+severity:[[:space:]]*/, "", v); sub(/[[:space:]]+$/, "", v); severity=v; next }
     /^-[[:space:]]+check:/     { v=$0; sub(/^-[[:space:]]+check:[[:space:]]*/, "", v); sub(/[[:space:]]+$/, "", v); check=v; next }
+    /^-[[:space:]]+directive:/ { v=$0; sub(/^-[[:space:]]+directive:[[:space:]]*/, "", v); sub(/[[:space:]]+$/, "", v); directive=v; next }
     END { flush() }
-  ' "$pol" | while IFS="$US" read -r hook id principle severity enabled check; do
+  ' "$pol" | while IFS="$US" read -r hook id principle severity enabled check directive; do
     # Apply config overrides for this id.
     local ov_enabled ov_severity
     ov_enabled="$(_policy_cfg_get "$id" "enabled")"
     ov_severity="$(_policy_cfg_get "$id" "severity")"
     [[ -n "$ov_enabled" ]]  && enabled="$ov_enabled"
     [[ -n "$ov_severity" ]] && severity="$ov_severity"
-    printf '%s%s%s%s%s%s%s%s%s%s%s\n' "$hook" "$US" "$id" "$US" "$principle" "$US" "$severity" "$US" "$enabled" "$US" "$check"
+    printf '%s%s%s%s%s%s%s%s%s%s%s%s%s\n' "$hook" "$US" "$id" "$US" "$principle" "$US" "$severity" "$US" "$enabled" "$US" "$check" "$US" "$directive"
   done
 
   # 2) Append config-only custom policies (have a `hook:` field, not in POLICY.md).
@@ -7576,7 +7606,8 @@ _policy_records() {
     c_check="$(_policy_cfg_get "$cid" "check")"
     c_pr="$(_policy_cfg_get "$cid" "principle")"
     c_en="$(_policy_cfg_get "$cid" "enabled")"; [[ -z "$c_en" ]] && c_en="true"
-    printf '%s%s%s%s%s%s%s%s%s%s%s\n' "$c_hook" "$US" "$cid" "$US" "$c_pr" "$US" "$c_sev" "$US" "$c_en" "$US" "$c_check"
+    local c_dir; c_dir="$(_policy_cfg_get "$cid" "directive")"
+    printf '%s%s%s%s%s%s%s%s%s%s%s%s%s\n' "$c_hook" "$US" "$cid" "$US" "$c_pr" "$US" "$c_sev" "$US" "$c_en" "$US" "$c_check" "$US" "$c_dir"
   done
 }
 
@@ -7643,6 +7674,22 @@ _policy_principle_line() {
   ' "$pr"
 }
 
+# Pull a principle's heading ONLY from PRINCIPLES.md (no body line).
+# Arg: principle number N. Stdout: "<heading title>" (without the "N. " prefix) or empty.
+_policy_principle_title() {
+  local n="$1" pr=".spectacular/PRINCIPLES.md"
+  [[ -n "$n" ]] || return 0
+  [[ -f "$pr" ]] || return 0
+  awk -v n="$n" '
+    $0 ~ "^##[[:space:]]+" n "\\." {
+      head=$0; sub(/^##[[:space:]]+/, "", head)
+      sub("^" n "\\.[[:space:]]*", "", head)
+      sub(/[[:space:]]+$/, "", head)
+      print head; exit
+    }
+  ' "$pr"
+}
+
 # is this severity a blocker? (opt-in: only literal "block")
 _policy_is_block() { [[ "$1" == "block" ]]; }
 
@@ -7651,8 +7698,8 @@ _policy_is_block() { [[ "$1" == "block" ]]; }
 # Use this — not the raw POLICY.md text — before enforcing a gate, so config
 # `enabled: false` / severity overrides are honored.
 _policy_lookup() {
-  local want="$1" US=$'\037' hook id principle severity enabled check
-  while IFS="$US" read -r hook id principle severity enabled check; do
+  local want="$1" US=$'\037' hook id principle severity enabled check directive
+  while IFS="$US" read -r hook id principle severity enabled check directive; do
     [[ "$id" == "$want" ]] || continue
     printf '%s%s%s\n' "${enabled:-true}" "$US" "$severity"
     return 0
@@ -7674,15 +7721,16 @@ _policy_enabled() {
 }
 
 cmd_policy() {
-  local form="list" arg="" principle_filter="" json=false
+  local form="list" arg="" principle_filter="" json=false full=false
   while (( $# > 0 )); do
     case "$1" in
       --principle) require_value "--principle" "${2:-}"; principle_filter="$2"; form="principle"; shift 2 ;;
       --principle=*) principle_filter="${1#--principle=}"; form="principle"; shift ;;
       --json) json=true; shift ;;
+      --full) full=true; shift ;;
       --help|-h)
         cat <<EOF
-Usage: spectacular policy [@hook | <id> | --principle N | --json]
+Usage: spectacular policy [@hook | <id> | --principle N | --json | --full]
 
 Read the merged policy contract (POLICY.md + config.yaml overrides).
 
@@ -7692,8 +7740,11 @@ Forms:
   spectacular policy <id>            One policy, full text + its principle
   spectacular policy --principle N   Reverse: which policies enforce principle N
   spectacular policy --json          Machine form (skill-consumed)
+  spectacular policy @hook --full    Full principle paragraphs on every row
+                                     (default is tiered: block=full, warn=title)
 
 The skill calls 'spectacular policy @<hook>' on entering a work phase.
+Each row leads with the policy's own 'directive:' one-liner when authored.
 Valid hooks: ${POLICY_VALID_HOOKS}
 EOF
         exit 0 ;;
@@ -7719,8 +7770,8 @@ EOF
   # ── JSON form ──────────────────────────────────────────────────────────────
   if $json; then
     printf '['
-    local i=0 hook id principle severity enabled check
-    while IFS="$US" read -r hook id principle severity enabled check; do
+    local i=0 hook id principle severity enabled check directive
+    while IFS="$US" read -r hook id principle severity enabled check directive; do
       [[ -z "$id" ]] && continue
       # Apply filters
       if [[ "$form" == "hook" && "$hook" != "$arg" ]]; then continue; fi
@@ -7734,9 +7785,9 @@ EOF
         *) en_json="true" ;;
       esac
       (( i > 0 )) && printf ','
-      printf '{"hook":"%s","id":"%s","principle":"%s","severity":"%s","blocking":%s,"enabled":%s,"check":"%s"}' \
+      printf '{"hook":"%s","id":"%s","principle":"%s","severity":"%s","blocking":%s,"enabled":%s,"check":"%s","directive":"%s"}' \
         "$(_json_escape "$hook")" "$(_json_escape "$id")" "$(_json_escape "$principle")" \
-        "$(_json_escape "$severity")" "$is_block" "$en_json" "$(_json_escape "$check")"
+        "$(_json_escape "$severity")" "$is_block" "$en_json" "$(_json_escape "$check")" "$(_json_escape "$directive")"
       i=$((i + 1))
     done <<< "$records"
     printf ']\n'
@@ -7745,8 +7796,8 @@ EOF
 
   # ── id form: one policy, full text + principle ───────────────────────────────
   if [[ "$form" == "id" ]]; then
-    local found=false hook id principle severity enabled check
-    while IFS="$US" read -r hook id principle severity enabled check; do
+    local found=false hook id principle severity enabled check directive
+    while IFS="$US" read -r hook id principle severity enabled check directive; do
       [[ "$id" == "$arg" ]] || continue
       found=true
       local sev_disp="${severity:-warn}"; _policy_is_block "$sev_disp" && sev_disp="block (refuse)" || sev_disp="${sev_disp} (surface + continue)"
@@ -7755,6 +7806,7 @@ EOF
       echo "  severity:  $sev_disp"
       [[ "${enabled:-true}" == "false" ]] && echo "  enabled:   false (disabled via config)"
       [[ -n "$principle" ]] && echo "  principle: $principle"
+      [[ -n "$directive" ]] && echo "  directive: $directive"
       echo "  check:     $check"
       if [[ -n "$principle" ]]; then
         local pl; pl="$(_policy_principle_line "$principle")"
@@ -7771,10 +7823,10 @@ EOF
     local pl; pl="$(_policy_principle_line "$principle_filter")"
     echo "Principle $principle_filter${pl:+: ${pl#*. }}"
     echo ""
-    local any=false hook id principle severity enabled check
+    local any=false hook id principle severity enabled check directive
     printf "%-28s  %-16s  %s\n" "POLICY" "HOOK" "SEVERITY"
     printf "%-28s  %-16s  %s\n" "------" "----" "--------"
-    while IFS="$US" read -r hook id principle severity enabled check; do
+    while IFS="$US" read -r hook id principle severity enabled check directive; do
       [[ "$principle" == "$principle_filter" ]] || continue
       any=true
       printf "%-28s  %-16s  %s\n" "$id" "$hook" "${severity:-warn}"
@@ -7784,14 +7836,17 @@ EOF
   fi
 
   # ── hook form / bare list ────────────────────────────────────────────────────
-  # Group by hook; in hook-form, show only the requested hook + principle lines.
-  local current_hook="" hook id principle severity enabled check shown=0
+  # Group by hook; in hook-form, show only the requested hook.
+  # Tiered injection (default): every row leads with the policy's own directive
+  # (the practice layer); the principle trailer is full for blocks, title-only
+  # for warns. --full restores full principle paragraphs on every row.
+  local current_hook="" hook id principle severity enabled check directive shown=0
   local order="$POLICY_VALID_HOOKS"
   local h
   for h in $order; do
     [[ "$form" == "hook" && "$h" != "$arg" ]] && continue
     local hook_has=false
-    while IFS="$US" read -r hook id principle severity enabled check; do
+    while IFS="$US" read -r hook id principle severity enabled check directive; do
       [[ "$hook" == "$h" ]] || continue
       [[ -z "$id" ]] && continue
       if ! $hook_has; then
@@ -7802,10 +7857,18 @@ EOF
       local dis=""; [[ "${enabled:-true}" == "false" ]] && dis="  [disabled]"
       printf "  %s %-28s %-6s%s\n" "$marker" "$id" "${severity:-warn}" "$dis"
       shown=$((shown + 1))
-      # In hook form, pull the linked principle line (the workhorse behavior).
-      if [[ "$form" == "hook" && -n "$principle" ]]; then
-        local pl; pl="$(_policy_principle_line "$principle")"
-        [[ -n "$pl" ]] && printf "      → P%s\n" "$pl"
+      # In hook form, inject directive + principle trailer (the workhorse behavior).
+      if [[ "$form" == "hook" ]]; then
+        [[ -n "$directive" ]] && printf "      — %s\n" "$directive"
+        if [[ -n "$principle" ]]; then
+          if $full || _policy_is_block "$severity"; then
+            local pl; pl="$(_policy_principle_line "$principle")"
+            [[ -n "$pl" ]] && printf "      → P%s\n" "$pl"
+          else
+            local pt; pt="$(_policy_principle_title "$principle")"
+            [[ -n "$pt" ]] && printf "      → P%s — %s\n" "$principle" "$pt"
+          fi
+        fi
       fi
     done <<< "$records"
   done
@@ -11262,7 +11325,7 @@ doctor_emit_text() {
   echo "Spectacular doctor"
   echo ""
 
-  local last_area="" errors=0 warnings=0 infos=0
+  local last_area="" errors=0 warnings=0 infos=0 nonpass=""
   while IFS='|' read -r area sev file msg fix ftype; do
     [[ -z "$area" ]] && continue
     if [[ "$area" != "$last_area" ]]; then
@@ -11281,10 +11344,22 @@ doctor_emit_text() {
       [[ "$ftype" == "judgment" ]] && route="(judgment — \`/spectacular doctor --fix\`)"
       printf "%-13s    → %s %s\n" "" "$fix" "$route"
     fi
+    # Collect non-pass rows compactly for the findings block below — a long run
+    # of pass rows otherwise drowns them mid-report. Only real severities: a
+    # multi-line finding message parses as stray continuation rows — skip those.
+    case "$sev" in
+      warning|error|info)
+        nonpass+="$(printf "%s %s · %s — %s%s" "$icon" "$area" "$file" "$msg" "${fix:+ → $fix}")"$'\n' ;;
+    esac
   done <<< "$DOC_FINDINGS"
 
   echo ""
   printf "%d error(s), %d warning(s), %d info\n" "$errors" "$warnings" "$infos"
+  if [[ -n "$nonpass" ]]; then
+    echo ""
+    echo "── findings ──"
+    printf "%s" "$nonpass"
+  fi
   if [[ $errors -gt 0 || $warnings -gt 0 ]]; then
     echo ""
     echo "Run \`spectacular doctor --fix\` for mechanical repairs."

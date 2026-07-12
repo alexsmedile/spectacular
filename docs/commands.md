@@ -170,7 +170,7 @@ Output:
 
 ### `spectacular advance <slug> [--to <state>] [--force]` *(v1.19.0+)*
 
-Advances a request one step through the lifecycle (`planned → active → review → verified`), or jumps with `--to`. Backward transitions require `--force`. The CLI is a dumb mutator — it edits `status:` in PLAN.md frontmatter only.
+Advances a request one step through the lifecycle (`planned → active → review → verified`), or jumps with `--to`. Backward transitions require `--force`. The CLI is a dumb mutator — it edits `status:` in PLAN.md frontmatter, and on `planned → active` scaffolds the request's `SESSION.md` when absent (prints `✓ scaffolded: SESSION.md`; never overwrites an existing one).
 
 ```text
 spectacular advance add-team-billing            # one step forward
@@ -295,16 +295,17 @@ Unlike `snapshot`, which is restricted strictly to registered canonical document
 
 Promotes an idea file into a full request and moves the original to `.spectacular/archive/ideas/`.
 
-### `spectacular policy [@hook | <id> | --principle N | --json]` *(v1.12.0+)*
+### `spectacular policy [@hook | <id> | --principle N | --json | --full]` *(v1.12.0+)*
 
-Reads the merged **policy contract** — `POLICY.md` (the always-set practice layer) with any `config.yaml` `policies:` overrides applied. The skill calls `spectacular policy @<hook>` on entering a work phase to retrieve only that phase's rules (progressive disclosure).
+Reads the merged **policy contract** — `POLICY.md` (the always-set practice layer) with any `config.yaml` `policies:` overrides applied. The skill calls `spectacular policy @<hook>` on entering a work phase to retrieve only that phase's rules (progressive disclosure). Each row leads with the policy's own `directive:` one-liner; the principle trailer is tiered — full line on `block` rows, `P<n> — <title>` on `warn` rows (title fallback when no directive is authored).
 
 ```text
 spectacular policy                 # all policies, grouped by hook (skim)
-spectacular policy @Verification   # one hook's policies + linked principle lines
+spectacular policy @Verification   # one hook's policies — directive + tiered principle trailer
+spectacular policy @Verification --full   # same, with full principle paragraphs on every row
 spectacular policy understand-before-change   # one policy, full text + its principle
 spectacular policy --principle 7   # reverse: which policies enforce principle 7
-spectacular policy --json          # machine form (skill-consumed)
+spectacular policy --json          # machine form (skill-consumed; carries "directive")
 ```
 
 Hooks (the locked 9): `@Init`, `@Planning`, `@Implementation`, `@Verification`, `@Archive`, `@Debugging`, `@Remember`, `@Snapshot`, `@SessionEnd`. A policy blocks a transition only if it declares `severity: block`; `warn` and unset are surface-and-continue. `spectacular advance` prints an advisory at the spine transitions, and `spectacular doctor policies` reports structural + `## Understanding`-gate findings. See [policies-contract](../skills/spectacular/references/policies-contract.md) for the schema.

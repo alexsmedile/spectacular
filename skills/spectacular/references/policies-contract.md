@@ -39,7 +39,7 @@ Section heading = the hook. Policy id = the `###` slug (kebab-case, carries the 
 
 ## Policy anatomy
 
-A policy block has four parts:
+A policy block has five parts:
 
 | Part | Required | Form | Meaning |
 |---|---|---|---|
@@ -47,6 +47,7 @@ A policy block has four parts:
 | `principle` | optional | `- principle: N` | the PRINCIPLES.md § it enforces; retrieval pulls that one line |
 | `severity` | yes for blockers | `- severity: block \| warn` | how a failed check resolves |
 | `check` | yes for blockers | `- check: <text>` | the condition that must hold |
+| `directive` | recommended | `- directive: <one imperative sentence>` | what the CLI injects at the hook gate — the practice layer, verbatim |
 | prose | yes | free text after the fields | rationale + the instruction injected into context |
 
 **`hook`** is not written as a field — it *is* the section heading the block sits under. Moving a policy = moving its `###` block under a different `## @<hook>`.
@@ -61,6 +62,8 @@ A policy block has four parts:
 - **Judgment** → enforced purely by the injected instruction; the skill reads the check prose and decides.
 
 No `check-kind` field exists. The same policy may even be checked both ways over time.
+
+**`directive`** is the one-sentence injection line — the policy's own instruction, written imperatively, that `spectacular policy @<hook>` prints on every row (the gate output agents actually read). Without it the CLI falls back to the linked principle's title, so migration is per-policy incremental — but the directive is the *practice* layer speaking in its own voice, so author one for every policy that matters at a gate. Tiering: **warn** rows show directive + `P<n> — <title>`; **block** rows show directive + the full principle line (a refusal must carry its reasoning); `--full` restores full paragraphs everywhere. The prose stays the full rationale — the directive is its sharpest sentence, not a replacement.
 
 ## The locked hook set (9)
 

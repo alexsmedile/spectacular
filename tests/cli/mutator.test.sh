@@ -40,6 +40,10 @@ assert_output_contains() {
   if echo "$1" | grep -qF -- "$2"; then pass_count=$((pass_count + 1))
   else echo "    ✗ expected output to contain: $2"; fail_count=$((fail_count + 1)); fi
 }
+assert_output_lacks() {
+  if ! echo "$1" | grep -qF -- "$2"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected output to NOT contain: $2"; fail_count=$((fail_count + 1)); fi
+}
 assert_exit() {
   if [[ "$1" -eq "$2" ]]; then pass_count=$((pass_count + 1))
   else echo "    ✗ $3: exit $1 want $2"; fail_count=$((fail_count + 1)); fi
@@ -430,6 +434,31 @@ scenario_10_doctor_precondition_clean_passes() {
   rm -rf "$dir"
 }
 
+scenario_11_advance_scaffolds_session() {
+  echo "Scenario 11: advance planned→active scaffolds SESSION.md; never overwrites"
+  local dir="/tmp/spectacular-mutator-11"
+  seed_workspace "$dir"
+  (cd "$dir" && "$CLI" new req-sess --summary "test" >/dev/null)
+
+  local out
+  out=$(cd "$dir" && "$CLI" advance req-sess 2>&1)
+  assert_output_contains "$out" "✓ scaffolded: SESSION.md"
+  assert_file_exists "$dir/.spectacular/requests/req-sess/SESSION.md"
+  assert_file_contains "$dir/.spectacular/requests/req-sess/SESSION.md" "## Current state"
+  assert_file_contains "$dir/.spectacular/requests/req-sess/SESSION.md" "## Active task"
+  assert_file_contains "$dir/.spectacular/requests/req-sess/SESSION.md" "## Blockers"
+  assert_file_contains "$dir/.spectacular/requests/req-sess/SESSION.md" "## Next actions"
+
+  # A second planned→active pass must never overwrite an existing SESSION.md
+  echo "MARKER-KEEP-ME" >> "$dir/.spectacular/requests/req-sess/SESSION.md"
+  (cd "$dir" && "$CLI" advance req-sess --to planned --force >/dev/null 2>&1)
+  out=$(cd "$dir" && "$CLI" advance req-sess 2>&1)
+  assert_output_lacks "$out" "✓ scaffolded: SESSION.md"
+  assert_file_contains "$dir/.spectacular/requests/req-sess/SESSION.md" "MARKER-KEEP-ME"
+
+  rm -rf "$dir"
+}
+
 echo "=== mutator.test.sh ==="
 scenario_1_touch_basic
 scenario_1b_touch_path_suggestions
@@ -445,6 +474,7 @@ scenario_8_new_build_id
 scenario_8b_new_build_id_ledger_drift
 scenario_9_doctor_precondition_archive
 scenario_10_doctor_precondition_clean_passes
+scenario_11_advance_scaffolds_session
 
 echo ""
 echo "Results: ${pass_count} passed, ${fail_count} failed"

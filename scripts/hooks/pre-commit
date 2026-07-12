@@ -7,11 +7,12 @@ set -uo pipefail
 CHECK_ONLY=false
 [[ "${1:-}" == "--check" ]] && CHECK_ONLY=true
 
+# Anchor all paths to repo root so the hook works regardless of CWD
 ROOT="$(git rev-parse --show-toplevel)"
 CONFIG="$ROOT/scripts/hooks/.git-guard.json"
-VERSIONS=()
+VERSIONS=()   # parallel arrays
 LABELS=()
-TYPES=()
+TYPES=()      # "version" | "tag"
 
 collect() {
   local label="$1" version="$2" type="${3:-version}"
@@ -20,6 +21,9 @@ collect() {
   TYPES+=("$type")
 }
 
+# semver_max <a> <b> — returns the higher of two semver strings
+# Uses gsort -V on macOS (coreutils), falls back to sort -V on Linux.
+# Pure-bash fallback for environments where neither supports -V correctly.
 semver_max() {
   local a="$1" b="$2"
   local sortcmd
@@ -28,9 +32,11 @@ semver_max() {
   else
     sortcmd="sort"
   fi
+  # Validate that version sort actually orders 1.9 < 1.10 correctly
   if printf '1.9.0\n1.10.0\n' | "$sortcmd" -V | tail -1 | grep -q '1.10.0'; then
     printf '%s\n%s' "$a" "$b" | "$sortcmd" -V | tail -1
   else
+    # Pure-bash semver compare fallback
     local IFS=.
     local -a av=($a) bv=($b)
     for i in 0 1 2; do
@@ -38,15 +44,77 @@ semver_max() {
       if (( ai > bi )); then echo "$a"; return; fi
       if (( bi > ai )); then echo "$b"; return; fi
     done
-    echo "$a"
+    echo "$a"  # equal
   fi
 }
 
+get_skill_version() {
+  local file="$1"
+  [ -f "$file" ] || return 1
+
+  # Extract frontmatter (lines between first --- and second ---)
+  local fm
+  fm=$(awk '
+    BEGIN { show=0; count=0 }
+    /^---$/ {
+      count++
+      if (count == 1) { show=1; next }
+      if (count == 2) { show=0; exit }
+    }
+    { if (show) print }
+  ' "$file")
+
+  # Detect if both formats exist
+  local has_top=0
+  local has_meta=0
+  local top_val=""
+  local meta_val=""
+
+  # Read top-level version
+  top_val=$(echo "$fm" | awk '
+    /^[[:space:]]*version:[[:space:]]*/ {
+      sub(/^[[:space:]]*version:[[:space:]]*/, "")
+      gsub(/^["\x27]|["\x27]$/, "")
+      print $0
+      exit
+    }
+  ')
+  [ -n "$top_val" ] && has_top=1
+
+  # Read metadata.version
+  meta_val=$(echo "$fm" | awk '
+    BEGIN { in_metadata=0; ver="" }
+    /^metadata:[[:space:]]*$/ { in_metadata=1; next }
+    /^[a-zA-Z0-9_-]+:[[:space:]]*/ { if ($0 !~ /^metadata:/) in_metadata=0 }
+    in_metadata && /^[[:space:]]+version:[[:space:]]*/ {
+      sub(/^[[:space:]]+version:[[:space:]]*/, "")
+      gsub(/^["\x27]|["\x27]$/, "")
+      ver=$0
+      exit
+    }
+    END { print ver }
+  ')
+  [ -n "$meta_val" ] && has_meta=1
+
+  if [ "$has_top" -eq 1 ] && [ "$has_meta" -eq 1 ]; then
+    echo "  [CONFLICT] $file has both top-level version ($top_val) and metadata.version ($meta_val). metadata.version wins." >&2
+    echo "$meta_val"
+  elif [ "$has_meta" -eq 1 ]; then
+    echo "$meta_val"
+  else
+    echo "$top_val"
+  fi
+}
+
+# ── Collect all version strings ───────────────────────────────────────────────
+
+# .claude-plugin/plugin.json
 if [ -f "$ROOT/.claude-plugin/plugin.json" ]; then
   v=$(jq -r '.version // empty' "$ROOT/.claude-plugin/plugin.json" 2>/dev/null)
   [ -n "$v" ] && collect ".claude-plugin/plugin.json" "$v"
 fi
 
+# .claude-plugin/marketplace.json (metadata.version + plugins[0].version)
 if [ -f "$ROOT/.claude-plugin/marketplace.json" ]; then
   v=$(jq -r '.metadata.version // empty' "$ROOT/.claude-plugin/marketplace.json" 2>/dev/null)
   [ -n "$v" ] && collect ".claude-plugin/marketplace.json (metadata)" "$v"
@@ -54,38 +122,55 @@ if [ -f "$ROOT/.claude-plugin/marketplace.json" ]; then
   [ -n "$v" ] && collect ".claude-plugin/marketplace.json (plugins[0])" "$v"
 fi
 
+# .codex-plugin/plugin.json
 if [ -f "$ROOT/.codex-plugin/plugin.json" ]; then
   v=$(jq -r '.version // empty' "$ROOT/.codex-plugin/plugin.json" 2>/dev/null)
   [ -n "$v" ] && collect ".codex-plugin/plugin.json" "$v"
 fi
 
+# README.md badge
 if [ -f "$ROOT/README.md" ]; then
   v=$(grep -oE 'version-[0-9]+\.[0-9]+\.[0-9]+' "$ROOT/README.md" | head -1 | sed 's/version-//')
   [ -n "$v" ] && collect "README.md badge" "$v"
 fi
 
+# CHANGELOG.md top entry
 if [ -f "$ROOT/CHANGELOG.md" ]; then
   v=$(grep -oE '^\#\# \[[0-9]+\.[0-9]+\.[0-9]+\]' "$ROOT/CHANGELOG.md" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
   [ -n "$v" ] && collect "CHANGELOG.md (top entry)" "$v"
 fi
 
+# Latest git tag (type "tag" — only blocks if tag is ahead of manifests)
 v=$(git -C "$ROOT" tag --sort=-version:refname 2>/dev/null | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -1 | sed 's/^v//')
 [ -n "$v" ] && collect "git tag (latest)" "$v" "tag"
 
+# SKILL.md files — controlled by config
 SKILL_CHECK=$(jq -r '.skill_check // "none"' "$CONFIG" 2>/dev/null || echo "none")
 if [ "$SKILL_CHECK" = "all" ]; then
   for f in "$ROOT"/skills/*/SKILL.md; do
     [ -f "$f" ] || continue
-    v=$(grep -E '^version:' "$f" | head -1 | sed 's/version:[[:space:]]*//')
+    v=$(get_skill_version "$f")
     [ -n "$v" ] && collect "${f#$ROOT/}" "$v"
   done
 elif [ "$SKILL_CHECK" = "selected" ]; then
   while IFS= read -r f; do
     [ -f "$ROOT/$f" ] || continue
-    v=$(grep -E '^version:' "$ROOT/$f" | head -1 | sed 's/version:[[:space:]]*//')
+    v=$(get_skill_version "$ROOT/$f")
     [ -n "$v" ] && collect "$f" "$v"
   done < <(jq -r '.skill_paths[]? // empty' "$CONFIG" 2>/dev/null)
 fi
+
+# CLI constant check — controlled by config
+if [ -f "$CONFIG" ]; then
+  CLI_FILE=$(jq -r '.cli_version.file // empty' "$CONFIG" 2>/dev/null)
+  CLI_VAR=$(jq -r '.cli_version.variable // empty' "$CONFIG" 2>/dev/null)
+  if [ -n "$CLI_FILE" ] && [ -n "$CLI_VAR" ] && [ -f "$ROOT/$CLI_FILE" ]; then
+    v=$(grep -E "^[[:space:]]*${CLI_VAR}=" "$ROOT/$CLI_FILE" | head -1 | cut -d'=' -f2- | sed -E 's/^[[:space:]]*["\x27]?//; s/["\x27]?[[:space:]]*$//')
+    [ -n "$v" ] && collect "$CLI_FILE ($CLI_VAR)" "$v"
+  fi
+fi
+
+# ── Guard: nothing to check ───────────────────────────────────────────────────
 
 if [ ${#VERSIONS[@]} -eq 0 ]; then
   echo ""
@@ -93,6 +178,8 @@ if [ ${#VERSIONS[@]} -eq 0 ]; then
   echo ""
   exit 0
 fi
+
+# ── Find highest version ───────────────────────────────────────────────────────
 
 HIGHEST=""
 for v in "${VERSIONS[@]+"${VERSIONS[@]}"}"; do
@@ -102,6 +189,8 @@ for v in "${VERSIONS[@]+"${VERSIONS[@]}"}"; do
     HIGHEST=$(semver_max "$HIGHEST" "$v")
   fi
 done
+
+# ── Print table ───────────────────────────────────────────────────────────────
 
 DRIFT=0
 echo ""
@@ -114,21 +203,26 @@ for i in "${!LABELS[@]}"; do
   ver="${VERSIONS[$i]}"
   type="${TYPES[$i]}"
   if [ "$type" = "tag" ]; then
+    # Tag may lag (not yet released) — only flag if tag is ahead of manifests
     if [ "$(semver_max "$ver" "$HIGHEST")" = "$ver" ] && [ "$ver" != "$HIGHEST" ]; then
-      mark="✗"; DRIFT=1
+      mark="✗"  # tag is ahead — manifests need updating
+      DRIFT=1
     else
-      mark="✓"
+      mark="✓"  # tag is behind or equal — fine
     fi
   else
     if [ "$ver" = "$HIGHEST" ]; then
       mark="✓"
     else
-      mark="✗"; DRIFT=1
+      mark="✗"
+      DRIFT=1
     fi
   fi
   printf "  %s  %-40s %s\n" "$mark" "$label" "$ver"
 done
 echo ""
+
+# ── Block or pass ─────────────────────────────────────────────────────────────
 
 if [ "$DRIFT" -eq 1 ] && [ "$CHECK_ONLY" = false ]; then
   echo "  version mismatch — commit blocked"

@@ -20,6 +20,8 @@ summary: "Operating policies — the practice layer paired with PRINCIPLES.md"
     - principle: N        (optional — the PRINCIPLES.md § it enforces)
     - severity: block     (block = refuse to proceed | warn = surface + continue)
     - check: <condition>
+    - directive: <one imperative sentence — what the CLI injects at the hook
+      gate; falls back to the principle title when absent>
     <prose: rationale + the instruction the skill follows when injected>
 
   Severity is OPT-IN to blocking: a policy blocks ONLY if it explicitly

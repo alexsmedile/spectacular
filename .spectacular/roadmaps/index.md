@@ -51,7 +51,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b28 | self-healing-optimization | Journey-audit self-healing pass — SKILL.md routing-only trim, coherence fixes, 2-of-6 extraction | themed | v1.33.0 | shipped |
 | b29 | cli-gate-ergonomics | Policy directives at gates (tiered output, --full), advance scaffolds SESSION.md, doctor findings block | themed | v1.34.0 | shipped |
 | b30 | verify-split | verify.md walk-only + verify-authoring.md (2-of-6 canonical); TASKS template `- [~]` deferred rows | themed | v1.34.0 | shipped |
-| b31 | review-sweep | Review-sweep protocol: request-auditor agent + `spectacular sweep` + VERIFY-LOG against:-stamps/pending-reverify | themed | v1.35.0 | active |
+| b31 | review-sweep | Review-sweep protocol: request-auditor agent + `spectacular sweep` + VERIFY-LOG against:-stamps/pending-reverify | themed | v1.35.0 | shipped |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

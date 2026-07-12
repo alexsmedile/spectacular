@@ -1,5 +1,5 @@
 ---
-status: verified
+status: archived
 priority: high
 owner: alex
 updated: 2026-07-12
@@ -7,6 +7,7 @@ build: b31
 summary: "Native review-sweep protocol: request-auditor agent (small/fast model) cross-checks review + ticked-active requests (claims vs code/tests/evidence), quick-checks planned requests for overlap with already-built work, appends sweep entries to VERIFY-LOG, hands off via SESSION.md; VERIFY-LOG evidence rows gain against:-stamps + pending-reverify semantics with doctor warnings."
 related:
   - PRD.md
+archived: 2026-07-12
 ---
 
 # Plan — review-sweep

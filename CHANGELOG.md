@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.35.0] — 2026-07-12
+
 ### Review sweep (b31) — audit the fleet, promote nothing
 
 - **`spectacular sweep [<slug>]`** — read-only fleet audit as the repeatable middle layer between

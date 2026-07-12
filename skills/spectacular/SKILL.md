@@ -160,14 +160,14 @@ Packs add a `new <name>` verb (user-scope, identified by name):
 
 | Decision point | Route to |
 |---|---|
-| Scaffolding a new request (`spectacular new`) | → **[[plan-rules]] § 2-of-6 rule** (compact table; canonical: verify.md Part 2). Default: no VERIFY.md — `### Verification` group in TASKS.md or PLAN § Validation instead. |
+| Scaffolding a new request (`spectacular new`) | → **[[plan-rules]] § 2-of-6 rule** (compact table; canonical: [[verify-authoring]]). Default: no VERIFY.md — `### Verification` group in TASKS.md or PLAN § Validation instead. |
 | Grilling/refining a PLAN.md | → **[[plan-rules]] § 2-of-6 rule** — confirm result; ask user if VERIFY.md needed |
 | Moving request `active → review` | → `lifecycle.md` § Verification artifact detection — pick artifact (VERIFY.md > TASKS Verification > PLAN Validation) |
-| Moving request `review → verified` | → **`verify.md` Part 1** — the interactive validation walk, record to VERIFY-LOG, gate the transition. **Never skip.** |
-| `spectacular verify <slug>` | → **`verify.md` Part 1** — the validation walk (skill-only; CLI redirects). |
-| Automating a shipped scenario | → `verify.md` Part 3 — when to author `tests/verify/<slug>.test.sh`. |
+| Moving request `review → verified` | → **`verify.md`** — the interactive validation walk (walk-only since b30), record to VERIFY-LOG, gate the transition. **Never skip.** |
+| `spectacular verify <slug>` | → **`verify.md`** — the validation walk (skill-only; CLI redirects). |
+| Automating a shipped scenario | → `verify-authoring.md` § Promoting checks to scripts — when to author `tests/verify/<slug>.test.sh`. |
 
-Verification always runs against *some* artifact — "VERIFY.md is opt-in" means the *file*, never the act; the full doctrine lives in `verify.md` § "Verification always happens" and loads with the walk.
+Verification always runs against *some* artifact — "VERIFY.md is opt-in" means the *file*, never the act; the full doctrine lives in `verify-authoring.md` § "Verification always happens".
 
 ---
 

@@ -27,6 +27,8 @@ Three checkbox states, all **flush-left** (no leading indent):
 | `- [x]` | done | yes — numerator + denominator |
 | `- [~]` | deferred | shown separately (`5/8 (+1 deferred)`), excluded from the open/done split |
 
+**`## v2 (deferred)` items scaffold and stay as `- [~]` until promoted to v1** — an open `- [ ]` box in v2 reads as unfinished work and skews the progress card (b28 dogfood finding).
+
 **Indented `  - [ ]` sub-bullets are allowed** — as a nested acceptance checklist
 under a parent task, *or* as **decomposition checkpoints** when an orchestrator breaks
 a large multi-phase milestone into sequential sub-steps ([[build-workflow]] B2).

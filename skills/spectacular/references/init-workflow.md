@@ -193,5 +193,5 @@ Smart-init ships with a Bash test harness at `tests/cli/init.test.sh` covering a
 
 - [[doc-index]] — registry the kit triggers-docs entries map into
 - [[kits-contract]] — kit extension schema (adds-slots, modifies-slots, triggers-docs)
-- [[verify]] — when VERIFY.md is justified for a CLI change like smart-init
+- [[verify-authoring]] — when VERIFY.md is justified for a CLI change like smart-init
 - [[lifecycle]] — what happens to a workspace after init (request lifecycle, archival)

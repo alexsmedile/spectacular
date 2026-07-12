@@ -41,5 +41,5 @@ related:
 
 ## v2 (deferred)
 
-- [ ] <Deferred task>
-- [ ] <Deferred task>
+- [~] <Deferred task>
+- [~] <Deferred task>

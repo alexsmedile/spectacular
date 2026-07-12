@@ -7,6 +7,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Verify split (b30) — the verified gate loads only walk content
+
+- **`verify.md` is walk-only** (24.9KB → 14.0KB): the `review → verified` walk — check kinds,
+  walk loop, recording, coherence pass, gate, retrospective, VERIFY-LOG shape. New
+  **`verify-authoring.md`** carries the authoring half: the 2-of-6 rule (canonical source),
+  fold patterns, standalone VERIFY.md shape, and promoting checks to `tests/verify/` scripts.
+  All 2-of-6 links re-pointed (SKILL.md, lifecycle ×3, init-workflow, new-request, plan-rules,
+  policy-injection, docs/commands); `doctor links` clean.
+- **TASKS template v2 rows scaffold as `- [~]`** (deferred) instead of `- [ ]` (open), so the
+  status card never counts deferred items as unfinished work; `tasks-rules.md` states the rule.
+
 ### CLI gate ergonomics (b29) — the policy gate speaks practice, not theory
 
 The b28 dogfood run showed the policy gate injecting ~90-word principle paragraphs (the theory

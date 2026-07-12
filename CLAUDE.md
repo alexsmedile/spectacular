@@ -120,7 +120,8 @@ Reference docs in `skills/spectacular/references/` are loaded *on demand*:
 | `pack-rules.md` | Convention-pack-specific grill rules — slot prompts, source-ingestion (`--from`), reserved pack-ids |
 | `kits-contract.md` | Kit extension schema: adds-slots, modifies-slots, triggers-docs |
 | `packs-contract.md` | Convention-pack schema: 6 rule categories, 4-tier scope precedence, modular-pack v2 sketch |
-| `verify.md` | Single verification reference (v1.20.0): Part 1 the interactive walk · Part 2 the 2-of-6 rule (was `verification.md`) · Part 3 promoting checks to scripts (was `verify-tests.md`) |
+| `verify.md` | The interactive validation walk — walk-only runtime core since b30 (v1.20.0 had merged three docs; authoring half split back out) |
+| `verify-authoring.md` | Authoring-time verification: the 2-of-6 rule (canonical), fold patterns, VERIFY.md shape, promoting checks to `tests/verify/` scripts (b30) |
 | `doctor.md` | Substrate self-check spec — areas, severity model, repair flow (CLI mechanical + skill judgment) |
 
 ## Key Conventions

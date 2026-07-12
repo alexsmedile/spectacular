@@ -145,9 +145,9 @@ If TASKS.md has groupings, those groupings should reference the slot-3 milestone
 
 ## The 2-of-6 rule (VERIFY.md decision at scaffold/grill time)
 
-> Compact copy for scaffold/grill journeys — canonical source: `verify.md` Part 2 ("The 2-of-6
-> rule"), which loads in full only for the `review → verified` walk. If this table and verify.md
-> ever disagree, verify.md wins.
+> Compact copy for scaffold/grill journeys — canonical source: `verify-authoring.md` ("The 2-of-6
+> rule"; authoring-time doc, split from verify.md in b30). If this table and verify-authoring.md
+> ever disagree, verify-authoring.md wins.
 
 Scaffold a standalone `VERIFY.md` when **at least two** are true:
 

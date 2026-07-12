@@ -99,4 +99,4 @@ Enforcement is **skill-side + doctor**, not `hooks.json`. This keeps policies wo
 - [policies-contract.md](policies-contract.md) — POLICY.md structure + policy anatomy + the 9 hooks
 - [policy-rules.md](policy-rules.md) — doc-verb dispatch (grill/refine/review) for POLICY.md
 - [lifecycle.md](lifecycle.md) — the two spine transitions that consult policies
-- [verify.md](verify.md) — the `verification-present` policy's home phase (Part 2, the 2-of-6 rule)
+- [verify.md](verify.md) — the walk where `verification-present` fires; [verify-authoring.md](verify-authoring.md) — the 2-of-6 rule deciding which artifact carries the checks

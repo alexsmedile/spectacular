@@ -94,6 +94,12 @@ Agents load only what the current task needs (planning loads PRD + PRINCIPLES + 
 
 State lives in `PLAN.md` frontmatter. The skill reads it on every invocation and surfaces the highest-priority next action. When all tasks are checked, it proposes moving to `review`. When the checklist passes, it proposes `archived` — and offers to update `specs/index.md` and any affected capability specs.
 
+Three guards keep the spine honest:
+
+- **Policy gates** — every transition injects that work-phase's policies from `POLICY.md` (nine `@`-hooks), each led by a one-sentence directive; `block` policies refuse the move, `warn` policies advise.
+- **The verify walk** — `review → verified` only happens through an interactive walk of the request's checks (each verified by its own authority: a command's exit code, an assertion, a judgment, or your evidence), recorded to an append-only `VERIFY-LOG.md` with `against:`-stamps so old evidence is never mistaken for current proof.
+- **The sweep** *(v1.35.0)* — `spectacular sweep` audits the whole fleet read-only: a small fast `request-auditor` agent per request cross-checks claimed state vs actual code, tests, and evidence, and flags planned work that duplicates something already shipped. It feeds the walk; it never promotes.
+
 ---
 
 ### The workspace
@@ -141,6 +147,8 @@ That's the whole idea. The full layout, once a project fills in:
 └── archive/            # completed requests (never deleted)
 ```
 
+The on-demand folders (`memories/`, `decisions/`, `sessions/`, `feedbacks/`, `ideas/`, `audits/`, `fixes/`) all share one **soft-DB** shape — an `index.md` catalog plus flat entry files — so agents can grep any collection the same way.
+
 A typical coding project (`spectacular init --kit coding`) scaffolds the always-set + `STACK.md` + `ARCHITECTURE.md`. A doc-only or research project (`spectacular init --kit research` or `--kit blank`) gets only the always-set. Smart-init never overwrites existing files — re-running is always safe.
 
 `.spectacular.local/` — personal overrides, always gitignored.
@@ -158,7 +166,7 @@ The fleet is a **discover → apply → review → verify** grid across the two 
 | **fix a bug** | `debug-investigator` — where + why | `debug-fixer` — a closed fix → diff | `code-reviewer` — a diff, 5 lenses |
 | **build a milestone** | `repo-explorer` — map the subsystem | `spec-builder` — a closed milestone → diff | `spec-reviewer` — a spec vs. the code |
 
-Plus **`debug-researcher`** (is this a known *external* bug?) and **`test-verifier`** (independently run a check or write a test → honest pass/fail). The two reviewers are read-only and never fix what they find; `code-reviewer` guards code, `spec-reviewer` guards the spec files — checking each claim in `specs/` still matches what the code actually does.
+Plus **`debug-researcher`** (is this a known *external* bug?), **`test-verifier`** (independently run a check or write a test → honest pass/fail), and **`request-auditor`** *(v1.35.0)* — the sweep's small-model auditor: one request's claimed state vs its actual evidence. The two reviewers are read-only and never fix what they find; `code-reviewer` guards code, `spec-reviewer` guards the spec files — checking each claim in `specs/` still matches what the code actually does.
 
 Agent definitions live in `agents/` at the repo root (the source of truth); the skill dispatches them through its bug- and build-workflow arcs, always as **optional, judgment-gated** steps — a trivial change never pays for a review it doesn't need.
 
@@ -199,7 +207,7 @@ Agent definitions live in `agents/` at the repo root (the source of truth); the 
 ## CLI reference
 
 ```
-spectacular init                              # always-set + blank kit (5 files only)
+spectacular init                              # always-set + blank kit (6 files only)
 spectacular init -i                           # interactive — kit menu + per-doc prompts
 spectacular init --kit coding                 # always-set + coding kit's STACK + ARCHITECTURE
 spectacular init --with principles,roadmap   # additive — those two on top of always-set

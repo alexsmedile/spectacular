@@ -209,6 +209,10 @@ CLI verbs (mutate workspace):
   touch <file>           Bump frontmatter 'updated:' to today
   feedback <sub>         Prototyping-mode human-feedback acquisition (new|list|resolve|archive)
   idea <sub>             Thinking-scratchpad idea management (new|list|promote)
+  audit <sub>            Bug-diagnosis scratchpad entries (new|list|resolve [--into-fix])
+  fix <sub>              Verified-fix log (new|list; --signature, --verified-by, --debug-job)
+  decide "<text>"        Record a project decision entry
+  session start|end      Open/close a work session entry
 
 Read verbs (v1.8.0+ — collapse multi-step inspection to one call):
   requests [--active]    List requests (--status, --since, --limit, --json)
@@ -222,10 +226,16 @@ Read verbs (v1.8.0+ — collapse multi-step inspection to one call):
   summary                One-page workspace overview
   progress <slug>        Milestone tick rate for a request
   paths                  Conventional paths as JSON
+  roadmap                Build-id ledger + version mapping
+  policy [@hook|<id>]    Policies for a work-phase hook (--principle N, --full, --json)
+  links [<slug>]         Cross-request link graph (--json, --all)
 
 Skill verbs (run via /spectacular in your AI agent):
   status [--against-latest|--since <date>]    Briefing of project state
   remember               Write an operational lesson to .spectacular/memories/
+  verify <slug>          Validation walk — checks by kind, records VERIFY-LOG, gates review→verified
+  sweep [<slug>]         Read-only fleet audit via request-auditor agents (never promotes)
+  imagine <slug>         Imagination-backed planning (vision/ fragments → draft PLAN)
 
 Top-level:
   -v, --version          Print version and exit

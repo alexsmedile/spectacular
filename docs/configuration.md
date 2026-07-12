@@ -77,7 +77,7 @@ The default `name` is inferred from the current directory when you run `spectacu
 
 ## `workspace_schema` + provenance *(v1.26.3+)*
 
-Three top-level keys track *what version of Spectacular* built and touched this workspace — distinct from the project's own release version (which lives in `ROADMAP.md` / git tags).
+Three top-level keys track *what version of Spectacular* built and touched this workspace — distinct from the project's own release version (which lives in the roadmap ledger (`roadmaps/index.md`; legacy `ROADMAP.md`) / git tags).
 
 ```yaml
 workspace_schema: "0.6"        # structural layout version — migrations bump this

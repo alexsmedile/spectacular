@@ -414,6 +414,51 @@ spectacular sweep add-team-billing
 
 **Skill only** — at the terminal the CLI prints a redirect. See [review-sweep.md](../skills/spectacular/references/review-sweep.md).
 
+### `spectacular audit` *(v1.25.0+)*
+
+Bug-diagnosis scratchpad — the soft-DB collection for investigations *before* a fix is planned. Entries carry the bug-fixing skeleton (problem → intended behavior → root cause → fix → success criteria).
+
+```text
+spectacular audit new "cards render stale data"
+spectacular audit list
+spectacular audit resolve A3 --disposition "requests/fix-stale-cards"
+spectacular audit resolve A3 --into-fix          # graduate the audit into a fixes/ entry
+```
+
+### `spectacular fix` *(v1.25.0+)*
+
+Verified-fix log — written only once a bug is resolved **and** verified. Adds a searchable **Signature** and **Verified by**; `--debug-job <slug>` back-links a `debugs/` trace folder.
+
+```text
+spectacular fix new "debounce the refresh" --signature "stale card data" --verified-by "tests/cli/cards.test.sh"
+spectacular fix list
+```
+
+Check `fixes/` **first** when a new bug appears — that's the self-learning loop ([bug-workflow.md](../skills/spectacular/references/bug-workflow.md)).
+
+### `spectacular imagine` / `spectacular vision` *(v1.15.0+)*
+
+Imagination-backed planning: `imagine <slug>` (skill-side; CLI redirects) renders ASCII artifacts (stories/ui/arch) into the request's `vision/` folder, collects per-fragment reactions, then derives a draft PLAN. `vision add <story|ui|arch> <name> [--slug --caption]` adds a fragment file mechanically. See [vision-rules.md](../skills/spectacular/references/vision-rules.md).
+
+### Read verbs *(v1.8.0+)*
+
+Read-only inspection verbs that collapse multi-step agent workflows into one deterministic call. Universal flags: `--status`, `--since <Nd|Nh|Nw>`, `--limit N`, `--all`, `--json`. Skim-by-default; `--full` for raw content.
+
+| Verb | Returns |
+|---|---|
+| `summary` | One-page workspace overview |
+| `requests [--active]` / `request <slug>` | Fleet list / one request's detail |
+| `decisions` / `decision <slug>` | Decision entries |
+| `memories` / `memory <slug>` | Memory entries |
+| `sessions [show <slug>]` | Session log |
+| `show <doctype>` | Dump a canonical doc (prd, spec, principles…) |
+| `progress <slug>` | Milestone tick rate |
+| `links [<slug>]` | Cross-request link graph |
+| `paths` | Conventional paths as JSON |
+| `roadmap` | Build-id ledger + version mapping |
+
+Cold-start pattern: `summary → requests --active → request <slug>`.
+
 ### `spectacular prd` / `spectacular prd grill`
 
 Walks the user through the **8-slot canonical PRD** (Vision / Problem / Target users / Deliverable / Goals & success criteria / Non-goals / Constraints / First milestone), one question at a time, with kit-aware prompts.
@@ -438,7 +483,7 @@ Runs the PRD quality gate — 10 checks total (8 base + 2 kit-aware). Reports a 
 
 To keep operation deterministic, Spectacular uses a clear division of labor:
 
-- **CLI mutator verbs** (run in the terminal: `init`, `doctor`, `pack`, `migrate`, `new`, `advance`, `undo`, `next`, `snapshot`, `archive`, `touch`, `decide`, `remember`, `session`, `feedback`, `idea`):
+- **CLI mutator verbs** (run in the terminal: `init`, `doctor`, `pack`, `migrate`, `new`, `advance`, `undo`, `next`, `snapshot`, `archive`, `touch`, `decide`, `remember`, `session`, `feedback`, `idea`, `audit`, `fix`):
   - These commands run locally in your shell and handle mechanical scaffolding, file moves, and structured data entry edits.
   - Some commands (like `touch` and `snapshot`) are **path-based** and expect literal, cwd-relative file paths. They do not resolve request slugs automatically.
   - Other commands (like `advance` and `archive`) are **slug-based** and accept request slugs directly.

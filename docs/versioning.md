@@ -63,7 +63,7 @@ Default to silent, correct increments. **Ask the user for an explicit target ver
    change (removed/renamed verb or flag, altered invocation, file-contract break).
    A MAJOR is expensive and often a deliberate moment, so confirm the target
    (`2.0.0`?) rather than auto-bumping.
-2. **The roadmap pins a milestone number** — if `ROADMAP.md` declares a marketing
+2. **The roadmap pins a milestone number** — if the roadmap ledger (`roadmaps/index.md`; legacy `ROADMAP.md`) declares a marketing
    milestone (a deliberate `1.0`, `2.0`, etc. with stated goals), and the work in
    flight is what closes that milestone, confirm whether to land it *as* that
    milestone version vs. a routine increment. See below.
@@ -75,7 +75,7 @@ For MINOR and PATCH with no roadmap milestone in play: **don't ask, just increme
 ## The roadmap ledger — how builds map to versions
 
 Before a change set *becomes* a release, it lives in the **roadmap ledger** — a table
-at the top of `.spectacular/roadmaps/index.md` that is the **single source of truth for which
+at the top of `.spectacular/specs/roadmap.md` that is the **single source of truth for which
 build ships in which version.** Understanding it is how you read "what's planned for
 v1.x" without grepping.
 
@@ -275,5 +275,5 @@ contract.
 
 - [commands.md](commands.md) — the CLI/skill surface that MAJOR protects
 - [configuration.md](configuration.md) — `config.yaml` schema (a file-contract surface)
-- `.spectacular/roadmaps/index.md` — where optional milestone narratives live
+- `.spectacular/specs/roadmap.md` — where optional milestone narratives live
 - `CHANGELOG.md` — the human-readable record of every version

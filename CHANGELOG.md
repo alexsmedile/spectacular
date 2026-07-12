@@ -7,6 +7,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Documentation
+
+- Post-release currency audit (two read-only auditors): corrected the policy-count claim in
+  `specs/index.md` (23 defaults, 6 block / 17 warn), re-pointed `ARCHITECTURE.md`'s 2-of-6 link to
+  `verify-authoring.md`, fixed `.spectacular/AGENTS.md`'s dead prd-grill/refine/review references.
+  `docs/commands.md` gains the missing `audit` / `fix` / `imagine`+`vision` / read-verbs sections;
+  CLI `--help` now lists `audit`, `fix`, `decide`, `session`, `roadmap`, `policy`, `links`,
+  `verify`, `sweep`, `imagine`. README: lifecycle guards (policy gates / verify walk / sweep),
+  `request-auditor` in the fleet, soft-DB collection note, always-set count fixed to 6. Roadmap
+  ledger canonical path (`roadmaps/index.md`) named in versioning/configuration/visual-conventions.
+
 ## [1.35.0] — 2026-07-12
 
 ### Review sweep (b31) — audit the fleet, promote nothing

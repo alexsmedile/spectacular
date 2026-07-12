@@ -90,7 +90,7 @@ Bar width is 10 fill characters; each status row is omitted when its count is 0.
 
 **Tier legend:**
 
-| Tier in ROADMAP.md | Label | Meaning |
+| Tier in the roadmap ledger | Label | Meaning |
 |---|---|---|
 | `full` | Runway (near-term) | Detailed, near-term, planned |
 | `themed` | Major (mid-term) | Themed, mid-term |

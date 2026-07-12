@@ -445,7 +445,7 @@ Agents rarely reason about failure modes unless explicitly prompted — this fil
 
 ## VERIFY.md (on demand)
 
-**On-demand only.** The skill proposes creation when the request hits the **2-of-6 rule** (see [[verify]] Part 2 for full text):
+**On-demand only.** The skill proposes creation when the request hits the **2-of-6 rule** (see [[verify-authoring]] for full text):
 
 1. User-visible change
 2. High reversibility cost

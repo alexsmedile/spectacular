@@ -47,7 +47,7 @@ Load only what the task needs. Don't load the entire repository.
 | Task type | Load |
 |---|---|
 | Planning / design | `PRD.md`, `PRINCIPLES.md`, `decisions/index.md` |
-| Refining intent / writing a PRD | `PRD.md`, skill references `prd-grill.md` / `prd-refine.md` / `prd-review.md` |
+| Refining intent / writing a PRD | `PRD.md`, skill references `grill.md` / `refine.md` / `review.md` + `prd-rules.md` |
 | Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `requests/<slug>/TASKS.md`, `specs/index.md`, relevant `specs/<capability>.md` |
 | Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `specs/<capability>.md`, `requests/<slug>/RISKS.md` |
 | Onboarding cold | `PRD.md`, `ARCHITECTURE.md`, this file |

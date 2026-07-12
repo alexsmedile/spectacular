@@ -1,6 +1,6 @@
 {
   "name": "spectacular",
-  "version": "1.33.0",
+  "version": "1.34.0",
   "description": "AI-native operational workspace for software projects. Stop losing context. Start shipping.",
   "skills": "./skills/",
   "hooks": "./hooks/hooks-codex.json",

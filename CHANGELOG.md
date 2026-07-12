@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.34.0] — 2026-07-12
+
 ### Verify split (b30) — the verified gate loads only walk content
 
 - **`verify.md` is walk-only** (24.9KB → 14.0KB): the `review → verified` walk — check kinds,

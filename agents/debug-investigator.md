@@ -50,19 +50,15 @@ answered?). If the brief is too thin to act on, say so in Open questions rather 
 4. **Diagnose — find why.** Establish the mechanism: what actually makes it fail. State it plainly
    enough that the orchestrator can plan a fix without re-deriving it. Prefer root cause over
    surface symptom.
-5. **Write your trace artifact, then report.** If the orchestrator gave you a trace path (e.g.
-   `.spectacular/debug/<job>/investigation.json`), write your findings there as JSON (via `Bash`, a
-   `cat > <path>` heredoc) per the `investigation.json` schema in [[debug-trace]] — same fields as
-   the block below. This is *process state*, not the ledger — a trace artifact, not a code change;
-   writing this one JSON file is your only write. You still have no `Edit` tool and change no code.
-   Then emit the block below to the orchestrator. If you established the cause with evidence, say so
-   with confidence. If you couldn't, give ranked hypotheses — honest, most-likely-first — and a
-   REASON for what's still blocking closure. Do **not** invent certainty, and do **not** cross into
-   prescribing the literal edit.
+5. **Report.** Emit the block below to the orchestrator — it persists your findings to the job's
+   trace (`investigation.json`); you write nothing, anywhere. If you established the cause with
+   evidence, say so with confidence. If you couldn't, give ranked hypotheses — honest,
+   most-likely-first — and a REASON for what's still blocking closure. Do **not** invent certainty,
+   and do **not** cross into prescribing the literal edit.
 
 ## Output — findings report
 
-Return exactly this as your **final message** — it *is* the tool result the orchestrator receives and machine-reads (not prose for a human; the orchestrator parses `STATUS` + slots to route). The `investigation.json` you wrote is the durable copy of the same content:
+Return exactly this as your **final message** — it *is* the tool result the orchestrator receives and machine-reads (not prose for a human; the orchestrator parses `STATUS` + slots to route, and persists this block to the job's trace as `investigation.json`):
 
 ```
 STATUS: root-cause-found | hypotheses-only

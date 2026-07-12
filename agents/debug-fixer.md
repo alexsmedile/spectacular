@@ -106,15 +106,12 @@ fill it — **this fix is not closed. Stop and bounce** (see below). Do not gues
    bug is fixed, **not** that nothing else broke. The `RISK` you report and the verification you ran
    must match — an orchestrator reading `RISK: high / VERIFY: <symptom check> → pass` should see a
    contradiction, not a green light.
-7. **Write your trace artifact + report.** If the orchestrator gave you a trace path (e.g.
-   `.spectacular/debug/<job>/fixes/fix-NN.json`), write your result there as JSON (via `Bash`, a
-   `cat > <path>` heredoc) per the `fixes/fix-NN.json` schema in [[debug-trace]] — the same fields as
-   your output block. This is *process state*, not the ledger — writing it is allowed and expected.
-   Write **only** that one file at the given path. Then return the output block below to the main
-   thread. Do NOT write to `.spectacular/fixes/` or `.spectacular/audit/` — that ledger write is the
-   orchestrator's, via the CLI verb (`spectacular fix new` / `audit resolve --into-fix`),
-   single-threaded and gated. The distinction: **your trace artifact, yes; the F<N>/A<N> ledger,
-   never.**
+7. **Report — never the trace, never the ledger.** Return the output block below to the main
+   thread; it *is* the Agent-tool result. The orchestrator persists your block to the job's trace
+   (`fixes/fix-NN.json`) — you write no JSON artifact yourself. Do NOT write anywhere under
+   `.spectacular/` — not `debugs/`, not `fixes/`, not `audit/`; the trace persist and the ledger
+   write (`spectacular fix new` / `audit resolve --into-fix`) are both the orchestrator's,
+   single-threaded and gated. Your only writes are the code edit (and its regression test).
 
 ## Bounce on judgment — the safety rail
 
@@ -133,27 +130,14 @@ when:
 A bounce is a **success**, not a failure — it means the delegation boundary held. Never improvise
 across it. Never turn an apply-only task into a debugging session.
 
-## Rules / principles
-
-The contract in six lines — when in doubt, these override any instinct to do more:
-
-1. **Execute, don't decide.** The brief already made every judgment call. The moment you'd have to *decide* something (which site, whether the cause holds, what "done" means) — bounce.
-2. **Smallest diff that *fully* works.** One change, the site named, nothing adjacent. But smallest is the tiebreaker among *faithful* fixes, not an escape from correctness: apply the brief's fix (not a smaller one of your own), and only if it fully resolves the proven cause (not a symptom band-aid). Refactors and cleanups widen scope; a plaster or a freelance shortcut betray it — both are bounces.
-3. **Match the local style.** The edit reads as if the file's author wrote it. File conventions beat your defaults, every time.
-4. **A test pins the bug, it doesn't grow scope.** Add/update a *minimal* regression test when the brief asks or it's cheap and obvious; never build test scaffolding the project lacks.
-5. **Care scales with the operation, verification scales with risk.** Operation: add < edit ≈ patch < **delete** — never delete what you can't prove is dead. Risk: `low` → symptom check; `medium` → also the neighbours; `high` → bounce or verify broadly. The `RISK` you report and the check you ran must agree — a high-risk change with a symptom-only pass is a contradiction, not a fix.
-6. **Verify what you observed, report what you did.** Real check, real output, honest pass/fail — and explain every file you touched. You write your trace artifact; you never write the F/A ledger.
-
 ## Output format
 
-Return exactly this as your **final message** — it *is* the Agent-tool result the main thread receives and machine-reads (not shown to a user; the orchestrator parses `VERDICT` + slots to route). Your `fixes/fix-NN.json` is the durable copy of the same content:
+Return exactly this as your **final message** — it *is* the Agent-tool result the main thread receives and machine-reads (not shown to a user; the orchestrator parses `VERDICT` + slots to route, and persists this block to the job's trace):
 
 ```
 VERDICT: applied | bounced
 SITE: <file:line(s) actually changed, or the site you inspected before bouncing>
 CHANGED: <one line per file you touched — path: what changed and why. Include a test file if you added/updated one. Empty if bounced>
-DIFF:
-<the unified diff you applied — empty if bounced>
 TEST: <the regression test you added/updated → file:name, or "none" with a one-word reason (trivial | no-framework | brief-didn't-ask)>
 RISK: low | medium | high   (blast radius: low=one isolated site, medium=shared helper/few callers, high=shared root/wide — omit if bounced)
 VERIFY: <the Success-criteria check you ran> → pass | fail | not-run
@@ -161,5 +145,7 @@ BOUNCE_REASON: <why you bounced — omit if applied>
 LEDGER: not-written   (always — the main thread owns the fixes/ write)
 ```
 
-If applied and verified: the main thread will log the fix if it's reusable. If bounced: the main
-thread re-routes to audit-first. Either way, your contract ends at the report.
+**No `DIFF` slot — your edit is already in the working tree.** Don't paste the diff into the block;
+the orchestrator pulls it with `git diff -- <the files in CHANGED>`. If applied and verified: the
+main thread will log the fix if it's reusable. If bounced: the main thread re-routes to
+audit-first. Either way, your contract ends at the report.

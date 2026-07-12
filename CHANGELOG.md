@@ -7,6 +7,51 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Dispatch token efficiency
+
+Agent dispatch was effective but token-heavy: the same content traveled multiple times per
+dispatch (the diff in the return block + on disk, trace JSON written twice by every fleet agent),
+every fan-out sibling re-derived the repo's conventions, and the two workflow references loaded
+~18k tokens of doctrine prose into the main context before the first dispatch. This release cuts
+every one of those costs without changing the fleet's invariants (closed briefs, bounce rail,
+single-threaded ledger).
+
+### Added
+
+- **`build-workflow-doctrine.md` + `bug-workflow-doctrine.md`** — the *why* behind each workflow's
+  gates (rationale, failure modes, the relation-to-each-other table), split out of the runtime
+  docs. Loaded only when a routing call is uncertain or when editing the workflows — never on
+  routine dispatch. Registered in `doc-index.md`, `SKILL.md` routing, and `CLAUDE.md`.
+- **Conventions capsule in dispatch briefs.** Every `spec-builder` brief now carries a ~5-line
+  capsule in its Constraints slot (test harness + run command, naming/error idiom, the precedent
+  file to mirror) so N fanned-out builders don't each re-read STACK/PRINCIPLES/sibling patterns;
+  builders spot-check the capsule instead of re-deriving it. Fix briefs that include a test carry
+  a one-line harness note.
+
+### Changed
+
+- **Agent return blocks no longer carry the unified diff** (`spec-builder`, `debug-fixer` — the
+  `DIFF:` slot is removed). The edits are already in the working tree; the orchestrator pulls them
+  selectively with `git diff -- <files in CHANGED>`, guided by its critical-check plan, instead of
+  paying for a milestone-sized diff as agent output *and* main-context tool result *and* a re-read.
+  Well-formed checks in both workflows now key on a non-empty `CHANGED` list + a `VERIFY` that ran.
+- **The orchestrator persists all debug-trace artifacts.** Fleet agents (`debug-investigator`,
+  `debug-fixer`, `debug-researcher`) no longer write their own `*.json` leaf via heredoc *and*
+  return the same content as a block — they return only the block, and the orchestrator writes it
+  to the assigned slot when it updates the spine. Halves fleet-agent output for identical data,
+  strengthens the single-writer invariant (agents now write nothing under `.spectacular/`), and
+  makes slot collisions impossible by construction. The `diff` field in `fixes/fix-NN.json` is
+  captured by the orchestrator via `git diff` at collection time. (`debug-trace.md` writer rules,
+  `bug-workflow.md` Step 1c.)
+- **`build-workflow.md` and `bug-workflow.md` rewritten as lean runtime cores** — the arc, the
+  decision tables, the gates, the [join] rule, and the output-routing procedures stay; the
+  rationale moved to the new doctrine docs. Build core ~10k → ~4.5k tokens, bug core ~8.2k → ~4k:
+  roughly **5.5k / 4.2k tokens back on every build / debug session** before any dispatch happens.
+  `debug-trace.md`'s intro essay was compressed (schemas untouched).
+- **Agent contracts trimmed** — the "Rules / principles" recap sections (explicit restatements of
+  each Protocol) removed from `spec-builder` and `debug-fixer`; combined with the contract changes
+  above, ~230 / ~440 tokens lighter per spawn respectively, with no behavioral loss.
+
 ## [1.32.0] — 2026-07-11
 
 ### Build-workflow: routing doctrine, the [join] principle, and a four-phase rewrite

@@ -66,8 +66,10 @@ A stub's rules file therefore only needs its **frontmatter** (the engine's dispa
 |---|---|---|---|
 | `migrations-contract` | reference | `skills/spectacular/references/migrations-contract.md` | — |
 | `migration` | reference | `skills/spectacular/references/migrations/v<from>-to-v<to>.md` | — |
-| `bug-workflow` | reference | `skills/spectacular/references/bug-workflow.md` | ties audit/ + fixes/ into the self-learning loop; loaded on any bug report |
-| `build-workflow` | reference | `skills/spectacular/references/build-workflow.md` | **build-direction orchestrator arc** (mirror of bug-workflow) — assemble a closed milestone brief from the request chain, decide build-inline vs dispatch `spec-builder`, confirm + tick the ledger; routes the optional fleet (`repo-explorer` map-before-plan, `code-reviewer` + `test-verifier` arms-length gates); loaded when implementing a milestone |
+| `bug-workflow` | reference | `skills/spectacular/references/bug-workflow.md` | **runtime core** — ties audit/ + fixes/ into the self-learning loop; loaded on any bug report |
+| `bug-workflow-doctrine` | reference | `skills/spectacular/references/bug-workflow-doctrine.md` | the *why* behind bug-workflow's gates — load only when a routing call is uncertain or when editing the workflow |
+| `build-workflow` | reference | `skills/spectacular/references/build-workflow.md` | **build-direction orchestrator arc, runtime core** (mirror of bug-workflow) — assemble a closed milestone brief from the request chain, decide build-inline vs dispatch `spec-builder`, confirm + tick the ledger; routes the optional fleet (`repo-explorer` map-before-plan, `code-reviewer` + `test-verifier` arms-length gates); loaded when implementing a milestone |
+| `build-workflow-doctrine` | reference | `skills/spectacular/references/build-workflow-doctrine.md` | the *why* behind build-workflow's gates + the relation-to-bug-workflow table — load only when a routing call is uncertain or when editing the workflow |
 | `soft-db-index` | reference | `skills/spectacular/references/soft-db-index.md` | **canonical routing index** for the 7 soft-DB collections — role, purpose, structure, boundary rules |
 
 ## Mode taxonomy

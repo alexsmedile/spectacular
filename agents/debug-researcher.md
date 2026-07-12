@@ -59,13 +59,7 @@ Either path serves the same protocol; the protocol is what matters, not the fetc
 
 ## Output — verdict + citations
 
-**Write your trace artifact first.** If the orchestrator gave you a trace path (e.g.
-`.spectacular/debug/<job>/research/research-NN.json`), write your verdict there as JSON (via `Bash`,
-a `cat > <path>` heredoc) per the `research/research-NN.json` schema in [[debug-trace]] — same fields
-as the block below. Write only that one file; this is *process state*, not the ledger. Then return
-the block to the orchestrator.
-
-Return exactly this as your **final message** — it *is* the Agent-tool result the orchestrator receives and machine-reads (not prose for a human; it parses `VERDICT` + slots to route). The `research/research-NN.json` you wrote is the durable copy:
+Return exactly this as your **final message** — it *is* the Agent-tool result the orchestrator receives and machine-reads (not prose for a human; it parses `VERDICT` + slots to route, and persists this block to the job's trace as `research/research-NN.json` — you write no file yourself):
 
 ```
 VERDICT: known-platform-bug | genuinely-ours | no-strong-match

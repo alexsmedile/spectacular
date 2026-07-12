@@ -1,7 +1,7 @@
 ---
 doc-id: debug-trace
 kind: reference
-summary: "Traceability for a live debug job: one folder per job under .spectacular/debugs/, one JSON artifact per agent turn. Schemas + writer rules. In-flight process state, distinct from the fixes/audit ledger."
+summary: "Traceability for a live debug job: one folder per job under .spectacular/debugs/, one JSON artifact per agent turn — all persisted by the orchestrator from returned blocks. Schemas + the single-writer rule. In-flight process state, distinct from the fixes/audit ledger."
 status: active
 ---
 
@@ -14,39 +14,30 @@ place is `.spectacular/debugs/<job-slug>/`, holding one JSON artifact per agent 
 
 ## debugs/ vs audits/ vs fixes/ — the pipeline and the two summaries it produces
 
-These three are **not competitors** — `debugs/` is the raw pipeline *while a job runs*, and `audits/`
-+ `fixes/` are the two permanent summaries *distilled from it* when the job resolves. Different
-question, different lifetime, different curation:
+`debugs/` is the raw pipeline *while a job runs* (the workbench — tolerates open + messy);
+`audits/` + `fixes/` are the two permanent summaries distilled from it at resolution (the library —
+requires resolved + clean):
 
 | Folder | Answers | Scope | Lifetime | Curation |
 |---|---|---|---|---|
 | **`debugs/<job>/`** | "what's happening **right now** on this live job?" | one in-flight job | **kept as trace** (marked resolved, never pruned) | raw — verbose JSON, per-agent, may be unresolved |
-| **`audits/A<N>.md`** | "what did we find? what was going on?" (the **examination**) | any deep examination, not just bugs | permanent | curated — written only if findings are worth keeping |
-| **`fixes/F<N>.md`** | "have we solved this before?" (the **remedy** / lesson learned) | solved, reusable problems | permanent | curated — written only if reusable |
+| **`audits/A<N>.md`** | "what did we find?" (the **examination**) | any deep examination, not just bugs | permanent | written only if findings are worth keeping |
+| **`fixes/F<N>.md`** | "have we solved this before?" (the **remedy**) | solved, reusable problems | permanent | written only if reusable |
 
-**debugs/ is the workbench; audits/ + fixes/ are the library.** The workbench holds the mess *while
-you work* — 3 Fixer results, a half-finished investigation, jobs still open with no clarity yet.
-audits/ and fixes/ are written **only at resolution**, when clarity exists — that's *why* they're
-separate collections: debugs/ tolerates open + messy; the library requires resolved + clean.
-
-`audit` literally means *examination* (from *audire*, "to hear") — it's broader than debugging; you
-can audit a spec for drift or a dependency, no bug involved. Bug investigation is *one kind* of
-audit. `fixes` is the greppable lesson-learned database — signed, searchable, reused next time.
-
-**The two summaries cross-link, and both link back to the trace:** `audits/A<N>` says "remedied by
-`F4`"; `fixes/F<N>` says "found via `A7`"; both carry `debug_job: <job-slug>` back to the raw trace
-that produced them. The library is the distilled record; debugs/ is the full feed behind it.
+The two summaries cross-link (`A<N>` ↔ `F<N>`) and both carry `debug_job: <job-slug>` back to the
+raw trace that produced them.
 
 ## Trace vs ledger — the write rule
 
 | Layer | Where | Writer | When |
 |---|---|---|---|
-| **Debug trace** | `.spectacular/debugs/<job>/*.json` | **each agent writes its own artifact** | live, as the job runs |
+| **Debug trace** | `.spectacular/debugs/<job>/*.json` | **orchestrator** — persists each agent's returned block | live, as each agent returns |
 | **Ledger** | `fixes/F<N>.md`, `audits/A<N>.md` | **orchestrator only** (CLI verbs) | at resolution, distilled from the trace |
 
-The invariant is **scoped, not broken**: agents write their own *trace* artifact (the block they
-already return), but **never the ledger** — `F<N>`/`A<N>` stay single-writer via `spectacular
-fix new` / `audit new`. All of `.spectacular/` is **committed to git**, so a live job survives a
+The invariant is **total**: agents only *return* their block (the Agent-tool result); the
+orchestrator persists it as the leaf artifact and stays the single writer of both trace and ledger
+— `F<N>`/`A<N>` go through `spectacular fix new` / `audit new`. (Agents writing their own leaf via
+heredoc was the old contract — dropped because it paid the same content twice in agent output.) All of `.spectacular/` is **committed to git**, so a live job survives a
 session loss, is team-visible, and a fresh session can resume from it.
 
 ## Folder layout
@@ -69,10 +60,10 @@ smelled external. Missing `outcome.json` → still in flight.
 
 ## Slot assignment — no collision on fan-out
 
-Each agent writes to **a path the orchestrator gives it in the prompt** — the orchestrator owns
-slot assignment (it knows the job folder and the fan-out count), the agent owns the content write.
-When the orchestrator fans out 3 Fixers it hands each its path: `fixes/fix-01.json`,
-`fixes/fix-02.json`, `fixes/fix-03.json`. No agent picks its own index; no coordination needed.
+The orchestrator owns slot assignment (it knows the job folder and the fan-out count) **and** the
+write: when it fans out 3 Fixers it earmarks `fixes/fix-01.json`, `fixes/fix-02.json`,
+`fixes/fix-03.json`, and as each Fixer's block returns, persists it to that slot. Agents never
+touch the trace folder; collision is impossible by construction.
 
 ## Schemas
 
@@ -117,7 +108,7 @@ apply (not omitted — presence of the key with `null` is explicit).
 - `timeline`: append-only; one entry per agent turn or status change. The audit trail.
 - `outcome`: path to `outcome.json`, or `null` until resolved.
 
-### `investigation.json` — Investigator findings (Investigator writes)
+### `investigation.json` — Investigator findings (orchestrator persists from the returned block)
 
 Mirrors the agent's findings block, one-to-one:
 
@@ -152,7 +143,7 @@ Mirrors the agent's findings block, one-to-one:
 - `ruled_out`: hypotheses **tested and eliminated**, each with the evidence that killed it. Empty array means nothing was eliminated — suspicious for anything beyond a trivial bug. The orchestrator copies these into the `audit/A<N>` entry so no future walk re-opens a dead end (see [[bug-workflow]] § Coming back).
 - `plausible_solutions`: the solution space (approaches + trade-offs) — **never the literal diff**.
 
-### `research/research-NN.json` — Researcher verdict (Researcher writes)
+### `research/research-NN.json` — Researcher verdict (orchestrator persists from the returned block)
 
 ```json
 {
@@ -172,9 +163,9 @@ Mirrors the agent's findings block, one-to-one:
 - `verdict`: `known-platform-bug | genuinely-ours | no-strong-match`.
 - `workaround`: string, or `"none found"`.
 
-### `fixes/fix-NN.json` — Fixer result (Fixer writes)
+### `fixes/fix-NN.json` — Fixer result (orchestrator persists from the returned block)
 
-Mirrors the Fixer's output block:
+Mirrors the Fixer's output block, plus the `diff` the orchestrator captures itself:
 
 ```json
 {
@@ -203,7 +194,9 @@ Mirrors the Fixer's output block:
 
 - `verdict`: `applied | bounced`.
 - `changed`: one entry per file touched — `{file, what}` (the human-readable "explain the change" the diff alone doesn't give). Empty array if bounced.
-- `diff`: the unified diff (empty string if bounced).
+- `diff`: the unified diff — **captured by the orchestrator** via `git diff -- <the files in
+  CHANGED>` at collection time (the Fixer's return block carries no diff; its edit lives in the
+  working tree). Empty string if bounced.
 - `test`: the regression test added/updated (`file:name`), or `"none (<reason>)"` — `trivial | no-framework | brief-didn't-ask`. A test that pins the fixed bug is part of the fix, not scope-widening.
 - `risk`: blast radius of the change — `low` (one site, isolated), `medium` (shared helper, few callers), `high` (shared root, wide blast radius). Feeds the orchestrator's fan-out-vs-inline call and flags what to watch on verify. `null` if bounced.
 - `verify.result`: `pass | fail | not-run`.
@@ -247,8 +240,8 @@ The bridge from trace to permanent ledger:
 
 1. **Open** — orchestrator scaffolds `debugs/<job-slug>/` + writes `job.json` (`status: investigating`
    or `fixing` for a just-fix bug that skips investigation).
-2. **Agents append** — each agent writes its artifact to the path the orchestrator assigned; the
-   orchestrator appends a `timeline` entry + updates `status` + the `artifacts` index in `job.json`.
+2. **Returns append** — as each agent returns, the orchestrator persists its block to the assigned
+   slot, appends a `timeline` entry + updates `status` + the `artifacts` index in `job.json`.
    Jobs may sit **unresolved** here — the trace holds mid-flight state with no final clarity yet.
    That's fine; debugs/ tolerates open.
 3. **Resolve — summarize into the library (each only if earned).** When clarity exists, the

@@ -48,6 +48,7 @@ spectacular/
 │                              #   fleet = discover/apply/review × fix/build + specialists:
 │                              #   debug-{investigator,fixer,researcher} · repo-explorer · spec-builder
 │                              #   · code-reviewer (code) · spec-reviewer (docs) · test-verifier
+│                              #   · request-auditor (sweep: claims-vs-evidence, haiku)
 │                              #   .claude/agents/*.md are relative symlinks → ../../agents/<name>.md
 ├── packs/                     # App-store convention packs (alex-default)
 ├── hooks/                     # ⚠ Claude/Codex PLUGIN event handlers (plugin runtime)

@@ -401,6 +401,19 @@ spectacular verify add-team-billing
 
 **Skill only** — needs an LLM to read each check and judge evidence. At the terminal the CLI prints a redirect to run `/spectacular verify <slug>` inside Claude Code or Codex. See [verify.md](../skills/spectacular/references/verify.md) — the interactive walk (walk-only since v1.34) — and [verify-authoring.md](../skills/spectacular/references/verify-authoring.md) — the 2-of-6 rule + promoting checks to scripts.
 
+### `spectacular sweep [<slug>]` *(v1.35.0+)*
+
+Read-only audit of the request fleet — the repeatable middle layer between "TASKS are ticked" and the verify walk. Dispatches one small-model `request-auditor` subagent per `review` / ticked-`active` request (parallel) plus one batched overlap check over all `planned` requests (flags work that already shipped). Each audit cross-checks claims vs code, claims vs tests, evidence freshness (`against:` stamps — stale evidence is flipped to `pending-reverify`, never mistaken for a current bug), and PLAN coherence.
+
+Findings append to each request's `VERIFY-LOG.md` as a dated sweep entry; next-agent handoff lines go to `SESSION.md § Next actions`. The sweep **never promotes** — lifecycle proposals (e.g. `advance --to review` for a ticked-active request) are relayed for human confirmation.
+
+```text
+spectacular sweep
+spectacular sweep add-team-billing
+```
+
+**Skill only** — at the terminal the CLI prints a redirect. See [review-sweep.md](../skills/spectacular/references/review-sweep.md).
+
 ### `spectacular prd` / `spectacular prd grill`
 
 Walks the user through the **8-slot canonical PRD** (Vision / Problem / Target users / Deliverable / Goals & success criteria / Non-goals / Constraints / First milestone), one question at a time, with kit-aware prompts.

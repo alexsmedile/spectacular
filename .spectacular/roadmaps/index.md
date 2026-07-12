@@ -1,5 +1,5 @@
 ---
-version: 3.13
+version: 3.14
 updated: 2026-07-12
 summary: "Per-version scope, phase, and exit criteria. Shipped through v1.23.0 (roadmap ledger docs + index-mode pruning, b17+b18). Next up — priority order: cli-debt-removal → skill-desc-length-check → snapshot-retention → spec-audit-mode, all ahead of the contract-prep ladder (①→②→③, target tbd) → v2.0.0 major. Long-term gets fuzzier on purpose. (v3.12: contract ladder un-pinned to tbd — generic, so reslotting never forces a renumber.)"
 related:
@@ -51,6 +51,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b28 | self-healing-optimization | Journey-audit self-healing pass — SKILL.md routing-only trim, coherence fixes, 2-of-6 extraction | themed | v1.33.0 | shipped |
 | b29 | cli-gate-ergonomics | Policy directives at gates (tiered output, --full), advance scaffolds SESSION.md, doctor findings block | themed | v1.34.0 | shipped |
 | b30 | verify-split | verify.md walk-only + verify-authoring.md (2-of-6 canonical); TASKS template `- [~]` deferred rows | themed | v1.34.0 | shipped |
+| b31 | review-sweep | Review-sweep protocol: request-auditor agent + `spectacular sweep` + VERIFY-LOG against:-stamps/pending-reverify | themed | v1.35.0 | active |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

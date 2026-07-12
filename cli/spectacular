@@ -9418,6 +9418,31 @@ check_lifecycle() {
           fi
         fi
 
+        # Evidence freshness (b31): [manual]/[observe] passed rows must carry an
+        # against: stamp; pending-reverify rows mean evidence went stale. Presence
+        # checks only — staleness itself is a judgment flip, never a git heuristic.
+        if [[ -f "$d/VERIFY-LOG.md" ]]; then
+          local ev_total ev_stamped ev_unstamped ev_pending
+          ev_total=$(grep -cE '^- ✓ \[(manual|observe)\]' "$d/VERIFY-LOG.md" 2>/dev/null || true)
+          ev_stamped=$(grep -cE '^- ✓ \[(manual|observe)\].*against:' "$d/VERIFY-LOG.md" 2>/dev/null || true)
+          ev_unstamped=$(( ${ev_total:-0} - ${ev_stamped:-0} ))
+          if (( ev_unstamped > 0 )); then
+            doc_add "lifecycle" "warning" "$d/VERIFY-LOG.md" \
+              "request '$slug' has $ev_unstamped manual/observe evidence row(s) without an against: stamp" \
+              "re-record with 'against: <commit/build> · <identity>' so evidence can be told from stale evidence" \
+              "judgment"
+            issues=$((issues + 1))
+          fi
+          ev_pending=$(grep -c 'pending-reverify' "$d/VERIFY-LOG.md" 2>/dev/null || true)
+          if (( ${ev_pending:-0} > 0 )); then
+            doc_add "lifecycle" "warning" "$d/VERIFY-LOG.md" \
+              "request '$slug' is $status with $ev_pending pending-reverify evidence row(s) — stale evidence not re-proven" \
+              "re-perform the check(s) against the current build, record fresh stamped rows" \
+              "judgment"
+            issues=$((issues + 1))
+          fi
+        fi
+
         # Stale verified — info only
         if [[ "$status" == "verified" ]]; then
           local updated
@@ -11791,6 +11816,15 @@ main() {
       shift
       skill_verb_message "verify" \
         "Validation walk — reads VERIFY.md (or PLAN § Validation), verifies each check by its kind (executable / assertable / judgable / observable / manual), records to VERIFY-LOG, and gates review→verified." \
+        "$@"
+      ;;
+    # Sweep (v1.35.0+): skill-only fleet audit. Dispatches request-auditor
+    # subagents (review + ticked-active deep, planned batched overlap check),
+    # persists findings to VERIFY-LOG + SESSION.md. Never promotes.
+    sweep)
+      shift
+      skill_verb_message "sweep" \
+        "Review sweep — read-only audit of the request fleet: cross-checks each review/ticked-active request's claims vs code/tests/evidence via request-auditor subagents, quick-checks planned requests for overlap with shipped work, appends sweep entries to VERIFY-LOG, hands off via SESSION.md. Never promotes — feeds the verify walk." \
         "$@"
       ;;
     # Feedback (v1.6.0+; renamed from feedback-loop in v1.19.0): canonical name

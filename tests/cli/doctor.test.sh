@@ -986,6 +986,82 @@ scenario_20_milestone_off_prefix_name_fallback
 scenario_21_schema_behind_warning
 scenario_22_findings_block
 
+scenario_23_evidence_freshness() {
+  echo "Scenario 23: VERIFY-LOG evidence rows — against: stamps + pending-reverify (b31)"
+  local dir="/tmp/doctor-test-23"
+  seed_clean "$dir"
+  local req="$dir/.spectacular/requests/demo"
+  mkdir -p "$req"
+  cat > "$req/PLAN.md" <<EOF
+---
+status: review
+priority: low
+updated: 2026-07-12
+summary: "demo"
+---
+# Plan — demo
+## Goal
+Demo.
+## Constraints
+- none
+## Milestones
+- M1 — demo
+## Tasks
+See \`TASKS.md\`.
+## Dependencies
+- none
+## Validation
+- M1 — assertable: true
+## Deliverables
+- none
+EOF
+  cat > "$req/TASKS.md" <<EOF
+---
+status: review
+updated: 2026-07-12
+---
+# Tasks — demo
+## v1
+### M1 — demo
+- [x] done
+EOF
+
+  # Unstamped manual row + pending-reverify row → two warnings
+  cat > "$req/VERIFY-LOG.md" <<EOF
+---
+updated: 2026-07-12
+---
+# Verify log — demo
+## 2026-07-12 10:00 — walk (2 passed, 0 blocked, 0 skipped)
+- ✓ [manual] install flow — performed install, result: ok
+- ✓ [observe] badge renders — screenshot seen — against: abc1234 · demo-app v2
+- ⟳ [manual] login — pending-reverify: code moved past against-stamp (sweep 2026-07-12)
+**Outcome:** stayed in review
+EOF
+  local out
+  out=$(cd "$dir" && "$CLI" doctor lifecycle 2>&1)
+  assert_output_contains "$out" "1 manual/observe evidence row(s) without an against: stamp" "unstamped manual row warned"
+  assert_output_contains "$out" "1 pending-reverify evidence row(s)" "pending-reverify row warned"
+
+  # Fully stamped, no pending → neither warning
+  cat > "$req/VERIFY-LOG.md" <<EOF
+---
+updated: 2026-07-12
+---
+# Verify log — demo
+## 2026-07-12 10:00 — walk (2 passed, 0 blocked, 0 skipped)
+- ✓ [manual] install flow — performed install, result: ok — against: abc1234 · demo-app v2
+- ✓ [observe] badge renders — screenshot seen — against: abc1234 · demo-app v2
+**Outcome:** verified
+EOF
+  out=$(cd "$dir" && "$CLI" doctor lifecycle 2>&1)
+  assert_output_lacks "$out" "without an against: stamp" "stamped rows produce no stamp warning"
+  assert_output_lacks "$out" "pending-reverify" "clean log produces no pending-reverify warning"
+
+  rm -rf "$dir"
+}
+scenario_23_evidence_freshness
+
 echo ""
 echo "  Asserts: $pass_count passed, $fail_count failed"
 

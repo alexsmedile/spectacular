@@ -155,6 +155,8 @@ Wait for the human to actually do it — don't accept a confirmation that skips 
 • "blocked" → BLOCKER (couldn't perform / it failed).  • "skip" → SKIPPED.
 ```
 
+**Evidence stamp (manual + observable passes).** Before recording, ask once: "against what? (`<commit/build> · <app/extension identity>`)" — the stamp goes on the log row as `against:`. Default offer: current `git rev-parse --short HEAD`. Evidence without a stamp can't be told from stale evidence later ([[review-sweep]]).
+
 After each: record the outcome (§ 3), advance.
 
 **Exec safety (gating `run:` commands).** Default: **confirm each** executable check before running (show the command, `y/n/skip`). At walk start, offer **"run all executable checks this walk? (y)"** to batch-approve. Never run a command that wasn't shown to the user.
@@ -220,14 +222,15 @@ updated: <today>
 - ✓ [exec] <check> — `<cmd>` exit 0
 - ✓ [assert] <check> — property holds: <what was checked>
 - ✓ [judge] <check> — <agent reasoning + artifact seen>
-- ✓ [observe] <check> — <evidence the human gave>
-- ✓ [manual] <check> — performed <action>, result: <result>
+- ✓ [observe] <check> — <evidence the human gave> — against: <commit/build> · <identity>
+- ✓ [manual] <check> — performed <action>, result: <result> — against: <commit/build> · <identity>
 - ✗ [exec] <check> — BLOCKED: `<cmd>` exit 1 — <stderr tail>
 - ⊘ [observe] <check> — skipped
+- ⟳ [manual] <check> — pending-reverify: code moved past against-stamp (<who flagged> <date>)
 **Outcome:** <verified | stayed in review — N blockers>
 ```
 
-The `[kind]` tag records *which authority* confirmed each line — the audit trail shows not just "passed" but *how*.
+The `[kind]` tag records *which authority* confirmed each line — the audit trail shows not just "passed" but *how*. `[manual]`/`[observe]` rows additionally carry an **`against:` stamp** (commit/build + app/extension identity) so evidence is tied to what it proved. **`pending-reverify`** is a judgment flip — a sweep ([[review-sweep]]) or human appends a `⟳` row when the code moved past the stamp; it clears only by re-performing the check (a fresh stamped ✓ row). An old ✗ never means a current bug, and an old ✓ never means current proof — the stamp decides. `doctor lifecycle` warns on unstamped manual/observe rows and on `pending-reverify` rows in `review`/`verified` requests (mechanical presence checks only — no git heuristics).
 
 ## Lifecycle + archive tie-in
 

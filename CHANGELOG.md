@@ -7,6 +7,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Review sweep (b31) — audit the fleet, promote nothing
+
+- **`spectacular sweep [<slug>]`** — read-only fleet audit as the repeatable middle layer between
+  "TASKS are ticked" and the verify walk. New `references/review-sweep.md` defines three tiers:
+  `review` + ticked-`active` requests each get a deep claims-vs-evidence audit (one small-model
+  `request-auditor` subagent per request, parallel); `planned` requests get one batched overlap
+  check vs `specs/index.md` + archive, catching about-to-be-rebuilt work. Findings append to
+  VERIFY-LOG as dated sweep entries; next-agent handoff goes to `SESSION.md § Next actions`. The
+  sweep never promotes — proposals are relayed, the human confirms. CLI gains the skill-redirect
+  stub.
+- **`request-auditor` agent** — read-only, haiku-pinned fleet member with a closed audit brief and
+  a machine-readable findings block (SLUG/VERDICT/FINDINGS/PROPOSALS/NEXT-AGENT).
+- **Evidence freshness in VERIFY-LOG** — `[manual]`/`[observe]` rows now carry an
+  `against: <commit/build> · <identity>` stamp (the walk asks for it at recording time), plus a
+  `pending-reverify` marker flipped by judgment when code moves past the stamp — an old failure is
+  never mistaken for a current bug, and old evidence never passes as current proof. `doctor
+  lifecycle` warns on unstamped rows and on `pending-reverify` rows in `review`/`verified` requests
+  (presence checks only — no git heuristics). New doctor test scenario 23.
+
 ## [1.34.0] — 2026-07-12
 
 ### Verify split (b30) — the verified gate loads only walk content

@@ -50,6 +50,7 @@ spectacular/
 │   ├── spec-builder.md        #   apply · build — a closed milestone brief (apply-only)
 │   ├── code-reviewer.md       #   review · code — 5-lens findings over a diff (read-only)
 │   ├── spec-reviewer.md       #   review · docs — punch list vs a doc's rules-file rubric (read-only)
+│   ├── request-auditor.md     #   review · request — claims-vs-evidence audit for the sweep (read-only, haiku)
 │   └── test-verifier.md       #   verify — run a check / write a test to spec (apply-only, tests)
 │                              #   .claude/agents/*.md are relative symlinks → ../../agents/
 ├── packs/                     # App-store convention packs (alex-default)

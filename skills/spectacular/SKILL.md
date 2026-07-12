@@ -165,6 +165,7 @@ Packs add a `new <name>` verb (user-scope, identified by name):
 | Moving request `active → review` | → `lifecycle.md` § Verification artifact detection — pick artifact (VERIFY.md > TASKS Verification > PLAN Validation) |
 | Moving request `review → verified` | → **`verify.md`** — the interactive validation walk (walk-only since b30), record to VERIFY-LOG, gate the transition. **Never skip.** |
 | `spectacular verify <slug>` | → **`verify.md`** — the validation walk (skill-only; CLI redirects). |
+| `spectacular sweep [<slug>]` / "audit the fleet" | → **`review-sweep.md`** — read-only request-auditor fan-out (review + ticked-active deep; planned batched overlap check). Never promotes — feeds the walk. |
 | Automating a shipped scenario | → `verify-authoring.md` § Promoting checks to scripts — when to author `tests/verify/<slug>.test.sh`. |
 
 Verification always runs against *some* artifact — "VERIFY.md is opt-in" means the *file*, never the act; the full doctrine lives in `verify-authoring.md` § "Verification always happens".

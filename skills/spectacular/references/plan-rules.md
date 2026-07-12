@@ -143,6 +143,27 @@ PLAN structure check: milestones (slot 3) must logically precede tasks (slot 4 /
 
 If TASKS.md has groupings, those groupings should reference the slot-3 milestones by name or number.
 
+## The 2-of-6 rule (VERIFY.md decision at scaffold/grill time)
+
+> Compact copy for scaffold/grill journeys — canonical source: `verify.md` Part 2 ("The 2-of-6
+> rule"), which loads in full only for the `review → verified` walk. If this table and verify.md
+> ever disagree, verify.md wins.
+
+Scaffold a standalone `VERIFY.md` when **at least two** are true:
+
+| # | Criterion |
+|---|---|
+| 1 | **User-visible change** — behavior change observable outside the team |
+| 2 | **High reversibility cost** — migrations, schema changes, destructive ops |
+| 3 | **Multi-surface verification** — beyond tests: manual QA, browser, prod smoke |
+| 4 | **Risk surface non-trivial** — auth, billing, payments, PII, data integrity |
+| 5 | **External contract change** — public API, library shape, plugin interface, CLI flags |
+| 6 | **Rollback plan exists** — a non-trivial undo that itself needs verification |
+
+**Default: no file** — fewer than two → checks live in PLAN § Validation (descriptive properties)
+or a TASKS `### Verification` group (step-by-step). "No file" ≠ "no verification": every request
+still reaches `verified` through *some* artifact. The file is opt-in; the practice is not.
+
 ## Frontmatter schema (v1.17.0+)
 
 Required: `status`, `updated`, `summary`.

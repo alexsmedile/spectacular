@@ -75,15 +75,7 @@ Monitor `TASKS.md` for completion signals:
 
 ## Context loading during active work
 
-Load by task type:
-
-| Task type | Load |
-|---|---|
-| Planning/design | `PLAN.md`, `PRD.md`, `decisions/index.md`, `specs/index.md`, relevant `specs/<capability>.md` |
-| Implementation | `STACK.md`, `PLAN.md`, `TASKS.md`, local capability specs |
-| Review/QA | `VERIFY.md`, capability specs, `RISKS.md` |
-
-Always prefer loading targeted per-capability files over the full `specs/` tree. The top-level `SPEC.md` is cheap and always relevant.
+Follow the context-loading table in `.spectacular/AGENTS.md` (authoritative — don't re-derive a read list here). Always prefer targeted per-capability files over the full `specs/` tree; the top-level `specs/index.md` is cheap and always relevant.
 
 ---
 

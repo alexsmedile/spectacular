@@ -7,6 +7,38 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Self-healing optimization (b28) — journey audit follow-through
+
+A full walk of the skill's highest-frequency journeys (status open, new request, active work, bug)
+surfaced that SKILL.md itself — loaded on *every* invocation — carried ~1.2k tokens of doctrine
+duplicated from the reference docs it routes to, and that `spectacular new` loaded the 6.2k-token
+verify.md for one ~300-token rule. Tracked as request `self-healing-optimization`.
+
+### Added
+
+- **Compact 2-of-6 rule table in `plan-rules.md`** (canonical source stays verify.md Part 2, which
+  now loads only for the `review → verified` walk). `new-request.md` and SKILL.md's verification
+  routing point at the table — the scaffold/grill journeys drop ~6k tokens.
+
+### Changed
+
+- **SKILL.md trimmed to routing-only** (21.5KB → 16.3KB, ~1.2k tokens lighter on every skill
+  invocation): feedback-loop surfacing rules, imagine scope notes, verification doctrine, and the
+  task-tracking convention are now one-line pointers to their canonical refs; State awareness
+  defers to `.spectacular/AGENTS.md`'s loading table + the read-verbs cold-start pattern instead
+  of restating a third read list; long routing rows compressed. All trigger rows and route targets
+  preserved (grep-verified).
+- **`active-request.md`** — duplicated context-loading table replaced with a pointer to
+  `.spectacular/AGENTS.md` (the single authority).
+
+### Fixed
+
+- **`status.md` review signal contradicted the verification doctrine** — it offered to *create*
+  VERIFY.md whenever a `review` request lacked one; it now offers the walk against the resolved
+  artifact (VERIFY.md > TASKS Verification > PLAN § Validation), matching lifecycle.md and the
+  2-of-6 opt-in rule.
+- **`active-request.md` stale reference** — "top-level `SPEC.md`" → `specs/index.md`.
+
 ### Dispatch token efficiency
 
 Agent dispatch was effective but token-heavy: the same content traveled multiple times per

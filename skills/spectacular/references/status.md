@@ -64,8 +64,7 @@ While reading state, flag any of the following:
 | Signal | Proactive proposal |
 |---|---|
 | All TASKS.md items checked, status still `active` | Propose moving to `review` |
-| Status is `review`, VERIFY.md exists | Prompt to run VERIFY checklist |
-| Status is `review`, no VERIFY.md | Offer to create VERIFY.md |
+| Status is `review` | Offer to run the verification walk against the resolved artifact — VERIFY.md if present, else TASKS `### Verification` group, else PLAN § Validation (see [[lifecycle]] § Artifact detection). Never offer to *create* VERIFY.md here — the file is opt-in via the 2-of-6 rule at scaffold/grill time. |
 | Request `updated` date > 14 days ago, status `active` | Flag as potentially stale |
 | `specs/` capability is `draft`, no active request | Suggest creating a request or promoting to stable |
 | specs/index.md drift (from `spectacular doctor specs`) | The CLI computes this — run `spectacular doctor specs` and relay any "specs/index.md … may be stale" warning. Offer to run spec-sync against the named archive. Don't re-derive the date math here; the CLI owns it. See [[spec-sync]]. |

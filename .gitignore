@@ -33,3 +33,4 @@ articles/
 
 # per-project skills not part of this repo
 .claude/skills/notebook-lm-cli
+_snapshots/

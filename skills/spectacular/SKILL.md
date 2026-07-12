@@ -31,14 +31,14 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 
 ### Workspace lifecycle
 
-**Mutation principle (v0.7.0+):** lifecycle mutations go through CLI verbs — never free-form file edits. The CLI is the deterministic mutator; the skill orchestrates, reads, decides, communicates. Manual edits remain available for edge cases the verbs don't cover, but should be the exception. See [[lifecycle]] and individual reference docs for the verb each flow uses.
+**Mutation principle (v0.7.0+):** lifecycle mutations go through CLI verbs — never free-form file edits (manual edits only for edge cases the verbs don't cover). See [[lifecycle]].
 
 | User says / context | Route to |
 |---|---|
 | `/spectacular` with no args | → `references/status.md` (empty workspace → `references/guided-first-run.md`) |
 | `spectacular status` | → `references/status.md` |
 | `spectacular new <description>` | → `references/new-request.md` (then run `spectacular new <slug>`) |
-| `spectacular archive <slug>` | → CLI verb (no skill flow); see [[archive]] for context. The archive flow's spec-sync step may dispatch `spec-reviewer` for an arms-length currency check of `specs/` before the SPEC-DELTA is written — see [[spec-sync]]. |
+| `spectacular archive <slug>` | → CLI verb; see [[archive]] (its spec-sync step may dispatch `spec-reviewer` — [[spec-sync]]) |
 | `spectacular remember this` | → `references/memory.md` (legacy free-text capture) |
 | `spectacular remember "<text>"` | → CLI verb; see [[memory-rules]] for entry shape |
 | `spectacular decide "<decision>" [--context\|--consequences]` | → CLI verb; see [[decisions-rules]] |
@@ -47,7 +47,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular idea new <slug>` | → CLI verb; see [[idea-rules]] for entry shape |
 | `spectacular idea list` | → CLI verb |
 | `spectacular idea promote <slug>` | → CLI verb; scaffolds request, moves source to `archive/ideas/` |
-| A bug/quirk/regression is reported (any "why does X do Y", "this is broken") | → **`references/bug-workflow.md`** — check prior fixes first, then decide audit-first vs just-fix. Routes the debug fleet (`debug-investigator`/`debug-fixer`/`debug-researcher`) + optional `code-reviewer`/`test-verifier` arms-length pass before a fix is called resolved. Load this before diagnosing. (Rationale in `bug-workflow-doctrine.md` — load only if a routing call is uncertain.) |
+| A bug/quirk/regression is reported (any "why does X do Y", "this is broken") | → **`references/bug-workflow.md`** — load before diagnosing; routes the debug fleet + the ceremony/fan-out gates. (Rationale: `bug-workflow-doctrine.md`, only if a routing call is uncertain.) |
 | `spectacular audit new\|list\|resolve` | → CLI verb; bug investigation before a fix. `resolve --into-fix` graduates to a fix (copies all slots). See [[audit-rules]], [[bug-workflow]] |
 | `spectacular fix new\|list` | → CLI verb; log a **verified, signed** fix. See [[fixes-rules]], [[bug-workflow]] |
 | "record a fix" / "log this fix" / "the bug is fixed and verified" | → `spectacular fix new` once resolved+verified, **with `--signature`**; see [[fixes-rules]] |
@@ -69,11 +69,11 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `/spectacular migrate` (walk judgment migrations) | → `references/migrate.md` |
 | Explain a migration spec or contract | → `references/migrations-contract.md` |
 | Actively working on a request | → `references/active-request.md` |
-| Implementing a milestone — decide build-inline vs dispatch a `spec-builder` | → **`references/build-workflow.md`** — assemble a closed brief from the request chain, apply the worth-it/fan-out gate, confirm + tick the ledger. Also routes the optional fleet: `repo-explorer` (map unfamiliar ground before planning), `code-reviewer` + `test-verifier` (arms-length review/verify before recording). The build-direction analog of [[bug-workflow]]. (Rationale in `build-workflow-doctrine.md` — load only if a routing call is uncertain.) |
+| Implementing a milestone — decide build-inline vs dispatch a `spec-builder` | → **`references/build-workflow.md`** — the closed-brief chain, the inline-vs-dispatch gate, the build fleet. (Rationale: `build-workflow-doctrine.md`, only if a routing call is uncertain.) |
 
-### Read verbs (v1.8.0+) — collapse multi-step inspection to one CLI call
+### Read verbs (v1.8.0+) — read-only, no skill flow
 
-These are read-only — no skill flow needed, no mutation. Always prefer these over walking the filesystem or reading multiple PLAN.md/TASKS.md files manually.
+Always prefer these over walking the filesystem or hand-reading multiple PLAN/TASKS files.
 
 | User says / context | Route to |
 |---|---|
@@ -96,9 +96,7 @@ These are read-only — no skill flow needed, no mutation. Always prefer these o
 
 ### Doc-writing (generalized — works for any registered doc)
 
-The generalized handler matches `spectacular <doc> [<verb>]` where `<doc>` is any doc listed in `references/doc-index.md`. The verb defaults based on the doc's mode and current state.
-
-Each doc is described by a rules file at `references/<doc-id>-rules.md`. The rules file's **frontmatter** declares dispatch (mode, slots, template, location, scope, snapshot-on-edit, kit-support). The rules file's **body** declares per-doc prompts and gate checks.
+`spectacular <doc> [<verb>]` works for any doc in `references/doc-index.md`; the verb defaults from the doc's mode + state. Each doc's rules file (`references/<doc-id>-rules.md`) declares dispatch in frontmatter, prompts + gate checks in the body.
 
 | User says | Route to |
 |---|---|
@@ -107,17 +105,15 @@ Each doc is described by a rules file at `references/<doc-id>-rules.md`. The rul
 | `spectacular <doc> refine` | → `references/refine.md` (with `<doc-id>-rules.md` context) |
 | `spectacular <doc> review` | → `references/review.md` (with `<doc-id>-rules.md` context) |
 
-**Registered docs:** the live registry is the set of `references/<doc-id>-rules.md` files — each declares one doc's dispatch + behavior. The authoritative catalog (every doc-id, its mode, and location) is `references/doc-index.md`; the per-capability detail for the engine itself is in `.spectacular/specs/doc-engine.md`. Don't maintain a hardcoded id list here — it drifts every time a doc ships.
-
-`spectacular prd [grill|refine|review]` is just this handler with `<doc> = prd` (bare `prd` → grill if empty, else review).
+**Registered docs:** the live registry is the set of `references/<doc-id>-rules.md` files; the catalog is `references/doc-index.md`. No hardcoded id list here — it drifts. (`spectacular prd …` is just this handler with `<doc> = prd`; bare `prd` → grill if empty, else review.)
 
 ### Where does this belong? — soft-DB routing
 
-When you have a piece of operational knowledge and must decide *which store* it goes in (a fact? a decision? a bug fix? an idea?), route via **`references/soft-db-index.md`** — the canonical index of the seven soft-DB collections (`memory` · `decisions` · `sessions` · `ideas` · `feedback` · `audit` · `fixes`), each with its role, purpose, structure, write verb, and the boundary rule that keeps entries from landing in the wrong collection. Load it whenever the routing isn't obvious. (`requests/` and the canonical docs are **not** collections — soft-db-index says why.)
+Deciding *which store* a piece of knowledge goes in (fact? decision? fix? idea?) → **`references/soft-db-index.md`**, the canonical index of the seven collections (`memory` · `decisions` · `sessions` · `ideas` · `feedback` · `audit` · `fixes`). Load it whenever the routing isn't obvious.
 
 ### Feedback-loop mode (v1.6.0+)
 
-`feedback-loop` is a distinct skill mode for prototyping-stage human-feedback acquisition. **Not** a benchmark or verification pass. See [[feedback-loop]] for the full spec.
+`feedback-loop` is a distinct skill mode for prototyping-stage human-feedback acquisition. **Not** a benchmark or verification pass.
 
 | User says / context | Route to |
 |---|---|
@@ -128,18 +124,12 @@ When you have a piece of operational knowledge and must decide *which store* it 
 | `spectacular feedback-loop resolve <slug>` | → CLI verb (close entry, optional auto-promote to memory) |
 | `spectacular feedback-loop archive <slug>` | → CLI verb |
 | `spectacular feedback grill\|refine\|review` | → generic engine via [[feedback-rules]] (works like any registered doc) |
-**Proactive surfacing — three checkpoints only:**
-1. **Milestone tick in TASKS.md** — after acknowledging the milestone, may offer: "Want to feedback-loop M<N> before moving on?"
-2. **Request status → `review`** — same single-prompt offer scoped to the request as a whole.
-3. **End of `spectacular archive <slug>` flow** — may offer: "Anything worth feedback-looping before this leaves the active set?"
 
-Never mid-flow. Never unsolicited. Single short prompt; user accepts or declines.
-
-**Auto-promotion to memory:** when a feedback resolution captures a durable preference signal ("I always want X", "Y is the right default"), the skill must explicitly confirm before writing a memory entry. No silent promotions. Sets `promoted_to:` on the feedback file.
+Proactive-surfacing rules (three checkpoints only, never mid-flow) and the memory auto-promotion contract live in [[feedback-loop]] — loaded whenever the mode runs.
 
 ### Imagine mode (v1.15.0+) — imagination-backed planning
 
-`imagine` is a distinct, **generative-first** mode: the skill renders see-able ASCII artifacts (user stories, UI/output mockups, architecture sketches) the human reacts to per-fragment, then **derives a draft PLAN from the approved vision**. This is Spectacular's second planning axis — spec-driven **and** imagination-backed. Unlike `grill` (which interrogates the human slot-by-slot), `imagine` leads with proposed artifacts. Full engine: [[imagine]]. Doc-type rules: [[vision-rules]].
+`imagine` is a **generative-first** mode: render see-able ASCII artifacts the human reacts to per-fragment, then derive a draft PLAN from the approved vision. Full engine + v1 scope rules: [[imagine]]. Doc-type rules: [[vision-rules]].
 
 | User says / context | Route to |
 |---|---|
@@ -149,11 +139,9 @@ Never mid-flow. Never unsolicited. Single short prompt; user accepts or declines
 | `spectacular vision grill\|refine\|review` | → generic engine via [[vision-rules]] (manual spine authoring — rare; `imagine` is the default) |
 | `spectacular doctor vision` | → `references/doctor.md` (vision area) |
 
-**Scope (v1):** request-level only, **Build-only** derivation (vision → draft PLAN). Compare/reconcile (diff an existing spec against a vision) and the project altitude (`imagine` near PRD) are v2. The derived PLAN is always a **draft** — it flows into the existing PLAN grill/review gate; never auto-accepted.
-
 ### Pack-specific verbs (`pack` is the canonical doc-id since v1.19.0)
 
-Packs use a short alias and add a `new <name>` verb (since packs are user-scope, identified by name, not project-singleton):
+Packs add a `new <name>` verb (user-scope, identified by name):
 
 | User says | Route to |
 |---|---|
@@ -166,39 +154,29 @@ Packs use a short alias and add a `new <name>` verb (since packs are user-scope,
 
 ### Public-facing docs — owned by pageworks
 
-Public-facing docs work lives in the dedicated [pageworks](https://github.com/alexsmedile/pageworks) skill. Spectacular keeps **discovery-only awareness** of `docs/` (folder + manifest presence, surfaced by `doctor docs` and an archive-time audit hint). When the user asks to "write docs / add a page / add a tutorial", route to `references/pageworks-handoff.md` and surface its install hint — never auto-install.
+"Write docs / add a page / add a tutorial" → `references/pageworks-handoff.md` (surface its install hint — never auto-install). Spectacular keeps discovery-only awareness of `docs/`.
 
 ### Verification routing (when writing PLAN.md or moving requests to review)
 
-When grilling, scaffolding, or finalizing a PLAN.md for any request, **route to `references/verify.md`** — the single verification reference (Part 1 the walk · Part 2 the 2-of-6 rule · Part 3 promoting checks to scripts; merged in v1.20.0). Decisions:
-
 | Decision point | Route to |
 |---|---|
-| Scaffolding a new request (`spectacular new`) | → `verify.md` Part 2 — apply 2-of-6 rule. Default: no VERIFY.md. Add `### Verification` group to TASKS.md or fill PLAN § Validation instead. |
-| Grilling/refining a PLAN.md | → `verify.md` Part 2 — confirm 2-of-6 rule result; ask user if VERIFY.md needed |
+| Scaffolding a new request (`spectacular new`) | → **[[plan-rules]] § 2-of-6 rule** (compact table; canonical: verify.md Part 2). Default: no VERIFY.md — `### Verification` group in TASKS.md or PLAN § Validation instead. |
+| Grilling/refining a PLAN.md | → **[[plan-rules]] § 2-of-6 rule** — confirm result; ask user if VERIFY.md needed |
 | Moving request `active → review` | → `lifecycle.md` § Verification artifact detection — pick artifact (VERIFY.md > TASKS Verification > PLAN Validation) |
-| Moving request `review → verified` | → **`verify.md` Part 1** — run the interactive validation walk: verify each check by its kind (executable / assertable / judgable / observable / manual), record to VERIFY-LOG, gate the transition. **Never skip.** |
+| Moving request `review → verified` | → **`verify.md` Part 1** — the interactive validation walk, record to VERIFY-LOG, gate the transition. **Never skip.** |
 | `spectacular verify <slug>` | → **`verify.md` Part 1** — the validation walk (skill-only; CLI redirects). |
 | Automating a shipped scenario | → `verify.md` Part 3 — when to author `tests/verify/<slug>.test.sh`. |
 
-**Critical:** "VERIFY.md is opt-in" refers to *creating the file*, not *performing verification*. Verification always runs against *some* artifact. When VERIFY.md exists it is load-bearing; do not bypass it because it's "optional."
-
-The skill never auto-scaffolds VERIFY.md. It is created only when:
-- The 2-of-6 rule triggers during request scaffolding, AND
-- The user confirms.
+Verification always runs against *some* artifact — "VERIFY.md is opt-in" means the *file*, never the act; the full doctrine lives in `verify.md` § "Verification always happens" and loads with the walk.
 
 ---
 
 ## State awareness
 
-Before any action, read frontmatter from:
-1. `.spectacular/config.yaml` — project config, naming rules
-2. `.spectacular/AGENTS.md` — **authoritative** context-loading rules per task type; follow its table over guessing
-3. Root canonical docs — `PRD.md` (intent), `PRINCIPLES.md` (rules), `ARCHITECTURE.md` (structure), `STACK.md` (host tech), `roadmaps/index.md` (time)
-4. `specs/index.md` (top-level system spec index) + any `specs/<capability>.md` (read frontmatter only unless task needs depth)
-5. `requests/*/PLAN.md` — active work (read all frontmatter for status briefing)
+Load **only** what the task needs (principle 6 — progressive disclosure). Two authorities, no third list:
 
-Load **only** what the task needs (principle 6 — progressive disclosure). For planning, PRD + PRINCIPLES + decisions/index.md. For implementation, STACK + PLAN + TASKS + spec index + relevant `specs/<capability>.md`. For review, VERIFY + RISKS + capability specs. AGENTS.md owns the full table.
+- **What to load per task type** — `.spectacular/AGENTS.md`'s context-loading table is authoritative; follow it over guessing or re-deriving a read list.
+- **How to read state** — prefer the read verbs (§ Cold-start pattern above: `summary` → `requests --active` → `request <slug>`) over walking the filesystem; the flow docs (`status.md`, `active-request.md`) own their own read steps.
 
 Never read `archive/` during normal operation.
 
@@ -212,20 +190,11 @@ Never read `archive/` during normal operation.
 - **Slugs** are kebab-case, skill-derived, user-overridable, uniqueness enforced.
 - **Memory** (`spectacular remember this`) writes to `.spectacular/memories/` — git-committed, team-visible. Never to `.claude/` memory.
 - Be proactive: surface stale state, propose lifecycle transitions, flag blocked requests.
-- **Know when to write to a collection, not just how.** Each soft-DB collection has a named prompt-moment — see the "When to act" trigger table in [[soft-db-index]]. Reversible/cheap writes (audit note, session, idea) happen on their natural trigger; permanent/team-visible writes (memory, decisions, archive) are **proposed, human confirms, then written** — never autonomous. Archive is the convergence point (spec-sync + memory + fix/audit capture); see [[archive]].
+- **Know when to write to a collection, not just how** — the "When to act" trigger table in [[soft-db-index]]. Cheap/reversible writes on their natural trigger; permanent/team-visible writes (memory, decisions, archive) are proposed → human confirms → written, never autonomous.
 
 ### Task tracking — two layers
 
-Spectacular uses **two task trackers at different granularities**:
-
-| Layer | Tool | Purpose |
-|---|---|---|
-| **Milestones** | On-disk `requests/<slug>/TASKS.md` | Persisted, git-committed, team-visible. Owns the M1/M2/M3… block structure user reads to gauge request state. |
-| **Session steps** | Harness `TaskCreate` / `TaskUpdate` | Ephemeral, per-session. Decomposes the *current* milestone into concrete edits/commits/tests. Drives the CLI's live progress UI. |
-
-**When starting non-trivial work** (3+ steps), create harness micro-tasks for the immediate steps and mark them `in_progress` → `completed` as you go. Never copy every TASKS.md line into the harness one-for-one — harness tasks are *finer-grained* than TASKS.md items and exist only for the active session.
-
-The on-disk TASKS.md is updated at session end (or at milestone completion within a session). The harness tracker decays naturally when the session ends. Full convention in `.spectacular/AGENTS.md` § Task tracking.
+On-disk `requests/<slug>/TASKS.md` owns milestones (persistent, team-visible); harness `TaskCreate`/`TaskUpdate` owns ephemeral session micro-steps (finer-grained — never a one-for-one copy of TASKS.md lines). Full convention: `.spectacular/AGENTS.md` § Task tracking.
 
 ---
 
@@ -237,9 +206,4 @@ Conversational briefing with a minimal embedded table. Never a raw dump. Identif
 
 ## References & templates index
 
-This file deliberately does **not** hand-list every reference doc or template — that list drifts every time a doc ships (see the registry note above, and principle 6). The live sources of truth:
-
-- **Reference docs** — the set of `references/*.md`. Human catalog: `references/doc-index.md`. Each doc's dispatch lives in its own `references/<doc-id>-rules.md` frontmatter.
-- **Templates** — the `templates/` tree (canonical bases under `templates/<doc>/base.md`, PRD kits under `templates/prd/kits/`, soft-DB entries under `templates/<collection>/entry.md`). Frontmatter stubs for every file type: `references/scaffold-reference.md`.
-
-Project may override any template by placing files at `.spectacular/templates/<doc>/...` — same filenames, project-local takes precedence.
+No hand-list here — it drifts. Reference docs: `references/*.md`, cataloged in `references/doc-index.md`. Templates: the `templates/` tree; frontmatter stubs in `references/scaffold-reference.md`. Projects may override any template at `.spectacular/templates/<doc>/...` (same filenames, project-local wins).

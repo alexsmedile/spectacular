@@ -32,7 +32,7 @@ related:
 
 ## v2 (deferred)
 
-- [~] roadmap-rules.md core/doctrine split (7.2k — heaviest reference; same recipe as build/bug workflows)
-- [~] debug-trace.md example-JSON diet (schemas keep one example each, trim field commentary)
-- [~] verify.md walk-only split — Part 1 stands alone now that Parts 2–3 route elsewhere (dogfood finding 5)
-- [~] Follow-up request `cli-gate-ergonomics` for the CLI-side dogfood findings: policy gate title+one-liner default (finding 1), advance auto-scaffolds SESSION.md (finding 2), doctor findings adjacent to summary (finding 3), v2 template items scaffold as `- [~]` (finding 4)
+All four items graduated to real requests on 2026-07-12 after a /grill-me pass (decisions recorded in each PLAN):
+
+- [~] → [[cli-gate-ergonomics]] (b29, high): dogfood findings 1–3 — policy gate block=full/warn=title, advance auto-scaffolds SESSION.md, doctor findings block
+- [~] → [[verify-split]] (b30, medium): dogfood finding 5 (verify.md walk-only + verify-authoring.md) + finding 4 (template `- [~]` patch); carries the roadmap-rules split + debug-trace diet as its own v2

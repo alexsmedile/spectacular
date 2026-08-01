@@ -55,7 +55,7 @@ Each is a folder of individually-addressable `.md` entries (frontmatter, git-com
 |---|---|---|---|
 | `memories/` | `memories/index.md` | Durable standing facts / "always do X" | `spectacular remember` |
 | `decisions/` | `decisions/index.md` | ADR — why A over B | `spectacular decide` |
-| `questions/` | — | Human-owned blockers and ambiguities (`QUE-NNN`) | `spectacular question new\|resolve` |
+| `questions/` | — | Active human-owned blockers and ambiguities (`QUE-NNN`); resolved history moves to `archive/questions/` | `spectacular question new\|resolve` |
 | `research/` | — | Sourced discovery evidence (`RES-NNN`) | `spectacular research new\|resolve` |
 | `spikes/` | — | Authorized feasibility evidence (`SPK-NNN`) | `spectacular spike new\|resolve` |
 | `sessions/` | `sessions/index.md` | Work-session time-log | `spectacular session start\|end` |
@@ -63,6 +63,24 @@ Each is a folder of individually-addressable `.md` entries (frontmatter, git-com
 | `feedbacks/` | — | Post-ship prototyping signal | `spectacular feedback-loop new` |
 | `audits/` | `A<N>.md` | Bug diagnosis before a fix is planned | `spectacular audit new\|resolve` |
 | `fixes/` | `F<N>.md` | Verified, signed, reusable fix corpus | `spectacular fix new\|list` |
+
+### Optional advanced engineering collections
+
+Heavy projects can reserve additional evidence stores without adding them to every workspace:
+
+```bash
+spectacular init --with findings,fixes,bugs,security,benchmarks
+```
+
+| Folder | Reserved ID | Intended use | Availability |
+|---|---|---|---|
+| `findings/` | `FND-NNN` | Research, audit, or interview takeaway | Path/ID reserved; workflow deferred |
+| `fixes/` | `FIX-NNN` | Remediation/hotfix identity | Existing `F<N>` ledger stays active; migration deferred |
+| `bugs/` | `BUG-NNN` | Known defect or regression | Path/ID reserved; workflow deferred |
+| `security/` | `SEC-NNN` | Vulnerability or threat finding | Path/ID reserved; workflow deferred |
+| `benchmarks/` | `BMK-NNN` | Performance/load/profiling result | Path/ID reserved; workflow deferred |
+
+`security/` is singular because it names the engineering domain; `securities/` means financial instruments. Use `fnd1` for findings and `bug1` for bugs: `f1` belongs to the existing fix ledger, while `b1` belongs to the roadmap build ledger.
 
 `audit → requests → fixes` form the self-learning bug loop (see the bug-workflow skill reference).
 
@@ -72,9 +90,9 @@ The rule: **a plural folder name is a category directory** — it holds either a
 
 1. **Two `SESSION`s, opposite scope.** Per-request `SESSION.md` (singular — one request's working state, created on `active`) is **unrelated** to the top-level `sessions/` category folder and its `sessions/index.md` (the work-session time-log). Same word, different system — the biggest confusion trap.
 2. **Consolidated specs.** Capability specs are flat files inside `specs/` (e.g. `specs/cli.md`, `specs/doc-engine.md`), indexed by `specs/index.md`. There are no nested spec folders.
-3. **Plural folders.** All collection and execution folders are strictly plural: `memories/`, `roadmaps/`, `decisions/`, `questions/`, `research/`, `spikes/`, `sessions/`, `audits/`, `fixes/`, `feedbacks/`, `ideas/`, `requests/`, `debugs/`.
+3. **Plural folders.** Collection and execution folders are plural (`memories/`, `roadmaps/`, `decisions/`, `questions/`, `research/`, `spikes/`, `sessions/`, `audits/`, `fixes/`, `feedbacks/`, `ideas/`, `requests/`, `debugs/`, `findings/`, `bugs/`, `benchmarks/`) except `security/`, which is the singular domain name.
 4. **Collections vs. execution trees.** Markdown collections hold flat, individually addressable entries; some also maintain an `index.md`. Execution trees (`requests/`, `debugs/`) hold per-item sub-directories with state files or run logs.
-5. **Canonical identity.** Wayfinding filenames begin with `DEC-NNN`, `QUE-NNN`, `IDEA-NNN`, `RES-NNN`, `SPK-NNN`, or `SPC-NNN`. `PRT-NNN` is reserved for prototype artifacts and `TSK-NNN` for future task identity. Conversational aliases never replace canonical IDs in saved frontmatter.
+5. **Canonical identity.** Wayfinding filenames begin with `DEC-NNN`, `QUE-NNN`, `IDEA-NNN`, `RES-NNN`, `SPK-NNN`, or `SPC-NNN`. `PRT-NNN` and `TSK-NNN` remain reserved. Prototype outputs currently belong to a request, vision, feedback entry, or spike; generic artifacts, tracer bullets, and technical debt do not receive `ART`, `TRC`, or `DEB` IDs. Conversational aliases never replace canonical IDs in saved frontmatter.
 
 ---
 
@@ -382,7 +400,7 @@ skills:
 
 ## `specs/index.md` + `specs/` — capability specs
 
-Ephemeral execution context. Code is authoritative; `specs/index.md` is the cheap, always-on index and flat specification files hold detail. Specs move `draft|unconfirmed → approved → implemented → superseded|deprecated → archived`. Legacy labels remain readable until an explicit, preview-first migration.
+Ephemeral execution context. Code is authoritative; `specs/index.md` is the cheap, always-on index and flat specification files hold detail. Specs move `draft|unconfirmed → approved → implemented`, then normally archive after verified integration; implemented specs may first become superseded/deprecated. Rejected or abandoned draft/unconfirmed/approved specs archive with a reason instead of being purged. Legacy labels remain readable until an explicit, preview-first migration.
 
 **Rules:**
 - Keep the index concise; use one flat file per detailed capability (never nested folders)
@@ -575,10 +593,14 @@ Completed requests are moved here, not deleted. Original slug is preserved. Cont
 ```
 archive/
 ├── add-team-billing/   # completed request
-└── ideas/              # promoted idea files
+├── ideas/              # promoted idea files
+├── questions/          # resolved QUE history
+└── specs/              # implemented/rejected/obsolete detailed SPC history
 ```
 
 The skill does not read `archive/` during normal operation.
+
+Retention is lifecycle-derived: live artifacts are checkpoint-synchronized, temporary artifacts close with their owner, stale-safe archive is checked against code before reuse, and throwaway code is deleted only after outcome/evidence plus a recovery pointer are preserved.
 
 ---
 

@@ -57,6 +57,14 @@ spectacular init
 /spectacular
 ```
 
+Heavy engineering projects can optionally reserve specialist evidence stores without adding them to the default scaffold:
+
+```bash
+spectacular init --with findings,fixes,bugs,security,benchmarks
+```
+
+These paths reserve future `FND`, `FIX`, `BUG`, `SEC`, and `BMK` records; they do not activate unfinished workflows or migrate existing fix IDs.
+
 > [!TIP]
 > `spectacular init` scaffolds the `.spectacular/` directory and installs the `/spectacular` skill into `.agents/skills/spectacular/` (source) and `.claude/skills/spectacular/` (symlink). After init, `/spectacular` is immediately available to Codex and Claude Code.
 
@@ -150,7 +158,11 @@ That's the whole idea. The full layout, once a project fills in:
 └── archive/            # completed requests (never deleted)
 ```
 
-Wayfinding records use stable canonical IDs: `DEC-001`, `QUE-001`, `IDEA-001`, `RES-001`, `SPK-001`, `PRT-001`, and `SPC-001`. You can speak in compact aliases such as `D1`, `Q1`, `I1`, `R1`, or `S1`; persisted cross-references always use the canonical form.
+Wayfinding records use stable canonical IDs: `DEC-001`, `QUE-001`, `IDEA-001`, `RES-001`, `SPK-001`, and `SPC-001`; `PRT-001` remains reserved. You can speak in compact aliases such as `D1`, `Q1`, `I1`, `R1`, or `S1`; persisted cross-references always use the canonical form.
+
+Discovery is progressive: inspect code/tests/docs or ask directly first, use `RES` for a bounded fact gap, `SPK` for disposable technical feasibility work, and an attached prototype only when human interaction is the evidence. A tracer bullet is retained production execution from an approved spec, not a prototype. Artifacts inherit their owner, and technical debt stays in requests, roadmap candidates, ideas, or linked decisions instead of a parallel backlog.
+
+Artifact freshness is lifecycle-derived: live state stays synchronized at named checkpoints; stale-safe history remains retrievable but must be checked against code before reuse; temporary context closes with its owner; throwaway branches/mocks are deleted only after their learning and recovery pointer survive. Open human questions surface before every session briefing. Resolved questions and implemented/rejected detailed specs archive out of active context. The live roadmap is `.spectacular/roadmaps/index.md`; shipped prose compacts into per-version files.
 
 The on-demand folders (`memories/`, `decisions/`, `questions/`, `research/`, `spikes/`, `sessions/`, `feedbacks/`, `ideas/`, `audits/`, `fixes/`) keep durable Markdown records in git, so humans and agents can inspect the same project state without a service or database.
 
@@ -183,24 +195,25 @@ Agent definitions live in `agents/` at the repo root (the source of truth); the 
 |---|---|
 | `/spectacular` | Project briefing — active requests, draft capabilities, next action |
 | `spectacular status` | Same as no-arg invocation |
-| `spectacular new <slug>` | Scaffold a new request (PLAN.md + TASKS.md) |
-| `spectacular advance <slug>` | Advance lifecycle: `planned → active → review → verified` (`promote` remains a deprecated alias) |
+| `spectacular request new [slug] --from SPC-001` | Scaffold a planned PLAN/TASKS bundle from an approved specification (`new` remains the free-form alias) |
+| `/spectacular act SPC-001` | Agentic handoff: gates, activation provenance, compiled brief, native plan, production implementation; `/spectacular SPC-001` is shorthand |
+| `spectacular request advance <slug>` | Advance lifecycle; verified requires recorded verification evidence (`advance` remains an alias) |
 | `spectacular snapshot <file>` | Snapshot a canonical document before editing |
 | `spectacular touch <file>` | Bump `updated:` on a canonical doc |
 | `spectacular archive <slug>` | Archive a completed request; propose `specs/index.md` sync + memory entries |
 | `spectacular remember this` | Write an insight to `memories/` immediately |
-| `spectacular decide "<decision>"` | Append an ADR entry; `--context`/`--consequences` fill the other sections (v1.8.4+) |
+| `spectacular decide "<decision>"` | Append an ADR entry; `--tags cli,docs` makes reusable principles easy to retrieve |
 | `spectacular feedback-loop` | Prototyping-mode human-feedback loop — pick target, craft proposal, ask user, capture, decide (v1.6.0+) |
 | `spectacular idea` | Parked inspiration — `new\|list\|promote`; new files receive an `IDEA-NNN` identity |
 | `spectacular question` | Human-owned blockers — `new\|list\|resolve`; unresolved questions surface at session start |
 | `spectacular research` / `spike` | Evidence and feasibility records — `new\|list\|resolve`; spike execution requires approval |
-| `spectacular spec` | Feature-spec lifecycle — `new\|list\|confirm\|act`; only a confirmed, `current` spec can create a request |
+| `spectacular spec` | Feature-spec lifecycle — `new\|list\|approve\|implement\|archive`; only `approved` can seed a request |
 | `spectacular wayfind` | Strict topo order, fog/frontier, priority-then-uncertainty selection, metaphor routing, deferral, and dependency paths |
 | `spectacular afk` | Opt-in Git isolation: policy/status, branch proposals/start, preflight, archive-first cleanup, and verified PR handoff |
 | `spectacular id` | Resolve aliases to canonical IDs or preview/apply an archive-first legacy-ID migration |
 | `spectacular summary` | One-page workspace overview: counts of requests/decisions/memories/sessions/ideas/feedback (v1.8.0+) |
 | `spectacular requests` | List requests; filter with `--status`, `--active`, `--since`; `--json` for agents (v1.8.0+) |
-| `spectacular request <slug>` | Skim view of one request (frontmatter + outline + milestone progress); `--full` for raw (v1.8.0+) |
+| `spectacular request <slug>` | Cheap overview; `--brief [-m2]` compiles active implementation context; `--full` returns the request-owned bundle |
 | `spectacular decisions` / `decision <slug>` | List/inspect decisions (v1.8.0+) |
 | `spectacular memories` / `memory <slug>` | List/inspect memories (v1.8.0+) |
 | `spectacular sessions` / `sessions show <slug>` | List/inspect sessions read-only (v1.8.0+) |
@@ -259,7 +272,8 @@ spectacular spike resolve spk1 --result supported --outcome "Feasible at the tar
 
 spectacular spec new user-onboarding --summary "Guide a new user to first success" --target-version v1.0.0-discovery
 spectacular spec approve s1 --evidence "Product review complete" --target-version v1.0.0-execution
-spectacular spec act s1                       # scaffold a request with source_spec: SPC-001
+spectacular request new --from s1             # mechanical planned PLAN + TASKS scaffold
+# then, inside Codex/Claude: /spectacular act SPC-001
 spectacular spec implement s1 --verified-against "commit abc123"  # historical evidence point; code stays authoritative
 
 spectacular wayfind status                    # unresolved fog + dependency-ready frontier
@@ -281,7 +295,9 @@ spectacular afk pr onboarding-work --version v1.0.0 --name "User Onboarding" --t
 spectacular summary                           # one-page workspace overview (v1.8.0+)
 spectacular requests --active                 # list active requests (table + --json)
 spectacular requests --status review --since 7d --limit 10
-spectacular request <slug>                    # skim view (frontmatter + outline + progress); --full for raw
+spectacular request <slug>                    # cheap overview
+spectacular request <slug> --brief -m2        # active implementation starting prompt
+spectacular request <slug> --full             # ordered request-owned Markdown bundle
 spectacular decisions [--tag t] [--since 30d] [--json]
 spectacular decision <slug>                   # skim view of one decision
 spectacular memories [--tag t] [--since 7d] [--json]

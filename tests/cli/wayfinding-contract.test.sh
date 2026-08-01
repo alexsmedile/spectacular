@@ -26,6 +26,10 @@ scenario_aliases() {
   assert_eq "$($CLI id resolve res2)" "RES-002" "res2"
   assert_eq "$($CLI id resolve IDE-42)" "IDEA-042" "legacy IDE alias"
   assert_eq "$($CLI id resolve spec7)" "SPC-007" "reserved SPEC alias"
+  assert_eq "$($CLI id resolve fnd1)" "FND-001" "finding-safe alias"
+  assert_eq "$($CLI id resolve f1)" "F1" "legacy fix owns f1"
+  assert_eq "$($CLI id resolve bug1)" "BUG-001" "bug-safe alias"
+  assert_eq "$($CLI id resolve b1)" "b1" "roadmap build owns b1"
   assert_eq "$($CLI id resolve 3 --context question)" "QUE-003" "contextual number"
 
   local code
@@ -56,8 +60,11 @@ scenario_questions() {
   [[ "$out" == *"QUE-001"* && "$out" == *"QUE-002"* ]] && pass || fail "question list shows both IDs"
 
   (cd "$d" && "$CLI" question resolve q1 --answer "Use database-per-tenant." >/dev/null)
-  assert_contains "$q1" "status: resolved"
-  assert_contains "$q1" "Use database-per-tenant."
+  local archived_q1="$d/.spectacular/archive/questions/QUE-001-tenant-isolation.md"
+  [[ ! -f "$q1" && -f "$archived_q1" ]] && pass || fail "resolved question leaves active collection and archives"
+  assert_contains "$archived_q1" "status: archived"
+  assert_contains "$archived_q1" "archived_from: resolved"
+  assert_contains "$archived_q1" "Use database-per-tenant."
   rm -rf "$d"
 }
 
@@ -104,14 +111,14 @@ scenario_spec_lifecycle() {
   [[ -f "$spec" ]] && pass || fail "SPC-001 spec written"
   assert_contains "$spec" "status: draft"
 
-  (cd "$d" && "$CLI" spec act s1 --request-slug onboarding-work >/dev/null 2>&1) && code=0 || code=$?
+  (cd "$d" && "$CLI" request new onboarding-work --from s1 >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "draft spec action gate"
   (cd "$d" && "$CLI" spec approve s1 --evidence "user approved" --target-version v1.0.0-execution >/dev/null)
   assert_contains "$spec" "status: approved"
   assert_contains "$spec" "version: 1.0"
   [[ -f "$d/.spectacular/_snapshots/specs/SPC-001-onboarding/@v1.md" ]] && pass || fail "confirmation snapshot written"
 
-  (cd "$d" && "$CLI" spec act s1 --request-slug onboarding-work >/dev/null)
+  (cd "$d" && "$CLI" request new onboarding-work --from s1 >/dev/null)
   assert_contains "$d/.spectacular/requests/onboarding-work/PLAN.md" "source_spec: SPC-001"
   rm -rf "$d"
 }
@@ -135,6 +142,7 @@ scenario_frontier() {
   [[ "$out" == *"Questions requiring your input"* && "$out" == *"QUE-001"* ]] && pass || fail "session start surfaces question"
 
   (cd "$d" && "$CLI" question resolve q1 --answer "Enterprise first" >/dev/null)
+  [[ ! -f "$d/.spectacular/questions/QUE-001-product-choice.md" && -f "$d/.spectacular/archive/questions/QUE-001-product-choice.md" ]] && pass || fail "resolved blocker archived outside active fog"
   out=$(cd "$d" && "$CLI" wayfind status)
   [[ "$out" == *"RES-001     frontier"* ]] && pass || fail "resolved dependency promotes research to frontier"
   (cd "$d" && "$CLI" wayfind defer r1 --reason "not relevant today" >/dev/null)

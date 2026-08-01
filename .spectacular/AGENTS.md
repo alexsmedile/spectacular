@@ -48,7 +48,7 @@ Load only what the task needs. Don't load the entire repository.
 |---|---|
 | Planning / design | `PRD.md`, `PRINCIPLES.md`, `decisions/index.md` |
 | Refining intent / writing a PRD | `PRD.md`, skill references `grill.md` / `refine.md` / `review.md` + `prd-rules.md` |
-| Implementing a request | `STACK.md`, `requests/<slug>/PLAN.md`, `requests/<slug>/TASKS.md`, `specs/index.md`, relevant `specs/<capability>.md` |
+| Implementing a request | Start with `spectacular request <slug> --brief`; then named code/tests and only the linked capability spec needed for the active milestone |
 | Reviewing / QA | `requests/<slug>/VERIFY.md`, relevant `specs/<capability>.md`, `requests/<slug>/RISKS.md` |
 | Onboarding cold | `PRD.md`, `ARCHITECTURE.md`, this file |
 | Structural questions | `ARCHITECTURE.md` only |
@@ -67,7 +67,7 @@ When a new skill is added, update this list manually. The skill will warn if it 
 
 ## Creating requests
 
-Use `spectacular new <description>` (or describe the work to `/spectacular` and let it derive the slug). The skill scaffolds `requests/<slug>/PLAN.md` + `TASKS.md` from the canonical template. Slugs are kebab-case; the skill confirms before creating.
+For approved work, use `spectacular request new [slug] --from SPC-NNN`, then `/spectacular act SPC-NNN`. The first command mechanically creates a planned PLAN/TASKS bundle; the agentic act flow reviews gates, records activation provenance, compiles `request --brief`, creates the finer native session plan, and begins implementation. `spectacular new <description>` remains the free-form compatibility path.
 
 Per-request folders contain `PLAN.md` + `TASKS.md` + (on demand) `SESSION.md`, `RISKS.md`, `VERIFY.md`, `specs/`, `artifacts/`. They **never** contain a `PRD.md` — product intent is project-wide and lives at the root.
 

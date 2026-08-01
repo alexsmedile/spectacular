@@ -7,6 +7,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Request execution workflow (SPC-002, b39)
+
+- `spectacular request` is now the canonical request namespace: approved-spec scaffolding with
+  `request new --from`, cheap overview, active-only compiled `--brief`, milestone aliases
+  (`--milestone M2`, `-m 2`, `-m2`), ordered `--full`, stable JSON, lifecycle advance, and archive.
+  Existing top-level forms remain compatibility aliases.
+- `/spectacular act SPC-NNN` (or bare `/spectacular SPC-NNN`) owns the agentic handoff: one
+  request, HITL/policy/blocker gates, exact spec/Git activation provenance, compiled brief,
+  native Codex/Claude session planning, and production implementation. Terminal `spec act`
+  redirects instead of partially executing that flow.
+- `review → verified` now requires passing VERIFY-LOG evidence or a recorded explicit override.
+  Decisions accept reusable `--tags`; their index keeps the newest 50 individual, the preceding
+  50 in ten-entry blocks, and older history in fifty-entry blocks without changing ADR bodies.
+  Collision-safe aliases are `fnd1` for findings, `f1` for fixes, `bug1` for bugs, and `b1` for
+  roadmap builds.
+
 ### Documentation
 
 - Post-release currency audit (two read-only auditors): corrected the policy-count claim in

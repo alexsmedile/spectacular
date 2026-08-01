@@ -81,9 +81,9 @@ Omitted sections are written as **empty headers** (not dropped) so the ADR shape
 
 ---
 
-## Index mode (large projects — 50+ decisions)
+## Index mode and compaction
 
-When `DECISIONS.md` grows past ~50 entries the flat file becomes a context-tax. Use **index mode** instead:
+Index mode keeps full ADRs individually addressable and supports topic retrieval through `tags:` frontmatter (`spectacular decide ... --tags cli,docs`).
 
 ```
 .spectacular/
@@ -114,6 +114,14 @@ Three parts separated by ` — `: D-number (bold), short title, one-sentence rat
 Heading format: `# D<N> — Title` (same title as the index line's short title). Sections follow the ADR schema (Context / Decision / Consequences). Session link is optional.
 
 **Agent read pattern:** always load `DECISIONS.md` (index, cheap — ~1 line per decision). Load `decisions/D<N>-<slug>.md` on demand when that specific decision is directly relevant to current work. Never load all per-entry files at once.
+
+As the index grows, compact its presentation without changing bodies or IDs:
+
+1. Keep the newest 50 entries as individual canonical lines.
+2. Group the preceding 50 in chronological blocks of 10.
+3. Group everything older in chronological blocks of 50.
+
+Examples: at D60, D1–10 becomes the first compact block; at D70, D11–20 becomes the second. At D150, D1–50 is one coarse block, D51–100 remains five ten-entry blocks, and D101–150 remains individual. Each block exposes its inclusive ID range and union of topic tags; `spectacular decisions --tag <topic>` and explicit ID lookup still read the individual frontmatter/files. Compaction is index-only: never concatenate, renumber, move, or delete ADR bodies.
 
 **Migration:** `spectacular decisions migrate` reads flat `DECISIONS.md`, splits each `## YYYY-MM-DD —` block into `decisions/D<N>-<slug>.md`, then rewrites `DECISIONS.md` as the one-liner index. `--dry-run` previews without writing. Idempotent if `decisions/` already exists.
 

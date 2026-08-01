@@ -18,7 +18,7 @@ printf '%s\n' '---' 'version: 1.0' 'updated: 2026-08-01' 'summary: "index"' '---
 echo "Scenario specs: approval, implementation evidence, atomic supersession, archive"
 (cd "$WS" && "$CLI" spec new original --summary "Original behavior" >/dev/null)
 (cd "$WS" && "$CLI" spec approve s1 --evidence "user chose it" >/dev/null)
-(cd "$WS" && "$CLI" spec act s1 --request-slug original-build >/dev/null)
+(cd "$WS" && "$CLI" request new original-build --from s1 >/dev/null)
 PLAN1="$WS/.spectacular/requests/original-build/PLAN.md"
 sed -i.bak 's/status: planned/status: verified/' "$PLAN1"; rm -f "$PLAN1.bak"
 (cd "$WS" && "$CLI" docs-impact original-build --none --reason "No public surface" >/dev/null)
@@ -29,7 +29,7 @@ assert_contains "$SPEC1" "verified_against: commit abc123"
 
 (cd "$WS" && "$CLI" spec new replacement --summary "Replacement behavior" --supersedes s1 >/dev/null)
 (cd "$WS" && "$CLI" spec approve s2 --evidence "user approved replacement" >/dev/null)
-(cd "$WS" && "$CLI" spec act s2 --request-slug replacement-build >/dev/null)
+(cd "$WS" && "$CLI" request new replacement-build --from s2 >/dev/null)
 PLAN2="$WS/.spectacular/requests/replacement-build/PLAN.md"
 sed -i.bak 's/status: planned/status: verified/' "$PLAN2"; rm -f "$PLAN2.bak"
 (cd "$WS" && "$CLI" docs-impact replacement-build --required --evidence "docs/workflow.md updated" >/dev/null)
@@ -53,8 +53,41 @@ out=$(cd "$WS" && "$CLI" wayfind status)
 
 (cd "$WS" && "$CLI" question new choice --question "Choose?" >/dev/null)
 (cd "$WS" && "$CLI" question resolve q1 --answer "A" --resolved-by user --source "interview 2026-08-01" >/dev/null)
-assert_contains "$WS/.spectacular/questions/QUE-001-choice.md" "resolved_by: user"
-assert_contains "$WS/.spectacular/questions/QUE-001-choice.md" "resolution_source: interview 2026-08-01"
+ARCHIVED_Q="$WS/.spectacular/archive/questions/QUE-001-choice.md"
+[[ -f "$ARCHIVED_Q" && ! -f "$WS/.spectacular/questions/QUE-001-choice.md" ]] && pass || fail "resolved question archived"
+assert_contains "$ARCHIVED_Q" "archived_from: resolved"
+assert_contains "$ARCHIVED_Q" "resolved_by: user"
+assert_contains "$ARCHIVED_Q" "resolution_source: interview 2026-08-01"
+
+echo "Scenario retention: implemented and abandoned specs leave active context archive-first"
+(cd "$WS" && "$CLI" spec new integrated --summary "Integrated behavior" >/dev/null)
+(cd "$WS" && "$CLI" spec approve s3 --evidence "approved" >/dev/null)
+(cd "$WS" && "$CLI" request new integrated-build --from s3 >/dev/null)
+PLAN3="$WS/.spectacular/requests/integrated-build/PLAN.md"
+sed -i.bak 's/status: planned/status: verified/' "$PLAN3"; rm -f "$PLAN3.bak"
+(cd "$WS" && "$CLI" docs-impact integrated-build --none --reason "No public surface" >/dev/null)
+(cd "$WS" && "$CLI" spec implement s3 --verified-against "commit def456" >/dev/null)
+out=$(cd "$WS" && "$CLI" spec archive s3 --reason "Merged; code and tests are authoritative")
+[[ "$out" == *"Dry-run only"* && -f "$WS/.spectacular/specs/SPC-003-integrated.md" ]] && pass || fail "implemented spec archive defaults to dry-run"
+(cd "$WS" && "$CLI" spec archive s3 --reason "Merged; code and tests are authoritative" --apply --yes >/dev/null)
+ARCHIVED_S3="$WS/.spectacular/archive/specs/SPC-003-integrated.md"
+[[ -f "$ARCHIVED_S3" && ! -f "$WS/.spectacular/specs/SPC-003-integrated.md" ]] && pass || fail "implemented spec archived out of live set"
+assert_contains "$ARCHIVED_S3" "archived_from: implemented"
+assert_contains "$ARCHIVED_S3" "verified_against: commit def456"
+
+(cd "$WS" && "$CLI" spec new integrated-v2 --summary "Replacement for archived implementation" --supersedes s3 >/dev/null)
+(cd "$WS" && "$CLI" spec approve s4 --evidence "approved replacement" >/dev/null)
+(cd "$WS" && "$CLI" request new integrated-v2-build --from s4 >/dev/null)
+PLAN4="$WS/.spectacular/requests/integrated-v2-build/PLAN.md"
+sed -i.bak 's/status: planned/status: verified/' "$PLAN4"; rm -f "$PLAN4.bak"
+(cd "$WS" && "$CLI" docs-impact integrated-v2-build --none --reason "No public surface" >/dev/null)
+(cd "$WS" && "$CLI" spec implement s4 --verified-against "commit fed654" >/dev/null)
+assert_contains "$ARCHIVED_S3" "archived_from: implemented"
+assert_contains "$WS/.spectacular/specs/SPC-004-integrated-v2.md" "status: implemented"
+
+(cd "$WS" && "$CLI" spec new rejected --summary "Rejected path" >/dev/null)
+(cd "$WS" && "$CLI" spec archive s5 --reason "Failed feasibility" --apply --yes >/dev/null)
+assert_contains "$WS/.spectacular/archive/specs/SPC-005-rejected.md" "archived_from: draft"
 
 (cd "$WS" && "$CLI" remember "The old fact" >/dev/null)
 (cd "$WS" && "$CLI" remember "The corrected fact" --supersedes M1 >/dev/null)

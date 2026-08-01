@@ -1,14 +1,15 @@
 ---
-status: verified
+status: archived
 priority: high
 owner: alex
-updated: 2026-08-01
+updated: 2026-08-02
 build: b35
 docs_impact: required
 summary: "Unify Spectacular entity lifecycles, evidence gates, AFK authorization, archival behavior, and documentation impact under one enforceable contract"
 related:
   - PRD.md
 docs_impact_evidence: Updated docs/commands.md, docs/workflow.md, docs/scaffold.md, canonical architecture/spec index, and skill references
+archived: 2026-08-02
 ---
 
 # Plan — lifecycle-contract

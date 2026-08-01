@@ -1,8 +1,8 @@
 ---
-status: verified
+status: archived
 priority: high
 owner: alex
-updated: 2026-08-01
+updated: 2026-08-02
 build: b32
 source_spec: SPC-001
 summary: "Add canonical IDs, decisions/questions/ideas databases, research and spike node contracts, and confirmed/unconfirmed specification state"
@@ -11,6 +11,7 @@ related:
 blocks:
   - wayfinding-sequencer
   - afk-git-hygiene
+archived: 2026-08-02
 ---
 
 # Plan — wayfinding-contract

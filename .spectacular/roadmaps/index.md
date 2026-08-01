@@ -1,7 +1,7 @@
 ---
-version: 3.16
-updated: 2026-08-01
-summary: "Per-version scope, phase, and exit criteria. The active runway now includes the b32→b33→b34 Wayfinding contract, sequencer, and AFK Git hygiene chain; targets remain tbd until discovery/execution prerelease support ships."
+version: 3.20
+updated: 2026-08-02
+summary: "Per-version scope, phase, and exit criteria. The b32–b39 Wayfinding, lifecycle, retention, and request-interface foundation is implemented and verified; remaining unslotted work stays tbd."
 related:
   - ../PRD.md
   - ../ARCHITECTURE.md
@@ -52,10 +52,14 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b29 | cli-gate-ergonomics | Policy directives at gates (tiered output, --full), advance scaffolds SESSION.md, doctor findings block | themed | v1.34.0 | shipped |
 | b30 | verify-split | verify.md walk-only + verify-authoring.md (2-of-6 canonical); TASKS template `- [~]` deferred rows | themed | v1.34.0 | shipped |
 | b31 | review-sweep | Review-sweep protocol: request-auditor agent + `spectacular sweep` + VERIFY-LOG against:-stamps/pending-reverify | themed | v1.35.0 | shipped |
-| b32 | wayfinding-contract | Canonical IDs, knowledge stores, and spec confirmation | full | tbd | planned |
-| b33 | wayfinding-sequencer | Fog/frontier sequencing and dependency coherence | full | tbd | planned |
-| b34 | afk-git-hygiene | Human-gated AFK branch and playground hygiene | themed | tbd | planned |
-| b35 | lifecycle-contract | Unified evidence-backed lifecycle contract | full | tbd | active |
+| b32 | wayfinding-contract | Canonical IDs, knowledge stores, and spec confirmation | full | tbd | shipped |
+| b33 | wayfinding-sequencer | Fog/frontier sequencing and dependency coherence | full | tbd | shipped |
+| b34 | afk-git-hygiene | Human-gated AFK branch and playground hygiene | themed | tbd | shipped |
+| b35 | lifecycle-contract | Unified evidence-backed lifecycle contract | full | tbd | shipped |
+| b36 | advanced-engineering-collections | Optional reserved senior-engineering collections | themed | tbd | shipped |
+| b37 | discovery-evidence-protocol | Progressive routing for research, spikes, prototypes, tracer bullets, artifacts, and technical debt | themed | tbd | shipped |
+| b38 | artifact-retention-contract | Live, stale-safe, temporary, and throwaway artifact retention | themed | tbd | shipped |
+| b39 | request-workflow-interface | Approved-spec request handoff, compiled implementation context, command grammar, and verification evidence gate | full | tbd | shipped |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = mutable when work is slotted; `status` = release-level `candidate · planned · active · shipped · cancelled` (distinct from request lifecycle). `candidate` means likely upcoming but not yet scoped or committed. See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

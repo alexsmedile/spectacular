@@ -30,3 +30,5 @@ An optional host prefix is prepended, never replaced—for example `codex/spike/
 6. `afk pr` requires a verified request, passing VERIFY-LOG outcome, approved source spec, fresh `--tests-passed`, policy permission, and explicit apply. Breaking changes require a separate approval flag. It opens `[Spectacular] Executed: <version> - <name>` and stops before merge.
 
 Archive records contain a durable Git ref, tip SHA, and exact restore command. Recovery never depends on reflog retention; remote branches are untouched.
+
+These refs are cold recovery under [[artifact-retention]], not live branches or normal agent context. Cleanup may delete the local spike/fork branch after evidence is preserved and the ref verifies. Pruning old recovery refs is a separate, explicitly approved retention operation; routine AFK cleanup never does it.

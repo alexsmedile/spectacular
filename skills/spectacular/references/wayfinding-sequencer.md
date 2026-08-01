@@ -24,7 +24,7 @@ Dependencies override target versions. `doctor wayfinding` warns when a node tar
 | Park this idea | `idea new` | Creates a parked `IDEA-NNN`; never edits current PLAN/TASKS. |
 | Put it on ice / Icebox | `wayfind defer` | Requires a reason; preserves the record. |
 | Find your way to X | `wayfind path` | Shows prerequisites before recommending action. |
-| Act on goal X | `spec act` | Refuses any specification that is not `current`. |
+| Act on goal X | `/spectacular act SPC-NNN` | Requires an approved specification and runs the request/HITL/activation gates in [[request-workflow]]. |
 
 The CLI exposes these mappings through `spectacular wayfind route <phrase> ...`. The skill may translate natural language directly, but it must call the same underlying gated verb.
 

@@ -26,19 +26,21 @@ scenario_topology_and_ranking() {
   (cd "$d" && "$CLI" research new market-data --summary "Research market" --blocked-by q1 >/dev/null)
   (cd "$d" && "$CLI" spike new feasibility --summary "Test feasibility" --blocked-by q1 >/dev/null)
   (cd "$d" && "$CLI" spec new launch --summary "Launch" --target-version v1.0.0-execution >/dev/null)
-  sed -i.bak 's/updated: 2026-08-01/blocked_by:\n  - RES-001\n  - SPK-001\nupdated: 2026-08-01/' "$d/.spectacular/specs/SPC-001-launch.md"; rm -f "$d/.spectacular/specs/SPC-001-launch.md.bak"
+  sed -i.bak 's/related: \[\]/blocked_by:\n  - RES-001\n  - SPK-001\nrelated: []/' "$d/.spectacular/specs/SPC-001-launch.md"; rm -f "$d/.spectacular/specs/SPC-001-launch.md.bak"
 
   order=$(cd "$d" && "$CLI" wayfind order)
   [[ "$order" == $'QUE-001\tfrontier\nRES-001\tfog\nSPK-001\tfog\nSPC-001\tfog' ]] && pass || fail "strict dependency-first order: $order"
   out=$(cd "$d" && "$CLI" wayfind next)
   [[ "$out" == *"QUE-001"* ]] && pass || fail "human question wins equal-priority uncertainty tie"
-  (cd "$d" && "$CLI" question resolve q1 --answer "Enterprise" >/dev/null)
-  out=$(cd "$d" && "$CLI" wayfind next)
-  [[ "$out" == *"SPK-001"* ]] && pass || fail "spike outranks research at equal priority"
 
   sed -i.bak 's/blocked_by: \[\]/blocked_by:\n  - SPC-001/' "$d/.spectacular/questions/QUE-001-product-choice.md"; rm -f "$d/.spectacular/questions/QUE-001-product-choice.md.bak"
   (cd "$d" && "$CLI" wayfind status >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "cyclic graph refuses sequencing"
+  sed -i.bak 's/blocked_by:/blocked_by: []/; /  - SPC-001/d' "$d/.spectacular/questions/QUE-001-product-choice.md"; rm -f "$d/.spectacular/questions/QUE-001-product-choice.md.bak"
+
+  (cd "$d" && "$CLI" question resolve q1 --answer "Enterprise" >/dev/null)
+  out=$(cd "$d" && "$CLI" wayfind next)
+  [[ "$out" == *"SPK-001"* ]] && pass || fail "spike outranks research at equal priority"
   rm -rf "$d"
 }
 
@@ -58,7 +60,7 @@ scenario_resolve_and_routes() {
   assert_contains "$d/.spectacular/questions/QUE-001-pricing.md" "status: deferred"
   (cd "$d" && "$CLI" wayfind resume q1 >/dev/null)
   (cd "$d" && "$CLI" wayfind resolve q1 --answer "Per seat" >/dev/null)
-  assert_contains "$d/.spectacular/questions/QUE-001-pricing.md" "status: resolved"
+  assert_contains "$d/.spectacular/archive/questions/QUE-001-pricing.md" "archived_from: resolved"
   out=$(cd "$d" && "$CLI" wayfind route "find your way to" q1)
   [[ "$out" == *"Find your way to QUE-001"* ]] && pass || fail "find route resolves target"
 
@@ -66,7 +68,10 @@ scenario_resolve_and_routes() {
   (cd "$d" && "$CLI" wayfind route "act on goal" s1 --request-slug billing-work >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "act route preserves spec confirmation gate"
   (cd "$d" && "$CLI" spec confirm s1 --evidence "approved" >/dev/null)
-  (cd "$d" && "$CLI" wayfind route "act on goal" s1 --request-slug billing-work >/dev/null)
+  out=$(cd "$d" && "$CLI" wayfind route "act on goal" s1 --request-slug billing-work 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "approved act route redirects to agentic flow"
+  [[ "$out" == *"/spectacular act SPC-001"* ]] && pass || fail "act route names canonical agentic command"
+  (cd "$d" && "$CLI" request new billing-work --from s1 >/dev/null)
   assert_contains "$d/.spectacular/requests/billing-work/PLAN.md" "source_spec: SPC-001"
   rm -rf "$d"
 }

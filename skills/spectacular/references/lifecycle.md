@@ -27,15 +27,13 @@ The skill detects signals and **proposes** transitions. The user can also force 
 
 | From | To | Signal | Skill action |
 |---|---|---|---|
-| `planned` | `active` | User starts working on request | Run `spectacular advance <slug>`; create SESSION.md |
+| `planned` | `active` | User authorizes approved work | Run `/spectacular act SPC-NNN`; it gates, records provenance, and creates SESSION.md |
 | `active` | `review` | All TASKS.md items checked | Propose `spectacular advance <slug>`; also propose VERIFY.md if 2-of-6 rule triggers (see [[plan-rules]] § 2-of-6) |
 | `active` | `review` | User says "done" / "ready to review" | Run `spectacular advance <slug>` |
-| `review` | `verified` | All `- [x]` in VERIFY.md (when present) | Propose `spectacular advance <slug>` |
-| `review` | `verified` | All TASKS § Verification + PLAN § Validation items confirmed (when no VERIFY.md) | Propose `spectacular advance <slug>` |
-| `review` | `verified` | User confirms everything works | Run `spectacular advance <slug>` |
+| `review` | `verified` | Verification artifact checks pass | Run `/spectacular verify <slug>`; it records VERIFY-LOG evidence, then calls `request advance` |
 | `verified` | `archived` | User confirms archive | Run `spectacular archive <slug>`; see [[archive]] |
 
-> **Verb name (v1.19.0):** the lifecycle verb is `spectacular advance` (was `promote`). `promote` still works as a deprecated alias and prints a one-line notice. Distinct from `spectacular idea promote`, which promotes an *idea* into a request — that one keeps its name.
+> **Namespace:** the canonical form is `spectacular request advance`; top-level `advance` and deprecated `promote` remain compatibility aliases.
 
 **Mutation principle (v0.7.0+):** state changes use `spectacular advance <slug>`. The CLI:
 - Reads current status from PLAN.md frontmatter

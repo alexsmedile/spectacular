@@ -1,8 +1,8 @@
 ---
-status: verified
+status: archived
 priority: high
 owner: alex
-updated: 2026-08-01
+updated: 2026-08-02
 build: b33
 summary: "Compute fog and frontier, prioritize uncertainty, surface blockers, map Wayfinder language, and validate dependency/version order"
 related:
@@ -11,6 +11,7 @@ depends-on:
   - wayfinding-contract
 blocks:
   - afk-git-hygiene
+archived: 2026-08-02
 ---
 
 # Plan — wayfinding-sequencer

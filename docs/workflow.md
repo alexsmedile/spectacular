@@ -99,19 +99,49 @@ idea → questions / research / spikes → user decision → draft|unconfirmed s
 
 Each record receives a stable canonical ID such as `QUE-001` or `RES-001`. Compact aliases such as `q1` and `r1` work as input, while saved cross-references use canonical IDs.
 
+Use discovery only when it changes what you would build. Start with the cheapest sufficient answer:
+
+| Need | Use | What survives |
+|---|---|---|
+| A fact or comparison you cannot establish from current code/tests/docs | `RES-NNN` research | Sources, evidence, options, and result |
+| A technical feasibility assumption that needs executable proof | `SPK-NNN` spike | Experiment evidence; branch code is disposable |
+| A UI/CLI/workflow that needs human reaction | Prototype attached to the request, vision, or feedback loop | Observations and the resulting spec change |
+| A real end-to-end production skeleton after architecture approval | Approved `SPC` with `execution_mode: tracer` | Thin production code and tests, retained for extension |
+
+If the path is already clear, create none of these and implement the approved request. `RES` is canonical (say `R1`); `PRT` remains reserved. Research, spikes, vendor evidence, and interviews can support a decision, but the user or an explicitly authorized AFK gate still makes the choice. “Artifact” is an owned output, not another database entity.
+
+Technical debt also stays with its execution owner: an active request task when in scope, a `tbd` roadmap candidate when likely soon, or an idea when uncommitted. A deliberate compromise may add a linked decision explaining why. Spectacular does not create a parallel `debt/` backlog.
+
 When discovery converges, create a collaborative draft (or an AFK unconfirmed specification), approve it with the human, then act on it:
 
 ```bash
 spectacular spec new team-billing --summary "Bill teams by active seat" --target-version v1.0.0-discovery
 spectacular spec approve s1 --evidence "Pricing and architecture approved" --target-version v1.0.0-execution
-spectacular spec act s1
+spectacular request new --from s1
+# then, inside Codex/Claude:
+/spectacular act SPC-001
 ```
 
-Only an `approved` specification can seed an implementation request. After verified integration, `spec implement --verified-against <commit|build>` records the historical evidence point; code remains authoritative. If an open loop is not relevant now, defer it with a reason and optional review point.
+Only an `approved` specification can seed an implementation request. `request new --from` creates the durable planned PLAN/TASKS bundle; `act` runs gates, records the exact specification/Git baseline, compiles `request --brief`, creates the finer native Codex/Claude session plan, and begins implementation. After verified integration, `spec implement --verified-against <commit|build>` records the historical evidence point; code remains authoritative. If an open loop is not relevant now, defer it with a reason and optional review point.
 
 Wayfinder language maps to the same gates: “park this idea” creates an idea, “put it on ice” defers with a reason, “find your way to…” shows prerequisites, and “act on goal…” still requires an approved specification. During implementation, park unexpected discoveries instead of adding them to the active milestone. Run `spectacular doctor wayfinding` to surface inferred dependency gaps and discovery/execution target inversions; findings are proposals, never automatic roadmap edits.
 
 For explicitly authorized AFK work, create a durable goal-scoped `spectacular afk run`, inspect `spectacular afk status`, and propose the branch class before creating it. Draft specs, spikes, forks, and approved execution stay isolated. Cleanup creates a durable Git archive ref before local deletion; remote deletion and merge remain human actions. A verified handoff may open `[Spectacular] Executed: <version> - <name>` only after the request, source spec, verification log, and fresh tests satisfy their gates.
+
+## Keep live context small and trustworthy
+
+Spectacular derives four retention classes from lifecycle state and location:
+
+| Class | Meaning | Examples |
+|---|---|---|
+| Live | Safe to use for current planning/execution; refreshed at lifecycle checkpoints | code/tests, roadmap/spec indexes, active requests, unresolved questions |
+| Temporary | Bounded working material | execution specs, SESSION notes, prototypes, AFK drafts |
+| Stale-safe | Preserved history; verify against code before reuse | archived SPC/QUE/request, DEC/FND, completed research/spikes, shipped roadmap files |
+| Throwaway | The code/file may be deleted once learning and recovery survive | spike/fork branches, sandbox prototype code, scratch output |
+
+Every session briefing starts with unresolved human-input questions. Resolving one records answer provenance and archives it; it creates a DEC only when the answer is genuinely a choice. Detailed specs stay aligned through approval/action, then may drift as temporary execution context; after verified merge, archive them and treat production code plus executable unit/invariant tests as truth.
+
+The current roadmap entry is `.spectacular/roadmaps/index.md`. It owns the build ledger and active/planned direction. `spectacular roadmap migrate` moves older shipped prose to `.spectacular/roadmaps/vX.Y.Z.md`; do not create `ROADMAP_ARCHIVE.md`.
 
 ## 5. Create a request
 

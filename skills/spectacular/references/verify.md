@@ -192,7 +192,7 @@ Walk complete — <slug>
 ```
 
 **If all checks passed (B = 0, S = 0):**
-- Default is **propose, human confirms**: "All <N> checks passed. Mark `<slug>` verified? (y/n)" — on `y` → `spectacular advance <slug> --to verified`. Never edit `status:` directly.
+- Default is **propose, human confirms**: "All <N> checks passed. Mark `<slug>` verified? (y/n)" — on `y` → `spectacular request advance <slug> --to verified`. Never edit `status:` directly.
 - **Configurable auto-flip:** `verify.auto_promote: true` in config (or `--auto`) skips the prompt and promotes immediately, reporting it.
 
 **If any blocker or skip (B > 0 or S > 0):**
@@ -234,7 +234,7 @@ The `[kind]` tag records *which authority* confirmed each line — the audit tra
 
 ## Lifecycle + archive tie-in
 
-- The walk is the *intended* path to `verified`. `spectacular advance <slug> --to verified` still works directly (the CLI stays a dumb mutator), but the walk is what makes the checks real.
+- The walk is the normal owner of `review → verified`. The CLI requires passing `VERIFY-LOG.md` evidence; an exceptional bypass must say `--override verify --reason <why>` and is recorded in PLAN frontmatter.
 - **Archive warning:** `spectacular archive <slug>` should warn when a request reaches archive `verified` but with **no VERIFY-LOG.md** — flipped without ever being walked. Advisory, not blocking (see [[archive]]).
 
 ## CLI redirect

@@ -89,6 +89,11 @@ scenario_1_bare_init() {
   assert_file_absent "$dir/.spectacular/roadmaps/index.md" "roadmaps/index.md absent"
   assert_file_absent "$dir/.spectacular/STACK.md" "STACK.md absent"
   assert_file_absent "$dir/.spectacular/decisions/index.md" "decisions/index.md absent"
+  assert_file_absent "$dir/.spectacular/findings/.gitkeep" "findings collection absent"
+  assert_file_absent "$dir/.spectacular/fixes/.gitkeep" "fixes collection absent"
+  assert_file_absent "$dir/.spectacular/bugs/.gitkeep" "bugs collection absent"
+  assert_file_absent "$dir/.spectacular/security/.gitkeep" "security collection absent"
+  assert_file_absent "$dir/.spectacular/benchmarks/.gitkeep" "benchmarks collection absent"
 
   assert_file_contains "$dir/.spectacular/PRD.md" "kit: blank" "PRD kit is blank"
   assert_file_contains "$dir/.spectacular/config.yaml" "kit: blank" "config kit is blank"
@@ -194,6 +199,31 @@ scenario_5_with_flag() {
   else
     pass_count=$((pass_count + 1))
   fi
+
+  rm -rf "$dir"
+}
+
+scenario_5b_advanced_collections() {
+  echo "Scenario 5b: --with can reserve advanced engineering collections"
+  local dir="/tmp/spectacular-test-5b"
+  seed_workspace "$dir"
+
+  run_cli "$dir" --with findings,fixes,bugs,security,benchmarks >/dev/null
+
+  assert_dir_exists "$dir/.spectacular/findings" "findings dir created"
+  assert_dir_exists "$dir/.spectacular/fixes" "fixes dir created"
+  assert_dir_exists "$dir/.spectacular/bugs" "bugs dir created"
+  assert_dir_exists "$dir/.spectacular/security" "security dir created"
+  assert_dir_exists "$dir/.spectacular/benchmarks" "benchmarks dir created"
+  assert_file_exists "$dir/.spectacular/findings/.gitkeep" "findings gitkeep created"
+  assert_file_exists "$dir/.spectacular/fixes/.gitkeep" "fixes gitkeep created"
+  assert_file_exists "$dir/.spectacular/bugs/.gitkeep" "bugs gitkeep created"
+  assert_file_exists "$dir/.spectacular/security/.gitkeep" "security gitkeep created"
+  assert_file_exists "$dir/.spectacular/benchmarks/.gitkeep" "benchmarks gitkeep created"
+
+  echo "existing verified fix" > "$dir/.spectacular/fixes/F1.md"
+  run_cli "$dir" --with findings,fixes,bugs,security,benchmarks >/dev/null
+  assert_file_contains "$dir/.spectacular/fixes/F1.md" "existing verified fix" "repeat init preserves existing fixes"
 
   rm -rf "$dir"
 }
@@ -442,6 +472,7 @@ scenario_2_kit_coding
 scenario_3_interactive
 scenario_4_idempotent_rerun
 scenario_5_with_flag
+scenario_5b_advanced_collections
 scenario_6_minimal_overrides_kit
 scenario_7_interactive_abort
 scenario_8_global_flag

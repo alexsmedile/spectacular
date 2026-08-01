@@ -37,7 +37,8 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 |---|---|
 | `/spectacular` with no args | → `references/status.md` (empty workspace → `references/guided-first-run.md`) |
 | `spectacular status` | → `references/status.md` |
-| `spectacular new <description>` | → `references/new-request.md` (then run `spectacular new <slug>`) |
+| `spectacular request new [<slug>] --from <SPC>` | → CLI verb; approved-spec PLAN/TASKS scaffold; see [[request-workflow]] and [[new-request]] (`spectacular new` remains the free-form compatibility alias) |
+| `/spectacular act <SPC>` / `/spectacular <SPC>` / compatibility `/spectacular spec act <SPC>` | → [[request-workflow]] approved-spec handoff: resolve one request, run gates, activate with provenance, compile `--brief`, initialize native planning, implement |
 | `spectacular archive <slug>` | → CLI verb; see [[archive]] (its spec-sync step may dispatch `spec-reviewer` — [[spec-sync]]) |
 | `spectacular remember this` | → `references/memory.md` (legacy free-text capture) |
 | `spectacular remember "<text>"` | → CLI verb; see [[memory-rules]] for entry shape |
@@ -50,12 +51,14 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular question new\|list\|resolve` | → CLI verb; active human blockers live in `questions/`; see [[question-rules]] and [[canonical-ids]] |
 | `spectacular research new\|list\|resolve` | → CLI verb; read-only evidence discovery in `research/`; see [[research-rules]] |
 | `spectacular spike new\|list\|resolve` | → CLI verb; human-authorized feasibility discovery in `spikes/`; see [[spike-rules]] |
+| Choosing research vs spike vs prototype vs tracer bullet, or routing technical debt | → `references/discovery-protocol.md`; use the cheapest sufficient answer and avoid creating redundant nodes |
+| Deciding what must stay current, may remain stale, should archive, or may be deleted | → `references/artifact-retention.md`; derive live/stale-safe/temporary/throwaway from entity, status, and path |
 | `spectacular spec new\|list\|approve\|act\|implement\|deprecate\|archive` | → CLI verbs; evidence-gated specification lifecycle; `confirm` remains an alias for `approve`; see [[spec-lifecycle]], [[lifecycle-contract]], and [[canonical-ids]] |
 | `spectacular wayfind status\|next\|order\|resolve\|defer\|resume\|path\|route` | → CLI verb; strict dependency-first fog/frontier sequencing and durable open-loop control; see [[wayfinding-sequencer]] |
 | “Park this idea” | → `spectacular wayfind route "park this idea" <slug>`; creates an `IDEA-NNN` record and does not alter active milestone scope |
 | “Put it on ice” / “Icebox” | → `spectacular wayfind route icebox <id> --reason <why>`; durable `status: deferred` |
 | “Find your way to <destination>” | → `spectacular wayfind path <id>` first; then resolve its dependency-ready discovery path without bypassing gates |
-| “Act on goal <target>” | → `spectacular wayfind route "act on goal" <SPC alias>`; delegates to `spec act`, which requires `status: approved` |
+| “Act on goal <target>” | → resolve the approved SPC, then run `/spectacular act <SPC>` per [[request-workflow]] |
 | `spectacular afk run\|status\|configure\|propose\|preflight\|start\|cleanup\|pr` | → CLI verbs; durable goal authorization plus opt-in, dry-run-first Git isolation and verified PR handoff; see [[afk-git-hygiene]] and [[lifecycle-contract]] |
 | User authorizes AFK work | → inspect `spectacular afk status`; branch mutation still requires enabled project config plus explicit apply; merge/remote deletion remain HITL |
 | A built-in `/goal` begins in a Spectacular workspace | → create/resume a durable goal-scoped AFK run for that goal; keep it active until completion/cancellation or a declared/unexpected HITL gate |
@@ -66,7 +69,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | "record a fix" / "log this fix" / "the bug is fixed and verified" | → `spectacular fix new` once resolved+verified, **with `--signature`**; see [[fixes-rules]] |
 | "investigate this bug" / "audit this quirk" before planning | → `spectacular audit new`; see [[audit-rules]] |
 | "have we seen this bug before?" / starting to diagnose | → **[[bug-workflow]] Step 0** — grep `.spectacular/fixes/` signatures first (self-learning loop) |
-| `spectacular advance <slug>` | → CLI verb (no skill flow); lifecycle move-forward (was `promote`, still an alias); see [[lifecycle]] |
+| `spectacular request advance <slug>` | → CLI verb; lifecycle move-forward (`advance` remains an alias); review→verified is evidence-gated; see [[request-workflow]] and [[lifecycle]] |
 | `spectacular snapshot <file>` | → CLI verb (no skill flow); see [[versioning]] for snapshot rules. Requires a literal path relative to working directory (canonical docs only). |
 | `spectacular policy [@hook\|<id>\|--principle N\|--json]` | → CLI verb; read the merged policy contract. See [[policy-injection]] for the runtime loop, [[policies-contract]] for the schema |
 | Entering any work phase (init/planning/implementation/verification/archive/remember/snapshot/session-end) | → the phase ref doc's **@\<hook\> policy gate** runs `spectacular policy @<hook>` first; see [[policy-injection]] |
@@ -81,7 +84,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular migrate [--dry-run\|--list]` | → CLI verb. Mechanical apply of pending schema migrations. |
 | `/spectacular migrate` (walk judgment migrations) | → `references/migrate.md` |
 | Explain a migration spec or contract | → `references/migrations-contract.md` |
-| Actively working on a request | → `references/active-request.md` |
+| Actively working on, resuming, or retrieving context for a request | → `references/request-workflow.md`, then `references/active-request.md` only for session-state details |
 | Implementing a milestone — decide build-inline vs dispatch a `spec-builder` | → **`references/build-workflow.md`** — the closed-brief chain, the inline-vs-dispatch gate, the build fleet. (Rationale: `build-workflow-doctrine.md`, only if a routing call is uncertain.) |
 
 ### Read verbs (v1.8.0+) — read-only, no skill flow
@@ -91,7 +94,7 @@ Always prefer these over walking the filesystem or hand-reading multiple PLAN/TA
 | User says / context | Route to |
 |---|---|
 | `spectacular requests [--active\|--status\|--since\|--json]` | → CLI verb. Lists requests with frontmatter view. |
-| `spectacular request <slug>` | → CLI verb. Skim view of one request (frontmatter + outline + milestone progress). `--full` for raw. |
+| `spectacular request <slug>` | → CLI verb. Cheap overview. `--brief [-mN]` compiles active implementation context; `--full` emits the ordered request-owned Markdown bundle. See [[request-workflow]]. |
 | `spectacular decisions [--tag\|--since\|--json]` | → CLI verb. Lists decisions. |
 | `spectacular decision <slug>` | → CLI verb. Skim view of one decision. |
 | `spectacular memories [--tag\|--since\|--json]` | → CLI verb. Lists memory entries. |
@@ -109,10 +112,13 @@ Always prefer these over walking the filesystem or hand-reading multiple PLAN/TA
 
 ### Doc-writing (generalized — works for any registered doc)
 
-`spectacular <doc> [<verb>]` works for any doc in `references/doc-index.md`; the verb defaults from the doc's mode + state. Each doc's rules file (`references/<doc-id>-rules.md`) declares dispatch in frontmatter, prompts + gate checks in the body.
+The conversational canonical grammar is verb-first: `/spectacular grill|refine|review <doc> [target]`. Document-first forms remain compatibility aliases. The verb defaults from the document's mode + state only when the user supplies the document without a verb. Each doc's rules file declares dispatch and gate checks.
 
 | User says | Route to |
 |---|---|
+| `/spectacular grill <doc> [target]` | → resolve and print the target, then `references/grill.md` with `<doc-id>-rules.md` |
+| `/spectacular refine <doc> [target]` | → resolve and print the target, then `references/refine.md` with `<doc-id>-rules.md` |
+| `/spectacular review <doc> [target]` | → resolve and print the target, then `references/review.md` with `<doc-id>-rules.md` |
 | `spectacular <doc>` (no verb) | → load `references/<doc-id>-rules.md`, resolve mode, dispatch |
 | `spectacular <doc> grill` | → `references/grill.md` (with `<doc-id>-rules.md` context) |
 | `spectacular <doc> refine` | → `references/refine.md` (with `<doc-id>-rules.md` context) |

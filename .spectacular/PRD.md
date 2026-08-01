@@ -1,6 +1,6 @@
 ---
-version: 2.0
-updated: 2026-05-21
+version: 2.1
+updated: 2026-08-02
 summary: "AI-native operational workspace for software projects — convention, skill, and CLI"
 related:
   - PRINCIPLES.md
@@ -51,6 +51,8 @@ Spectacular ships as three complementary layers:
 3. **CLI** — a one-time bootstrap tool (`spectacular init`) that scaffolds the directory, installs the skill, and generates stub root files. Used once per project.
 
 PRD vs PLAN clarifier: `.spectacular/PRD.md` is project-wide (this file). Per-request work lives in `requests/<slug>/PLAN.md` + `TASKS.md` — requests never carry their own PRD. Full distinction in [ARCHITECTURE.md § Request files](ARCHITECTURE.md).
+
+Request interface: mechanical entity operations are noun-first (`request new|list|advance|archive`); agentic document work is verb-first (`/spectacular grill|refine|review <doc>`). An approved SPC becomes planned work through `request new --from`; `/spectacular act SPC-NNN` runs gates, records the exact spec/Git activation baseline, compiles an active-only implementation brief, initializes the coding agent's finer session plan, and begins production work. The durable TASKS milestone, native session plan, and narrower subagent brief are complementary layers, never duplicates.
 
 ## Goals & success criteria
 

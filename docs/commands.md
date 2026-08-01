@@ -36,6 +36,8 @@ spectacular init                              # always-set + blank kit
 spectacular init -i                           # interactive: kit menu + per-doc prompts
 spectacular init --kit coding                 # always-set + coding kit's STACK + ARCHITECTURE
 spectacular init --with principles,roadmap    # additive: those two on top of always-set
+spectacular init --with findings,fixes,bugs,security,benchmarks
+                                               # reserve advanced engineering collections
 spectacular init --kit coding --minimal       # always-set only; kit identity preserved
 spectacular init --name my-app
 spectacular init --summary "Internal dashboard for support workflows"
@@ -45,6 +47,8 @@ spectacular init --update                     # re-download latest skill release
 ```
 
 Pre-flight is **always non-destructive** — re-running init on an existing workspace never overwrites existing files. Empty files are filled; non-empty files are skipped; malformed files trigger a `spectacular doctor frontmatter` hint.
+
+Advanced collection flags are reservation-only: they create Git-preservable directories without claiming their record workflows exist. `security/` is intentionally singular. Existing `fixes/F<N>.md` records remain untouched; future `FIX-NNN` migration requires explicit confirmation.
 
 ### `spectacular init --update`
 
@@ -340,25 +344,28 @@ spectacular spike new connection-pool --summary "Validate pooling under peak loa
 spectacular spike resolve spk1 --result supported --outcome "Feasible at 500 concurrent sessions" --evidence "benchmark report"
 ```
 
-`question new` defaults to `requires_user_input: true`. Spike records set `execution_requires_approval: true`; creating the record does not authorize running prototype code.
+`question new` defaults to `requires_user_input: true`. `question list` defaults to active questions; use `--status archived` (or `resolved`) for explicit history. Resolving records answer provenance, moves the file to `.spectacular/archive/questions/`, and keeps its canonical ID available as a satisfied dependency. `--decision` links an existing DEC only when the answer represents a genuine choice. Spike records set `execution_requires_approval: true`; creating the record does not authorize running prototype code.
 
 ### Specification lifecycle and action *(v1.36.0+)*
 
 Specifications converge discovery into executable intent:
 
 ```text
-draft|unconfirmed → approved → implemented → superseded|deprecated → archived
+draft|unconfirmed → approved → implemented → archived
+       └──────────────────────────────→ archived (rejected/abandoned)
+implemented → superseded|deprecated → archived
 ```
 
 ```bash
 spectacular spec new user-onboarding --summary "Guide a new user to first success" --target-version v1.0.0-discovery
 spectacular spec list --status draft
 spectacular spec approve s1 --evidence "Product review complete" --target-version v1.0.0-execution
-spectacular spec act s1 --request-slug user-onboarding --priority high
+spectacular request new user-onboarding --from s1 --priority high
+# then, inside Codex/Claude: /spectacular act SPC-001
 spectacular spec implement s1 --verified-against "commit abc123"
 ```
 
-Collaborative specs start `draft`; pass `--afk` for `unconfirmed`. `spec approve` snapshots and authorizes implementation (`confirm` remains an alias). Only approved specs may act. `implemented` is a historical evidence point, not a freshness promise; code remains authoritative.
+Collaborative specs start `draft`; pass `--afk` for `unconfirmed`. `spec approve` snapshots and authorizes implementation (`confirm` remains an alias). `request new --from` mechanically creates both PLAN and TASKS but leaves them planned. `/spectacular act SPC-001` (or `/spectacular SPC-001`) is the agentic authorization/implementation flow. Terminal `spec act` redirects rather than partially performing it. `implemented` is a historical evidence point, not a freshness promise; code remains authoritative. `spec archive` is dry-run first and accepts implemented specs after verification as well as rejected/abandoned draft, unconfirmed, or approved specs; it records `archived_from`, reason, and dates before moving detail to `archive/specs/`.
 
 ### Wayfinding fog and frontier *(v1.36.0+)*
 
@@ -564,7 +571,9 @@ Read-only inspection verbs that collapse multi-step agent workflows into one det
 | Verb | Returns |
 |---|---|
 | `summary` | One-page workspace overview |
-| `requests [--active]` / `request <slug>` | Fleet list / one request's detail |
+| `request list` / `request <slug>` | Fleet list / cheap request overview (`requests` remains an alias) |
+| `request <slug> --brief [-m2]` | Active implementation prompt compiled from PLAN, TASKS, SESSION, provenance, and boundaries |
+| `request <slug> --full` | Ordered request-owned Markdown bundle; external linked records stay unexpanded |
 | `decisions` / `decision <slug>` | Decision entries |
 | `memories` / `memory <slug>` | Memory entries |
 | `sessions [show <slug>]` | Session log |
@@ -574,7 +583,7 @@ Read-only inspection verbs that collapse multi-step agent workflows into one det
 | `paths` | Conventional paths as JSON |
 | `roadmap` | Build-id ledger + version mapping |
 
-Cold-start pattern: `summary → requests --active → request <slug>`.
+Cold-start pattern: `summary → request list --active → request <slug>`. When implementing, continue with `request <slug> --brief`; use `--full` only for review/debugging.
 
 ### `spectacular prd` / `spectacular prd grill`
 

@@ -1,8 +1,8 @@
 ---
-status: verified
+status: archived
 priority: medium
 owner: alex
-updated: 2026-08-01
+updated: 2026-08-02
 build: b34
 summary: "Add human-gated AFK branch conventions, spike playground hygiene, archival cleanup, and verified pull-request handoff"
 related:
@@ -10,6 +10,7 @@ related:
 depends-on:
   - wayfinding-contract
   - wayfinding-sequencer
+archived: 2026-08-02
 ---
 
 # Plan — afk-git-hygiene

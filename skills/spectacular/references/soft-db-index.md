@@ -60,7 +60,7 @@ The value of separate collections is lost if entries land in the wrong one. Each
 - **`ideas/` — pre-commitment, not a backlog.** No scope, no exit criteria. The moment it gains a plan it becomes a `request/`. ROADMAP's Icebox holds version-tied vision items; ideas have no version.
 - **`questions/` — an explicit open loop, not a parked possibility.** It blocks or informs another entity and expects an answer. Out-of-scope inspiration belongs in `ideas/`; a settled choice belongs in `decisions/`.
 - **`research/` — evidence, not a choice.** It narrows options and may support a decision; it does not become the ADR itself.
-- **`spikes/` — disposable code for knowledge, not implementation.** Preserve evidence/outcome; production work begins only from a current spec and normal request.
+- **`spikes/` — disposable code for knowledge, not implementation.** Preserve evidence/outcome; production work begins only from an approved spec and normal request.
 - **`feedbacks/` — post-ship prototyping signal, not a bug.** Answers "right thing to build?" about something already built. A malfunction is a bug (`audits/`/`fixes/`), not feedback. Not a benchmark/eval harness either.
 - **`audits/` — diagnosis, not the fix.** Ends in a *disposition*, not a verified change. If root cause is already obvious and the fix is one site, skip the audit entirely (see [[bug-workflow]]).
 - **`fixes/` — verified + reusable, not a symptom tracker.** Logged only once resolved *and* verified, and only when it carries reusable knowledge. A typo fix teaches nothing → no entry.

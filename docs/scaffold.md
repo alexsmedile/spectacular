@@ -382,7 +382,7 @@ skills:
 
 ## `specs/index.md` + `specs/` — capability specs
 
-Canonical system truth. `specs/index.md` is the cheap, always-on index; flat specification files hold detail only when a capability outgrows its index bullet. New wayfinding specs use `SPC-NNN-<slug>.md` and move `unconfirmed → current → deprecated`. Legacy capability filenames and `draft | stable | deprecated` status remain readable for compatibility.
+Ephemeral execution context. Code is authoritative; `specs/index.md` is the cheap, always-on index and flat specification files hold detail. Specs move `draft|unconfirmed → approved → implemented → superseded|deprecated → archived`. Legacy labels remain readable until an explicit, preview-first migration.
 
 **Rules:**
 - Keep the index concise; use one flat file per detailed capability (never nested folders)
@@ -394,7 +394,7 @@ Canonical system truth. `specs/index.md` is the cheap, always-on index; flat spe
 
 ```yaml
 ---
-status: stable | draft | deprecated
+status: draft | unconfirmed | approved | implemented | superseded | deprecated | archived
 updated: 2026-05-11
 summary: "What this capability does"
 ---

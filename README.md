@@ -230,7 +230,7 @@ spectacular init --skill-scope none           # scaffold only; skip skill instal
 spectacular init --update                     # re-download latest skill release
 
 spectacular doctor                            # substrate self-check (all areas)
-spectacular doctor <area>                     # scoped: skill | workspace | frontmatter | snapshots | links | lifecycle | kits | conventions | specs | docs | personas | memory | sessions | feedback | ideas | debug | policies | vision | decisions | roadmap
+spectacular doctor <area>                     # scoped checks include lifecycle | specs | wayfinding | fixes | afk | decisions | roadmap
 spectacular doctor --fix                      # apply mechanical fixes (gitignore, missing dirs, dangling symlinks, pack drift, legacy current/ migration)
 spectacular doctor --format json              # JSON report for the skill or other tools
 
@@ -247,18 +247,20 @@ spectacular id resolve d1                     # DEC-001; aliases are input-only
 spectacular id resolve 3 --context question   # QUE-003; naked numbers need context
 spectacular id migrate --dry-run              # preview legacy filename/reference changes
 spectacular id migrate --apply --yes          # archive originals, then migrate explicitly
+spectacular lifecycle migrate                 # preview conservative legacy status mappings; apply requires --apply --yes
 
 spectacular question new tenant-isolation --question "Shared schema or database per tenant?"
 spectacular question list --status open
 spectacular question resolve q1 --answer "Use schema-per-tenant"
 spectacular research new auth-options --summary "Compare supported authentication paths"
-spectacular research resolve r1 --outcome "OIDC is the supported path" --evidence "vendor docs"
+spectacular research resolve r1 --result supported --outcome "OIDC is the supported path" --evidence "vendor docs"
 spectacular spike new pooling --summary "Validate pool behavior under load"
-spectacular spike resolve spk1 --outcome "Feasible at the target concurrency" --evidence "benchmark run"
+spectacular spike resolve spk1 --result supported --outcome "Feasible at the target concurrency" --evidence "benchmark run"
 
 spectacular spec new user-onboarding --summary "Guide a new user to first success" --target-version v1.0.0-discovery
-spectacular spec confirm s1 --evidence "Product review complete" --target-version v1.0.0-execution
+spectacular spec approve s1 --evidence "Product review complete" --target-version v1.0.0-execution
 spectacular spec act s1                       # scaffold a request with source_spec: SPC-001
+spectacular spec implement s1 --verified-against "commit abc123"  # historical evidence point; code stays authoritative
 
 spectacular wayfind status                    # unresolved fog + dependency-ready frontier
 spectacular wayfind order                     # strict prerequisite-before-dependent order
@@ -267,9 +269,10 @@ spectacular wayfind resolve q1 --answer "Use schema-per-tenant"
 spectacular wayfind defer q1 --reason "Not relevant to this milestone"
 spectacular wayfind resume q1
 spectacular wayfind route "park this idea" cache-index --hypothesis "Cache it"
-spectacular wayfind route "act on goal" s1    # still enforces current-spec gate
+spectacular wayfind route "act on goal" s1    # still enforces approved-spec gate
 
 spectacular afk status                        # read-only policy + repository state
+spectacular afk run start onboarding --goal "Implement approved onboarding" --allowed-actions "research,spikes,feature" --apply --yes
 spectacular afk propose spike spk1 --host-prefix codex/
 spectacular afk start spike spk1 --apply --yes
 spectacular afk cleanup codex/spike/prototype-spk-001 --disposition abandoned --outcome "failed" --evidence "SPK-001"  # dry-run

@@ -87,7 +87,7 @@ The skill should not dump the whole workspace. It loads context progressively.
 Not every idea should immediately become implementation work. Use typed records to keep exploration explicit:
 
 ```text
-idea → questions / research / spikes → decision → unconfirmed spec → confirmed spec → request
+idea → questions / research / spikes → user decision → draft|unconfirmed spec → approved spec → request
 ```
 
 - Park out-of-scope inspiration with `spectacular idea new <slug>`.
@@ -99,19 +99,19 @@ idea → questions / research / spikes → decision → unconfirmed spec → con
 
 Each record receives a stable canonical ID such as `QUE-001` or `RES-001`. Compact aliases such as `q1` and `r1` work as input, while saved cross-references use canonical IDs.
 
-When discovery converges, create an unconfirmed specification, confirm it with the human, then act on it:
+When discovery converges, create a collaborative draft (or an AFK unconfirmed specification), approve it with the human, then act on it:
 
 ```bash
 spectacular spec new team-billing --summary "Bill teams by active seat" --target-version v1.0.0-discovery
-spectacular spec confirm s1 --evidence "Pricing and architecture approved" --target-version v1.0.0-execution
+spectacular spec approve s1 --evidence "Pricing and architecture approved" --target-version v1.0.0-execution
 spectacular spec act s1
 ```
 
-Only a `current` specification can seed an implementation request. If an open loop is not relevant now, use `spectacular wayfind defer <id> --reason "..."`; resume it later without losing context.
+Only an `approved` specification can seed an implementation request. After verified integration, `spec implement --verified-against <commit|build>` records the historical evidence point; code remains authoritative. If an open loop is not relevant now, defer it with a reason and optional review point.
 
-Wayfinder language maps to the same gates: “park this idea” creates an idea, “put it on ice” defers with a reason, “find your way to…” shows prerequisites, and “act on goal…” still requires a current specification. During implementation, park unexpected discoveries instead of adding them to the active milestone. Run `spectacular doctor wayfinding` to surface inferred dependency gaps and discovery/execution target inversions; findings are proposals, never automatic roadmap edits.
+Wayfinder language maps to the same gates: “park this idea” creates an idea, “put it on ice” defers with a reason, “find your way to…” shows prerequisites, and “act on goal…” still requires an approved specification. During implementation, park unexpected discoveries instead of adding them to the active milestone. Run `spectacular doctor wayfinding` to surface inferred dependency gaps and discovery/execution target inversions; findings are proposals, never automatic roadmap edits.
 
-For explicitly authorized AFK work, inspect `spectacular afk status` and propose the branch class before creating it. Draft specs, spikes, forks, and confirmed execution stay isolated. Cleanup is archive-first and dry-run by default; remote deletion and merge remain human actions. A verified handoff may open `[SpecTACular] Executed: <version> - <name>` only after the request, source spec, verification log, and fresh tests satisfy their gates.
+For explicitly authorized AFK work, create a durable goal-scoped `spectacular afk run`, inspect `spectacular afk status`, and propose the branch class before creating it. Draft specs, spikes, forks, and approved execution stay isolated. Cleanup creates a durable Git archive ref before local deletion; remote deletion and merge remain human actions. A verified handoff may open `[Spectacular] Executed: <version> - <name>` only after the request, source spec, verification log, and fresh tests satisfy their gates.
 
 ## 5. Create a request
 
@@ -187,16 +187,16 @@ The skill can propose transitions, but the human should confirm them.
 
 ---
 
-## 8. Update system truth after completion
+## 8. Record implementation evidence after completion
 
-`specs/index.md` (and any per-capability `specs/<capability>.md` files) describe what the system does now. They should be updated after a request changes real behavior.
+Code is the source of implemented behavior. Specs are execution context and may become stale. After a verified request, record `implemented_at` and `verified_against`; do not treat the status as continuous synchronization.
 
 When archiving a completed request, the skill should propose updates such as:
 
 - add or update a bullet in `specs/index.md`
 - create a new `specs/<capability>.md` (only when the bullet outgrows one line)
 - update an existing capability spec
-- change a capability status from `draft` to `stable`
+- approve a draft before execution, or mark an approved spec implemented against a concrete commit/build
 - leave unaffected specs unchanged
 
 Canonical docs and `specs/` files should be snapshotted before edits:

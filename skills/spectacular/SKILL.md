@@ -50,14 +50,15 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular question new\|list\|resolve` | → CLI verb; active human blockers live in `questions/`; see [[question-rules]] and [[canonical-ids]] |
 | `spectacular research new\|list\|resolve` | → CLI verb; read-only evidence discovery in `research/`; see [[research-rules]] |
 | `spectacular spike new\|list\|resolve` | → CLI verb; human-authorized feasibility discovery in `spikes/`; see [[spike-rules]] |
-| `spectacular spec new\|list\|confirm\|act` | → CLI verb; `unconfirmed → current → request` specification lifecycle; see [[spec-lifecycle]] and [[canonical-ids]] |
+| `spectacular spec new\|list\|approve\|act\|implement\|deprecate\|archive` | → CLI verbs; evidence-gated specification lifecycle; `confirm` remains an alias for `approve`; see [[spec-lifecycle]], [[lifecycle-contract]], and [[canonical-ids]] |
 | `spectacular wayfind status\|next\|order\|resolve\|defer\|resume\|path\|route` | → CLI verb; strict dependency-first fog/frontier sequencing and durable open-loop control; see [[wayfinding-sequencer]] |
 | “Park this idea” | → `spectacular wayfind route "park this idea" <slug>`; creates an `IDEA-NNN` record and does not alter active milestone scope |
 | “Put it on ice” / “Icebox” | → `spectacular wayfind route icebox <id> --reason <why>`; durable `status: deferred` |
 | “Find your way to <destination>” | → `spectacular wayfind path <id>` first; then resolve its dependency-ready discovery path without bypassing gates |
-| “Act on goal <target>” | → `spectacular wayfind route "act on goal" <SPC alias>`; delegates to `spec act`, which requires `status: current` |
-| `spectacular afk status\|configure\|propose\|preflight\|start\|cleanup\|pr` | → CLI verbs; opt-in, dry-run-first Git isolation and verified PR handoff; see [[afk-git-hygiene]] |
+| “Act on goal <target>” | → `spectacular wayfind route "act on goal" <SPC alias>`; delegates to `spec act`, which requires `status: approved` |
+| `spectacular afk run\|status\|configure\|propose\|preflight\|start\|cleanup\|pr` | → CLI verbs; durable goal authorization plus opt-in, dry-run-first Git isolation and verified PR handoff; see [[afk-git-hygiene]] and [[lifecycle-contract]] |
 | User authorizes AFK work | → inspect `spectacular afk status`; branch mutation still requires enabled project config plus explicit apply; merge/remote deletion remain HITL |
+| A built-in `/goal` begins in a Spectacular workspace | → create/resume a durable goal-scoped AFK run for that goal; keep it active until completion/cancellation or a declared/unexpected HITL gate |
 | A user refers to `D1`, `Q1`, `R1`, `SPK1`, `S1`, or another entity alias | → normalize via `spectacular id resolve`; persist the canonical ID; see [[canonical-ids]] |
 | A bug/quirk/regression is reported (any "why does X do Y", "this is broken") | → **`references/bug-workflow.md`** — load before diagnosing; routes the debug fleet + the ceremony/fan-out gates. (Rationale: `bug-workflow-doctrine.md`, only if a routing call is uncertain.) |
 | `spectacular audit new\|list\|resolve` | → CLI verb; bug investigation before a fix. `resolve --into-fix` graduates to a fix (copies all slots). See [[audit-rules]], [[bug-workflow]] |
@@ -199,7 +200,7 @@ Never read `archive/` during normal operation.
 
 - **Never overwrite canonical documents in place** — snapshot first (`PRD@v1.0.md`). See `references/versioning.md`.
 - **Lifecycle state** lives in `PLAN.md` frontmatter (`status: planned | active | review | verified`). TASKS.md mirrors it for skim tooling; PLAN is authoritative — `doctor` repairs drift.
-- **Capability state** lives in `specs/<capability>.md` frontmatter (`status: stable | draft | deprecated`); the top-level `.spectacular/specs/index.md` is the always-on index.
+- **Entity lifecycles** are defined only by [[lifecycle-contract]]. Specs are historical execution context; code is authoritative, and only `approved` specs may seed requests.
 - **Slugs** are kebab-case, skill-derived, user-overridable, uniqueness enforced.
 - **Memory** (`spectacular remember this`) writes to `.spectacular/memories/` — git-committed, team-visible. Never to `.claude/` memory.
 - Be proactive: surface stale state, propose lifecycle transitions, flag blocked requests.

@@ -105,10 +105,4 @@ The `--force` flag is intentionally awkward — backward moves should be rare an
 
 ## Capability spec states
 
-`specs/<capability>.md` frontmatter tracks its own state: `status: stable | draft | deprecated`
-
-- `draft` — capability spec exists but is being developed (often tied to an active request)
-- `stable` — current canonical truth, no active changes
-- `deprecated` — no longer in use, kept for reference
-
-Skill proposes `specs/` updates (and a bullet edit to `SPEC.md` index) when a request is archived (see `spec-sync.md`).
+Specification states, evidence, revision behavior, and archive gates are defined only in [[lifecycle-contract]]. Code is authoritative; a spec's `implemented` status records a historical verified point rather than continuous freshness.

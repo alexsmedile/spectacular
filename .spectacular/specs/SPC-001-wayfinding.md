@@ -1,20 +1,21 @@
 ---
 id: SPC-001
 type: specification
-status: current
+status: approved
+approved_at: 2026-08-01
+approved_by: user
 target_version: v1.36.0-execution
 updated: 2026-08-01
-summary: "Canonical discovery records, fog/frontier sequencing, and confirmed-spec execution handoff"
+summary: "Canonical discovery records, fog/frontier sequencing, and approved-spec execution handoff"
 related: []
-version: 1.2
-confirmed: 2026-08-01
+version: 1.3
 ---
 
-# SPC-001 — Canonical discovery records, fog/frontier sequencing, and confirmed-spec execution handoff
+# SPC-001 — Canonical discovery records, fog/frontier sequencing, and approved-spec execution handoff
 
 ## Intent
 
-Turn a user's broad dream and unresolved alternatives into durable, low-entropy discovery state that survives sessions and converges into a confirmed executable specification.
+Turn a user's broad dream and unresolved alternatives into durable, low-entropy discovery state that survives sessions and converges into an approved executable specification.
 
 ## Requirements
 
@@ -25,14 +26,14 @@ Turn a user's broad dream and unresolved alternatives into durable, low-entropy 
 - Surface unresolved `requires_user_input` questions at session start unless deferred.
 - Reject dangling/cyclic graphs and present discovery nodes in deterministic, dependency-first topological order.
 - Rank frontier nodes by explicit priority, then prefer high-uncertainty work before deterministic specification/execution work.
-- Keep specs `unconfirmed` until explicit confirmation; only `current` specs may seed implementation requests.
+- Keep collaborative specs `draft` and AFK-authored specs `unconfirmed` until explicit approval; only `approved` specs may seed implementation requests.
 - Use `vX.Y.Z-discovery` and `vX.Y.Z-execution` target conventions while dependency order remains primary.
 - Park unexpected execution scope in ideas or a later target instead of expanding the current milestone.
 - Map “park this idea,” “put it on ice,” “find your way to,” and “act on goal” through the same gated CLI verbs used by explicit commands.
 - Detect strong dependency signals across PRD, roadmap, plans, and specs; warn and propose explicit edges without mutating or reslotting source documents.
-- Keep AFK Git behavior opt-in and dry-run-first; isolate draft specs, spikes, forks, and confirmed execution using host-prefix-compatible branch classes.
+- Keep AFK Git behavior opt-in and dry-run-first; isolate draft specs, spikes, forks, and approved execution using host-prefix-compatible branch classes.
 - Require clean-tree/primary-branch preflight, durable branch provenance, and archive-before-local-delete; never delete remote branches autonomously.
-- Gate PR handoff on a verified request, passing verification evidence, current source spec, fresh tests, and separate breaking-change approval; stop before merge.
+- Gate PR handoff on a verified request, passing verification evidence, approved source spec, fresh tests, and separate breaking-change approval; stop before merge.
 
 ## Evidence and decisions
 

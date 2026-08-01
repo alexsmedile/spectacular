@@ -44,7 +44,7 @@ related:
 
 ### M4 — Human-review handoff
 - [x] Gate handoff on confirmed spec, verification evidence, and passing tests
-- [x] Open `[SpecTACular] Executed: <version> - <name>` PRs when authorized
+- [x] Open `[Spectacular] Executed: <version> - <name>` PRs when authorized
 - [x] Stop before merge and breaking API/schema changes
 - [x] → check: PR handoff fixtures pass and HITL gates remain enforced
 

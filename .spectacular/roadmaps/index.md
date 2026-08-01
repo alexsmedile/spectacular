@@ -1,5 +1,5 @@
 ---
-version: 3.15
+version: 3.16
 updated: 2026-08-01
 summary: "Per-version scope, phase, and exit criteria. The active runway now includes the b32→b33→b34 Wayfinding contract, sequencer, and AFK Git hygiene chain; targets remain tbd until discovery/execution prerelease support ships."
 related:
@@ -32,7 +32,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b8 | visual-layer | Visual layer | full | v1.15.0 | shipped |
 | b9 | decisions-index | Decisions index mode | full | v1.17.0 | shipped |
 | b10 | skill-desc-length-check | Skill description length guard | themed | v1.23.3 | shipped |
-| b11 | spec-audit-mode | Spec frontmatter schema check (pivoted from semantic audit) | themed | tbd | review |
+| b11 | spec-audit-mode | Spec frontmatter schema check (pivoted from semantic audit) | themed | tbd | active |
 | b15 | naming-coherence | Naming coherence (advance/feedback/pack/next) | themed | v1.19.0 | shipped |
 | b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | shipped |
 | b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | shipped |
@@ -55,8 +55,9 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b32 | wayfinding-contract | Canonical IDs, knowledge stores, and spec confirmation | full | tbd | planned |
 | b33 | wayfinding-sequencer | Fog/frontier sequencing and dependency coherence | full | tbd | planned |
 | b34 | afk-git-hygiene | Human-gated AFK branch and playground hygiene | themed | tbd | planned |
+| b35 | lifecycle-contract | Unified evidence-backed lifecycle contract | full | tbd | active |
 
-> **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
+> **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = mutable when work is slotted; `status` = release-level `candidate · planned · active · shipped · cancelled` (distinct from request lifecycle). `candidate` means likely upcoming but not yet scoped or committed. See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 
 ### Next up — priority order (2026-06-28)
 

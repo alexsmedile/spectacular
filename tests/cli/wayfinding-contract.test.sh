@@ -80,18 +80,20 @@ scenario_typed_records() {
   local code
   (cd "$d" && "$CLI" decide "Autonomous without evidence" --autonomous >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "autonomous ADR evidence gate"
-  (cd "$d" && "$CLI" decide "Use option A" --autonomous --evidence "RES-001" >/dev/null)
+  (cd "$d" && "$CLI" research resolve r1 --result supported --outcome "Option A wins" --evidence "bench.md" >/dev/null)
+  (cd "$d" && "$CLI" afk run start choose-auth --goal "Choose reversible auth mechanism" --allowed-actions "research,decisions" --apply --yes >/dev/null)
+  (cd "$d" && "$CLI" decide "Use option A" --autonomous --technical --in-scope --reversible --no-product-tradeoff --alternatives "Option B" --evidence "RES-001" >/dev/null)
   assert_contains "$d/.spectacular/decisions/DEC-002-use-option-a.md" "origin: autonomous-evidence"
   assert_contains "$d/.spectacular/decisions/DEC-002-use-option-a.md" "evidence: \"RES-001\""
 
-  (cd "$d" && "$CLI" research resolve r1 --outcome "Option A wins" --evidence "bench.md" >/dev/null)
-  assert_contains "$d/.spectacular/research/RES-001-auth-options.md" "status: verified"
+  assert_contains "$d/.spectacular/research/RES-001-auth-options.md" "status: completed"
+  assert_contains "$d/.spectacular/research/RES-001-auth-options.md" "result: supported"
   assert_contains "$d/.spectacular/research/RES-001-auth-options.md" "**Evidence:** bench.md"
   rm -rf "$d"
 }
 
 scenario_spec_lifecycle() {
-  echo "Scenario specs: unconfirmed blocks action; current spec seeds a request"
+  echo "Scenario specs: draft blocks action; approved spec seeds a request"
   local d="/tmp/spectacular-wayfinding-specs" code
   new_ws "$d"
   mkdir -p "$d/.spectacular/specs"
@@ -100,12 +102,12 @@ scenario_spec_lifecycle() {
   (cd "$d" && "$CLI" spec new onboarding --summary "User onboarding" --target-version v1.0.0-discovery >/dev/null)
   local spec="$d/.spectacular/specs/SPC-001-onboarding.md"
   [[ -f "$spec" ]] && pass || fail "SPC-001 spec written"
-  assert_contains "$spec" "status: unconfirmed"
+  assert_contains "$spec" "status: draft"
 
   (cd "$d" && "$CLI" spec act s1 --request-slug onboarding-work >/dev/null 2>&1) && code=0 || code=$?
-  assert_exit "$code" 1 "unconfirmed spec action gate"
-  (cd "$d" && "$CLI" spec confirm s1 --evidence "user approved" --target-version v1.0.0-execution >/dev/null)
-  assert_contains "$spec" "status: current"
+  assert_exit "$code" 1 "draft spec action gate"
+  (cd "$d" && "$CLI" spec approve s1 --evidence "user approved" --target-version v1.0.0-execution >/dev/null)
+  assert_contains "$spec" "status: approved"
   assert_contains "$spec" "version: 1.0"
   [[ -f "$d/.spectacular/_snapshots/specs/SPC-001-onboarding/@v1.md" ]] && pass || fail "confirmation snapshot written"
 
@@ -184,7 +186,7 @@ scenario_id_migration() {
   [[ -f "$d/.spectacular/ideas/IDEA-001-foo.md" ]] && pass || fail "idea migrated"
   [[ -f "$d/.spectacular/specs/SPC-001-cap.md" ]] && pass || fail "spec migrated"
   assert_contains "$d/.spectacular/decisions/index.md" "**DEC-001**"
-  assert_contains "$d/.spectacular/specs/SPC-001-cap.md" "status: unconfirmed"
+  assert_contains "$d/.spectacular/specs/SPC-001-cap.md" "status: draft"
   local archived_count
   archived_count=$(find "$d/.spectacular/archive/id-migrations" -type f | wc -l | tr -d ' ')
   [[ "$archived_count" -ge 4 ]] && pass || fail "originals and mapping archived"

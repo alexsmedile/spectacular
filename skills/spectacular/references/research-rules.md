@@ -11,6 +11,6 @@ status: active
 
 # Research Rules
 
-Research records use canonical `RES-NNN` IDs and answer “what are the facts, evidence, and viable options?” They may run AFK when read-only. A record clears fog only at `status: verified`, with sources/evidence and an outcome. Research may inform an ADR but does not silently resolve a product/business question.
+Research records use canonical `RES-NNN` IDs and answer “what are the facts, evidence, and viable options?” They may run AFK when read-only. Completion requires evidence plus `result: supported | refuted | inconclusive`. Only supported/refuted clears the tested uncertainty; inconclusive remains fog and needs a narrower successor. Research informs a decision but never makes one by itself. See [[lifecycle-contract]].
 
 Verbs: `spectacular research new|list|resolve`. See [[canonical-ids]].

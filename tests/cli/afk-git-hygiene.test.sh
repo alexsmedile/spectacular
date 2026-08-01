@@ -45,6 +45,7 @@ scenario_isolation_and_cleanup() {
   local d="/tmp/spectacular-afk-cleanup" out code branch="codex/spike/prototype-spk-001"
   init_repo "$d"
   (cd "$d" && "$CLI" afk configure --enable --branch-prefix codex/ --apply --yes >/dev/null && git add . && git commit -qm policy)
+  (cd "$d" && "$CLI" afk run start spike-test --goal "Test SPK-001" --allowed-actions "spikes" --apply --yes >/dev/null && git add . && git commit -qm afk-run)
   (cd "$d" && "$CLI" afk preflight spike >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "spike writes refused on primary"
   (cd "$d" && "$CLI" afk start spike spk1 >/dev/null)
@@ -61,7 +62,8 @@ scenario_isolation_and_cleanup() {
   (cd "$d" && git show-ref --verify --quiet "refs/heads/$branch") && code=0 || code=$?
   assert_exit "$code" 1 "confirmed cleanup deletes local branch"
   local archived; archived=$(find "$d/.spectacular/archive/afk-branches" -type f | head -1)
-  assert_contains "$archived" "recoverable_from: git reflog"
+  assert_contains "$archived" "archive_ref: refs/spectacular/archive/"
+  assert_contains "$archived" "restore_command:"
   assert_contains "$archived" "**Evidence:** SPK-001 benchmark"
   (cd "$d" && "$CLI" afk cleanup nowhere --disposition abandoned --outcome x --evidence y --remote >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "remote deletion remains closed"
@@ -69,26 +71,27 @@ scenario_isolation_and_cleanup() {
 }
 
 scenario_pr_handoff() {
-  echo "Scenario PR: verified/current/test gates; exact title; no merge"
+  echo "Scenario PR: verified/approved/test gates; exact title; no merge"
   local d="/tmp/spectacular-afk-pr" bin="/tmp/spectacular-afk-bin" log="/tmp/spectacular-afk-gh.log" out code
   init_repo "$d"; rm -rf "$bin"; mkdir -p "$bin"; rm -f "$log"
   (cd "$d" && "$CLI" afk configure --enable --branch-prefix codex/ --allow-pr-create --apply --yes >/dev/null)
-  (cd "$d" && "$CLI" spec new billing --summary "Billing" >/dev/null && "$CLI" spec confirm s1 --evidence approved >/dev/null && "$CLI" spec act s1 --request-slug billing-work >/dev/null)
+  (cd "$d" && "$CLI" spec new billing --summary "Billing" >/dev/null && "$CLI" spec approve s1 --evidence approved >/dev/null && "$CLI" spec act s1 --request-slug billing-work >/dev/null)
   sed -i.bak 's/status: planned/status: verified/' "$d/.spectacular/requests/billing-work/PLAN.md"; rm -f "$d/.spectacular/requests/billing-work/PLAN.md.bak"
   printf '%s\n' '---' 'updated: 2026-08-01' '---' '# Verify log' '' '**Outcome:** verified' > "$d/.spectacular/requests/billing-work/VERIFY-LOG.md"
   (cd "$d" && git add . && git commit -qm verified)
+  (cd "$d" && "$CLI" afk run start billing-run --goal "Implement approved billing spec" --request billing-work --allowed-actions "feature" --apply --yes >/dev/null && git add . && git commit -qm afk-run)
   (cd "$d" && "$CLI" afk start feature billing --version v1.0.0 --apply --yes >/dev/null && git add . && git commit -qm branch-provenance)
 
   (cd "$d" && "$CLI" afk pr billing-work --version v1.0.0 --name Billing >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "fresh test proof required"
   out=$(cd "$d" && "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed)
-  [[ "$out" == *"[SpecTACular] Executed: v1.0.0 - Billing"* && "$out" == *"stop before merge"* ]] && pass || fail "dry-run prints exact title and merge boundary"
+  [[ "$out" == *"[Spectacular] Executed: v1.0.0 - Billing"* && "$out" == *"stop before merge"* ]] && pass || fail "dry-run prints exact title and merge boundary"
   (cd "$d" && "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed --breaking --apply --yes >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "breaking change requires separate approval"
 
   printf '#!/bin/sh\nprintf "%%s\\n" "$*" > "%s"\nprintf "https://example.test/pr/1\\n"\n' "$log" > "$bin/gh"; chmod +x "$bin/gh"
   (cd "$d" && PATH="$bin:$PATH" "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed --apply --yes >/dev/null)
-  assert_contains "$log" "pr create --title [SpecTACular] Executed: v1.0.0 - Billing"
+  assert_contains "$log" "pr create --title [Spectacular] Executed: v1.0.0 - Billing"
   [[ "$(cd "$d" && git branch --show-current)" == "codex/feat/v1.0.0-billing" ]] && pass || fail "PR handoff does not merge or switch branch"
   rm -rf "$d" "$bin"; rm -f "$log"
 }

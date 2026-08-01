@@ -56,7 +56,9 @@ Omitted sections are written as **empty headers** (not dropped) so the ADR shape
 
 **Dry run:** `spectacular decide "<text>" --dry-run` previews the entry and writes nothing to disk (v1.8.3+). On a workspace with no `DECISIONS.md` yet, it prints `would create` + `would append` but does **not** bootstrap the file — the bootstrap only happens on a real write.
 
-**Evidence-backed autonomous capture (Wayfinding):** `spectacular decide "<text>" --autonomous --evidence "RES-001, SPK-002"` is allowed for a technical conclusion earned by research/prototyping. `--autonomous` refuses without evidence. Product/business questions remain HITL and resolve through `questions/`; an agent cannot use this flag to self-answer them.
+**Decision authority:** a DEC follows explicit user choice or unambiguous intent already recorded in conversation, interview, PRD, or an approved spec (`--derived-from` cites it). Unsettled alternatives remain a QUE with options and a recommendation. See [[lifecycle-contract]].
+
+**Narrow AFK exception:** autonomous capture additionally requires an active AFK run that permits decisions, completed conclusive RES/SPK evidence, and explicit `--technical --in-scope --reversible --no-product-tradeoff --alternatives`. Product/business ambiguity or any HITL gate refuses the DEC. Supersession creates a new DEC with `--supersedes`; history is never rewritten.
 
 **Entry format:**
 

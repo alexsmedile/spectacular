@@ -1,5 +1,5 @@
 ---
-version: 1.5
+version: 1.6
 updated: 2026-08-01
 summary: "The .spectacular/ directory — layers, file roles, frontmatter conventions, lifecycle, versioning"
 related:
@@ -165,7 +165,7 @@ related:
 
 ```yaml
 ---
-status: stable | draft | deprecated
+status: draft | unconfirmed | approved | implemented | superseded | deprecated | archived
 updated: 2026-05-11
 summary: "What this capability does"
 ---
@@ -298,9 +298,9 @@ Spectacular keeps distinct typed Markdown collections so uncertainty is visible 
 - `questions/` holds unresolved blockers (`QUE-NNN`); records requiring user judgment are surfaced at session start.
 - `research/` holds sourced investigation (`RES-NNN`) and `spikes/` holds feasibility experiments (`SPK-NNN`, with `PRT` reserved for prototype artifacts).
 - `decisions/` contains verified, evidence-backed architectural decisions (`DEC-NNN`), not unresolved preferences.
-- `specs/` contains feature specifications (`SPC-NNN`) whose lifecycle is `unconfirmed → current → deprecated`. Only `current` specs may seed execution requests.
+- `specs/` contains feature specifications (`SPC-NNN`). Their evidence-gated lifecycle is defined by `skills/spectacular/references/lifecycle-contract.md`; only `approved` specs may seed execution requests, while code remains authoritative.
 
-Cross-references always persist canonical IDs, even when users speak in aliases such as `D1`, `Q1`, or `SPEC1`. Explicit prefixes win; naked numbers require a collection context. IDs use at least three digits. Discovery targets use `vX.Y.Z-discovery`; confirmed-spec execution targets use `vX.Y.Z-execution`.
+Cross-references always persist canonical IDs, even when users speak in aliases such as `D1`, `Q1`, or `SPEC1`. Explicit prefixes win; naked numbers require a collection context. IDs use at least three digits. Discovery targets use `vX.Y.Z-discovery`; approved-spec execution targets use `vX.Y.Z-execution`.
 
 Readiness is derived from canonical dependencies. Unresolved records form the **fog**; dependency-ready records form the **frontier**. The sequencer rejects invalid graphs and uses strict dependency-first topological order. `wayfind next` ranks explicit priority first, then uncertainty: user-input question, spike, research, other question, specification. Strong dependency language across PRD, roadmap, plans, and specs produces advisory doctor findings only; explicit frontmatter remains authoritative and is never silently rewritten.
 
@@ -331,7 +331,7 @@ ideas/
 
 # Spec layer (specs/index.md + specs/)
 
-The spec layer carries both proposed and canonical behavior. Each specification declares `status: unconfirmed | current | deprecated`; only `current` entries represent system truth and may seed an execution request.
+The spec layer carries ephemeral execution context, not permanent system truth. Each specification follows `draft|unconfirmed → approved → implemented → superseded|deprecated → archived`; only `approved` entries may seed an execution request. `implemented` is a historical evidence point, not a promise of continuous freshness.
 
 ```txt
 specs/
@@ -609,7 +609,7 @@ archived  → moved to archive/, specs/index.md + specs/ updated, memory propose
 
 **State storage:**
 - `status:` in `PLAN.md` frontmatter = request lifecycle state
-- `status:` in `specs/<capability>.md` = capability state (`stable | draft | deprecated`); top-level `specs/index.md` carries no per-capability status — it's the index
+- `status:` in `specs/<capability>.md` = the specification lifecycle from `skills/spectacular/references/lifecycle-contract.md`; top-level `specs/index.md` carries no per-capability status — it is the index
 - `status:` in `requests/<slug>/specs/` = individual spec development state
 
 **Transition rules:**

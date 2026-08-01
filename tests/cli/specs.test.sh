@@ -408,7 +408,7 @@ EOF
 }
 
 scenario_15_published_without_version() {
-  echo "Scenario 15: status: published but no version: → warning"
+  echo "Scenario 15: legacy status published → conservative migration warning"
   local dir="/tmp/spectacular-specs-test-15"
   seed_workspace "$dir"; run_cli "$dir" init >/dev/null
   cat > "$dir/.spectacular/specs/CAP.md" <<'EOF'
@@ -422,8 +422,8 @@ related:
 # Cap
 EOF
   local out; out="$(run_cli "$dir" doctor specs)"
-  if echo "$out" | grep -q "CAP.md.*published.*no \`version:\`\|CAP.md.*must be versioned"; then pass_count=$((pass_count + 1))
-  else echo "    ✗ expected published-without-version warning"; echo "$out" | grep CAP.md; fail_count=$((fail_count + 1)); fi
+  if echo "$out" | grep -q "CAP.md.*published.*outside allowed set"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected legacy-status migration warning"; echo "$out" | grep CAP.md; fail_count=$((fail_count + 1)); fi
   rm -rf "$dir"
 }
 

@@ -212,10 +212,13 @@ CLI verbs (mutate workspace):
   question <sub>         Open-question database (new|list|resolve)
   research <sub>         Evidence-gathering discovery records (new|list|resolve)
   spike <sub>            Feasibility discovery records (new|list|resolve)
-  spec <sub>             Specification lifecycle (new|list|confirm|act)
+  spec <sub>             Specification lifecycle (new|list|approve|act|implement|deprecate|archive)
   wayfind <sub>          Strict discovery sequencing (status|next|order|resolve|defer|resume|path|route)
-  afk <sub>              Human-gated Git policy (status|configure|propose|preflight|start|cleanup|pr)
+  afk <sub>              Goal-scoped autonomy + Git policy (run|status|configure|propose|preflight|start|cleanup|pr)
+  docs-impact <slug>     Close a request's documentation assessment
   id resolve <ref>       Resolve a canonical ID or shorthand alias
+  collections migrate   Preview/apply archive-first singular→plural folder migration
+  lifecycle migrate     Preview/apply conservative lifecycle-label mappings
   audit <sub>            Bug-diagnosis scratchpad entries (new|list|resolve [--into-fix])
   fix <sub>              Verified-fix log (new|list; --signature, --verified-by, --debug-job)
   decide "<text>"        Record a project decision entry
@@ -1101,14 +1104,15 @@ EOF
 
 # ── cmd_remember: spectacular remember "<text>" [--tag a,b] ─────────────────
 cmd_remember() {
-  local text="" tags_csv="" dry_run=false
+  local text="" tags_csv="" supersedes="" dry_run=false
   while (( $# > 0 )); do
     case "$1" in
       --tag|--tags) require_value "--tag" "${2:-}"; tags_csv="$2"; shift 2 ;;
+      --supersedes) require_value "--supersedes" "${2:-}"; supersedes="$2"; shift 2 ;;
       --dry-run)    dry_run=true; shift ;;
       --help|-h)
         cat <<EOF
-Usage: spectacular remember "<text>" [--tag a,b] [--dry-run]
+Usage: spectacular remember "<text>" [--tag a,b] [--supersedes <memory>] [--dry-run]
 
 Write one memory entry to .spectacular/memories/M<N>-<slug>.md and regenerate
 memories/index.md index. Auto-derives slug + summary. If a session is open,
@@ -1125,9 +1129,13 @@ EOF
   [[ -z "$text" ]] && die "remember: <text> argument required. See: spectacular remember --help"
   [[ -d ".spectacular" ]] || die "remember: not inside a Spectacular workspace"
 
-  local base_slug slug entry_dir entry_path summary tags_yaml session
+  local base_slug slug entry_dir entry_path summary tags_yaml session old_memory=""
   entry_dir=".spectacular/memories"
   mkdir -p "$entry_dir"
+  if [[ -n "$supersedes" ]]; then
+    old_memory=$(_memory_find "$supersedes") || die "remember: superseded memory '$supersedes' not found"
+    [[ "$(fm_get "$old_memory" status)" == active || -z "$(fm_get "$old_memory" status)" ]] || die "remember: superseded memory must be active"
+  fi
 
   # Auto-number: find highest M<N> in memories/ dir
   local next_n
@@ -1176,7 +1184,14 @@ EOF
   fi
 
   echo "$rendered" > "$entry_path"
+  [[ -n "$supersedes" ]] && fm_set "$entry_path" supersedes "$(basename "$old_memory" .md)"
   created "$entry_path"
+  if [[ -n "$old_memory" ]]; then
+    fm_set "$old_memory" status superseded
+    fm_set "$old_memory" superseded_by "$slug"
+    fm_touch "$old_memory"
+    info "  ↔ superseded: $(basename "$old_memory" .md)"
+  fi
   _regen_memory_index
   info "  ✓  memories/index.md regenerated"
   if [[ -n "$session" ]]; then
@@ -1188,7 +1203,7 @@ EOF
 # v1.5.0: appends to flat DECISIONS.md.
 # v1.17.0: detects index mode (decisions/ folder) and writes per-entry file instead.
 cmd_decide() {
-  local text="" context="" consequences="" evidence="" autonomous=false dry_run=false
+  local text="" context="" consequences="" evidence="" autonomous=false technical=false in_scope=false reversible=false no_product_tradeoff=false alternatives="" derived_from="" supersedes="" dry_run=false
   while (( $# > 0 )); do
     case "$1" in
       --dry-run) dry_run=true; shift ;;
@@ -1196,9 +1211,16 @@ cmd_decide() {
       --consequences) require_value "--consequences" "${2:-}"; consequences="$2"; shift 2 ;;
       --evidence)     require_value "--evidence"     "${2:-}"; evidence="$2";     shift 2 ;;
       --autonomous)   autonomous=true; shift ;;
+      --technical) technical=true; shift ;;
+      --in-scope) in_scope=true; shift ;;
+      --reversible) reversible=true; shift ;;
+      --no-product-tradeoff) no_product_tradeoff=true; shift ;;
+      --alternatives) require_value "--alternatives" "${2:-}"; alternatives="$2"; shift 2 ;;
+      --derived-from) require_value "--derived-from" "${2:-}"; derived_from="$2"; shift 2 ;;
+      --supersedes) require_value "--supersedes" "${2:-}"; supersedes=$(_canonical_resolve "$2" decision); shift 2 ;;
       --help|-h)
         cat <<EOF
-Usage: spectacular decide "<decision>" [--context "..."] [--consequences "..."] [--dry-run]
+Usage: spectacular decide "<decision>" [--context "..."] [--consequences "..."] [--derived-from <source>] [--supersedes <DEC>] [--dry-run]
 
 Append one ADR-style entry to .spectacular/decisions/index.md (Context / Decision /
 Consequences). The positional argument fills **Decision:**. Auto-derives a
@@ -1210,6 +1232,11 @@ Legacy D<N> files remain readable and contribute to the next allocated number.
 
   --context "..."        fill the **Context:** section (situation forcing the decision)
   --consequences "..."   fill the **Consequences:** section (what it enables/forecloses)
+  --derived-from "..."   cite unambiguous user intent already recorded elsewhere
+  --supersedes <DEC>     create a replacement decision; preserve the old history
+  --autonomous           narrow AFK exception; also requires conclusive RES/SPK evidence,
+                         --technical --in-scope --reversible --no-product-tradeoff,
+                         and --alternatives
 
 Sections left without a flag are emitted as empty headers to fill in later.
 EOF
@@ -1222,11 +1249,29 @@ EOF
   done
 
   [[ -z "$text" ]] && die "decide: <decision> argument required. See: spectacular decide --help"
-  $autonomous && [[ -z "$evidence" ]] && die "decide: --autonomous requires --evidence (research, spike, prototype, interview, or source reference)"
+  if $autonomous; then
+    [[ -n "$evidence" ]] || die "decide: --autonomous requires completed research/spike --evidence"
+    $technical && $in_scope && $reversible && $no_product_tradeoff && [[ -n "$alternatives" ]] || die "decide: autonomous decisions require --technical --in-scope --reversible --no-product-tradeoff --alternatives"
+    local run allowed token ep result
+    run=$(_afk_active_run) || die "decide: --autonomous is allowed only inside an active AFK run"
+    [[ "$(fm_get "$run" status)" == active ]] || die "decide: AFK run is gated"
+    allowed=$(fm_get "$run" allowed_actions)
+    [[ ",$allowed," == *,decisions,* ]] || die "decide: active AFK run does not authorize decisions"
+    local old_ifs="$IFS"; IFS=','
+    for token in $evidence; do
+      token=$(printf '%s' "$token" | tr -d ' ')
+      case "$token" in RES-*|SPK-*) ;; *) die "decide: autonomous evidence '$token' must be a RES/SPK canonical ID" ;; esac
+      ep=$(_wayfind_find_id "$token") || die "decide: evidence '$token' not found"
+      [[ "$(fm_get "$ep" status)" == completed ]] || die "decide: evidence '$token' is not completed"
+      result=$(fm_get "$ep" result); [[ "$result" == supported || "$result" == refuted ]] || die "decide: evidence '$token' is inconclusive"
+    done
+    IFS="$old_ifs"
+  fi
   [[ -d ".spectacular" ]] || die "decide: not inside a Spectacular workspace"
 
-  local title session
+  local title session decision_slug old_decision=""
   title=$(_summary_from_text "$text")
+  decision_slug=$(_slug_from_text "$text")
   session=$(_active_session_slug)
 
   local decisions=".spectacular/decisions/index.md"
@@ -1234,12 +1279,17 @@ EOF
 
   # Enforce index mode under OKF: bootstrap decisions/ directory if absent
   mkdir -p "$decisions_dir"
+  _require_unique_collection_slug decisions "$decision_slug" "decide"
+  if [[ -n "$supersedes" ]]; then
+    old_decision=$(_wayfind_find_id "$supersedes") || die "decide: superseded decision '$supersedes' not found"
+    [[ "$(fm_get "$old_decision" status)" == verified ]] || die "decide: $supersedes is not a verified current decision"
+  fi
 
   # ── Index mode ──────────────────────────────────────────────────────────────
   # Canonical allocation scans both DEC-NNN and legacy D<N> files.
   local dnum
   dnum=$(_next_canonical_id decisions DEC)
-  local entry_slug="${dnum}-$(_slug_from_text "$text")"
+  local entry_slug="${dnum}-${decision_slug}"
   local entry_path="${decisions_dir}/${entry_slug}.md"
 
   # Build the index line with the canonical ID.
@@ -1254,6 +1304,7 @@ EOF
 
   local origin="user"
   $autonomous && origin="autonomous-evidence"
+  [[ -n "$derived_from" ]] && origin="user-derived"
 
   # Build full ADR prose for the per-entry file
   local prose
@@ -1263,6 +1314,8 @@ EOF
     'type: decision' \
     'status: verified' \
     "origin: $origin" \
+    "derived_from: \"$derived_from\"" \
+    "supersedes: \"$supersedes\"" \
     "evidence: \"${evidence:-user direction}\"" \
     "updated: $TODAY" \
     '---' \
@@ -1274,6 +1327,9 @@ EOF
     '' \
     '**Evidence:**' \
     "${evidence:-User direction recorded by explicit command.}" \
+    '' \
+    '**Alternatives considered:**' \
+    "${alternatives:-Recorded in the cited user context or decision discussion.}" \
     '' \
     '**Decision:**' \
     "$text" \
@@ -1309,6 +1365,11 @@ EOF
   fi
 
   printf '%s\n' "$prose" > "$entry_path"
+  if [[ -n "$old_decision" ]]; then
+    fm_set "$old_decision" status superseded
+    fm_set "$old_decision" superseded_by "$dnum"
+    fm_touch "$old_decision"
+  fi
   created "$entry_path"
   printf '%s\n' "$index_line" >> "$decisions"
   fm_touch "$decisions"
@@ -1343,6 +1404,26 @@ _canonical_pad() {
   n=$((10#$digits))
   (( n > 999 )) && width=4
   printf "%0${width}d" "$n"
+}
+
+_collection_slug_exists() {
+  local collection="$1" slug="$2" f base
+  [[ -d ".spectacular/$collection" ]] || return 1
+  for f in ".spectacular/$collection"/*.md; do
+    [[ -f "$f" ]] || continue
+    [[ "$(basename "$f")" == index.md ]] && continue
+    base=$(basename "$f" .md)
+    base=$(printf '%s' "$base" | sed -E 's/^(DEC|QUE|IDEA|RES|SPK|SPC)-[0-9]+-//; s/^D[0-9]+-//')
+    [[ "$base" == "$slug" ]] && return 0
+  done
+  return 1
+}
+
+_require_unique_collection_slug() {
+  local collection="$1" slug="$2" command="$3"
+  _collection_slug_exists "$collection" "$slug" && \
+    die "$command: slug '$slug' already exists in .spectacular/$collection/"
+  return 0
 }
 
 _canonical_resolve() {
@@ -1506,7 +1587,13 @@ EOF
     id="SPC-$(_canonical_pad "$next_spec")"; next_spec=$((next_spec + 1))
     local legacy_status new_status
     legacy_status=$(fm_get "$f" status)
-    case "$legacy_status" in draft|"") new_status=unconfirmed ;; published) new_status=current ;; *) new_status="$legacy_status" ;; esac
+    case "$legacy_status" in
+      draft|"") new_status=draft ;;
+      unconfirmed) new_status=unconfirmed ;;
+      stable|published|current) new_status=approved ;;
+      deprecated) new_status=deprecated ;;
+      *) new_status="$legacy_status" ;;
+    esac
     old="${f#.spectacular/}"; new="specs/$id-$base.md"
     printf '%s|%s|%s|specification|%s\n' "$old" "$new" "$id" "$new_status" >> "$map"
   done
@@ -1557,11 +1644,92 @@ EOF
   rm -rf "$tmp"
 }
 
+cmd_collections() {
+  local sub="${1:-}"; shift || true
+  [[ "$sub" == migrate ]] || die "Usage: spectacular collections migrate [--dry-run | --apply --yes]"
+  local apply=false yes=false
+  while (( $# > 0 )); do case "$1" in --dry-run) apply=false; shift ;; --apply) apply=true; shift ;; --yes) yes=true; shift ;; *) die "collections migrate: unknown option '$1'" ;; esac; done
+  $apply && ! $yes && die "collections migrate: --apply requires --yes"
+  local mappings="idea:ideas question:questions spike:spikes decision:decisions spec:specs memory:memories session:sessions feedback:feedbacks audit:audits fix:fixes debug:debugs"
+  local pair old new src dest item changes=0 conflicts=""
+  for pair in $mappings; do
+    old=${pair%%:*}; new=${pair#*:}; src=".spectacular/$old"; dest=".spectacular/$new"
+    [[ -d "$src" ]] || continue
+    for item in "$src"/*; do
+      [[ -e "$item" ]] || continue
+      changes=$((changes + 1))
+      [[ -e "$dest/$(basename "$item")" ]] && conflicts="${conflicts:+$conflicts, }$old/$(basename "$item")"
+      info "  $item → $dest/$(basename "$item")"
+    done
+  done
+  (( changes > 0 )) || { info "  ✓ collection folders already canonical"; return 0; }
+  [[ -z "$conflicts" ]] || die "collections migrate: destination collision(s): $conflicts; resolve explicitly before migration"
+  if ! $apply; then info "Dry-run only. Apply with: spectacular collections migrate --apply --yes"; return 0; fi
+  local stamp archive_root
+  stamp=$(date +%Y%m%d-%H%M%S); archive_root=".spectacular/archive/collection-migrations/$stamp"
+  mkdir -p "$archive_root"
+  for pair in $mappings; do
+    old=${pair%%:*}; new=${pair#*:}; src=".spectacular/$old"; dest=".spectacular/$new"
+    [[ -d "$src" ]] || continue
+    cp -R "$src" "$archive_root/$old"
+    mkdir -p "$dest"
+    for item in "$src"/*; do [[ -e "$item" ]] && mv "$item" "$dest/"; done
+  done
+  info "  ✓ migrated $changes item(s); originals archived at $archive_root"
+  info "  ↳ empty singular directories are intentionally left in place for safe manual cleanup"
+}
+
+cmd_lifecycle_migrate() {
+  local sub="${1:-}"; shift || true
+  [[ "$sub" == migrate ]] || die "Usage: spectacular lifecycle migrate [--dry-run | --apply --yes]"
+  local apply=false yes=false
+  while (( $# > 0 )); do case "$1" in --dry-run) apply=false; shift ;; --apply) apply=true; shift ;; --yes) yes=true; shift ;; *) die "lifecycle migrate: unknown option '$1'" ;; esac; done
+  $apply && ! $yes && die "lifecycle migrate: --apply requires --yes"
+  local tmp map f status new count manual=0
+  tmp=$(mktemp -d); map="$tmp/mapping.tsv"; : > "$map"
+  while IFS= read -r f; do
+    status=$(fm_get "$f" status); new=""
+    case "$status" in stable|published|current) new=approved ;; esac
+    [[ -n "$new" ]] && printf '%s\tstatus\t%s\t%s\n' "$f" "$status" "$new" >> "$map"
+  done < <(_iter_md specs)
+  while IFS= read -r f; do
+    status=$(fm_get "$f" status)
+    [[ -z "$status" ]] && printf '%s\tstatus\tmissing\tactive\n' "$f" >> "$map"
+  done < <(_iter_md memories)
+  for f in .spectacular/research/*.md .spectacular/spikes/*.md; do
+    [[ -f "$f" ]] || continue
+    if [[ "$(fm_get "$f" status)" == verified ]]; then
+      info "  manual: $f verified → completed requires supported|refuted|inconclusive + evidence review"
+      manual=$((manual + 1))
+    fi
+  done
+  count=$(wc -l < "$map" | tr -d ' ')
+  if (( count == 0 )); then
+    (( manual > 0 )) && info "No safe automatic mappings; $manual discovery record(s) require judgment" || info "  ✓ lifecycle labels already canonical"
+    rm -rf "$tmp"; return 0
+  fi
+  info "── lifecycle migration ($count safe mapping(s)) ──"
+  while IFS=$'\t' read -r f _field status new; do info "  $f: $status → $new"; done < "$map"
+  if ! $apply; then info "Dry-run only. Apply with: spectacular lifecycle migrate --apply --yes"; rm -rf "$tmp"; return 0; fi
+  local stamp archive_root rel
+  stamp=$(date +%Y%m%d-%H%M%S); archive_root=".spectacular/archive/lifecycle-migrations/$stamp"; mkdir -p "$archive_root"
+  cp "$map" "$archive_root/mapping.tsv"
+  while IFS=$'\t' read -r f _field status new; do
+    rel=${f#.spectacular/}; mkdir -p "$archive_root/$(dirname "$rel")"; cp "$f" "$archive_root/$rel"
+    fm_set "$f" status "$new"; fm_touch "$f"
+  done < "$map"
+  info "  ✓ migrated $count record(s); originals + mapping archived at $archive_root"
+  (( manual > 0 )) && info "  ⚠ $manual discovery record(s) still require explicit result/evidence review"
+  rm -rf "$tmp"
+}
+
 _question_find() {
-  local ref="$1" canonical f
+  local ref="$1" canonical f dir
   canonical=$(_canonical_resolve "$ref" question)
-  for f in .spectacular/questions/"$canonical"-*.md .spectacular/questions/"$canonical".md; do
-    [[ -f "$f" ]] && { echo "$f"; return 0; }
+  for dir in .spectacular/questions .spectacular/question; do
+    for f in "$dir"/"$canonical"-*.md "$dir"/"$canonical".md; do
+      [[ -f "$f" ]] && { echo "$f"; return 0; }
+    done
   done
   return 1
 }
@@ -1579,7 +1747,7 @@ Usage: spectacular question <new|list|resolve> [options]
   new <slug> [--question <text>] [--context <text>] [--priority high|medium|low]
              [--target-version <v>] [--blocked-by <id,id>]
   list [--status open|resolved|deferred|all]
-  resolve <id|alias> --answer <text>
+  resolve <id|alias> --answer <text> [--resolved-by <actor>] [--source <provenance>] [--decision <DEC>]
 EOF
       ;;
     *) die "question: unknown subcommand '$sub'. Use: new | list | resolve" ;;
@@ -1603,6 +1771,7 @@ cmd_question_new() {
   [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || die "question new: slug must be kebab-case"
   case "$priority" in low|medium|high) ;; *) die "question new: priority must be low|medium|high" ;; esac
   [[ -d .spectacular ]] || die "question new: not inside a Spectacular workspace"
+  _require_unique_collection_slug questions "$slug" "question new"
 
   local dir=".spectacular/questions" id path blocked_yaml="blocked_by: []" item canonical
   mkdir -p "$dir"
@@ -1675,10 +1844,13 @@ cmd_question_list() {
 }
 
 cmd_question_resolve() {
-  local ref="" answer=""
+  local ref="" answer="" resolved_by="user" source="" decision=""
   while (( $# > 0 )); do
     case "$1" in
       --answer) require_value "--answer" "${2:-}"; answer="$2"; shift 2 ;;
+      --resolved-by) require_value "--resolved-by" "${2:-}"; resolved_by="$2"; shift 2 ;;
+      --source) require_value "--source" "${2:-}"; source="$2"; shift 2 ;;
+      --decision) require_value "--decision" "${2:-}"; decision=$(_canonical_resolve "$2" decision); shift 2 ;;
       -*) die "question resolve: unknown flag '$1'" ;;
       *) [[ -z "$ref" ]] || die "question resolve: only one reference allowed"; ref="$1"; shift ;;
     esac
@@ -1688,16 +1860,23 @@ cmd_question_resolve() {
   path=$(_question_find "$ref") || die "question resolve: '$ref' not found"
   id=$(fm_get "$path" id)
   fm_set "$path" status resolved
+  fm_set "$path" resolved_at "$TODAY"
+  fm_set "$path" resolved_by "$resolved_by"
+  [[ -n "$source" ]] && fm_set "$path" resolution_source "$source"
+  [[ -n "$decision" ]] && fm_set "$path" resulting_decision "$decision"
   fm_set "$path" updated "$TODAY"
   printf '\n**Resolved %s:** %s\n' "$TODAY" "$answer" >> "$path"
   info "  ✓  ${id} resolved"
 }
 
 _discovery_find() {
-  local collection="$1" context="$2" ref="$3" canonical f
+  local collection="$1" context="$2" ref="$3" canonical f dir legacy=""
   canonical=$(_canonical_resolve "$ref" "$context")
-  for f in .spectacular/"$collection"/"$canonical"-*.md .spectacular/"$collection"/"$canonical".md; do
-    [[ -f "$f" ]] && { echo "$f"; return 0; }
+  [[ "$collection" == spikes ]] && legacy=spike
+  for dir in ".spectacular/$collection" ${legacy:+".spectacular/$legacy"}; do
+    for f in "$dir"/"$canonical"-*.md "$dir"/"$canonical".md; do
+      [[ -f "$f" ]] && { echo "$f"; return 0; }
+    done
   done
   return 1
 }
@@ -1714,8 +1893,8 @@ cmd_discovery_record() {
 Usage: spectacular $kind <new|list|resolve> [options]
 
   new <slug> [--summary <text>] [--target-version <v>] [--blocked-by <id,id>]
-  list [--status open|verified|deferred|all]
-  resolve <id|alias> --outcome <text> [--evidence <source>]
+  list [--status open|running|deferred|completed|all]
+  resolve <id|alias> --result supported|refuted|inconclusive --outcome <text> --evidence <source>
 EOF
       ;;
     *) die "$kind: unknown subcommand '$sub'. Use: new | list | resolve" ;;
@@ -1737,6 +1916,7 @@ _discovery_new() {
   done
   [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || die "$kind new: slug must be kebab-case"
   [[ -d .spectacular ]] || die "$kind new: not inside a Spectacular workspace"
+  _require_unique_collection_slug "$collection" "$slug" "$kind new"
   local dir=".spectacular/$collection" id path blocked_yaml="blocked_by: []" item canonical human_gate=false
   [[ "$kind" == spike ]] && human_gate=true
   mkdir -p "$dir"
@@ -1757,6 +1937,7 @@ _discovery_new() {
 id: $id
 type: $kind
 status: open
+result: pending
 target_version: "$target_version"
 ${blocked_yaml}
 requires_user_input: false
@@ -1816,35 +1997,45 @@ _discovery_list() {
 
 _discovery_resolve() {
   local kind="$1" collection="$2"; shift 2
-  local ref="" outcome="" evidence=""
+  local ref="" outcome="" evidence="" result=""
   while (( $# > 0 )); do
     case "$1" in
       --outcome) require_value "--outcome" "${2:-}"; outcome="$2"; shift 2 ;;
       --evidence) require_value "--evidence" "${2:-}"; evidence="$2"; shift 2 ;;
+      --result) require_value "--result" "${2:-}"; result="$2"; shift 2 ;;
       -*) die "$kind resolve: unknown flag '$1'" ;;
       *) [[ -z "$ref" ]] || die "$kind resolve: only one reference allowed"; ref="$1"; shift ;;
     esac
   done
-  [[ -n "$ref" && -n "$outcome" ]] || die "Usage: spectacular $kind resolve <id|alias> --outcome <text> [--evidence <source>]"
+  [[ -n "$ref" && -n "$outcome" && -n "$evidence" && -n "$result" ]] || die "Usage: spectacular $kind resolve <id|alias> --result supported|refuted|inconclusive --outcome <text> --evidence <source>"
+  case "$result" in supported|refuted|inconclusive) ;; *) die "$kind resolve: --result must be supported|refuted|inconclusive" ;; esac
   local path id
   path=$(_discovery_find "$collection" "$kind" "$ref") || die "$kind resolve: '$ref' not found"
   id=$(fm_get "$path" id)
-  fm_set "$path" status verified
+  fm_set "$path" status completed
+  fm_set "$path" result "$result"
+  fm_set "$path" completed_at "$TODAY"
   fm_set "$path" updated "$TODAY"
-  printf '\n**Verified %s:** %s\n' "$TODAY" "$outcome" >> "$path"
-  [[ -n "$evidence" ]] && printf '**Evidence:** %s\n' "$evidence" >> "$path"
-  info "  ✓  $id verified — fog cleared"
+  printf '\n**Completed %s (%s):** %s\n' "$TODAY" "$result" "$outcome" >> "$path"
+  printf '**Evidence:** %s\n' "$evidence" >> "$path"
+  if [[ "$result" == inconclusive ]]; then
+    info "  ⚠  $id completed inconclusively — uncertainty remains in fog; create/link a narrower successor"
+  else
+    info "  ✓  $id completed ($result) — tested uncertainty cleared"
+  fi
 }
 
 _spec_find() {
-  local ref="$1" canonical f path compact
+  local ref="$1" canonical f path compact dir
   path=".spectacular/specs/$ref.md"
   [[ -f "$path" ]] && { echo "$path"; return 0; }
   compact=$(printf '%s' "$ref" | tr -d ' _-' | tr '[:lower:]' '[:upper:]')
   if [[ "$compact" =~ ^(S|SPC|SPEC)([0-9]+)$ ]] || [[ "$compact" =~ ^[0-9]+$ ]]; then
     canonical=$(_canonical_resolve "$ref" spec)
-    for f in .spectacular/specs/"$canonical"-*.md .spectacular/specs/"$canonical".md; do
-      [[ -f "$f" ]] && { echo "$f"; return 0; }
+    for dir in .spectacular/specs .spectacular/spec; do
+      for f in "$dir"/"$canonical"-*.md "$dir"/"$canonical".md; do
+        [[ -f "$f" ]] && { echo "$f"; return 0; }
+      done
     done
   fi
   return 1
@@ -1855,18 +2046,25 @@ cmd_spec_record() {
   case "$sub" in
     new) cmd_spec_new "$@" ;;
     list) cmd_spec_list "$@" ;;
-    confirm) cmd_spec_confirm "$@" ;;
+    approve|confirm) cmd_spec_approve "$sub" "$@" ;;
     act) cmd_spec_act "$@" ;;
+    implement) cmd_spec_implement "$@" ;;
+    deprecate) cmd_spec_deprecate "$@" ;;
+    archive) cmd_spec_archive "$@" ;;
     ""|--help|-h)
       cat <<EOF
-Usage: spectacular spec <new|list|confirm|act> [options]
+Usage: spectacular spec <new|list|approve|act|implement|deprecate|archive> [options]
 
-  new <slug> --summary <text> [--target-version <v>]
-  list [--status unconfirmed|current|deprecated|all]
-  confirm <id|alias> [--evidence <text>] [--target-version <v>]
+  new <slug> --summary <text> [--afk] [--supersedes <SPC>] [--target-version <v>]
+  list [--status draft|unconfirmed|approved|implemented|superseded|deprecated|all]
+  approve <id|alias> [--evidence <text>] [--approved-by <actor>]
   act <id|alias> [--request-slug <slug>] [--priority high|medium|low]
+  implement <id|alias> --verified-against <commit|build>
+  deprecate <id|alias> --reason <why>
+  archive <id|alias> --reason <why> [--apply --yes]
 
-Only a current spec can create an implementation request.
+Only an approved spec can create an implementation request. `confirm` remains
+a compatibility alias for `approve`.
 EOF
       ;;
     *) die "spec: unknown subcommand '$sub'. Use: new | list | confirm | act" ;;
@@ -1874,18 +2072,26 @@ EOF
 }
 
 cmd_spec_new() {
-  local slug="" summary="" target_version="tbd"
+  local slug="" summary="" target_version="tbd" afk=false supersedes=""
   while (( $# > 0 )); do
     case "$1" in
       --summary) require_value "--summary" "${2:-}"; summary="$2"; shift 2 ;;
       --target-version) require_value "--target-version" "${2:-}"; target_version="$2"; shift 2 ;;
+      --afk) afk=true; shift ;;
+      --supersedes) require_value "--supersedes" "${2:-}"; supersedes=$(_canonical_resolve "$2" spec); shift 2 ;;
       -*) die "spec new: unknown flag '$1'" ;;
       *) [[ -z "$slug" ]] || die "spec new: only one slug allowed"; slug="$1"; shift ;;
     esac
   done
   [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || die "spec new: slug must be kebab-case"
   [[ -n "$summary" ]] || die "spec new: --summary is required"
-  local id path
+  _require_unique_collection_slug specs "$slug" "spec new"
+  local id path status=draft old_path=""
+  $afk && status=unconfirmed
+  if [[ -n "$supersedes" ]]; then
+    old_path=$(_spec_find "$supersedes") || die "spec new: superseded spec '$supersedes' not found"
+    [[ "$(fm_get "$old_path" status)" == implemented ]] || die "spec new: $supersedes must remain implemented until its replacement is implemented"
+  fi
   mkdir -p .spectacular/specs
   id=$(_next_canonical_id specs SPC)
   path=".spectacular/specs/$id-$slug.md"
@@ -1894,8 +2100,9 @@ cmd_spec_new() {
 ---
 id: $id
 type: specification
-status: unconfirmed
+status: $status
 target_version: "$target_version"
+supersedes: "${supersedes}"
 updated: $TODAY
 summary: "$summary"
 related: []
@@ -1917,10 +2124,10 @@ _(What outcome should exist?)_
 
 ## Confirmation
 
-Unconfirmed — not eligible for implementation.
+$status — not eligible for implementation until explicitly approved.
 EOF
   created "$path"
-  info "  → $id is unconfirmed"
+  info "  → $id is $status"
 }
 
 cmd_spec_list() {
@@ -1941,29 +2148,33 @@ cmd_spec_list() {
   (( count > 0 )) || info "(no specifications match)"
 }
 
-cmd_spec_confirm() {
-  local ref="" evidence="" target=""
+cmd_spec_approve() {
+  local invoked_as="$1"; shift
+  local ref="" evidence="" target="" approved_by="user"
   while (( $# > 0 )); do
     case "$1" in
       --evidence) require_value "--evidence" "${2:-}"; evidence="$2"; shift 2 ;;
       --target-version) require_value "--target-version" "${2:-}"; target="$2"; shift 2 ;;
-      -*) die "spec confirm: unknown flag '$1'" ;;
-      *) [[ -z "$ref" ]] || die "spec confirm: only one reference allowed"; ref="$1"; shift ;;
+      --approved-by) require_value "--approved-by" "${2:-}"; approved_by="$2"; shift 2 ;;
+      -*) die "spec approve: unknown flag '$1'" ;;
+      *) [[ -z "$ref" ]] || die "spec approve: only one reference allowed"; ref="$1"; shift ;;
     esac
   done
-  [[ -n "$ref" ]] || die "Usage: spectacular spec confirm <id|alias> [--evidence <text>] [--target-version <v>]"
+  [[ -n "$ref" ]] || die "Usage: spectacular spec approve <id|alias> [--evidence <text>] [--approved-by <actor>]"
   local path id status
-  path=$(_spec_find "$ref") || die "spec confirm: '$ref' not found"
+  path=$(_spec_find "$ref") || die "spec approve: '$ref' not found"
   id=$(fm_get "$path" id); status=$(fm_get "$path" status)
-  [[ "$status" == unconfirmed || "$status" == draft ]] || die "spec confirm: $id is '$status', expected unconfirmed"
+  [[ "$status" == unconfirmed || "$status" == draft ]] || die "spec approve: $id is '$status', expected draft or unconfirmed"
   cmd_snapshot "$path"
-  fm_set "$path" status current
+  fm_set "$path" status approved
   [[ -n "$(fm_get "$path" version)" ]] || fm_set "$path" version "1.0"
-  fm_set "$path" confirmed "$TODAY"
+  fm_set "$path" approved_at "$TODAY"
+  fm_set "$path" approved_by "$approved_by"
   [[ -n "$target" ]] && fm_set "$path" target_version "$target"
   fm_touch "$path"
-  printf '\n**Confirmed %s**%s\n' "$TODAY" "${evidence:+ — $evidence}" >> "$path"
-  info "  ✓  $id: unconfirmed → current"
+  printf '\n**Approved %s by %s**%s\n' "$TODAY" "$approved_by" "${evidence:+ — $evidence}" >> "$path"
+  [[ "$invoked_as" == confirm ]] && warn "'spec confirm' is a compatibility alias; use 'spec approve'"
+  info "  ✓  $id: $status → approved"
 }
 
 cmd_spec_act() {
@@ -1980,7 +2191,7 @@ cmd_spec_act() {
   local path id status summary spec_slug plan
   path=$(_spec_find "$ref") || die "spec act: '$ref' not found"
   id=$(fm_get "$path" id); status=$(fm_get "$path" status); summary=$(fm_get "$path" summary)
-  [[ "$status" == current || "$status" == published ]] || die "spec act: $id is '$status'; confirm it before implementation"
+  [[ "$status" == approved ]] || die "spec act: $id is '$status'; only an approved spec can authorize implementation"
   spec_slug=$(basename "$path" .md | sed -E 's/^SPC-[0-9]+-//')
   [[ -z "$request_slug" ]] && request_slug="$spec_slug"
   cmd_new "$request_slug" --summary "Implement $id: $summary" --priority "$priority"
@@ -1989,6 +2200,120 @@ cmd_spec_act() {
   fm_touch "$plan"
   printf '\n> **Source specification:** `%s` (`%s`)\n' "$id" "$path" >> "$plan"
   info "  ↳ request source: $id"
+}
+
+_request_docs_impact_closed() {
+  local plan="$1" impact reason evidence
+  impact=$(fm_get "$plan" docs_impact)
+  reason=$(fm_get "$plan" docs_impact_reason)
+  evidence=$(fm_get "$plan" docs_impact_evidence)
+  case "$impact" in
+    none) [[ -n "$reason" ]] ;;
+    required) [[ -n "$evidence" ]] ;;
+    *) return 1 ;;
+  esac
+}
+
+_request_docs_impact_is_heavy() {
+  local plan="$1" priority source
+  priority=$(fm_get "$plan" priority); source=$(fm_get "$plan" source_spec)
+  [[ "$priority" == high || -n "$source" ]]
+}
+
+cmd_docs_impact() {
+  local slug="${1:-}" mode="" reason="" evidence=""
+  [[ -n "$slug" ]] || die "Usage: spectacular docs-impact <request> --none --reason <why> | --required --evidence <update|handoff>"
+  shift || true
+  while (( $# > 0 )); do
+    case "$1" in
+      --none) mode=none; shift ;;
+      --required) mode=required; shift ;;
+      --reason) require_value "$1" "${2:-}"; reason="$2"; shift 2 ;;
+      --evidence) require_value "$1" "${2:-}"; evidence="$2"; shift 2 ;;
+      *) die "docs-impact: unknown option '$1'" ;;
+    esac
+  done
+  local plan=".spectacular/requests/$slug/PLAN.md"
+  [[ -f "$plan" ]] || die "docs-impact: request '$slug' not found"
+  case "$mode" in
+    none) [[ -n "$reason" ]] || die "docs-impact: --none requires --reason" ;;
+    required) [[ -n "$evidence" ]] || die "docs-impact: --required requires --evidence" ;;
+    *) die "docs-impact: choose exactly one of --none or --required" ;;
+  esac
+  fm_set "$plan" docs_impact "$mode"
+  if [[ "$mode" == none ]]; then fm_set "$plan" docs_impact_reason "$reason"; fm_unset "$plan" docs_impact_evidence
+  else fm_set "$plan" docs_impact_evidence "$evidence"; fm_unset "$plan" docs_impact_reason; fi
+  fm_touch "$plan"
+  info "  ✓ $slug docs impact: $mode"
+}
+
+cmd_spec_implement() {
+  local ref="" verified_against=""
+  while (( $# > 0 )); do
+    case "$1" in
+      --verified-against) require_value "$1" "${2:-}"; verified_against="$2"; shift 2 ;;
+      -*) die "spec implement: unknown flag '$1'" ;;
+      *) [[ -z "$ref" ]] || die "spec implement: only one reference allowed"; ref="$1"; shift ;;
+    esac
+  done
+  [[ -n "$ref" && -n "$verified_against" ]] || die "Usage: spectacular spec implement <id|alias> --verified-against <commit|build>"
+  local path id status plan linked=0 supersedes old_path
+  path=$(_spec_find "$ref") || die "spec implement: '$ref' not found"
+  id=$(fm_get "$path" id); status=$(fm_get "$path" status)
+  [[ "$status" == approved ]] || die "spec implement: $id is '$status', expected approved"
+  for plan in .spectacular/requests/*/PLAN.md .spectacular/archive/*/PLAN.md; do
+    [[ -f "$plan" ]] || continue
+    [[ "$(fm_get "$plan" source_spec)" == "$id" ]] || continue
+    linked=$((linked + 1))
+    case "$(fm_get "$plan" status)" in verified|archived) ;; *) die "spec implement: linked request $(basename "$(dirname "$plan")") is not verified/archived" ;; esac
+    _request_docs_impact_closed "$plan" || die "spec implement: linked request $(basename "$(dirname "$plan")") has unresolved docs impact"
+  done
+  (( linked > 0 )) || die "spec implement: $id has no linked implementation request"
+  supersedes=$(fm_get "$path" supersedes)
+  if [[ -n "$supersedes" ]]; then
+    old_path=$(_spec_find "$supersedes") || die "spec implement: superseded spec $supersedes not found"
+    [[ "$(fm_get "$old_path" status)" == implemented ]] || die "spec implement: $supersedes must be implemented before atomic replacement"
+  fi
+  cmd_snapshot "$path" >/dev/null
+  [[ -n "$old_path" ]] && cmd_snapshot "$old_path" >/dev/null
+  fm_set "$path" status implemented
+  fm_set "$path" implemented_at "$TODAY"
+  fm_set "$path" verified_against "$verified_against"
+  fm_touch "$path"
+  if [[ -n "$old_path" ]]; then
+    fm_set "$old_path" status superseded
+    fm_set "$old_path" superseded_by "$id"
+    fm_touch "$old_path"
+    info "  ↔ $supersedes: implemented → superseded"
+  fi
+  info "  ✓ $id: approved → implemented (verified against $verified_against)"
+}
+
+cmd_spec_deprecate() {
+  local ref="" reason=""
+  while (( $# > 0 )); do case "$1" in --reason) require_value "$1" "${2:-}"; reason="$2"; shift 2 ;; -*) die "spec deprecate: unknown flag '$1'" ;; *) [[ -z "$ref" ]] || die "spec deprecate: only one reference allowed"; ref="$1"; shift ;; esac; done
+  [[ -n "$ref" && -n "$reason" ]] || die "Usage: spectacular spec deprecate <id|alias> --reason <why>"
+  local path id status
+  path=$(_spec_find "$ref") || die "spec deprecate: '$ref' not found"; id=$(fm_get "$path" id); status=$(fm_get "$path" status)
+  [[ "$status" == implemented ]] || die "spec deprecate: $id is '$status', expected implemented"
+  cmd_snapshot "$path" >/dev/null; fm_set "$path" status deprecated; fm_set "$path" deprecated_at "$TODAY"; fm_set "$path" deprecation_reason "$reason"; fm_touch "$path"
+  info "  ✓ $id: implemented → deprecated"
+}
+
+cmd_spec_archive() {
+  local ref="" reason="" apply=false yes=false
+  while (( $# > 0 )); do case "$1" in --reason) require_value "$1" "${2:-}"; reason="$2"; shift 2 ;; --apply) apply=true; shift ;; --yes) yes=true; shift ;; -*) die "spec archive: unknown flag '$1'" ;; *) [[ -z "$ref" ]] || die "spec archive: only one reference allowed"; ref="$1"; shift ;; esac; done
+  [[ -n "$ref" && -n "$reason" ]] || die "Usage: spectacular spec archive <id|alias> --reason <why> [--apply --yes]"
+  local path id status destination
+  path=$(_spec_find "$ref") || die "spec archive: '$ref' not found"; id=$(fm_get "$path" id); status=$(fm_get "$path" status)
+  [[ "$status" == superseded || "$status" == deprecated ]] || die "spec archive: $id is '$status'; only superseded or deprecated specs can be archived"
+  destination=".spectacular/archive/specs/$(basename "$path")"
+  info "Archive plan: $path → $destination (reason: $reason)"
+  $apply || { info "Dry-run only. Apply with --apply --yes"; return 0; }
+  $yes || die "spec archive: --apply requires --yes"
+  cmd_snapshot "$path" >/dev/null; fm_set "$path" status archived; fm_set "$path" archived_at "$TODAY"; fm_set "$path" archive_reason "$reason"; fm_touch "$path"
+  mkdir -p .spectacular/archive/specs; mv "$path" "$destination"
+  info "  ✓ archived $id; explicit historical lookup: $destination"
 }
 
 # ── cmd_decisions_migrate: spectacular decisions migrate ─────────────────────
@@ -2252,11 +2577,11 @@ cmd_session_end() {
     decisions_count=$(grep -c "\[\[sessions/$slug\]\]" .spectacular/DECISIONS.md || true)
   fi
 
-  # Count linked memories: scan memory/*.md frontmatter for session: $slug
+  # Count linked memories: scan memories/*.md frontmatter for session: $slug
   local memories_count=0
   local mfile msession
-  if [[ -d ".spectacular/memory" ]]; then
-    for mfile in .spectacular/memory/*.md; do
+  if [[ -d ".spectacular/memories" ]]; then
+    for mfile in .spectacular/memories/*.md; do
       [[ -f "$mfile" ]] || continue
       msession=$(fm_get "$mfile" "session")
       [[ "$msession" == "$slug" ]] && memories_count=$((memories_count + 1))
@@ -2307,11 +2632,11 @@ cmd_session_end() {
     echo "## Linked memories"
     echo ""
     if [[ $memories_count -gt 0 ]]; then
-      for mfile in .spectacular/memory/*.md; do
+      for mfile in .spectacular/memories/*.md; do
         [[ -f "$mfile" ]] || continue
         msession=$(fm_get "$mfile" "session")
         [[ "$msession" == "$slug" ]] || continue
-        echo "- [[memory/$(basename "$mfile" .md)]]"
+        echo "- [[memories/$(basename "$mfile" .md)]]"
       done
     else
       echo "_(none)_"
@@ -2320,6 +2645,13 @@ cmd_session_end() {
 
   _regen_sessions_index
   info "  ✓  session closed: $slug (${decisions_count} decisions, ${memories_count} memories)"
+  local pending_docs=0 plan
+  for plan in .spectacular/requests/*/PLAN.md; do
+    [[ -f "$plan" ]] || continue
+    case "$(fm_get "$plan" status)" in active|review) ;; *) continue ;; esac
+    _request_docs_impact_closed "$plan" || pending_docs=$((pending_docs + 1))
+  done
+  (( pending_docs == 0 )) || info "  ⚠ docs-impact assessment pending for $pending_docs active/review request(s)"
 }
 
 # Return 0 if file is a registered canonical doc (eligible for snapshot).
@@ -2544,12 +2876,13 @@ _feedback_dir() {
 
 # Walk all feedback locations and emit one path per line
 _feedback_iter_all() {
-  local f
-  if [[ -d ".spectacular/feedbacks" ]]; then
-    for f in .spectacular/feedbacks/*.md; do
+  local f root
+  for root in .spectacular/feedbacks .spectacular/feedback; do
+    [[ -d "$root" ]] || continue
+    for f in "$root"/*.md; do
       [[ -f "$f" ]] && echo "$f"
     done
-  fi
+  done
   if [[ -d ".spectacular/requests" ]]; then
     local d
     for d in .spectacular/requests/*/feedbacks; do
@@ -2557,6 +2890,10 @@ _feedback_iter_all() {
       for f in "$d"/*.md; do
         [[ -f "$f" ]] && echo "$f"
       done
+    done
+    for d in .spectacular/requests/*/feedback; do
+      [[ -d "$d" ]] || continue
+      for f in "$d"/*.md; do [[ -f "$f" ]] && echo "$f"; done
     done
   fi
 }
@@ -2854,17 +3191,27 @@ EOF
 # Shared by ideas, decisions, memory, sessions (single-folder collections).
 # feedback is NOT one of these — it spans two locations (see _feedback_iter_all).
 _iter_md() {
-  local name="$1"
+  local name="$1" legacy=""
   case "$name" in
-    audit) name="audits" ;;
-    memory) name="memories" ;;
+    audit|audits) legacy="audit"; name="audits" ;;
+    memory|memories) legacy="memory"; name="memories" ;;
+    decision|decisions) legacy="decision"; name="decisions" ;;
+    idea|ideas) legacy="idea"; name="ideas" ;;
+    question|questions) legacy="question"; name="questions" ;;
+    spike|spikes) legacy="spike"; name="spikes" ;;
+    spec|specs) legacy="spec"; name="specs" ;;
+    session|sessions) legacy="session"; name="sessions" ;;
+    fix|fixes) legacy="fix"; name="fixes" ;;
+    debug|debugs) legacy="debug"; name="debugs" ;;
   esac
-  local dir=".spectacular/$name" f
-  [[ -d "$dir" ]] || return 0
-  for f in "$dir"/*.md; do
-    [[ -f "$f" ]] || continue
-    [[ "$(basename "$f")" == "index.md" ]] && continue
-    echo "$f"
+  local dir f
+  for dir in ".spectacular/$name" ${legacy:+".spectacular/$legacy"}; do
+    [[ -d "$dir" ]] || continue
+    for f in "$dir"/*.md; do
+      [[ -f "$f" ]] || continue
+      [[ "$(basename "$f")" == "index.md" ]] && continue
+      echo "$f"
+    done
   done
 }
 
@@ -2927,6 +3274,7 @@ EOF
 
   local entries_dir=".spectacular/ideas"
   mkdir -p "$entries_dir"
+  _require_unique_collection_slug ideas "$slug" "idea new"
 
   local id entry_path
   id=$(_next_canonical_id ideas IDEA)
@@ -3295,6 +3643,7 @@ cmd_audit_resolve() {
   # matching slot forward (problem, intended, cause, proposed fix, criteria).
   local fix_id=""
   if $into_fix; then
+    [[ -n "$verified_by" ]] || die "audit resolve: --into-fix requires concrete --verified-by evidence; otherwise keep it as an audit/request"
     local f_title f_from_audit f_severity f_problem f_intended f_cause f_fix f_criteria f_verified_by f_signature
     f_title=$(_h1_title "$entry_path"); [[ -z "$f_title" ]] && f_title="fix for $id"
     f_from_audit="$id"
@@ -3383,8 +3732,7 @@ Subcommands:
                                 Options:
                                   --severity low|medium|high  (default: medium)
                                   --bug <text> --cause <text> --fix <text>
-                                  --verified-by <text>   The check that proves it
-                                                           (omitting → verified: null + warn)
+                                  --verified-by <text>   Required check that proves it
                                   --from-audit <A<N>>    Link to originating audit
                                   --debug-job <slug>     Back-link to debug/<slug> job
                                   --dry-run
@@ -3421,6 +3769,7 @@ cmd_fix_new() {
     esac
   done
   [[ -z "$f_title" ]] && die "fix new: <title> argument required (quote it)"
+  [[ -n "$f_verified_by" ]] || die "fix new: --verified-by is required; incomplete work belongs in audits/ or a request"
   [[ -d ".spectacular" ]] || die "fix new: not inside a Spectacular workspace"
   _validate_severity "$f_severity" "fix new"
   if [[ -n "$f_from_audit" ]]; then
@@ -3433,8 +3782,6 @@ cmd_fix_new() {
       die "fix new: --from-audit '$f_from_audit' not found under .spectacular/audits/"
     fi
   fi
-  [[ -z "$f_verified_by" ]] && warn "no --verified-by — entry marked unverified; fill 'Verified by' before trusting it"
-
   if $dry_run; then
     local fslug; fslug=$(_slug_from_text "$f_title")
     echo "── would write .spectacular/fixes/F$(_next_entry_num .spectacular/fixes F)-${fslug}.md ──"
@@ -4063,10 +4410,15 @@ _wayfind_find_id() {
 }
 
 _wayfind_satisfied() {
-  local file="$1" status type
+  local file="$1" status type result
   status=$(fm_get "$file" status); type=$(fm_get "$file" type)
   [[ -z "$status" && "$file" == .spectacular/decisions/* ]] && return 0
-  case "$status" in resolved|verified|current|published|promoted) return 0 ;; esac
+  if [[ "$status" == completed ]]; then
+    result=$(fm_get "$file" result)
+    [[ "$result" == supported || "$result" == refuted ]] && return 0
+    return 1
+  fi
+  case "$status" in resolved|verified|approved|implemented|superseded|deprecated|promoted) return 0 ;; esac
   return 1
 }
 
@@ -4074,6 +4426,7 @@ _wayfind_readiness() {
   local file="$1" status dep dep_file
   status=$(fm_get "$file" status)
   [[ "$status" == deferred ]] && { echo deferred; return 0; }
+  [[ "$status" == completed && "$(fm_get "$file" result)" == inconclusive ]] && { echo fog; return 0; }
   _wayfind_satisfied "$file" && { echo resolved; return 0; }
   while IFS= read -r dep; do
     [[ -n "$dep" ]] || continue
@@ -4125,7 +4478,7 @@ cmd_wayfind_status() {
   [[ "${1:-}" == --blockers-only ]] && blockers_only=true && shift
   (( $# == 0 )) || die "wayfind status: unknown argument '$1'"
   _wayfind_validate_or_die
-  local f id type state req label frontier=0 fog=0 deferred=0 resolved=0 blockers=0
+  local f id type state req label frontier=0 fog=0 deferred=0 resolved=0 blockers=0 blocker_rows=""
   if $blockers_only; then
     info "── Questions requiring your input ──"
   else
@@ -4137,7 +4490,11 @@ cmd_wayfind_status() {
     case "$state" in frontier) frontier=$((frontier+1)) ;; fog) fog=$((fog+1)) ;; deferred) deferred=$((deferred+1)) ;; resolved) resolved=$((resolved+1)) ;; esac
     if $blockers_only; then
       if [[ "$type" == question && "$req" == true && "$state" != resolved && "$state" != deferred ]]; then
-        info "  ▸ $id — $label [$state]"
+        local downstream=0 dependent
+        while IFS= read -r dependent; do
+          while IFS= read -r dep; do [[ "$dep" == "$id" ]] && downstream=$((downstream + 1)); done < <(_fm_list "$dependent" blocked_by)
+        done < <(_wayfind_iter)
+        blocker_rows+="$(_prio_weight "$(fm_get "$f" priority)")"$'\t'"$downstream"$'\t'"$id"$'\t'"$state"$'\t'"$label"$'\n'
         blockers=$((blockers+1))
       fi
     else
@@ -4145,7 +4502,13 @@ cmd_wayfind_status() {
     fi
   done < <(_wayfind_topological_iter)
   if $blockers_only; then
-    (( blockers > 0 )) || info "  ✓ No immediate human blockers"
+    if (( blockers > 0 )); then
+      while IFS=$'\t' read -r _priority downstream id state label; do
+        info "  ▸ $id — $label [$state; blocks $downstream]"
+      done < <(printf '%s' "$blocker_rows" | sort -t $'\t' -k1,1n -k2,2nr -k3,3)
+    else
+      info "  ✓ No immediate human blockers"
+    fi
   else
     info ""
     info "Fog: $((frontier + fog)) unresolved · Frontier: $frontier actionable · Blocked: $fog · Deferred: $deferred · Resolved: $resolved"
@@ -4241,9 +4604,9 @@ cmd_wayfind_route() {
 
 cmd_wayfind_hold() {
   local target="$1"; shift
-  local ref="" reason="" id path
+  local ref="" reason="" review_after="" id path
   while (( $# > 0 )); do
-    case "$1" in --reason) require_value "--reason" "${2:-}"; reason="$2"; shift 2 ;; -*) die "wayfind: unknown flag '$1'" ;; *) [[ -z "$ref" ]] || die "wayfind: only one ID allowed"; ref="$1"; shift ;; esac
+    case "$1" in --reason) require_value "--reason" "${2:-}"; reason="$2"; shift 2 ;; --review-after) require_value "--review-after" "${2:-}"; review_after="$2"; shift 2 ;; -*) die "wayfind: unknown flag '$1'" ;; *) [[ -z "$ref" ]] || die "wayfind: only one ID allowed"; ref="$1"; shift ;; esac
   done
   [[ -n "$ref" ]] || die "wayfind: ID required"
   id=$(_canonical_resolve "$ref")
@@ -4251,8 +4614,9 @@ cmd_wayfind_hold() {
   if [[ "$target" == deferred ]]; then
     [[ -n "$reason" ]] || die "wayfind defer: --reason is required"
     fm_set "$path" status deferred; fm_set "$path" deferred_reason "$reason"
+    [[ -n "$review_after" ]] && fm_set "$path" review_after "$review_after"
   else
-    fm_set "$path" status open; fm_unset "$path" deferred_reason
+    fm_set "$path" status open; fm_unset "$path" deferred_reason; fm_unset "$path" review_after
   fi
   fm_touch "$path"
   info "  ✓  $id → $target"
@@ -4322,6 +4686,57 @@ cmd_afk_status() {
   info "  allow_pr_create:  $(_afk_config_get allow_pr_create)"
   info "  current:          ${branch:-(detached)} ($dirty)"
   $enabled || info "  gate:             configure, review, then apply with: spectacular afk configure --enable --apply --yes"
+}
+
+_afk_active_run() {
+  local f status
+  for f in .spectacular/afk/runs/*.md; do
+    [[ -f "$f" ]] || continue
+    status=$(fm_get "$f" status)
+    [[ "$status" == active || "$status" == gated ]] && { echo "$f"; return 0; }
+  done
+  return 1
+}
+
+cmd_afk_run() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    start)
+      local slug="" goal="" request="" allowed="research,spikes,draft-specs" gates="merge,breaking-api-schema,product-business,undeclared-auth-browser-sensitive-data" apply=false yes=false
+      while (( $# > 0 )); do case "$1" in --goal) require_value "$1" "${2:-}"; goal="$2"; shift 2 ;; --request) require_value "$1" "${2:-}"; request="$2"; shift 2 ;; --allowed-actions) require_value "$1" "${2:-}"; allowed="$2"; shift 2 ;; --hitl-gates) require_value "$1" "${2:-}"; gates="$2"; shift 2 ;; --apply) apply=true; shift ;; --yes) yes=true; shift ;; -*) die "afk run start: unknown flag '$1'" ;; *) [[ -z "$slug" ]] || die "afk run start: only one slug allowed"; slug="$1"; shift ;; esac; done
+      [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ && -n "$goal" ]] || die "Usage: spectacular afk run start <slug> --goal <exact-goal> [--request <slug>] [--allowed-actions <csv>] [--apply --yes]"
+      _afk_active_run >/dev/null && die "afk run start: an AFK run is already active or gated; complete/cancel it first"
+      local path=".spectacular/afk/runs/$slug.md"
+      [[ ! -e "$path" ]] || die "afk run start: run '$slug' already exists"
+      info "AFK run proposal: $slug — $goal"
+      info "  allowed_actions: $allowed"
+      info "  hitl_gates: $gates"
+      $apply || { info "Dry-run only. Apply with --apply --yes"; return 0; }
+      $yes || die "afk run start: --apply requires --yes"
+      mkdir -p .spectacular/afk/runs
+      printf '%s\n' '---' "id: $slug" 'type: afk-run' 'status: active' "goal: \"$goal\"" "request: \"$request\"" "allowed_actions: \"$allowed\"" "hitl_gates: \"$gates\"" "started_at: $TODAY" "updated: $TODAY" '---' '' "# AFK run — $slug" '' "## Goal" '' "$goal" > "$path"
+      created "$path" ;;
+    status)
+      local active; active=$(_afk_active_run) || { info "No active or gated AFK run"; return 0; }
+      info "AFK run: $(fm_get "$active" id) [$(fm_get "$active" status)]"
+      info "  goal: $(fm_get "$active" goal)"
+      info "  request: $(fm_get "$active" request)"
+      info "  allowed_actions: $(fm_get "$active" allowed_actions)"
+      info "  hitl_gates: $(fm_get "$active" hitl_gates)" ;;
+    gate|resume|complete|cancel)
+      local active reason=""; active=$(_afk_active_run) || die "afk run $sub: no active or gated run"
+      while (( $# > 0 )); do case "$1" in --reason) require_value "$1" "${2:-}"; reason="$2"; shift 2 ;; *) die "afk run $sub: unknown option '$1'" ;; esac; done
+      local current; current=$(fm_get "$active" status)
+      case "$sub" in
+        gate) [[ "$current" == active && -n "$reason" ]] || die "afk run gate: active run and --reason are required"; fm_set "$active" status gated; fm_set "$active" gate_reason "$reason" ;;
+        resume) [[ "$current" == gated ]] || die "afk run resume: run is not gated"; fm_set "$active" status active; fm_unset "$active" gate_reason ;;
+        complete) [[ "$current" == active ]] || die "afk run complete: gated work must be explicitly resumed first"; fm_set "$active" status completed; fm_set "$active" completed_at "$TODAY" ;;
+        cancel) [[ -n "$reason" ]] || die "afk run cancel: --reason is required"; fm_set "$active" status cancelled; fm_set "$active" cancelled_at "$TODAY"; fm_set "$active" cancellation_reason "$reason" ;;
+      esac
+      fm_touch "$active"; info "  ✓ AFK run $(fm_get "$active" id): $current → $(fm_get "$active" status)" ;;
+    ""|--help|-h) echo "Usage: spectacular afk run <start|status|gate|resume|complete|cancel>" ;;
+    *) die "afk run: unknown subcommand '$sub'" ;;
+  esac
 }
 
 cmd_afk_configure() {
@@ -4410,6 +4825,8 @@ cmd_afk_start() {
   info "Proposed branch: $branch"
   if ! $apply; then info "Dry-run only. Create with: --apply --yes"; return 0; fi
   _afk_enabled || die "afk start: AFK Git policy is not enabled"
+  local active_run; active_run=$(_afk_active_run) || die "afk start: no active AFK run; authorize one with 'spectacular afk run start'"
+  [[ "$(fm_get "$active_run" status)" == active ]] || die "afk start: AFK run is gated"
   $yes || die "afk start: --apply requires --yes"
   _afk_require_repo; _afk_require_clean
   git show-ref --verify --quiet "refs/heads/$branch" && die "afk start: branch already exists: $branch"
@@ -4447,15 +4864,21 @@ cmd_afk_cleanup() {
   if ! $apply; then info "Dry-run only. Apply with: --apply --yes"; return 0; fi
   _afk_enabled || die "afk cleanup: AFK Git policy is not enabled"
   $yes || die "afk cleanup: --apply requires --yes"
-  local stamp safe archive
+  local stamp safe archive tip_sha archive_ref restore_command
   stamp=$(date +%Y%m%d-%H%M%S); safe=$(_afk_slug "$branch")
   archive=".spectacular/archive/afk-branches/${stamp}-${safe}.md"
+  tip_sha=$(git rev-parse "refs/heads/$branch")
+  archive_ref="refs/spectacular/archive/${safe}-${stamp}-${tip_sha:0:12}"
+  restore_command="git branch $branch $archive_ref"
+  git update-ref "$archive_ref" "$tip_sha"
+  [[ "$(git rev-parse "$archive_ref")" == "$tip_sha" ]] || die "afk cleanup: failed to verify durable archive ref; branch was not deleted"
   mkdir -p "$(dirname "$archive")"
-  printf '%s\n' '---' "branch: \"$branch\"" "disposition: $disposition" "node: \"$node\"" "archived: $TODAY" 'recoverable_from: git reflog' '---' '' "# AFK branch archive — $branch" '' "**Outcome:** $outcome" '' "**Evidence:** $evidence" > "$archive"
+  printf '%s\n' '---' "branch: \"$branch\"" "disposition: $disposition" "node: \"$node\"" "archived: $TODAY" "tip_sha: $tip_sha" "archive_ref: $archive_ref" "restore_command: \"$restore_command\"" '---' '' "# AFK branch archive — $branch" '' "**Outcome:** $outcome" '' "**Evidence:** $evidence" '' "**Restore:** \`$restore_command\`" > "$archive"
   if [[ "$disposition" == merged ]]; then git branch -d "$branch" >/dev/null; else git branch -D "$branch" >/dev/null; fi
   info "  ✓ archived: $archive"
   info "  ✓ deleted local branch: $branch"
-  info "  ↳ recoverable through Git reflog; remote branch untouched"
+  info "  ↳ durable ref: $archive_ref ($tip_sha)"
+  info "  ↳ restore with: $restore_command; remote branch untouched"
 }
 
 cmd_afk_pr() {
@@ -4482,10 +4905,10 @@ cmd_afk_pr() {
   [[ -f "$log" ]] && grep -q '\*\*Outcome:\*\* verified' "$log" || die "afk pr: verified request has no passing VERIFY-LOG outcome"
   source=$(fm_get "$plan" source_spec); [[ -n "$source" ]] || die "afk pr: request has no source_spec provenance"
   spec_path=$(_spec_find "$source") || die "afk pr: source spec not found: $source"
-  [[ "$(fm_get "$spec_path" status)" == current ]] || die "afk pr: source spec $source is not current"
+  case "$(fm_get "$spec_path" status)" in approved|implemented) ;; *) die "afk pr: source spec $source is not approved" ;; esac
   $tests_passed || die "afk pr: fresh passing tests must be confirmed with --tests-passed"
   $breaking && ! $breaking_ok && die "afk pr: breaking API/schema change requires --breaking-change-approved"
-  local title="[SpecTACular] Executed: $version - $name"
+  local title="[Spectacular] Executed: $version - $name"
   info "PR title: $title"
   if ! $apply; then info "Dry-run only. The command will open a PR and stop before merge."; return 0; fi
   _afk_enabled || die "afk pr: AFK Git policy is not enabled"
@@ -4505,6 +4928,7 @@ cmd_afk() {
   local sub="${1:-}"; shift || true
   case "$sub" in
     status) cmd_afk_status "$@" ;;
+    run) cmd_afk_run "$@" ;;
     configure) cmd_afk_configure "$@" ;;
     propose) cmd_afk_propose "$@" ;;
     preflight) cmd_afk_preflight "$@" ;;
@@ -4513,7 +4937,7 @@ cmd_afk() {
     pr) cmd_afk_pr "$@" ;;
     ""|--help|-h)
       cat <<EOF
-Usage: spectacular afk <status|configure|propose|preflight|start|cleanup|pr>
+Usage: spectacular afk <run|status|configure|propose|preflight|start|cleanup|pr>
 
 Read-only by default. Branch creation, cleanup, and PR creation require enabled
 project policy plus explicit --apply --yes. Merge and remote deletion are never performed.
@@ -5379,6 +5803,7 @@ cmd_decision() {
 }
 
 cmd_memory() {
+  if [[ "${1:-}" == retract ]]; then shift; cmd_memory_retract "$@"; return $?; fi
   local slug="" full=false json=false
   while (( $# > 0 )); do
     case "$1" in
@@ -5395,12 +5820,36 @@ cmd_memory() {
   done
 
   [[ -z "$slug" ]] && die "memory: <slug> argument required"
-  local f=".spectacular/memory/$slug.md"
-  [[ -f "$f" ]] || die "memory: '$slug' not found at $f"
+  local f
+  f=$(_memory_find "$slug") || die "memory: '$slug' not found in .spectacular/memories/"
 
   if $full; then cat "$f"; return 0; fi
   if $json; then _skim_file_json "$f"; return 0; fi
   _skim_file "$f"
+}
+
+_memory_find() {
+  local ref="$1" f compact dir
+  for dir in .spectacular/memories .spectacular/memory; do
+    [[ -f "$dir/$ref.md" ]] && { echo "$dir/$ref.md"; return 0; }
+  done
+  compact=$(printf '%s' "$ref" | tr '[:lower:]' '[:upper:]')
+  for dir in .spectacular/memories .spectacular/memory; do
+    for f in "$dir"/"$compact"-*.md "$dir"/"$compact".md; do
+      [[ -f "$f" ]] && { echo "$f"; return 0; }
+    done
+  done
+  return 1
+}
+
+cmd_memory_retract() {
+  local ref="" reason=""
+  while (( $# > 0 )); do case "$1" in --reason) require_value "$1" "${2:-}"; reason="$2"; shift 2 ;; -*) die "memory retract: unknown flag '$1'" ;; *) [[ -z "$ref" ]] || die "memory retract: only one reference allowed"; ref="$1"; shift ;; esac; done
+  [[ -n "$ref" && -n "$reason" ]] || die "Usage: spectacular memory retract <memory> --reason <why>"
+  local f; f=$(_memory_find "$ref") || die "memory retract: '$ref' not found"
+  [[ "$(fm_get "$f" status)" == active || -z "$(fm_get "$f" status)" ]] || die "memory retract: only an active memory can be retracted"
+  fm_set "$f" status retracted; fm_set "$f" retracted_at "$TODAY"; fm_set "$f" retraction_reason "$reason"; fm_touch "$f"
+  info "  ✓ retracted $(basename "$f" .md); history preserved"
 }
 
 cmd_sessions_show() {
@@ -6269,6 +6718,15 @@ _closure_check_spec() {
   fi
 }
 
+_closure_check_docs() {
+  local plan="$1/PLAN.md"
+  [[ -f "$plan" ]] || return 0
+  local impact; impact=$(fm_get "$plan" docs_impact)
+  [[ -z "$impact" ]] && return 0
+  [[ "$impact" == pending ]] && ! _request_docs_impact_is_heavy "$plan" && return 0
+  _request_docs_impact_closed "$plan" || echo "docs impact is pending or lacks its required reason/evidence"
+}
+
 # `spectacular archive <slug> [--force]`
 # Moves request to .spectacular/archive/, rewrites inbound related: links,
 # sets status: archived + archived: <today>. Refuses if not in verified/review
@@ -6284,8 +6742,8 @@ cmd_archive() {
       --skip-doctor)     opt_skip_doctor=true; shift ;;
       --no-docs-prompt)  opt_no_docs_prompt=true; shift ;;
       --override)
-        [[ -n "${2:-}" ]] || die "archive: --override requires a check name (tasks|verify|spec)"
-        case "$2" in tasks|verify|spec) ;; *) die "archive: --override check must be tasks|verify|spec, got: $2" ;; esac
+        [[ -n "${2:-}" ]] || die "archive: --override requires a check name (tasks|verify|spec|docs)"
+        case "$2" in tasks|verify|spec|docs) ;; *) die "archive: --override check must be tasks|verify|spec|docs, got: $2" ;; esac
         [[ "${3:-}" == "--reason" && -n "${4:-}" ]] || die "archive: --override $2 requires --reason \"<text>\""
         ov_check+=("$2"); ov_reason+=("$4"); shift 4 ;;
       --help|-h)
@@ -6304,6 +6762,7 @@ Closure gate — blocks archive unless the request closed itself out:
   tasks   every TASKS.md box is [x], or [~] with a ' — <reason>'
   verify  if VERIFY.md exists, VERIFY-LOG.md has a passed (✅) walk row
   spec    a SPEC-DELTA.md exists (ADDED/MODIFIED/REMOVED, or 'NONE — <why>')
+  docs    docs_impact is none + reason, or required + update/handoff evidence
 Bypass one check with --override <check> --reason "<text>" (repeatable). The
 reason is stamped into archive_overrides: in the archived PLAN — auditable, not
 silent. --force does NOT bypass these; it only bypasses the status gate.
@@ -6372,6 +6831,8 @@ EOF
   [[ -n "$_msg" ]] && { gate_fail_check+=("verify"); gate_fail_msg+=("$_msg"); }
   _msg="$(_closure_check_spec "$src")"   || true
   [[ -n "$_msg" ]] && { gate_fail_check+=("spec");   gate_fail_msg+=("$_msg"); }
+  _msg="$(_closure_check_docs "$src")"   || true
+  [[ -n "$_msg" ]] && { gate_fail_check+=("docs");   gate_fail_msg+=("$_msg"); }
 
   # Resolve each failure against the overrides. An override for check C clears
   # every failure of check C and records an archive_overrides: entry.
@@ -7097,6 +7558,17 @@ EOF
     *) die "promote: invalid --to '$target'. Must be: planned | active | review | verified" ;;
   esac
 
+  if [[ "$target" == verified ]]; then
+    local docs_impact; docs_impact=$(fm_get "$plan" docs_impact)
+    if [[ -n "$docs_impact" ]]; then
+      if [[ "$docs_impact" != pending ]] || _request_docs_impact_is_heavy "$plan"; then
+        _request_docs_impact_closed "$plan" || die "advance: docs impact is not closed; run 'spectacular docs-impact $slug --none --reason <why>' or '--required --evidence <update|handoff>'"
+      fi
+    else
+      warn "advance: legacy request has no docs_impact field; add an assessment for major/heavy work"
+    fi
+  fi
+
   # Refuse backward unless --force
   if [[ "$current" == "$target" ]]; then
     echo "  • $slug: already $current (no change)"
@@ -7486,6 +7958,7 @@ priority: $opt_priority
 owner: $owner
 updated: $TODAY
 build: $_build_id
+docs_impact: pending
 summary: "${opt_summary}"
 related: []
 ---
@@ -9957,7 +10430,7 @@ DOC_OPT_AREA=""        # empty = all areas
 DOC_OPT_FIX=false
 DOC_OPT_FORMAT="text"  # text | json
 
-DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas wayfinding debug policies vision decisions roadmap"
+DOC_AREAS="skill workspace frontmatter snapshots links lifecycle kits conventions specs docs personas memory sessions feedback ideas wayfinding debug fixes afk policies vision decisions roadmap"
 
 # Findings accumulator. Each line:  area|severity|file|message|proposed_fix|fix_type
 # severity: pass | warning | error | info
@@ -9993,6 +10466,8 @@ Areas (run all if omitted):
   feedback      feedbacks/ entries — frontmatter, stale-open (>30d), orphan back-refs
   ideas         ideas/ entries — frontmatter, stale-exploring (>90d), orphan promoted
   debug         debugs/<slug> trace spines — status/disposition enums
+  fixes         fixes/ trusted corpus — concrete verification evidence
+  afk           afk/runs/ authorization records — state, scope, and single-active invariant
   decisions     decisions/index.md index-mode consistency — orphans, stale files, prefix naming, numbering gaps
 
 Options:
@@ -10019,7 +10494,7 @@ doctor_parse_args() {
       --fix) DOC_OPT_FIX=true; shift ;;
       --format) require_value "--format" "${2:-}"; DOC_OPT_FORMAT="$2"; shift 2 ;;
       -h|--help) doctor_usage; exit 0 ;;
-      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|wayfinding|debug|policies|vision|decisions|roadmap)
+      skill|workspace|frontmatter|snapshots|links|lifecycle|kits|conventions|specs|docs|personas|memory|sessions|feedback|ideas|wayfinding|debug|fixes|afk|policies|vision|decisions|roadmap)
         if [[ -z "$DOC_OPT_AREA" ]]; then
           DOC_OPT_AREA="$1"
         else
@@ -10736,6 +11211,13 @@ check_lifecycle() {
     local status
     status=$(awk -F': ' '/^---$/{c++; next} c==1 && /^status:/ { print $2; exit }' "$plan" | tr -d '"' | tr -d "'" | xargs)
 
+    local docs_impact; docs_impact=$(fm_get "$plan" docs_impact)
+    if [[ -n "$docs_impact" && "$status" =~ ^(active|review|verified)$ ]] && ! _request_docs_impact_closed "$plan"; then
+      doc_add "lifecycle" "warning" "$plan" "request '$slug' has unresolved docs impact ($docs_impact)" \
+        "record none+reason or required+evidence before verification/archive" "judgment"
+      issues=$((issues + 1))
+    fi
+
     case "$status" in
       active)
         if [[ ! -f "$d/SESSION.md" ]]; then
@@ -11224,7 +11706,7 @@ check_specs() {
   # legitimately carries no `status:`.
   local spec_required_fields="status updated summary related"
   # Wayfinding names are canonical; draft/published remain compatibility aliases.
-  local spec_status_enum="unconfirmed current deprecated draft published"
+  local spec_status_enum="draft unconfirmed approved implemented superseded deprecated archived"
   shopt -s nullglob
   for contract_doc in "$specs_dir"/*.md; do
     local basename
@@ -11270,10 +11752,11 @@ check_specs() {
         *) doc_add "specs" "warning" "$contract_doc" "\`status: $s_status\` outside allowed set ($spec_status_enum)" \
              "use one of: ${spec_status_enum// /, }" "judgment" ;;
       esac
-      # version required iff current/published.
-      if [[ "$s_status" == "current" || "$s_status" == "published" ]] && ! echo "$sfm" | grep -q "^version:"; then
-        doc_add "specs" "warning" "$contract_doc" "\`status: $s_status\` but no \`version:\` — a current spec is a contract and must be versioned" \
-          "add \`version:\` to frontmatter" "judgment"
+      if [[ "$s_status" == implemented ]]; then
+        for field in implemented_at verified_against; do
+          echo "$sfm" | grep -q "^${field}:" || doc_add "specs" "warning" "$contract_doc" "implemented spec missing required evidence field: $field" \
+            "record the historical implementation evidence" "judgment"
+        done
       fi
     fi
   done
@@ -11515,6 +11998,13 @@ check_memory() {
     return 0
   fi
 
+  for file in "$dir"/*.md; do
+    [[ -f "$file" && "$(basename "$file")" != index.md ]] || continue
+    local memory_status; memory_status=$(fm_get "$file" status)
+    case "$memory_status" in active|superseded|retracted) ;; "") doc_add "memory" "warning" "$file" "memory has no lifecycle status (legacy-readable)" "add status: active or migrate explicitly" "judgment" ;; *) doc_add "memory" "warning" "$file" "invalid memory status: $memory_status" "use active|superseded|retracted" "judgment" ;; esac
+    [[ "$memory_status" != retracted || -n "$(fm_get "$file" retraction_reason)" ]] || doc_add "memory" "warning" "$file" "retracted memory lacks retraction_reason" "record why the fact was withdrawn" "judgment"
+  done
+
   # Detect index ↔ entries drift
   local index_links
   index_links=$(grep -oE '\[\[memories/[^]]+\]\]' "$idx" 2>/dev/null | sed 's/\[\[memories\///; s/\]\]//' | sort -u || true)
@@ -11571,6 +12061,7 @@ check_memory() {
       "$invalid_prefix_count memory file(s) missing sequential M<N>-<slug> prefix: $invalid_prefix_files" \
       "rename files to follow the M<N>-<slug>.md pattern" "judgment"
   fi
+
 }
 
 # ── check_sessions (v1.5.0+) ─────────────────────────────────────────────────
@@ -11846,6 +12337,23 @@ check_wayfinding() {
   nodes="$tmp/nodes"; edges="$tmp/edges"
   : > "$nodes"; : > "$edges"
 
+  local collection base slug_key slug_seen="$tmp/slugs" slug_duplicates=""
+  : > "$slug_seen"
+  for collection in ideas questions research spikes decisions specs; do
+    for f in ".spectacular/$collection"/*.md; do
+      [[ -f "$f" && "$(basename "$f")" != index.md ]] || continue
+      base=$(basename "$f" .md)
+      slug_key=$(printf '%s' "$base" | sed -E 's/^(DEC|QUE|IDEA|RES|SPK|SPC)-[0-9]+-//; s/^D[0-9]+-//')
+      if grep -q "^${collection}|${slug_key}$" "$slug_seen"; then
+        slug_duplicates="${slug_duplicates:+$slug_duplicates, }$collection/$slug_key"
+      else
+        printf '%s|%s\n' "$collection" "$slug_key" >> "$slug_seen"
+      fi
+    done
+  done
+  [[ -z "$slug_duplicates" ]] || doc_add "wayfinding" "error" ".spectacular/" "duplicate slug(s) within a collection: $slug_duplicates" \
+    "rename one record through an explicit, reference-aware migration" "judgment"
+
   while IFS= read -r f; do
     id=$(fm_get "$f" id)
     [[ -n "$id" ]] || continue
@@ -11862,6 +12370,14 @@ check_wayfinding() {
       [[ -n "$dep" ]] || continue
       printf '%s|%s\n' "$id" "$dep" >> "$edges"
     done < <(_fm_list "$f" blocked_by)
+  done < <(_wayfind_iter)
+
+  while IFS= read -r f; do
+    case "$(fm_get "$f" type):$(fm_get "$f" status)" in research:completed|spike:completed)
+      case "$(fm_get "$f" result)" in supported|refuted|inconclusive) ;; *) doc_add "wayfinding" "warning" "$f" "completed discovery has invalid/missing result" "use supported|refuted|inconclusive" "judgment" ;; esac
+      grep -q '^\*\*Evidence:\*\* .\+' "$f" || doc_add "wayfinding" "warning" "$f" "completed discovery has no concrete evidence" "record sources/artifacts before completion" "judgment"
+      ;;
+    esac
   done < <(_wayfind_iter)
 
   if (( count == 0 )); then
@@ -12435,6 +12951,13 @@ check_decisions() {
       "$invalid_prefix_count decision file(s) missing canonical DEC-NNN-<slug> or legacy D<N>-<slug> prefix: $invalid_prefix_files" \
       "rename through the canonical-ID migration; do not hand-rewrite links" "judgment"
   fi
+
+  for f in "$decisions_dir"/DEC-*.md; do
+    [[ -f "$f" ]] || continue
+    local decision_status; decision_status=$(fm_get "$f" status)
+    case "$decision_status" in verified|superseded) ;; *) doc_add "decisions" "warning" "$f" "invalid decision status: ${decision_status:-missing}" "use verified|superseded; create a new DEC for reversals" "judgment" ;; esac
+    [[ "$decision_status" != superseded || -n "$(fm_get "$f" superseded_by)" ]] || doc_add "decisions" "warning" "$f" "superseded decision lacks superseded_by" "link the replacement DEC" "judgment"
+  done
 }
 
 # ── check_roadmap (v1.23.0+, b18) ─────────────────────────────────────────────
@@ -12448,6 +12971,10 @@ check_roadmap() {
   local roadmap=".spectacular/roadmaps/index.md"
   local roadmap_dir=".spectacular/roadmaps"
   [[ -f "$roadmap" ]] || { doc_add "roadmap" "info" "$roadmap" "roadmaps/index.md not present — skipped"; return 0; }
+
+  local invalid_ledger_statuses
+  invalid_ledger_statuses=$(awk -F'|' '/^\|[[:space:]]*b[0-9]+[[:space:]]*\|/ { s=$7; gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); if (s !~ /^(candidate|planned|active|shipped|cancelled)$/) print s }' "$roadmap" | sort -u | tr '\n' ' ')
+  [[ -z "$invalid_ledger_statuses" ]] || doc_add "roadmap" "warning" "$roadmap" "invalid release-ledger status(es): $invalid_ledger_statuses" "use candidate|planned|active|shipped|cancelled" "judgment"
 
   # Count inline shipped prose blocks: ## v-blocks whose body has **Status:** shipped.
   # On each new ## heading, bank the previous block if it was a shipped v-block.
@@ -12529,6 +13056,32 @@ check_roadmap() {
   fi
 }
 
+check_fixes() {
+  [[ -d .spectacular/fixes ]] || { doc_add "fixes" "info" ".spectacular/fixes/" "no fixes corpus yet"; return 0; }
+  local f count=0 verified
+  for f in .spectacular/fixes/*.md; do
+    [[ -f "$f" ]] || continue; count=$((count + 1)); verified=$(fm_get "$f" verified)
+    if [[ -z "$verified" || "$verified" == null ]] || ! grep -q '^## Verified by' "$f"; then
+      doc_add "fixes" "warning" "$f" "fix lacks concrete verification evidence" "move incomplete work back to an audit/request or record verified-by" "judgment"
+    fi
+  done
+  (( count > 0 )) && doc_add "fixes" "pass" ".spectacular/fixes/" "$count fix record(s) inspected"
+}
+
+check_afk() {
+  local dir=.spectacular/afk/runs f status active=0 count=0
+  [[ -d "$dir" ]] || { doc_add "afk" "info" "$dir" "no AFK authorization runs yet"; return 0; }
+  for f in "$dir"/*.md; do
+    [[ -f "$f" ]] || continue; count=$((count + 1)); status=$(fm_get "$f" status)
+    case "$status" in active|gated) active=$((active + 1)) ;; completed|cancelled) ;; *) doc_add "afk" "warning" "$f" "invalid AFK run status: ${status:-missing}" "use active|gated|completed|cancelled" "judgment" ;; esac
+    for field in goal allowed_actions hitl_gates started_at; do
+      [[ -n "$(fm_get "$f" "$field")" ]] || doc_add "afk" "warning" "$f" "AFK run missing $field" "record the authorization boundary" "judgment"
+    done
+  done
+  (( active <= 1 )) || doc_add "afk" "error" "$dir" "$active AFK runs are active/gated simultaneously" "complete or cancel all but one" "judgment"
+  (( count > 0 )) && doc_add "afk" "pass" "$dir" "$count AFK run record(s) inspected"
+}
+
 # ── doctor orchestrator ───────────────────────────────────────────────────────
 # Dispatch a list of area names to their check_<area> functions.
 # Single source of truth — adding a new area only requires touching this one case.
@@ -12552,6 +13105,8 @@ run_areas() {
       ideas)       check_ideas ;;
       wayfinding)  check_wayfinding ;;
       debug)       check_debug ;;
+      fixes)       check_fixes ;;
+      afk)         check_afk ;;
       policies)    check_policies ;;
       vision)      check_vision ;;
       decisions)   check_decisions ;;
@@ -13299,6 +13854,7 @@ main() {
       fi
       ;;
     decide)   shift; cmd_decide "$@"; exit $? ;;
+    docs-impact) shift; cmd_docs_impact "$@"; exit $? ;;
     session)  shift; cmd_session "$@"; exit $? ;;
     # Lifecycle advance (v1.19.0+): `advance` is canonical; `promote` is a
     # deprecation alias (warns once, then runs). Renamed from `promote` to free
@@ -13343,7 +13899,7 @@ main() {
       shift; cmd_discovery_record spike spikes SPK "$@"; exit $? ;;
     spec)
       case "${2:-}" in
-        new|list|confirm|act) shift; cmd_spec_record "$@"; exit $? ;;
+        new|list|approve|confirm|act|implement|deprecate|archive) shift; cmd_spec_record "$@"; exit $? ;;
         *) : ;;
       esac
       ;;
@@ -13353,6 +13909,10 @@ main() {
       shift; cmd_afk "$@"; exit $? ;;
     id)
       shift; cmd_id "$@"; exit $? ;;
+    collections)
+      shift; cmd_collections "$@"; exit $? ;;
+    lifecycle)
+      shift; cmd_lifecycle_migrate "$@"; exit $? ;;
     # Audit / fix (v1.25.0+): bug-lifecycle soft-DB collections.
     audit)
       shift; cmd_audit "$@"; exit $? ;;

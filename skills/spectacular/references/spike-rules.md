@@ -11,6 +11,6 @@ status: active
 
 # Spike Rules
 
-Spikes use canonical `SPK-NNN` IDs and answer “does this approach work?” Execution requires human authorization and should use an isolated `spike/prototype-*` branch through [[afk-git-hygiene]]. Spike code is disposable; its sources, evidence, outcome, and optional `PRT-NNN` artifact references are durable.
+Spikes use canonical `SPK-NNN` IDs and answer “does this approach work?” Execution requires human authorization and should use an isolated `spike/prototype-*` branch through [[afk-git-hygiene]]. Completion requires evidence plus `result: supported | refuted | inconclusive`; inconclusive stays fog. Spike code is disposable, while evidence and outcomes remain durable. `PRT` is reserved but has no standalone lifecycle yet. See [[lifecycle-contract]].
 
 Verbs: `spectacular spike new|list|resolve`. See [[canonical-ids]].

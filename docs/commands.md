@@ -322,9 +322,11 @@ spectacular id migrate --apply --yes
 
 Explicit prefixes always win. A naked number requires `--context`; ambiguous input is rejected instead of guessed. IDs use at least three digits and naturally expand beyond 999. Migration is dry-run by default. Applying it requires `--apply --yes`, archives originals plus `mapping.tsv` under `.spectacular/archive/id-migrations/<timestamp>/`, then rewrites legacy path references.
 
+Legacy singular collection folders remain readable. Preview `spectacular collections migrate`; apply only after reviewing the exact paths with `--apply --yes`. For lifecycle labels, `spectacular lifecycle migrate` safely maps legacy spec labels to `approved` and statusless memories to `active`; it never guesses discovery results. Both migrations archive originals first.
+
 ### Questions, research, and spikes *(v1.36.0+)*
 
-Use questions for product or business ambiguities that need a human answer, research for sourced facts, and spikes for feasibility experiments. Resolving research or a spike marks its evidence `verified`; it does not silently decide a product trade-off.
+Use questions for product or business ambiguities that need a human answer, research for sourced facts, and spikes for feasibility experiments. Completing research or a spike requires evidence and a `supported`, `refuted`, or `inconclusive` result; research does not silently make a decision.
 
 ```bash
 spectacular question new tenant-isolation --question "Shared schema or database per tenant?" --priority high
@@ -332,30 +334,31 @@ spectacular question list --status open
 spectacular question resolve q1 --answer "Use schema-per-tenant"
 
 spectacular research new auth-options --summary "Compare supported authentication paths" --blocked-by q1
-spectacular research resolve r1 --outcome "OIDC is supported" --evidence "vendor documentation"
+spectacular research resolve r1 --result supported --outcome "OIDC is supported" --evidence "vendor documentation"
 
 spectacular spike new connection-pool --summary "Validate pooling under peak load"
-spectacular spike resolve spk1 --outcome "Feasible at 500 concurrent sessions" --evidence "benchmark report"
+spectacular spike resolve spk1 --result supported --outcome "Feasible at 500 concurrent sessions" --evidence "benchmark report"
 ```
 
 `question new` defaults to `requires_user_input: true`. Spike records set `execution_requires_approval: true`; creating the record does not authorize running prototype code.
 
-### Specification confirmation and action *(v1.36.0+)*
+### Specification lifecycle and action *(v1.36.0+)*
 
 Specifications converge discovery into executable intent:
 
 ```text
-idea/discovery → unconfirmed spec → confirmation → current spec → request → implementation → verification
+draft|unconfirmed → approved → implemented → superseded|deprecated → archived
 ```
 
 ```bash
 spectacular spec new user-onboarding --summary "Guide a new user to first success" --target-version v1.0.0-discovery
-spectacular spec list --status unconfirmed
-spectacular spec confirm s1 --evidence "Product review complete" --target-version v1.0.0-execution
+spectacular spec list --status draft
+spectacular spec approve s1 --evidence "Product review complete" --target-version v1.0.0-execution
 spectacular spec act s1 --request-slug user-onboarding --priority high
+spectacular spec implement s1 --verified-against "commit abc123"
 ```
 
-`spec confirm` snapshots the specification before changing it to `current`. `spec act` refuses an unconfirmed or deprecated spec, creates a normal planned request, and records its canonical `source_spec`.
+Collaborative specs start `draft`; pass `--afk` for `unconfirmed`. `spec approve` snapshots and authorizes implementation (`confirm` remains an alias). Only approved specs may act. `implemented` is a historical evidence point, not a freshness promise; code remains authoritative.
 
 ### Wayfinding fog and frontier *(v1.36.0+)*
 
@@ -367,7 +370,7 @@ spectacular wayfind status --blockers-only
 spectacular wayfind next
 spectacular wayfind order
 spectacular wayfind resolve q1 --answer "Use schema-per-tenant"
-spectacular wayfind defer q1 --reason "Not relevant to this milestone"
+spectacular wayfind defer q1 --reason "Not relevant to this milestone" --review-after v1.2.0
 spectacular wayfind resume q1
 spectacular wayfind path s1
 spectacular wayfind route "park this idea" cache-index --hypothesis "Cache the generated index"
@@ -378,7 +381,7 @@ spectacular wayfind route "act on goal" s1 --request-slug user-onboarding
 
 `wayfind order` is strict dependency-first topological order and refuses dangling or cyclic graphs. `wayfind next` considers only frontier nodes, ranks explicit priority first, then front-loads uncertainty: a ready human question, spike, research, other question, then specification. Deferral is durable and reversible. Session start automatically shows unresolved, non-deferred questions that require user input.
 
-`wayfind route` translates the supported metaphors through existing safe verbs: parking creates an idea without touching current scope, icebox requires a deferral reason, find shows prerequisites, and act delegates to the confirmed-spec gate. `doctor wayfinding` detects strong dependency signals across PRD, roadmap, plans, and specs plus discovery/execution target inversions; it proposes explicit remediation and never mutates or silently reslots the roadmap. Authorized branch isolation is handled separately by `spectacular afk`.
+`wayfind route` translates the supported metaphors through existing safe verbs: parking creates an idea without touching current scope, icebox requires a deferral reason, find shows prerequisites, and act delegates to the approved-spec gate. `doctor wayfinding` detects strong dependency signals across PRD, roadmap, plans, and specs plus discovery/execution target inversions; it proposes explicit remediation and never mutates or silently reslots the roadmap. Authorized branch isolation is handled separately by `spectacular afk`.
 
 ### AFK Git hygiene *(v1.36.0+)*
 
@@ -387,6 +390,7 @@ AFK Git behavior is opt-in and dry-run-first. The host prefix composes with Spec
 ```bash
 spectacular afk status
 spectacular afk configure --enable --branch-prefix codex/ --apply --yes
+spectacular afk run start auth-goal --goal "Implement approved authentication spec" --request auth --allowed-actions "research,spikes,draft-specs,decisions" --apply --yes
 
 spectacular afk propose draft-spec auth
 spectacular afk propose spike spk1
@@ -406,7 +410,7 @@ spectacular afk pr billing-work --version v1.2.0 --name "Team Billing" --tests-p
 spectacular afk pr billing-work --version v1.2.0 --name "Team Billing" --tests-passed --apply --yes
 ```
 
-Branch classes are `spec/draft-*`, `spike/prototype-*`, `fork/idea-*`, and `feat/v*-*`. `start` records provenance in `.spectacular/afk/branches.md`. Cleanup writes outcome/evidence under `.spectacular/archive/afk-branches/` before confirmed local deletion and refuses `--remote`. PR apply requires a verified request, a passing `VERIFY-LOG`, a current `source_spec`, fresh `--tests-passed`, policy permission, and a non-primary clean branch. `--breaking` additionally requires `--breaking-change-approved`. The command opens the PR with `[SpecTACular] Executed: <version> - <name>` and never merges.
+Branch classes are `spec/draft-*`, `spike/prototype-*`, `fork/idea-*`, and `feat/v*-*`. `start` records provenance in `.spectacular/afk/branches.md`. Cleanup writes outcome/evidence under `.spectacular/archive/afk-branches/` before confirmed local deletion and refuses `--remote`. PR apply requires a verified request, a passing `VERIFY-LOG`, a current `source_spec`, fresh `--tests-passed`, policy permission, and a non-primary clean branch. `--breaking` additionally requires `--breaking-change-approved`. The command opens the PR with `[Spectacular] Executed: <version> - <name>` and never merges.
 
 ### `spectacular policy [@hook | <id> | --principle N | --json | --full]` *(v1.12.0+)*
 

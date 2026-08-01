@@ -1,7 +1,9 @@
 ---
-status: published
-version: 1.2
-updated: 2026-06-29
+status: approved
+approved_at: 2026-08-01
+approved_by: migration-confirmed-by-user
+version: 1.3
+updated: 2026-08-01
 summary: "Structured ROADMAP.md — the build-id ledger (single source of truth for build→version) plus per-version prose blocks with precision tiers, a 9-phase chain, an outcome slot, and a tier-aware review gate"
 related:
   - index.md

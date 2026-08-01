@@ -7,6 +7,7 @@
 
 ---
 type: memory
+status: active
 date: <DATE>
 tags: <TAGS>
 related: []

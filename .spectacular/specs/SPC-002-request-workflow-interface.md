@@ -1,7 +1,7 @@
 ---
 id: SPC-002
 type: specification
-status: approved
+status: implemented
 target_version: "v1.36.0-execution"
 supersedes: ""
 updated: 2026-08-02
@@ -12,6 +12,8 @@ related:
 version: 1.1
 approved_at: 2026-08-02
 approved_by: user
+implemented_at: 2026-08-02
+verified_against: commit bf0756f
 ---
 
 # SPC-002 — Request creation, implementation context, command grammar, and verified execution handoff

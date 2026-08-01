@@ -1,7 +1,7 @@
 ---
 doc-id: decisions
 mode: index | flat
-location: .spectacular/decisions/index.md (flat) | .spectacular/decisions/index.md + .spectacular/decisions/D<N>-<slug>.md (index)
+location: .spectacular/decisions/index.md (flat) | .spectacular/decisions/index.md + .spectacular/decisions/DEC-NNN-<slug>.md (index)
 scope: project-wide
 template: templates/decisions/entry.md
 snapshot-on-edit: false
@@ -11,7 +11,7 @@ status: active
 
 # DECISIONS Rules
 
-Append-only ADR log. Each new decision is one entry, appended to the bottom. Entries are immutable by convention — corrections go in a follow-up entry, not by rewriting history.
+Append-only ADR log. Each new decision is one entry, appended to the bottom. Entries are immutable by convention — corrections go in a follow-up entry, not by rewriting history. New entries use canonical `DEC-NNN` IDs; `D<N>` remains the preferred spoken shorthand and a backwards-compatible input/file form. See [[canonical-ids]].
 
 > **This is where ADRs (Architecture Decision Records) live in Spectacular.** When asked to "record an ADR" / "record an architecture decision," write here with `spectacular decide` — do **not** create a separate `docs/adr/` folder.
 
@@ -56,6 +56,8 @@ Omitted sections are written as **empty headers** (not dropped) so the ADR shape
 
 **Dry run:** `spectacular decide "<text>" --dry-run` previews the entry and writes nothing to disk (v1.8.3+). On a workspace with no `DECISIONS.md` yet, it prints `would create` + `would append` but does **not** bootstrap the file — the bootstrap only happens on a real write.
 
+**Evidence-backed autonomous capture (Wayfinding):** `spectacular decide "<text>" --autonomous --evidence "RES-001, SPK-002"` is allowed for a technical conclusion earned by research/prototyping. `--autonomous` refuses without evidence. Product/business questions remain HITL and resolve through `questions/`; an agent cannot use this flag to self-answer them.
+
 **Entry format:**
 
 ```markdown
@@ -85,21 +87,21 @@ When `DECISIONS.md` grows past ~50 entries the flat file becomes a context-tax. 
 .spectacular/
 └── decisions/
     ├── index.md          ← index only: one line per decision
-    ├── D1-<slug>.md
-    ├── D2-<slug>.md
+    ├── DEC-001-<slug>.md
+    ├── DEC-002-<slug>.md
     └── ...
 ```
 
 **Index line format** (canonical):
 ```markdown
-- **D42** — Reject field-mode storage for v1 — folders-only until v2 ships
+- **DEC-042** — Reject field-mode storage for v1 — folders-only until v2 ships
 ```
 
 Three parts separated by ` — `: D-number (bold), short title, one-sentence rationale. No trailing period.
 
-**Per-entry file format** (`decisions/D42-<slug>.md`):
+**Per-entry file format** (`decisions/DEC-042-<slug>.md`):
 ```markdown
-# D42 — Reject field-mode storage for v1
+# DEC-042 — Reject field-mode storage for v1
 
 **Context:** ...
 **Decision:** ...

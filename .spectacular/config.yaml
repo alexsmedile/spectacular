@@ -33,4 +33,11 @@ agents:
 skills:
   symlink_on_init: []
 
-last_build: 31
+# AFK Git policy is opt-in. Configure through `spectacular afk configure`.
+# afk_git:
+#   enabled: false
+#   branch_prefix: "codex/"
+#   primary_branches: "main,master,develop"
+#   allow_pr_create: false
+
+last_build: 34

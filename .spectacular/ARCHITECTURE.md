@@ -1,6 +1,6 @@
 ---
-version: 1.2
-updated: 2026-06-28
+version: 1.5
+updated: 2026-08-01
 summary: "The .spectacular/ directory — layers, file roles, frontmatter conventions, lifecycle, versioning"
 related:
   - PRD.md
@@ -29,18 +29,22 @@ This is distinct from `STACK.md` — STACK describes the **host project's** tech
 ├── config.yaml         # machine-readable project config
 ├── POLICY.md           # practice layer — policies under work-phase hooks (v1.12.0+)
 │
-├── specs/              # system spec — specs/index.md (index) + specs/<capability>.md (v2.0 OKF; flat files)
+├── specs/              # specifications — canonical SPC-NNN entries + index
 ├── roadmaps/           # time-ordered "what's next" — roadmaps/index.md + shipped v*.md (v2.0 OKF)
-├── decisions/          # ADR log — decisions/index.md + D<N>-<slug>.md entries (v2.0 OKF)
+├── decisions/          # verified architectural decisions — DEC-NNN-<slug>.md
+├── questions/          # unresolved, user-owned blockers — QUE-NNN-<slug>.md
+├── research/           # sourced investigations — RES-NNN-<slug>.md
+├── spikes/             # feasibility experiments — SPK-NNN-<slug>.md
 ├── memories/           # long-term operational learning — memories/index.md + M<N>-<slug>.md (v2.0 OKF)
 ├── sessions/           # work-session log — sessions/index.md + entries (v1.5.0+; v2.0 OKF)
-├── ideas/              # exploratory scratchpad — not acted on by skill
+├── ideas/              # parked inspiration — IDEA-NNN-<slug>.md
 ├── requests/           # active and planned work
 ├── skills/             # project-specific reusable skills
 ├── feedbacks/          # prototyping-mode feedback entries (v1.6.0+; v2.0 OKF)
 ├── audits/             # bug investigations — diagnose before planning a fix (A<N>.md; v1.25.0+)
 ├── fixes/              # verified-fix log — logged only once resolved (F<N>.md; v1.25.0+)
 ├── debugs/             # in-flight debug-job traces — debugs/<slug>/ (v1.26.0+; v2.0 OKF)
+├── afk/                # AFK branch provenance ledger (created only after authorized start)
 ├── _snapshots/         # versioned snapshots of canonical docs (store name configurable; default _snapshots since v1.24.0)
 │   ├── PRD/            # one folder per canonical doc, uppercase preserved
 │   │   └── @v1.2.md    # filename = the content's version (couples to version:)
@@ -50,6 +54,7 @@ This is distinct from `STACK.md` — STACK describes the **host project's** tech
 │       └── @v4.md
 ├── .last-mutation      # undo breadcrumb — gitignored, session ephemera (v1.22.0+)
 └── archive/            # completed requests, historical snapshots
+    └── afk-branches/   # outcome/evidence records written before local branch cleanup
 ```
 
 `.spectacular.local/` — personal overrides, always gitignored, never committed. `.spectacular/` itself is fully committed to git.
@@ -285,17 +290,31 @@ summary: "What this request changes"
 
 ---
 
+# Wayfinding knowledge layer
+
+Spectacular keeps distinct typed Markdown collections so uncertainty is visible instead of being smuggled into plans or specifications:
+
+- `ideas/` parks out-of-scope inspiration (`IDEA-NNN`) without expanding the active milestone.
+- `questions/` holds unresolved blockers (`QUE-NNN`); records requiring user judgment are surfaced at session start.
+- `research/` holds sourced investigation (`RES-NNN`) and `spikes/` holds feasibility experiments (`SPK-NNN`, with `PRT` reserved for prototype artifacts).
+- `decisions/` contains verified, evidence-backed architectural decisions (`DEC-NNN`), not unresolved preferences.
+- `specs/` contains feature specifications (`SPC-NNN`) whose lifecycle is `unconfirmed → current → deprecated`. Only `current` specs may seed execution requests.
+
+Cross-references always persist canonical IDs, even when users speak in aliases such as `D1`, `Q1`, or `SPEC1`. Explicit prefixes win; naked numbers require a collection context. IDs use at least three digits. Discovery targets use `vX.Y.Z-discovery`; confirmed-spec execution targets use `vX.Y.Z-execution`.
+
+Readiness is derived from canonical dependencies. Unresolved records form the **fog**; dependency-ready records form the **frontier**. The sequencer rejects invalid graphs and uses strict dependency-first topological order. `wayfind next` ranks explicit priority first, then uncertainty: user-input question, spike, research, other question, specification. Strong dependency language across PRD, roadmap, plans, and specs produces advisory doctor findings only; explicit frontmatter remains authoritative and is never silently rewritten.
+
 # Ideas layer
 
-A **thinking scratchpad**, not a workflow stage. Nothing in `ideas/` is acted on automatically by the skill.
+A **parking space**, not an execution stage. Nothing in `ideas/` is acted on automatically by the skill.
 
 Use it for: raw thoughts, market observations, UX experiments, discarded approaches, future concepts, unresolved brainstorming.
 
 ```txt
 ideas/
-├── multiplayer-editor.md
-├── ai-memory-system.md
-└── growth-loops.md
+├── IDEA-001-multiplayer-editor.md
+├── IDEA-002-ai-memory-system.md
+└── IDEA-003-growth-loops.md
 ```
 
 **Rules:**
@@ -312,14 +331,13 @@ ideas/
 
 # Spec layer (specs/index.md + specs/)
 
-The spec layer represents canonical system truth — what the product *actually does* right now. It is **`specs/index.md` (the index) + `specs/<capability>.md` (per-capability detail, flat files)**. The pre-v0.5.0 `current/` folder was replaced by this spec layer in v0.5.0.
+The spec layer carries both proposed and canonical behavior. Each specification declares `status: unconfirmed | current | deprecated`; only `current` entries represent system truth and may seed an execution request.
 
 ```txt
 specs/
-├── index.md            # the index — dense capability bullets, each pointing to a spec file when promoted
-├── cli.md              # one flat file per capability, each with its own frontmatter state
-├── doc-engine.md
-└── roadmap.md
+├── index.md                         # dense capability index
+├── SPC-001-user-onboarding.md       # canonical ID + descriptive slug
+└── SPC-002-roadmap.md
 ```
 
 **Purpose:** defines current behavior, active capabilities, security requirements, performance expectations, user-visible behavior.

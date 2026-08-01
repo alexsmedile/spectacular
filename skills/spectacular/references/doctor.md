@@ -37,7 +37,7 @@ Exit codes: 0 (clean), 1 (warnings only), 2 (errors present).
 
 ## Check areas (v1)
 
-Areas in current order: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions`, `specs`, `docs`, `personas`, `memory`, `sessions`, `feedback`, `ideas`, `policies`.
+Areas in current order: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions`, `specs`, `docs`, `personas`, `memory`, `sessions`, `feedback`, `ideas`, `wayfinding`, `debug`, `policies`, `vision`, `decisions`, `roadmap`.
 
 Per-area check tables, severity model per check, and mechanical-vs-judgment classification live in [[doctor-areas]]. Load that file when you need to explain what a finding means or implement a new check.
 

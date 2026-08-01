@@ -139,7 +139,10 @@ That's the whole idea. The full layout, once a project fills in:
 │   ── created on demand ─────────────────────────────────────────────
 ├── memories/           # long-term operational learning (git-committed)
 ├── feedbacks/          # prototyping-mode feedback entries (v1.6.0+)
-├── ideas/              # thinking scratchpad — not acted on automatically (v1.7.0+)
+├── questions/          # active ambiguities that need a human answer
+├── research/           # sourced evidence that clears discovery fog
+├── spikes/             # authorized feasibility experiments + prototype evidence
+├── ideas/              # parked inspiration — not acted on automatically
 ├── debugs/             # live debug-job traces — one folder per bug (v1.26.0+)
 ├── audits/             # diagnostic examinations earned at resolution (v1.25.0+)
 ├── fixes/              # reusable verified-fix library, greppable (v1.25.0+)
@@ -147,7 +150,9 @@ That's the whole idea. The full layout, once a project fills in:
 └── archive/            # completed requests (never deleted)
 ```
 
-The on-demand folders (`memories/`, `decisions/`, `sessions/`, `feedbacks/`, `ideas/`, `audits/`, `fixes/`) all share one **soft-DB** shape — an `index.md` catalog plus flat entry files — so agents can grep any collection the same way.
+Wayfinding records use stable canonical IDs: `DEC-001`, `QUE-001`, `IDEA-001`, `RES-001`, `SPK-001`, `PRT-001`, and `SPC-001`. You can speak in compact aliases such as `D1`, `Q1`, `I1`, `R1`, or `S1`; persisted cross-references always use the canonical form.
+
+The on-demand folders (`memories/`, `decisions/`, `questions/`, `research/`, `spikes/`, `sessions/`, `feedbacks/`, `ideas/`, `audits/`, `fixes/`) keep durable Markdown records in git, so humans and agents can inspect the same project state without a service or database.
 
 A typical coding project (`spectacular init --kit coding`) scaffolds the always-set + `STACK.md` + `ARCHITECTURE.md`. A doc-only or research project (`spectacular init --kit research` or `--kit blank`) gets only the always-set. Smart-init never overwrites existing files — re-running is always safe.
 
@@ -186,7 +191,13 @@ Agent definitions live in `agents/` at the repo root (the source of truth); the 
 | `spectacular remember this` | Write an insight to `memories/` immediately |
 | `spectacular decide "<decision>"` | Append an ADR entry; `--context`/`--consequences` fill the other sections (v1.8.4+) |
 | `spectacular feedback-loop` | Prototyping-mode human-feedback loop — pick target, craft proposal, ask user, capture, decide (v1.6.0+) |
-| `spectacular idea` | Thinking-scratchpad ideas — `new\|list\|promote`. Promotion scaffolds a request + archives the idea (v1.7.0+) |
+| `spectacular idea` | Parked inspiration — `new\|list\|promote`; new files receive an `IDEA-NNN` identity |
+| `spectacular question` | Human-owned blockers — `new\|list\|resolve`; unresolved questions surface at session start |
+| `spectacular research` / `spike` | Evidence and feasibility records — `new\|list\|resolve`; spike execution requires approval |
+| `spectacular spec` | Feature-spec lifecycle — `new\|list\|confirm\|act`; only a confirmed, `current` spec can create a request |
+| `spectacular wayfind` | Strict topo order, fog/frontier, priority-then-uncertainty selection, metaphor routing, deferral, and dependency paths |
+| `spectacular afk` | Opt-in Git isolation: policy/status, branch proposals/start, preflight, archive-first cleanup, and verified PR handoff |
+| `spectacular id` | Resolve aliases to canonical IDs or preview/apply an archive-first legacy-ID migration |
 | `spectacular summary` | One-page workspace overview: counts of requests/decisions/memories/sessions/ideas/feedback (v1.8.0+) |
 | `spectacular requests` | List requests; filter with `--status`, `--active`, `--since`; `--json` for agents (v1.8.0+) |
 | `spectacular request <slug>` | Skim view of one request (frontmatter + outline + milestone progress); `--full` for raw (v1.8.0+) |
@@ -231,6 +242,38 @@ spectacular feedback-loop archive <slug>      # move to .spectacular/archive/fee
 spectacular idea new <slug>                   # scaffold idea entry (status: parked); --hypothesis, --origin, --priority
 spectacular idea list                         # list ideas; --status parked|exploring|promoted|all
 spectacular idea promote <slug>               # scaffold request from idea + move source to archive/ideas/
+
+spectacular id resolve d1                     # DEC-001; aliases are input-only
+spectacular id resolve 3 --context question   # QUE-003; naked numbers need context
+spectacular id migrate --dry-run              # preview legacy filename/reference changes
+spectacular id migrate --apply --yes          # archive originals, then migrate explicitly
+
+spectacular question new tenant-isolation --question "Shared schema or database per tenant?"
+spectacular question list --status open
+spectacular question resolve q1 --answer "Use schema-per-tenant"
+spectacular research new auth-options --summary "Compare supported authentication paths"
+spectacular research resolve r1 --outcome "OIDC is the supported path" --evidence "vendor docs"
+spectacular spike new pooling --summary "Validate pool behavior under load"
+spectacular spike resolve spk1 --outcome "Feasible at the target concurrency" --evidence "benchmark run"
+
+spectacular spec new user-onboarding --summary "Guide a new user to first success" --target-version v1.0.0-discovery
+spectacular spec confirm s1 --evidence "Product review complete" --target-version v1.0.0-execution
+spectacular spec act s1                       # scaffold a request with source_spec: SPC-001
+
+spectacular wayfind status                    # unresolved fog + dependency-ready frontier
+spectacular wayfind order                     # strict prerequisite-before-dependent order
+spectacular wayfind next                      # priority first, then question/spike/research/spec uncertainty
+spectacular wayfind resolve q1 --answer "Use schema-per-tenant"
+spectacular wayfind defer q1 --reason "Not relevant to this milestone"
+spectacular wayfind resume q1
+spectacular wayfind route "park this idea" cache-index --hypothesis "Cache it"
+spectacular wayfind route "act on goal" s1    # still enforces current-spec gate
+
+spectacular afk status                        # read-only policy + repository state
+spectacular afk propose spike spk1 --host-prefix codex/
+spectacular afk start spike spk1 --apply --yes
+spectacular afk cleanup codex/spike/prototype-spk-001 --disposition abandoned --outcome "failed" --evidence "SPK-001"  # dry-run
+spectacular afk pr onboarding-work --version v1.0.0 --name "User Onboarding" --tests-passed  # dry-run; never merges
 
 spectacular summary                           # one-page workspace overview (v1.8.0+)
 spectacular requests --active                 # list active requests (table + --json)

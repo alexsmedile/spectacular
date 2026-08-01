@@ -15,7 +15,7 @@ assert_exit()   { [[ "$1" -eq "$2" ]] && pass || fail "$3: exit $1 want $2"; }
 assert_output_contains(){ echo "$1" | grep -qF -- "$2" && pass || fail "output should contain: $2"; }
 
 scenario_decide() {
-  echo "Scenario decide: decide exits 0, writes D<N>-<slug>.md, index.md, and summary counts correctly"
+  echo "Scenario decide: decide exits 0, writes DEC-NNN-<slug>.md, index.md, and summary counts correctly"
   local dir="/tmp/spectacular-decide-okf"
   rm -rf "$dir"; mkdir -p "$dir/.spectacular"
   printf 'project:\n  name: okf\n' > "$dir/.spectacular/config.yaml"
@@ -26,8 +26,9 @@ scenario_decide() {
 
   (cd "$dir" && "$CLI" decide "Second decision" --consequences "enable y" >/dev/null 2>&1)
 
-  # Check that D1/D2 slug-prefixed files are written
-  [[ -f "$dir/.spectacular/decisions/D1-first-decision.md" && -f "$dir/.spectacular/decisions/D2-second-decision.md" ]] && pass || fail "D1/D2 files written"
+  # Check canonical files and index IDs.
+  [[ -f "$dir/.spectacular/decisions/DEC-001-first-decision.md" && -f "$dir/.spectacular/decisions/DEC-002-second-decision.md" ]] && pass || fail "DEC-001/DEC-002 files written"
+  grep -qF -- "**DEC-001**" "$dir/.spectacular/decisions/index.md" && pass || fail "canonical DEC ID indexed"
 
   # Check that index.md is created
   [[ -f "$dir/.spectacular/decisions/index.md" ]] && pass || fail "decisions/index.md written"

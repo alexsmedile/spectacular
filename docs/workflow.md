@@ -4,7 +4,7 @@ description: The normal Spectacular loop after installation — init, briefing, 
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-07-12
+updated: 2026-08-01
 ---
 
 # Workflow Guide
@@ -82,7 +82,38 @@ The skill should not dump the whole workspace. It loads context progressively.
 
 ---
 
-## 4. Create a request
+## 4. Clear discovery fog when the path is uncertain
+
+Not every idea should immediately become implementation work. Use typed records to keep exploration explicit:
+
+```text
+idea → questions / research / spikes → decision → unconfirmed spec → confirmed spec → request
+```
+
+- Park out-of-scope inspiration with `spectacular idea new <slug>`.
+- Record a human-owned ambiguity with `spectacular question new <slug>`.
+- Gather sources and evidence with `spectacular research new <slug>`.
+- Validate feasibility with `spectacular spike new <slug>`; execution requires human approval.
+- Inspect unresolved fog and dependency-ready work with `spectacular wayfind status` and `spectacular wayfind next`.
+- Inspect strict dependency order with `spectacular wayfind order`; invalid graphs refuse sequencing until repaired.
+
+Each record receives a stable canonical ID such as `QUE-001` or `RES-001`. Compact aliases such as `q1` and `r1` work as input, while saved cross-references use canonical IDs.
+
+When discovery converges, create an unconfirmed specification, confirm it with the human, then act on it:
+
+```bash
+spectacular spec new team-billing --summary "Bill teams by active seat" --target-version v1.0.0-discovery
+spectacular spec confirm s1 --evidence "Pricing and architecture approved" --target-version v1.0.0-execution
+spectacular spec act s1
+```
+
+Only a `current` specification can seed an implementation request. If an open loop is not relevant now, use `spectacular wayfind defer <id> --reason "..."`; resume it later without losing context.
+
+Wayfinder language maps to the same gates: “park this idea” creates an idea, “put it on ice” defers with a reason, “find your way to…” shows prerequisites, and “act on goal…” still requires a current specification. During implementation, park unexpected discoveries instead of adding them to the active milestone. Run `spectacular doctor wayfinding` to surface inferred dependency gaps and discovery/execution target inversions; findings are proposals, never automatic roadmap edits.
+
+For explicitly authorized AFK work, inspect `spectacular afk status` and propose the branch class before creating it. Draft specs, spikes, forks, and confirmed execution stay isolated. Cleanup is archive-first and dry-run by default; remote deletion and merge remain human actions. A verified handoff may open `[SpecTACular] Executed: <version> - <name>` only after the request, source spec, verification log, and fresh tests satisfy their gates.
+
+## 5. Create a request
 
 When you have work to track, tell the agent:
 
@@ -110,7 +141,7 @@ Move it to `active` when implementation begins. The skill may create `SESSION.md
 
 ---
 
-## 5. Work from the request folder
+## 6. Work from the request folder
 
 During implementation, the request folder is the operational center:
 
@@ -124,7 +155,7 @@ Keep request docs focused on the request. Do not prematurely rewrite `specs/inde
 
 ---
 
-## 6. Use the lifecycle
+## 7. Use the lifecycle
 
 Requests move through this lifecycle:
 
@@ -156,7 +187,7 @@ The skill can propose transitions, but the human should confirm them.
 
 ---
 
-## 7. Update system truth after completion
+## 8. Update system truth after completion
 
 `specs/index.md` (and any per-capability `specs/<capability>.md` files) describe what the system does now. They should be updated after a request changes real behavior.
 
@@ -177,7 +208,7 @@ _snapshots/specs/billing/SPEC/@v1.0.md
 
 ---
 
-## 8. Capture operational memory
+## 9. Capture operational memory
 
 Use memory for lessons the team should not rediscover:
 
@@ -197,7 +228,7 @@ Memory is team-visible and committed to git under `.spectacular/memories/`. Do n
 
 ---
 
-## 9. Archive completed requests
+## 10. Archive completed requests
 
 After a request is verified:
 
@@ -221,9 +252,11 @@ Archiving runs a **closure gate** *(v1.28.0+)*: it blocks on open `TASKS.md` box
 For long-running projects, a useful rhythm is:
 
 1. Run `/spectacular` at the start of a session.
-2. Work from one active request.
-3. Keep `TASKS.md` and `SESSION.md` current.
-4. Verify before changing request state to `verified`.
-5. Archive completed work.
-6. Update `specs/index.md` / `specs/` (via a `SPEC-DELTA.md`) only when behavior has actually changed.
-7. Write memory only for lessons with future value.
+2. Answer surfaced human blockers or defer them deliberately.
+3. Clear high-uncertainty discovery nodes before routine implementation.
+4. Confirm the spec, then act on it to create a request.
+5. Work from one active request and keep `TASKS.md` / `SESSION.md` current.
+6. Verify before changing request state to `verified`.
+7. Archive completed work.
+8. Update `specs/index.md` / `specs/` (via a `SPEC-DELTA.md`) only when behavior has actually changed.
+9. Write memory only for lessons with future value.

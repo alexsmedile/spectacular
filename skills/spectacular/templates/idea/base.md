@@ -1,4 +1,5 @@
 ---
+id: <ID>
 type: idea
 status: parked
 priority: medium
@@ -9,7 +10,7 @@ promoted_to: null
 related: []
 ---
 
-# Idea — <SLUG>
+# <ID> — <SLUG>
 
 ## Hypothesis
 

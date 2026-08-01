@@ -130,6 +130,22 @@ Judgment-only area — no `--fix`. Scans `.spectacular/ideas/*.md`.
 | Required frontmatter present | ⚠️ per entry | `type: idea`, `status`, `updated` all set |
 | Stale exploring | ⚠️ per entry | `status: exploring` with `updated` > 90 days ago |
 | Orphan promoted | ⚠️ per entry | `status: promoted` but file still in `.spectacular/ideas/` (should be in `archive/ideas/`) |
+
+## `wayfinding`
+
+Read-only structural validation for canonical discovery records.
+
+| Check | Severity | Detects |
+|---|---|---|
+| Canonical identity | ⚠️ | IDs or `blocked_by` references outside the canonical prefix/padding contract |
+| Unique identity | ❌ | The same canonical ID appears in multiple records |
+| Dependency resolution | ⚠️ | `blocked_by` points to a missing decision, question, idea, research, spike, prototype, spec, or reserved task |
+| DAG integrity | ❌ | A dependency cycle makes frontier/topological ordering impossible |
+| Topological execution | ❌ at runtime | `wayfind status|next|order|path` refuse dangling or cyclic graphs instead of presenting a false frontier |
+| Inferred dependency gap | ⚠️ | Strong dependency language in PRD, roadmap, PLAN, or spec is not represented by explicit frontmatter |
+| Target-version inversion | ⚠️ | A dependent node targets an earlier SemVer/discovery-execution phase than its prerequisite |
+
+No `--fix`: choosing an edge or changing a target encodes intent. Doctor proposes remediation and never silently reslots.
 | Unknown status | ⚠️ per entry | `status` not one of `parked\|exploring\|promoted` |
 
 No `--fix` because every finding requires a human decision (promote? demote? delete? move?). See [[idea-rules]] for the full mode spec.

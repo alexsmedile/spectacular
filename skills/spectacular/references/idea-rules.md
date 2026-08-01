@@ -12,7 +12,7 @@ status: active
 
 # Idea Rules
 
-Soft-folder database of captured ideas. There is **no top-level `IDEAS.md` index file** — folder listing is the canonical view. Each idea is a self-contained markdown file.
+Soft-folder database of captured ideas. There is **no top-level `IDEAS.md` index file** — folder listing is the canonical view. Each idea is a self-contained markdown file named `IDEA-NNN-<slug>.md`; users normally refer to it as `I<N>`. Legacy unnumbered files remain readable until migrated. See [[canonical-ids]].
 
 **Mode: `index`** (no regenerated index file in v1.7.0). Entry files at `entries-dir`.
 
@@ -35,6 +35,7 @@ Soft-folder database of captured ideas. There is **no top-level `IDEAS.md` index
 ```yaml
 ---
 type: idea
+id: IDEA-NNN
 status: parked | exploring | promoted
 priority: low | medium | high
 owner: <name>

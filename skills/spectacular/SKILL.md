@@ -47,6 +47,18 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular idea new <slug>` | → CLI verb; see [[idea-rules]] for entry shape |
 | `spectacular idea list` | → CLI verb |
 | `spectacular idea promote <slug>` | → CLI verb; scaffolds request, moves source to `archive/ideas/` |
+| `spectacular question new\|list\|resolve` | → CLI verb; active human blockers live in `questions/`; see [[question-rules]] and [[canonical-ids]] |
+| `spectacular research new\|list\|resolve` | → CLI verb; read-only evidence discovery in `research/`; see [[research-rules]] |
+| `spectacular spike new\|list\|resolve` | → CLI verb; human-authorized feasibility discovery in `spikes/`; see [[spike-rules]] |
+| `spectacular spec new\|list\|confirm\|act` | → CLI verb; `unconfirmed → current → request` specification lifecycle; see [[spec-lifecycle]] and [[canonical-ids]] |
+| `spectacular wayfind status\|next\|order\|resolve\|defer\|resume\|path\|route` | → CLI verb; strict dependency-first fog/frontier sequencing and durable open-loop control; see [[wayfinding-sequencer]] |
+| “Park this idea” | → `spectacular wayfind route "park this idea" <slug>`; creates an `IDEA-NNN` record and does not alter active milestone scope |
+| “Put it on ice” / “Icebox” | → `spectacular wayfind route icebox <id> --reason <why>`; durable `status: deferred` |
+| “Find your way to <destination>” | → `spectacular wayfind path <id>` first; then resolve its dependency-ready discovery path without bypassing gates |
+| “Act on goal <target>” | → `spectacular wayfind route "act on goal" <SPC alias>`; delegates to `spec act`, which requires `status: current` |
+| `spectacular afk status\|configure\|propose\|preflight\|start\|cleanup\|pr` | → CLI verbs; opt-in, dry-run-first Git isolation and verified PR handoff; see [[afk-git-hygiene]] |
+| User authorizes AFK work | → inspect `spectacular afk status`; branch mutation still requires enabled project config plus explicit apply; merge/remote deletion remain HITL |
+| A user refers to `D1`, `Q1`, `R1`, `SPK1`, `S1`, or another entity alias | → normalize via `spectacular id resolve`; persist the canonical ID; see [[canonical-ids]] |
 | A bug/quirk/regression is reported (any "why does X do Y", "this is broken") | → **`references/bug-workflow.md`** — load before diagnosing; routes the debug fleet + the ceremony/fan-out gates. (Rationale: `bug-workflow-doctrine.md`, only if a routing call is uncertain.) |
 | `spectacular audit new\|list\|resolve` | → CLI verb; bug investigation before a fix. `resolve --into-fix` graduates to a fix (copies all slots). See [[audit-rules]], [[bug-workflow]] |
 | `spectacular fix new\|list` | → CLI verb; log a **verified, signed** fix. See [[fixes-rules]], [[bug-workflow]] |
@@ -109,7 +121,7 @@ Always prefer these over walking the filesystem or hand-reading multiple PLAN/TA
 
 ### Where does this belong? — soft-DB routing
 
-Deciding *which store* a piece of knowledge goes in (fact? decision? fix? idea?) → **`references/soft-db-index.md`**, the canonical index of the seven collections (`memory` · `decisions` · `sessions` · `ideas` · `feedback` · `audit` · `fixes`). Load it whenever the routing isn't obvious.
+Deciding *which store* a piece of knowledge goes in (fact? decision? question? research? spike? fix? idea?) → **`references/soft-db-index.md`**, the canonical collection index. Load it whenever the routing isn't obvious.
 
 ### Feedback-loop mode (v1.6.0+)
 
@@ -191,6 +203,7 @@ Never read `archive/` during normal operation.
 - **Slugs** are kebab-case, skill-derived, user-overridable, uniqueness enforced.
 - **Memory** (`spectacular remember this`) writes to `.spectacular/memories/` — git-committed, team-visible. Never to `.claude/` memory.
 - Be proactive: surface stale state, propose lifecycle transitions, flag blocked requests.
+- **Execution boundary:** when implementation reveals an unexpected requirement, tangent, or optimization, park it as an idea (or future target) instead of adding it to the active request's PLAN/TASKS. See [[wayfinding-sequencer]].
 - **Know when to write to a collection, not just how** — the "When to act" trigger table in [[soft-db-index]]. Cheap/reversible writes on their natural trigger; permanent/team-visible writes (memory, decisions, archive) are proposed → human confirms → written, never autonomous.
 
 ### Task tracking — two layers

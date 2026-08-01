@@ -1,6 +1,6 @@
 ---
-version: 1.16
-updated: 2026-07-12
+version: 1.19
+updated: 2026-08-01
 summary: "What Spectacular actually is and does as of v1.35.0 — capabilities index"
 related:
   - ../PRD.md
@@ -16,6 +16,8 @@ Spectacular is an AI-native operational workspace for software projects. It ship
 
 ## Capabilities
 
+- **Wayfinding contract + sequencer (v1.36.0+)** — typed Markdown collections distinguish parked ideas (`IDEA`), user-owned questions (`QUE`), sourced research (`RES`), feasibility spikes (`SPK`/`PRT`), verified decisions (`DEC`), and feature specifications (`SPC`). Canonical dependencies produce strict topological order, fog, and a priority-then-uncertainty-ranked frontier; dangling/cyclic graphs refuse sequencing. Specs move `unconfirmed → current → deprecated`, and only current specs may seed requests. Discovery/execution targets use SemVer prerelease labels while dependencies remain primary. CLI support includes `id resolve|migrate`, collection mutators, `spec new|confirm|act`, `wayfind status|next|order|resolve|defer|resume|path|route`, metaphor routing, and advisory cross-layer dependency/version analysis. See [[SPC-001-wayfinding]], [[canonical-ids]], [[spec-lifecycle]], and [[wayfinding-sequencer]].
+- **AFK Git hygiene (v1.36.0+)** — opt-in, dry-run-first branch isolation for draft specs (`spec/draft-*`), spikes (`spike/prototype-*`), forks (`fork/idea-*`), and confirmed execution (`feat/v*-*`), composed with a host-required prefix. Clean-tree and primary-branch preflights protect playground work; branch provenance is durable; cleanup archives outcome/evidence before confirmed local deletion and refuses remote deletion. Verified PR handoff requires a current source spec, passing verification evidence, fresh tests, and separate breaking-change approval, and stops before merge. CLI: `afk status|configure|propose|preflight|start|cleanup|pr`. See [[afk-git-hygiene]].
 - **CLI bootstrap** — `spectacular init` scaffolds the always-set (PRD, SPEC, config, agents-file, requests/, specs/), installs the skill into `.agents/skills/spectacular/`, symlinks `.claude/skills/spectacular/`, and writes a version-pinned `skills.lock`. Idempotent — re-running fills empty stubs without overwriting content.
 - **Smart-init kits** — five kits (`blank`, `coding`, `content`, `product`, `research`) declare which extra docs (`PRINCIPLES`, `ARCHITECTURE`, `ROADMAP`, `STACK`, `DECISIONS`) to scaffold via `triggers-docs`. Additive `--with <docs>` extends the kit; `--minimal` ignores kit defaults. See [[kits-contract]].
 - **Doc-writing engine** *(v1.4.0+)* — one registry-driven engine (`grill`/`refine`/`review`) operates every registered canonical doc; per-doc behavior is data in `references/<doc-id>-rules.md`, agentic verbs are skill-only, mechanical verbs run in CLI. See [[specs/doc-engine]].

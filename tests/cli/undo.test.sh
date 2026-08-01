@@ -76,14 +76,14 @@ scenario_3_undo_idea_promote() {
   seed "$dir"
   (cd "$dir" && "$CLI" idea new myidea >/dev/null 2>&1)
   (cd "$dir" && "$CLI" idea promote myidea >/dev/null 2>&1)
-  assert_file_absent "$dir/.spectacular/ideas/myidea.md"
-  assert_file_exists "$dir/.spectacular/archive/ideas/myidea.md"
+  assert_file_absent "$dir/.spectacular/ideas/IDEA-001-myidea.md"
+  assert_file_exists "$dir/.spectacular/archive/ideas/IDEA-001-myidea.md"
   assert_dir_exists "$dir/.spectacular/requests/myidea"
   # undo, answer N to the removal prompt (no /dev/tty in CI → defaults to n)
   (cd "$dir" && echo "n" | "$CLI" undo >/dev/null 2>&1)
-  assert_file_exists "$dir/.spectacular/ideas/myidea.md"
-  assert_file_contains "$dir/.spectacular/ideas/myidea.md" "status: parked"
-  assert_file_lacks "$dir/.spectacular/ideas/myidea.md" "promoted_to:"
+  assert_file_exists "$dir/.spectacular/ideas/IDEA-001-myidea.md"
+  assert_file_contains "$dir/.spectacular/ideas/IDEA-001-myidea.md" "status: parked"
+  assert_file_lacks "$dir/.spectacular/ideas/IDEA-001-myidea.md" "promoted_to:"
   assert_dir_exists "$dir/.spectacular/requests/myidea"   # left in place (default)
   rm -rf "$dir"
 }

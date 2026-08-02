@@ -1,5 +1,5 @@
 ---
-version: 3.20
+version: 3.21
 updated: 2026-08-02
 summary: "Per-version scope, phase, and exit criteria. The b32–b39 Wayfinding, lifecycle, retention, and request-interface foundation is implemented and verified; remaining unslotted work stays tbd."
 related:
@@ -32,7 +32,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b8 | visual-layer | Visual layer | full | v1.15.0 | shipped |
 | b9 | decisions-index | Decisions index mode | full | v1.17.0 | shipped |
 | b10 | skill-desc-length-check | Skill description length guard | themed | v1.23.3 | shipped |
-| b11 | spec-audit-mode | Spec frontmatter schema check (pivoted from semantic audit) | themed | tbd | active |
+| b11 | spec-audit-mode | Spec frontmatter schema check (pivoted from semantic audit) | themed | tbd | shipped |
 | b15 | naming-coherence | Naming coherence (advance/feedback/pack/next) | themed | v1.19.0 | shipped |
 | b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | shipped |
 | b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | shipped |
@@ -60,6 +60,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b37 | discovery-evidence-protocol | Progressive routing for research, spikes, prototypes, tracer bullets, artifacts, and technical debt | themed | tbd | shipped |
 | b38 | artifact-retention-contract | Live, stale-safe, temporary, and throwaway artifact retention | themed | tbd | shipped |
 | b39 | request-workflow-interface | Approved-spec request handoff, compiled implementation context, command grammar, and verification evidence gate | full | tbd | shipped |
+| b40 | github-native-lifecycle | GitHub-friendly collaboration projections and PR-centered request completion | full | tbd | candidate |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = mutable when work is slotted; `status` = release-level `candidate · planned · active · shipped · cancelled` (distinct from request lifecycle). `candidate` means likely upcoming but not yet scoped or committed. See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

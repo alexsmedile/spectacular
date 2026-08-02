@@ -1,5 +1,5 @@
 ---
-version: 1.25
+version: 1.26
 updated: 2026-08-02
 summary: "What Spectacular actually is and does as of v1.35.0 — capabilities index"
 related:
@@ -50,6 +50,10 @@ Spectacular is an AI-native operational workspace for software projects. It ship
 - **Memory** — `spectacular remember this` writes operational lessons to `.spectacular/memories/`. Git-committed, team-visible. Never to `.claude/` personal memory.
 - **Versioning** — canonical docs (root layer + `SPEC.md` + `specs/<capability>/SPEC.md` + `config.yaml`) never overwritten in place. Snapshot as `<FILE>@vN.md` before edit; unversioned filename always points to current.
 - **Distribution** — published as both Claude Code plugin marketplace (`alexsmedile/spectacular`) and Codex plugin marketplace. CLI installed via curl-one-liner (`cli/install.sh`).
+
+## Deferred design
+
+- **GitHub-native lifecycle (SPC-003, draft)** — preserve Spectacular as the primary lifecycle authority while designing deliberate GitHub projections: requests conclude through pull requests, bugs may project to Issues, local questions remain blockers, comments may inform without mutating state, and Discussions may host public ideas or roadmap conversation. Issue-import triage, route-by-meaning, synchronization, authorization, and other GitHub features remain intentionally unresolved pending a future grill. See [[SPC-003-github-native-lifecycle]].
 
 ## How to extend this file
 

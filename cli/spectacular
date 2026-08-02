@@ -27,6 +27,34 @@ TODAY="$(date +%Y-%m-%d)"
 # the chain (v0.4 → v0.5 → v0.6 → ...). See requests/workspace-migrations/PLAN.md.
 CURRENT_SCHEMA="2.0"
 
+# Canonical workspace paths. Keep these fixed for now: this registry removes
+# duplicated path construction without introducing configurable layout
+# behavior (custom workspace roots remain a separately designed v2 concern).
+SPEC_WORKSPACE_DIR=".spectacular"
+SPEC_ARCHIVE_DIR="$SPEC_WORKSPACE_DIR/archive"
+SPEC_REQUESTS_DIR="$SPEC_WORKSPACE_DIR/requests"
+SPEC_SPECS_DIR="$SPEC_WORKSPACE_DIR/specs"
+SPEC_ROADMAPS_DIR="$SPEC_WORKSPACE_DIR/roadmaps"
+SPEC_DECISIONS_DIR="$SPEC_WORKSPACE_DIR/decisions"
+SPEC_MEMORIES_DIR="$SPEC_WORKSPACE_DIR/memories"
+SPEC_SESSIONS_DIR="$SPEC_WORKSPACE_DIR/sessions"
+SPEC_QUESTIONS_DIR="$SPEC_WORKSPACE_DIR/questions"
+SPEC_IDEAS_DIR="$SPEC_WORKSPACE_DIR/ideas"
+SPEC_RESEARCH_DIR="$SPEC_WORKSPACE_DIR/research"
+SPEC_SPIKES_DIR="$SPEC_WORKSPACE_DIR/spikes"
+SPEC_FINDINGS_DIR="$SPEC_WORKSPACE_DIR/findings"
+SPEC_FIXES_DIR="$SPEC_WORKSPACE_DIR/fixes"
+SPEC_BUGS_DIR="$SPEC_WORKSPACE_DIR/bugs"
+SPEC_SECURITY_DIR="$SPEC_WORKSPACE_DIR/security"
+SPEC_BENCHMARKS_DIR="$SPEC_WORKSPACE_DIR/benchmarks"
+SPEC_AUDITS_DIR="$SPEC_WORKSPACE_DIR/audits"
+SPEC_DEBUGS_DIR="$SPEC_WORKSPACE_DIR/debugs"
+SPEC_FEEDBACKS_DIR="$SPEC_WORKSPACE_DIR/feedbacks"
+SPEC_AFK_DIR="$SPEC_WORKSPACE_DIR/afk"
+SPEC_SNAPSHOTS_DIR="$SPEC_WORKSPACE_DIR/_snapshots"
+SPEC_TRASH_DIR="$SPEC_WORKSPACE_DIR/.trash"
+SPEC_CONFIG_FILE="$SPEC_WORKSPACE_DIR/config.yaml"
+
 # ── defaults ─────────────────────────────────────────────────────────────────
 OPT_NAME=""
 OPT_SUMMARY=""
@@ -660,17 +688,17 @@ update_skill() {
 
 doc_dirs() {
   # Report creation only when the dir genuinely didn't exist before
-  if [[ ! -d ".spectacular/specs" ]]; then
-    mkdir -p .spectacular/specs
-    touch .spectacular/specs/.gitkeep
-    created ".spectacular/specs/"
+  if [[ ! -d "$SPEC_SPECS_DIR" ]]; then
+    mkdir -p "$SPEC_SPECS_DIR"
+    touch "$SPEC_SPECS_DIR/.gitkeep"
+    created "$SPEC_SPECS_DIR/"
   fi
-  [[ -d ".spectacular/requests" ]] || { mkdir -p .spectacular/requests; created ".spectacular/requests/"; }
+  [[ -d "$SPEC_REQUESTS_DIR" ]] || { mkdir -p "$SPEC_REQUESTS_DIR"; created "$SPEC_REQUESTS_DIR/"; }
 }
 
 doc_config() {
   local name="$1" summary="$2" agents_file="$3" kit_id="$4"
-  write_if_missing ".spectacular/config.yaml" "project:
+  write_if_missing "$SPEC_WORKSPACE_DIR/config.yaml" "project:
   name: ${name}
   summary: \"${summary}\"
   kit: ${kit_id}
@@ -834,12 +862,12 @@ _fm_unset_block() {
 # Single-level only: each lifecycle mutator overwrites .spectacular/.last-mutation
 # with key=value lines describing how to reverse the last op. Gitignored — session
 # ephemera, not team state. undo reads it, reverses, then clears it. See [[lifecycle-undo]].
-_BREADCRUMB=".spectacular/.last-mutation"
+_BREADCRUMB="$SPEC_WORKSPACE_DIR/.last-mutation"
 
 # _breadcrumb_write op slug [k=v ...]  — overwrites the breadcrumb. Always stamps ts (epoch).
 _breadcrumb_write() {
   local op="$1" slug="$2"; shift 2
-  [[ -d ".spectacular" ]] || return 0
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
   {
     echo "op=$op"
     echo "slug=$slug"
@@ -967,7 +995,7 @@ _summary_from_text() {
 # Return the slug of the currently-open session, or empty if none.
 # Scans .spectacular/sessions/*.md for status: open.
 _active_session_slug() {
-  local sessions_dir=".spectacular/sessions"
+  local sessions_dir="$SPEC_SESSIONS_DIR"
   [[ -d "$sessions_dir" ]] || return 0
   local file status
   for file in "$sessions_dir"/*.md; do
@@ -985,7 +1013,7 @@ _active_session_slug() {
 #        e.g. "memory/entry.md" → /path/to/templates/memory/entry.md
 _resolve_template() {
   local rel="$1"
-  local project_override=".spectacular/templates/$rel"
+  local project_override="$SPEC_WORKSPACE_DIR/templates/$rel"
   if [[ -f "$project_override" ]]; then
     echo "$project_override"; return 0
   fi
@@ -1032,8 +1060,8 @@ _render_template() {
 # Regenerate MEMORY.md index from .spectacular/memory/*.md entries.
 # Newest first by date in frontmatter.
 _regen_memory_index() {
-  local index=".spectacular/memories/index.md"
-  local entries_dir=".spectacular/memories"
+  local index="$SPEC_MEMORIES_DIR/index.md"
+  local entries_dir="$SPEC_MEMORIES_DIR"
   [[ -d "$entries_dir" ]] || return 0
 
   {
@@ -1071,8 +1099,8 @@ EOF
 # Regenerate SESSIONS.md index from .spectacular/sessions/*.md entries.
 # Newest first by start_date. Status column shows open|closed.
 _regen_sessions_index() {
-  local index=".spectacular/sessions/index.md"
-  local entries_dir=".spectacular/sessions"
+  local index="$SPEC_SESSIONS_DIR/index.md"
+  local entries_dir="$SPEC_SESSIONS_DIR"
   [[ -d "$entries_dir" ]] || return 0
 
   {
@@ -1108,7 +1136,7 @@ EOF
 }
 
 _regen_decisions_index() {
-  local dir=".spectacular/decisions" index rows file base id n title rationale tags tmp
+  local dir="$SPEC_DECISIONS_DIR" index rows file base id n title rationale tags tmp
   index="$dir/index.md"
   [[ -d "$dir" ]] || return 0
   rows=$(mktemp)
@@ -1197,10 +1225,10 @@ EOF
   done
 
   [[ -z "$text" ]] && die "remember: <text> argument required. See: spectacular remember --help"
-  [[ -d ".spectacular" ]] || die "remember: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "remember: not inside a Spectacular workspace"
 
   local base_slug slug entry_dir entry_path summary tags_yaml session old_memory=""
-  entry_dir=".spectacular/memories"
+  entry_dir="$SPEC_MEMORIES_DIR"
   mkdir -p "$entry_dir"
   if [[ -n "$supersedes" ]]; then
     old_memory=$(_memory_find "$supersedes") || die "remember: superseded memory '$supersedes' not found"
@@ -1339,15 +1367,15 @@ EOF
     done
     IFS="$old_ifs"
   fi
-  [[ -d ".spectacular" ]] || die "decide: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "decide: not inside a Spectacular workspace"
 
   local title session decision_slug old_decision=""
   title=$(_summary_from_text "$text")
   decision_slug=$(_slug_from_text "$text")
   session=$(_active_session_slug)
 
-  local decisions=".spectacular/decisions/index.md"
-  local decisions_dir=".spectacular/decisions"
+  local decisions="$SPEC_DECISIONS_DIR/index.md"
+  local decisions_dir="$SPEC_DECISIONS_DIR"
 
   # Enforce index mode under OKF: bootstrap decisions/ directory if absent
   mkdir -p "$decisions_dir"
@@ -1485,7 +1513,7 @@ _canonical_pad() {
 
 _collection_slug_exists() {
   local collection="$1" slug="$2" f base dir
-  for dir in ".spectacular/$collection" ".spectacular/archive/$collection"; do
+  for dir in "$SPEC_WORKSPACE_DIR/$collection" "$SPEC_ARCHIVE_DIR/$collection"; do
     [[ -d "$dir" ]] || continue
     for f in "$dir"/*.md; do
       [[ -f "$f" ]] || continue
@@ -1526,7 +1554,7 @@ _canonical_resolve() {
 
 _next_canonical_id() {
   local collection="$1" prefix="$2" next=1 f base digits n dir
-  for dir in ".spectacular/$collection" ".spectacular/archive/$collection"; do
+  for dir in "$SPEC_WORKSPACE_DIR/$collection" "$SPEC_ARCHIVE_DIR/$collection"; do
     [[ -d "$dir" ]] || continue
     for f in "$dir"/*.md; do
       [[ -f "$f" ]] || continue
@@ -1636,44 +1664,44 @@ EOF
       *) die "id migrate: unknown option '$1'" ;;
     esac
   done
-  [[ -d .spectacular ]] || die "id migrate: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "id migrate: not inside a Spectacular workspace"
   $apply && ! $yes && die "id migrate: --apply requires --yes after reviewing the dry-run"
 
   local tmp map f base suffix num id old new next_idea=1 next_spec=1
   tmp=$(mktemp -d); map="$tmp/mapping.tsv"; : > "$map"
 
   # Seed sequential allocators from already-canonical files.
-  for f in .spectacular/ideas/IDEA-[0-9]*.md; do
+  for f in "$SPEC_IDEAS_DIR"/IDEA-[0-9]*.md; do
     [[ -f "$f" ]] || continue; base=$(basename "$f"); num="${base#IDEA-}"; num="${num%%-*}"
     [[ "$num" =~ ^[0-9]+$ ]] && (( 10#$num >= next_idea )) && next_idea=$((10#$num + 1))
   done
-  for f in .spectacular/specs/SPC-[0-9]*.md; do
+  for f in "$SPEC_SPECS_DIR"/SPC-[0-9]*.md; do
     [[ -f "$f" ]] || continue; base=$(basename "$f"); num="${base#SPC-}"; num="${num%%-*}"
     [[ "$num" =~ ^[0-9]+$ ]] && (( 10#$num >= next_spec )) && next_spec=$((10#$num + 1))
   done
 
   # Decisions retain their historical number.
-  for f in .spectacular/decisions/D[0-9]*.md; do
+  for f in "$SPEC_DECISIONS_DIR"/D[0-9]*.md; do
     [[ -f "$f" ]] || continue
     base=$(basename "$f" .md)
     [[ "$base" =~ ^D([0-9]+)(-(.*))?$ ]] || continue
     num=$((10#${BASH_REMATCH[1]})); suffix="${BASH_REMATCH[3]:-decision-$num}"
-    id="DEC-$(_canonical_pad "$num")"; old="${f#.spectacular/}"; new="decisions/$id-$suffix.md"
-    [[ ! -e ".spectacular/$new" ]] || die "id migrate: target exists: .spectacular/$new"
+    id="DEC-$(_canonical_pad "$num")"; old="${f#"$SPEC_WORKSPACE_DIR"/}"; new="decisions/$id-$suffix.md"
+    [[ ! -e "$SPEC_WORKSPACE_DIR/$new" ]] || die "id migrate: target exists: .spectacular/$new"
     printf '%s|%s|%s|decision|verified\n' "$old" "$new" "$id" >> "$map"
   done
 
   # Legacy ideas get deterministic IDs in filename sort order.
-  for f in .spectacular/ideas/*.md; do
+  for f in "$SPEC_IDEAS_DIR"/*.md; do
     [[ -f "$f" ]] || continue; base=$(basename "$f" .md)
     [[ "$base" == index || "$base" == IDEA-[0-9]* ]] && continue
     id="IDEA-$(_canonical_pad "$next_idea")"; next_idea=$((next_idea + 1))
-    old="${f#.spectacular/}"; new="ideas/$id-$base.md"
+    old="${f#"$SPEC_WORKSPACE_DIR"/}"; new="ideas/$id-$base.md"
     printf '%s|%s|%s|idea|%s\n' "$old" "$new" "$id" "$(fm_get "$f" status)" >> "$map"
   done
 
   # Legacy capability specs become canonical SPC files; old statuses map forward.
-  for f in .spectacular/specs/*.md; do
+  for f in "$SPEC_SPECS_DIR"/*.md; do
     [[ -f "$f" ]] || continue; base=$(basename "$f" .md)
     [[ "$base" == index || "$base" == SPC-[0-9]* ]] && continue
     id="SPC-$(_canonical_pad "$next_spec")"; next_spec=$((next_spec + 1))
@@ -1686,7 +1714,7 @@ EOF
       deprecated) new_status=deprecated ;;
       *) new_status="$legacy_status" ;;
     esac
-    old="${f#.spectacular/}"; new="specs/$id-$base.md"
+    old="${f#"$SPEC_WORKSPACE_DIR"/}"; new="specs/$id-$base.md"
     printf '%s|%s|%s|specification|%s\n' "$old" "$new" "$id" "$new_status" >> "$map"
   done
 
@@ -1705,16 +1733,16 @@ EOF
 
   local stamp archive_root archived type status mf old_base new_base
   stamp=$(date +%Y%m%d-%H%M%S)
-  archive_root=".spectacular/archive/id-migrations/$stamp"
+  archive_root="$SPEC_ARCHIVE_DIR/id-migrations/$stamp"
   mkdir -p "$archive_root"
   cp "$map" "$archive_root/mapping.tsv"
 
   while IFS='|' read -r old new id type status; do
     archived="$archive_root/$old"
-    mkdir -p "$(dirname "$archived")" "$(dirname ".spectacular/$new")"
-    cp ".spectacular/$old" "$archived"
-    mv ".spectacular/$old" ".spectacular/$new"
-    _id_migration_add_frontmatter ".spectacular/$new" "$id" "$type" "$status"
+    mkdir -p "$(dirname "$archived")" "$(dirname "$SPEC_WORKSPACE_DIR/$new")"
+    cp "$SPEC_WORKSPACE_DIR/$old" "$archived"
+    mv "$SPEC_WORKSPACE_DIR/$old" "$SPEC_WORKSPACE_DIR/$new"
+    _id_migration_add_frontmatter "$SPEC_WORKSPACE_DIR/$new" "$id" "$type" "$status"
   done < "$map"
 
   # Rewrite path references outside snapshots and the migration archive.
@@ -1727,7 +1755,7 @@ EOF
         sed -i.bak "s|\*\*D${num}\*\*|**$id**|g" "$mf"
       fi
       rm -f "$mf.bak"
-    done < <(find .spectacular -type f -name '*.md' ! -path '.spectacular/_snapshots/*' ! -path '.spectacular/archive/id-migrations/*')
+    done < <(find "$SPEC_WORKSPACE_DIR" -type f -name '*.md' ! -path "$SPEC_WORKSPACE_DIR/_snapshots/*" ! -path "$SPEC_ARCHIVE_DIR/id-migrations/*")
   done < "$map"
 
   info "  ✓  migrated $count file(s)"
@@ -1745,7 +1773,7 @@ cmd_collections() {
   local mappings="idea:ideas question:questions spike:spikes decision:decisions spec:specs memory:memories session:sessions feedback:feedbacks audit:audits fix:fixes debug:debugs"
   local pair old new src dest item changes=0 conflicts=""
   for pair in $mappings; do
-    old=${pair%%:*}; new=${pair#*:}; src=".spectacular/$old"; dest=".spectacular/$new"
+    old=${pair%%:*}; new=${pair#*:}; src="$SPEC_WORKSPACE_DIR/$old"; dest="$SPEC_WORKSPACE_DIR/$new"
     [[ -d "$src" ]] || continue
     for item in "$src"/*; do
       [[ -e "$item" ]] || continue
@@ -1758,10 +1786,10 @@ cmd_collections() {
   [[ -z "$conflicts" ]] || die "collections migrate: destination collision(s): $conflicts; resolve explicitly before migration"
   if ! $apply; then info "Dry-run only. Apply with: spectacular collections migrate --apply --yes"; return 0; fi
   local stamp archive_root
-  stamp=$(date +%Y%m%d-%H%M%S); archive_root=".spectacular/archive/collection-migrations/$stamp"
+  stamp=$(date +%Y%m%d-%H%M%S); archive_root="$SPEC_ARCHIVE_DIR/collection-migrations/$stamp"
   mkdir -p "$archive_root"
   for pair in $mappings; do
-    old=${pair%%:*}; new=${pair#*:}; src=".spectacular/$old"; dest=".spectacular/$new"
+    old=${pair%%:*}; new=${pair#*:}; src="$SPEC_WORKSPACE_DIR/$old"; dest="$SPEC_WORKSPACE_DIR/$new"
     [[ -d "$src" ]] || continue
     cp -R "$src" "$archive_root/$old"
     mkdir -p "$dest"
@@ -1788,7 +1816,7 @@ cmd_lifecycle_migrate() {
     status=$(fm_get "$f" status)
     [[ -z "$status" ]] && printf '%s\tstatus\tmissing\tactive\n' "$f" >> "$map"
   done < <(_iter_md memories)
-  for f in .spectacular/research/*.md .spectacular/spikes/*.md; do
+  for f in "$SPEC_RESEARCH_DIR"/*.md "$SPEC_SPIKES_DIR"/*.md; do
     [[ -f "$f" ]] || continue
     if [[ "$(fm_get "$f" status)" == verified ]]; then
       info "  manual: $f verified → completed requires supported|refuted|inconclusive + evidence review"
@@ -1804,10 +1832,10 @@ cmd_lifecycle_migrate() {
   while IFS=$'\t' read -r f _field status new; do info "  $f: $status → $new"; done < "$map"
   if ! $apply; then info "Dry-run only. Apply with: spectacular lifecycle migrate --apply --yes"; rm -rf "$tmp"; return 0; fi
   local stamp archive_root rel
-  stamp=$(date +%Y%m%d-%H%M%S); archive_root=".spectacular/archive/lifecycle-migrations/$stamp"; mkdir -p "$archive_root"
+  stamp=$(date +%Y%m%d-%H%M%S); archive_root="$SPEC_ARCHIVE_DIR/lifecycle-migrations/$stamp"; mkdir -p "$archive_root"
   cp "$map" "$archive_root/mapping.tsv"
   while IFS=$'\t' read -r f _field status new; do
-    rel=${f#.spectacular/}; mkdir -p "$archive_root/$(dirname "$rel")"; cp "$f" "$archive_root/$rel"
+    rel=${f#"$SPEC_WORKSPACE_DIR"/}; mkdir -p "$archive_root/$(dirname "$rel")"; cp "$f" "$archive_root/$rel"
     fm_set "$f" status "$new"; fm_touch "$f"
   done < "$map"
   info "  ✓ migrated $count record(s); originals + mapping archived at $archive_root"
@@ -1818,7 +1846,7 @@ cmd_lifecycle_migrate() {
 _question_find() {
   local ref="$1" canonical f dir
   canonical=$(_canonical_resolve "$ref" question)
-  for dir in .spectacular/questions .spectacular/question; do
+  for dir in "$SPEC_QUESTIONS_DIR" "$SPEC_WORKSPACE_DIR/question"; do
     for f in "$dir"/"$canonical"-*.md "$dir"/"$canonical".md; do
       [[ -f "$f" ]] && { echo "$f"; return 0; }
     done
@@ -1862,10 +1890,10 @@ cmd_question_new() {
   done
   [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || die "question new: slug must be kebab-case"
   case "$priority" in low|medium|high) ;; *) die "question new: priority must be low|medium|high" ;; esac
-  [[ -d .spectacular ]] || die "question new: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "question new: not inside a Spectacular workspace"
   _require_unique_collection_slug questions "$slug" "question new"
 
-  local dir=".spectacular/questions" id path blocked_yaml="blocked_by: []" item canonical
+  local dir="$SPEC_QUESTIONS_DIR" id path blocked_yaml="blocked_by: []" item canonical
   mkdir -p "$dir"
   id=$(_next_canonical_id questions QUE)
   path="$dir/$id-$slug.md"
@@ -1926,15 +1954,15 @@ cmd_question_list() {
   printf '%-10s  %-10s  %-8s  %-10s  %s\n' "ID" "STATUS" "PRIORITY" "UPDATED" "QUESTION"
   printf '%-10s  %-10s  %-8s  %-10s  %s\n' "--" "------" "--------" "-------" "--------"
   case "$filter" in active|open|deferred|archived|resolved|all) ;; *) die "question list: --status must be active|open|deferred|archived|resolved|all" ;; esac
-  for dir in .spectacular/questions .spectacular/archive/questions; do
+  for dir in "$SPEC_QUESTIONS_DIR" "$SPEC_ARCHIVE_DIR/questions"; do
     [[ -d "$dir" ]] || continue
-    [[ "$dir" == .spectacular/archive/questions && "$filter" != archived && "$filter" != resolved && "$filter" != all ]] && continue
+    [[ "$dir" == "$SPEC_ARCHIVE_DIR/questions" && "$filter" != archived && "$filter" != resolved && "$filter" != all ]] && continue
     for f in "$dir"/*.md; do
       [[ -f "$f" ]] || continue
       id=$(fm_get "$f" id); stored_status=$(fm_get "$f" status); priority=$(fm_get "$f" priority); updated=$(fm_get "$f" updated)
       status="$stored_status"
-      [[ "$dir" == .spectacular/archive/questions ]] && status=archived
-      if [[ "$dir" == .spectacular/questions ]]; then
+      [[ "$dir" == "$SPEC_ARCHIVE_DIR/questions" ]] && status=archived
+      if [[ "$dir" == "$SPEC_QUESTIONS_DIR" ]]; then
         [[ "$filter" == active || "$filter" == all || "$filter" == "$stored_status" ]] || continue
       else
         [[ "$filter" == archived || "$filter" == resolved || "$filter" == all ]] || continue
@@ -1973,9 +2001,9 @@ cmd_question_resolve() {
   fm_set "$path" archived_from resolved
   fm_set "$path" status archived
   fm_set "$path" archived_at "$TODAY"
-  destination=".spectacular/archive/questions/$(basename "$path")"
+  destination="$SPEC_ARCHIVE_DIR/questions/$(basename "$path")"
   [[ ! -e "$destination" ]] || die "question resolve: archive target exists: $destination"
-  mkdir -p .spectacular/archive/questions
+  mkdir -p "$SPEC_ARCHIVE_DIR/questions"
   mv "$path" "$destination"
   info "  ✓  ${id} resolved and archived"
   info "  ↳ $destination"
@@ -1985,7 +2013,7 @@ _discovery_find() {
   local collection="$1" context="$2" ref="$3" canonical f dir legacy=""
   canonical=$(_canonical_resolve "$ref" "$context")
   [[ "$collection" == spikes ]] && legacy=spike
-  for dir in ".spectacular/$collection" ${legacy:+".spectacular/$legacy"}; do
+  for dir in "$SPEC_WORKSPACE_DIR/$collection" ${legacy:+"$SPEC_WORKSPACE_DIR/$legacy"}; do
     for f in "$dir"/"$canonical"-*.md "$dir"/"$canonical".md; do
       [[ -f "$f" ]] && { echo "$f"; return 0; }
     done
@@ -2027,9 +2055,9 @@ _discovery_new() {
     esac
   done
   [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || die "$kind new: slug must be kebab-case"
-  [[ -d .spectacular ]] || die "$kind new: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "$kind new: not inside a Spectacular workspace"
   _require_unique_collection_slug "$collection" "$slug" "$kind new"
-  local dir=".spectacular/$collection" id path blocked_yaml="blocked_by: []" item canonical human_gate=false
+  local dir="$SPEC_WORKSPACE_DIR/$collection" id path blocked_yaml="blocked_by: []" item canonical human_gate=false
   [[ "$kind" == spike ]] && human_gate=true
   mkdir -p "$dir"
   id=$(_next_canonical_id "$collection" "$prefix")
@@ -2139,12 +2167,12 @@ _discovery_resolve() {
 
 _spec_find() {
   local ref="$1" canonical f path compact dir
-  path=".spectacular/specs/$ref.md"
+  path="$SPEC_SPECS_DIR/$ref.md"
   [[ -f "$path" ]] && { echo "$path"; return 0; }
   compact=$(printf '%s' "$ref" | tr -d ' _-' | tr '[:lower:]' '[:upper:]')
   if [[ "$compact" =~ ^(S|SPC|SPEC)([0-9]+)$ ]] || [[ "$compact" =~ ^[0-9]+$ ]]; then
     canonical=$(_canonical_resolve "$ref" spec)
-    for dir in .spectacular/specs .spectacular/spec .spectacular/archive/specs; do
+    for dir in "$SPEC_SPECS_DIR" "$SPEC_WORKSPACE_DIR/spec" "$SPEC_ARCHIVE_DIR/specs"; do
       for f in "$dir"/"$canonical"-*.md "$dir"/"$canonical".md; do
         [[ -f "$f" ]] && { echo "$f"; return 0; }
       done
@@ -2206,9 +2234,9 @@ cmd_spec_new() {
     [[ "$old_status" == implemented || ( "$old_status" == archived && ( "$old_archived_from" == implemented || "$old_archived_from" == superseded ) ) ]] || \
       die "spec new: $supersedes must be an implemented live/archive predecessor"
   fi
-  mkdir -p .spectacular/specs
+  mkdir -p "$SPEC_SPECS_DIR"
   id=$(_next_canonical_id specs SPC)
-  path=".spectacular/specs/$id-$slug.md"
+  path="$SPEC_SPECS_DIR/$id-$slug.md"
   [[ ! -e "$path" ]] || die "spec new: target exists: $path"
   cat > "$path" <<EOF
 ---
@@ -2346,7 +2374,7 @@ cmd_docs_impact() {
       *) die "docs-impact: unknown option '$1'" ;;
     esac
   done
-  local plan=".spectacular/requests/$slug/PLAN.md"
+  local plan="$SPEC_REQUESTS_DIR/$slug/PLAN.md"
   [[ -f "$plan" ]] || die "docs-impact: request '$slug' not found"
   case "$mode" in
     none) [[ -n "$reason" ]] || die "docs-impact: --none requires --reason" ;;
@@ -2374,7 +2402,7 @@ cmd_spec_implement() {
   path=$(_spec_find "$ref") || die "spec implement: '$ref' not found"
   id=$(fm_get "$path" id); status=$(fm_get "$path" status)
   [[ "$status" == approved ]] || die "spec implement: $id is '$status', expected approved"
-  for plan in .spectacular/requests/*/PLAN.md .spectacular/archive/*/PLAN.md; do
+  for plan in "$SPEC_REQUESTS_DIR"/*/PLAN.md "$SPEC_ARCHIVE_DIR"/*/PLAN.md; do
     [[ -f "$plan" ]] || continue
     [[ "$(fm_get "$plan" source_spec)" == "$id" ]] || continue
     linked=$((linked + 1))
@@ -2429,12 +2457,12 @@ cmd_spec_archive() {
     *) die "spec archive: $id is '$status'; expected draft, unconfirmed, approved, implemented, superseded, or deprecated" ;;
   esac
   [[ "$status" != implemented || -n "$(fm_get "$path" verified_against)" ]] || die "spec archive: implemented $id lacks verified_against evidence"
-  destination=".spectacular/archive/specs/$(basename "$path")"
+  destination="$SPEC_ARCHIVE_DIR/specs/$(basename "$path")"
   info "Archive plan: $path → $destination (reason: $reason)"
   $apply || { info "Dry-run only. Apply with --apply --yes"; return 0; }
   $yes || die "spec archive: --apply requires --yes"
   cmd_snapshot "$path" >/dev/null; fm_set "$path" archived_from "$status"; fm_set "$path" status archived; fm_set "$path" archived_at "$TODAY"; fm_set "$path" archive_reason "$reason"; fm_touch "$path"
-  mkdir -p .spectacular/archive/specs; mv "$path" "$destination"
+  mkdir -p "$SPEC_ARCHIVE_DIR/specs"; mv "$path" "$destination"
   info "  ✓ archived $id; explicit historical lookup: $destination"
 }
 
@@ -2463,10 +2491,10 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "decisions migrate: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "decisions migrate: not inside a Spectacular workspace"
 
-  local decisions=".spectacular/DECISIONS.md"
-  local decisions_dir=".spectacular/decisions"
+  local decisions="$SPEC_WORKSPACE_DIR/DECISIONS.md"
+  local decisions_dir="$SPEC_DECISIONS_DIR"
 
   # Idempotent: already migrated
   if [[ -d "$decisions_dir" ]]; then
@@ -2621,7 +2649,7 @@ cmd_session_start() {
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "session start: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "session start: not inside a Spectacular workspace"
 
   local existing
   existing=$(_active_session_slug)
@@ -2634,7 +2662,7 @@ cmd_session_start() {
   base_slug="${TODAY}-${first_tag:-work}"
   # Sanitize the tag part
   base_slug=$(echo "$base_slug" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/-+/-/g; s/-$//')
-  entry_dir=".spectacular/sessions"
+  entry_dir="$SPEC_SESSIONS_DIR"
   mkdir -p "$entry_dir"
   slug=$(_resolve_slug_collision "$entry_dir" "$base_slug" "md")
   entry_path="$entry_dir/$slug.md"
@@ -2670,7 +2698,7 @@ cmd_session_start() {
   _regen_sessions_index
   info "  ✓  SESSIONS.md regenerated"
   info "  → session open: $slug"
-  if [[ -d .spectacular/questions ]]; then
+  if [[ -d "$SPEC_QUESTIONS_DIR" ]]; then
     info ""
     cmd_wayfind status --blockers-only
   fi
@@ -2685,25 +2713,25 @@ cmd_session_end() {
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "session end: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "session end: not inside a Spectacular workspace"
 
   local slug entry_path
   slug=$(_active_session_slug)
   [[ -z "$slug" ]] && die "session end: no open session found"
-  entry_path=".spectacular/sessions/$slug.md"
+  entry_path="$SPEC_SESSIONS_DIR/$slug.md"
 
   # Count linked decisions: scan flat DECISIONS.md for matching session reference
   # (v1.5.0 — flat decisions; folder shape lands in v1.6.x)
   local decisions_count=0
-  if [[ -f ".spectacular/DECISIONS.md" ]]; then
-    decisions_count=$(grep -c "\[\[sessions/$slug\]\]" .spectacular/DECISIONS.md || true)
+  if [[ -f "$SPEC_WORKSPACE_DIR/DECISIONS.md" ]]; then
+    decisions_count=$(grep -c "\[\[sessions/$slug\]\]" "$SPEC_WORKSPACE_DIR/DECISIONS.md" || true)
   fi
 
   # Count linked memories: scan memories/*.md frontmatter for session: $slug
   local memories_count=0
   local mfile msession
-  if [[ -d ".spectacular/memories" ]]; then
-    for mfile in .spectacular/memories/*.md; do
+  if [[ -d "$SPEC_MEMORIES_DIR" ]]; then
+    for mfile in "$SPEC_MEMORIES_DIR"/*.md; do
       [[ -f "$mfile" ]] || continue
       msession=$(fm_get "$mfile" "session")
       [[ "$msession" == "$slug" ]] && memories_count=$((memories_count + 1))
@@ -2746,7 +2774,7 @@ cmd_session_end() {
         }
         index($0, "[[sessions/" slug "]]") { matched = 1 }
         END { if (matched && title != "") print "- " title }
-      ' .spectacular/DECISIONS.md
+      ' "$SPEC_WORKSPACE_DIR/DECISIONS.md"
     else
       echo "_(none)_"
     fi
@@ -2754,7 +2782,7 @@ cmd_session_end() {
     echo "## Linked memories"
     echo ""
     if [[ $memories_count -gt 0 ]]; then
-      for mfile in .spectacular/memories/*.md; do
+      for mfile in "$SPEC_MEMORIES_DIR"/*.md; do
         [[ -f "$mfile" ]] || continue
         msession=$(fm_get "$mfile" "session")
         [[ "$msession" == "$slug" ]] || continue
@@ -2768,7 +2796,7 @@ cmd_session_end() {
   _regen_sessions_index
   info "  ✓  session closed: $slug (${decisions_count} decisions, ${memories_count} memories)"
   local pending_docs=0 plan
-  for plan in .spectacular/requests/*/PLAN.md; do
+  for plan in "$SPEC_REQUESTS_DIR"/*/PLAN.md; do
     [[ -f "$plan" ]] || continue
     case "$(fm_get "$plan" status)" in active|review) ;; *) continue ;; esac
     _request_docs_impact_closed "$plan" || pending_docs=$((pending_docs + 1))
@@ -2787,21 +2815,21 @@ is_canonical_doc() {
   dir="${dir#./}"
 
   # Legacy and OKF root docs
-  if [[ "$dir" == ".spectacular" ]]; then
+  if [[ "$dir" == "$SPEC_WORKSPACE_DIR" ]]; then
     case "$base" in
       PRD.md|ARCHITECTURE.md|PRINCIPLES.md|STACK.md|AGENTS.md|DESIGN.md|POLICY.md|config.yaml|PERSONAS.md|SPEC.md|ROADMAP.md|DECISIONS.md|MEMORY.md|SESSIONS.md)
         return 0
         ;;
       *) return 1 ;;
     esac
-  elif [[ "$dir" == ".spectacular/specs" ]] || [[ "$dir" == ".spectacular/roadmaps" ]] || [[ "$dir" == ".spectacular/decisions" ]] || [[ "$dir" == ".spectacular/memories" ]] || [[ "$dir" == ".spectacular/sessions" ]]; then
+  elif [[ "$dir" == "$SPEC_SPECS_DIR" ]] || [[ "$dir" == "$SPEC_ROADMAPS_DIR" ]] || [[ "$dir" == "$SPEC_DECISIONS_DIR" ]] || [[ "$dir" == "$SPEC_MEMORIES_DIR" ]] || [[ "$dir" == "$SPEC_SESSIONS_DIR" ]]; then
     return 0
-  elif [[ "$dir" == ".spectacular/specs/"* ]]; then
+  elif [[ "$dir" == "$SPEC_SPECS_DIR/"* ]]; then
     # Legacy capability subfolders (e.g. specs/auth/SPEC.md)
     if [[ "$base" == "SPEC.md" ]]; then
       return 0
     fi
-  elif [[ "$dir" == ".spectacular/roadmap" ]] || [[ "$dir" == ".spectacular/memory" ]] || [[ "$dir" == ".spectacular/session" ]]; then
+  elif [[ "$dir" == "$SPEC_WORKSPACE_DIR/roadmap" ]] || [[ "$dir" == "$SPEC_WORKSPACE_DIR/memory" ]] || [[ "$dir" == "$SPEC_WORKSPACE_DIR/session" ]]; then
     # Legacy folders
     return 0
   fi
@@ -2817,10 +2845,10 @@ diagnose_path_error() {
   local clean_file="${file%/}"
 
   # 1. Prefix missing check
-  if [[ -f ".spectacular/$clean_file" ]]; then
-    local suggested=".spectacular/$clean_file"
+  if [[ -f "$SPEC_WORKSPACE_DIR/$clean_file" ]]; then
+    local suggested="$SPEC_WORKSPACE_DIR/$clean_file"
     if [[ "$verb" == "snapshot" ]] && ! is_canonical_doc "$suggested"; then
-      if [[ "$suggested" == .spectacular/requests/*/PLAN.md ]]; then
+      if [[ "$suggested" == "$SPEC_REQUESTS_DIR"/*/PLAN.md ]]; then
         echo "not-eligible-request"
         echo "$suggested"
       else
@@ -2848,15 +2876,15 @@ diagnose_path_error() {
   elif [[ "$clean_file" =~ $p4 ]] || [[ "$clean_file" =~ $p5 ]]; then
     slug="${BASH_REMATCH[1]}"
   elif [[ "$clean_file" =~ $p6 ]]; then
-    if [[ -d ".spectacular/requests/$clean_file" ]] || [[ -d "requests/$clean_file" ]]; then
+    if [[ -d "$SPEC_REQUESTS_DIR/$clean_file" ]] || [[ -d "requests/$clean_file" ]]; then
       slug="$clean_file"
     fi
   fi
 
   if [[ -n "$slug" ]]; then
     local plan_candidate=""
-    if [[ -f ".spectacular/requests/$slug/PLAN.md" ]]; then
-      plan_candidate=".spectacular/requests/$slug/PLAN.md"
+    if [[ -f "$SPEC_REQUESTS_DIR/$slug/PLAN.md" ]]; then
+      plan_candidate="$SPEC_REQUESTS_DIR/$slug/PLAN.md"
     elif [[ -f "requests/$slug/PLAN.md" ]]; then
       plan_candidate="requests/$slug/PLAN.md"
     fi
@@ -2881,7 +2909,7 @@ diagnose_path_error() {
 # Stdout: declared schema (e.g. "0.6"); defaults to "0.4" if field absent
 # (that's the schema before the first registered migration).
 config_workspace_schema() {
-  local cfg=".spectacular/config.yaml"
+  local cfg="$SPEC_WORKSPACE_DIR/config.yaml"
   [[ -f "$cfg" ]] || { echo "0.4"; return 0; }
   local schema
   schema=$(awk -F: '
@@ -2909,7 +2937,7 @@ config_workspace_schema() {
 # an indented `  <key>: <value>` line under a top-level `snapshots:` key.
 config_snapshots_field() {
   local key="$1"
-  local cfg=".spectacular/config.yaml"
+  local cfg="$SPEC_WORKSPACE_DIR/config.yaml"
   [[ -f "$cfg" ]] || return 0
   awk -v key="$key" '
     /^[^[:space:]#]/ { inblock = ($0 ~ /^snapshots:/) ? 1 : 0 }
@@ -2990,30 +3018,30 @@ EOF
 _feedback_dir() {
   local request="${1:-}"
   if [[ -n "$request" ]]; then
-    echo ".spectacular/requests/$request/feedbacks"
+    echo "$SPEC_REQUESTS_DIR/$request/feedbacks"
   else
-    echo ".spectacular/feedbacks"
+    echo "$SPEC_WORKSPACE_DIR/feedbacks"
   fi
 }
 
 # Walk all feedback locations and emit one path per line
 _feedback_iter_all() {
   local f root
-  for root in .spectacular/feedbacks .spectacular/feedback; do
+  for root in "$SPEC_FEEDBACKS_DIR" "$SPEC_WORKSPACE_DIR/feedback"; do
     [[ -d "$root" ]] || continue
     for f in "$root"/*.md; do
       [[ -f "$f" ]] && echo "$f"
     done
   done
-  if [[ -d ".spectacular/requests" ]]; then
+  if [[ -d "$SPEC_REQUESTS_DIR" ]]; then
     local d
-    for d in .spectacular/requests/*/feedbacks; do
+    for d in "$SPEC_REQUESTS_DIR"/*/feedbacks; do
       [[ -d "$d" ]] || continue
       for f in "$d"/*.md; do
         [[ -f "$f" ]] && echo "$f"
       done
     done
-    for d in .spectacular/requests/*/feedback; do
+    for d in "$SPEC_REQUESTS_DIR"/*/feedback; do
       [[ -d "$d" ]] || continue
       for f in "$d"/*.md; do [[ -f "$f" ]] && echo "$f"; done
     done
@@ -3062,10 +3090,10 @@ EOF
   done
 
   [[ -z "$target" ]] && die "feedback-loop new: <target> argument required"
-  [[ -d ".spectacular" ]] || die "feedback-loop new: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "feedback-loop new: not inside a Spectacular workspace"
 
   if [[ -n "$request" ]]; then
-    [[ -d ".spectacular/requests/$request" ]] || die "feedback-loop new: request '$request' not found"
+    [[ -d "$SPEC_REQUESTS_DIR/$request" ]] || die "feedback-loop new: request '$request' not found"
   fi
 
   local valid_scopes="skill substrate convention doc-type request"
@@ -3135,7 +3163,7 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "feedback-loop list: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "feedback-loop list: not inside a Spectacular workspace"
 
   # Slug carries the date prefix; we drop the DATE column to avoid duplication.
   # Slugs over 32 chars truncate to 29 + "..." to keep columns aligned.
@@ -3205,7 +3233,7 @@ EOF
   [[ -z "$next_action" ]] && die "feedback-loop resolve: --next-action required (ship-as-is | new-request:<slug> | park | memory:<entry>)
 Resolving without an explicit decision leaves next_action: tbd — that's a smell.
 Use 'feedback-loop list' to inspect, or set --next-action park to defer."
-  [[ -d ".spectacular" ]] || die "feedback-loop resolve: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "feedback-loop resolve: not inside a Spectacular workspace"
 
   local entry_path
   entry_path=$(_feedback_find "$slug") || die "feedback-loop resolve: feedback entry '$slug' not found"
@@ -3252,14 +3280,14 @@ EOF
   done
 
   [[ -z "$slug" ]] && die "feedback-loop archive: <slug> argument required"
-  [[ -d ".spectacular" ]] || die "feedback-loop archive: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "feedback-loop archive: not inside a Spectacular workspace"
 
   local src
   src=$(_feedback_find "$slug") || die "feedback-loop archive: feedback entry '$slug' not found"
 
   local year archive_dir target
   year=$(date +%Y)
-  archive_dir=".spectacular/archive/feedbacks/$year"
+  archive_dir="$SPEC_ARCHIVE_DIR/feedbacks/$year"
   mkdir -p "$archive_dir"
   target="$archive_dir/$(basename "$src")"
 
@@ -3327,7 +3355,7 @@ _iter_md() {
     debug|debugs) legacy="debug"; name="debugs" ;;
   esac
   local dir f
-  for dir in ".spectacular/$name" ${legacy:+".spectacular/$legacy"}; do
+  for dir in "$SPEC_WORKSPACE_DIR/$name" ${legacy:+"$SPEC_WORKSPACE_DIR/$legacy"}; do
     [[ -d "$dir" ]] || continue
     for f in "$dir"/*.md; do
       [[ -f "$f" ]] || continue
@@ -3340,16 +3368,16 @@ _iter_md() {
 # Find an idea by slug. Echoes path or empty.
 _idea_find() {
   local slug="$1" f path compact canonical
-  path=".spectacular/ideas/$slug.md"
+  path="$SPEC_IDEAS_DIR/$slug.md"
   [[ -f "$path" ]] && { echo "$path"; return 0; }
   compact=$(printf '%s' "$slug" | tr -d ' _-' | tr '[:lower:]' '[:upper:]')
   if [[ "$compact" =~ ^(I|IDE|IDEA)([0-9]+)$ ]] || [[ "$compact" =~ ^[0-9]+$ ]]; then
     canonical=$(_canonical_resolve "$slug" idea)
-    for f in .spectacular/ideas/"$canonical"-*.md .spectacular/ideas/"$canonical".md; do
+    for f in "$SPEC_IDEAS_DIR"/"$canonical"-*.md "$SPEC_IDEAS_DIR"/"$canonical".md; do
       [[ -f "$f" ]] && { echo "$f"; return 0; }
     done
   fi
-  for f in .spectacular/ideas/IDEA-[0-9]*-"$slug".md; do
+  for f in "$SPEC_IDEAS_DIR"/IDEA-[0-9]*-"$slug".md; do
     [[ -f "$f" ]] && { echo "$f"; return 0; }
   done
   return 1
@@ -3382,7 +3410,7 @@ EOF
   done
 
   [[ -z "$slug" ]] && die "idea new: <slug> argument required"
-  [[ -d ".spectacular" ]] || die "idea new: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "idea new: not inside a Spectacular workspace"
 
   # Validate slug shape (same as cmd_new)
   if [[ ! "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]]; then
@@ -3394,7 +3422,7 @@ EOF
     *) die "idea new: invalid --priority '$priority'. Must be: low | medium | high" ;;
   esac
 
-  local entries_dir=".spectacular/ideas"
+  local entries_dir="$SPEC_IDEAS_DIR"
   mkdir -p "$entries_dir"
   _require_unique_collection_slug ideas "$slug" "idea new"
 
@@ -3405,13 +3433,13 @@ EOF
 
   # Also refuse if already in archive (don't shadow promoted ideas)
   local archived_match
-  for archived_match in .spectacular/archive/ideas/IDEA-[0-9]*-"$slug".md .spectacular/archive/ideas/"$slug".md; do
+  for archived_match in "$SPEC_ARCHIVE_DIR"/ideas/IDEA-[0-9]*-"$slug".md "$SPEC_ARCHIVE_DIR"/ideas/"$slug".md; do
     [[ -f "$archived_match" ]] && die "idea new: '$slug' exists in archive ($archived_match). Pick a different slug."
   done
 
   local owner=""
-  if [[ -f ".spectacular/config.yaml" ]]; then
-    owner=$(awk '/^  owner:/ { sub(/^  owner:[[:space:]]*/, ""); print; exit }' .spectacular/config.yaml)
+  if [[ -f "$SPEC_WORKSPACE_DIR/config.yaml" ]]; then
+    owner=$(awk '/^  owner:/ { sub(/^  owner:[[:space:]]*/, ""); print; exit }' "$SPEC_CONFIG_FILE")
   fi
   [[ -z "$owner" ]] && owner="$(whoami 2>/dev/null || echo unknown)"
 
@@ -3469,7 +3497,7 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "idea list: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "idea list: not inside a Spectacular workspace"
 
   local count=0 f status updated priority slug slug_display
   printf "%-32s  %-10s  %-8s  %-10s  %s\n" "SLUG" "STATUS" "PRIORITY" "UPDATED" "ORIGIN"
@@ -3537,7 +3565,7 @@ EOF
   done
 
   [[ -z "$slug" ]] && die "idea promote: <slug> argument required"
-  [[ -d ".spectacular" ]] || die "idea promote: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "idea promote: not inside a Spectacular workspace"
 
   local idea_path idea_file idea_slug
   idea_path=$(_idea_find "$slug") || die "idea promote: idea '$slug' not found in .spectacular/ideas/"
@@ -3552,7 +3580,7 @@ EOF
   [[ -z "$request_slug" ]] && request_slug="$idea_slug"
 
   # Refuse if request slug already taken
-  if [[ -d ".spectacular/requests/$request_slug" ]] || [[ -d ".spectacular/archive/$request_slug" ]]; then
+  if [[ -d "$SPEC_REQUESTS_DIR/$request_slug" ]] || [[ -d "$SPEC_ARCHIVE_DIR/$request_slug" ]]; then
     die "idea promote: request slug '$request_slug' already exists. Use --request-slug <other>."
   fi
 
@@ -3569,7 +3597,7 @@ EOF
   cmd_new "${new_args[@]}" "$request_slug" || die "idea promote: 'spectacular new $request_slug' failed"
 
   # Append a promotion note to the new PLAN.md
-  local new_plan=".spectacular/requests/$request_slug/PLAN.md"
+  local new_plan="$SPEC_REQUESTS_DIR/$request_slug/PLAN.md"
   if [[ -f "$new_plan" ]]; then
     # Add a note section just below the title
     cat >> "$new_plan" <<EOF
@@ -3586,7 +3614,7 @@ EOF
   fm_set "$idea_path" "promoted_to" "requests/$request_slug/"
   fm_set "$idea_path" "updated" "$TODAY"
 
-  local archive_dir=".spectacular/archive/ideas"
+  local archive_dir="$SPEC_ARCHIVE_DIR/ideas"
   mkdir -p "$archive_dir"
   local archived_path="$archive_dir/$idea_file"
   if [[ -e "$archived_path" ]]; then
@@ -3599,7 +3627,7 @@ EOF
   # place on undo unless the user confirms removal (per decision D9).
   _breadcrumb_write "idea-promote" "$idea_slug" "request_slug=$request_slug" "idea_prev_status=$idea_prev_status" "idea_file=$idea_file"
 
-  created ".spectacular/requests/$request_slug/"
+  created "$SPEC_REQUESTS_DIR/$request_slug/"
   info "  → idea archived: $archived_path"
   info "  → status: promoted"
   info "  ↳ next: cd into the request and flesh out PLAN slots"
@@ -3672,10 +3700,10 @@ cmd_audit_new() {
     esac
   done
   [[ -z "$title" ]] && die "audit new: <title> argument required (quote it)"
-  [[ -d ".spectacular" ]] || die "audit new: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "audit new: not inside a Spectacular workspace"
   _validate_severity "$severity" "audit new"
 
-  local dir=".spectacular/audits"
+  local dir="$SPEC_AUDITS_DIR"
   mkdir -p "$dir"
   local num="$(_next_entry_num "$dir" A)"
   local id="A${num}"
@@ -3706,7 +3734,7 @@ cmd_audit_list() {
       *) die "Unknown flag for audit list: $1" ;;
     esac
   done
-  [[ -d ".spectacular" ]] || die "audit list: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "audit list: not inside a Spectacular workspace"
 
   local count=0 f status severity updated id disposition
   printf "%-6s  %-9s  %-8s  %-10s  %s\n" "ID" "STATUS" "SEVERITY" "UPDATED" "DISPOSITION"
@@ -3742,9 +3770,9 @@ cmd_audit_resolve() {
   done
   [[ -z "$id" ]] && die "audit resolve: <A<N>> argument required"
   [[ -z "$disposition" ]] && die "audit resolve: --disposition \"<text>\" required"
-  [[ -d ".spectacular" ]] || die "audit resolve: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "audit resolve: not inside a Spectacular workspace"
 
-  local dir=".spectacular/audits"
+  local dir="$SPEC_AUDITS_DIR"
   local entry_path="$dir/$id.md"
   if [[ ! -f "$entry_path" ]]; then
     local matches=()
@@ -3814,7 +3842,7 @@ _section_body() {
 # Default: writes the file, echoes the new id.
 # If f_dry=true: writes nothing, echoes the rendered content (for --dry-run).
 _fix_scaffold() {
-  local dir=".spectacular/fixes"
+  local dir="$SPEC_FIXES_DIR"
   local id="F$(_next_entry_num "$dir" F)"
   local verified_date="null"
   [[ -n "${f_verified_by:-}" ]] && verified_date="$TODAY"
@@ -3892,12 +3920,12 @@ cmd_fix_new() {
   done
   [[ -z "$f_title" ]] && die "fix new: <title> argument required (quote it)"
   [[ -n "$f_verified_by" ]] || die "fix new: --verified-by is required; incomplete work belongs in audits/ or a request"
-  [[ -d ".spectacular" ]] || die "fix new: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "fix new: not inside a Spectacular workspace"
   _validate_severity "$f_severity" "fix new"
   if [[ -n "$f_from_audit" ]]; then
     local audit_found=false
     local match
-    for match in ".spectacular/audits/${f_from_audit}"*.md; do
+    for match in "$SPEC_AUDITS_DIR/${f_from_audit}"*.md; do
       [[ -f "$match" ]] && audit_found=true && break
     done
     if ! $audit_found; then
@@ -3906,7 +3934,7 @@ cmd_fix_new() {
   fi
   if $dry_run; then
     local fslug; fslug=$(_slug_from_text "$f_title")
-    echo "── would write .spectacular/fixes/F$(_next_entry_num .spectacular/fixes F)-${fslug}.md ──"
+    echo "── would write .spectacular/fixes/F$(_next_entry_num "$SPEC_FIXES_DIR" F)-${fslug}.md ──"
     local f_dry=true; _fix_scaffold || die "fix new: could not render fixes template"
     return 0
   fi
@@ -3914,7 +3942,7 @@ cmd_fix_new() {
   local id fslug entry_path
   id=$(_fix_scaffold) || die "fix new: could not render fixes template"
   fslug=$(_slug_from_text "${f_title:-untitled}")
-  entry_path=".spectacular/fixes/${id}-${fslug}.md"
+  entry_path="$SPEC_FIXES_DIR/${id}-${fslug}.md"
   created "$entry_path"
   if [[ -n "$f_verified_by" ]]; then info "  → verified: $TODAY · by: $f_verified_by"; else info "  → verified: null (unverified)"; fi
   [[ -n "$f_from_audit" ]] && info "  ↳ linked to audit: $f_from_audit"
@@ -3930,7 +3958,7 @@ cmd_fix_list() {
       *) die "Unknown flag for fix list: $1" ;;
     esac
   done
-  [[ -d ".spectacular" ]] || die "fix list: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "fix list: not inside a Spectacular workspace"
 
   local count=0 f verified severity id from_audit
   printf "%-6s  %-12s  %-8s  %-10s  %s\n" "ID" "VERIFIED" "SEVERITY" "FROM" "TITLE"
@@ -4040,9 +4068,9 @@ EOF
   done
 
   [[ -z "$slug" ]] && die "imagine: <slug> argument required"
-  [[ -d ".spectacular" ]] || die "imagine: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "imagine: not inside a Spectacular workspace"
 
-  local req_dir=".spectacular/requests/$slug"
+  local req_dir="$SPEC_REQUESTS_DIR/$slug"
   [[ -d "$req_dir" ]] || die "imagine: request '$slug' not found at $req_dir. Create it first with 'spectacular new $slug'."
 
   local vdir="$req_dir/vision"
@@ -4128,7 +4156,7 @@ EOF
 
   [[ -z "$kind" ]] && die "vision add: <kind> required (story | ui | arch)"
   [[ -z "$name" ]] && die "vision add: <name> required"
-  [[ -d ".spectacular" ]] || die "vision add: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "vision add: not inside a Spectacular workspace"
 
   local subdir tmpl_name
   case "$kind" in
@@ -4147,7 +4175,7 @@ EOF
     die "vision add: --slug <request-slug> required."
   fi
 
-  local vdir=".spectacular/requests/$slug/vision"
+  local vdir="$SPEC_REQUESTS_DIR/$slug/vision"
   [[ -d "$vdir" ]] || die "vision add: vision/ not found at $vdir. Run 'spectacular imagine $slug' first."
 
   local frag="$vdir/$subdir/$name.md"
@@ -4224,8 +4252,8 @@ _json_escape() {
 # Iterate over all request directories. Emits one path per request (PLAN.md).
 _request_iter_all() {
   local d
-  [[ -d ".spectacular/requests" ]] || return 0
-  for d in .spectacular/requests/*/; do
+  [[ -d "$SPEC_REQUESTS_DIR" ]] || return 0
+  for d in "$SPEC_REQUESTS_DIR"/*/; do
     [[ -d "$d" ]] || continue
     [[ -f "$d/PLAN.md" ]] && echo "$d/PLAN.md"
   done
@@ -4266,7 +4294,7 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "requests: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "requests: not inside a Spectacular workspace"
   [[ "$limit" =~ ^[0-9]+$ ]] || die "requests: --limit must be a positive integer"
   (( limit > 0 )) || die "requests: --limit must be > 0"
 
@@ -4367,7 +4395,7 @@ EOF
     *) die "next takes no arguments (got '$1')" ;;
   esac
 
-  [[ -d ".spectacular" ]] || die "next: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "next: not inside a Spectacular workspace"
 
   # Pick the best request per state: lowest priority-weight, tie-break newest.
   local best_active="" best_active_w=9 best_active_upd=""
@@ -4439,8 +4467,8 @@ _fm_list() {
 _wayfind_iter() {
   local collection f
   for collection in questions research spikes specs; do
-    [[ -d ".spectacular/$collection" ]] || continue
-    for f in ".spectacular/$collection"/*.md; do
+    [[ -d "$SPEC_WORKSPACE_DIR/$collection" ]] || continue
+    for f in "$SPEC_WORKSPACE_DIR/$collection"/*.md; do
       [[ -f "$f" ]] || continue
       [[ "$(basename "$f")" == index.md ]] && continue
       [[ -n "$(fm_get "$f" id)" ]] && echo "$f"
@@ -4512,14 +4540,14 @@ _wayfind_find_id() {
   prefix="${id%%-*}"
   case "$prefix" in
     DEC) dir=decisions ;;
-    QUE) dir=questions; archive_dir=.spectacular/archive/questions ;;
+    QUE) dir=questions; archive_dir="$SPEC_ARCHIVE_DIR/questions" ;;
     IDEA) dir=ideas ;;
     RES) dir=research ;;
     SPK) dir=spikes ;;
-    SPC) dir=specs; archive_dir=.spectacular/archive/specs ;;
+    SPC) dir=specs; archive_dir="$SPEC_ARCHIVE_DIR/specs" ;;
     *) return 1 ;;
   esac
-  for f in ".spectacular/$dir/$id"-*.md ".spectacular/$dir/$id".md; do
+  for f in "$SPEC_WORKSPACE_DIR/$dir/$id"-*.md "$SPEC_WORKSPACE_DIR/$dir/$id".md; do
     [[ -f "$f" ]] && { echo "$f"; return 0; }
   done
   if [[ -n "$archive_dir" ]]; then
@@ -4529,7 +4557,7 @@ _wayfind_find_id() {
   fi
   if [[ "$prefix" == DEC ]]; then
     n=$((10#${id#DEC-}))
-    for f in .spectacular/decisions/D"$n"-*.md .spectacular/decisions/D"$n".md; do
+    for f in "$SPEC_DECISIONS_DIR"/D"$n"-*.md "$SPEC_DECISIONS_DIR"/D"$n".md; do
       [[ -f "$f" ]] && { echo "$f"; return 0; }
     done
   fi
@@ -4539,7 +4567,7 @@ _wayfind_find_id() {
 _wayfind_satisfied() {
   local file="$1" status type result archived_from
   status=$(fm_get "$file" status); type=$(fm_get "$file" type)
-  [[ -z "$status" && "$file" == .spectacular/decisions/* ]] && return 0
+  [[ -z "$status" && "$file" == "$SPEC_DECISIONS_DIR"/* ]] && return 0
   if [[ "$status" == completed ]]; then
     result=$(fm_get "$file" result)
     [[ "$result" == supported || "$result" == refuted ]] && return 0
@@ -4756,14 +4784,14 @@ cmd_wayfind_hold() {
 # ── AFK Git hygiene ─────────────────────────────────────────────────────────
 _afk_config_get() {
   local field="$1"
-  [[ -f .spectacular/config.yaml ]] || return 0
+  [[ -f "$SPEC_CONFIG_FILE" ]] || return 0
   awk -v fld="$field" '
     /^afk_git:/ { on=1; next }
     on && /^[^[:space:]#]/ { exit }
     on && $0 ~ "^[[:space:]]+" fld ":" {
       sub("^[[:space:]]+" fld ":[[:space:]]*", ""); sub(/[[:space:]]+#.*$/, ""); gsub(/^"|"$/, ""); print; exit
     }
-  ' .spectacular/config.yaml
+  ' "$SPEC_CONFIG_FILE"
 }
 
 _afk_enabled() { [[ "$(_afk_config_get enabled)" == true ]]; }
@@ -4821,7 +4849,7 @@ cmd_afk_status() {
 
 _afk_active_run() {
   local f status
-  for f in .spectacular/afk/runs/*.md; do
+  for f in "$SPEC_AFK_DIR"/runs/*.md; do
     [[ -f "$f" ]] || continue
     status=$(fm_get "$f" status)
     [[ "$status" == active || "$status" == gated ]] && { echo "$f"; return 0; }
@@ -4837,14 +4865,14 @@ cmd_afk_run() {
       while (( $# > 0 )); do case "$1" in --goal) require_value "$1" "${2:-}"; goal="$2"; shift 2 ;; --request) require_value "$1" "${2:-}"; request="$2"; shift 2 ;; --allowed-actions) require_value "$1" "${2:-}"; allowed="$2"; shift 2 ;; --hitl-gates) require_value "$1" "${2:-}"; gates="$2"; shift 2 ;; --apply) apply=true; shift ;; --yes) yes=true; shift ;; -*) die "afk run start: unknown flag '$1'" ;; *) [[ -z "$slug" ]] || die "afk run start: only one slug allowed"; slug="$1"; shift ;; esac; done
       [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ && -n "$goal" ]] || die "Usage: spectacular afk run start <slug> --goal <exact-goal> [--request <slug>] [--allowed-actions <csv>] [--apply --yes]"
       _afk_active_run >/dev/null && die "afk run start: an AFK run is already active or gated; complete/cancel it first"
-      local path=".spectacular/afk/runs/$slug.md"
+      local path="$SPEC_WORKSPACE_DIR/afk/runs/$slug.md"
       [[ ! -e "$path" ]] || die "afk run start: run '$slug' already exists"
       info "AFK run proposal: $slug — $goal"
       info "  allowed_actions: $allowed"
       info "  hitl_gates: $gates"
       $apply || { info "Dry-run only. Apply with --apply --yes"; return 0; }
       $yes || die "afk run start: --apply requires --yes"
-      mkdir -p .spectacular/afk/runs
+      mkdir -p "$SPEC_AFK_DIR/runs"
       printf '%s\n' '---' "id: $slug" 'type: afk-run' 'status: active' "goal: \"$goal\"" "request: \"$request\"" "allowed_actions: \"$allowed\"" "hitl_gates: \"$gates\"" "started_at: $TODAY" "updated: $TODAY" '---' '' "# AFK run — $slug" '' "## Goal" '' "$goal" > "$path"
       created "$path" ;;
     status)
@@ -4897,17 +4925,17 @@ cmd_afk_configure() {
   info "  allow_pr_create: $allow_pr"
   if ! $apply; then info "  dry-run only — apply with --apply --yes"; return 0; fi
   $yes || die "afk configure: --apply requires --yes"
-  [[ -f .spectacular/config.yaml ]] || die "afk configure: .spectacular/config.yaml missing"
-  cmd_snapshot .spectacular/config.yaml >/dev/null
+  [[ -f "$SPEC_CONFIG_FILE" ]] || die "afk configure: .spectacular/config.yaml missing"
+  cmd_snapshot "$SPEC_CONFIG_FILE" >/dev/null
   local tmp; tmp=$(mktemp)
   awk '
     /^afk_git:/ { skip=1; next }
     skip && /^[^[:space:]#]/ { skip=0 }
     !skip { print }
-  ' .spectacular/config.yaml > "$tmp"
-  mv "$tmp" .spectacular/config.yaml
+  ' "$SPEC_CONFIG_FILE" > "$tmp"
+  mv "$tmp" "$SPEC_CONFIG_FILE"
   printf '\nafk_git:\n  enabled: %s\n  branch_prefix: "%s"\n  primary_branches: "%s"\n  allow_pr_create: %s\n' \
-    "$enabled" "$prefix" "$primaries" "$allow_pr" >> .spectacular/config.yaml
+    "$enabled" "$prefix" "$primaries" "$allow_pr" >> "$SPEC_CONFIG_FILE"
   info "  ✓ AFK Git policy updated"
 }
 
@@ -4938,8 +4966,8 @@ cmd_afk_preflight() {
 
 _afk_record_branch() {
   local branch="$1" kind="$2" target="$3"
-  mkdir -p .spectacular/afk
-  local ledger=.spectacular/afk/branches.md
+  mkdir -p "$SPEC_AFK_DIR"
+  local ledger="$SPEC_AFK_DIR/branches.md"
   [[ -f "$ledger" ]] || printf '%s\n' '---' "updated: $TODAY" '---' '' '# AFK branches' > "$ledger"
   printf '\n- `%s` — kind: %s · source: %s · created: %s\n' "$branch" "$kind" "$target" "$TODAY" >> "$ledger"
   fm_touch "$ledger"
@@ -4997,7 +5025,7 @@ cmd_afk_cleanup() {
   $yes || die "afk cleanup: --apply requires --yes"
   local stamp safe archive tip_sha archive_ref restore_command
   stamp=$(date +%Y%m%d-%H%M%S); safe=$(_afk_slug "$branch")
-  archive=".spectacular/archive/afk-branches/${stamp}-${safe}.md"
+  archive="$SPEC_ARCHIVE_DIR/afk-branches/${stamp}-${safe}.md"
   tip_sha=$(git rev-parse "refs/heads/$branch")
   archive_ref="refs/spectacular/archive/${safe}-${stamp}-${tip_sha:0:12}"
   restore_command="git branch $branch $archive_ref"
@@ -5030,7 +5058,7 @@ cmd_afk_pr() {
     esac
   done
   [[ -n "$version" && -n "$name" ]] || die "afk pr: --version and --name are required"
-  local plan=".spectacular/requests/$slug/PLAN.md" log=".spectacular/requests/$slug/VERIFY-LOG.md" source spec_path
+  local plan="$SPEC_REQUESTS_DIR/$slug/PLAN.md" log="$SPEC_REQUESTS_DIR/$slug/VERIFY-LOG.md" source spec_path
   [[ -f "$plan" ]] || die "afk pr: request not found: $slug"
   [[ "$(fm_get "$plan" status)" == verified ]] || die "afk pr: request '$slug' must be verified"
   [[ -f "$log" ]] && grep -q '\*\*Outcome:\*\* verified' "$log" || die "afk pr: verified request has no passing VERIFY-LOG outcome"
@@ -5114,7 +5142,7 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "decisions: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "decisions: not inside a Spectacular workspace"
   [[ "$limit" =~ ^[0-9]+$ ]] || die "decisions: --limit must be a positive integer"
   local since_epoch
   since_epoch=$(_parse_since "$since")
@@ -5212,7 +5240,7 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "memories: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "memories: not inside a Spectacular workspace"
   [[ "$limit" =~ ^[0-9]+$ ]] || die "memories: --limit must be a positive integer"
   local since_epoch
   since_epoch=$(_parse_since "$since")
@@ -5320,7 +5348,7 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "sessions: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "sessions: not inside a Spectacular workspace"
   [[ "$limit" =~ ^[0-9]+$ ]] || die "sessions: --limit must be a positive integer"
   local since_epoch
   since_epoch=$(_parse_since "$since")
@@ -5586,10 +5614,10 @@ EOF
   [[ -n "$milestone" ]] && ! $brief && die "request: --milestone is valid only with --brief"
 
   [[ -z "$slug" ]] && die "request: <slug> argument required"
-  [[ -d ".spectacular" ]] || die "request: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "request: not inside a Spectacular workspace"
 
-  local plan=".spectacular/requests/$slug/PLAN.md"
-  local archive_plan=".spectacular/archive/$slug/PLAN.md"
+  local plan="$SPEC_REQUESTS_DIR/$slug/PLAN.md"
+  local archive_plan="$SPEC_ARCHIVE_DIR/$slug/PLAN.md"
   if [[ ! -f "$plan" ]]; then
     if [[ -f "$archive_plan" ]]; then
       plan="$archive_plan"
@@ -5711,9 +5739,9 @@ EOF
   # Compute inverses by scanning all other active requests
   _req_by=""
   _blk_by=""
-  if [[ -d ".spectacular/requests" ]]; then
+  if [[ -d "$SPEC_REQUESTS_DIR" ]]; then
     shopt -s nullglob
-    for _other_plan in .spectacular/requests/*/PLAN.md; do
+    for _other_plan in "$SPEC_REQUESTS_DIR"/*/PLAN.md; do
       local _other_slug
       _other_slug=$(basename "$(dirname "$_other_plan")")
       [[ "$_other_slug" == "$slug" ]] && continue
@@ -5765,8 +5793,8 @@ EOF
       while IFS= read -r t; do
         [[ -z "$t" ]] && continue
         local _tst=""
-        [[ -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ✓ (shipped)"
-        [[ ! -f ".spectacular/requests/$t/PLAN.md" ]] && [[ ! -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ⚠ (not found)"
+        [[ -f "$SPEC_ARCHIVE_DIR/$t/PLAN.md" ]] && _tst=" ✓ (shipped)"
+        [[ ! -f "$SPEC_REQUESTS_DIR/$t/PLAN.md" ]] && [[ ! -f "$SPEC_ARCHIVE_DIR/$t/PLAN.md" ]] && _tst=" ⚠ (not found)"
         printf "  depends-on:  %s%s\n" "$t" "$_tst"
       done <<< "$_dep"
     fi
@@ -5774,8 +5802,8 @@ EOF
       while IFS= read -r t; do
         [[ -z "$t" ]] && continue
         local _tst=""
-        [[ -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ✓ (shipped)"
-        [[ ! -f ".spectacular/requests/$t/PLAN.md" ]] && [[ ! -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ⚠ (not found)"
+        [[ -f "$SPEC_ARCHIVE_DIR/$t/PLAN.md" ]] && _tst=" ✓ (shipped)"
+        [[ ! -f "$SPEC_REQUESTS_DIR/$t/PLAN.md" ]] && [[ ! -f "$SPEC_ARCHIVE_DIR/$t/PLAN.md" ]] && _tst=" ⚠ (not found)"
         printf "  blocks:      %s%s\n" "$t" "$_tst"
       done <<< "$_blk"
     fi
@@ -5783,8 +5811,8 @@ EOF
       while IFS= read -r t; do
         [[ -z "$t" ]] && continue
         local _tst=""
-        [[ -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ✓ (shipped)"
-        [[ ! -f ".spectacular/requests/$t/PLAN.md" ]] && [[ ! -f ".spectacular/archive/$t/PLAN.md" ]] && _tst=" ⚠ (not found)"
+        [[ -f "$SPEC_ARCHIVE_DIR/$t/PLAN.md" ]] && _tst=" ✓ (shipped)"
+        [[ ! -f "$SPEC_REQUESTS_DIR/$t/PLAN.md" ]] && [[ ! -f "$SPEC_ARCHIVE_DIR/$t/PLAN.md" ]] && _tst=" ⚠ (not found)"
         printf "  related:     %s%s\n" "$t" "$_tst"
       done <<< "$_rel"
     fi
@@ -5838,7 +5866,7 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "links: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "links: not inside a Spectacular workspace"
 
   # ── helper: parse a YAML list field from frontmatter ──────────────────────
   _links_parse_list() {
@@ -5860,9 +5888,9 @@ EOF
   # ── helper: slug → status label ───────────────────────────────────────────
   _links_status() {
     local t="$1"
-    if [[ -f ".spectacular/requests/$t/PLAN.md" ]]; then
-      fm_get ".spectacular/requests/$t/PLAN.md" "status"
-    elif [[ -f ".spectacular/archive/$t/PLAN.md" ]]; then
+    if [[ -f "$SPEC_REQUESTS_DIR/$t/PLAN.md" ]]; then
+      fm_get "$SPEC_REQUESTS_DIR/$t/PLAN.md" "status"
+    elif [[ -f "$SPEC_ARCHIVE_DIR/$t/PLAN.md" ]]; then
       echo "archived"
     else
       echo "unknown"
@@ -5872,8 +5900,8 @@ EOF
   # ── helper: suffix label for a target slug ────────────────────────────────
   _links_suffix() {
     local t="$1"
-    if [[ ! -f ".spectacular/requests/$t/PLAN.md" ]]; then
-      if [[ -f ".spectacular/archive/$t/PLAN.md" ]]; then
+    if [[ ! -f "$SPEC_REQUESTS_DIR/$t/PLAN.md" ]]; then
+      if [[ -f "$SPEC_ARCHIVE_DIR/$t/PLAN.md" ]]; then
         echo " ✓ (shipped)"
       else
         echo " ⚠ (not found)"
@@ -5884,7 +5912,7 @@ EOF
   # ── 1. Collect active slugs ────────────────────────────────────────────────
   local -a active_slugs=()
   shopt -s nullglob
-  for _d in .spectacular/requests/*/; do
+  for _d in "$SPEC_REQUESTS_DIR"/*/; do
     active_slugs+=("$(basename "$_d")")
   done
   shopt -u nullglob
@@ -5897,7 +5925,7 @@ EOF
   _graph_dir=$(mktemp -d)
 
   for _s in ${active_slugs[@]+"${active_slugs[@]}"}; do
-    local _plan=".spectacular/requests/$_s/PLAN.md"
+    local _plan="$SPEC_REQUESTS_DIR/$_s/PLAN.md"
     [[ -f "$_plan" ]] || continue
     local _deps _blks _rels_raw
     _deps=$(_links_parse_list "$_plan" "depends-on")
@@ -5949,8 +5977,8 @@ EOF
   # ── 5. Scoped to one slug if provided ─────────────────────────────────────
   local -a render_slugs=()
   if [[ -n "$slug" ]]; then
-    if [[ ! -f ".spectacular/requests/$slug/PLAN.md" ]] && \
-       [[ ! -f ".spectacular/archive/$slug/PLAN.md" ]]; then
+    if [[ ! -f "$SPEC_REQUESTS_DIR/$slug/PLAN.md" ]] && \
+       [[ ! -f "$SPEC_ARCHIVE_DIR/$slug/PLAN.md" ]]; then
       rm -rf "$_graph_dir"
       die "links: '$slug' not found in requests/ or archive/"
     fi
@@ -6076,18 +6104,18 @@ cmd_decision() {
   done
 
   [[ -z "$slug" ]] && die "decision: <slug> argument required"
-  local f=".spectacular/decisions/$slug.md"
+  local f="$SPEC_DECISIONS_DIR/$slug.md"
   if [[ ! -f "$f" ]]; then
     local compact canonical num candidate
     compact=$(printf '%s' "$slug" | tr -d ' _-' | tr '[:lower:]' '[:upper:]')
     if [[ "$compact" =~ ^(D|DEC)([0-9]+)$ ]] || [[ "$compact" =~ ^[0-9]+$ ]]; then
       canonical=$(_canonical_resolve "$slug" decision)
-      for candidate in .spectacular/decisions/"$canonical"-*.md .spectacular/decisions/"$canonical".md; do
+      for candidate in "$SPEC_DECISIONS_DIR"/"$canonical"-*.md "$SPEC_DECISIONS_DIR"/"$canonical".md; do
         [[ -f "$candidate" ]] && { f="$candidate"; break; }
       done
       if [[ ! -f "$f" ]]; then
         num=$((10#${canonical#DEC-}))
-        for candidate in .spectacular/decisions/D"$num"-*.md .spectacular/decisions/D"$num".md; do
+        for candidate in "$SPEC_DECISIONS_DIR"/D"$num"-*.md "$SPEC_DECISIONS_DIR"/D"$num".md; do
           [[ -f "$candidate" ]] && { f="$candidate"; break; }
         done
       fi
@@ -6128,11 +6156,11 @@ cmd_memory() {
 
 _memory_find() {
   local ref="$1" f compact dir
-  for dir in .spectacular/memories .spectacular/memory; do
+  for dir in "$SPEC_MEMORIES_DIR" "$SPEC_WORKSPACE_DIR/memory"; do
     [[ -f "$dir/$ref.md" ]] && { echo "$dir/$ref.md"; return 0; }
   done
   compact=$(printf '%s' "$ref" | tr '[:lower:]' '[:upper:]')
-  for dir in .spectacular/memories .spectacular/memory; do
+  for dir in "$SPEC_MEMORIES_DIR" "$SPEC_WORKSPACE_DIR/memory"; do
     for f in "$dir"/"$compact"-*.md "$dir"/"$compact".md; do
       [[ -f "$f" ]] && { echo "$f"; return 0; }
     done
@@ -6167,7 +6195,7 @@ cmd_sessions_show() {
   done
 
   [[ -z "$slug" ]] && die "sessions show: <slug> argument required"
-  local f=".spectacular/sessions/$slug.md"
+  local f="$SPEC_SESSIONS_DIR/$slug.md"
   [[ -f "$f" ]] || die "sessions show: '$slug' not found at $f"
 
   if $full; then cat "$f"; return 0; fi
@@ -6203,32 +6231,32 @@ EOF
   done
 
   [[ -z "$doctype" ]] && die "show: <doctype> argument required"
-  [[ -d ".spectacular" ]] || die "show: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "show: not inside a Spectacular workspace"
 
   local path
   case "$doctype" in
-    prd)          path=".spectacular/PRD.md" ;;
+    prd)          path="$SPEC_WORKSPACE_DIR/PRD.md" ;;
     spec)
-      if [[ -f ".spectacular/specs/index.md" ]]; then path=".spectacular/specs/index.md"; else path=".spectacular/SPEC.md"; fi
+      if [[ -f "$SPEC_SPECS_DIR/index.md" ]]; then path="$SPEC_SPECS_DIR/index.md"; else path="$SPEC_WORKSPACE_DIR/SPEC.md"; fi
       ;;
-    principles)   path=".spectacular/PRINCIPLES.md" ;;
-    policy)       path=".spectacular/POLICY.md" ;;
-    architecture) path=".spectacular/ARCHITECTURE.md" ;;
+    principles)   path="$SPEC_WORKSPACE_DIR/PRINCIPLES.md" ;;
+    policy)       path="$SPEC_WORKSPACE_DIR/POLICY.md" ;;
+    architecture) path="$SPEC_WORKSPACE_DIR/ARCHITECTURE.md" ;;
     roadmap)
-      if [[ -f ".spectacular/roadmaps/index.md" ]]; then path=".spectacular/roadmaps/index.md"; else path=".spectacular/ROADMAP.md"; fi
+      if [[ -f "$SPEC_ROADMAPS_DIR/index.md" ]]; then path="$SPEC_ROADMAPS_DIR/index.md"; else path="$SPEC_WORKSPACE_DIR/ROADMAP.md"; fi
       ;;
-    stack)        path=".spectacular/STACK.md" ;;
-    agents)       path=".spectacular/AGENTS.md" ;;
+    stack)        path="$SPEC_WORKSPACE_DIR/STACK.md" ;;
+    agents)       path="$SPEC_WORKSPACE_DIR/AGENTS.md" ;;
     decisions)
-      if [[ -f ".spectacular/decisions/index.md" ]]; then path=".spectacular/decisions/index.md"; else path=".spectacular/DECISIONS.md"; fi
+      if [[ -f "$SPEC_DECISIONS_DIR/index.md" ]]; then path="$SPEC_DECISIONS_DIR/index.md"; else path="$SPEC_WORKSPACE_DIR/DECISIONS.md"; fi
       ;;
     memory)
-      if [[ -f ".spectacular/memories/index.md" ]]; then path=".spectacular/memories/index.md"; else path=".spectacular/MEMORY.md"; fi
+      if [[ -f "$SPEC_MEMORIES_DIR/index.md" ]]; then path="$SPEC_MEMORIES_DIR/index.md"; else path="$SPEC_WORKSPACE_DIR/MEMORY.md"; fi
       ;;
     sessions)
-      if [[ -f ".spectacular/sessions/index.md" ]]; then path=".spectacular/sessions/index.md"; else path=".spectacular/SESSIONS.md"; fi
+      if [[ -f "$SPEC_SESSIONS_DIR/index.md" ]]; then path="$SPEC_SESSIONS_DIR/index.md"; else path="$SPEC_WORKSPACE_DIR/SESSIONS.md"; fi
       ;;
-    personas)     path=".spectacular/PERSONAS.md" ;;
+    personas)     path="$SPEC_WORKSPACE_DIR/PERSONAS.md" ;;
     *) die "show: unknown doctype '$doctype'. Run 'spectacular show --help' for the list." ;;
   esac
 
@@ -6406,8 +6434,8 @@ cmd_progress() {
   done
 
   [[ -z "$slug" ]] && die "progress: <slug> argument required"
-  local tasks=".spectacular/requests/$slug/TASKS.md"
-  [[ -f "$tasks" ]] || tasks=".spectacular/archive/$slug/TASKS.md"
+  local tasks="$SPEC_REQUESTS_DIR/$slug/TASKS.md"
+  [[ -f "$tasks" ]] || tasks="$SPEC_ARCHIVE_DIR/$slug/TASKS.md"
   [[ -f "$tasks" ]] || die "progress: TASKS.md not found for '$slug'"
 
   if $json; then
@@ -6439,7 +6467,7 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "paths: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "paths: not inside a Spectacular workspace"
 
   # Canonical paths (always returned, even if file doesn't exist yet)
   local -a keys=(
@@ -6452,28 +6480,28 @@ EOF
     config skill_lock
   )
   local -a vals=(
-    ".spectacular/PRD.md"
-    ".spectacular/specs/index.md"
-    ".spectacular/PRINCIPLES.md"
-    ".spectacular/ARCHITECTURE.md"
-    ".spectacular/roadmaps/index.md"
-    ".spectacular/STACK.md"
-    ".spectacular/AGENTS.md"
-    ".spectacular/PERSONAS.md"
-    ".spectacular/decisions/index.md"
-    ".spectacular/decisions/"
-    ".spectacular/memories/index.md"
-    ".spectacular/memories/"
-    ".spectacular/sessions/index.md"
-    ".spectacular/sessions/"
-    ".spectacular/feedbacks/"
-    ".spectacular/ideas/"
-    ".spectacular/requests/"
-    ".spectacular/archive/"
-    ".spectacular/$(config_snapshots_folder)/"
-    ".spectacular/packs/"
-    ".spectacular/config.yaml"
-    ".spectacular/skills.lock"
+    "$SPEC_WORKSPACE_DIR/PRD.md"
+    "$SPEC_SPECS_DIR/index.md"
+    "$SPEC_WORKSPACE_DIR/PRINCIPLES.md"
+    "$SPEC_WORKSPACE_DIR/ARCHITECTURE.md"
+    "$SPEC_ROADMAPS_DIR/index.md"
+    "$SPEC_WORKSPACE_DIR/STACK.md"
+    "$SPEC_WORKSPACE_DIR/AGENTS.md"
+    "$SPEC_WORKSPACE_DIR/PERSONAS.md"
+    "$SPEC_DECISIONS_DIR/index.md"
+    "$SPEC_DECISIONS_DIR/"
+    "$SPEC_MEMORIES_DIR/index.md"
+    "$SPEC_MEMORIES_DIR/"
+    "$SPEC_SESSIONS_DIR/index.md"
+    "$SPEC_SESSIONS_DIR/"
+    "$SPEC_WORKSPACE_DIR/feedbacks/"
+    "$SPEC_IDEAS_DIR/"
+    "$SPEC_REQUESTS_DIR/"
+    "$SPEC_ARCHIVE_DIR/"
+    "$SPEC_WORKSPACE_DIR/$(config_snapshots_folder)/"
+    "$SPEC_WORKSPACE_DIR/packs/"
+    "$SPEC_WORKSPACE_DIR/config.yaml"
+    "$SPEC_WORKSPACE_DIR/skills.lock"
   )
 
   if [[ "$format" == "text" ]]; then
@@ -6512,7 +6540,7 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "summary: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "summary: not inside a Spectacular workspace"
 
   # Count requests by status
   local total_requests=0 planned=0 active=0 review=0 verified=0
@@ -6531,11 +6559,11 @@ EOF
 
   # Count decisions, memories
   local total_decisions=0 total_memories=0
-  if [[ -d ".spectacular/decisions" ]]; then
+  if [[ -d "$SPEC_DECISIONS_DIR" ]]; then
     while IFS= read -r f; do [[ -n "$f" ]] && total_decisions=$((total_decisions + 1)); done < <(_iter_md decisions)
-  elif [[ -f ".spectacular/DECISIONS.md" ]]; then
+  elif [[ -f "$SPEC_WORKSPACE_DIR/DECISIONS.md" ]]; then
     # flat mode: each ADR is a "## <date> — <title>" prose block
-    total_decisions=$(grep -c '^## ' .spectacular/DECISIONS.md 2>/dev/null || true)
+    total_decisions=$(grep -c '^## ' "$SPEC_WORKSPACE_DIR/DECISIONS.md" 2>/dev/null || true)
   fi
   while IFS= read -r f; do [[ -n "$f" ]] && total_memories=$((total_memories + 1)); done < <(_iter_md memory)
 
@@ -6550,18 +6578,18 @@ EOF
 
   # Ideas + feedback (light counts)
   local total_ideas=0
-  if [[ -d ".spectacular/ideas" ]]; then
-    for f in .spectacular/ideas/*.md; do [[ -f "$f" ]] && total_ideas=$((total_ideas + 1)); done
+  if [[ -d "$SPEC_IDEAS_DIR" ]]; then
+    for f in "$SPEC_IDEAS_DIR"/*.md; do [[ -f "$f" ]] && total_ideas=$((total_ideas + 1)); done
   fi
   local total_feedback=0
-  if [[ -d ".spectacular/feedback" ]]; then
-    for f in .spectacular/feedback/*.md; do [[ -f "$f" ]] && total_feedback=$((total_feedback + 1)); done
+  if [[ -d "$SPEC_WORKSPACE_DIR/feedback" ]]; then
+    for f in "$SPEC_WORKSPACE_DIR/feedback"/*.md; do [[ -f "$f" ]] && total_feedback=$((total_feedback + 1)); done
   fi
 
   # Project name
   local project="?"
-  if [[ -f ".spectacular/config.yaml" ]]; then
-    project=$(awk '/^  name:/ { sub(/^  name:[[:space:]]*/, ""); print; exit }' .spectacular/config.yaml)
+  if [[ -f "$SPEC_WORKSPACE_DIR/config.yaml" ]]; then
+    project=$(awk '/^  name:/ { sub(/^  name:[[:space:]]*/, ""); print; exit }' "$SPEC_CONFIG_FILE")
     [[ -z "$project" ]] && project="?"
   fi
 
@@ -6609,22 +6637,22 @@ EOF
   # Cross-request link advisory (v1.16.0+): show active requests that have
   # declared edges so an agent sees ordering dependencies at a glance.
   local _link_lines=""
-  if [[ -d ".spectacular/requests" ]]; then
+  if [[ -d "$SPEC_REQUESTS_DIR" ]]; then
     local _link_gdir
     _link_gdir=$(mktemp -d)
     local _active_plan_slugs=()
     shopt -s nullglob
-    for _d in .spectacular/requests/*/; do
+    for _d in "$SPEC_REQUESTS_DIR"/*/; do
       local _sl; _sl=$(basename "$_d")
-      local _st; _st=$(fm_get ".spectacular/requests/$_sl/PLAN.md" "status" 2>/dev/null || true)
+      local _st; _st=$(fm_get "$SPEC_REQUESTS_DIR/$_sl/PLAN.md" "status" 2>/dev/null || true)
       [[ "$_st" == "active" ]] || continue
       _active_plan_slugs+=("$_sl")
       local _dp
       _dp=$(awk '/^---$/{c++;if(c>1)exit;next}c==1&&f&&/^[a-zA-Z]/{exit}c==1&&f&&/^[[:space:]]*-/{v=$0;sub(/^[[:space:]]*-[[:space:]]*/,"",v);gsub(/^"|"$/,"",v);gsub(/[[:space:]]+$/,"",v);if(v!="")print v}c==1&&/^depends-on:/{f=1}' \
-        ".spectacular/requests/$_sl/PLAN.md")
+        "$SPEC_REQUESTS_DIR/$_sl/PLAN.md")
       local _bk
       _bk=$(awk '/^---$/{c++;if(c>1)exit;next}c==1&&f&&/^[a-zA-Z]/{exit}c==1&&f&&/^[[:space:]]*-/{v=$0;sub(/^[[:space:]]*-[[:space:]]*/,"",v);gsub(/^"|"$/,"",v);gsub(/[[:space:]]+$/,"",v);if(v!="")print v}c==1&&/^blocks:/{f=1}' \
-        ".spectacular/requests/$_sl/PLAN.md")
+        "$SPEC_REQUESTS_DIR/$_sl/PLAN.md")
       [[ -n "$_dp" ]] && printf '%s\n' "$_dp" > "$_link_gdir/$_sl.dep"
       [[ -n "$_bk" ]] && printf '%s\n' "$_bk" > "$_link_gdir/$_sl.blk"
     done
@@ -6718,10 +6746,10 @@ EOF
   done
 
   [[ "$keep" =~ ^[0-9]+$ ]] || die "roadmap migrate: --keep must be a non-negative integer"
-  [[ -d ".spectacular" ]] || die "roadmap migrate: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "roadmap migrate: not inside a Spectacular workspace"
 
-  local roadmap=".spectacular/roadmaps/index.md"
-  local roadmap_dir=".spectacular/roadmaps"
+  local roadmap="$SPEC_ROADMAPS_DIR/index.md"
+  local roadmap_dir="$SPEC_ROADMAPS_DIR"
   [[ -f "$roadmap" ]] || die "roadmap migrate: $roadmap not found"
 
   # 1. Parse ## v<X.Y.Z> blocks in document order. Capture heading, body span, and
@@ -6879,8 +6907,8 @@ EOF
     esac
   done
 
-  local roadmap=".spectacular/roadmaps/index.md"
-  [[ -f "$roadmap" ]] || roadmap=".spectacular/ROADMAP.md"
+  local roadmap="$SPEC_ROADMAPS_DIR/index.md"
+  [[ -f "$roadmap" ]] || roadmap="$SPEC_WORKSPACE_DIR/ROADMAP.md"
   [[ -f "$roadmap" ]] || die "roadmap: roadmap index not found at $roadmap"
 
   # Parse ledger table → emit pipe-delimited: build|slug|title|tier|version|status
@@ -7089,13 +7117,13 @@ EOF
   done
 
   [[ -z "$slug" ]] && die "archive: <slug> argument required."
-  [[ -d ".spectacular" ]] || die "archive: not inside a Spectacular workspace."
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "archive: not inside a Spectacular workspace."
 
   require_doctor_clean "archive" "skip-doctor" "$opt_skip_doctor"
 
-  local src=".spectacular/requests/$slug"
+  local src="$SPEC_REQUESTS_DIR/$slug"
   if [[ ! -d "$src" ]]; then
-    if [[ -d ".spectacular/archive/$slug" ]]; then
+    if [[ -d "$SPEC_ARCHIVE_DIR/$slug" ]]; then
       die "archive: '$slug' is already archived (.spectacular/archive/$slug)"
     fi
     die "archive: request '$slug' not found at $src"
@@ -7193,8 +7221,8 @@ EOF
   fm_touch "$plan"
 
   # Move dir
-  mkdir -p .spectacular/archive
-  local dest=".spectacular/archive/$slug"
+  mkdir -p "$SPEC_ARCHIVE_DIR"
+  local dest="$SPEC_ARCHIVE_DIR/$slug"
   if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     git mv "$src" "$dest" 2>/dev/null || mv "$src" "$dest"
   else
@@ -7207,7 +7235,7 @@ EOF
   # Also catches: '../<slug>/PLAN.md', '../<slug>/TASKS.md', etc.
   local rewrite_count=0
   shopt -s nullglob
-  for target_file in .spectacular/requests/*/PLAN.md .spectacular/requests/*/TASKS.md .spectacular/requests/*/VERIFY.md; do
+  for target_file in "$SPEC_REQUESTS_DIR"/*/PLAN.md "$SPEC_REQUESTS_DIR"/*/TASKS.md "$SPEC_REQUESTS_DIR"/*/VERIFY.md; do
     if grep -q "\.\./${slug}/" "$target_file" 2>/dev/null; then
       sed -i.bak "s|\\.\\./${slug}/|../../archive/${slug}/|g" "$target_file"
       rm -f "$target_file.bak"
@@ -7242,7 +7270,7 @@ EOF
         sub(/[[:space:]]*$/, "")
         print; exit
       }
-    ' .spectacular/config.yaml 2>/dev/null)"
+    ' "$SPEC_CONFIG_FILE" 2>/dev/null)"
 
     if [[ "$prompt_setting" != "false" ]]; then
       # Detect spec-touching changes in the archived request's tracked content
@@ -7448,7 +7476,7 @@ EOF
   fi
 
   if ! is_canonical_doc "$file"; then
-    if [[ "$file" == .spectacular/requests/*/PLAN.md ]] || [[ "$file" == requests/*/PLAN.md ]]; then
+    if [[ "$file" == "$SPEC_REQUESTS_DIR"/*/PLAN.md ]] || [[ "$file" == requests/*/PLAN.md ]]; then
       die "snapshot: $file is a request plan and not eligible for snapshotting. If you only meant to update the updated: date, use: spectacular touch $file"
     else
       die "snapshot: $file is not a registered canonical doc. Use plain cp for other files."
@@ -7458,7 +7486,7 @@ EOF
   local has_frontmatter=true
   if ! head -1 "$file" | grep -q '^---$'; then
     case "$file" in
-      .spectacular/config.yaml|config.yaml|.spectacular/DESIGN.md|DESIGN.md) has_frontmatter=false ;;
+      "$SPEC_CONFIG_FILE"|config.yaml|"$SPEC_WORKSPACE_DIR/DESIGN.md"|DESIGN.md) has_frontmatter=false ;;
       *) die "snapshot: $file has no frontmatter delimiter" ;;
     esac
   fi
@@ -7476,8 +7504,8 @@ EOF
   # .spectacular/specs/cli/SPEC.md → <store>/specs/cli/SPEC/@v<N>.md
   local snap_root snap_dir rel_dir
   snap_root="$(snapshot_store_root)"
-  rel_dir="${dir#.spectacular/}"
-  if [[ "$rel_dir" == ".spectacular" || "$rel_dir" == "$dir" ]]; then
+  rel_dir="${dir#"$SPEC_WORKSPACE_DIR"/}"
+  if [[ "$rel_dir" == "$SPEC_WORKSPACE_DIR" || "$rel_dir" == "$dir" ]]; then
     # File is at .spectacular root (rel_dir collapses), or not under .spectacular at all
     snap_dir="${snap_root}/${base_no_ext}"
   else
@@ -7581,12 +7609,12 @@ EOF
 # on disk and the configured one doesn't exist yet (pre-M4-migration workspace).
 snapshot_store_root() {
   local folder; folder="$(config_snapshots_folder)"
-  if [[ -d ".spectacular/$folder" ]]; then
-    echo ".spectacular/$folder"
-  elif [[ "$folder" != "snapshots" && -d ".spectacular/snapshots" ]]; then
-    echo ".spectacular/snapshots"
+  if [[ -d "$SPEC_WORKSPACE_DIR/$folder" ]]; then
+    echo "$SPEC_WORKSPACE_DIR/$folder"
+  elif [[ "$folder" != "snapshots" && -d "$SPEC_WORKSPACE_DIR/snapshots" ]]; then
+    echo "$SPEC_WORKSPACE_DIR/snapshots"
   else
-    echo ".spectacular/$folder"
+    echo "$SPEC_WORKSPACE_DIR/$folder"
   fi
 }
 
@@ -7693,7 +7721,7 @@ snapshot_prune_remove() {
   fi
   # Fallback: move to .trash/ mirroring the path under .spectacular/
   local rel="${f#.spectacular/}"
-  local dest=".spectacular/.trash/$rel"
+  local dest="$SPEC_WORKSPACE_DIR/.trash/$rel"
   mkdir -p "$(dirname "$dest")"
   mv "$f" "$dest" && echo "      pruned (→ .trash): $f"
 }
@@ -7747,7 +7775,7 @@ _plan_understanding_filled() {
 # locked design: CLI mechanical surface, skill judgment + enforcement.
 _policy_consult_transition() {
   local slug="$1" plan="$2" hook="$3"
-  [[ -f ".spectacular/POLICY.md" ]] || return 0
+  [[ -f "$SPEC_WORKSPACE_DIR/POLICY.md" ]] || return 0
 
   local pol_out
   pol_out="$(cmd_policy "$hook" 2>/dev/null)"
@@ -7815,11 +7843,11 @@ EOF
   done
 
   [[ -z "$slug" ]] && die "promote: <slug> argument required. See: spectacular promote --help"
-  [[ -d ".spectacular" ]] || die "promote: not inside a Spectacular workspace."
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "promote: not inside a Spectacular workspace."
 
-  local plan=".spectacular/requests/$slug/PLAN.md"
+  local plan="$SPEC_REQUESTS_DIR/$slug/PLAN.md"
   if [[ ! -f "$plan" ]]; then
-    if [[ -f ".spectacular/archive/$slug/PLAN.md" ]]; then
+    if [[ -f "$SPEC_ARCHIVE_DIR/$slug/PLAN.md" ]]; then
       die "promote: '$slug' is archived. Restore from .spectacular/archive/ first."
     fi
     die "promote: request '$slug' not found at .spectacular/requests/$slug/"
@@ -7861,7 +7889,7 @@ EOF
   esac
 
   if [[ "$target" == verified ]]; then
-    local verify_log=".spectacular/requests/$slug/VERIFY-LOG.md" verified_evidence=false
+    local verify_log="$SPEC_REQUESTS_DIR/$slug/VERIFY-LOG.md" verified_evidence=false
     if [[ -f "$verify_log" ]] && grep -Eq '✅|^result:[[:space:]]*pass([[:space:]]|$)|\*\*Outcome:\*\*[[:space:]]*verified' "$verify_log"; then
       verified_evidence=true
     fi
@@ -7930,7 +7958,7 @@ EOF
   fm_set "$plan" "status" "$target"
   fm_touch "$plan"
   # Also bump TASKS.md status: to stay in sync
-  local tasks=".spectacular/requests/$slug/TASKS.md"
+  local tasks="$SPEC_REQUESTS_DIR/$slug/TASKS.md"
   if [[ -f "$tasks" ]]; then
     fm_set "$tasks" "status" "$target"
     fm_touch "$tasks"
@@ -7939,7 +7967,7 @@ EOF
   # doctor lifecycle warning. Never overwrites — an existing SESSION.md is kept.
   # (Mirrors the template in references/active-request.md — keep the two in sync.)
   if [[ "$current" == "planned" && "$target" == "active" ]]; then
-    local session=".spectacular/requests/$slug/SESSION.md"
+    local session="$SPEC_REQUESTS_DIR/$slug/SESSION.md"
     if [[ ! -f "$session" ]]; then
       cat > "$session" <<EOF
 ---
@@ -8023,7 +8051,7 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "undo: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "undo: not inside a Spectacular workspace"
 
   if [[ ! -f "$_BREADCRUMB" ]]; then
     info "Nothing to undo — no recent lifecycle mutation recorded."
@@ -8039,8 +8067,8 @@ EOF
   case "$op" in
     advance)
       local prev; prev="$(_breadcrumb_get prev_status)"
-      local plan=".spectacular/requests/$slug/PLAN.md"
-      local tasks=".spectacular/requests/$slug/TASKS.md"
+      local plan="$SPEC_REQUESTS_DIR/$slug/PLAN.md"
+      local tasks="$SPEC_REQUESTS_DIR/$slug/TASKS.md"
       [[ -f "$plan" ]] || die "undo: $plan not found — cannot reverse advance for '$slug'."
       # Staleness: refuse if PLAN/TASKS changed after the mutation.
       local mt; mt="$(_max_mtime "$plan" "$tasks")"
@@ -8060,8 +8088,8 @@ EOF
 
     archive)
       local prev; prev="$(_breadcrumb_get prev_status)"
-      local arc=".spectacular/archive/$slug"
-      local dest=".spectacular/requests/$slug"
+      local arc="$SPEC_ARCHIVE_DIR/$slug"
+      local dest="$SPEC_REQUESTS_DIR/$slug"
       [[ -d "$arc" ]] || die "undo: archived dir $arc not found — cannot reverse archive for '$slug'."
       [[ -d "$dest" ]] && die "undo: $dest already exists — refusing to overwrite. Resolve manually."
       # Staleness: refuse if the archived PLAN changed after the mutation.
@@ -8093,7 +8121,7 @@ EOF
       # Reverse inbound link rewrites: ../../archive/<slug>/ → ../<slug>/
       local rev=0 tf
       shopt -s nullglob
-      for tf in .spectacular/requests/*/PLAN.md .spectacular/requests/*/TASKS.md .spectacular/requests/*/VERIFY.md; do
+      for tf in "$SPEC_REQUESTS_DIR"/*/PLAN.md "$SPEC_REQUESTS_DIR"/*/TASKS.md "$SPEC_REQUESTS_DIR"/*/VERIFY.md; do
         if grep -q "\.\./\.\./archive/${slug}/" "$tf" 2>/dev/null; then
           sed -i.bak "s|\\.\\./\\.\\./archive/${slug}/|../${slug}/|g" "$tf"
           rm -f "$tf.bak"; rev=$((rev+1))
@@ -8111,8 +8139,8 @@ EOF
       req_slug="$(_breadcrumb_get request_slug)"
       idea_prev="$(_breadcrumb_get idea_prev_status)"; [[ -z "$idea_prev" ]] && idea_prev="exploring"
       idea_file="$(_breadcrumb_get idea_file)"; [[ -z "$idea_file" ]] && idea_file="$slug.md"
-      local arc=".spectacular/archive/ideas/$idea_file"
-      local dest=".spectacular/ideas/$idea_file"
+      local arc="$SPEC_ARCHIVE_DIR/ideas/$idea_file"
+      local dest="$SPEC_IDEAS_DIR/$idea_file"
       [[ -f "$arc" ]] || die "undo: archived idea $arc not found — cannot reverse idea-promote for '$slug'."
       [[ -f "$dest" ]] && die "undo: $dest already exists — refusing to overwrite. Resolve manually."
       local mt; mt="$(_max_mtime "$arc")"
@@ -8126,7 +8154,7 @@ EOF
         info "  request dir .spectacular/requests/$req_slug/ left in place (use removal prompt to delete)"
         return 0
       fi
-      mkdir -p .spectacular/ideas
+      mkdir -p "$SPEC_IDEAS_DIR"
       if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         git mv "$arc" "$dest" 2>/dev/null || mv "$arc" "$dest"
       else
@@ -8135,7 +8163,7 @@ EOF
       fm_set "$dest" "status" "$idea_prev"; fm_unset "$dest" "promoted_to"; fm_touch "$dest"
       info "  ↩ restored idea: $arc → $dest (status $idea_prev)"
       # Scaffolded request: leave by default; prompt to remove (decision D9).
-      local req_dir=".spectacular/requests/$req_slug"
+      local req_dir="$SPEC_REQUESTS_DIR/$req_slug"
       if [[ -d "$req_dir" ]]; then
         info ""
         info "  The scaffolded request still exists: $req_dir"
@@ -8222,20 +8250,20 @@ EOF
     *) die "new: invalid --priority '$opt_priority'. Must be: low | medium | high" ;;
   esac
 
-  [[ -d ".spectacular" ]] || die "new: not inside a Spectacular workspace. Run 'spectacular init' first."
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "new: not inside a Spectacular workspace. Run 'spectacular init' first."
 
-  local target=".spectacular/requests/$slug"
+  local target="$SPEC_REQUESTS_DIR/$slug"
   if [[ -d "$target" ]]; then
     die "new: slug '$slug' already exists at $target"
   fi
-  if [[ -d ".spectacular/archive/$slug" ]]; then
+  if [[ -d "$SPEC_ARCHIVE_DIR/$slug" ]]; then
     die "new: slug '$slug' exists in archive (.spectacular/archive/$slug). Pick a different slug or restore the archived request."
   fi
 
   # Read owner from config.yaml if present
   local owner=""
-  if [[ -f ".spectacular/config.yaml" ]]; then
-    owner=$(awk '/^  owner:/ { sub(/^  owner:[[:space:]]*/, ""); print; exit }' .spectacular/config.yaml)
+  if [[ -f "$SPEC_WORKSPACE_DIR/config.yaml" ]]; then
+    owner=$(awk '/^  owner:/ { sub(/^  owner:[[:space:]]*/, ""); print; exit }' "$SPEC_CONFIG_FILE")
   fi
   [[ -z "$owner" ]] && owner="$(whoami 2>/dev/null || echo unknown)"
 
@@ -8246,15 +8274,15 @@ EOF
   # the ledger without last_build catching up), reconcile to the ledger max so
   # `new` never re-issues an id the ledger already uses.
   local _last_build=0 _build_id=""
-  if [[ -f ".spectacular/config.yaml" ]]; then
+  if [[ -f "$SPEC_WORKSPACE_DIR/config.yaml" ]]; then
     local _lb
-    _lb=$(awk '/^last_build:/ { sub(/^last_build:[[:space:]]*/, ""); print; exit }' .spectacular/config.yaml)
+    _lb=$(awk '/^last_build:/ { sub(/^last_build:[[:space:]]*/, ""); print; exit }' "$SPEC_CONFIG_FILE")
     [[ "$_lb" =~ ^[0-9]+$ ]] && _last_build="$_lb"
   fi
   # Reconcile against the roadmap ledger's highest bN (index.md, or legacy ROADMAP.md).
   local _ledger="" _ledger_max=0
-  if [[ -f ".spectacular/roadmaps/index.md" ]]; then _ledger=".spectacular/roadmaps/index.md"
-  elif [[ -f ".spectacular/ROADMAP.md" ]]; then _ledger=".spectacular/ROADMAP.md"; fi
+  if [[ -f "$SPEC_ROADMAPS_DIR/index.md" ]]; then _ledger="$SPEC_ROADMAPS_DIR/index.md"
+  elif [[ -f "$SPEC_WORKSPACE_DIR/ROADMAP.md" ]]; then _ledger="$SPEC_WORKSPACE_DIR/ROADMAP.md"; fi
   if [[ -n "$_ledger" ]]; then
     _ledger_max=$(grep -oE '\| *b[0-9]+' "$_ledger" | grep -oE '[0-9]+' | sort -n | tail -1)
     [[ "$_ledger_max" =~ ^[0-9]+$ ]] || _ledger_max=0
@@ -8375,13 +8403,13 @@ EOF
   fi
 
   # Write last_build: back to config.yaml (create field if missing)
-  if [[ -f ".spectacular/config.yaml" ]]; then
-    if grep -q "^last_build:" .spectacular/config.yaml; then
+  if [[ -f "$SPEC_WORKSPACE_DIR/config.yaml" ]]; then
+    if grep -q "^last_build:" "$SPEC_CONFIG_FILE"; then
       local _tmp; _tmp=$(mktemp)
       awk -v nb="$_next_build" '/^last_build:/ { print "last_build: " nb; next } { print }' \
-        .spectacular/config.yaml > "$_tmp" && mv "$_tmp" .spectacular/config.yaml
+        "$SPEC_CONFIG_FILE" > "$_tmp" && mv "$_tmp" "$SPEC_CONFIG_FILE"
     else
-      printf '\nlast_build: %s\n' "$_next_build" >> .spectacular/config.yaml
+      printf '\nlast_build: %s\n' "$_next_build" >> "$SPEC_CONFIG_FILE"
     fi
   fi
 
@@ -8397,10 +8425,10 @@ EOF
   local _new_keywords _match_slugs=""
   _new_keywords=$(echo "$slug" | tr '-' '\n')
   shopt -s nullglob
-  for _d in .spectacular/requests/*/; do
+  for _d in "$SPEC_REQUESTS_DIR"/*/; do
     local _cs; _cs=$(basename "$_d")
     [[ "$_cs" == "$slug" ]] && continue
-    local _cst; _cst=$(fm_get ".spectacular/requests/$_cs/PLAN.md" "status" 2>/dev/null || true)
+    local _cst; _cst=$(fm_get "$SPEC_REQUESTS_DIR/$_cs/PLAN.md" "status" 2>/dev/null || true)
     [[ "$_cst" == "active" ]] || [[ "$_cst" == "planned" ]] || continue
     local _matched=false
     while IFS= read -r _kw; do
@@ -8447,11 +8475,11 @@ EOF
   [[ "$status" == approved ]] || die "request new: $id is '$status'; only an approved specification may seed implementation"
   spec_slug=$(basename "$spec" .md | sed -E 's/^SPC-[0-9]+-//')
   [[ -z "$slug" ]] && slug="$spec_slug"
-  existing=$(grep -lE "^source_spec:[[:space:]]*[\"']?${id}[\"']?[[:space:]]*$" .spectacular/requests/*/PLAN.md 2>/dev/null | head -1 || true)
+  existing=$(grep -lE "^source_spec:[[:space:]]*[\"']?${id}[\"']?[[:space:]]*$" "$SPEC_REQUESTS_DIR"/*/PLAN.md 2>/dev/null | head -1 || true)
   [[ -z "$existing" ]] || die "request new: $id already seeds request '$(basename "$(dirname "$existing")")'"
 
   cmd_new "$slug" --summary "Implement $id: $summary" --priority "$priority"
-  plan=".spectacular/requests/$slug/PLAN.md"; tasks=".spectacular/requests/$slug/TASKS.md"
+  plan="$SPEC_REQUESTS_DIR/$slug/PLAN.md"; tasks="$SPEC_REQUESTS_DIR/$slug/TASKS.md"
   version=$(fm_get "$spec" version); [[ -n "$version" ]] || version="unversioned"
   if command -v shasum >/dev/null 2>&1; then digest="sha256:$(shasum -a 256 "$spec" | awk '{print $1}')"
   else digest="sha256:$(sha256sum "$spec" | awk '{print $1}')"; fi
@@ -8588,7 +8616,7 @@ _doctor_precondition() {
   if [[ "$skip" == "true" ]]; then
     return 0
   fi
-  if [[ ! -d ".spectacular" ]]; then
+  if [[ ! -d "$SPEC_WORKSPACE_DIR" ]]; then
     return 0  # outside-workspace check is the caller's job; don't double-error
   fi
 
@@ -8673,7 +8701,7 @@ migration_field() {
 # Used internally by migration apply functions.
 bump_workspace_schema() {
   local new_schema="$1"
-  local cfg=".spectacular/config.yaml"
+  local cfg="$SPEC_WORKSPACE_DIR/config.yaml"
   if [[ ! -f "$cfg" ]]; then
     echo "  ✗ cannot bump workspace_schema — config.yaml not found" >&2
     return 1
@@ -8699,7 +8727,7 @@ EOF
 # (no field) get one inserted after workspace_schema:. Never touches
 # created_with: (write-once at init). Silent no-op if config.yaml is absent.
 stamp_last_touched() {
-  local cfg=".spectacular/config.yaml"
+  local cfg="$SPEC_WORKSPACE_DIR/config.yaml"
   [[ -f "$cfg" ]] || return 0
   if grep -q "^last_touched_with:" "$cfg"; then
     grep -q "^last_touched_with: \"${SPECTACULAR_VERSION}\"$" "$cfg" && return 0
@@ -8728,8 +8756,8 @@ stamp_last_touched() {
 # Idempotent: no-op when current/ absent.
 migration_apply_v04_to_v05() {
   local dry="$1"
-  local current_dir=".spectacular/current"
-  local specs_dir=".spectacular/specs"
+  local current_dir="$SPEC_WORKSPACE_DIR/current"
+  local specs_dir="$SPEC_SPECS_DIR"
 
   if [[ ! -d "$current_dir" ]]; then
     echo "  • v0.4→v0.5: no .spectacular/current/ found — nothing to rename"
@@ -8757,7 +8785,7 @@ migration_apply_v04_to_v05() {
 # Idempotent: no-op when specs/ already present.
 migration_apply_v05_to_v06() {
   local dry="$1"
-  local specs_dir=".spectacular/specs"
+  local specs_dir="$SPEC_SPECS_DIR"
 
   if [[ -d "$specs_dir" ]]; then
     # specs/ exists — just ensure schema is bumped
@@ -8787,7 +8815,7 @@ migration_apply_v06_to_v20() {
   echo "  • Running v0.6→v2.0 migration (OKF Restructure)..."
 
   # Define paths
-  local root_dir=".spectacular"
+  local root_dir="$SPEC_WORKSPACE_DIR"
 
   # Step 1: Dry run preview
   if [[ "$dry" == "true" ]]; then
@@ -9254,7 +9282,7 @@ EOF
     return 0
   fi
 
-  if [[ ! -d ".spectacular" ]]; then
+  if [[ ! -d "$SPEC_WORKSPACE_DIR" ]]; then
     die "Not inside a Spectacular workspace (no .spectacular/ here)."
   fi
 
@@ -9336,7 +9364,7 @@ EOF
     if schema_lt "$disk_schema_before" "$target"; then
       printf '%s  %s → %s  (spectacular %s)\n' \
         "$TODAY" "$start_schema" "$current" "$SPECTACULAR_VERSION" \
-        >> ".spectacular/migrations.log"
+        >> "$SPEC_WORKSPACE_DIR/migrations.log"
     fi
     echo "Migration complete. workspace_schema is now ${current}."
   fi
@@ -9428,7 +9456,7 @@ _status_sort_rank() {
 
 # `spectacular status` (bare) → aligned fleet table, sorted active→planned.
 cmd_status_fleet() {
-  [[ -d ".spectacular" ]] || die "status: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "status: not inside a Spectacular workspace"
 
   # Collect rows: rank|slug|status|priority|build|updated|progress|milestone|goal
   local rows=() f slug status priority build updated goal progress milestone rank
@@ -9479,8 +9507,8 @@ cmd_status_fleet() {
 # `spectacular status <slug>` → single request card.
 cmd_status_card() {
   local slug="$1"
-  [[ -d ".spectacular" ]] || die "status: not inside a Spectacular workspace"
-  local dir=".spectacular/requests/$slug"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "status: not inside a Spectacular workspace"
+  local dir="$SPEC_REQUESTS_DIR/$slug"
   local plan="$dir/PLAN.md"
   [[ -f "$plan" ]] || die "status: no request '$slug' (looked for $plan)"
 
@@ -9528,7 +9556,7 @@ cmd_status_card() {
 
 # `spectacular status --json` → structured fleet for the skill / agents (contract).
 cmd_status_json() {
-  [[ -d ".spectacular" ]] || die "status: not inside a Spectacular workspace"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "status: not inside a Spectacular workspace"
   local f slug status priority build updated summary goal milestone
   printf '['
   local i=0
@@ -9562,7 +9590,7 @@ cmd_status_json() {
 # plus the suggested verb to catch up. Always exits 0 (informational), unless
 # the user is not inside a Spectacular workspace at all (exits 1).
 cmd_status_against_latest() {
-  if [[ ! -d ".spectacular" ]]; then
+  if [[ ! -d "$SPEC_WORKSPACE_DIR" ]]; then
     echo "Not inside a Spectacular workspace (no .spectacular/ here)." >&2
     return 1
   fi
@@ -9592,7 +9620,7 @@ cmd_status_since() {
     echo "status --since: <date> argument required (YYYY-MM-DD | 7d | 2w | 1m | yesterday)" >&2
     return 2
   fi
-  if [[ ! -d ".spectacular" ]]; then
+  if [[ ! -d "$SPEC_WORKSPACE_DIR" ]]; then
     echo "Not inside a Spectacular workspace (no .spectacular/ here)." >&2
     return 1
   fi
@@ -9610,7 +9638,7 @@ cmd_status_since() {
   local -a archived=() verified=() review=() active=() planned=()
   local dir slug updated status
   shopt -s nullglob
-  for dir in .spectacular/requests/*/ .spectacular/archive/*/; do
+  for dir in "$SPEC_REQUESTS_DIR"/*/ "$SPEC_ARCHIVE_DIR"/*/; do
     [[ -f "$dir/PLAN.md" ]] || continue
     updated="$(fm_get "$dir/PLAN.md" "updated")"
     [[ -z "$updated" ]] && continue
@@ -9642,7 +9670,7 @@ cmd_status_since() {
   local -a docs=()
   local doc_file doc_base
   shopt -s nullglob
-  for doc_file in .spectacular/*.md; do
+  for doc_file in "$SPEC_WORKSPACE_DIR"/*.md; do
     doc_base="$(basename "$doc_file")"
     # Skip snapshot files (@v in name)
     [[ "$doc_base" =~ @v ]] && continue
@@ -9721,7 +9749,7 @@ status_since_print_group() {
 # Read convention_pack: stanza values from .spectacular/config.yaml
 # Stdout: pack source name (empty if no convention_pack block or commented out)
 config_pack_source() {
-  local cfg=".spectacular/config.yaml"
+  local cfg="$SPEC_WORKSPACE_DIR/config.yaml"
   [[ -f "$cfg" ]] || return 0
   awk '
     /^convention_pack:/ { in_block=1; next }
@@ -9746,7 +9774,7 @@ config_pack_mode() {
 # Empty if convention_pack absent or mode: field omitted. Used by check_conventions
 # to detect unknown-mode drift and emit an info note before silently falling back.
 config_pack_mode_raw() {
-  local cfg=".spectacular/config.yaml"
+  local cfg="$SPEC_WORKSPACE_DIR/config.yaml"
   [[ -f "$cfg" ]] || return 0
   local src
   src="$(config_pack_source)"
@@ -9778,8 +9806,8 @@ POLICY_VALID_HOOKS="@Init @Planning @Implementation @Debugging @Verification @Ar
 # Reads POLICY.md (definition) then applies config.yaml `policies:` overrides.
 # Custom policies declared only in config (with a `hook:`) are appended.
 _policy_records() {
-  local pol=".spectacular/POLICY.md"
-  local cfg=".spectacular/config.yaml"
+  local pol="$SPEC_WORKSPACE_DIR/POLICY.md"
+  local cfg="$SPEC_WORKSPACE_DIR/config.yaml"
   [[ -f "$pol" ]] || return 0
   local US=$'\037'
 
@@ -9843,7 +9871,7 @@ _policy_records() {
 #       enabled: false
 #       severity: block
 _policy_cfg_get() {
-  local id="$1" field="$2" cfg=".spectacular/config.yaml"
+  local id="$1" field="$2" cfg="$SPEC_WORKSPACE_DIR/config.yaml"
   [[ -f "$cfg" ]] || return 0
   awk -v id="$id" -v field="$field" '
     /^policies:/ { in_p=1; next }
@@ -9866,7 +9894,7 @@ _policy_cfg_get() {
 
 # List all policy ids appearing in config.yaml's `policies:` block.
 _policy_cfg_custom_ids() {
-  local cfg=".spectacular/config.yaml"
+  local cfg="$SPEC_WORKSPACE_DIR/config.yaml"
   [[ -f "$cfg" ]] || return 0
   awk '
     /^policies:/ { in_p=1; next }
@@ -9878,7 +9906,7 @@ _policy_cfg_custom_ids() {
 # Pull a principle's heading + first content line from PRINCIPLES.md.
 # Arg: principle number N. Stdout: "N. <heading> — <first line>" or empty.
 _policy_principle_line() {
-  local n="$1" pr=".spectacular/PRINCIPLES.md"
+  local n="$1" pr="$SPEC_WORKSPACE_DIR/PRINCIPLES.md"
   [[ -n "$n" ]] || return 0
   [[ -f "$pr" ]] || return 0
   awk -v n="$n" '
@@ -9902,7 +9930,7 @@ _policy_principle_line() {
 # Pull a principle's heading ONLY from PRINCIPLES.md (no body line).
 # Arg: principle number N. Stdout: "<heading title>" (without the "N. " prefix) or empty.
 _policy_principle_title() {
-  local n="$1" pr=".spectacular/PRINCIPLES.md"
+  local n="$1" pr="$SPEC_WORKSPACE_DIR/PRINCIPLES.md"
   [[ -n "$n" ]] || return 0
   [[ -f "$pr" ]] || return 0
   awk -v n="$n" '
@@ -9979,8 +10007,8 @@ EOF
     esac
   done
 
-  [[ -d ".spectacular" ]] || die "policy: not inside a Spectacular workspace"
-  [[ -f ".spectacular/POLICY.md" ]] || die_recover "policy: .spectacular/POLICY.md not found" \
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "policy: not inside a Spectacular workspace"
+  [[ -f "$SPEC_WORKSPACE_DIR/POLICY.md" ]] || die_recover "policy: .spectacular/POLICY.md not found" \
     "spectacular doctor --fix   # re-scaffold the always-set POLICY.md"
 
   # Validate hook arg against the known set.
@@ -10112,7 +10140,7 @@ doc_prd() {
   # runs `spectacular prd grill`. Init only handles `triggers-docs` (which
   # sibling docs to scaffold). See references/kits-contract.md.
   local name="$1" kit_id="$2"
-  write_if_missing ".spectacular/PRD.md" "---
+  write_if_missing "$SPEC_WORKSPACE_DIR/PRD.md" "---
 version: 1.1
 updated: ${TODAY}
 summary: \"\"
@@ -10149,7 +10177,7 @@ kit: ${kit_id}
 
 doc_principles() {
   local name="$1"
-  write_if_missing ".spectacular/PRINCIPLES.md" "---
+  write_if_missing "$SPEC_WORKSPACE_DIR/PRINCIPLES.md" "---
 version: 1.0
 updated: ${TODAY}
 summary: \"Operating principles for this project + runtime enforcement hooks\"
@@ -10228,7 +10256,7 @@ Default to the minimum high-impact slice now — verify, learn, extend. Build le
 # correct, enforceable contract. Full spec: references/policies-contract.md.
 doc_policy() {
   local name="$1"
-  write_if_missing ".spectacular/POLICY.md" "---
+  write_if_missing "$SPEC_WORKSPACE_DIR/POLICY.md" "---
 version: 1.0
 updated: ${TODAY}
 summary: \"Operating policies — the practice layer paired with PRINCIPLES.md\"
@@ -10400,7 +10428,7 @@ Before handing off, summarize what changed, what's left, and what's next, so the
 
 doc_architecture() {
   local name="$1"
-  write_if_missing ".spectacular/ARCHITECTURE.md" "---
+  write_if_missing "$SPEC_WORKSPACE_DIR/ARCHITECTURE.md" "---
 version: 1.0
 updated: ${TODAY}
 summary: \"Structure of this project's .spectacular/ workspace\"
@@ -10431,8 +10459,8 @@ related:
 
 doc_spec() {
   local name="$1"
-  mkdir -p ".spectacular/specs"
-  write_if_missing ".spectacular/specs/index.md" "---
+  mkdir -p "$SPEC_SPECS_DIR"
+  write_if_missing "$SPEC_SPECS_DIR/index.md" "---
 version: 1.0
 updated: ${TODAY}
 summary: \"Index of what this system actually is and how it behaves right now\"
@@ -10475,8 +10503,8 @@ Link out to \`specs/<capability>.md\` only when a capability needs more than one
 
 doc_roadmap() {
   local name="$1"
-  mkdir -p ".spectacular/roadmaps"
-  write_if_missing ".spectacular/roadmaps/index.md" "---
+  mkdir -p "$SPEC_ROADMAPS_DIR"
+  write_if_missing "$SPEC_ROADMAPS_DIR/index.md" "---
 version: 1.0
 updated: ${TODAY}
 summary: \"${name} roadmap — v1 status, v2 features, v3+ direction\"
@@ -10499,7 +10527,7 @@ related:
 }
 
 doc_stack() {
-  write_if_missing ".spectacular/STACK.md" "---
+  write_if_missing "$SPEC_WORKSPACE_DIR/STACK.md" "---
 version: 1.0
 updated: ${TODAY}
 summary: \"Technology stack and engineering rules\"
@@ -10513,8 +10541,8 @@ summary: \"Technology stack and engineering rules\"
 }
 
 doc_decisions() {
-  mkdir -p ".spectacular/decisions"
-  write_if_missing ".spectacular/decisions/index.md" "---
+  mkdir -p "$SPEC_DECISIONS_DIR"
+  write_if_missing "$SPEC_DECISIONS_DIR/index.md" "---
 type: decisions
 doc: decisions
 updated: ${TODAY}
@@ -10525,8 +10553,8 @@ updated: ${TODAY}
 }
 
 doc_memory() {
-  mkdir -p ".spectacular/memories"
-  write_if_missing ".spectacular/memories/index.md" "---
+  mkdir -p "$SPEC_MEMORIES_DIR"
+  write_if_missing "$SPEC_MEMORIES_DIR/index.md" "---
 type: index
 doc: memory
 version: 1.0
@@ -10542,8 +10570,8 @@ summary: \"Operational memory index — auto-regenerated by spectacular remember
 }
 
 doc_sessions() {
-  mkdir -p ".spectacular/sessions"
-  write_if_missing ".spectacular/sessions/index.md" "---
+  mkdir -p "$SPEC_SESSIONS_DIR"
+  write_if_missing "$SPEC_SESSIONS_DIR/index.md" "---
 type: index
 doc: sessions
 version: 1.0
@@ -10559,7 +10587,7 @@ summary: \"Sessions index — auto-regenerated by spectacular session start|end\
 }
 
 doc_personas() {
-  write_if_missing ".spectacular/PERSONAS.md" "---
+  write_if_missing "$SPEC_WORKSPACE_DIR/PERSONAS.md" "---
 version: 1.0
 updated: ${TODAY}
 summary: \"Audience profiles and the user stories that drive build decisions\"
@@ -10593,7 +10621,7 @@ related:
 # Existing contents (notably legacy fixes/F<N>.md records) are never touched.
 doc_reserved_collection() {
   local collection="$1"
-  local dir=".spectacular/${collection}"
+  local dir="$SPEC_WORKSPACE_DIR/${collection}"
   if [[ ! -d "$dir" ]]; then
     mkdir -p "$dir"
     touch "$dir/.gitkeep"
@@ -10614,7 +10642,7 @@ doc_benchmarks() { doc_reserved_collection "benchmarks"; }
 
 doc_agents() {
   local name="$1" agents_file="$2"
-  write_if_missing ".spectacular/${agents_file}" "---
+  write_if_missing "$SPEC_WORKSPACE_DIR/${agents_file}" "---
 version: 1.0
 updated: ${TODAY}
 summary: \"Onboarding doc for any agent or human landing inside .spectacular/\"
@@ -10722,7 +10750,7 @@ doc_gitignore() {
 # Returns 0 if it changed the file, 1 if already in sync.
 snapshot_gitignore_sync() {
   local gitignore=".gitignore"
-  local entry=".spectacular/$(config_snapshots_folder)/"
+  local entry="$SPEC_WORKSPACE_DIR/$(config_snapshots_folder)/"
   local want; want="$(config_snapshots_gitignore)"
   [[ -f "$gitignore" ]] || { [[ "$want" == "true" ]] || return 1; touch "$gitignore"; }
   local present=1; grep -qxF "$entry" "$gitignore" 2>/dev/null || present=0
@@ -10991,14 +11019,14 @@ check_skill() {
   fi
   if [[ -f "$lock" ]]; then
     if grep -q "^spectacular:" "$lock" 2>/dev/null || grep -q "ref:" "$lock" 2>/dev/null; then
-      doc_add "skill" "pass" ".spectacular/skills.lock" "skills.lock present"
+      doc_add "skill" "pass" "$SPEC_WORKSPACE_DIR/skills.lock" "skills.lock present"
     else
-      doc_add "skill" "warning" ".spectacular/skills.lock" "skills.lock present but no ref/version detected" "" "judgment"
+      doc_add "skill" "warning" "$SPEC_WORKSPACE_DIR/skills.lock" "skills.lock present but no ref/version detected" "" "judgment"
     fi
   elif $is_source_repo; then
-    doc_add "skill" "info" ".spectacular/skills.lock" "absent (this is the spectacular source repo — expected)"
+    doc_add "skill" "info" "$SPEC_WORKSPACE_DIR/skills.lock" "absent (this is the spectacular source repo — expected)"
   else
-    doc_add "skill" "warning" ".spectacular/skills.lock" "missing (skill may not have been installed via CLI)" "" "judgment"
+    doc_add "skill" "warning" "$SPEC_WORKSPACE_DIR/skills.lock" "missing (skill may not have been installed via CLI)" "" "judgment"
   fi
 
   # SKILL.md parseable
@@ -11055,44 +11083,44 @@ check_skill_desc_len() {
 
 # ── area: workspace ───────────────────────────────────────────────────────────
 check_workspace() {
-  if [[ ! -d ".spectacular" ]]; then
-    doc_add "workspace" "error" ".spectacular/" "directory missing — workspace not initialized" \
+  if [[ ! -d "$SPEC_WORKSPACE_DIR" ]]; then
+    doc_add "workspace" "error" "$SPEC_WORKSPACE_DIR/" "directory missing — workspace not initialized" \
       "run \`spectacular init\`" "judgment"
     return
   fi
-  doc_add "workspace" "pass" ".spectacular/" "workspace directory present"
+  doc_add "workspace" "pass" "$SPEC_WORKSPACE_DIR/" "workspace directory present"
 
   # Always-set files (per smart-init's definition)
   # Determine which agents-file is in use by reading config.yaml first
   local agents_file="AGENTS.md"
-  if [[ -f ".spectacular/config.yaml" ]]; then
+  if [[ -f "$SPEC_WORKSPACE_DIR/config.yaml" ]]; then
     local cfg_agents
-    cfg_agents=$(awk '/^  file:/ { print $2; exit }' ".spectacular/config.yaml" 2>/dev/null)
+    cfg_agents=$(awk '/^  file:/ { print $2; exit }' "$SPEC_WORKSPACE_DIR/config.yaml" 2>/dev/null)
     [[ -n "$cfg_agents" ]] && agents_file="$cfg_agents"
   fi
 
   local always_set=("PRD.md" "config.yaml" "POLICY.md" "$agents_file")
   for f in "${always_set[@]}"; do
-    if [[ -f ".spectacular/$f" ]]; then
-      doc_add "workspace" "pass" ".spectacular/$f" "always-set file present"
+    if [[ -f "$SPEC_WORKSPACE_DIR/$f" ]]; then
+      doc_add "workspace" "pass" "$SPEC_WORKSPACE_DIR/$f" "always-set file present"
     else
-      doc_add "workspace" "error" ".spectacular/$f" "always-set file missing" \
+      doc_add "workspace" "error" "$SPEC_WORKSPACE_DIR/$f" "always-set file missing" \
         "re-scaffold via \`spectacular doctor --fix\` or \`spectacular init\`" "mechanical"
     fi
   done
 
   # Always-set directories
   for d in "requests" "specs"; do
-    if [[ -d ".spectacular/$d" ]]; then
-      doc_add "workspace" "pass" ".spectacular/$d/" "always-set directory present"
+    if [[ -d "$SPEC_WORKSPACE_DIR/$d" ]]; then
+      doc_add "workspace" "pass" "$SPEC_WORKSPACE_DIR/$d/" "always-set directory present"
     else
-      doc_add "workspace" "error" ".spectacular/$d/" "always-set directory missing" \
+      doc_add "workspace" "error" "$SPEC_WORKSPACE_DIR/$d/" "always-set directory missing" \
         "mkdir -p .spectacular/$d (mechanical fix available)" "mechanical"
     fi
   done
 
   # config.yaml parses + has project: stanza
-  if [[ -f ".spectacular/config.yaml" ]]; then
+  if [[ -f "$SPEC_WORKSPACE_DIR/config.yaml" ]]; then
     # Real YAML parse via Python if available (PyYAML is stdlib-adjacent; degrade if absent)
     local yaml_ok=true
     local yaml_err=""
@@ -11111,7 +11139,7 @@ except yaml.YAMLError as e:
     msg = str(e).replace("\n", " ").strip()
     print(msg[:200])
     sys.exit(1)
-' ".spectacular/config.yaml" 2>&1); then
+' "$SPEC_WORKSPACE_DIR/config.yaml" 2>&1); then
         :
       else
         yaml_code=$?
@@ -11122,13 +11150,13 @@ except yaml.YAMLError as e:
       fi
     fi
     if ! $yaml_ok; then
-      doc_add "workspace" "error" ".spectacular/config.yaml" "config.yaml is not valid YAML: ${yaml_err:-parse failed}" \
+      doc_add "workspace" "error" "$SPEC_WORKSPACE_DIR/config.yaml" "config.yaml is not valid YAML: ${yaml_err:-parse failed}" \
         "fix YAML syntax in config.yaml" "judgment"
-    elif ! grep -q "^project:" ".spectacular/config.yaml" 2>/dev/null; then
-      doc_add "workspace" "error" ".spectacular/config.yaml" "config.yaml missing project: stanza" \
+    elif ! grep -q "^project:" "$SPEC_WORKSPACE_DIR/config.yaml" 2>/dev/null; then
+      doc_add "workspace" "error" "$SPEC_WORKSPACE_DIR/config.yaml" "config.yaml missing project: stanza" \
         "rewrite config.yaml with project name/summary/kit" "judgment"
     else
-      doc_add "workspace" "pass" ".spectacular/config.yaml" "config.yaml parses + has project: stanza"
+      doc_add "workspace" "pass" "$SPEC_WORKSPACE_DIR/config.yaml" "config.yaml parses + has project: stanza"
     fi
 
     # Schema-behind: workspace_schema older than the CLI's CURRENT_SCHEMA means
@@ -11138,14 +11166,14 @@ except yaml.YAMLError as e:
     declared_schema="$(config_workspace_schema)"
     if [[ -n "$declared_schema" ]]; then
       if [[ "$declared_schema" == "$CURRENT_SCHEMA" ]]; then
-        doc_add "workspace" "pass" ".spectacular/config.yaml" "workspace_schema ${declared_schema} matches CLI (${CURRENT_SCHEMA})"
+        doc_add "workspace" "pass" "$SPEC_WORKSPACE_DIR/config.yaml" "workspace_schema ${declared_schema} matches CLI (${CURRENT_SCHEMA})"
       elif schema_lt "$declared_schema" "$CURRENT_SCHEMA"; then
-        doc_add "workspace" "warning" ".spectacular/config.yaml" \
+        doc_add "workspace" "warning" "$SPEC_WORKSPACE_DIR/config.yaml" \
           "workspace_schema ${declared_schema} is behind CLI (expects ${CURRENT_SCHEMA})" \
           "run \`spectacular migrate\` (preview with --dry-run)" "judgment"
       else
         # Declared newer than CLI knows — the CLI is stale, not the workspace.
-        doc_add "workspace" "warning" ".spectacular/config.yaml" \
+        doc_add "workspace" "warning" "$SPEC_WORKSPACE_DIR/config.yaml" \
           "workspace_schema ${declared_schema} is newer than this CLI (${CURRENT_SCHEMA}) — update the CLI" \
           "run \`spectacular init --update\`" "judgment"
       fi
@@ -11175,9 +11203,9 @@ except yaml.YAMLError as e:
   local path
   for v06_name in PRINCIPLES ARCHITECTURE ROADMAP; do
     if [[ "$v06_name" == "ROADMAP" ]]; then
-      path=".spectacular/roadmaps/index.md"
+      path="$SPEC_ROADMAPS_DIR/index.md"
     else
-      path=".spectacular/${v06_name}.md"
+      path="$SPEC_WORKSPACE_DIR/${v06_name}.md"
     fi
     [[ -f "$path" ]] || missing_v06+=("$v06_name")
   done
@@ -11186,7 +11214,7 @@ except yaml.YAMLError as e:
     v06_list=$(printf '%s, ' "${missing_v06[@]}" | sed 's/, $//')
     # Bash 3-compatible lowercase via tr (macOS default is bash 3.2)
     with_arg=$(printf '%s,' "${missing_v06[@]}" | sed 's/,$//' | tr '[:upper:]' '[:lower:]')
-    doc_add "workspace" "info" ".spectacular/" \
+    doc_add "workspace" "info" "$SPEC_WORKSPACE_DIR/" \
       "v0.6+ conventional files missing: ${v06_list} (optional)" \
       "spectacular init --with ${with_arg}" "judgment"
   fi
@@ -11194,8 +11222,8 @@ except yaml.YAMLError as e:
   # v0.9+ ROADMAP shape detection: structured roadmaps have `**Phase:**` markers
   # and `**Scope (in):**` slots. Pre-v0.9 freeform roadmaps have only `**Status:**`
   # plus loose bullet lists. Surface as info — never error.
-  local roadmap=".spectacular/roadmaps/index.md"
-  [[ -f "$roadmap" ]] || roadmap=".spectacular/ROADMAP.md"
+  local roadmap="$SPEC_ROADMAPS_DIR/index.md"
+  [[ -f "$roadmap" ]] || roadmap="$SPEC_WORKSPACE_DIR/ROADMAP.md"
   if [[ -f "$roadmap" ]]; then
     if grep -q "^## v" "$roadmap" 2>/dev/null && ! grep -q "^\*\*Phase:\*\*" "$roadmap" 2>/dev/null; then
       doc_add "workspace" "info" "$roadmap" \
@@ -11216,14 +11244,14 @@ except yaml.YAMLError as e:
 # For each canonical .md at .spectacular/ root, check it has frontmatter delimiters
 # and required fields (version, updated, summary). Schema-version drift = warning.
 check_frontmatter() {
-  if [[ ! -d ".spectacular" ]]; then
+  if [[ ! -d "$SPEC_WORKSPACE_DIR" ]]; then
     return
   fi
 
   local required_fields="version updated summary"
   shopt -s nullglob
   # Note: only scan .spectacular root, not archive/ (archive is read-only per architecture)
-  for f in .spectacular/*.md; do
+  for f in "$SPEC_WORKSPACE_DIR"/*.md; do
     local base
     base=$(basename "$f")
 
@@ -11271,7 +11299,7 @@ check_frontmatter() {
 #   3. Version-sequence gaps in the store tree
 #   4. Retention: snapshots outside the kept tiers (prunable) → info
 check_snapshots() {
-  if [[ ! -d ".spectacular" ]]; then
+  if [[ ! -d "$SPEC_WORKSPACE_DIR" ]]; then
     return
   fi
 
@@ -11281,7 +11309,7 @@ check_snapshots() {
 
   # ── 1. Legacy root-level snapshot detection (migration warning) ─────────────
   shopt -s nullglob
-  local legacy=(.spectacular/*@v*.md)
+  local legacy=("$SPEC_WORKSPACE_DIR"/*@v*.md)
   shopt -u nullglob
   if [[ ${#legacy[@]} -gt 0 ]]; then
     for s in "${legacy[@]}"; do
@@ -11298,8 +11326,8 @@ check_snapshots() {
   fi
 
   # ── 2. Folder migration: old snapshots/ while config wants a different store ─
-  if [[ "$snap_folder" != "snapshots" && -d ".spectacular/snapshots" && ! -d ".spectacular/$snap_folder" ]]; then
-    doc_add "snapshots" "warning" ".spectacular/snapshots/" \
+  if [[ "$snap_folder" != "snapshots" && -d "$SPEC_WORKSPACE_DIR/snapshots" && ! -d "$SPEC_WORKSPACE_DIR/$snap_folder" ]]; then
+    doc_add "snapshots" "warning" "$SPEC_WORKSPACE_DIR/snapshots/" \
       "snapshot store is at snapshots/ but config wants ${snap_folder}/ (b16 rename)" \
       "spectacular doctor --fix snapshots  # renames snapshots/ → ${snap_folder}/" \
       "mechanical"
@@ -11308,7 +11336,7 @@ check_snapshots() {
   # ── 2b. gitignore drift: .gitignore line doesn't match snapshots.gitignore ──
   local want_gi gi_entry gi_present=0
   want_gi="$(config_snapshots_gitignore)"
-  gi_entry=".spectacular/${snap_folder}/"
+  gi_entry="$SPEC_WORKSPACE_DIR/${snap_folder}/"
   grep -qxF "$gi_entry" .gitignore 2>/dev/null && gi_present=1
   if [[ "$want_gi" == "true" && "$gi_present" -eq 0 ]]; then
     doc_add "snapshots" "warning" ".gitignore" \
@@ -11437,7 +11465,7 @@ check_snapshots() {
 # Walk every canonical .md, extract `related:` frontmatter entries, verify each
 # target exists (resolved relative to the file's location).
 check_links() {
-  if [[ ! -d ".spectacular" ]]; then return; fi
+  if [[ ! -d "$SPEC_WORKSPACE_DIR" ]]; then return; fi
 
   # Root-aware target resolution (v1.16.0+):
   # - Bare slug (no '/', no '.md') → resolve as request slug: requests/<slug>/PLAN.md
@@ -11468,9 +11496,9 @@ check_links() {
 
   _cl_check_slug() {
     local slug="$1" file="$2" field="$3"
-    if [[ -f ".spectacular/requests/$slug/PLAN.md" ]]; then
+    if [[ -f "$SPEC_REQUESTS_DIR/$slug/PLAN.md" ]]; then
       : # active request — valid
-    elif [[ -f ".spectacular/archive/$slug/PLAN.md" ]]; then
+    elif [[ -f "$SPEC_ARCHIVE_DIR/$slug/PLAN.md" ]]; then
       : # archived = satisfied — valid, not a warning
     else
       doc_add "links" "warning" "$file" \
@@ -11484,7 +11512,7 @@ check_links() {
   while IFS= read -r f; do
     [[ -f "$f" ]] || continue
     if [[ "$(basename "$f")" =~ @v ]]; then continue; fi
-    if [[ "$f" == *".spectacular/archive/"* ]]; then continue; fi
+    if [[ "$f" == *"$SPEC_ARCHIVE_DIR/"* ]]; then continue; fi
 
     local in_fm=false cur_field=""
     while IFS= read -r line; do
@@ -11532,11 +11560,11 @@ check_links() {
         fi
       fi
     done < "$f"
-  done < <(find ".spectacular" -type f -name "*.md")
+  done < <(find "$SPEC_WORKSPACE_DIR" -type f -name "*.md")
   shopt -u nullglob
 
   if ! echo "$DOC_FINDINGS" | grep -q "^links|warning"; then
-    doc_add "links" "pass" ".spectacular/" "all related:/depends-on:/blocks: targets resolve"
+    doc_add "links" "pass" "$SPEC_WORKSPACE_DIR/" "all related:/depends-on:/blocks: targets resolve"
   fi
 }
 
@@ -11623,14 +11651,14 @@ _check_request_structure() {
 # ── area: lifecycle ───────────────────────────────────────────────────────────
 # For each request, check status frontmatter against required artifacts.
 check_lifecycle() {
-  if [[ ! -d ".spectacular/requests" ]]; then return; fi
+  if [[ ! -d "$SPEC_REQUESTS_DIR" ]]; then return; fi
 
   shopt -s nullglob
-  local request_dirs=(.spectacular/requests/*/)
+  local request_dirs=("$SPEC_REQUESTS_DIR"/*/)
   shopt -u nullglob
 
   if [[ ${#request_dirs[@]} -eq 0 ]]; then
-    doc_add "lifecycle" "info" ".spectacular/requests/" "no requests yet"
+    doc_add "lifecycle" "info" "$SPEC_REQUESTS_DIR/" "no requests yet"
     return
   fi
 
@@ -11835,7 +11863,7 @@ check_lifecycle() {
   done
 
   if [[ $issues -eq 0 ]]; then
-    doc_add "lifecycle" "pass" ".spectacular/requests/" "all requests have valid lifecycle state"
+    doc_add "lifecycle" "pass" "$SPEC_REQUESTS_DIR/" "all requests have valid lifecycle state"
   fi
 }
 
@@ -11892,7 +11920,7 @@ check_kits() {
   done
 
   # Project-local kits override
-  local local_kits=".spectacular/templates/prd/kits"
+  local local_kits="$SPEC_WORKSPACE_DIR/templates/prd/kits"
   if [[ -d "$local_kits" ]]; then
     shopt -s nullglob
     local local_files=("$local_kits"/*.md)
@@ -11903,14 +11931,14 @@ check_kits() {
   fi
 
   # PRD kit identity check
-  if [[ -f ".spectacular/PRD.md" ]]; then
+  if [[ -f "$SPEC_WORKSPACE_DIR/PRD.md" ]]; then
     local prd_kit
-    prd_kit=$(awk -F': ' '/^---$/{c++; next} c==1 && /^kit:/ { print $2; exit }' .spectacular/PRD.md | xargs)
+    prd_kit=$(awk -F': ' '/^---$/{c++; next} c==1 && /^kit:/ { print $2; exit }' "$SPEC_WORKSPACE_DIR/PRD.md" | xargs)
     if [[ -n "$prd_kit" ]]; then
       if [[ -f "$kits_dir/$prd_kit.md" ]] || [[ -f "$local_kits/$prd_kit.md" ]]; then
-        doc_add "kits" "pass" ".spectacular/PRD.md" "declared kit '$prd_kit' is resolvable"
+        doc_add "kits" "pass" "$SPEC_WORKSPACE_DIR/PRD.md" "declared kit '$prd_kit' is resolvable"
       else
-        doc_add "kits" "error" ".spectacular/PRD.md" "declares kit '$prd_kit' but no matching kit file found" \
+        doc_add "kits" "error" "$SPEC_WORKSPACE_DIR/PRD.md" "declares kit '$prd_kit' but no matching kit file found" \
           "install missing kit or change PRD's kit: field" "judgment"
       fi
     fi
@@ -12026,7 +12054,7 @@ check_conventions() {
   pack_src_name="$(config_pack_source 2>/dev/null)"
 
   if [[ -z "$pack_src_name" ]]; then
-    doc_add "conventions" "info" ".spectacular/config.yaml" "no convention_pack declared — skipped"
+    doc_add "conventions" "info" "$SPEC_WORKSPACE_DIR/config.yaml" "no convention_pack declared — skipped"
     return
   fi
 
@@ -12041,7 +12069,7 @@ check_conventions() {
     case "$pack_mode_raw" in
       suggest|scaffold|enforce) ;;
       *)
-        doc_add "conventions" "info" ".spectacular/config.yaml" \
+        doc_add "conventions" "info" "$SPEC_WORKSPACE_DIR/config.yaml" \
           "unknown convention_pack.mode '$pack_mode_raw' (valid: suggest / scaffold / enforce) — falling back to 'suggest'" \
           "set mode to one of: suggest, scaffold, enforce" "judgment"
         ;;
@@ -12050,7 +12078,7 @@ check_conventions() {
 
   local pack_resolved
   if ! pack_resolved="$(pack_resolve "$pack_src_name")"; then
-    doc_add "conventions" "error" ".spectacular/config.yaml" \
+    doc_add "conventions" "error" "$SPEC_WORKSPACE_DIR/config.yaml" \
       "convention_pack source '$pack_src_name' not found in any scope" \
       "run 'spectacular pack install $pack_src_name' or change source in config.yaml" "judgment"
     return
@@ -12095,11 +12123,11 @@ check_conventions() {
 # Validate the system-spec surface: SPEC.md index + specs/ dir + legacy current/ migration.
 # Per-capability files under specs/<capability>/SPEC.md are optional (only for complex work).
 check_specs() {
-  [[ -d ".spectacular" ]] || return 0
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
 
-  local spec_file=".spectacular/specs/index.md"
-  local specs_dir=".spectacular/specs"
-  local legacy_dir=".spectacular/current"
+  local spec_file="$SPEC_SPECS_DIR/index.md"
+  local specs_dir="$SPEC_SPECS_DIR"
+  local legacy_dir="$SPEC_WORKSPACE_DIR/current"
 
   # Conflict: both current/ and specs/ present → manual merge required
   if [[ -d "$legacy_dir" && -d "$specs_dir" ]]; then
@@ -12227,7 +12255,7 @@ check_specs() {
   # against the current spec files. MODIFIED/REMOVED must quote a bullet that
   # exists; ADDED must not duplicate one. NONE is always valid. This replaces the
   # date heuristic below as the primary drift signal (heuristic stays as backstop).
-  for delta in .spectacular/requests/*/SPEC-DELTA.md; do
+  for delta in "$SPEC_REQUESTS_DIR"/*/SPEC-DELTA.md; do
     [[ -f "$delta" ]] || continue
     local dslug; dslug="$(basename "$(dirname "$delta")")"
     # NONE line → valid, nothing to check.
@@ -12252,7 +12280,7 @@ check_specs() {
       [[ "$line" =~ ^-\ .*::.* ]] || continue   # only `- <file> :: <payload>` lines
       file="${line#- }"; file="${file%% ::*}"; file="$(echo "$file" | sed 's/[[:space:]]*$//')"
       payload="${line#*:: }"
-      local target=".spectacular/$file"
+      local target="$SPEC_WORKSPACE_DIR/$file"
       [[ -f "$target" ]] || { doc_add "specs" "warning" "$delta" "delta targets missing file: $file (for $dslug)" "fix the file path in SPEC-DELTA.md" "judgment"; ok=0; continue; }
       case "$section" in
         MODIFIED|REMOVED)
@@ -12277,7 +12305,7 @@ check_specs() {
     local spec_updated newest_arch="" newest_epoch=0 spec_epoch
     spec_updated=$(fm_get "$spec_file" "updated")
     spec_epoch=$(_date_to_epoch "$spec_updated")
-    for arch_plan in .spectacular/archive/*/PLAN.md; do
+    for arch_plan in "$SPEC_ARCHIVE_DIR"/*/PLAN.md; do
       [[ -f "$arch_plan" ]] || continue
       local a_upd a_epoch
       a_upd=$(fm_get "$arch_plan" "updated")
@@ -12335,9 +12363,9 @@ check_docs() {
 # validate frontmatter + at least one persona block + at least one story per
 # persona. Never errors on absence.
 check_personas() {
-  [[ -d ".spectacular" ]] || return 0
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
 
-  local pf=".spectacular/PERSONAS.md"
+  local pf="$SPEC_WORKSPACE_DIR/PERSONAS.md"
 
   if [[ ! -f "$pf" ]]; then
     doc_add "personas" "info" "$pf" "PERSONAS.md not scaffolded — opt-in via 'spectacular init --with personas' or product/content kits" \
@@ -12421,8 +12449,8 @@ check_personas() {
 # ── check_memory (v1.5.0+) ───────────────────────────────────────────────────
 # Soft-DB self-check: index ↔ entries drift, frontmatter shape.
 check_memory() {
-  [[ -d ".spectacular" ]] || return 0
-  local idx=".spectacular/memories/index.md" dir=".spectacular/memories"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
+  local idx="$SPEC_MEMORIES_DIR/index.md" dir="$SPEC_MEMORIES_DIR"
 
   if [[ ! -f "$idx" ]] && [[ ! -d "$dir" ]]; then
     doc_add "memory" "info" "$idx" "memories/index.md not scaffolded — opt-in via 'spectacular init --with memory' or coding kit" \
@@ -12528,8 +12556,8 @@ check_memory() {
 # ── check_sessions (v1.5.0+) ─────────────────────────────────────────────────
 # Soft-DB + lifecycle: at most one open, 4h stale-open warning.
 check_sessions() {
-  [[ -d ".spectacular" ]] || return 0
-  local idx=".spectacular/sessions/index.md" dir=".spectacular/sessions"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
+  local idx="$SPEC_SESSIONS_DIR/index.md" dir="$SPEC_SESSIONS_DIR"
 
   if [[ ! -f "$idx" ]] && [[ ! -d "$dir" ]]; then
     doc_add "sessions" "info" "$idx" "sessions/index.md not scaffolded — opt-in via 'spectacular init --with sessions' or coding kit" \
@@ -12618,17 +12646,17 @@ check_sessions() {
 #   - orphan back-refs (PLAN feedback: list mentions a missing file, or
 #     entry's request: field points to a missing request)
 check_feedback() {
-  [[ -d ".spectacular" ]] || return 0
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
 
-  local top_dir=".spectacular/feedbacks"
+  local top_dir="$SPEC_WORKSPACE_DIR/feedbacks"
   local has_any=false
 
-  if [[ -d "$top_dir" ]] || ls -d .spectacular/requests/*/feedbacks >/dev/null 2>&1; then
+  if [[ -d "$top_dir" ]] || ls -d "$SPEC_REQUESTS_DIR"/*/feedbacks >/dev/null 2>&1; then
     has_any=true
   fi
 
   if ! $has_any; then
-    doc_add "feedback" "info" ".spectacular/feedbacks/" "no feedback entries yet — start one with 'spectacular feedback-loop new <target>'" \
+    doc_add "feedback" "info" "$SPEC_WORKSPACE_DIR/feedbacks/" "no feedback entries yet — start one with 'spectacular feedback-loop new <target>'" \
       "skip" "judgment"
     return 0
   fi
@@ -12671,7 +12699,7 @@ check_feedback() {
 
     # Orphan back-ref: request: field set but request folder missing
     if [[ -n "$request_v" && "$request_v" != "null" ]]; then
-      if [[ ! -d ".spectacular/requests/$request_v" ]]; then
+      if [[ ! -d "$SPEC_REQUESTS_DIR/$request_v" ]]; then
         orphan_count=$((orphan_count + 1))
         orphan_files="${orphan_files:+$orphan_files, }$(basename "$f" .md)→$request_v"
       fi
@@ -12704,9 +12732,9 @@ check_feedback() {
 # ── check_ideas (v1.7.0+) ────────────────────────────────────────────────────
 # Judgment-only — no --fix. Flags stale exploring, orphan promoted, malformed.
 check_ideas() {
-  [[ -d ".spectacular" ]] || return 0
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
 
-  local top_dir=".spectacular/ideas"
+  local top_dir="$SPEC_IDEAS_DIR"
 
   if [[ ! -d "$top_dir" ]]; then
     doc_add "ideas" "info" "$top_dir" "no ideas/ folder — opt-in via 'spectacular idea new <slug>'" \
@@ -12792,7 +12820,7 @@ check_ideas() {
 # Validates canonical IDs and the blocked_by DAG. Derived fog/frontier remains
 # read-only; doctor catches the structural defects that would make it lie.
 check_wayfinding() {
-  [[ -d .spectacular ]] || return 0
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
   local tmp nodes edges f id dep dep_file count=0 malformed="" duplicate="" dangling=""
   tmp=$(mktemp -d)
   nodes="$tmp/nodes"; edges="$tmp/edges"
@@ -12801,7 +12829,7 @@ check_wayfinding() {
   local collection base slug_key slug_seen="$tmp/slugs" slug_duplicates=""
   : > "$slug_seen"
   for collection in ideas questions research spikes decisions specs; do
-    for f in ".spectacular/$collection"/*.md; do
+    for f in "$SPEC_WORKSPACE_DIR/$collection"/*.md; do
       [[ -f "$f" && "$(basename "$f")" != index.md ]] || continue
       base=$(basename "$f" .md)
       slug_key=$(printf '%s' "$base" | sed -E 's/^(DEC|QUE|IDEA|RES|SPK|SPC)-[0-9]+-//; s/^D[0-9]+-//')
@@ -12812,7 +12840,7 @@ check_wayfinding() {
       fi
     done
   done
-  [[ -z "$slug_duplicates" ]] || doc_add "wayfinding" "error" ".spectacular/" "duplicate slug(s) within a collection: $slug_duplicates" \
+  [[ -z "$slug_duplicates" ]] || doc_add "wayfinding" "error" "$SPEC_WORKSPACE_DIR/" "duplicate slug(s) within a collection: $slug_duplicates" \
     "rename one record through an explicit, reference-aware migration" "judgment"
 
   while IFS= read -r f; do
@@ -12843,7 +12871,7 @@ check_wayfinding() {
 
   if (( count == 0 )); then
     rm -rf "$tmp"
-    doc_add "wayfinding" "info" ".spectacular/" "no canonical discovery nodes yet"
+    doc_add "wayfinding" "info" "$SPEC_WORKSPACE_DIR/" "no canonical discovery nodes yet"
     return 0
   fi
 
@@ -12856,11 +12884,11 @@ check_wayfinding() {
     dep_file=$(_wayfind_find_id "$dep") || dangling="${dangling:+$dangling, }${id}→${dep}"
   done < "$edges"
 
-  [[ -z "$malformed" ]] || doc_add "wayfinding" "warning" ".spectacular/" "non-canonical ID/reference(s): $malformed" \
+  [[ -z "$malformed" ]] || doc_add "wayfinding" "warning" "$SPEC_WORKSPACE_DIR/" "non-canonical ID/reference(s): $malformed" \
     "normalize with 'spectacular id resolve'; persist canonical IDs" "judgment"
-  [[ -z "$duplicate" ]] || doc_add "wayfinding" "error" ".spectacular/" "duplicate canonical ID(s): $duplicate" \
+  [[ -z "$duplicate" ]] || doc_add "wayfinding" "error" "$SPEC_WORKSPACE_DIR/" "duplicate canonical ID(s): $duplicate" \
     "assign a unique ID and rewrite inbound references" "judgment"
-  [[ -z "$dangling" ]] || doc_add "wayfinding" "warning" ".spectacular/" "dangling dependency reference(s): $dangling" \
+  [[ -z "$dangling" ]] || doc_add "wayfinding" "warning" "$SPEC_WORKSPACE_DIR/" "dangling dependency reference(s): $dangling" \
     "create/restore the referenced node or remove the stale edge" "judgment"
 
   local cycle
@@ -12883,7 +12911,7 @@ check_wayfinding() {
       for (n in node) if (color[n] == 0 && visit(n)) { print cycle; exit }
     }
   ' "$nodes" "$edges")
-  [[ -z "$cycle" ]] || doc_add "wayfinding" "error" ".spectacular/" "dependency cycle: $cycle" \
+  [[ -z "$cycle" ]] || doc_add "wayfinding" "error" "$SPEC_WORKSPACE_DIR/" "dependency cycle: $cycle" \
     "remove or reverse one blocked_by edge; a DAG cannot contain cycles" "judgment"
 
   # Dependencies outrank target versions. Compare the full SemVer base and the
@@ -12900,16 +12928,16 @@ check_wayfinding() {
       inversions="${inversions:+$inversions, }$id($node_target)→$dep($dep_target)"
     fi
   done < "$edges"
-  [[ -z "$inversions" ]] || doc_add "wayfinding" "warning" ".spectacular/" "target-version inversion(s): $inversions" \
+  [[ -z "$inversions" ]] || doc_add "wayfinding" "warning" "$SPEC_WORKSPACE_DIR/" "target-version inversion(s): $inversions" \
     "move the dependent target later or the prerequisite earlier; dependencies win, never reslot silently" "judgment"
 
   # Infer only strong prose signals. This is advisory: explicit frontmatter is
   # still the graph authority, and doctor never writes an inferred edge.
   local undeclared="" signal_files="" line ref declared source_id source_set plan_ref plan_set
   local scan_files=()
-  [[ -f .spectacular/PRD.md ]] && scan_files+=(.spectacular/PRD.md)
-  [[ -f .spectacular/roadmaps/index.md ]] && scan_files+=(.spectacular/roadmaps/index.md)
-  for f in .spectacular/specs/*.md .spectacular/requests/*/PLAN.md; do [[ -f "$f" ]] && scan_files+=("$f"); done
+  [[ -f "$SPEC_WORKSPACE_DIR/PRD.md" ]] && scan_files+=("$SPEC_WORKSPACE_DIR/PRD.md")
+  [[ -f "$SPEC_ROADMAPS_DIR/index.md" ]] && scan_files+=("$SPEC_ROADMAPS_DIR/index.md")
+  for f in "$SPEC_SPECS_DIR"/*.md "$SPEC_REQUESTS_DIR"/*/PLAN.md; do [[ -f "$f" ]] && scan_files+=("$f"); done
   for f in ${scan_files[@]+"${scan_files[@]}"}; do
     source_id=$(fm_get "$f" id); source_set=" "
     while IFS= read -r declared; do [[ -n "$declared" ]] && source_set+="$declared "; done < <(_fm_list "$f" blocked_by)
@@ -12919,14 +12947,14 @@ check_wayfinding() {
         if [[ -n "$source_id" && "$source_set" != *" $ref "* ]]; then
           undeclared="${undeclared:+$undeclared, }${source_id}→${ref}"
         elif [[ -z "$source_id" ]]; then
-          signal_files="${signal_files:+$signal_files, }${f#.spectacular/}→${ref}"
+          signal_files="${signal_files:+$signal_files, }${f#"$SPEC_WORKSPACE_DIR"/}→${ref}"
         fi
       done < <(printf '%s\n' "$line" | grep -Eo '(DEC|QUE|IDEA|RES|SPK|PRT|SPC|TSK)-[0-9]{3,}' | sort -u)
     done < <(grep -Ei 'depends[- ]on|blocked[- _]by|requires|prerequisite' "$f" 2>/dev/null || true)
 
     # Request PLAN body links under Dependencies must agree with either side of
     # its frontmatter graph. This catches prose-only request dependencies.
-    if [[ "$f" == .spectacular/requests/*/PLAN.md ]]; then
+    if [[ "$f" == "$SPEC_REQUESTS_DIR"/*/PLAN.md ]]; then
       plan_set=" "
       while IFS= read -r declared; do [[ -n "$declared" ]] && plan_set+="$declared "; done < <(_fm_list "$f" depends-on)
       while IFS= read -r declared; do [[ -n "$declared" ]] && plan_set+="$declared "; done < <(_fm_list "$f" blocks)
@@ -12939,13 +12967,13 @@ check_wayfinding() {
         | grep -Eo '\[\[[a-z0-9][a-z0-9-]+\]\]' | tr -d '[]' | sort -u)
     fi
   done
-  [[ -z "$undeclared" ]] || doc_add "wayfinding" "warning" ".spectacular/" "inferred dependency missing from frontmatter: $undeclared" \
+  [[ -z "$undeclared" ]] || doc_add "wayfinding" "warning" "$SPEC_WORKSPACE_DIR/" "inferred dependency missing from frontmatter: $undeclared" \
     "review the signal, then add blocked_by/depends-on/blocks explicitly or rewrite misleading prose" "judgment"
-  [[ -z "$signal_files" ]] || doc_add "wayfinding" "info" ".spectacular/" "cross-layer dependency signal(s) to review: $signal_files" \
+  [[ -z "$signal_files" ]] || doc_add "wayfinding" "info" "$SPEC_WORKSPACE_DIR/" "cross-layer dependency signal(s) to review: $signal_files" \
     "confirm the referenced canonical edge is represented by the owning node" "judgment"
 
   if [[ -z "$malformed$duplicate$dangling$cycle$inversions$undeclared" ]]; then
-    doc_add "wayfinding" "pass" ".spectacular/" "$count canonical discovery node(s); IDs, dependency DAG, and target order are valid"
+    doc_add "wayfinding" "pass" "$SPEC_WORKSPACE_DIR/" "$count canonical discovery node(s); IDs, dependency DAG, and target order are valid"
   fi
   rm -rf "$tmp"
 }
@@ -12957,8 +12985,8 @@ check_wayfinding() {
 # disposition value or a wont-fix/folded job that wrongly logged an F<N>, before
 # it surfaces later as a resume failure. Enums mirror references/debug-trace.md.
 check_debug() {
-  [[ -d ".spectacular" ]] || return 0
-  local top_dir=".spectacular/debugs"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
+  local top_dir="$SPEC_DEBUGS_DIR"
 
   if [[ ! -d "$top_dir" ]]; then
     doc_add "debug" "info" "$top_dir" "no debugs/ folder — opens on the first fleet job (see references/debug-trace.md)" \
@@ -13053,11 +13081,11 @@ print(len(lf) if isinstance(lf,list) else -1)
 # kind-vs-subfolder match, dangling persona refs, manifest-vs-files drift, and
 # approval progress. Mechanical --fix: regenerate the spine manifest.
 check_vision() {
-  [[ -d ".spectacular/requests" ]] || return 0
+  [[ -d "$SPEC_REQUESTS_DIR" ]] || return 0
 
-  local personas=".spectacular/PERSONAS.md"
+  local personas="$SPEC_WORKSPACE_DIR/PERSONAS.md"
   local req vdir found_any=false
-  for req in .spectacular/requests/*/; do
+  for req in "$SPEC_REQUESTS_DIR"/*/; do
     vdir="${req}vision"
     [[ -d "$vdir" ]] || continue
     found_any=true
@@ -13149,7 +13177,7 @@ check_vision() {
   done
 
   if ! $found_any; then
-    doc_add "vision" "info" ".spectacular/requests/" "no vision/ folders — opt-in via 'spectacular imagine <slug>'" \
+    doc_add "vision" "info" "$SPEC_REQUESTS_DIR/" "no vision/ folders — opt-in via 'spectacular imagine <slug>'" \
       "skip" "judgment"
   fi
 }
@@ -13161,8 +13189,8 @@ check_vision() {
 # (PLAN § Understanding filled OR UNDERSTANDING.md present). Judgment checks are
 # left to the skill's injection loop.
 check_policies() {
-  [[ -d ".spectacular" ]] || return 0
-  local pol=".spectacular/POLICY.md"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
+  local pol="$SPEC_WORKSPACE_DIR/POLICY.md"
 
   if [[ ! -f "$pol" ]]; then
     # check_workspace already emits the mechanical always-set finding that drives
@@ -13183,7 +13211,7 @@ check_policies() {
   # Structure check: orphan hooks, missing checks, bad severities, dangling principle refs.
   local orphan_hooks="" missing_check="" bad_sev="" dangling_pr="" policy_count=0
   local cur_hook="" cur_id="" seen_check=false cur_is_block=false
-  local pr=".spectacular/PRINCIPLES.md"
+  local pr="$SPEC_WORKSPACE_DIR/PRINCIPLES.md"
   local line
   while IFS= read -r line; do
     case "$line" in
@@ -13250,7 +13278,7 @@ check_policies() {
   # Mechanical presence-check; the skill enforces at the transition. Honor config:
   # skip the gate entirely when the policy is disabled in the merged contract.
   if _policy_enabled "understand-before-change"; then
-    local reqs_dir=".spectacular/requests" plan slug status_v
+    local reqs_dir="$SPEC_REQUESTS_DIR" plan slug status_v
     if [[ -d "$reqs_dir" ]]; then
       for plan in "$reqs_dir"/*/PLAN.md; do
         [[ -f "$plan" ]] || continue
@@ -13270,9 +13298,9 @@ check_policies() {
 }
 
 check_decisions() {
-  [[ -d ".spectacular" ]] || return 0
-  local decisions=".spectacular/decisions/index.md"
-  local decisions_dir=".spectacular/decisions"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
+  local decisions="$SPEC_DECISIONS_DIR/index.md"
+  local decisions_dir="$SPEC_DECISIONS_DIR"
 
   if [[ ! -d "$decisions_dir" ]] || [[ ! -f "$decisions" ]]; then
     doc_add "decisions" "warning" "$decisions" "decisions/ index-mode folder or index.md missing" \
@@ -13428,9 +13456,9 @@ check_decisions() {
 #     (roadmap/v*.md → no index line), and a nudge when shipped prose blocks
 #     beyond the keep-window are still inline (prunable via `roadmap migrate`).
 check_roadmap() {
-  [[ -d ".spectacular" ]] || return 0
-  local roadmap=".spectacular/roadmaps/index.md"
-  local roadmap_dir=".spectacular/roadmaps"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
+  local roadmap="$SPEC_ROADMAPS_DIR/index.md"
+  local roadmap_dir="$SPEC_ROADMAPS_DIR"
   [[ -f "$roadmap" ]] || { doc_add "roadmap" "info" "$roadmap" "roadmaps/index.md not present — skipped"; return 0; }
 
   local invalid_ledger_statuses
@@ -13518,19 +13546,19 @@ check_roadmap() {
 }
 
 check_fixes() {
-  [[ -d .spectacular/fixes ]] || { doc_add "fixes" "info" ".spectacular/fixes/" "no fixes corpus yet"; return 0; }
+  [[ -d "$SPEC_FIXES_DIR" ]] || { doc_add "fixes" "info" "$SPEC_FIXES_DIR/" "no fixes corpus yet"; return 0; }
   local f count=0 verified
-  for f in .spectacular/fixes/*.md; do
+  for f in "$SPEC_FIXES_DIR"/*.md; do
     [[ -f "$f" ]] || continue; count=$((count + 1)); verified=$(fm_get "$f" verified)
     if [[ -z "$verified" || "$verified" == null ]] || ! grep -q '^## Verified by' "$f"; then
       doc_add "fixes" "warning" "$f" "fix lacks concrete verification evidence" "move incomplete work back to an audit/request or record verified-by" "judgment"
     fi
   done
-  (( count > 0 )) && doc_add "fixes" "pass" ".spectacular/fixes/" "$count fix record(s) inspected"
+  (( count > 0 )) && doc_add "fixes" "pass" "$SPEC_FIXES_DIR/" "$count fix record(s) inspected"
 }
 
 check_afk() {
-  local dir=.spectacular/afk/runs f status active=0 count=0
+  local dir="$SPEC_AFK_DIR/runs" f status active=0 count=0
   [[ -d "$dir" ]] || { doc_add "afk" "info" "$dir" "no AFK authorization runs yet"; return 0; }
   for f in "$dir"/*.md; do
     [[ -f "$f" ]] || continue; count=$((count + 1)); status=$(fm_get "$f" status)
@@ -13740,9 +13768,9 @@ doctor_apply_mechanical_fixes() {
     fi
 
     # Missing dir
-    if [[ "$file" == ".spectacular/requests/" || "$file" == ".spectacular/specs/" ]]; then
+    if [[ "$file" == "$SPEC_REQUESTS_DIR/" || "$file" == "$SPEC_SPECS_DIR/" ]]; then
       mkdir -p "$file"
-      [[ "$file" == ".spectacular/specs/" ]] && touch "${file}.gitkeep"
+      [[ "$file" == "$SPEC_SPECS_DIR/" ]] && touch "${file}.gitkeep"
       echo "  ✓ fixed [workspace]: created $file"
       applied=$((applied + 1))
       continue
@@ -13750,8 +13778,8 @@ doctor_apply_mechanical_fixes() {
 
     # Legacy current/ → specs/ migration (specs area, mechanical)
     if [[ "$area" == "specs" && "$msg" == *"legacy current/ folder"* ]]; then
-      if [[ -d ".spectacular/current" && ! -d ".spectacular/specs" ]]; then
-        mv .spectacular/current .spectacular/specs
+      if [[ -d "$SPEC_WORKSPACE_DIR/current" && ! -d "$SPEC_SPECS_DIR" ]]; then
+        mv "$SPEC_WORKSPACE_DIR/current" "$SPEC_SPECS_DIR"
         echo "  ✓ fixed [specs]: renamed .spectacular/current/ → .spectacular/specs/"
         applied=$((applied + 1))
       fi
@@ -13799,13 +13827,13 @@ doctor_apply_mechanical_fixes() {
     if [[ "$area" == "snapshots" && "$msg" == *"config wants"* ]]; then
       local snap_folder
       snap_folder="$(config_snapshots_folder)"
-      if [[ -d ".spectacular/snapshots" && ! -d ".spectacular/$snap_folder" ]]; then
-        if git ls-files --error-unmatch ".spectacular/snapshots" >/dev/null 2>&1; then
-          git mv ".spectacular/snapshots" ".spectacular/$snap_folder" 2>/dev/null && {
+      if [[ -d "$SPEC_WORKSPACE_DIR/snapshots" && ! -d "$SPEC_WORKSPACE_DIR/$snap_folder" ]]; then
+        if git ls-files --error-unmatch "$SPEC_WORKSPACE_DIR/snapshots" >/dev/null 2>&1; then
+          git mv "$SPEC_WORKSPACE_DIR/snapshots" "$SPEC_WORKSPACE_DIR/$snap_folder" 2>/dev/null && {
             echo "  ✓ fixed [snapshots]: git mv snapshots/ → ${snap_folder}/"
             applied=$((applied + 1)); }
         else
-          mv ".spectacular/snapshots" ".spectacular/$snap_folder" && {
+          mv "$SPEC_WORKSPACE_DIR/snapshots" "$SPEC_WORKSPACE_DIR/$snap_folder" && {
             echo "  ✓ fixed [snapshots]: mv snapshots/ → ${snap_folder}/"
             applied=$((applied + 1)); }
         fi
@@ -13828,7 +13856,7 @@ doctor_apply_mechanical_fixes() {
     fi
 
     # Missing always-set or index file → re-scaffold using doc_<id>
-    if [[ "$file" == ".spectacular/PRD.md" || "$file" == ".spectacular/specs/index.md" || "$file" == ".spectacular/config.yaml" || "$file" == ".spectacular/POLICY.md" || "$file" == ".spectacular/AGENTS.md" || "$file" == ".spectacular/CLAUDE.md" || "$file" == ".spectacular/roadmaps/index.md" || "$file" == ".spectacular/decisions/index.md" || "$file" == ".spectacular/memories/index.md" || "$file" == ".spectacular/sessions/index.md" ]]; then
+    if [[ "$file" == "$SPEC_WORKSPACE_DIR/PRD.md" || "$file" == "$SPEC_SPECS_DIR/index.md" || "$file" == "$SPEC_WORKSPACE_DIR/config.yaml" || "$file" == "$SPEC_WORKSPACE_DIR/POLICY.md" || "$file" == "$SPEC_WORKSPACE_DIR/AGENTS.md" || "$file" == "$SPEC_WORKSPACE_DIR/CLAUDE.md" || "$file" == "$SPEC_ROADMAPS_DIR/index.md" || "$file" == "$SPEC_DECISIONS_DIR/index.md" || "$file" == "$SPEC_MEMORIES_DIR/index.md" || "$file" == "$SPEC_SESSIONS_DIR/index.md" ]]; then
       local fname fdir name
       fname=$(basename "$file")
       fdir=$(basename "$(dirname "$file")")
@@ -14003,7 +14031,7 @@ pack_appstore_dir() {
 }
 
 pack_projectlocal_dir() {
-  if [[ -d "./.spectacular/packs" ]]; then
+  if [[ -d "$SPEC_WORKSPACE_DIR/packs" ]]; then
     echo "$(pwd)/.spectacular/packs"
   else
     echo ""

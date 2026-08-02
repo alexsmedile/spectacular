@@ -1,12 +1,14 @@
 ---
-status: planned
+status: verified
 priority: medium
 owner: alex
-updated: 2026-07-07
+updated: 2026-08-02
 build: b24
 summary: "Introduce a centralized path variable registry at the top of the spectacular CLI to avoid hardcoding .spectacular/ paths in functions."
 related:
   - ../../PRD.md
+docs_impact: required
+docs_impact_evidence: "Updated roadmap/spec indexes, SPC-003, and DEC-018 through DEC-020 in PR #2"
 ---
 
 # Plan — cli-path-abstraction
@@ -37,7 +39,7 @@ All logic checking for schemas, bootstrapping files, doctor validations, and sna
 
 ## Decisions
 
-- **Flat variables over associative arrays**: Chose plain variables (e.g. `PATH_MEMORIES_DIR`) over associative arrays (`PATH_MAP[memories]`) because Spectacular requires Bash 3.2 compatibility.
+- **Flat variables over associative arrays**: Chose plain, namespaced variables (e.g. `SPEC_MEMORIES_DIR`) over associative arrays because Spectacular requires Bash 3.2 compatibility.
 
 ## Milestones
 

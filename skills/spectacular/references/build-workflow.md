@@ -13,6 +13,11 @@ delegable labor (closed-brief, build-only); the two things you never delegate ar
 (closing an open brief) and **mutation** (the checkbox tick + status move). Verbs, no overlap:
 **you plan → Builder builds → you confirm + record.**
 
+Start by running `spectacular request <slug> --brief` (optionally `-mN`). That generated prompt is
+the durable-chain compiler; inspect the named code/tests just in time, then create the coding
+agent's native session plan at finer granularity. TASKS milestones, native plan items, and subagent
+briefs are different lifetime layers—never copy them one-for-one. Canonical contract: [[request-workflow]].
+
 > This is the runtime core: the arc, the gates, the tables, the procedures. The *why* behind each
 > rule — rationale, failure modes, the relation to [[bug-workflow]] — is in
 > [[build-workflow-doctrine]]. Load it only when a routing call feels uncertain or you're editing
@@ -64,8 +69,7 @@ it doesn't plan** — the map informs the brief; it isn't the brief.
 
 ## A2 — Does the chain close into a brief?
 
-A bare `- [ ]` TASKS line is a fragment, not a brief. Walk the chain the request lifecycle already
-wrote:
+A bare `- [ ]` TASKS line is a fragment, not a brief. `request --brief` walks the chain the request lifecycle already wrote:
 
 ```
 TASK ROW            →  MILESTONE BLOCK      →  PLAN SECTIONS         →  BRIEF                 →  OUTPUT + CHECK

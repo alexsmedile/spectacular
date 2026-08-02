@@ -4,6 +4,7 @@ priority: medium
 owner: <OWNER>
 updated: <DATE>
 build: <BUILD>
+docs_impact: pending
 summary: "<one-sentence description of what this request changes>"
 related:
   - PRD.md

@@ -65,6 +65,8 @@ make_gate_clean() {
   [[ -f "$t" ]] && { sed -i.bak 's/^- \[ \]/- [x]/' "$t"; rm -f "$t.bak"; }
   printf 'NONE — archive-mechanics fixture, spec delta not under test\n' \
     > "$dir/.spectacular/requests/$slug/SPEC-DELTA.md"
+  printf '%s\n' '---' 'result: pass' '---' '# Verify log' > "$dir/.spectacular/requests/$slug/VERIFY-LOG.md"
+  (cd "$dir" && "$CLI" docs-impact "$slug" --none --reason "fixture has no docs impact" >/dev/null)
 }
 
 scenario_1_touch_basic() {
@@ -193,6 +195,7 @@ scenario_3_promote_basic() {
   local dir="/tmp/spectacular-mutator-3"
   seed_workspace "$dir"
   (cd "$dir" && "$CLI" new req1 --summary "one" >/dev/null)
+  make_gate_clean "$dir" req1
 
   (cd "$dir" && "$CLI" promote req1 >/dev/null)
   assert_file_contains "$dir/.spectacular/requests/req1/PLAN.md" 'status: active'
@@ -260,6 +263,7 @@ scenario_5_archive_basic() {
 
   (cd "$dir" && "$CLI" new req-a --summary "first" >/dev/null)
   (cd "$dir" && "$CLI" new req-b --summary "depends on a" >/dev/null)
+  make_gate_clean "$dir" req-a
 
   sed -i.bak 's|  - PRD.md|  - PRD.md\
   - ../req-a/PLAN.md|' "$dir/.spectacular/requests/req-b/PLAN.md"

@@ -4,7 +4,7 @@ description: Complete .spectacular/ directory spec — every file, frontmatter s
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-07-12
+updated: 2026-08-01
 ---
 
 # Scaffold Reference
@@ -29,7 +29,7 @@ Every file type Spectacular uses, grouped by scope. This table is the quick refe
 | `roadmaps/index.md` | What's next | Time-ordered direction (v1 / v2 / v3+) + Icebox. |
 | `STACK.md` | Tech choices | Host project's frontend / backend / infra + engineering rules. |
 | `AGENTS.md` | Agent onboarding | How to operate in `.spectacular/`; authoritative context-loading table. |
-| `decisions/index.md` | Decision log (ADR) | Why A over B. Flat prose, or index mode (`+ decisions/D<N>.md`). |
+| `decisions/index.md` | Decision log (ADR) | Index of evidence-backed `DEC-NNN` records. |
 | `PERSONAS.md` | Audience profiles | Opt-in — only with `product` / `content` kit or `--with personas`. |
 | `config.yaml` | Machine config | Name, naming rules, agent context, `workspace_schema` + provenance. |
 
@@ -55,11 +55,32 @@ Each is a folder of individually-addressable `.md` entries (frontmatter, git-com
 |---|---|---|---|
 | `memories/` | `memories/index.md` | Durable standing facts / "always do X" | `spectacular remember` |
 | `decisions/` | `decisions/index.md` | ADR — why A over B | `spectacular decide` |
+| `questions/` | — | Active human-owned blockers and ambiguities (`QUE-NNN`); resolved history moves to `archive/questions/` | `spectacular question new\|resolve` |
+| `research/` | — | Sourced discovery evidence (`RES-NNN`) | `spectacular research new\|resolve` |
+| `spikes/` | — | Authorized feasibility evidence (`SPK-NNN`) | `spectacular spike new\|resolve` |
 | `sessions/` | `sessions/index.md` | Work-session time-log | `spectacular session start\|end` |
-| `ideas/` | — | Pre-commitment sparks (no lifecycle) | `spectacular idea new` → `promote` |
+| `ideas/` | — | Parked inspiration (`IDEA-NNN`) | `spectacular idea new` → `promote` |
 | `feedbacks/` | — | Post-ship prototyping signal | `spectacular feedback-loop new` |
 | `audits/` | `A<N>.md` | Bug diagnosis before a fix is planned | `spectacular audit new\|resolve` |
 | `fixes/` | `F<N>.md` | Verified, signed, reusable fix corpus | `spectacular fix new\|list` |
+
+### Optional advanced engineering collections
+
+Heavy projects can reserve additional evidence stores without adding them to every workspace:
+
+```bash
+spectacular init --with findings,fixes,bugs,security,benchmarks
+```
+
+| Folder | Reserved ID | Intended use | Availability |
+|---|---|---|---|
+| `findings/` | `FND-NNN` | Research, audit, or interview takeaway | Path/ID reserved; workflow deferred |
+| `fixes/` | `FIX-NNN` | Remediation/hotfix identity | Existing `F<N>` ledger stays active; migration deferred |
+| `bugs/` | `BUG-NNN` | Known defect or regression | Path/ID reserved; workflow deferred |
+| `security/` | `SEC-NNN` | Vulnerability or threat finding | Path/ID reserved; workflow deferred |
+| `benchmarks/` | `BMK-NNN` | Performance/load/profiling result | Path/ID reserved; workflow deferred |
+
+`security/` is singular because it names the engineering domain; `securities/` means financial instruments. Use `fnd1` for findings, `fix1` for fixes, and `bug1` for bugs. Ambiguous `f1` is refused; `b1` remains the roadmap build alias.
 
 `audit → requests → fixes` form the self-learning bug loop (see the bug-workflow skill reference).
 
@@ -69,9 +90,9 @@ The rule: **a plural folder name is a category directory** — it holds either a
 
 1. **Two `SESSION`s, opposite scope.** Per-request `SESSION.md` (singular — one request's working state, created on `active`) is **unrelated** to the top-level `sessions/` category folder and its `sessions/index.md` (the work-session time-log). Same word, different system — the biggest confusion trap.
 2. **Consolidated specs.** Capability specs are flat files inside `specs/` (e.g. `specs/cli.md`, `specs/doc-engine.md`), indexed by `specs/index.md`. There are no nested spec folders.
-3. **Plural folders.** All collection and execution folders are strictly plural: `memories/`, `roadmaps/`, `decisions/`, `sessions/`, `audits/`, `fixes/`, `feedbacks/`, `ideas/`, `requests/`, `debugs/`.
-4. **Collections vs. execution trees.** Soft-DB collections (`memories/`, `decisions/`, `sessions/`, `audits/`, `fixes/`, `feedbacks/`, `ideas/`, `roadmaps/`) hold a central `index.md` plus flat sequential/date-logged entries. Execution trees (`requests/`, `debugs/`) hold per-item sub-directories (`requests/<slug>/`, `debugs/<slug>/`) with state files or run logs.
-5. **Sequential prefixes.** Entry files under `decisions/` and `memories/` carry an ID prefix: `decisions/D<N>-<slug>.md`, `memories/M<N>-<slug>.md`.
+3. **Plural folders.** Collection and execution folders are plural (`memories/`, `roadmaps/`, `decisions/`, `questions/`, `research/`, `spikes/`, `sessions/`, `audits/`, `fixes/`, `feedbacks/`, `ideas/`, `requests/`, `debugs/`, `findings/`, `bugs/`, `benchmarks/`) except `security/`, which is the singular domain name.
+4. **Collections vs. execution trees.** Markdown collections hold flat, individually addressable entries; some also maintain an `index.md`. Execution trees (`requests/`, `debugs/`) hold per-item sub-directories with state files or run logs.
+5. **Canonical identity.** Wayfinding filenames begin with `DEC-NNN`, `QUE-NNN`, `IDEA-NNN`, `RES-NNN`, `SPK-NNN`, or `SPC-NNN`. `PRT-NNN` and `TSK-NNN` remain reserved. Prototype outputs currently belong to a request, vision, feedback entry, or spike; generic artifacts, tracer bullets, and technical debt do not receive `ART`, `TRC`, or `DEB` IDs. Conversational aliases never replace canonical IDs in saved frontmatter.
 
 ---
 
@@ -97,8 +118,9 @@ The rule: **a plural folder name is a category directory** — it holds either a
 │   ├── payments.md
 │   └── subscriptions.md
 │
-├── memories/  decisions/  sessions/  ideas/  feedbacks/  audits/  fixes/
-│                        # the 7 soft-DB collections (each: folder + index)
+├── memories/  decisions/  questions/  research/  spikes/
+├── sessions/  ideas/  feedbacks/  audits/  fixes/
+│                        # durable Markdown collections, created on demand
 │
 ├── requests/           # active and planned work — one folder per request
 │   └── add-team-billing/
@@ -129,6 +151,9 @@ The rule: **a plural folder name is a category directory** — it holds either a
 | `specs/` | On `spectacular init` (was `current/` pre-v0.5.0) |
 | `requests/` | On `spectacular init` |
 | `ideas/` | On first idea file |
+| `questions/` | On first `spectacular question new` |
+| `research/` | On first `spectacular research new` |
+| `spikes/` | On first `spectacular spike new` |
 | `memories/` | On first `spectacular remember this` |
 | `skills/` | On first project skill |
 | `archive/` | On first archived request |
@@ -251,7 +276,7 @@ Sections: Frontend, Backend, Infrastructure, Rules.
 
 ### `decisions/index.md`
 
-Architectural decision log. Each entry records a decision, the reasoning behind it, and the tradeoffs accepted.
+Index of verified architectural and product decisions. Full ADRs live in `decisions/DEC-NNN-<slug>.md`; the index stays short enough for planning-time retrieval.
 
 ```yaml
 ---
@@ -261,14 +286,30 @@ summary: "Architectural and product decisions log"
 ---
 ```
 
-Entry format:
+Index format:
 
 ```md
-## YYYY-MM-DD
+- **DEC-001** — Use Postgres RLS — Centralizes tenant isolation
+```
 
+Entry files use:
+
+```yaml
+---
+id: DEC-001
+type: decision
+status: verified
+origin: user
+evidence: "User direction recorded by explicit command."
+updated: 2026-08-01
+---
+```
+
+```md
 **Decision:** Use Postgres RLS instead of app-level permissions
-**Why:** Centralized security logic
-**Tradeoffs:** Harder local debugging
+**Context:** Tenant isolation must be enforced consistently
+**Evidence:** Security review and prototype results
+**Consequences:** Centralized policy; harder local debugging
 ```
 
 ---
@@ -359,7 +400,7 @@ skills:
 
 ## `specs/index.md` + `specs/` — capability specs
 
-Canonical system truth. `specs/index.md` is the cheap, always-on index; flat `specs/<capability>.md` files hold detail only when a capability outgrows its index bullet. They describe what the system does right now — not what it will do, not what it did.
+Ephemeral execution context. Code is authoritative; `specs/index.md` is the cheap, always-on index and flat specification files hold detail. Specs move `draft|unconfirmed → approved → implemented`, then normally archive after verified integration; implemented specs may first become superseded/deprecated. Rejected or abandoned draft/unconfirmed/approved specs archive with a reason instead of being purged. Legacy labels remain readable until an explicit, preview-first migration.
 
 **Rules:**
 - Keep the index concise; use one flat file per detailed capability (never nested folders)
@@ -371,7 +412,7 @@ Canonical system truth. `specs/index.md` is the cheap, always-on index; flat `sp
 
 ```yaml
 ---
-status: stable | draft | deprecated
+status: draft | unconfirmed | approved | implemented | superseded | deprecated | archived
 updated: 2026-05-11
 summary: "What this capability does"
 ---
@@ -515,7 +556,19 @@ Low-commitment, speculative. Nothing in `ideas/` is acted on automatically by th
 
 Use for: raw thoughts, market observations, UX experiments, discarded approaches, future concepts.
 
-**Promotion:** An idea can be promoted to a request with `spectacular idea promote <idea-file>`. The skill scaffolds the request from the idea content and moves the idea file to `archive/ideas/`.
+Each new idea is stored as `IDEA-NNN-<slug>.md`. **Promotion:** `spectacular idea promote <slug-or-alias>` scaffolds a request from the idea content and moves the idea file to `archive/ideas/`.
+
+---
+
+## `questions/`, `research/`, and `spikes/` — discovery records
+
+These collections turn uncertainty into durable, linkable work:
+
+- `QUE-NNN` records an ambiguity or blocker. It defaults to `requires_user_input: true` and uses `open | deferred | resolved`.
+- `RES-NNN` records sources, evidence, and an outcome. It clears fog only when `verified`.
+- `SPK-NNN` records a feasibility experiment. Its execution requires human authorization; prototype code is evidence, not implementation.
+
+Dependencies are canonical IDs in `blocked_by:`. `spectacular wayfind status` computes unresolved fog and the dependency-ready frontier without storing either as a lifecycle status.
 
 ---
 
@@ -540,10 +593,14 @@ Completed requests are moved here, not deleted. Original slug is preserved. Cont
 ```
 archive/
 ├── add-team-billing/   # completed request
-└── ideas/              # promoted idea files
+├── ideas/              # promoted idea files
+├── questions/          # resolved QUE history
+└── specs/              # implemented/rejected/obsolete detailed SPC history
 ```
 
 The skill does not read `archive/` during normal operation.
+
+Retention is lifecycle-derived: live artifacts are checkpoint-synchronized, temporary artifacts close with their owner, stale-safe archive is checked against code before reuse, and throwaway code is deleted only after outcome/evidence plus a recovery pointer are preserved.
 
 ---
 

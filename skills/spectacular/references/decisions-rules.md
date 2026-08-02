@@ -1,7 +1,7 @@
 ---
 doc-id: decisions
 mode: index | flat
-location: .spectacular/decisions/index.md (flat) | .spectacular/decisions/index.md + .spectacular/decisions/D<N>-<slug>.md (index)
+location: .spectacular/decisions/index.md (flat) | .spectacular/decisions/index.md + .spectacular/decisions/DEC-NNN-<slug>.md (index)
 scope: project-wide
 template: templates/decisions/entry.md
 snapshot-on-edit: false
@@ -11,7 +11,7 @@ status: active
 
 # DECISIONS Rules
 
-Append-only ADR log. Each new decision is one entry, appended to the bottom. Entries are immutable by convention — corrections go in a follow-up entry, not by rewriting history.
+Append-only ADR log. Each new decision is one entry, appended to the bottom. Entries are immutable by convention — corrections go in a follow-up entry, not by rewriting history. New entries use canonical `DEC-NNN` IDs; `D<N>` remains the preferred spoken shorthand and a backwards-compatible input/file form. See [[canonical-ids]].
 
 > **This is where ADRs (Architecture Decision Records) live in Spectacular.** When asked to "record an ADR" / "record an architecture decision," write here with `spectacular decide` — do **not** create a separate `docs/adr/` folder.
 
@@ -56,6 +56,10 @@ Omitted sections are written as **empty headers** (not dropped) so the ADR shape
 
 **Dry run:** `spectacular decide "<text>" --dry-run` previews the entry and writes nothing to disk (v1.8.3+). On a workspace with no `DECISIONS.md` yet, it prints `would create` + `would append` but does **not** bootstrap the file — the bootstrap only happens on a real write.
 
+**Decision authority:** a DEC follows explicit user choice or unambiguous intent already recorded in conversation, interview, PRD, or an approved spec (`--derived-from` cites it). Unsettled alternatives remain a QUE with options and a recommendation. See [[lifecycle-contract]].
+
+**Narrow AFK exception:** autonomous capture additionally requires an active AFK run that permits decisions, completed conclusive RES/SPK evidence, and explicit `--technical --in-scope --reversible --no-product-tradeoff --alternatives`. Product/business ambiguity or any HITL gate refuses the DEC. Supersession creates a new DEC with `--supersedes`; history is never rewritten.
+
 **Entry format:**
 
 ```markdown
@@ -77,29 +81,29 @@ Omitted sections are written as **empty headers** (not dropped) so the ADR shape
 
 ---
 
-## Index mode (large projects — 50+ decisions)
+## Index mode and compaction
 
-When `DECISIONS.md` grows past ~50 entries the flat file becomes a context-tax. Use **index mode** instead:
+Index mode keeps full ADRs individually addressable and supports topic retrieval through `tags:` frontmatter (`spectacular decide ... --tags cli,docs`).
 
 ```
 .spectacular/
 └── decisions/
     ├── index.md          ← index only: one line per decision
-    ├── D1-<slug>.md
-    ├── D2-<slug>.md
+    ├── DEC-001-<slug>.md
+    ├── DEC-002-<slug>.md
     └── ...
 ```
 
 **Index line format** (canonical):
 ```markdown
-- **D42** — Reject field-mode storage for v1 — folders-only until v2 ships
+- **DEC-042** — Reject field-mode storage for v1 — folders-only until v2 ships
 ```
 
 Three parts separated by ` — `: D-number (bold), short title, one-sentence rationale. No trailing period.
 
-**Per-entry file format** (`decisions/D42-<slug>.md`):
+**Per-entry file format** (`decisions/DEC-042-<slug>.md`):
 ```markdown
-# D42 — Reject field-mode storage for v1
+# DEC-042 — Reject field-mode storage for v1
 
 **Context:** ...
 **Decision:** ...
@@ -110,6 +114,23 @@ Three parts separated by ` — `: D-number (bold), short title, one-sentence rat
 Heading format: `# D<N> — Title` (same title as the index line's short title). Sections follow the ADR schema (Context / Decision / Consequences). Session link is optional.
 
 **Agent read pattern:** always load `DECISIONS.md` (index, cheap — ~1 line per decision). Load `decisions/D<N>-<slug>.md` on demand when that specific decision is directly relevant to current work. Never load all per-entry files at once.
+
+As the index grows, compact its presentation without changing bodies or IDs:
+
+1. Keep the newest 50 entries as individual canonical lines.
+2. Group the preceding 50 in chronological blocks of 10.
+3. Group everything older in chronological blocks of 50.
+
+Examples: at D60, D1–10 becomes the first compact block; at D70, D11–20 becomes the second. At D150, D1–50 is one coarse block, D51–100 remains five ten-entry blocks, and D101–150 remains individual. Each block exposes its inclusive ID range and union of topic tags; `spectacular decisions --tag <topic>` and explicit ID lookup still read the individual frontmatter/files. Compaction is index-only: never concatenate, renumber, move, or delete ADR bodies.
+
+Chronological compaction and topical retrieval solve different problems:
+
+- **The canonical index stays deterministic and chronological.** An LLM must not permanently regroup it by inferred topic; decisions can span several topics, and model-generated taxonomies drift between sessions.
+- **Tags provide the durable topic index.** Use a small set of stable lowercase nouns such as `cli`, `docs`, `lifecycle`, `security`, or `git`. Query with `spectacular decisions --tag <topic>`, then load only the matching bodies.
+- **LLM clustering is a read-time view.** After tag/frontmatter retrieval, an agent may group the result by theme for an explanation. That derived grouping is disposable and never rewrites IDs, files, or canonical chronology.
+- **Do not copy the 50/10/50 thresholds to every collection.** They fit a high-volume append-only ADR history. Live blockers and active specs stay fully visible; roadmaps group by release; sessions group by time; memories, findings, fixes, research, and benchmarks retrieve by their own status, tags, signatures, or evidence fields.
+
+When a topic has inconsistent tags, search decision frontmatter and one-line summaries, propose a tag normalization, and require confirmation before changing durable history.
 
 **Migration:** `spectacular decisions migrate` reads flat `DECISIONS.md`, splits each `## YYYY-MM-DD —` block into `decisions/D<N>-<slug>.md`, then rewrites `DECISIONS.md` as the one-liner index. `--dry-run` previews without writing. Idempotent if `decisions/` already exists.
 

@@ -1,7 +1,7 @@
 ---
-version: 3.14
-updated: 2026-07-12
-summary: "Per-version scope, phase, and exit criteria. Shipped through v1.23.0 (roadmap ledger docs + index-mode pruning, b17+b18). Next up — priority order: cli-debt-removal → skill-desc-length-check → snapshot-retention → spec-audit-mode, all ahead of the contract-prep ladder (①→②→③, target tbd) → v2.0.0 major. Long-term gets fuzzier on purpose. (v3.12: contract ladder un-pinned to tbd — generic, so reslotting never forces a renumber.)"
+version: 3.20
+updated: 2026-08-02
+summary: "Per-version scope, phase, and exit criteria. The b32–b39 Wayfinding, lifecycle, retention, and request-interface foundation is implemented and verified; remaining unslotted work stays tbd."
 related:
   - ../PRD.md
   - ../ARCHITECTURE.md
@@ -32,7 +32,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b8 | visual-layer | Visual layer | full | v1.15.0 | shipped |
 | b9 | decisions-index | Decisions index mode | full | v1.17.0 | shipped |
 | b10 | skill-desc-length-check | Skill description length guard | themed | v1.23.3 | shipped |
-| b11 | spec-audit-mode | Spec frontmatter schema check (pivoted from semantic audit) | themed | tbd | review |
+| b11 | spec-audit-mode | Spec frontmatter schema check (pivoted from semantic audit) | themed | tbd | active |
 | b15 | naming-coherence | Naming coherence (advance/feedback/pack/next) | themed | v1.19.0 | shipped |
 | b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | shipped |
 | b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | shipped |
@@ -52,8 +52,16 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b29 | cli-gate-ergonomics | Policy directives at gates (tiered output, --full), advance scaffolds SESSION.md, doctor findings block | themed | v1.34.0 | shipped |
 | b30 | verify-split | verify.md walk-only + verify-authoring.md (2-of-6 canonical); TASKS template `- [~]` deferred rows | themed | v1.34.0 | shipped |
 | b31 | review-sweep | Review-sweep protocol: request-auditor agent + `spectacular sweep` + VERIFY-LOG against:-stamps/pending-reverify | themed | v1.35.0 | shipped |
+| b32 | wayfinding-contract | Canonical IDs, knowledge stores, and spec confirmation | full | tbd | shipped |
+| b33 | wayfinding-sequencer | Fog/frontier sequencing and dependency coherence | full | tbd | shipped |
+| b34 | afk-git-hygiene | Human-gated AFK branch and playground hygiene | themed | tbd | shipped |
+| b35 | lifecycle-contract | Unified evidence-backed lifecycle contract | full | tbd | shipped |
+| b36 | advanced-engineering-collections | Optional reserved senior-engineering collections | themed | tbd | shipped |
+| b37 | discovery-evidence-protocol | Progressive routing for research, spikes, prototypes, tracer bullets, artifacts, and technical debt | themed | tbd | shipped |
+| b38 | artifact-retention-contract | Live, stale-safe, temporary, and throwaway artifact retention | themed | tbd | shipped |
+| b39 | request-workflow-interface | Approved-spec request handoff, compiled implementation context, command grammar, and verification evidence gate | full | tbd | shipped |
 
-> **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = only mutable field (one-row edit to reslot); `status` = release-level `planned · active · shipped` (distinct from request lifecycle). See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
+> **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = mutable when work is slotted; `status` = release-level `candidate · planned · active · shipped · cancelled` (distinct from request lifecycle). `candidate` means likely upcoming but not yet scoped or committed. See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 
 ### Next up — priority order (2026-06-28)
 

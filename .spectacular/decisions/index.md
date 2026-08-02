@@ -3,7 +3,7 @@ type: decisions
 doc: decisions
 mode: index
 version: 1.0
-updated: 2026-06-28
+updated: 2026-08-02
 summary: "Architectural and product decisions log"
 ---
 
@@ -18,3 +18,11 @@ summary: "Architectural and product decisions log"
 - **D7** — Skill description length check gates on `description` alone at 1024 chars (error), 1000 (warning) — not the description+w — Codex measures description ALONE: the v1.17.2 patch took description 1146→986 while description+when_to_use stayed 1253 (>1024) and the error cleared — proving the concatenation is not what Codex caps. check_skill() and the pre-commit guard both measure description alone.
 - **D8** — Stub rules-file bodies thin to frontmatter + one pointer; the shared 3-verb default lives once in doc-index.md — architecture/principles/stack thin to pointer; agents keeps its top-level-AGENTS.md delta; spec and tasks keep real bodies (spec=index+sync role, tasks=full review/refine spec — mislabeled mode:stub). doc-index.md gains a 'stub default behavior' section. Frontmatter untouched everywhere — engine dispatch intact.
 - **D9** — Undo v1: single-level breadcrumb (.last-mutation), staleness via timestamp-vs-mtime, idea-promote undo prompts before re — v1 scope stays tight: no breadcrumb stack, no git-reflog coupling, no destructive auto-delete. Each can graduate to v2 if real use demands. undo refuses on stale breadcrumb rather than mis-reverting.
+- **DEC-010** — Separate durable request milestones, native agent session plans, and narrow subagent briefs by lifetime and audience — TASKS remains milestone-level and committed; Codex/Claude planning may go deeper for the current session; subagents receive closed, smaller briefs. #agents #planning #tasks #context
+- **DEC-011** — Use noun-first canonical CLI entity commands and verb-first conversational document commands while preserving compatibil — Canonical mechanical forms group under request, spec, question, idea, and other entities; conversational grill/refine/review are verb-first; older spellings keep working. #cli #commands #ux #compatibility #slug
+- **DEC-012** — Generate implementation briefs on demand from durable request state instead of storing BRIEF.md — request overview remains cheap; --brief compiles authorized execution context; --full returns the request bundle; native agents inspect current code and Git just in time. #cli #request #context #prompt #agents
+- **DEC-013** — Separate approved-spec request scaffolding from agentic execution authorization — request new --from SPC-NNN generates PLAN and TASKS; /spectacular act SPC-NNN is the short agentic form, with /spectacular SPC-NNN accepted when unambiguous; activation records provenance and begins native planning after gates. #spec #request #lifecycle #agents #cli
+- **DEC-014** — Make verification evidence, not a direct status edit, the normal authority for review to verified — /spectacular verify owns the normal transition; exceptional bypasses require an explicit recorded override; documentation impact is assessed inside verification or closure rather than taught as an everyday command. #verify #lifecycle #evidence #docs #cli
+- **DEC-015** — Use collision-safe canonical aliases: fnd1 for FND, f1 for fixes, bug1 for BUG, and b1 for roadmap builds — Canonical IDs remain unambiguous; context-free f1 resolves to a fix and b1 to a build; findings and bugs use fnd1 and bug1. #ids #aliases #slug #cli
+- **DEC-016** — Compact decision history with rolling fifty, ten, and fifty-entry tiers after the first fifty decisions — Keep the newest 50 decisions individual; compact the preceding 50 into blocks of 10; compact older history into blocks of 50. Strong frontmatter and index summaries preserve block discovery and selective retrieval. #decisions #indexing #retention #docs #context
+- **DEC-017** — Prefer explicit fix1 and fnd1 aliases; refuse ambiguous f1 while preserving b1 for roadmap builds — Fix lookup remains backward-compatible through fix1 to legacy F1 without migrating stored IDs; findings use fnd1; f1 fails with corrective guidance; b1 remains unchanged. #ids #aliases #cli #fixes #findings

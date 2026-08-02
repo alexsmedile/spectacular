@@ -27,6 +27,9 @@ Human catalog of every document type in a Spectacular workspace.
 | `personas` | grill-each | `.spectacular/PERSONAS.md` | [personas-rules](personas-rules.md) |
 | `feedback` | index | `.spectacular/feedbacks/index.md` + `feedbacks/` | [feedback-rules](feedback-rules.md) |
 | `idea` | index | `.spectacular/ideas/index.md` + `ideas/` | [idea-rules](idea-rules.md) |
+| `question` | index | `.spectacular/questions/` | [question-rules](question-rules.md) — active blockers and ambiguities; canonical `QUE-NNN` IDs |
+| `research` | index | `.spectacular/research/` | [research-rules](research-rules.md) — cited evidence that clears fog; canonical `RES-NNN` IDs |
+| `spike` | index | `.spectacular/spikes/` | [spike-rules](spike-rules.md) — human-authorized feasibility evidence; canonical `SPK-NNN` IDs |
 | `audit` | index | `.spectacular/audits/index.md` + `audits/` | [audit-rules](audit-rules.md) — **bug investigation** before a fix is planned; write with `spectacular audit new\|list\|resolve` (v1.25.0) |
 | `fixes` | index | `.spectacular/fixes/index.md` + `fixes/` | [fixes-rules](fixes-rules.md) — **verified-fix log**; write only once resolved, with `spectacular fix new\|list` (v1.25.0) |
 
@@ -71,6 +74,7 @@ A stub's rules file therefore only needs its **frontmatter** (the engine's dispa
 | `build-workflow` | reference | `skills/spectacular/references/build-workflow.md` | **build-direction orchestrator arc, runtime core** (mirror of bug-workflow) — assemble a closed milestone brief from the request chain, decide build-inline vs dispatch `spec-builder`, confirm + tick the ledger; routes the optional fleet (`repo-explorer` map-before-plan, `code-reviewer` + `test-verifier` arms-length gates); loaded when implementing a milestone |
 | `build-workflow-doctrine` | reference | `skills/spectacular/references/build-workflow-doctrine.md` | the *why* behind build-workflow's gates + the relation-to-bug-workflow table — load only when a routing call is uncertain or when editing the workflow |
 | `soft-db-index` | reference | `skills/spectacular/references/soft-db-index.md` | **canonical routing index** for the 7 soft-DB collections — role, purpose, structure, boundary rules |
+| `canonical-ids` | reference | `skills/spectacular/references/canonical-ids.md` | canonical entity prefixes, aliases, padding, and cross-reference rules |
 
 ## Mode taxonomy
 

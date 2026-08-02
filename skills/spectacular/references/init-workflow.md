@@ -34,7 +34,7 @@ Created on every init regardless of kit or flags:
 
 **Rationale:** PRD is the anchor every other doc references. specs/index.md is the always-on index of what's built. config.yaml is how the skill discovers project state. AGENTS.md is the cold-start onboarding doc. requests/ and specs/ are the working surfaces. Without these six, the workspace is unusable.
 
-Everything else (`PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`) is opt-in via kit or `--with` flag. Empty stubs of unused docs create *stub fatigue* — the skill still reads them during briefings, diluting signal.
+Everything else (`PRINCIPLES.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `STACK.md`, `DECISIONS.md`) is opt-in via kit or `--with` flag. Advanced engineering collections (`findings/`, `fixes/`, `bugs/`, `security/`, `benchmarks/`) are also explicit opt-ins. Empty stubs of unused docs create *stub fatigue* — the skill still reads them during briefings, diluting signal.
 
 ---
 
@@ -63,6 +63,8 @@ spectacular init                              # always-set + blank kit
 spectacular init -i                           # interactive: pick kit + per-suggested prompts
 spectacular init --kit coding                 # always-set + coding's always-docs (STACK + ARCHITECTURE)
 spectacular init --with principles,roadmap   # additive on top of kit defaults
+spectacular init --with findings,fixes,bugs,security,benchmarks
+                                              # reserve advanced engineering collections
 spectacular init --kit coding --minimal       # always-set only; kit identity preserved, extras skipped
 spectacular init --name my-app --agents-file CLAUDE.md
 spectacular init --skill-scope global         # install skill to ~/.agents/ and ~/.claude/
@@ -73,10 +75,12 @@ spectacular init --update                     # re-download latest skill release
 
 **Flag interactions:**
 - `--kit` (default `blank`) sets the kit identity and triggers its always-docs.
-- `--with <a,b,c>` adds explicit docs on top of kit always-docs (additive, deduplicated).
+- `--with <a,b,c>` adds explicit docs or reserved collections on top of kit always-docs (additive, deduplicated).
 - `--minimal` overrides kit always-docs — only always-set is scaffolded, regardless of kit. Kit identity is still recorded in PRD frontmatter.
 - `--skill-scope <project|global|none>` (v1.8.3+) controls where (or whether) the skill is installed — see below. `--global` is a deprecated alias for `--skill-scope global`; `--no-skill` for `--skill-scope none`.
 - Unknown kit, unknown doc-ID, or unknown skill-scope value errors cleanly (non-zero exit, helpful message).
+
+Advanced collection scaffolding creates the selected directory plus `.gitkeep`, preserving it in Git while making no claim that a lifecycle, mutator, or doctor area exists. Re-running init never alters entries already present. `security/` is intentionally singular, and legacy `fixes/F<N>.md` IDs remain unchanged until a separately confirmed migration.
 
 ---
 

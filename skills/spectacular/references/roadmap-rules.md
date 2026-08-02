@@ -20,8 +20,10 @@ This file declares everything roadmap-specific. The skill handles the rest.
 
 A `.spectacular/roadmaps/index.md` containing:
 
-1. One **version block** per planned/active/shipped release, each tagged with a **precision tier** (`full | themed | vision`) that controls which slots are required
+1. Live planned/active version blocks plus only a bounded recent shipped window, each tagged with a **precision tier** (`full | themed | vision`) that controls which slots are required
 2. An optional **Icebox section** at the end for ideas not yet tied to any version
+
+`roadmaps/index.md` is the single live entry point. There is no parallel `ROADMAP.md` or `ROADMAP_ARCHIVE.md`. Re-evaluate its ledger and active release blocks at major roadmap/release changes, heavy request closure, and session end. `spectacular roadmap migrate` compacts older shipped prose into `roadmaps/vX.Y.Z.md`; the index keeps the shipped link and recent window. See [[artifact-retention]].
 
 Frontmatter unchanged from prior versions (`version`, `updated`, `summary`, `related`).
 

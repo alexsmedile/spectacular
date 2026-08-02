@@ -4,7 +4,7 @@ description: CLI subcommands and agent skill triggers, including the boundary be
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-05-23
+updated: 2026-08-01
 ---
 
 # Commands
@@ -20,7 +20,7 @@ The CLI bootstraps the workspace and runs substrate self-checks. The skill opera
 
 ## CLI commands
 
-The installed shell command currently supports two subcommands:
+The installed shell command supports workspace lifecycle, typed-record, inspection, and diagnostic subcommands. The two entry points most users begin with are:
 
 ```bash
 spectacular init [options]
@@ -36,6 +36,8 @@ spectacular init                              # always-set + blank kit
 spectacular init -i                           # interactive: kit menu + per-doc prompts
 spectacular init --kit coding                 # always-set + coding kit's STACK + ARCHITECTURE
 spectacular init --with principles,roadmap    # additive: those two on top of always-set
+spectacular init --with findings,fixes,bugs,security,benchmarks
+                                               # reserve advanced engineering collections
 spectacular init --kit coding --minimal       # always-set only; kit identity preserved
 spectacular init --name my-app
 spectacular init --summary "Internal dashboard for support workflows"
@@ -45,6 +47,8 @@ spectacular init --update                     # re-download latest skill release
 ```
 
 Pre-flight is **always non-destructive** — re-running init on an existing workspace never overwrites existing files. Empty files are filled; non-empty files are skipped; malformed files trigger a `spectacular doctor frontmatter` hint.
+
+Advanced collection flags are reservation-only: they create Git-preservable directories without claiming their record workflows exist. `security/` is intentionally singular. Existing `fixes/F<N>.md` records remain untouched; future `FIX-NNN` migration requires explicit confirmation.
 
 ### `spectacular init --update`
 
@@ -65,7 +69,7 @@ spectacular doctor --fix                  # apply mechanical fixes interactively
 spectacular doctor --format json          # JSON report for skill/tool consumption
 ```
 
-Available areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions` *(v0.4.0+)*, `specs` *(v0.5.0+)*, `docs` *(v0.6.0+)*, `personas` *(v1.3.0+)*, `memory` / `sessions` *(v1.5.0+)*, `feedback` *(v1.6.0+)*, `ideas` *(v1.7.0+)*, `policies` *(v1.12.0+)*, `vision` *(v1.15.0+)*, `decisions` *(v1.17.0+)*, `roadmap` *(v1.23.0+)*.
+Available areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions` *(v0.4.0+)*, `specs` *(v0.5.0+)*, `docs` *(v0.6.0+)*, `personas` *(v1.3.0+)*, `memory` / `sessions` *(v1.5.0+)*, `feedback` *(v1.6.0+)*, `ideas` *(v1.7.0+)*, `policies` *(v1.12.0+)*, `vision` *(v1.15.0+)*, `decisions` *(v1.17.0+)*, `roadmap` *(v1.23.0+)*, and `wayfinding` *(v1.36.0+)*.
 
 The `specs` area validates **spec-delta integrity** *(v1.28.0+)* — for each active request's `SPEC-DELTA.md`, a `⚠️` warning when a `MODIFIED`/`REMOVED` entry quotes a bullet that doesn't exist in its target file, or an `ADDED` entry duplicates one. This is the primary drift signal. It also keeps the older **spec date-drift** heuristic *(v1.18.0+)* as a backstop — a `⚠️` when `specs/index.md`'s `updated` date predates the newest archived request, signalling a likely missed spec-sync. Both route to the skill's spec-sync flow to reconcile content.
 
@@ -225,9 +229,11 @@ spectacular remember "..." --dry-run    # preview without writing
 
 ### `spectacular decide "<decision>" [--context "..."] [--consequences "..."]` (v1.5.0+)
 
-CLI mutator. Appends one ADR-style entry (**Context / Decision / Consequences**) to `.spectacular/decisions/index.md`. The positional argument fills `**Decision:**`; auto-derives a title slug from the first ~6 words of the decision. If a session is open, the entry includes a `Session:` link.
+CLI mutator. Writes one evidence-backed ADR to `.spectacular/decisions/DEC-NNN-<slug>.md` and appends its summary to `decisions/index.md`. The positional argument fills `**Decision:**`; the title slug is derived from its first few words. If a session is open, the entry includes a `Session:` link.
 
 `--context` and `--consequences` (v1.8.4+) populate those sections at write time. Omitted sections are emitted as empty headers to fill in later — never invented from the decision text.
+
+Agents may draft a technical decision autonomously only with traceable evidence: `--autonomous --evidence "RES-001"`. Product and business trade-offs still require the user.
 
 ```text
 spectacular decide "use bash for the CLI to keep install footprint zero"
@@ -291,9 +297,127 @@ spectacular touch .spectacular/requests/add-team-billing/PLAN.md
 
 Unlike `snapshot`, which is restricted strictly to registered canonical documents, `touch` accepts **any** file with a YAML frontmatter block, including request plans. Both commands are path-based and require a literal, cwd-relative file path argument; they do not resolve request slugs.
 
-### `spectacular idea promote <idea>`
+### `spectacular idea promote <slug-or-alias>`
 
 Promotes an idea file into a full request and moves the original to `.spectacular/archive/ideas/`.
+
+New ideas are stored as `.spectacular/ideas/IDEA-NNN-<slug>.md`. The canonical ID remains stable if the descriptive slug changes; `i1`, `ide1`, and legacy `IDE-001` are accepted as input aliases.
+
+### Canonical IDs and migration *(v1.36.0+)*
+
+Wayfinding records use stable, zero-padded IDs. Aliases are for conversation and command input; frontmatter and dependency links always persist canonical IDs.
+
+| Entity | Canonical ID | Common aliases |
+|---|---|---|
+| Decision | `DEC-001` | `d1`, `dec1` |
+| Question | `QUE-001` | `q1`, `que1` |
+| Idea | `IDEA-001` | `i1`, `ide1`, legacy `IDE-001` |
+| Research | `RES-001` | `r1`, `res1` |
+| Spike / prototype | `SPK-001` / `PRT-001` | `spk1` / `prt1` |
+| Specification | `SPC-001` | `s1`, `spc1`, legacy `spec1` |
+| Task | `TSK-001` | reserved; not yet assigned to `TASKS.md` items |
+
+```bash
+spectacular id resolve d1
+spectacular id resolve 3 --context question
+spectacular id migrate --dry-run
+spectacular id migrate --apply --yes
+```
+
+Explicit prefixes always win. A naked number requires `--context`; ambiguous input is rejected instead of guessed. IDs use at least three digits and naturally expand beyond 999. Migration is dry-run by default. Applying it requires `--apply --yes`, archives originals plus `mapping.tsv` under `.spectacular/archive/id-migrations/<timestamp>/`, then rewrites legacy path references.
+
+Legacy singular collection folders remain readable. Preview `spectacular collections migrate`; apply only after reviewing the exact paths with `--apply --yes`. For lifecycle labels, `spectacular lifecycle migrate` safely maps legacy spec labels to `approved` and statusless memories to `active`; it never guesses discovery results. Both migrations archive originals first.
+
+### Questions, research, and spikes *(v1.36.0+)*
+
+Use questions for product or business ambiguities that need a human answer, research for sourced facts, and spikes for feasibility experiments. Completing research or a spike requires evidence and a `supported`, `refuted`, or `inconclusive` result; research does not silently make a decision.
+
+```bash
+spectacular question new tenant-isolation --question "Shared schema or database per tenant?" --priority high
+spectacular question list --status open
+spectacular question resolve q1 --answer "Use schema-per-tenant"
+
+spectacular research new auth-options --summary "Compare supported authentication paths" --blocked-by q1
+spectacular research resolve r1 --result supported --outcome "OIDC is supported" --evidence "vendor documentation"
+
+spectacular spike new connection-pool --summary "Validate pooling under peak load"
+spectacular spike resolve spk1 --result supported --outcome "Feasible at 500 concurrent sessions" --evidence "benchmark report"
+```
+
+`question new` defaults to `requires_user_input: true`. `question list` defaults to active questions; use `--status archived` (or `resolved`) for explicit history. Resolving records answer provenance, moves the file to `.spectacular/archive/questions/`, and keeps its canonical ID available as a satisfied dependency. `--decision` links an existing DEC only when the answer represents a genuine choice. Spike records set `execution_requires_approval: true`; creating the record does not authorize running prototype code.
+
+### Specification lifecycle and action *(v1.36.0+)*
+
+Specifications converge discovery into executable intent:
+
+```text
+draft|unconfirmed → approved → implemented → archived
+       └──────────────────────────────→ archived (rejected/abandoned)
+implemented → superseded|deprecated → archived
+```
+
+```bash
+spectacular spec new user-onboarding --summary "Guide a new user to first success" --target-version v1.0.0-discovery
+spectacular spec list --status draft
+spectacular spec approve s1 --evidence "Product review complete" --target-version v1.0.0-execution
+spectacular request new user-onboarding --from s1 --priority high
+# then, inside Codex/Claude: /spectacular act SPC-001
+spectacular spec implement s1 --verified-against "commit abc123"
+```
+
+Collaborative specs start `draft`; pass `--afk` for `unconfirmed`. `spec approve` snapshots and authorizes implementation (`confirm` remains an alias). `request new --from` mechanically creates both PLAN and TASKS but leaves them planned. `/spectacular act SPC-001` (or `/spectacular SPC-001`) is the agentic authorization/implementation flow. Terminal `spec act` redirects rather than partially performing it. `implemented` is a historical evidence point, not a freshness promise; code remains authoritative. `spec archive` is dry-run first and accepts implemented specs after verification as well as rejected/abandoned draft, unconfirmed, or approved specs; it records `archived_from`, reason, and dates before moving detail to `archive/specs/`.
+
+### Wayfinding fog and frontier *(v1.36.0+)*
+
+Fog is unresolved work. The frontier is the subset whose `blocked_by` dependencies are satisfied and can be addressed now.
+
+```bash
+spectacular wayfind status
+spectacular wayfind status --blockers-only
+spectacular wayfind next
+spectacular wayfind order
+spectacular wayfind resolve q1 --answer "Use schema-per-tenant"
+spectacular wayfind defer q1 --reason "Not relevant to this milestone" --review-after v1.2.0
+spectacular wayfind resume q1
+spectacular wayfind path s1
+spectacular wayfind route "park this idea" cache-index --hypothesis "Cache the generated index"
+spectacular wayfind route icebox q1 --reason "Later milestone"
+spectacular wayfind route "find your way to" s1
+spectacular wayfind route "act on goal" s1 --request-slug user-onboarding
+```
+
+`wayfind order` is strict dependency-first topological order and refuses dangling or cyclic graphs. `wayfind next` considers only frontier nodes, ranks explicit priority first, then front-loads uncertainty: a ready human question, spike, research, other question, then specification. Deferral is durable and reversible. Session start automatically shows unresolved, non-deferred questions that require user input.
+
+`wayfind route` translates the supported metaphors through existing safe verbs: parking creates an idea without touching current scope, icebox requires a deferral reason, find shows prerequisites, and act delegates to the approved-spec gate. `doctor wayfinding` detects strong dependency signals across PRD, roadmap, plans, and specs plus discovery/execution target inversions; it proposes explicit remediation and never mutates or silently reslots the roadmap. Authorized branch isolation is handled separately by `spectacular afk`.
+
+### AFK Git hygiene *(v1.36.0+)*
+
+AFK Git behavior is opt-in and dry-run-first. The host prefix composes with Spectacular’s intent-specific branch class.
+
+```bash
+spectacular afk status
+spectacular afk configure --enable --branch-prefix codex/ --apply --yes
+spectacular afk run start auth-goal --goal "Implement approved authentication spec" --request auth --allowed-actions "research,spikes,draft-specs,decisions" --apply --yes
+
+spectacular afk propose draft-spec auth
+spectacular afk propose spike spk1
+spectacular afk propose fork idea1
+spectacular afk propose feature billing --version v1.2.0
+
+spectacular afk start spike spk1                # proposal only
+spectacular afk start spike spk1 --apply --yes  # enabled policy + clean tree required
+spectacular afk preflight spike                 # rejects primary/dirty/wrong-class branches
+
+spectacular afk cleanup codex/spike/prototype-spk-001 \
+  --disposition abandoned --outcome "Pool design failed" --evidence "SPK-001 benchmark"
+spectacular afk cleanup codex/spike/prototype-spk-001 \
+  --disposition abandoned --outcome "Pool design failed" --evidence "SPK-001 benchmark" --apply --yes
+
+spectacular afk pr billing-work --version v1.2.0 --name "Team Billing" --tests-passed
+spectacular afk pr billing-work --version v1.2.0 --name "Team Billing" --tests-passed --apply --yes
+```
+
+Branch classes are `spec/draft-*`, `spike/prototype-*`, `fork/idea-*`, and `feat/v*-*`. `start` records provenance in `.spectacular/afk/branches.md`. Cleanup writes outcome/evidence under `.spectacular/archive/afk-branches/` before confirmed local deletion and refuses `--remote`. PR apply requires a verified request, a passing `VERIFY-LOG`, a current `source_spec`, fresh `--tests-passed`, policy permission, and a non-primary clean branch. `--breaking` additionally requires `--breaking-change-approved`. The command opens the PR with `[Spectacular] Executed: <version> - <name>` and never merges.
 
 ### `spectacular policy [@hook | <id> | --principle N | --json | --full]` *(v1.12.0+)*
 
@@ -447,7 +571,9 @@ Read-only inspection verbs that collapse multi-step agent workflows into one det
 | Verb | Returns |
 |---|---|
 | `summary` | One-page workspace overview |
-| `requests [--active]` / `request <slug>` | Fleet list / one request's detail |
+| `request list` / `request <slug>` | Fleet list / cheap request overview (`requests` remains an alias) |
+| `request <slug> --brief [-m2]` | Active implementation prompt compiled from PLAN, TASKS, SESSION, provenance, and boundaries |
+| `request <slug> --full` | Ordered request-owned Markdown bundle; external linked records stay unexpanded |
 | `decisions` / `decision <slug>` | Decision entries |
 | `memories` / `memory <slug>` | Memory entries |
 | `sessions [show <slug>]` | Session log |
@@ -457,7 +583,7 @@ Read-only inspection verbs that collapse multi-step agent workflows into one det
 | `paths` | Conventional paths as JSON |
 | `roadmap` | Build-id ledger + version mapping |
 
-Cold-start pattern: `summary → requests --active → request <slug>`.
+Cold-start pattern: `summary → request list --active → request <slug>`. When implementing, continue with `request <slug> --brief`; use `--full` only for review/debugging.
 
 ### `spectacular prd` / `spectacular prd grill`
 
@@ -483,7 +609,7 @@ Runs the PRD quality gate — 10 checks total (8 base + 2 kit-aware). Reports a 
 
 To keep operation deterministic, Spectacular uses a clear division of labor:
 
-- **CLI mutator verbs** (run in the terminal: `init`, `doctor`, `pack`, `migrate`, `new`, `advance`, `undo`, `next`, `snapshot`, `archive`, `touch`, `decide`, `remember`, `session`, `feedback`, `idea`, `audit`, `fix`):
+- **CLI mutator verbs** (run in the terminal: `init`, `doctor`, `pack`, `migrate`, `new`, `advance`, `undo`, `next`, `snapshot`, `archive`, `touch`, `decide`, `remember`, `session`, `feedback`, `idea`, `question`, `research`, `spike`, `spec`, `wayfind`, `afk`, `id`, `audit`, `fix`):
   - These commands run locally in your shell and handle mechanical scaffolding, file moves, and structured data entry edits.
   - Some commands (like `touch` and `snapshot`) are **path-based** and expect literal, cwd-relative file paths. They do not resolve request slugs automatically.
   - Other commands (like `advance` and `archive`) are **slug-based** and accept request slugs directly.

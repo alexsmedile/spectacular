@@ -1,11 +1,11 @@
 ---
-description: Scaffold a new request — slug rules, templates, target-version.
-when_to_use: spectacular new <description> or spectacular idea promote.
+description: Scaffold a free-form or approved-spec-derived request without authorizing implementation.
+when_to_use: spectacular request new --from SPC-NNN, spectacular new <description>, or spectacular idea promote.
 ---
 
 # New Request — Scaffolding
 
-Triggered by: `spectacular new <description>`, or when conversational context clearly indicates a new piece of work to track.
+Canonical spec-driven creation is `spectacular request new [<slug>] --from SPC-NNN`. `spectacular new <description>` remains the compatibility path for free-form work that does not yet have an approved SPC.
 
 > **@Planning policy gate.** First, run `spectacular policy @Planning` and follow every active policy returned. A `block` policy must be satisfied or you stop; a `warn` policy you surface and continue. See [policy-injection.md](policy-injection.md).
 
@@ -37,6 +37,12 @@ Example: "add team billing" → `add-team-billing`
 
 ## Scaffold sequence
 
+### From an approved specification
+
+The CLI requires `status: approved`, refuses duplicate live requests for the same `source_spec`, generates PLAN and TASKS in approved requirement order, records the source version/digest and scaffold Git baseline, and leaves the request `planned`. It does not authorize production code.
+
+Next run `/spectacular act SPC-NNN`. The full gate, activation provenance, compiled brief, and native-plan handoff are canonical in [[request-workflow]].
+
 **Mutation principle (v0.7.0+):** scaffolding goes through `spectacular new <slug>`. The CLI:
 - Validates the slug (kebab-case, max 64 chars; respects pack naming rules if active)
 - Refuses if slug already exists in `requests/` OR `archive/`
@@ -60,7 +66,7 @@ requests/<slug>/
 └── TASKS.md      ← always created
 ```
 
-> **Tier-reveal (next step).** After scaffolding, surface exactly one suggestion: `Next: spectacular plan grill <slug> to stress-test the PLAN before building.` One line, only after the scaffold is confirmed — never mid-flow, never a menu.
+> **Tier-reveal (next step).** After a free-form scaffold, surface exactly one suggestion: `Next: /spectacular grill plan <slug> to stress-test the PLAN before building.` After a spec-derived scaffold, use `Next: /spectacular act SPC-NNN`. Never present a menu.
 
 Create only on demand (skill proposes, user confirms):
 - `SESSION.md` — when request moves to `active`

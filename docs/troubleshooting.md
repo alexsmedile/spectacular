@@ -4,7 +4,7 @@ description: Common setup, install, skill discovery, update, symlink, and worksp
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-05-23
+updated: 2026-08-01
 ---
 
 # Troubleshooting
@@ -138,7 +138,7 @@ spectacular doctor frontmatter        # scoped to one area
 spectacular doctor --fix              # apply mechanical repairs (gitignore, missing dirs, dangling symlinks)
 ```
 
-Doctor surfaces issues in 7 areas: `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`. For repairs requiring judgment (frontmatter drift, missing snapshot, lifecycle mismatch), use the skill side in your AI agent:
+Doctor can scan the whole workspace or one area, including `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions`, `specs`, `docs`, `personas`, `memory`, `sessions`, `feedback`, `ideas`, `debug`, `policies`, `vision`, `decisions`, `roadmap`, and `wayfinding`. The wayfinding area checks canonical IDs, dangling dependencies, and cycles. For repairs requiring judgment (frontmatter drift, missing snapshot, lifecycle mismatch), use the skill side in your AI agent:
 
 ```text
 /spectacular doctor --fix
@@ -196,28 +196,23 @@ ln -s ~/.agents/skills/spectacular ~/.claude/skills/spectacular
 
 ---
 
-## Skill triggers do not work in the shell
+## A command redirects from the shell to the skill
 
-Only `spectacular init` is a shell CLI command.
-
-These are skill triggers for an agent conversation:
+Most mechanical commands work directly in the shell, including `new`, `advance`, `archive`, `idea`, `question`, `research`, `spike`, `spec`, `wayfind`, and `id`. Commands that require an LLM remain agent skill triggers:
 
 ```text
 /spectacular
-spectacular new <description>
-spectacular advance <slug>
-spectacular next
-spectacular archive <slug>
 spectacular remember this
-spectacular snapshot <file>
-spectacular idea promote <idea>
 spectacular status
+spectacular verify <slug>
+spectacular sweep [<slug>]
+spectacular imagine <slug>
 spectacular prd
 spectacular prd refine
 spectacular prd review
 ```
 
-If you run `spectacular new ...` in a terminal, the CLI will reject it. Use the trigger inside Claude Code, Codex, or another agent that has loaded the skill.
+If a CLI invocation prints a redirect, repeat the command inside Claude Code, Codex, or another agent that has loaded the skill. The redirect is intentional: interviews, semantic review, and verification walks require agent judgment.
 
 ---
 

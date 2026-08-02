@@ -29,6 +29,8 @@ Soft-folder database. The index file (`SESSIONS.md`) is regenerated from individ
 
 **Lifecycle invariant:** at most one session has `status: open` at any time. `spectacular session start` errors if one is already open and suggests `end` first.
 
+**Session boundaries:** before the working briefing, surface `spectacular wayfind status --blockers-only`. At session end, if the session contained a major update, heavy request, release/roadmap change, or architecture decision, re-evaluate the live indexes (`roadmaps/index.md`, `specs/index.md`, and affected collection indexes) and record any deliberate deferral. Routine small edits do not trigger index churn. See [[artifact-retention]].
+
 **Snapshot-on-edit: false** — entries are factual records of when work happened; immutable by convention.
 
 **Entry frontmatter:**

@@ -4,7 +4,7 @@ description: The normal Spectacular loop after installation — init, briefing, 
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-07-12
+updated: 2026-08-01
 ---
 
 # Workflow Guide
@@ -82,7 +82,68 @@ The skill should not dump the whole workspace. It loads context progressively.
 
 ---
 
-## 4. Create a request
+## 4. Clear discovery fog when the path is uncertain
+
+Not every idea should immediately become implementation work. Use typed records to keep exploration explicit:
+
+```text
+idea → questions / research / spikes → user decision → draft|unconfirmed spec → approved spec → request
+```
+
+- Park out-of-scope inspiration with `spectacular idea new <slug>`.
+- Record a human-owned ambiguity with `spectacular question new <slug>`.
+- Gather sources and evidence with `spectacular research new <slug>`.
+- Validate feasibility with `spectacular spike new <slug>`; execution requires human approval.
+- Inspect unresolved fog and dependency-ready work with `spectacular wayfind status` and `spectacular wayfind next`.
+- Inspect strict dependency order with `spectacular wayfind order`; invalid graphs refuse sequencing until repaired.
+
+Each record receives a stable canonical ID such as `QUE-001` or `RES-001`. Compact aliases such as `q1` and `r1` work as input, while saved cross-references use canonical IDs.
+
+Use discovery only when it changes what you would build. Start with the cheapest sufficient answer:
+
+| Need | Use | What survives |
+|---|---|---|
+| A fact or comparison you cannot establish from current code/tests/docs | `RES-NNN` research | Sources, evidence, options, and result |
+| A technical feasibility assumption that needs executable proof | `SPK-NNN` spike | Experiment evidence; branch code is disposable |
+| A UI/CLI/workflow that needs human reaction | Prototype attached to the request, vision, or feedback loop | Observations and the resulting spec change |
+| A real end-to-end production skeleton after architecture approval | Approved `SPC` with `execution_mode: tracer` | Thin production code and tests, retained for extension |
+
+If the path is already clear, create none of these and implement the approved request. `RES` is canonical (say `R1`); `PRT` remains reserved. Research, spikes, vendor evidence, and interviews can support a decision, but the user or an explicitly authorized AFK gate still makes the choice. “Artifact” is an owned output, not another database entity.
+
+Technical debt also stays with its execution owner: an active request task when in scope, a `tbd` roadmap candidate when likely soon, or an idea when uncommitted. A deliberate compromise may add a linked decision explaining why. Spectacular does not create a parallel `debt/` backlog.
+
+When discovery converges, create a collaborative draft (or an AFK unconfirmed specification), approve it with the human, then act on it:
+
+```bash
+spectacular spec new team-billing --summary "Bill teams by active seat" --target-version v1.0.0-discovery
+spectacular spec approve s1 --evidence "Pricing and architecture approved" --target-version v1.0.0-execution
+spectacular request new --from s1
+# then, inside Codex/Claude:
+/spectacular act SPC-001
+```
+
+Only an `approved` specification can seed an implementation request. `request new --from` creates the durable planned PLAN/TASKS bundle; `act` runs gates, records the exact specification/Git baseline, compiles `request --brief`, creates the finer native Codex/Claude session plan, and begins implementation. After verified integration, `spec implement --verified-against <commit|build>` records the historical evidence point; code remains authoritative. If an open loop is not relevant now, defer it with a reason and optional review point.
+
+Wayfinder language maps to the same gates: “park this idea” creates an idea, “put it on ice” defers with a reason, “find your way to…” shows prerequisites, and “act on goal…” still requires an approved specification. During implementation, park unexpected discoveries instead of adding them to the active milestone. Run `spectacular doctor wayfinding` to surface inferred dependency gaps and discovery/execution target inversions; findings are proposals, never automatic roadmap edits.
+
+For explicitly authorized AFK work, create a durable goal-scoped `spectacular afk run`, inspect `spectacular afk status`, and propose the branch class before creating it. Draft specs, spikes, forks, and approved execution stay isolated. Cleanup creates a durable Git archive ref before local deletion; remote deletion and merge remain human actions. A verified handoff may open `[Spectacular] Executed: <version> - <name>` only after the request, source spec, verification log, and fresh tests satisfy their gates.
+
+## Keep live context small and trustworthy
+
+Spectacular derives four retention classes from lifecycle state and location:
+
+| Class | Meaning | Examples |
+|---|---|---|
+| Live | Safe to use for current planning/execution; refreshed at lifecycle checkpoints | code/tests, roadmap/spec indexes, active requests, unresolved questions |
+| Temporary | Bounded working material | execution specs, SESSION notes, prototypes, AFK drafts |
+| Stale-safe | Preserved history; verify against code before reuse | archived SPC/QUE/request, DEC/FND, completed research/spikes, shipped roadmap files |
+| Throwaway | The code/file may be deleted once learning and recovery survive | spike/fork branches, sandbox prototype code, scratch output |
+
+Every session briefing starts with unresolved human-input questions. Resolving one records answer provenance and archives it; it creates a DEC only when the answer is genuinely a choice. Detailed specs stay aligned through approval/action, then may drift as temporary execution context; after verified merge, archive them and treat production code plus executable unit/invariant tests as truth.
+
+The current roadmap entry is `.spectacular/roadmaps/index.md`. It owns the build ledger and active/planned direction. `spectacular roadmap migrate` moves older shipped prose to `.spectacular/roadmaps/vX.Y.Z.md`; do not create `ROADMAP_ARCHIVE.md`.
+
+## 5. Create a request
 
 When you have work to track, tell the agent:
 
@@ -110,7 +171,7 @@ Move it to `active` when implementation begins. The skill may create `SESSION.md
 
 ---
 
-## 5. Work from the request folder
+## 6. Work from the request folder
 
 During implementation, the request folder is the operational center:
 
@@ -124,7 +185,7 @@ Keep request docs focused on the request. Do not prematurely rewrite `specs/inde
 
 ---
 
-## 6. Use the lifecycle
+## 7. Use the lifecycle
 
 Requests move through this lifecycle:
 
@@ -156,16 +217,16 @@ The skill can propose transitions, but the human should confirm them.
 
 ---
 
-## 7. Update system truth after completion
+## 8. Record implementation evidence after completion
 
-`specs/index.md` (and any per-capability `specs/<capability>.md` files) describe what the system does now. They should be updated after a request changes real behavior.
+Code is the source of implemented behavior. Specs are execution context and may become stale. After a verified request, record `implemented_at` and `verified_against`; do not treat the status as continuous synchronization.
 
 When archiving a completed request, the skill should propose updates such as:
 
 - add or update a bullet in `specs/index.md`
 - create a new `specs/<capability>.md` (only when the bullet outgrows one line)
 - update an existing capability spec
-- change a capability status from `draft` to `stable`
+- approve a draft before execution, or mark an approved spec implemented against a concrete commit/build
 - leave unaffected specs unchanged
 
 Canonical docs and `specs/` files should be snapshotted before edits:
@@ -177,7 +238,7 @@ _snapshots/specs/billing/SPEC/@v1.0.md
 
 ---
 
-## 8. Capture operational memory
+## 9. Capture operational memory
 
 Use memory for lessons the team should not rediscover:
 
@@ -197,7 +258,7 @@ Memory is team-visible and committed to git under `.spectacular/memories/`. Do n
 
 ---
 
-## 9. Archive completed requests
+## 10. Archive completed requests
 
 After a request is verified:
 
@@ -221,9 +282,11 @@ Archiving runs a **closure gate** *(v1.28.0+)*: it blocks on open `TASKS.md` box
 For long-running projects, a useful rhythm is:
 
 1. Run `/spectacular` at the start of a session.
-2. Work from one active request.
-3. Keep `TASKS.md` and `SESSION.md` current.
-4. Verify before changing request state to `verified`.
-5. Archive completed work.
-6. Update `specs/index.md` / `specs/` (via a `SPEC-DELTA.md`) only when behavior has actually changed.
-7. Write memory only for lessons with future value.
+2. Answer surfaced human blockers or defer them deliberately.
+3. Clear high-uncertainty discovery nodes before routine implementation.
+4. Confirm the spec, then act on it to create a request.
+5. Work from one active request and keep `TASKS.md` / `SESSION.md` current.
+6. Verify before changing request state to `verified`.
+7. Archive completed work.
+8. Update `specs/index.md` / `specs/` (via a `SPEC-DELTA.md`) only when behavior has actually changed.
+9. Write memory only for lessons with future value.

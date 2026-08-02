@@ -1,6 +1,6 @@
 ---
 description: Archive a completed request — move to archive/, propose spec sync + memory entries.
-when_to_use: spectacular archive <slug>.
+when_to_use: spectacular request archive <slug> (top-level archive is a compatibility alias).
 ---
 
 # Archive — Completing a Request
@@ -18,8 +18,9 @@ Triggered by: `spectacular archive <slug>`, or skill proposing archive after req
 3. **Propose memory entries** — review the request for lessons worth keeping (see `memory.md`)
 4. **Propose bug-lifecycle captures** — if this request fixed a bug: offer a `fixes/` entry (`spectacular fix new … --signature …`) so the resolution is reusable next time (see [[bug-workflow]] Step 3). If it closes an open `audit/`, resolve it (`spectacular audit resolve <A> --disposition "requests/<slug>"`) so no investigation is left dangling. Skip silently when neither applies — most requests aren't bugs.
 5. **Human confirms** the spec delta, memory, and bug-lifecycle proposals before any writes
-6. **Run `spectacular archive <slug>`** — the CLI verb (v0.7.0+) runs the **closure gate**, then does the move + frontmatter bump + inbound link rewriting atomically. Do NOT manually `git mv` and then sed link paths — that's fragile and easy to leave half-broken.
+6. **Run `spectacular request archive <slug>`** — the CLI verb runs the **closure gate**, then does the move + frontmatter bump + inbound link rewriting atomically. Top-level `archive` remains an alias. Do NOT manually `git mv` and then sed link paths — that's fragile and easy to leave half-broken.
 7. Update any `specs/<capability>.md` files (and a bullet in `SPEC.md`) that reference this request
+8. Re-evaluate `roadmaps/index.md`: confirm the build ledger row, active release block, and any shipped-version index entry reflect the closure. Snapshot before a needed edit; do not create a parallel roadmap archive.
 
 ### What `spectacular archive <slug>` does
 
@@ -69,7 +70,7 @@ Propose concrete, specific entries. Avoid vague lessons. If nothing notable happ
 - Skill does not read `archive/` during normal operation
 - Promoted idea files go to `archive/ideas/<filename>.md`
 - Use `spectacular archive <slug>` — never manual `git mv` + sed (v0.7.0+)
-- **Only requests archive.** The append-only soft-DB collections (`memory/`, `decisions/`, `sessions/`, `audit/`, `fixes/`) are *not* archived — they stay live. A resolved `audit/` entry keeps `status: resolved` in place; `fixes/` is a permanent corpus by design (that's the point of the self-learning loop). `feedback/` is the one exception — it has its own `spectacular feedback-loop archive` verb → `archive/feedback/<year>/`. See [[soft-db-index]].
+- Requests use this archive flow. Entity-specific verbs separately archive resolved questions (`archive/questions/`), detailed specs (`archive/specs/`), promoted ideas, and feedback. Decisions/findings remain permanent and indexable; future scale compaction may move bodies behind their indexes but never discard IDs/rationale. Audits/fixes remain their durable self-learning corpus. See [[soft-db-index]] and [[artifact-retention]].
 - **Reversible (v1.22.0+):** an accidental archive is undone with `spectacular undo` — it moves the dir back, restores status, and reverses the inbound-link rewrites. Surface this as a one-line tier-reveal after archiving, not a separate flow. Undo is single-level and refuses on a stale breadcrumb.
 
 ---

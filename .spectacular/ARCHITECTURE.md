@@ -1,6 +1,6 @@
 ---
-version: 1.2
-updated: 2026-06-28
+version: 1.11
+updated: 2026-08-02
 summary: "The .spectacular/ directory — layers, file roles, frontmatter conventions, lifecycle, versioning"
 related:
   - PRD.md
@@ -29,18 +29,26 @@ This is distinct from `STACK.md` — STACK describes the **host project's** tech
 ├── config.yaml         # machine-readable project config
 ├── POLICY.md           # practice layer — policies under work-phase hooks (v1.12.0+)
 │
-├── specs/              # system spec — specs/index.md (index) + specs/<capability>.md (v2.0 OKF; flat files)
+├── specs/              # specifications — canonical SPC-NNN entries + index
 ├── roadmaps/           # time-ordered "what's next" — roadmaps/index.md + shipped v*.md (v2.0 OKF)
-├── decisions/          # ADR log — decisions/index.md + D<N>-<slug>.md entries (v2.0 OKF)
+├── decisions/          # verified architectural decisions — DEC-NNN-<slug>.md
+├── questions/          # unresolved, user-owned blockers — QUE-NNN-<slug>.md
+├── research/           # sourced investigations — RES-NNN-<slug>.md
+├── spikes/             # feasibility experiments — SPK-NNN-<slug>.md
 ├── memories/           # long-term operational learning — memories/index.md + M<N>-<slug>.md (v2.0 OKF)
 ├── sessions/           # work-session log — sessions/index.md + entries (v1.5.0+; v2.0 OKF)
-├── ideas/              # exploratory scratchpad — not acted on by skill
+├── ideas/              # parked inspiration — IDEA-NNN-<slug>.md
 ├── requests/           # active and planned work
 ├── skills/             # project-specific reusable skills
 ├── feedbacks/          # prototyping-mode feedback entries (v1.6.0+; v2.0 OKF)
 ├── audits/             # bug investigations — diagnose before planning a fix (A<N>.md; v1.25.0+)
 ├── fixes/              # verified-fix log — logged only once resolved (F<N>.md; v1.25.0+)
+├── findings/           # optional reserved advanced findings — future FND-NNN entries
+├── bugs/               # optional reserved defect registry — future BUG-NNN entries
+├── security/           # optional reserved security registry — future SEC-NNN entries
+├── benchmarks/         # optional reserved performance evidence — future BMK-NNN entries
 ├── debugs/             # in-flight debug-job traces — debugs/<slug>/ (v1.26.0+; v2.0 OKF)
+├── afk/                # AFK branch provenance ledger (created only after authorized start)
 ├── _snapshots/         # versioned snapshots of canonical docs (store name configurable; default _snapshots since v1.24.0)
 │   ├── PRD/            # one folder per canonical doc, uppercase preserved
 │   │   └── @v1.2.md    # filename = the content's version (couples to version:)
@@ -50,6 +58,7 @@ This is distinct from `STACK.md` — STACK describes the **host project's** tech
 │       └── @v4.md
 ├── .last-mutation      # undo breadcrumb — gitignored, session ephemera (v1.22.0+)
 └── archive/            # completed requests, historical snapshots
+    └── afk-branches/   # outcome/evidence records written before local branch cleanup
 ```
 
 `.spectacular.local/` — personal overrides, always gitignored, never committed. `.spectacular/` itself is fully committed to git.
@@ -160,7 +169,7 @@ related:
 
 ```yaml
 ---
-status: stable | draft | deprecated
+status: draft | unconfirmed | approved | implemented | superseded | deprecated | archived
 updated: 2026-05-11
 summary: "What this capability does"
 ---
@@ -190,6 +199,8 @@ blocks:
 - Other fields are optional; skill warns but does not block
 - `PLAN.md` frontmatter is the **single source of lifecycle state** for a request
 - Capability specs at `specs/<capability>.md` track their own state independently
+
+**Approved-spec activation provenance:** a spec-derived request stores flat fields on PLAN: `source_spec`, `source_spec_version`, `source_spec_digest`, `activated_at`, `activated_by`, and `activated_against`. The digest identifies the exact approved Markdown baseline; `activated_against` is the Git commit (or `uncommitted`). Do not copy the SPC body into the request. `spectacular request new --from SPC-NNN` creates both PLAN and TASKS but leaves them planned; `/spectacular act SPC-NNN` owns the gated transition into production work.
 
 **`hold:` — orthogonal hold (b21-adjacent, 2026-07-10).** The lifecycle is a
 **pure five-state chain** (`planned → active → review → verified → archived`). A
@@ -285,17 +296,50 @@ summary: "What this request changes"
 
 ---
 
+# Wayfinding knowledge layer
+
+Spectacular keeps distinct typed Markdown collections so uncertainty is visible instead of being smuggled into plans or specifications:
+
+- `ideas/` parks out-of-scope inspiration (`IDEA-NNN`) without expanding the active milestone.
+- `questions/` holds unresolved blockers (`QUE-NNN`); records requiring user judgment are surfaced at session start.
+- `research/` holds sourced investigation (`RES-NNN`) and `spikes/` holds technical feasibility experiments (`SPK-NNN`). People say `R1`; `RES` remains the only persisted research prefix.
+- `decisions/` contains verified, evidence-backed architectural decisions (`DEC-NNN`), not unresolved preferences.
+- `specs/` contains feature specifications (`SPC-NNN`). Their evidence-gated lifecycle is defined by `skills/spectacular/references/lifecycle-contract.md`; only `approved` specs may seed execution requests, while code remains authoritative.
+
+Discovery is progressive, not mandatory. Inspect code/tests/docs or ask directly first; create `RES` for a bounded fact gap, `SPK` for technical feasibility, and a request/vision/feedback-owned prototype only when human interaction is the evidence. `PRT` stays reserved. A tracer bullet is an approved `SPC` with `execution_mode: tracer`: a thin, production-quality vertical slice that is retained and extended, never throwaway discovery code. “Artifact” names an output owned by one of these records or a request, not an `ART` entity or catch-all database.
+
+Technical debt also has no parallel database. Put in-scope remediation in request tasks, likely near-term work in a roadmap `candidate` with `tbd`, uncommitted possibilities in `ideas/`, and deliberate compromises in a decision linked to the cleanup owner. A production mock is routed this way; a spike/prototype mock is disposable evidence. See `skills/spectacular/references/discovery-protocol.md`.
+
+## Artifact retention and freshness
+
+Freshness is derived from entity, status, and path—never duplicated as a `retention:` field:
+
+| Class | Includes | Contract |
+|---|---|---|
+| **Live** | code/tests, `roadmaps/index.md`, `specs/index.md`, active requests, unresolved questions, active-release specs before execution | Re-evaluate at implementation, archive, major roadmap/architecture change, and session boundaries |
+| **Temporary** | active execution specs, SESSION/request artifacts, prototypes, AFK drafts | Bounded by an owner; promote durable output or archive on closure |
+| **Stale-safe** | archived specs/questions/requests, DEC/FND, completed RES/SPK, shipped `roadmaps/vX.Y.Z.md` | Historical evidence, not current truth; check against code/vendor docs before reuse |
+| **Throwaway** | spike/fork branches, prototype sandbox code, scratch/generated output | Preserve outcome/evidence and recovery pointer, then delete |
+
+Production code and executable unit/invariant tests are implementation truth after verified integration. `roadmaps/index.md` is the only live roadmap entry point; no root `ROADMAP.md` or `ROADMAP_ARCHIVE.md` exists. Older shipped prose lives in `roadmaps/vX.Y.Z.md` behind the live index.
+
+At every human-agent session start, unresolved `requires_user_input` questions are surfaced before other work. Resolution records answer provenance and moves the QUE to `archive/questions/`; a DEC is created only for a genuine choice. Detailed specs remain synchronized through approval/action, become temporary execution context once code generation starts, and move to `archive/specs/` after verified integration or rejection. See `skills/spectacular/references/artifact-retention.md`.
+
+Cross-references always persist canonical IDs, even when users speak in aliases such as `D1`, `Q1`, or `SPEC1`. Explicit prefixes win; naked numbers require a collection context. IDs use at least three digits. Discovery targets use `vX.Y.Z-discovery`; approved-spec execution targets use `vX.Y.Z-execution`.
+
+Readiness is derived from canonical dependencies. Unresolved records form the **fog**; dependency-ready records form the **frontier**. The sequencer rejects invalid graphs and uses strict dependency-first topological order. `wayfind next` ranks explicit priority first, then uncertainty: user-input question, spike, research, other question, specification. Strong dependency language across PRD, roadmap, plans, and specs produces advisory doctor findings only; explicit frontmatter remains authoritative and is never silently rewritten.
+
 # Ideas layer
 
-A **thinking scratchpad**, not a workflow stage. Nothing in `ideas/` is acted on automatically by the skill.
+A **parking space**, not an execution stage. Nothing in `ideas/` is acted on automatically by the skill.
 
 Use it for: raw thoughts, market observations, UX experiments, discarded approaches, future concepts, unresolved brainstorming.
 
 ```txt
 ideas/
-├── multiplayer-editor.md
-├── ai-memory-system.md
-└── growth-loops.md
+├── IDEA-001-multiplayer-editor.md
+├── IDEA-002-ai-memory-system.md
+└── IDEA-003-growth-loops.md
 ```
 
 **Rules:**
@@ -312,14 +356,13 @@ ideas/
 
 # Spec layer (specs/index.md + specs/)
 
-The spec layer represents canonical system truth — what the product *actually does* right now. It is **`specs/index.md` (the index) + `specs/<capability>.md` (per-capability detail, flat files)**. The pre-v0.5.0 `current/` folder was replaced by this spec layer in v0.5.0.
+The spec layer carries ephemeral execution context, not permanent system truth. Each specification follows `draft|unconfirmed → approved → implemented`; only `approved` entries may seed an execution request. After verified integration, `implemented` detail normally archives, while superseded/deprecated remain optional intermediate history. Rejected or abandoned pre-implementation specs archive with their prior status and reason. Code and executable tests are authoritative.
 
 ```txt
 specs/
-├── index.md            # the index — dense capability bullets, each pointing to a spec file when promoted
-├── cli.md              # one flat file per capability, each with its own frontmatter state
-├── doc-engine.md
-└── roadmap.md
+├── index.md                         # dense capability index
+├── SPC-001-user-onboarding.md       # canonical ID + descriptive slug
+└── SPC-002-roadmap.md
 ```
 
 **Purpose:** defines current behavior, active capabilities, security requirements, performance expectations, user-visible behavior.
@@ -419,19 +462,24 @@ Executable implementation checklist, grouped by milestone. The skill monitors ta
 - `depends_on:` — surface task dependencies
 - `validates:` — link task groups to milestones (closes principle 7's validation loop)
 
-### ID-namespace convention (one letter per entity, project-wide)
+### ID-namespace convention
 
-Spectacular already uses a family of single-letter + number IDs, each scoped to its own entity type. This has been implicit convention since v1.5.0 — written down here so it doesn't drift or get reinvented per-request:
+Spectacular uses canonical padded IDs for durable Wayfinding entities while retaining older project-local mnemonic IDs as readable compatibility forms:
 
 | Prefix | Entity | Scope | Lives in |
 |---|---|---|---|
 | `M<N>` | Milestone | per-request | `TASKS.md` headings, `PLAN.md` §3/§6 |
-| `D<N>` | Decision | project-wide | `decisions/D<N>-<slug>.md` |
-| `F<N>` | Fix | project-wide | `fixes/F<N>.md` |
+| `DEC-NNN` | Decision | project-wide | `decisions/DEC-NNN-<slug>.md` |
+| `F<N>` | Legacy verified fix | project-wide | `fixes/F<N>.md` |
+| `FND-NNN` | Finding (reserved) | project-wide | `findings/FND-NNN-<slug>.md` |
+| `FIX-NNN` | Fix/remediation (reserved successor) | project-wide | `fixes/FIX-NNN-<slug>.md` |
+| `BUG-NNN` | Bug/defect (reserved) | project-wide | `bugs/BUG-NNN-<slug>.md` |
+| `SEC-NNN` | Security vulnerability (reserved) | project-wide | `security/SEC-NNN-<slug>.md` |
+| `BMK-NNN` | Benchmark result (reserved) | project-wide | `benchmarks/BMK-NNN-<slug>.md` |
 | `b<N>` | Roadmap build id | project-wide | `roadmaps/index.md` ledger table |
 | `A<N>` | Debug audit finding | per-debug-job | `debugs/<slug>/` trace artifacts |
 
-**Rule:** don't invent a new letter for an existing entity type (e.g. `G1` for a milestone) — reuse the table above so the ID stays greppable by convention across the whole project, not just within one file.
+**Rule:** don't invent a new prefix for an existing entity type. Reserved advanced IDs stabilize names only; no entry is allocated until its workflow ships. Use `fix1` for fixes and `fnd1` for findings; ambiguous `f1` is refused. Roadmap build IDs own `b1`, and bugs use `bug1`. `RCH`/`RSC`/`SER`/`SRC`, `ART`, `TRC`, and `DEB` are not accepted aliases or entity prefixes.
 
 **The ID is a mnemonic, not the link.** The real linkage between a `TASKS.md` milestone and its `PLAN.md` §3/§6 counterpart is the milestone's **name** (the text after the em-dash), not the `M<N>` token. If a heading ever does drift to a non-standard prefix or a renumbered `M<N>`, matching by name still works — `doctor lifecycle` checks both: it flags an off-standard prefix as a fixable warning, but only reports a genuine chain-break when the names *also* fail to line up (so a relettered-but-still-named-the-same milestone doesn't false-positive).
 
@@ -591,7 +639,7 @@ archived  → moved to archive/, specs/index.md + specs/ updated, memory propose
 
 **State storage:**
 - `status:` in `PLAN.md` frontmatter = request lifecycle state
-- `status:` in `specs/<capability>.md` = capability state (`stable | draft | deprecated`); top-level `specs/index.md` carries no per-capability status — it's the index
+- `status:` in `specs/<capability>.md` = the specification lifecycle from `skills/spectacular/references/lifecycle-contract.md`; top-level `specs/index.md` carries no per-capability status — it is the index
 - `status:` in `requests/<slug>/specs/` = individual spec development state
 
 **Transition rules:**

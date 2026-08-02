@@ -27,6 +27,7 @@ sections:
 extras:
   - workflow
   - commands
+  - integrations
   - configuration
   - versioning
   - scaffold

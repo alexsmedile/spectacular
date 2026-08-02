@@ -15,9 +15,9 @@ Triggered by: skill detects user is actively implementing a request, or user ask
 
 When a request transitions from `planned` → `active`:
 
-1. Update `PLAN.md` frontmatter: `status: active`, `updated: <today>`
+1. Use the activation flow in [[request-workflow]]; record the approved specification version/digest, actor, date, and Git baseline before changing `status: active`.
 2. Create `SESSION.md` if it doesn't exist (see template below)
-3. Load the full request context: `PLAN.md`, `TASKS.md`, `SESSION.md`, `specs/index.md`, relevant `specs/<capability>.md`
+3. Start with `spectacular request <slug> --brief`. Load a named file or linked capability spec only when the brief identifies a need; do not reload the discovery history.
 
 ---
 
@@ -75,7 +75,7 @@ Monitor `TASKS.md` for completion signals:
 
 ## Context loading during active work
 
-Follow the context-loading table in `.spectacular/AGENTS.md` (authoritative — don't re-derive a read list here). Always prefer targeted per-capability files over the full `specs/` tree; the top-level `specs/index.md` is cheap and always relevant.
+Follow [[request-workflow]] and the context-loading table in `.spectacular/AGENTS.md`. `TASKS.md` owns durable milestones; the native Codex/Claude plan decomposes only the current milestone; a subagent receives a narrower brief still. Never duplicate these layers one-for-one.
 
 ---
 

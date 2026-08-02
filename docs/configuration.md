@@ -4,7 +4,7 @@ description: config.yaml, agent files, tool overrides, request naming, and .spec
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-05-23
+updated: 2026-08-01
 ---
 
 # Configuration
@@ -227,6 +227,29 @@ skills:
 ```
 
 In v1, Spectacular installs its own skill and leaves project-specific skill automation minimal. Keep this empty unless your project has a documented local convention.
+
+---
+
+## `afk_git` *(v1.36.0+)*
+
+Opt-in policy for Away-From-Keyboard Git isolation. Absence is equivalent to disabled.
+
+```yaml
+afk_git:
+  enabled: false
+  branch_prefix: "codex/"
+  primary_branches: "main,master,develop"
+  allow_pr_create: false
+```
+
+| Field | Meaning |
+|---|---|
+| `enabled` | Allows explicitly confirmed local branch creation and cleanup. It never authorizes merge or remote deletion. |
+| `branch_prefix` | Host/runtime prefix prepended to Spectacular branch classes, such as `codex/`. |
+| `primary_branches` | Comma-separated branches protected from AFK writes and cleanup. |
+| `allow_pr_create` | Allows an explicitly confirmed verified PR handoff. Merge remains human-only. |
+
+Inspect without mutation using `spectacular afk status`. Preview configuration with `spectacular afk configure ...`; applying requires `--apply --yes` and snapshots `config.yaml` first.
 
 ---
 

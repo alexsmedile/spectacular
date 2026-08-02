@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/cli/audit-fix.test.sh — spectacular audit + fix soft-DB collections (v1.25.0)
 #
-# Covers the real logic: auto-numbering (A<N>/F<N>), the verified gate warning,
+# Covers the real logic: auto-numbering (A<N>/F<N>), the strict verified gate,
 # from-audit validation, and the --into-fix graduation (cause copy + disposition).
 
 set -u
@@ -33,16 +33,16 @@ scenario_autonumber() {
   rm -rf "$d"
 }
 
-# ── fix verified gate: no --verified-by → verified: null + nonzero-safe exit ───
+# ── fix verified gate: no --verified-by is refused ───
 scenario_verified_gate() {
-  echo "Scenario verified-gate: unverified fix logs with verified: null"
+  echo "Scenario verified-gate: unverified work remains an audit/request"
   local d="/tmp/spec-af-gate"; new_ws "$d"
   local code
   ( cd "$d" && "$CLI" fix new "unproven" >/dev/null 2>&1 ) && code=0 || code=$?
-  assert_exit "$code" 0 "fix new without --verified-by still exits 0"
-  assert_contains "$d/.spectacular/fixes/F1-unproven.md" "verified: null"
+  assert_exit "$code" 1 "fix new without --verified-by is refused"
+  [[ ! -f "$d/.spectacular/fixes/F1-unproven.md" ]] && pass || fail "unverified fix should not be written"
   ( cd "$d" && "$CLI" fix new "proven" --verified-by "tests/x.sh" >/dev/null 2>&1 )
-  grep -q "verified: null" "$d/.spectacular/fixes/F2-proven.md" && fail "F2 should be verified" || pass
+  grep -q "verified: null" "$d/.spectacular/fixes/F1-proven.md" && fail "F1 should be verified" || pass
   rm -rf "$d"
 }
 

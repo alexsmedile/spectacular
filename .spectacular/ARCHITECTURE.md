@@ -1,5 +1,5 @@
 ---
-version: 1.10
+version: 1.11
 updated: 2026-08-02
 summary: "The .spectacular/ directory — layers, file roles, frontmatter conventions, lifecycle, versioning"
 related:
@@ -479,7 +479,7 @@ Spectacular uses canonical padded IDs for durable Wayfinding entities while reta
 | `b<N>` | Roadmap build id | project-wide | `roadmaps/index.md` ledger table |
 | `A<N>` | Debug audit finding | per-debug-job | `debugs/<slug>/` trace artifacts |
 
-**Rule:** don't invent a new prefix for an existing entity type. Reserved advanced IDs stabilize names only; no entry is allocated until its workflow ships. Existing `F<N>` fixes own `f1`, findings use `fnd1`, roadmap build IDs own `b1`, and bugs use `bug1`. `RCH`/`RSC`/`SER`/`SRC`, `ART`, `TRC`, and `DEB` are not accepted aliases or entity prefixes.
+**Rule:** don't invent a new prefix for an existing entity type. Reserved advanced IDs stabilize names only; no entry is allocated until its workflow ships. Use `fix1` for fixes and `fnd1` for findings; ambiguous `f1` is refused. Roadmap build IDs own `b1`, and bugs use `bug1`. `RCH`/`RSC`/`SER`/`SRC`, `ART`, `TRC`, and `DEB` are not accepted aliases or entity prefixes.
 
 **The ID is a mnemonic, not the link.** The real linkage between a `TASKS.md` milestone and its `PLAN.md` §3/§6 counterpart is the milestone's **name** (the text after the em-dash), not the `M<N>` token. If a heading ever does drift to a non-standard prefix or a renumbered `M<N>`, matching by name still works — `doctor lifecycle` checks both: it flags an off-standard prefix as a fixable warning, but only reports a genuine chain-break when the names *also* fail to line up (so a relettered-but-still-named-the-same milestone doesn't false-positive).
 

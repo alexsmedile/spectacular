@@ -123,6 +123,15 @@ As the index grows, compact its presentation without changing bodies or IDs:
 
 Examples: at D60, D1–10 becomes the first compact block; at D70, D11–20 becomes the second. At D150, D1–50 is one coarse block, D51–100 remains five ten-entry blocks, and D101–150 remains individual. Each block exposes its inclusive ID range and union of topic tags; `spectacular decisions --tag <topic>` and explicit ID lookup still read the individual frontmatter/files. Compaction is index-only: never concatenate, renumber, move, or delete ADR bodies.
 
+Chronological compaction and topical retrieval solve different problems:
+
+- **The canonical index stays deterministic and chronological.** An LLM must not permanently regroup it by inferred topic; decisions can span several topics, and model-generated taxonomies drift between sessions.
+- **Tags provide the durable topic index.** Use a small set of stable lowercase nouns such as `cli`, `docs`, `lifecycle`, `security`, or `git`. Query with `spectacular decisions --tag <topic>`, then load only the matching bodies.
+- **LLM clustering is a read-time view.** After tag/frontmatter retrieval, an agent may group the result by theme for an explanation. That derived grouping is disposable and never rewrites IDs, files, or canonical chronology.
+- **Do not copy the 50/10/50 thresholds to every collection.** They fit a high-volume append-only ADR history. Live blockers and active specs stay fully visible; roadmaps group by release; sessions group by time; memories, findings, fixes, research, and benchmarks retrieve by their own status, tags, signatures, or evidence fields.
+
+When a topic has inconsistent tags, search decision frontmatter and one-line summaries, propose a tag normalization, and require confirmation before changing durable history.
+
 **Migration:** `spectacular decisions migrate` reads flat `DECISIONS.md`, splits each `## YYYY-MM-DD —` block into `decisions/D<N>-<slug>.md`, then rewrites `DECISIONS.md` as the one-liner index. `--dry-run` previews without writing. Idempotent if `decisions/` already exists.
 
 **Detected by:** presence of `decisions/` subfolder next to `DECISIONS.md`. Absence = flat mode (backwards compat).

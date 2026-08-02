@@ -41,3 +41,9 @@ skills:
 #   allow_pr_create: false
 
 last_build: 39
+
+afk_git:
+  enabled: true
+  branch_prefix: "codex/"
+  primary_branches: "main,master,develop"
+  allow_pr_create: true

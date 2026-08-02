@@ -21,7 +21,7 @@ scenario_decide() {
   printf 'project:\n  name: okf\n' > "$dir/.spectacular/config.yaml"
 
   # Run decide (no open session) -> must exit 0 and bootstrap decisions/
-  local code; (cd "$dir" && "$CLI" decide "First decision" --consequences "enable x" >/dev/null 2>&1) && code=0 || code=$?
+  local code; (cd "$dir" && "$CLI" decide "First decision" --consequences "enable x #cli #docs" --tags cli,docs >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 0 "decide exits 0"
 
   (cd "$dir" && "$CLI" decide "Second decision" --consequences "enable y" >/dev/null 2>&1)
@@ -29,13 +29,19 @@ scenario_decide() {
   # Check canonical files and index IDs.
   [[ -f "$dir/.spectacular/decisions/DEC-001-first-decision.md" && -f "$dir/.spectacular/decisions/DEC-002-second-decision.md" ]] && pass || fail "DEC-001/DEC-002 files written"
   grep -qF -- "**DEC-001**" "$dir/.spectacular/decisions/index.md" && pass || fail "canonical DEC ID indexed"
+  [[ "$(grep -o '#cli' "$dir/.spectacular/decisions/index.md" | wc -l | tr -d ' ')" == 1 ]] && pass || fail "decision index emits tags once"
+
+  # Legacy D<N> headings retain a clean title when a later decision regenerates the index.
+  printf '%s\n' '# D3 — Legacy title' '' '**Consequences:**' 'legacy rationale' > "$dir/.spectacular/decisions/D3-legacy-title.md"
+  (cd "$dir" && "$CLI" decide "Fourth decision" >/dev/null 2>&1)
+  grep -qF -- '- **D3** — Legacy title — legacy rationale' "$dir/.spectacular/decisions/index.md" && pass || fail "legacy D heading is normalized without duplicated prefix"
 
   # Check that index.md is created
   [[ -f "$dir/.spectacular/decisions/index.md" ]] && pass || fail "decisions/index.md written"
 
-  # Summary must count the two decisions
+  # Summary must count all decision files.
   local out; out=$(cd "$dir" && "$CLI" summary 2>&1)
-  assert_output_contains "$out" "Decisions:  2"
+  assert_output_contains "$out" "Decisions:  4"
   rm -rf "$dir"
 }
 

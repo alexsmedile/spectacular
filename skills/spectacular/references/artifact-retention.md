@@ -61,6 +61,19 @@ Decision bodies remain individually addressable and their frontmatter stays stro
 
 Thus D60 introduces `D1–10`; D70 adds `D11–20`; at D150 the index shows `D1–50` as one old block, D51–100 in ten-entry blocks, and D101–150 individually. Block summaries retain ID ranges and topic tags so agents can query frontmatter and open only the relevant bodies. Compaction never merges, renumbers, or deletes the underlying decision records.
 
+This threshold is specific to chronological, append-only decision history. Other indexes preserve their own strongest retrieval dimension:
+
+| Index | Primary retrieval | Compaction rule |
+|---|---|---|
+| Open questions, active requests, active-release specs | state, blocker, dependency | No compaction while live; archive terminal records |
+| Roadmaps | release/version | Keep the current ledger; move shipped prose to version files |
+| Sessions | date and request | Partition/archive by time; do not reuse decision thresholds |
+| Findings, research, benchmarks | topic, evidence, observed date | Filter frontmatter; re-check time-sensitive evidence before reuse |
+| Fixes and bugs | signature, affected surface, status | Retrieve by diagnostic identity, not chronology |
+| Memories | topic tags and recency | Filter first; archive or summarize only when normal reads become noisy |
+
+Topic grouping is derived at read time from stable tags and summaries. It may help an agent explain a decision set, but it never becomes a model-authored replacement for the canonical chronological index.
+
 Before using an archived spec, decision, finding, research result, or human-facing doc to change code, check it against current code/tests and current vendor documentation when external behavior matters. Historical records are evidence, not present-tense claims.
 
 ## Throwaway and garbage collection

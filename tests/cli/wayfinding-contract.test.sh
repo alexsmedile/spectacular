@@ -27,7 +27,7 @@ scenario_aliases() {
   assert_eq "$($CLI id resolve IDE-42)" "IDEA-042" "legacy IDE alias"
   assert_eq "$($CLI id resolve spec7)" "SPC-007" "reserved SPEC alias"
   assert_eq "$($CLI id resolve fnd1)" "FND-001" "finding-safe alias"
-  assert_eq "$($CLI id resolve f1)" "F1" "legacy fix owns f1"
+  assert_eq "$($CLI id resolve fix1)" "F1" "explicit fix alias resolves legacy fix"
   assert_eq "$($CLI id resolve bug1)" "BUG-001" "bug-safe alias"
   assert_eq "$($CLI id resolve b1)" "b1" "roadmap build owns b1"
   assert_eq "$($CLI id resolve 3 --context question)" "QUE-003" "contextual number"
@@ -35,6 +35,8 @@ scenario_aliases() {
   local code
   "$CLI" id resolve 3 >/dev/null 2>&1 && code=0 || code=$?
   assert_exit "$code" 1 "ambiguous naked number"
+  "$CLI" id resolve f1 >/dev/null 2>&1 && code=0 || code=$?
+  assert_exit "$code" 1 "ambiguous f1 is refused"
 }
 
 scenario_questions() {

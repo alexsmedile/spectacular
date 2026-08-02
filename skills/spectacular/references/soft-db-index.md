@@ -36,7 +36,7 @@ Heavy engineering work may opt into `findings/`, `fixes/`, `bugs/`, `security/`,
 
 | Collection | Reserved ID | Intended role | Current behavior |
 |---|---|---|---|
-| `findings/` | `FND-NNN` | Durable takeaway produced by research, audits, or user sessions | Reserved only; use `fnd1`, not collision-prone `f1` |
+| `findings/` | `FND-NNN` | Durable takeaway produced by research, audits, or user sessions | Reserved only; use `fnd1`; ambiguous `f1` is refused |
 | `fixes/` | `FIX-NNN` | Padded canonical remediation identity | Existing `F<N>` verified-fix ledger remains active until explicit migration |
 | `bugs/` | `BUG-NNN` | Known defect or regression | Reserved only; prefer `bug1` because `b<N>` is also a roadmap build ID |
 | `security/` | `SEC-NNN` | Security vulnerability or threat finding | Reserved only; folder is singular `security/`, never `securities/` |

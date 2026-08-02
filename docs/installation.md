@@ -4,12 +4,29 @@ description: Install, upgrade, and uninstall Spectacular (CLI, Claude Code plugi
 section: getting-started
 type: how-to
 status: stable
-updated: 2026-07-12
+updated: 2026-08-02
 ---
 
 # Installation
 
 Spectacular ships in three independently-installable forms. Most users want the CLI plus one plugin.
+
+## Choose your setup
+
+Before installing, answer three questions:
+
+1. **Plugin or plain skill files?** Plugins provide the smoothest platform integration. Plain files are transparent, customizable, and work without a marketplace.
+2. **Which platforms?** Install for Claude Code, Codex, or both. A shared `.spectacular/` workspace remains agent-agnostic.
+3. **Local or global files?** Project-local is isolated and reproducible; global makes `/spectacular` available in every repository.
+
+| Choice | Continue with |
+|---|---|
+| Claude Code plugin | [Claude Code plugin](#claude-code-plugin) |
+| Codex plugin | [Codex plugin](#codex-plugin) |
+| Both plugins | Install both plugin sections |
+| Project-local files | Install the CLI, then `spectacular init --skill-scope project` |
+| Global files | Install the CLI, then `spectacular init --skill-scope global` |
+| Plugin already installed | Bootstrap with `spectacular init --skill-scope none` to avoid duplicate skill files |
 
 | Form | What you get | When to use |
 |---|---|---|
@@ -18,7 +35,7 @@ Spectacular ships in three independently-installable forms. Most users want the 
 | **Codex plugin** | `/spectacular` in Codex | If you use Codex |
 | **Skill only** (manual) | Skill files under `~/.claude/skills/spectacular/` or project-local | Air-gapped installs / customization |
 
-The CLI is always the first install. Plugins layer on top.
+The CLI provides project scaffolding and deterministic lifecycle commands. Plugins or skill files provide the agent-facing `/spectacular` workflow.
 
 ---
 

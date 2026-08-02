@@ -80,7 +80,7 @@ spectacular init --with findings,fixes,bugs,security,benchmarks
 | `security/` | `SEC-NNN` | Vulnerability or threat finding | Path/ID reserved; workflow deferred |
 | `benchmarks/` | `BMK-NNN` | Performance/load/profiling result | Path/ID reserved; workflow deferred |
 
-`security/` is singular because it names the engineering domain; `securities/` means financial instruments. Use `fnd1` for findings and `bug1` for bugs: `f1` belongs to the existing fix ledger, while `b1` belongs to the roadmap build ledger.
+`security/` is singular because it names the engineering domain; `securities/` means financial instruments. Use `fnd1` for findings, `fix1` for fixes, and `bug1` for bugs. Ambiguous `f1` is refused; `b1` remains the roadmap build alias.
 
 `audit → requests → fixes` form the self-learning bug loop (see the bug-workflow skill reference).
 

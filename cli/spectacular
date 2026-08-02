@@ -1124,9 +1124,9 @@ _regen_decisions_index() {
     fi
     n=$(printf '%s' "$id" | grep -oE '[0-9]+' | head -1)
     [[ "$n" =~ ^[0-9]+$ ]] || continue
-    title=$(grep -m1 '^# ' "$file" | sed -E 's/^# (DEC-)?[0-9]+[[:space:]]+[—-][[:space:]]+//' | tr '\t' ' ')
+    title=$(grep -m1 '^# ' "$file" | sed -E 's/^# (DEC-|D)?[0-9]+[[:space:]]+[—-][[:space:]]+//' | tr '\t' ' ')
     [[ -n "$title" ]] || title=$(basename "$file" .md)
-    rationale=$(awk '/^\*\*Consequences:\*\*/{found=1;next} found && NF{print;exit}' "$file" | tr '\t' ' ')
+    rationale=$(awk '/^\*\*Consequences:\*\*/{found=1;next} found && NF{print;exit}' "$file" | tr '\t' ' ' | sed -E 's/( #[[:alnum:]_-]+)+[[:space:]]*$//')
     tags=$(fm_get "$file" tags | tr -d '[]' | sed 's/, */ #/g; s/^/#/' | sed 's/^#$//')
     printf '%s\t%s\t%s\t%s\t%s\n' "$((10#$n))" "$id" "$title" "$rationale" "$tags" >> "$rows"
   done
@@ -1560,8 +1560,11 @@ cmd_id() {
       [[ -n "$ref" ]] || die "Usage: spectacular id resolve <ref> [--context <entity>]"
       local compact_ref
       compact_ref=$(printf '%s' "$ref" | tr -d ' _-' | tr '[:upper:]' '[:lower:]')
-      if [[ -z "$context" && "$compact_ref" =~ ^f([0-9]+)$ ]]; then
+      if [[ -z "$context" && "$compact_ref" =~ ^fix([0-9]+)$ ]]; then
         printf 'F%s\n' "$((10#${BASH_REMATCH[1]}))"; return 0
+      fi
+      if [[ -z "$context" && "$compact_ref" =~ ^f([0-9]+)$ ]]; then
+        die "id resolve: '$ref' is intentionally ambiguous; use fix${BASH_REMATCH[1]} for a fix or fnd${BASH_REMATCH[1]} for a finding"
       fi
       if [[ -z "$context" && "$compact_ref" =~ ^b([0-9]+)$ ]]; then
         printf 'b%s\n' "$((10#${BASH_REMATCH[1]}))"; return 0

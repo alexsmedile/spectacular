@@ -38,7 +38,7 @@ Give humans and coding agents one predictable path from approved specification t
 - Make `/spectacular verify` the normal authority for `review → verified`; exceptional direct transitions require an explicit reason recorded as an override.
 - Fold documentation-impact assessment into verification and closure guidance while retaining the low-level compatibility command.
 - Keep `spectacular afk cleanup` as AFK branch hygiene; do not add another namespace level until another cleanup category exists.
-- Use collision-safe aliases: `fnd1` for `FND-001`, `f1` for fixes, `bug1` for `BUG-001`, and `b1` for roadmap builds.
+- Use explicit collision-safe aliases: `fnd1` for `FND-001`, `fix1` for legacy `F1` fixes, `bug1` for `BUG-001`, and `b1` for roadmap builds; refuse ambiguous `f1` (revised by DEC-017).
 - Compact decisions after 50 entries: newest 50 individual, preceding 50 in blocks of 10, older history in blocks of 50; preserve strong frontmatter and index summaries for selective retrieval.
 - Preserve the five-state request lifecycle, code/tests as implementation truth, archive-first behavior, Bash 3.2 support, and all existing HITL and execution-scope boundaries.
 

@@ -11,7 +11,7 @@
 
 ---
 
-## No spec. No plan. No clue.
+## No spec. No plan. No Problem.
 
 **Agents act before they understand.**
 
@@ -39,23 +39,31 @@ The skill is the primary interface. The CLI runs once.
 
 In short, here's how spectacular helps you build your projects:
 
-<img src="docs/assets/benefits.svg" width="100%" alt="Six benefits: Stay coherent · Plan, then build · Start in seconds · Roadmap the runway · Trust the state · Lose nothing" />
+<img src="docs/assets/benefits.svg" width="100%" alt="Six benefits: Share the context · Plan, then build · Start in seconds · Roadmap the runway · Trust the state · Lose nothing" />
 
 ---
 
 ## Quick start
 
+Choose how Spectacular should be available before bootstrapping:
+
+1. **Plugin or files?** Use a plugin for the smoothest agent experience, or install the skill as plain files.
+2. **Which agents?** Choose Claude Code, Codex, or both.
+3. **Which scope?** Keep skill files project-local, or install them globally for every repository.
+
 ```bash
 # Install the CLI
 curl -fsSL https://raw.githubusercontent.com/alexsmedile/spectacular/main/cli/install.sh | bash
 
-# Bootstrap any project
+# Bootstrap the project interactively
 cd your-project
-spectacular init
+spectacular init -i
 
 # Open Claude Code or Codex and run
 /spectacular
 ```
+
+Plugins are installed through their platform marketplace; file installs use `spectacular init --skill-scope project|global`. See [Installation](docs/installation.md) for the exact Claude Code, Codex, local, and global paths. Plain `spectacular init` remains the zero-prompt project-local default.
 
 Heavy engineering projects can optionally reserve specialist evidence stores without adding them to the default scaffold:
 
@@ -189,186 +197,24 @@ Agent definitions live in `agents/` at the repo root (the source of truth); the 
 
 ---
 
-## Skill commands
+## Everyday commands
 
-| Command | What happens |
+| Command | Purpose |
 |---|---|
-| `/spectacular` | Project briefing — active requests, draft capabilities, next action |
-| `spectacular status` | Same as no-arg invocation |
-| `spectacular request new [slug] --from SPC-001` | Scaffold a planned PLAN/TASKS bundle from an approved specification (`new` remains the free-form alias) |
-| `/spectacular act SPC-001` | Agentic handoff: gates, activation provenance, compiled brief, native plan, production implementation; `/spectacular SPC-001` is shorthand |
-| `spectacular request advance <slug>` | Advance lifecycle; verified requires recorded verification evidence (`advance` remains an alias) |
-| `spectacular snapshot <file>` | Snapshot a canonical document before editing |
-| `spectacular touch <file>` | Bump `updated:` on a canonical doc |
-| `spectacular archive <slug>` | Archive a completed request; propose `specs/index.md` sync + memory entries |
-| `spectacular remember this` | Write an insight to `memories/` immediately |
-| `spectacular decide "<decision>"` | Append an ADR entry; `--tags cli,docs` makes reusable principles easy to retrieve |
-| `spectacular feedback-loop` | Prototyping-mode human-feedback loop — pick target, craft proposal, ask user, capture, decide (v1.6.0+) |
-| `spectacular idea` | Parked inspiration — `new\|list\|promote`; new files receive an `IDEA-NNN` identity |
-| `spectacular question` | Human-owned blockers — `new\|list\|resolve`; unresolved questions surface at session start |
-| `spectacular research` / `spike` | Evidence and feasibility records — `new\|list\|resolve`; spike execution requires approval |
-| `spectacular spec` | Feature-spec lifecycle — `new\|list\|approve\|implement\|archive`; only `approved` can seed a request |
-| `spectacular wayfind` | Strict topo order, fog/frontier, priority-then-uncertainty selection, metaphor routing, deferral, and dependency paths |
-| `spectacular afk` | Opt-in Git isolation: policy/status, branch proposals/start, preflight, archive-first cleanup, and verified PR handoff |
-| `spectacular id` | Resolve aliases to canonical IDs or preview/apply an archive-first legacy-ID migration |
-| `spectacular summary` | One-page workspace overview: counts of requests/decisions/memories/sessions/ideas/feedback (v1.8.0+) |
-| `spectacular requests` | List requests; filter with `--status`, `--active`, `--since`; `--json` for agents (v1.8.0+) |
-| `spectacular request <slug>` | Cheap overview; `--brief [-m2]` compiles active implementation context; `--full` returns the request-owned bundle |
-| `spectacular decisions` / `decision <slug>` | List/inspect decisions (v1.8.0+) |
-| `spectacular memories` / `memory <slug>` | List/inspect memories (v1.8.0+) |
-| `spectacular sessions` / `sessions show <slug>` | List/inspect sessions read-only (v1.8.0+) |
-| `spectacular show <doctype>` | Dump canonical doc (`prd\|spec\|principles\|...`); `--section <h2>` filters (v1.8.0+) |
-| `spectacular progress <slug>` | Milestone tick rate from TASKS.md (v1.8.0+) |
-| `spectacular paths` | JSON map of conventional workspace paths (v1.8.0+) |
-| _(bug report to `/spectacular`)_ | Debug agent fleet — the skill checks prior `fixes/`, decides audit-first vs just-fix, delegates to read-only `debug-investigator` / apply-only `debug-fixer` / `debug-researcher`, then graduates a verified fix to the library. Traces land in `debugs/`; reusable remedies in `fixes/` (v1.26.0+) |
-| `spectacular fix new` / `audit new` | Log a verified fix / open a diagnostic audit (the debug-fleet library verbs); `fix new --debug-job <slug>` back-links the trace (v1.25.0+, `--debug-job` v1.26.0) |
+| `/spectacular` | Brief the project and surface blockers |
+| `spectacular request new --from SPC-001` | Create implementation work from an approved spec |
+| `/spectacular act SPC-001` | Start gated implementation |
+| `spectacular request <slug> --brief -m2` | Retrieve the smallest useful implementation prompt |
+| `spectacular wayfind next` | Select the dependency-ready next step |
+| `spectacular doctor` | Check workspace integrity |
 
-> [!NOTE]
-> **`spectacular docs *` verbs were removed in v1.17.0.** Public-facing documentation work lives in the standalone [pageworks](https://github.com/alexsmedile/pageworks) skill. `doctor docs` (discovery-only) remains. Install pageworks via its own one-liner.
-
----
-
-## CLI reference
-
-```
-spectacular init                              # always-set + blank kit (6 files only)
-spectacular init -i                           # interactive — kit menu + per-doc prompts
-spectacular init --kit coding                 # always-set + coding kit's STACK + ARCHITECTURE
-spectacular init --with principles,roadmap   # additive — those two on top of always-set
-spectacular init --kit coding --minimal       # always-set only; kit identity preserved
-spectacular init --name my-app
-spectacular init --agents-file CLAUDE.md      # use CLAUDE.md instead of AGENTS.md
-spectacular init --skill-scope global         # install skill to ~/.agents/ and ~/.claude/
-spectacular init --skill-scope none           # scaffold only; skip skill install (already installed elsewhere)
-spectacular init --update                     # re-download latest skill release
-
-spectacular doctor                            # substrate self-check (all areas)
-spectacular doctor <area>                     # scoped checks include lifecycle | specs | wayfinding | fixes | afk | decisions | roadmap
-spectacular doctor --fix                      # apply mechanical fixes (gitignore, missing dirs, dangling symlinks, pack drift, legacy current/ migration)
-spectacular doctor --format json              # JSON report for the skill or other tools
-
-spectacular feedback-loop new <target>        # scaffold a feedback entry (status: open); --request <slug> to scope
-spectacular feedback-loop list                # list entries across .spectacular/feedbacks/ + per-request folders
-spectacular feedback-loop resolve <slug> --next-action <a>   # close with a decision (required flag)
-spectacular feedback-loop archive <slug>      # move to .spectacular/archive/feedback/<year>/
-
-spectacular idea new <slug>                   # scaffold idea entry (status: parked); --hypothesis, --origin, --priority
-spectacular idea list                         # list ideas; --status parked|exploring|promoted|all
-spectacular idea promote <slug>               # scaffold request from idea + move source to archive/ideas/
-
-spectacular id resolve d1                     # DEC-001; aliases are input-only
-spectacular id resolve 3 --context question   # QUE-003; naked numbers need context
-spectacular id migrate --dry-run              # preview legacy filename/reference changes
-spectacular id migrate --apply --yes          # archive originals, then migrate explicitly
-spectacular lifecycle migrate                 # preview conservative legacy status mappings; apply requires --apply --yes
-
-spectacular question new tenant-isolation --question "Shared schema or database per tenant?"
-spectacular question list --status open
-spectacular question resolve q1 --answer "Use schema-per-tenant"
-spectacular research new auth-options --summary "Compare supported authentication paths"
-spectacular research resolve r1 --result supported --outcome "OIDC is the supported path" --evidence "vendor docs"
-spectacular spike new pooling --summary "Validate pool behavior under load"
-spectacular spike resolve spk1 --result supported --outcome "Feasible at the target concurrency" --evidence "benchmark run"
-
-spectacular spec new user-onboarding --summary "Guide a new user to first success" --target-version v1.0.0-discovery
-spectacular spec approve s1 --evidence "Product review complete" --target-version v1.0.0-execution
-spectacular request new --from s1             # mechanical planned PLAN + TASKS scaffold
-# then, inside Codex/Claude: /spectacular act SPC-001
-spectacular spec implement s1 --verified-against "commit abc123"  # historical evidence point; code stays authoritative
-
-spectacular wayfind status                    # unresolved fog + dependency-ready frontier
-spectacular wayfind order                     # strict prerequisite-before-dependent order
-spectacular wayfind next                      # priority first, then question/spike/research/spec uncertainty
-spectacular wayfind resolve q1 --answer "Use schema-per-tenant"
-spectacular wayfind defer q1 --reason "Not relevant to this milestone"
-spectacular wayfind resume q1
-spectacular wayfind route "park this idea" cache-index --hypothesis "Cache it"
-spectacular wayfind route "act on goal" s1    # still enforces approved-spec gate
-
-spectacular afk status                        # read-only policy + repository state
-spectacular afk run start onboarding --goal "Implement approved onboarding" --allowed-actions "research,spikes,feature" --apply --yes
-spectacular afk propose spike spk1 --host-prefix codex/
-spectacular afk start spike spk1 --apply --yes
-spectacular afk cleanup codex/spike/prototype-spk-001 --disposition abandoned --outcome "failed" --evidence "SPK-001"  # dry-run
-spectacular afk pr onboarding-work --version v1.0.0 --name "User Onboarding" --tests-passed  # dry-run; never merges
-
-spectacular summary                           # one-page workspace overview (v1.8.0+)
-spectacular requests --active                 # list active requests (table + --json)
-spectacular requests --status review --since 7d --limit 10
-spectacular request <slug>                    # cheap overview
-spectacular request <slug> --brief -m2        # active implementation starting prompt
-spectacular request <slug> --full             # ordered request-owned Markdown bundle
-spectacular decisions [--tag t] [--since 30d] [--json]
-spectacular decision <slug>                   # skim view of one decision
-spectacular memories [--tag t] [--since 7d] [--json]
-spectacular memory <slug>                     # skim view of one memory
-spectacular sessions [--status open|closed|all] [--since 24h]
-spectacular sessions show <slug>              # detail subverb (avoids `session start|end` collision)
-spectacular show <doctype>                    # prd|spec|principles|architecture|roadmap|stack|agents|...
-spectacular show <doctype> --section <name>   # filter to one H2 section
-spectacular progress <slug>                   # M1: 8/8 ✓, M2: 3/5, ... (parses TASKS.md ticks)
-spectacular paths                             # JSON map of workspace paths
-
-spectacular migrate                           # apply pending workspace schema migrations
-spectacular migrate --dry-run                 # preview the migration plan
-spectacular migrate --list                    # show all available migrations + current schema version
-
-spectacular pack list                         # show installed packs (bundled + app-store + user + project-local)
-spectacular pack install <name>               # install pack to ~/.spectacular/packs/<name>/
-spectacular pack install <name> --from <path> # install from arbitrary local folder
-spectacular pack show <name>                  # print scope + pack.md frontmatter
-spectacular pack remove <name>                # remove user-scope pack (--force for bundled/app-store/project-local)
-```
-
-### Convention packs (v0.4.0)
-
-Packs encode opt-in repo-shape opinions — naming rules, folder taxonomy, gitignore baseline, README contract, file-placement rules, project-type scaffolds. Two ship out of the box:
-
-- **`minimal`** (bundled) — README contract + safe gitignore baseline. The default.
-- **`alex-default`** (app-store) — fully-opinionated: kebab-case naming with role suffixes, mono-collection detection, 8 project-type scaffolds, language-specific gitignore blocks.
-
-Activate a pack per-repo by adding to `.spectacular/config.yaml`:
-
-```yaml
-convention_pack:
-  source: alex-default
-  mode: scaffold     # suggest | scaffold | enforce
-```
-
-| Mode | Init behavior | Doctor behavior |
-|---|---|---|
-| `suggest` | Pack read, not applied | Reports pack active, no drift checks |
-| `scaffold` | Appends pack gitignore entries | Warnings on drift (exit 1) |
-| `enforce` | Same as scaffold | Errors on drift (exit 2); `--fix` repairs |
-
-Full schema in [`skills/spectacular/references/packs-contract.md`](skills/spectacular/references/packs-contract.md). App-store packs live in [`packs/`](packs/).
-
-> [!TIP]
-> Init scaffolds the **6-file always-set** by default (`PRD.md`, `POLICY.md`, `config.yaml`, `<agents-file>`, `requests/`, `specs/index.md`). Kits add docs they need. Use `--with` for explicit extras. Use `--minimal` to ignore the kit's defaults. (v0.4.x scaffolded `current/` instead of `specs/index.md` + `specs/` — see [CHANGELOG](CHANGELOG.md) for the migration.)
-
-> [!TIP]
-> Claude-only team? Use `--agents-file CLAUDE.md`. Multi-tool team? Keep `AGENTS.md` as primary and add `tool_overrides.claude: CLAUDE.md` to `config.yaml` — the skill will surface both.
+The shell CLI handles deterministic file and lifecycle operations; the `/spectacular` skill handles interviews, judgment, planning, and implementation. See the [complete command reference](docs/commands.md), [installation choices](docs/installation.md), and [convention-pack contract](skills/spectacular/references/packs-contract.md).
 
 ---
 
 ## Works well with
 
-Spectacular owns one thing — `.spectacular/`: strategy, current truth, active work. It composes with focused sibling tools rather than absorbing their jobs.
-
-### Best with — pageworks
-
-**Public-facing documentation (the `docs/` surface) is owned by [pageworks](https://github.com/alexsmedile/pageworks)**, a sibling skill extracted in v1.2.0. The two compose: when a SPEC-touching request archives, spectacular asks whether `docs/` should be updated and hands off to pageworks if you confirm. `spectacular doctor docs` reports discovery only (folder + manifest presence; install hint if pageworks missing) — never validates schema. There is no automatic invocation across the boundary.
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/alexsmedile/pageworks/main/cli/install.sh | bash
-```
-
-### Also pairs with
-
-- **Claude Code / Codex / Cursor** — the agents that read `.spectacular/` and act on it. Spectacular is the protocol; these are the runtimes.
-- **Git** — `.spectacular/` is fully committed, so phases, decisions, and changelogs version alongside your code. `.spectacular.local/` stays gitignored.
-
-> Building a tool that composes with the `.spectacular/` contract? [Open an issue](https://github.com/alexsmedile/spectacular/issues) — this list is meant to grow.
+Spectacular is agent-agnostic: Claude Code, Codex, Cursor, and other agents can share the same committed `.spectacular/` workspace. Git preserves its operational history; [pageworks](https://github.com/alexsmedile/pageworks) can own public-facing `docs/`. See [Integrations](docs/integrations.md) for responsibilities and setup.
 
 ---
 
@@ -458,7 +304,9 @@ cp -r skills/spectacular ~/.agents/skills/
 | Doc | What it covers |
 |---|---|
 | [docs/workflow.md](docs/workflow.md) | Practical end-to-end usage loop — init, briefing, requests, lifecycle, archive, current sync, memory |
+| [docs/installation.md](docs/installation.md) | Plugin vs. files, Claude Code vs. Codex, and project-local vs. global installation |
 | [docs/commands.md](docs/commands.md) | CLI command reference and agent skill triggers, including the boundary between shell commands and skill commands |
+| [docs/integrations.md](docs/integrations.md) | How agent runtimes, Git, and pageworks compose with the operational workspace |
 | [docs/troubleshooting.md](docs/troubleshooting.md) | Common setup, install, skill discovery, update, symlink, and workspace state issues |
 | [docs/configuration.md](docs/configuration.md) | `config.yaml`, agent files, tool overrides, request naming, and `.spectacular.local/` |
 | [docs/scaffold.md](docs/scaffold.md) | Complete `.spectacular/` directory spec — every file, frontmatter schema, creation rules, versioning |

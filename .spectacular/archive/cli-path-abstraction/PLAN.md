@@ -1,5 +1,5 @@
 ---
-status: verified
+status: archived
 priority: medium
 owner: alex
 updated: 2026-08-02
@@ -9,6 +9,9 @@ related:
   - ../../PRD.md
 docs_impact: required
 docs_impact_evidence: "Updated roadmap/spec indexes, SPC-003, and DEC-018 through DEC-020 in PR #2"
+archive_overrides:
+  - verify — Verification walk passed 6/6 and request reached verified; archive gate expects ✅ but VERIFY-LOG records generated ✓ markers (2026-08-02)
+archived: 2026-08-02
 ---
 
 # Plan — cli-path-abstraction

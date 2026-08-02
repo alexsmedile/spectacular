@@ -1,7 +1,7 @@
 ---
-version: 3.21
+version: 3.22
 updated: 2026-08-02
-summary: "Per-version scope, phase, and exit criteria. The b32–b39 Wayfinding, lifecycle, retention, and request-interface foundation is implemented and verified; remaining unslotted work stays tbd."
+summary: "Per-version scope, phase, and exit criteria. v1.36.0 ships b24 and the b32–b39 Wayfinding, lifecycle, retention, and request-interface foundation; remaining unslotted work stays tbd."
 related:
   - ../PRD.md
   - ../ARCHITECTURE.md
@@ -32,7 +32,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b8 | visual-layer | Visual layer | full | v1.15.0 | shipped |
 | b9 | decisions-index | Decisions index mode | full | v1.17.0 | shipped |
 | b10 | skill-desc-length-check | Skill description length guard | themed | v1.23.3 | shipped |
-| b11 | spec-audit-mode | Spec frontmatter schema check (pivoted from semantic audit) | themed | tbd | shipped |
+| b11 | spec-audit-mode | Spec frontmatter schema check (pivoted from semantic audit) | themed | v1.30.0 | shipped |
 | b15 | naming-coherence | Naming coherence (advance/feedback/pack/next) | themed | v1.19.0 | shipped |
 | b13 | rules-files-audit | Rules-file body audit + verify-trio collapse | themed | v1.20.0 | shipped |
 | b14 | onboarding-dedup | Onboarding dedup + guided first-run | themed | v1.21.0 | shipped |
@@ -44,7 +44,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b21 | builder-agent | Builder agent + build-workflow orchestrator arc (build-direction fleet) — shipped M1+M2 as `spec-builder`; M3 + fan-out deferred to ideas/builder-trace-and-fanout | themed | v1.30.0 | shipped |
 | b22 | archive-closure-gate | Archive closure gate + delta-based spec-sync (fable review #1+#2) | themed | v1.28.0 | shipped |
 | b23 | status-fleet-view | Deterministic `spectacular status` fleet view + enforced PLAN/TASKS structure | themed | v1.29.0 | shipped |
-| b24 | cli-path-abstraction | Centralized path/variable declaration in the CLI | themed | tbd | planned |
+| b24 | cli-path-abstraction | Centralized path/variable declaration in the CLI | themed | v1.36.0 | shipped |
 | b25 | fleet-arc-wiring | Wire repo-explorer/code-reviewer/test-verifier into the workflow arcs (optional judgment-gated dispatch) | themed | v1.30.0 | shipped |
 | b26 | stance-layer | architectural-stance @Planning policy + grade label (severity dial rejected; decisions pre-locked in ideas/stance-layer) | themed | tbd | planned |
 | b27 | milestone-decomposition | Step 1.5 size-and-decompose gate + decompose-large-milestone policy — visible sub-steps inside a fat milestone (decisions pre-locked in ideas/milestone-decomposition) | themed | v1.32.0 | shipped |
@@ -52,14 +52,14 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b29 | cli-gate-ergonomics | Policy directives at gates (tiered output, --full), advance scaffolds SESSION.md, doctor findings block | themed | v1.34.0 | shipped |
 | b30 | verify-split | verify.md walk-only + verify-authoring.md (2-of-6 canonical); TASKS template `- [~]` deferred rows | themed | v1.34.0 | shipped |
 | b31 | review-sweep | Review-sweep protocol: request-auditor agent + `spectacular sweep` + VERIFY-LOG against:-stamps/pending-reverify | themed | v1.35.0 | shipped |
-| b32 | wayfinding-contract | Canonical IDs, knowledge stores, and spec confirmation | full | tbd | shipped |
-| b33 | wayfinding-sequencer | Fog/frontier sequencing and dependency coherence | full | tbd | shipped |
-| b34 | afk-git-hygiene | Human-gated AFK branch and playground hygiene | themed | tbd | shipped |
-| b35 | lifecycle-contract | Unified evidence-backed lifecycle contract | full | tbd | shipped |
-| b36 | advanced-engineering-collections | Optional reserved senior-engineering collections | themed | tbd | shipped |
-| b37 | discovery-evidence-protocol | Progressive routing for research, spikes, prototypes, tracer bullets, artifacts, and technical debt | themed | tbd | shipped |
-| b38 | artifact-retention-contract | Live, stale-safe, temporary, and throwaway artifact retention | themed | tbd | shipped |
-| b39 | request-workflow-interface | Approved-spec request handoff, compiled implementation context, command grammar, and verification evidence gate | full | tbd | shipped |
+| b32 | wayfinding-contract | Canonical IDs, knowledge stores, and spec confirmation | full | v1.36.0 | shipped |
+| b33 | wayfinding-sequencer | Fog/frontier sequencing and dependency coherence | full | v1.36.0 | shipped |
+| b34 | afk-git-hygiene | Human-gated AFK branch and playground hygiene | themed | v1.36.0 | shipped |
+| b35 | lifecycle-contract | Unified evidence-backed lifecycle contract | full | v1.36.0 | shipped |
+| b36 | advanced-engineering-collections | Optional reserved senior-engineering collections | themed | v1.36.0 | shipped |
+| b37 | discovery-evidence-protocol | Progressive routing for research, spikes, prototypes, tracer bullets, artifacts, and technical debt | themed | v1.36.0 | shipped |
+| b38 | artifact-retention-contract | Live, stale-safe, temporary, and throwaway artifact retention | themed | v1.36.0 | shipped |
+| b39 | request-workflow-interface | Approved-spec request handoff, compiled implementation context, command grammar, and verification evidence gate | full | v1.36.0 | shipped |
 | b40 | github-native-lifecycle | GitHub-friendly collaboration projections and PR-centered request completion | full | tbd | candidate |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = mutable when work is slotted; `status` = release-level `candidate · planned · active · shipped · cancelled` (distinct from request lifecycle). `candidate` means likely upcoming but not yet scoped or committed. See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
@@ -77,7 +77,7 @@ this order as each is cut; the contract-prep ladder (`tbd`, ordered ①→②→
 | ✅ | b4 | `cli-debt-removal` | review → **shipped v1.23.2** | Verified live; swept a missed dead `templates/docs/` dir on archive. |
 | ✅ | b10 | `skill-desc-length-check` | review → **shipped v1.23.3** | Verified live (53/53 tests, guard fires on commit); awk duplication reviewed + accepted (install boundary). |
 | ✅ | b16 | `snapshot-retention` | planned → **shipped v1.24.0** | Version coupling + tiered retention + `_snapshots/` rename; dogfooded on this repo. |
-| 1 | b11 | `spec-audit-mode` | review | Pivoted to a mechanical frontmatter schema check (semantic audit dropped); code + 7 tests shipped, awaiting archive. |
+| ✅ | b11 | `spec-audit-mode` | archived → **shipped v1.30.0** | Mechanical frontmatter schema check shipped; semantic audit was dropped rather than deferred. |
 | — | b3 | `convention-pack-modules` | planned (gated) | Deferred until pack-composition pain surfaces. |
 
 Then the runway: **contract-prep ①→②→③** (`target: tbd` — they take the next

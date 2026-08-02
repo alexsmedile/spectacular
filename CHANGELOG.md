@@ -7,6 +7,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.36.0] — 2026-08-02
+
+### Wayfinding, evidence, and lifecycle foundation (b32–b38)
+
+- Added canonical IDs and collision-safe aliases for decisions, questions, research, spikes,
+  specs, ideas, and optional senior-engineering collections; ambiguous `f1` is refused in favor
+  of explicit `fnd1` and `fix1`.
+- Added dependency-first fog/frontier sequencing, high-uncertainty-first discovery, durable
+  open-loop control, and metaphor routing for parking, deferring, wayfinding, and acting on goals.
+- Added evidence-backed lifecycles for specs, decisions, questions, research, and spikes. Research
+  informs recommendations but never becomes an autonomous decision; product and business choices
+  remain human-owned.
+- Added opt-in, goal-scoped AFK execution with dry-run-first Git isolation, spike/fork hygiene,
+  archive refs before cleanup, verified PR handoff, and explicit HITL gates.
+- Defined live, stale-safe, temporary, and throwaway retention classes, plus optional findings,
+  fixes, bugs, security, and benchmark scaffold collections.
+
 ### Request execution workflow (SPC-002, b39)
 
 - `spectacular request` is now the canonical request namespace: approved-spec scaffolding with
@@ -20,8 +37,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - `review → verified` now requires passing VERIFY-LOG evidence or a recorded explicit override.
   Decisions accept reusable `--tags`; their index keeps the newest 50 individual, the preceding
   50 in ten-entry blocks, and older history in fifty-entry blocks without changing ADR bodies.
-  Collision-safe aliases are `fnd1` for findings, `f1` for fixes, `bug1` for bugs, and `b1` for
-  roadmap builds.
+  Collision-safe aliases are `fnd1` for findings, `fix1` for fixes, `bug1` for bugs, and `b1` for
+  roadmap builds; ambiguous `f1` is refused.
+
+### Internal architecture (b24)
+
+- Centralized `.spectacular/` path declarations in the Bash 3.2 CLI without changing the public
+  command or workspace contracts, reducing future path drift and making later path abstraction
+  safer.
 
 ### Documentation
 

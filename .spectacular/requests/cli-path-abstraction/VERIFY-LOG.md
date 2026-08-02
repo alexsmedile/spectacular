@@ -14,3 +14,9 @@ updated: 2026-08-02
 - ✓ [judge] Decision coherence — `cli/spectacular` defines flat `SPEC_*` variables, uses them for runtime workspace paths, retains `.spectacular` as the fixed root, and leaves configurable path overrides deferred
 
 **Outcome:** all checks passed; stayed in review pending human confirmation of the review → verified transition.
+
+## 2026-08-02 03:59 CEST — human gate confirmation
+
+- User explicitly confirmed the request and authorized continuation through merge — against: `0111bc9` · PR #2
+
+**Outcome:** verified

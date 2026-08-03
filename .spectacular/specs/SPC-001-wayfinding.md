@@ -1,14 +1,16 @@
 ---
 id: SPC-001
 type: specification
-status: approved
+status: implemented
 approved_at: 2026-08-01
 approved_by: user
 target_version: v1.36.0-execution
-updated: 2026-08-01
+updated: 2026-08-03
 summary: "Canonical discovery records, fog/frontier sequencing, and approved-spec execution handoff"
 related: []
-version: 1.3
+version: 1.5
+implemented_at: 2026-08-03
+verified_against: commit bf0756f
 ---
 
 # SPC-001 — Canonical discovery records, fog/frontier sequencing, and approved-spec execution handoff
@@ -44,4 +46,4 @@ Turn a user's broad dream and unresolved alternatives into durable, low-entropy 
 
 ## Confirmation
 
-**Confirmed 2026-08-01** — the user's R1–R4 decisions establish the product contract; 53 focused Wayfinding assertions and the full 18-file regression suite passed before promotion to `current`.
+**Implemented 2026-08-03** — the user's R1–R4 decisions establish the product contract. The archived `wayfinding-contract` request records 53 focused Wayfinding assertions and the full 18-file regression suite passing; implementation is verified against commit `bf0756f`.

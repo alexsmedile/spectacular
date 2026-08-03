@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.36.0"
+SPECTACULAR_VERSION="1.37.0"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -231,7 +231,10 @@ CLI verbs (mutate workspace):
   doctor [area] [--fix]  Scoped substrate self-check; --fix applies mechanical repairs
   pack <list|install|show|remove>      Manage convention packs
   migrate [--to|--from|--list|--dry-run]   Apply workspace schema migrations
-  request new [slug] --from <SPC>      Scaffold planned PLAN + TASKS from an approved spec
+  request new [slug] --from <SPC>      Scaffold planned work from an approved spec
+  request new <slug> --from-issue <ref> --summary <outcome> --sensitivity normal|protected
+  request new <slug> --from-goal <ref> [--summary <outcome>] --sensitivity normal|protected
+                                         Scaffold lean coordinated work without inventing a spec
   request advance <slug> [--to <state>]  Advance request lifecycle
   new | advance | archive              Compatibility shortcuts for request operations
   undo [--dry-run]       Reverse the last lifecycle mutation (advance/archive/idea promote)
@@ -247,6 +250,7 @@ CLI verbs (mutate workspace):
   spec <sub>             Specification lifecycle (new|list|approve|implement|deprecate|archive; act redirects)
   wayfind <sub>          Strict discovery sequencing (status|next|order|resolve|defer|resume|path|route)
   afk <sub>              Goal-scoped autonomy + Git policy (run|status|configure|propose|preflight|start|cleanup|pr)
+  github <sub>           GitHub work bridge (triage|pr open|pr ready|reconcile)
   id resolve <ref>       Resolve a canonical ID or shorthand alias
   collections migrate   Preview/apply archive-first singular→plural folder migration
   lifecycle migrate     Preview/apply conservative lifecycle-label mappings
@@ -5075,15 +5079,7 @@ cmd_afk_pr() {
     summaries="${summary:-Implements the verified request scope.}"
   fi
   local title="[Spectacular] Executed: $version - $name" body
-  body="## Summary"
-  while IFS= read -r summary; do
-    [[ -n "$summary" ]] && body="$body"$'\n'"- $summary"
-  done <<< "$summaries"
-  body="$body"$'\n'"- Source specification: \`$source\` (verified request: \`$slug\`)."$'\n\n'"## Validation"$'\n'"- Request verification is recorded as passed."
-  while IFS= read -r validation; do
-    [[ -n "$validation" ]] && body="$body"$'\n'"- $validation"
-  done <<< "$validations"
-  body="$body"$'\n'"- Passing checks were confirmed at PR handoff."$'\n\n'"## Review notes"$'\n'"- Merge remains human-gated."$'\n\n---\n'"_Filed with [Spectacular](https://github.com/alexsmedile/spectacular)._"
+  body=$(_github_pr_manifest "$slug" "$plan" "$name" "" on_merge "$summaries" "$validations")
   info "PR title: $title"
   info "PR body:"
   printf '%s\n' "$body"
@@ -5095,10 +5091,13 @@ cmd_afk_pr() {
   local current_branch; current_branch=$(git branch --show-current)
   _afk_is_primary "$current_branch" && die "afk pr: refusing PR handoff from primary branch '$current_branch'"
   command -v gh >/dev/null 2>&1 || die "afk pr: gh CLI not found"
-  local args=(pr create --title "$title" --body "$body")
+  local args=(pr create --title "$title" --body "$body" --draft)
   [[ -n "$base" ]] && args+=(--base "$base")
-  gh "${args[@]}"
-  info "  ✓ pull request opened; merge was not attempted"
+  local pr_url head
+  pr_url=$(gh "${args[@]}") || die "afk pr: GitHub did not create the pull request"
+  head=$(git rev-parse HEAD)
+  fm_set "$plan" github_pr "$pr_url"; fm_set "$plan" github_pr_opened_at "$TODAY"; fm_set "$plan" github_pr_head "$head"; fm_set "$plan" issue_resolution on_merge
+  info "  ✓ draft pull request opened: $pr_url; merge was not attempted"
 }
 
 cmd_afk() {
@@ -5121,6 +5120,224 @@ project policy plus explicit --apply --yes. Merge and remote deletion are never 
 EOF
       ;;
     *) die "afk: unknown subcommand '$sub'" ;;
+  esac
+}
+
+# ── GitHub work bridge ──────────────────────────────────────────────────────
+
+_github_request_source() {
+  local plan="$1" source_type source_ref source_spec
+  source_spec=$(fm_get "$plan" source_spec)
+  source_type=$(fm_get "$plan" source_type); [[ -n "$source_type" ]] || { [[ -n "$source_spec" ]] && source_type=spec || source_type=goal; }
+  source_ref=$(fm_get "$plan" source_ref); [[ -n "$source_ref" ]] || source_ref="$source_spec"
+  printf '%s|%s\n' "$source_type" "$source_ref"
+}
+
+_github_pr_manifest() {
+  local slug="$1" plan="$2" name="$3" issue="$4" resolution="$5" summaries="$6" validations="$7"
+  local source_pair source_type source_ref source_spec docs_impact status summary validation relationship=""
+  source_pair=$(_github_request_source "$plan"); source_type=${source_pair%%|*}; source_ref=${source_pair#*|}
+  source_spec=$(fm_get "$plan" source_spec); docs_impact=$(fm_get "$plan" docs_impact); status=$(fm_get "$plan" status)
+  [[ -n "$summaries" ]] || summaries=$(_request_section "$plan" Goal | awk 'NF { sub(/^- /, ""); print; exit }')
+  [[ -n "$summaries" ]] || summaries="Implements the accepted request outcome."
+  if [[ -n "$issue" ]]; then
+    if [[ "$resolution" == on_merge ]]; then relationship="Fixes $issue"; else relationship="Refs $issue"; fi
+  fi
+  printf '%s\n' "## Summary"
+  while IFS= read -r summary; do [[ -n "$summary" ]] && printf '%s\n' "- $summary"; done <<< "$summaries"
+  printf '\n## Integration manifest\n'
+  [[ -n "$issue" ]] && printf '%s\n' "- Issue: $relationship"
+  [[ -n "$source_ref" ]] && printf '%s\n' "- Source: \`$source_type $source_ref\`"
+  [[ -n "$source_spec" ]] && printf '%s\n' "- Specification: \`$source_spec\`"
+  printf '%s\n' "- Spectacular request: \`$slug\`" "- Request state at handoff: \`$status\`"
+  printf '\n## Validation\n'
+  if [[ -n "$validations" ]]; then
+    while IFS= read -r validation; do [[ -n "$validation" ]] && printf '%s\n' "- $validation"; done <<< "$validations"
+  else
+    printf '%s\n' "- Verification evidence is owned by \`.spectacular/requests/$slug/VERIFY-LOG.md\`."
+  fi
+  printf '\n## Documentation impact\n- %s\n' "${docs_impact:-pending}"
+  printf '\n## Review notes\n- Merge remains human-gated.\n'
+  [[ "$resolution" == on_release ]] && printf '%s\n' "- Issue resolution is release-gated; this PR must not close it on merge."
+  printf '\n---\n_Filed with [Spectacular](https://github.com/alexsmedile/spectacular)._\n'
+}
+
+cmd_github_pr_open() {
+  local slug="${1:-}" name="" version="" base="" issue="" resolution=on_merge apply=false yes=false
+  local summaries="" validations="" summary validation
+  [[ -n "$slug" ]] || die "Usage: spectacular github pr open <request> [--name <name>] [--version vX.Y.Z] [--issue owner/repo#N] [--resolution on_merge|on_release] [--summary <change>] [--validation <check>] [--apply --yes]"
+  shift || true
+  while (( $# > 0 )); do
+    case "$1" in
+      --name) require_value "$1" "${2:-}"; name="$2"; shift 2 ;;
+      --version) require_value "$1" "${2:-}"; version="$2"; shift 2 ;;
+      --base) require_value "$1" "${2:-}"; base="$2"; shift 2 ;;
+      --issue) require_value "$1" "${2:-}"; issue="$2"; shift 2 ;;
+      --resolution) require_value "$1" "${2:-}"; resolution="$2"; shift 2 ;;
+      --summary) require_value "$1" "${2:-}"; summaries="$summaries${summaries:+$'\n'}$2"; shift 2 ;;
+      --validation) require_value "$1" "${2:-}"; validations="$validations${validations:+$'\n'}$2"; shift 2 ;;
+      --apply) apply=true; shift ;;
+      --yes) yes=true; shift ;;
+      *) die "github pr open: unknown option '$1'" ;;
+    esac
+  done
+  case "$resolution" in on_merge|on_release) ;; *) die "github pr open: --resolution must be on_merge|on_release" ;; esac
+  local plan="$SPEC_REQUESTS_DIR/$slug/PLAN.md" status source_pair source_type source_ref declared_source_type sensitivity title body
+  [[ -f "$plan" ]] || die "github pr open: request not found: $slug"
+  status=$(fm_get "$plan" status); case "$status" in active|review|verified) ;; *) die "github pr open: request '$slug' must be active, review, or verified" ;; esac
+  sensitivity=$(fm_get "$plan" sensitivity)
+  case "$sensitivity" in protected|confidential|security-sensitive) die "github pr open: protected content requires the provider-native security workflow" ;; esac
+  source_pair=$(_github_request_source "$plan"); source_type=${source_pair%%|*}; source_ref=${source_pair#*|}
+  declared_source_type=$(fm_get "$plan" source_type)
+  if [[ "$declared_source_type" == issue || "$declared_source_type" == goal ]]; then
+    [[ -n "$sensitivity" ]] || die "github pr open: Issue/goal request lacks an explicit sensitivity assessment"
+  fi
+  [[ -n "$issue" ]] || { [[ "$source_type" == issue ]] && issue="$source_ref" || true; }
+  [[ -n "$name" ]] || name=$(printf '%s' "$slug" | tr '-' ' ')
+  if [[ -n "$version" ]]; then title="[Spectacular] Executed: $version - $name"; else title="[Spectacular] $name"; fi
+  body=$(_github_pr_manifest "$slug" "$plan" "$name" "$issue" "$resolution" "$summaries" "$validations")
+  info "PR title: $title"
+  info "PR body:"
+  printf '%s\n' "$body"
+  if ! $apply; then info "Dry-run only. Apply with --apply --yes to open a draft PR; merge is never attempted."; return 0; fi
+  $yes || die "github pr open: --apply requires --yes"
+  _afk_require_repo; _afk_require_clean
+  local current_branch baseline commit_count upstream pr_url head
+  current_branch=$(git branch --show-current); _afk_is_primary "$current_branch" && die "github pr open: refusing PR handoff from primary branch '$current_branch'"
+  baseline=$(fm_get "$plan" activated_against)
+  if [[ -n "$baseline" && "$baseline" != uncommitted ]] && git cat-file -e "$baseline^{commit}" 2>/dev/null; then
+    commit_count=$(git rev-list --count "$baseline..HEAD")
+    [[ "$commit_count" -gt 0 ]] || die "github pr open: no meaningful implementation commit exists after activation"
+  fi
+  upstream=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || true)
+  [[ -n "$upstream" ]] || die "github pr open: current branch has no pushed upstream; push it before opening the PR"
+  command -v gh >/dev/null 2>&1 || die "github pr open: gh CLI not found"
+  local args=(pr create --title "$title" --body "$body" --draft)
+  [[ -n "$base" ]] && args+=(--base "$base")
+  pr_url=$(gh "${args[@]}") || die "github pr open: GitHub did not create the pull request"
+  head=$(git rev-parse HEAD)
+  fm_set "$plan" github_pr "$pr_url"; fm_set "$plan" github_pr_opened_at "$TODAY"; fm_set "$plan" github_pr_head "$head"; fm_set "$plan" issue_resolution "$resolution"
+  info "  ✓ draft pull request opened: $pr_url"
+  info "  ↳ merge was not attempted"
+}
+
+cmd_github_pr_ready() {
+  local slug="${1:-}" pr="" apply=false yes=false
+  [[ -n "$slug" ]] || die "Usage: spectacular github pr ready <request> [--pr <number|url>] [--apply --yes]"
+  shift || true
+  while (( $# > 0 )); do
+    case "$1" in --pr) require_value "$1" "${2:-}"; pr="$2"; shift 2 ;; --apply) apply=true; shift ;; --yes) yes=true; shift ;; *) die "github pr ready: unknown option '$1'" ;; esac
+  done
+  local plan="$SPEC_REQUESTS_DIR/$slug/PLAN.md" log="$SPEC_REQUESTS_DIR/$slug/VERIFY-LOG.md" head short_head remote_head checks_output checks_code=0
+  [[ -f "$plan" ]] || die "github pr ready: request not found: $slug"
+  [[ "$(fm_get "$plan" status)" == verified ]] || die "github pr ready: request '$slug' must be verified"
+  [[ -f "$log" ]] && grep -Eq '✅|^result:[[:space:]]*pass([[:space:]]|$)|\*\*Outcome:\*\*[[:space:]]*verified' "$log" || die "github pr ready: verified request has no passing VERIFY-LOG evidence"
+  pr=${pr:-$(fm_get "$plan" github_pr)}; [[ -n "$pr" ]] || die "github pr ready: no linked pull request; pass --pr or open one first"
+  _afk_require_repo; head=$(git rev-parse HEAD); short_head=$(git rev-parse --short=12 HEAD)
+  command -v gh >/dev/null 2>&1 || die "github pr ready: gh CLI not found"
+  remote_head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid) || die "github pr ready: cannot read pull request head"
+  [[ "$remote_head" == "$head" ]] || die "github pr ready: remote head $remote_head differs from verified local head $head"
+  checks_output=$(gh pr checks "$pr" --required 2>&1) || checks_code=$?
+  if [[ "$checks_code" -ne 0 ]]; then
+    if printf '%s' "$checks_output" | grep -qiE 'no (required )?checks (reported|found)'; then
+      grep -qE "$head|$short_head" "$log" || die "github pr ready: no required checks exist and local verification is not stamped against current HEAD $short_head"
+    else
+      die "github pr ready: required checks are not acceptable"
+    fi
+  fi
+  info "Ready plan: mark $pr ready for review at verified head $short_head"
+  if ! $apply; then info "Dry-run only. Apply with --apply --yes; merge is never attempted."; return 0; fi
+  $yes || die "github pr ready: --apply requires --yes"
+  gh pr ready "$pr" >/dev/null || die "github pr ready: GitHub did not mark the pull request ready"
+  fm_set "$plan" github_pr_ready_at "$TODAY"; fm_set "$plan" github_pr_head "$head"
+  info "  ✓ pull request is ready for review; merge was not attempted"
+}
+
+cmd_github_reconcile() {
+  local slug="" json=false
+  while (( $# > 0 )); do case "$1" in --json) json=true; shift ;; -*) die "github reconcile: unknown option '$1'" ;; *) [[ -z "$slug" ]] || die "github reconcile: only one request slug is allowed"; slug="$1"; shift ;; esac; done
+  command -v gh >/dev/null 2>&1 || { $json && printf '{"schema":"spectacular.github.reconcile.v1","status":"pending","reason":"gh CLI not found","findings":[]}\n' || info "GitHub reconciliation pending: gh CLI not found"; return 0; }
+  local findings="" count=0 plan req status pr source_pair source_type source_ref pr_state pr_head issue_state log local_head finding
+  shopt -s nullglob
+  for plan in "$SPEC_REQUESTS_DIR"/*/PLAN.md; do
+    req=$(basename "$(dirname "$plan")"); [[ -z "$slug" || "$req" == "$slug" ]] || continue
+    status=$(fm_get "$plan" status); pr=$(fm_get "$plan" github_pr)
+    pr_state=""; pr_head=""; issue_state=""
+    source_pair=$(_github_request_source "$plan"); source_type=${source_pair%%|*}; source_ref=${source_pair#*|}
+    if [[ -n "$pr" ]]; then
+      pr_state=$(gh pr view "$pr" --json state --jq .state 2>/dev/null || true)
+      pr_head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid 2>/dev/null || true)
+      if [[ -z "$pr_state" ]]; then
+        finding="$req: pull request state unavailable ($pr)"
+      elif [[ "$pr_state" == MERGED ]]; then
+        finding="$req: pull request merged while request remains $status"
+      else
+        finding=""
+      fi
+      if [[ -n "$pr_head" && "$status" =~ ^(review|verified)$ ]]; then
+        log="$SPEC_REQUESTS_DIR/$req/VERIFY-LOG.md"
+        [[ -f "$log" ]] && grep -qE "$pr_head|${pr_head:0:12}" "$log" || finding="${finding:+$finding; }$req: verification is not stamped against PR head ${pr_head:0:12}"
+      fi
+      if [[ -n "$finding" ]]; then findings="$findings${findings:+$'\n'}$finding"; count=$((count + 1)); fi
+    fi
+    if [[ "$source_type" == issue && -n "$source_ref" ]]; then
+      local issue_repo issue_number
+      issue_repo=${source_ref%#*}; issue_number=${source_ref##*#}
+      issue_state=$(gh issue view "$issue_number" --repo "$issue_repo" --json state --jq .state 2>/dev/null || true)
+      if [[ -z "$issue_state" ]]; then
+        finding="$req: source Issue state unavailable ($source_ref)"
+        findings="$findings${findings:+$'\n'}$finding"; count=$((count + 1))
+      elif [[ "$issue_state" == CLOSED && "$(fm_get "$plan" issue_resolution)" == on_release ]]; then
+        finding="$req: release-gated source Issue closed before authorized release reconciliation"
+        findings="$findings${findings:+$'\n'}$finding"; count=$((count + 1))
+      elif [[ "$issue_state" == CLOSED && "$status" =~ ^(active|review)$ ]]; then
+        finding="$req: source Issue is closed while request remains $status"
+        findings="$findings${findings:+$'\n'}$finding"; count=$((count + 1))
+      elif [[ "$issue_state" == OPEN && "$pr_state" == MERGED && "$(fm_get "$plan" issue_resolution)" == on_merge ]]; then
+        finding="$req: fully integrated on-merge Issue remains open"
+        findings="$findings${findings:+$'\n'}$finding"; count=$((count + 1))
+      fi
+    fi
+  done
+  shopt -u nullglob
+  if [[ -n "$slug" && ! -f "$SPEC_REQUESTS_DIR/$slug/PLAN.md" ]]; then die "github reconcile: request not found: $slug"; fi
+  if $json; then
+    printf '{"schema":"spectacular.github.reconcile.v1","status":"%s","finding_count":%s,"findings":[' "$([[ "$count" -eq 0 ]] && echo clean || echo discrepancies)" "$count"
+    local first=true
+    while IFS= read -r finding; do [[ -n "$finding" ]] || continue; $first && first=false || printf ','; printf '"%s"' "$(_json_escape "$finding")"; done <<< "$findings"
+    printf ']}\n'
+  elif [[ "$count" -eq 0 ]]; then
+    info "GitHub reconciliation: no actionable discrepancies"
+  else
+    info "GitHub reconciliation: $count actionable discrepancy(s)"
+    while IFS= read -r finding; do [[ -n "$finding" ]] && printf '  - %s\n' "$finding"; done <<< "$findings"
+  fi
+}
+
+cmd_github() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    triage)
+      skill_verb_message "github triage ${1:-<issue>}" \
+        "Interpret Issue readiness and route it to direct work, a durable request, or spec-first discovery. This requires agent judgment; labels and assignment are evidence, not authority." "${@:2}"
+      ;;
+    pr)
+      local action="${1:-}"; shift || true
+      case "$action" in open) cmd_github_pr_open "$@" ;; ready) cmd_github_pr_ready "$@" ;; *) die "Usage: spectacular github pr <open|ready> ..." ;; esac
+      ;;
+    reconcile) cmd_github_reconcile "$@" ;;
+    ""|--help|-h)
+      cat <<'EOF'
+Usage: spectacular github triage <issue>
+       spectacular github pr open <request> [options]
+       spectacular github pr ready <request> [options]
+       spectacular github reconcile [request] [--json]
+
+Spectacular wraps GitHub only where it adds lifecycle interpretation, safety
+gates, provenance, or reconciliation. Use gh directly for GitHub-only work.
+EOF
+      ;;
+    *) die "github: unknown subcommand '$sub'" ;;
   esac
 }
 
@@ -5536,7 +5753,7 @@ _request_full_bundle() {
 }
 
 _request_brief() {
-  local slug="$1" plan="$2" milestone="$3" tasks dir status source
+  local slug="$1" plan="$2" milestone="$3" tasks dir status source source_type source_ref
   dir="${plan%/PLAN.md}"; tasks="$dir/TASKS.md"; status=$(fm_get "$plan" status)
   [[ "$status" == active ]] || die "request --brief: '$slug' is $status; implementation briefs require an active request. Activate an approved plan with /spectacular act <SPC-ID>."
   [[ -f "$tasks" ]] || die "request --brief: TASKS.md is missing for '$slug'"
@@ -5544,11 +5761,14 @@ _request_brief() {
   [[ -n "$milestone" ]] || die "request --brief: '$slug' has no open milestone; advance it to review and run /spectacular verify $slug"
   _request_milestone_block "$tasks" "$milestone" | grep -q . || die "request --brief: milestone $milestone was not found in '$slug'"
   source=$(fm_get "$plan" source_spec)
+  source_type=$(fm_get "$plan" source_type); [[ -n "$source_type" ]] || { [[ -n "$source" ]] && source_type=spec || source_type=goal; }
+  source_ref=$(fm_get "$plan" source_ref); [[ -n "$source_ref" ]] || source_ref="$source"
   cat <<EOF
 # Implementation brief — $slug
 
 Status: $status
 Build: $(fm_get "$plan" build)
+Source: $source_type ${source_ref:-none}
 Source specification: ${source:-none}
 Specification version: $(fm_get "$plan" source_spec_version)
 Specification digest: $(fm_get "$plan" source_spec_digest)
@@ -5689,7 +5909,11 @@ EOF
   fi
 
   _skim_file "$plan"
-  echo "Source:    $(fm_get "$plan" source_spec)"
+  local _source_type _source_ref _source_spec
+  _source_spec=$(fm_get "$plan" source_spec)
+  _source_type=$(fm_get "$plan" source_type); [[ -n "$_source_type" ]] || { [[ -n "$_source_spec" ]] && _source_type=spec || _source_type=goal; }
+  _source_ref=$(fm_get "$plan" source_ref); [[ -n "$_source_ref" ]] || _source_ref="$_source_spec"
+  echo "Source:    $_source_type ${_source_ref:-none}"
   echo "Mode:      $(fm_get "$plan" status)"
   if [[ -f "$tasks" ]]; then
     local _current_m
@@ -7955,18 +8179,25 @@ EOF
   esac
 
   if [[ "$current" == planned && "$target" == active ]]; then
-    local activation_spec activation_path activation_digest activation_version activation_baseline
+    local activation_spec activation_path activation_digest activation_version activation_baseline activation_type activation_ref
     activation_spec=$(fm_get "$plan" source_spec)
+    activation_type=$(fm_get "$plan" source_type)
+    activation_ref=$(fm_get "$plan" source_ref)
     if [[ -n "$activation_spec" ]]; then
       activation_path=$(_spec_find "$activation_spec") || die "advance: source specification '$activation_spec' not found"
       [[ "$(fm_get "$activation_path" status)" == approved ]] || die "advance: source specification '$activation_spec' is not approved"
       activation_version=$(fm_get "$activation_path" version); [[ -n "$activation_version" ]] || activation_version=unversioned
       if command -v shasum >/dev/null 2>&1; then activation_digest="sha256:$(shasum -a 256 "$activation_path" | awk '{print $1}')"
       else activation_digest="sha256:$(sha256sum "$activation_path" | awk '{print $1}')"; fi
-      activation_baseline=uncommitted
-      git rev-parse --verify HEAD >/dev/null 2>&1 && activation_baseline=$(git rev-parse HEAD)
       fm_set "$plan" source_spec_version "$activation_version"
       fm_set "$plan" source_spec_digest "$activation_digest"
+    elif [[ -n "$activation_type" || -n "$activation_ref" ]]; then
+      case "$activation_type" in issue|goal) ;; *) die "advance: source_type must be issue or goal when source_spec is absent" ;; esac
+      [[ -n "$activation_ref" ]] || die "advance: $activation_type-derived request has no source_ref"
+    fi
+    if [[ -n "$activation_spec" || -n "$activation_type" || -n "$activation_ref" ]]; then
+      activation_baseline=uncommitted
+      git rev-parse --verify HEAD >/dev/null 2>&1 && activation_baseline=$(git rev-parse HEAD)
       fm_set "$plan" activated_at "$TODAY"
       fm_set "$plan" activated_by "${USER:-user}"
       fm_set "$plan" activated_against "$activation_baseline"
@@ -8468,25 +8699,81 @@ EOF
 # it creates a reviewed draft bundle from an approved baseline but does not
 # activate implementation or pretend to perform agentic planning.
 cmd_request_new() {
-  local slug="" from="" priority=medium
+  local slug="" from="" from_issue="" from_goal="" priority=medium source_summary="" sensitivity=""
   while (( $# > 0 )); do
     case "$1" in
       --from) require_value "$1" "${2:-}"; from="$2"; shift 2 ;;
+      --from-issue) require_value "$1" "${2:-}"; from_issue="$2"; shift 2 ;;
+      --from-goal) require_value "$1" "${2:-}"; from_goal="$2"; shift 2 ;;
+      --summary) require_value "$1" "${2:-}"; source_summary="$2"; shift 2 ;;
+      --sensitivity) require_value "$1" "${2:-}"; sensitivity="$2"; shift 2 ;;
       --priority) require_value "$1" "${2:-}"; priority="$2"; shift 2 ;;
       --help|-h)
         cat <<'EOF'
 Usage: spectacular request new [<slug>] --from <SPC-ID> [--priority low|medium|high]
+       spectacular request new <slug> --from-issue <owner/repo#N|URL> --summary <accepted-outcome> --sensitivity normal|protected
+       spectacular request new <slug> --from-goal <goal-ref> [--summary <accepted-outcome>] --sensitivity normal|protected
 
-Create PLAN.md and TASKS.md from an approved specification. The request remains
-planned; run /spectacular act <SPC-ID> inside an AI agent to review gates,
-record activation provenance, compile the brief, and begin implementation.
+Create a planned PLAN/TASKS bundle from exactly one source. Specifications must
+be approved. Issue and goal sources are for already-defined destinations that
+need durable coordination; they never manufacture a specification.
 EOF
         return 0 ;;
       -*) die "request new: unknown flag '$1'" ;;
       *) [[ -z "$slug" ]] || die "request new: only one slug allowed"; slug="$1"; shift ;;
     esac
   done
-  [[ -n "$from" ]] || die "request new: --from <SPC-ID> is required"
+  local source_count=0
+  [[ -n "$from" ]] && source_count=$((source_count + 1))
+  [[ -n "$from_issue" ]] && source_count=$((source_count + 1))
+  [[ -n "$from_goal" ]] && source_count=$((source_count + 1))
+  [[ "$source_count" -eq 1 ]] || die "request new: choose exactly one source: --from <SPC-ID>, --from-issue <owner/repo#N|URL>, or --from-goal <goal-ref>"
+  if [[ -n "$from_issue" || -n "$from_goal" ]]; then
+    [[ -n "$slug" ]] || die "request new: <slug> is required for Issue/goal-derived work"
+    [[ -z "$from_issue" || -n "$source_summary" ]] || die "request new: --from-issue requires --summary <accepted-outcome>; do not copy the Issue body"
+    case "$sensitivity" in normal|protected) ;; *) die "request new: Issue/goal sources require --sensitivity normal|protected from the readiness assessment" ;; esac
+    local source_type source_ref source_label plan tasks existing_source
+    if [[ -n "$from_issue" ]]; then
+      source_type=issue
+      if [[ "$from_issue" =~ ^https://github\.com/([^/]+)/([^/]+)/issues/([0-9]+)(/)?$ ]]; then
+        source_ref="${BASH_REMATCH[1]}/${BASH_REMATCH[2]}#${BASH_REMATCH[3]}"
+      elif [[ "$from_issue" =~ ^[^/[:space:]]+/[^#[:space:]]+#[0-9]+$ ]]; then
+        source_ref="$from_issue"
+      else
+        die "request new: Issue source must be canonical owner/repo#N or a GitHub Issue URL"
+      fi
+      source_label="Issue $source_ref"
+    else
+      source_type=goal; source_ref="$from_goal"; source_label="goal $source_ref"
+      [[ -n "$source_summary" ]] || source_summary="$from_goal"
+    fi
+    existing_source=$(grep -lE "^source_ref:[[:space:]]*[\"']?${source_ref//\//\\/}[\"']?[[:space:]]*$" "$SPEC_REQUESTS_DIR"/*/PLAN.md 2>/dev/null | head -1 || true)
+    [[ -z "$existing_source" ]] || die "request new: $source_label already owns request '$(basename "$(dirname "$existing_source")")'"
+    cmd_new "$slug" --summary "$source_summary" --priority "$priority"
+    plan="$SPEC_REQUESTS_DIR/$slug/PLAN.md"; tasks="$SPEC_REQUESTS_DIR/$slug/TASKS.md"
+    fm_set "$plan" source_type "$source_type"
+    fm_set "$plan" source_ref "$source_ref"
+    fm_set "$plan" sensitivity "$sensitivity"
+    _request_replace_section "$plan" Goal "$source_summary"
+    _request_replace_section "$plan" Constraints "- Preserve the accepted outcome and named boundaries of $source_label.\n- Stop for unresolved product choices, material scope expansion, security sensitivity, or undeclared access.\n- Link remote evidence; do not copy Issue bodies or comments into the request."
+    _request_replace_section "$plan" Milestones "- M1 — Implement and verify the accepted $source_type-derived work."
+    _request_replace_section "$plan" Dependencies "- Source: $source_label.\n- Existing code, tests, documentation, and decisions define the destination; escalate to spec-first if that proves false."
+    _request_replace_section "$plan" Validation "- M1 — prove the accepted outcome against the real code path and record current-head evidence."
+    _request_replace_section "$plan" Deliverables "- Verified implementation for $source_label.\n- Pull-request handoff with source, request, verification, and docs-impact references."
+    fm_set "$tasks" source_type "$source_type"
+    fm_set "$tasks" source_ref "$source_ref"
+    local source_task="Implement and verify the accepted outcome for $source_label."
+    local task_tmp; task_tmp=$(mktemp)
+    awk -v task="$source_task" '
+      /^###[[:space:]]+M1/ { print "### M1 — Implement accepted work"; print "- [ ] " task; skip=1; next }
+      skip && /^##[[:space:]]/ { skip=0 }
+      !skip { print }
+    ' "$tasks" > "$task_tmp" && mv "$task_tmp" "$tasks"
+    fm_touch "$plan"; fm_touch "$tasks"
+    info "  ↳ source: $source_type $source_ref"
+    info "  • request remains planned; review its closed outcome/boundaries before activation"
+    return 0
+  fi
   local spec id status summary spec_slug existing plan tasks tmp req_file version digest baseline reqs intent
   spec=$(_spec_find "$from") || die "request new: specification '$from' not found"
   id=$(fm_get "$spec" id); status=$(fm_get "$spec" status); summary=$(fm_get "$spec" summary)
@@ -8504,6 +8791,8 @@ EOF
   baseline="uncommitted"
   git rev-parse --verify HEAD >/dev/null 2>&1 && baseline=$(git rev-parse HEAD)
   fm_set "$plan" source_spec "$id"
+  fm_set "$plan" source_type spec
+  fm_set "$plan" source_ref "$id"
   fm_set "$plan" source_spec_version "$version"
   fm_set "$plan" source_spec_digest "$digest"
   fm_set "$plan" scaffolded_against "$baseline"
@@ -8535,6 +8824,8 @@ EOF
   ' "$tasks" > "$tmp" && mv "$tmp" "$tasks"
   rm -f "$req_file"
   fm_set "$tasks" source_spec "$id"
+  fm_set "$tasks" source_type spec
+  fm_set "$tasks" source_ref "$id"
   fm_touch "$tasks"
   info "  ↳ source baseline: $id v$version ($digest)"
   info "  • request remains planned; next: /spectacular act $id"
@@ -11695,19 +11986,50 @@ check_lifecycle() {
     local status
     status=$(awk -F': ' '/^---$/{c++; next} c==1 && /^status:/ { print $2; exit }' "$plan" | tr -d '"' | tr -d "'" | xargs)
 
-    local source_spec provenance_missing="" provenance_key
+    local source_spec source_type source_ref sensitivity provenance_missing="" provenance_key
     source_spec=$(fm_get "$plan" source_spec)
-    if [[ -n "$source_spec" && "$status" =~ ^(active|review)$ ]]; then
-      for provenance_key in source_spec_version source_spec_digest activated_at activated_by activated_against; do
-        [[ -n "$(fm_get "$plan" "$provenance_key")" ]] || provenance_missing="${provenance_missing:+$provenance_missing, }$provenance_key"
-      done
-      if [[ -n "$provenance_missing" ]]; then
-        doc_add "lifecycle" "error" "$plan" \
-          "request '$slug' has source_spec $source_spec but incomplete activation provenance: $provenance_missing" \
-          "record the exact approved spec version/digest, actor/date, and Git baseline; do not copy the spec body" \
-          "mechanical"
+    source_type=$(fm_get "$plan" source_type); source_ref=$(fm_get "$plan" source_ref)
+    sensitivity=$(fm_get "$plan" sensitivity)
+    if [[ -n "$source_type" || -n "$source_ref" ]]; then
+      case "$source_type" in issue|spec|goal) ;; *)
+        doc_add "lifecycle" "error" "$plan" "request '$slug' has invalid source_type '${source_type:-missing}'" \
+          "use issue, spec, or goal and preserve the canonical source_ref" "mechanical"
+        issues=$((issues + 1)) ;;
+      esac
+      if [[ -z "$source_ref" ]]; then
+        doc_add "lifecycle" "error" "$plan" "request '$slug' has source_type $source_type but no source_ref" \
+          "record the canonical source identity without copying its body" "mechanical"
         issues=$((issues + 1))
       fi
+      if [[ "$source_type" == issue && -n "$source_ref" && ! "$source_ref" =~ ^[^/[:space:]]+/[^#[:space:]]+#[0-9]+$ ]]; then
+        doc_add "lifecycle" "error" "$plan" "request '$slug' has malformed Issue source_ref '$source_ref'" \
+          "use canonical owner/repo#N identity" "mechanical"
+        issues=$((issues + 1))
+      fi
+      if [[ "$source_type" == issue || "$source_type" == goal ]]; then
+        case "$sensitivity" in normal|protected) ;; *)
+          doc_add "lifecycle" "error" "$plan" "request '$slug' has no valid sensitivity classification" \
+            "record sensitivity: normal|protected; protected work cannot use the ordinary PR path" "mechanical"
+          issues=$((issues + 1)) ;;
+        esac
+      fi
+      if [[ "$status" =~ ^(active|review|verified)$ ]]; then
+        for provenance_key in activated_at activated_by activated_against; do
+          [[ -n "$(fm_get "$plan" "$provenance_key")" ]] || provenance_missing="${provenance_missing:+$provenance_missing, }$provenance_key"
+        done
+      fi
+    fi
+    if [[ -n "$source_spec" && "$status" =~ ^(active|review|verified)$ ]]; then
+      for provenance_key in source_spec_version source_spec_digest; do
+        [[ -n "$(fm_get "$plan" "$provenance_key")" ]] || provenance_missing="${provenance_missing:+$provenance_missing, }$provenance_key"
+      done
+    fi
+    if [[ -n "$provenance_missing" ]]; then
+      doc_add "lifecycle" "error" "$plan" \
+        "request '$slug' has incomplete source/activation provenance: $provenance_missing" \
+        "record source identity, activation actor/date/Git baseline, and exact spec version/digest when applicable" \
+        "mechanical"
+      issues=$((issues + 1))
     fi
 
     local docs_impact; docs_impact=$(fm_get "$plan" docs_impact)
@@ -14436,6 +14758,8 @@ main() {
       shift; cmd_wayfind "$@"; exit $? ;;
     afk)
       shift; cmd_afk "$@"; exit $? ;;
+    github)
+      shift; cmd_github "$@"; exit $? ;;
     id)
       shift; cmd_id "$@"; exit $? ;;
     collections)

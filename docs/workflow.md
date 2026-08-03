@@ -4,7 +4,7 @@ description: The normal Spectacular loop after installation — init, briefing, 
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-08-01
+updated: 2026-08-03
 ---
 
 # Workflow Guide
@@ -124,9 +124,19 @@ spectacular request new --from s1
 
 Only an `approved` specification can seed an implementation request. `request new --from` creates the durable planned PLAN/TASKS bundle; `act` runs gates, records the exact specification/Git baseline, compiles `request --brief`, creates the finer native Codex/Claude session plan, and begins implementation. After verified integration, `spec implement --verified-against <commit|build>` records the historical evidence point; code remains authoritative. If an open loop is not relevant now, defer it with a reason and optional review point.
 
+Not every Issue needs that chain. First route it by meaning:
+
+| Path | Use when | Durable Spectacular artifact |
+|---|---|---|
+| Direct | One bounded session/PR; outcome, boundary, and acceptance check are settled | None |
+| Request | Destination is settled, but agents, dependencies, or sessions need coordination | Lean request from `--from-issue` or `--from-goal` |
+| Spec-first | Consequential behavior or contract still needs a choice | Approved SPC, then request(s) |
+
+GitHub owns the Issue, conversation, PR, checks, and merge state. Spectacular stores accepted meaning, authorization, dependencies, and stable references. Coordinated requests conclude through `github pr open` (draft), verification, `github pr ready`, and a human merge gate. See [Integrations](integrations.md).
+
 Wayfinder language maps to the same gates: “park this idea” creates an idea, “put it on ice” defers with a reason, “find your way to…” shows prerequisites, and “act on goal…” still requires an approved specification. During implementation, park unexpected discoveries instead of adding them to the active milestone. Run `spectacular doctor wayfinding` to surface inferred dependency gaps and discovery/execution target inversions; findings are proposals, never automatic roadmap edits.
 
-For explicitly authorized AFK work, create a durable goal-scoped `spectacular afk run`, inspect `spectacular afk status`, and propose the branch class before creating it. Draft specs, spikes, forks, and approved execution stay isolated. Cleanup creates a durable Git archive ref before local deletion; remote deletion and merge remain human actions. A verified handoff may open `[Spectacular] Executed: <version> - <name>` only after the request, source spec, verification log, and fresh tests satisfy their gates.
+For explicitly authorized AFK work, create a durable goal-scoped `spectacular afk run`, inspect `spectacular afk status`, and propose the branch class before creating it. Draft specs, spikes, forks, and approved execution stay isolated. Cleanup creates a durable Git archive ref before local deletion; remote deletion and merge remain human actions. A verified AFK handoff uses the shared GitHub manifest and opens a draft `[Spectacular] Executed: <version> - <name>` only after its narrower request, source-spec, verification, and test gates pass.
 
 ## Keep live context small and trustworthy
 

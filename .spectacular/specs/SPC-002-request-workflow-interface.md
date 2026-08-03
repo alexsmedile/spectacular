@@ -4,12 +4,12 @@ type: specification
 status: implemented
 target_version: "v1.36.0-execution"
 supersedes: ""
-updated: 2026-08-02
+updated: 2026-08-03
 summary: "Request creation, implementation context, command grammar, and verified execution handoff"
 related:
   - SPC-001-wayfinding.md
   - ../archive/request-workflow-interface/PLAN.md
-version: 1.1
+version: 1.2
 approved_at: 2026-08-02
 approved_by: user
 implemented_at: 2026-08-02
@@ -55,6 +55,4 @@ Give humans and coding agents one predictable path from approved specification t
 
 ## Confirmation
 
-Confirmed by the user on 2026-08-02. Approve this specification before activating the linked request.
-
-**Approved 2026-08-02 by user** — Explicit user confirmation of the complete request-workflow contract on 2026-08-02
+**Implemented 2026-08-02** — the user approved the complete request-workflow contract, the linked request completed verification, and implementation is verified against commit `bf0756f`.

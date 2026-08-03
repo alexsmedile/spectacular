@@ -1,13 +1,14 @@
 ---
 id: DEC-023
 type: decision
-status: verified
+status: superseded
 origin: user-derived
 derived_from: "User migration interview confirmed on 2026-08-03"
 supersedes: ""
 evidence: "user direction"
 tags: [migration, schema, git, branches, compatibility, request, lifecycle]
 updated: 2026-08-03
+superseded_by: DEC-024
 ---
 
 # DEC-023 — Migrate workspace schema 2.0 to 3.0 through staged requests

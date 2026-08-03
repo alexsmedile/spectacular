@@ -8,11 +8,11 @@ updated: 2026-08-03
 Request activated from `main@7074541`; M1–M4 evidence package completed and rechecked. Verdict is go for a schema-3 contract specification and no-go for migration implementation.
 
 ## Active task
-Interview the user on the four evidence-derived design questions before moving the request to review.
+Prepare the completed request and draft PR for lifecycle review after incorporating all interview decisions.
 
 ## Blockers
-Migration apply is blocked because no concrete breaking schema-3 delta is approved. Four design questions are listed in `artifacts/readiness-report.md`.
+None. D24 keeps schema 2.0 until a real breaking contract exists; D25 rejects speculative local-state versioning; D27 preserves a tiny user-facing migration receipt; the generated legacy debug trace was removed with user approval.
 
 ## Next actions
-- Review the four open questions with the user.
-- After resolution, refine the proposed SPC-004 scope and move this request to review.
+- Run final request and repository checks.
+- Move the request and draft PR to review after explicit lifecycle confirmation.

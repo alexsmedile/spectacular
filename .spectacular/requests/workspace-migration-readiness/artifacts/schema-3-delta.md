@@ -1,13 +1,13 @@
 ---
 updated: 2026-08-03
-status: proposed
+status: reserved
 source_schema: "2.0"
 target_schema: "3.0"
 ---
 
 # Proposed schema-3 contract delta
 
-This is a readiness proposal, not an approved specification and not migration authority.
+This is a reserved future-breaking-contract proposal, not an approved specification or current migration authority. D24 keeps the live workspace on schema 2.0 because the presently identified protections are additive.
 
 ## Confirmed invariants
 
@@ -23,7 +23,7 @@ This is a readiness proposal, not an approved specification and not migration au
 ### Shared workspace
 
 1. Freeze an explicit required/optional/forbidden path contract for schema 3 instead of deriving validity from a version number alone.
-2. Define the root-anchor allowlist and the status of migration provenance such as `migrations.log`.
+2. Define the root-anchor allowlist and D27's lightweight `migrations.log` operational exception.
 3. Define canonical plural collection paths and a judgment path for legacy singular content.
 4. Add machine-readable request relationship fields only after SPC-003 fixes their exact schema and reciprocity rules; do not smuggle them into migration code.
 5. Require every mutating command to reject a workspace whose declared schema is newer than the CLI understands.
@@ -34,7 +34,7 @@ This is a readiness proposal, not an approved specification and not migration au
 2. Define file permissions and protected-output behavior for security-bearing paths.
 3. Detect tracked/history-visible local paths without reading bodies and fail closed.
 4. Do not copy, archive, or back up private material into `.spectacular/`.
-5. Decide whether local state needs its own compatibility marker or whether each feature owns versioning independently.
+5. Per D25, add no local schema/version by default. A feature may introduce a narrow format marker only after a real incompatible change cannot be safely detected or migrated.
 
 ### Compatibility window
 
@@ -52,9 +52,9 @@ This is a readiness proposal, not an approved specification and not migration au
 - Snapshot pruning and legacy memory-status warnings: ordinary maintenance.
 - Public documentation rewrite: downstream of the approved contract.
 
-## Open design questions
+## Interview resolutions
 
-1. Which concrete shared-layout or required-field change is sufficiently breaking to earn schema 3.0? If none exists, keep schema 2.0 and ship the boundary protections additively.
-2. Should `.spectacular.local/` have one root compatibility marker, or should each feature-owned local file/version evolve independently?
-3. Is `migrations.log` durable shared evidence that should receive a canonical home, or disposable/local execution output?
-4. Should the two-file legacy `debug/` trace be moved to `debugs/`, archived, or deleted after its outcome is classified?
+1. **Resolved — D24:** no current change is sufficiently breaking; keep schema 2.0 and ship boundary protections additively. Reopen schema 3.0 only when a real breaking delta is proposed.
+2. **Resolved — D25:** neither by default; versioning is introduced only when a real incompatible local format earns it.
+3. **Resolved — D27:** keep `migrations.log` as an optional one-line-per-success user receipt, not authority or normal context; add no subsystem around it.
+4. **Resolved:** remove the generated legacy trace; the synthetic test fixture and Git history preserve everything useful without polluting live or archived Spectacular context.

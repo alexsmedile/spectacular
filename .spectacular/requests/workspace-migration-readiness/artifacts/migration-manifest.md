@@ -18,7 +18,7 @@ No step below is authorized to apply. Ordering is dependency-first.
 | P4 | Introduce optional schema-3 fields/path validators under schema 2.0 | Additive soak | Revert commit; absence stays valid | Old/new-shape doctor tests and dogfood |
 | P5 | Add filename-only tracked-local detection and protected refusal | Additive security guard | Non-bypassable; security review | Synthetic path fixtures; no body output |
 | P6 | Add `v20-to-v30` registry entry in dry-run mode | Migration scaffold | No live apply; manifest comparison | Registry doctor and dry-run golden output |
-| P7 | Classify legacy `debug/` and root artifacts | Judgment cleanup, separate scope | User/security decision per artifact | Clean root/plural-path doctor checks |
+| P7 | Classify root artifacts; legacy `debug/` already resolved as removable generated residue | Judgment cleanup, separate scope | User decision per remaining artifact | Clean root/plural-path doctor checks |
 | P8 | Flip `CURRENT_SCHEMA` to 3.0 and enable apply only after soak | Breaking transition | Exact baseline, isolated branch, snapshots, commit-level revert/abandon | Full Bash/CLI suite and schema-2 fixture migration |
 | P9 | Migrate this repository and open PR | Governed apply | Human PR/merge gate | Doctor zero schema errors; request verification |
 

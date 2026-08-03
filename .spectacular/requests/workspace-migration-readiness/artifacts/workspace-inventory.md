@@ -28,8 +28,8 @@ traffic: parallel
 | `archive/` | Closed request/history store | Stale-safe; excluded from normal context | Keep committed; this audit listed paths only and read no bodies |
 | `afk/` | Authorized autonomous-run provenance | Durable evidence | Keep committed and authority-bound |
 | `debugs/` | Current debug-job contract | Temporary while open; archive after distillation | Keep as canonical plural path |
-| `debug/` | Legacy singular trace path (2 tracked files) | Inconsistent with schema-2 migration contract | Judgment cleanup: classify trace before move/archive |
-| `migrations.log` | Tracked root migration record | Not declared by the minimal-root architecture | Decide whether it is durable evidence and relocate or formally admit it |
+| `debug/` | Legacy singular generated trace path | Inconsistent with schema-2 migration contract | Resolved: removed after user classification; fixture and Git history retain the useful evidence |
+| `migrations.log` | Lightweight human migration receipt | Optional append-only diagnostic provenance; never current-state authority | Keep committed per D27 and declare as a minimal operational-root exception; exclude from normal context |
 | `.last-mutation` | Undo breadcrumb/session ephemera | Gitignored by policy but currently tracked | Untrack in a separately reviewed cleanup; never migrate as shared truth |
 | `.DS_Store` | Operating-system metadata | Throwaway and gitignored, but currently tracked | Untrack in cleanup; no migration meaning |
 
@@ -65,7 +65,7 @@ If a tracked local path is detected later:
 ## Baseline discrepancies
 
 - The roadmap describes a future v1→v2 workspace migration, but schema 2.0 and its OKF migration are already shipped.
-- The migration contract says schema 2.0 has no singular directories, yet tracked `debug/` remains.
-- The architecture says the root contains anchors only, yet tracked `migrations.log`, `.last-mutation`, and `.DS_Store` remain.
+- The migration contract says schema 2.0 has no singular directories. The sole tracked `debug/` trace was confirmed as generated fixture residue and removed; no live singular trace remains.
+- The architecture says the root contains anchors only. D27 now preserves `migrations.log` as a small user-facing operational exception that the contract must declare; tracked `.last-mutation` and `.DS_Store` remain cleanup drift.
 - `status --against-latest` describes every unequal schema as “behind”; doctor correctly distinguishes a workspace newer than the CLI.
 - No global evidence was found that ordinary mutators refuse an unknown newer schema. Schema 3 requires a fail-safe mutation guard before adoption.

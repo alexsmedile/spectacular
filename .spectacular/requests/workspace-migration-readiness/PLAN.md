@@ -6,7 +6,7 @@ updated: 2026-08-03
 build: b41
 docs_impact: none
 docs_impact_reason: "Internal readiness artifacts only; public documentation waits for an approved schema-3 contract"
-summary: "Audit the shared and private workspace boundaries, reconcile schema numbering, and produce a safe schema-3 migration proposal without changing production behavior"
+summary: "Readiness audit concludes that schema 2.0 needs additive boundary and migration-safety hardening; schema 3.0 remains reserved for a real future breaking contract"
 related:
   - ../../PRD.md
   - ../../specs/SPC-003-github-native-lifecycle.md
@@ -16,9 +16,13 @@ related:
 
 # Plan — workspace-migration-readiness
 
+## SUPERSEDED 2026-08-03 — Additive hardening replaces the assumed imminent schema-3 migration
+
+The audit found no concrete breaking layout or required-field change that earns schema 3.0. Per D24, keep schema 2.0 and scope the next specification to compatible workspace-boundary and migration-safety hardening. The original schema-3 framing below remains as the investigated hypothesis and future-breaking reference.
+
 ## Goal
 
-Serve the PRD goals of reducing context rot and preserving human-agent coherence by producing an evidence-backed readiness package for evolving the shared/private workspace contract from schema 2.0 toward schema 3.0 without exposing private state or changing production behavior during discovery.
+Serve the PRD goals of reducing context rot and preserving human-agent coherence by producing an evidence-backed readiness package for evolving the shared/private workspace contract from schema 2.0 toward schema 3.0 without exposing private state or changing production behavior during discovery. *(Superseded 2026-08-03 as an imminent-migration assumption; kept for history.)*
 
 ## Constraints
 
@@ -48,6 +52,7 @@ CLI behavior, workspace layout, schema value, public documentation, GitHub repos
 
 - Keep readiness separate from migration apply instead of combining audit and mutation, because evidence must define the later approved specification.
 - Record traffic as `parallel` instead of `conditional`, `serialized`, or `unknown`, because no active request or open PR overlaps and every readiness output stays inside this request.
+- Remove the legacy singular debug trace instead of archiving or promoting it, because it is unreferenced generated output from a preserved synthetic fixture and Git already retains its history.
 
 ## Milestones
 

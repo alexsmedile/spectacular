@@ -9,9 +9,9 @@ traffic: parallel
 
 ## Verdict
 
-**GO** to write and grill a focused schema-3 contract specification.
+**GO** to write and grill a focused additive workspace-boundary and migration-safety specification under schema 2.0.
 
-**NO-GO** to implement or apply a schema-3 migration now.
+**NO-GO** to implement or apply a schema-3 migration now. D24 reserves schema 3.0 for a future real breaking contract rather than manufacturing one for additive improvements.
 
 The repository is not blocked by corruption or a detected private-data leak. It is blocked by an undefined breaking target: schema 2.0 already exists, while the roadmap's future “v2” plan names no concrete fields/layout and collides with the shipped schema number.
 
@@ -31,28 +31,29 @@ The repository is not blocked by corruption or a detected private-data leak. It 
 3. The local override prose is broader than the confirmed security boundary and has no general CLI implementation.
 4. `status --against-latest` does not correctly explain a newer workspace.
 5. A global fail-closed mutator guard for unknown newer schemas was not found.
-6. Schema 2.0 currently tolerates tracked singular/root drift (`debug/`, `.last-mutation`, `.DS_Store`, and an undeclared `migrations.log`).
+6. Schema 2.0 currently tolerates tracked root ephemera (`.last-mutation` and `.DS_Store`); the generated singular `debug/` residue was removed, while D27 preserves the lightweight migration receipt as an explicit operational exception.
 
 ## Proposed next specification
 
-Create `SPC-004 — Workspace schema 3 contract and migration safety` with this smallest scope:
+Create `SPC-004 — Workspace boundary and migration safety` with this smallest scope:
 
-- schema/product version independence and corrected roadmap terminology;
+- schema/product version independence, D24's schema-2 retention rule, and corrected roadmap terminology;
 - explicit required/optional/forbidden shared-path contract;
+- D27's intentionally tiny, non-authoritative migration receipt contract;
 - allowlisted private local-state contract and protected tracked-path detection;
 - older/equal/newer schema behavior shared by all mutators;
-- additive soak and dry-run stages before the breaking flip;
+- additive schema-2 hardening now and reusable dry-run stages for a later real breaking flip;
 - migration manifest/rollback invariants and fixture matrix;
 - explicit exclusions that keep GitHub collaboration behavior in SPC-003 and cleanup debt outside the schema migration.
 
-The actual migration request must be created only after SPC-004 is grilled, approved, and its breaking delta is concrete.
+No schema migration request should be created unless a later approved specification names a real breaking delta. SPC-004 may seed an additive hardening request after grilling and approval.
 
-## Open questions requiring the user
+## Interview resolutions
 
-1. What real breaking change should schema 3 introduce? If there is none, should Spectacular keep schema 2.0 and implement these protections additively?
-2. Should `.spectacular.local/` use one root compatibility marker or feature-owned versions?
-3. Where should durable migration provenance live, and is current `migrations.log` durable or disposable?
-4. What is the disposition of the legacy `debug/` trace after its outcome is classified?
+1. **Resolved — D24:** no current change earns schema 3.0; keep schema 2.0 and implement compatible protections additively.
+2. **Resolved — D25:** use no local schema/version by default; add a narrow format marker only after a real incompatible change earns it.
+3. **Resolved — D27:** keep the existing lightweight migration receipt; do not build a replacement ledger or command.
+4. **Resolved:** remove the generated legacy trace; retain its synthetic fixture and Git history rather than creating an archive duplicate.
 
 ## Traffic recheck requirement
 

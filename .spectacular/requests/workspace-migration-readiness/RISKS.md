@@ -20,7 +20,7 @@ related:
 | Automatic local backup duplicates secrets | Larger sensitive-data footprint | D22 permits protected local state | Initial local migration must be additive; destructive local conversion is separately authorized |
 | Concurrent request/schema edits drift | Conflicts or silently incompatible assumptions | Planned stance/pack work may later touch config/frontmatter | Re-run traffic at activation, before apply, and before PR readiness |
 | Non-reversible monolithic migration | Difficult recovery after partial rewrite | Existing 0.6→2.0 registry edge is marked non-reversible | Split schema-3 work into soak, guard, dry-run, and final flip; preserve branch/snapshots/manifest |
-| Root and singular-path cleanup is mixed into schema design | Scope creep and misleading migration necessity | `.DS_Store`, `.last-mutation`, `migrations.log`, and `debug/` differ in meaning | Route cleanup separately; only schema-relevant rules enter SPC-004 |
+| Root and singular-path cleanup is mixed into schema design | Scope creep and misleading migration necessity | `.DS_Store` and `.last-mutation` remain hygiene debt; the generated singular `debug/` trace was removed; D27 separately preserves `migrations.log` | Route remaining cleanup separately; only schema-relevant rules enter SPC-004 |
 
 ## Security gate
 

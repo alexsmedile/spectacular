@@ -57,4 +57,3 @@ The actual migration request must be created only after SPC-004 is grilled, appr
 ## Traffic recheck requirement
 
 Before SPC-004 execution or any migration branch begins, fetch again and recalculate traffic. A changed branch/PR/request graph invalidates this report's `parallel` assessment without erasing its evidence.
-

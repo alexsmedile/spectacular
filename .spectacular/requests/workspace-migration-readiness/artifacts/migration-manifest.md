@@ -53,4 +53,3 @@ No step below is authorized to apply. Ordering is dependency-first.
 ## Completion invariant
 
 Never bump `workspace_schema` merely because steps ran. Bump only after required shape, forbidden paths, links, permissions, and collection invariants pass. Failure preserves the branch and manifest and leaves the prior schema marker unchanged.
-

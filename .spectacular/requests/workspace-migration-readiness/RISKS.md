@@ -25,4 +25,3 @@ related:
 ## Security gate
 
 Any discovered tracked `.spectacular.local/` path, protected-content hint, credential, or sensitive provider reference changes traffic to `unknown` and stops normal output. This request found no such tracked/history path.
-

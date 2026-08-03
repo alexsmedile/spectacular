@@ -58,4 +58,3 @@ This is a readiness proposal, not an approved specification and not migration au
 2. Should `.spectacular.local/` have one root compatibility marker, or should each feature-owned local file/version evolve independently?
 3. Is `migrations.log` durable shared evidence that should receive a canonical home, or disposable/local execution output?
 4. Should the two-file legacy `debug/` trace be moved to `debugs/`, archived, or deleted after its outcome is classified?
-

@@ -1,7 +1,7 @@
 ---
 id: SPC-003
 type: specification
-status: approved
+status: implemented
 target_version: "v1.37.0-execution"
 supersedes: ""
 updated: 2026-08-03
@@ -12,9 +12,11 @@ related:
   - ../decisions/DEC-020-keep-spectacular-questions-as-local-blockers.md
   - ../decisions/DEC-021-gate-parallel-request-execution-with-a.md
   - ../roadmaps/index.md
-version: 1.0
+version: 1.1
 approved_at: 2026-08-03
 approved_by: user
+implemented_at: 2026-08-03
+verified_against: 409475a3fe9d14aecb74834e36112eb4192830d5
 ---
 
 # SPC-003 — GitHub work bridge

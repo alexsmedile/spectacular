@@ -1,5 +1,5 @@
 ---
-status: verified
+status: archived
 priority: high
 owner: alex
 updated: 2026-08-03
@@ -23,6 +23,7 @@ github_pr_opened_at: 2026-08-03
 github_pr_head: 823c8a6768e5402994c03c7dbd9f1cd96ebe7e84
 issue_resolution: on_merge
 github_pr_ready_at: 2026-08-03
+archived: 2026-08-03
 ---
 
 # Plan — github-work-bridge

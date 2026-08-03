@@ -12,7 +12,6 @@ related:
   - ../decisions/DEC-020-keep-spectacular-questions-as-local-blockers.md
   - ../decisions/DEC-021-gate-parallel-request-execution-with-a.md
   - ../roadmaps/index.md
-  - https://github.com/alexsmedile/spectacular/issues/3
 ---
 
 # SPC-003 — GitHub-friendly collaboration projections for requests, bugs, ideas, pull requests, and verification evidence

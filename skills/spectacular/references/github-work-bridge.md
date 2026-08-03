@@ -60,7 +60,7 @@ spectacular github pr ready <request> [--pr <number|url>] [--apply --yes]
 
 `open` is dry-run first and creates a draft only after a meaningful pushed commit on a non-primary clean branch. Use `Fixes owner/repo#N` for complete `on_merge` work and `Refs owner/repo#N` for partial or release-gated work. AFK's compatibility command uses the same manifest and remains subject to its narrower policy gates.
 
-`ready` requires a verified request, passing evidence stamped against current local HEAD, the same remote PR head, acceptable required checks, and explicit `--apply --yes`. It never merges.
+`ready` requires a verified request, the same local/remote PR head, acceptable required checks, and explicit `--apply --yes`. When no required checks exist, local verification must cover that head: an ancestor stamp remains valid only across request-ledger-only PLAN/TASKS/SESSION/VERIFY metadata commits; any code, test, configuration, or product-doc change invalidates it. It never merges.
 
 ## Reconciliation
 
@@ -68,7 +68,7 @@ spectacular github pr ready <request> [--pr <number|url>] [--apply --yes]
 spectacular github reconcile [request] [--json]
 ```
 
-Reconciliation is read-only. It reports unavailable PR state, merged PRs with live requests, verification stamped against an older PR head, and closed source Issues with active/review work. Missing `gh`, authentication, permissions, or remote evidence remains explicitly pending; it never invents success or silently mutates either side.
+Reconciliation is read-only. It reports unavailable PR state, merged PRs with live requests, verification that no longer covers the PR head, and closed source Issues with active/review work. Request-ledger-only descendants preserve coverage; implementation/doc/config changes do not. Missing `gh`, authentication, permissions, or remote evidence remains explicitly pending; it never invents success or silently mutates either side.
 
 Use raw `gh` for GitHub-only browsing, administration, check logs, and arbitrary API work. Add a Spectacular wrapper only when it combines local lifecycle with remote state, normalizes meaning, enforces a gate, records provenance, or reconciles discrepancies.
 

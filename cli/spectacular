@@ -5133,6 +5133,28 @@ _github_request_source() {
   printf '%s|%s\n' "$source_type" "$source_ref"
 }
 
+_github_verification_covers_head() {
+  local slug="$1" log="$2" head="$3" stamp changed file
+  [[ -f "$log" ]] || return 1
+  grep -qE "$head|${head:0:12}" "$log" && return 0
+  while IFS= read -r stamp; do
+    [[ -n "$stamp" ]] || continue
+    git cat-file -e "$stamp^{commit}" 2>/dev/null || continue
+    git merge-base --is-ancestor "$stamp" "$head" 2>/dev/null || continue
+    changed=$(git diff --name-only "$stamp..$head" 2>/dev/null || true)
+    [[ -n "$changed" ]] || return 0
+    local only_request_metadata=true
+    while IFS= read -r file; do
+      case "$file" in
+        ".spectacular/requests/$slug/PLAN.md"|".spectacular/requests/$slug/TASKS.md"|".spectacular/requests/$slug/SESSION.md"|".spectacular/requests/$slug/VERIFY-LOG.md"|".spectacular/requests/$slug/SPEC-DELTA.md") ;;
+        *) only_request_metadata=false; break ;;
+      esac
+    done <<< "$changed"
+    $only_request_metadata && return 0
+  done < <(grep -oE 'against:[[:space:]]*`?[0-9a-f]{7,40}' "$log" | sed -E 's/^against:[[:space:]]*`?//')
+  return 1
+}
+
 _github_pr_manifest() {
   local slug="$1" plan="$2" name="$3" issue="$4" resolution="$5" summaries="$6" validations="$7"
   local source_pair source_type source_ref source_spec docs_impact status summary validation relationship=""
@@ -5240,7 +5262,7 @@ cmd_github_pr_ready() {
   checks_output=$(gh pr checks "$pr" --required 2>&1) || checks_code=$?
   if [[ "$checks_code" -ne 0 ]]; then
     if printf '%s' "$checks_output" | grep -qiE 'no (required )?checks (reported|found)'; then
-      grep -qE "$head|$short_head" "$log" || die "github pr ready: no required checks exist and local verification is not stamped against current HEAD $short_head"
+      _github_verification_covers_head "$slug" "$log" "$head" || die "github pr ready: no required checks exist and local verification does not cover current HEAD $short_head"
     else
       die "github pr ready: required checks are not acceptable"
     fi
@@ -5276,7 +5298,7 @@ cmd_github_reconcile() {
       fi
       if [[ -n "$pr_head" && "$status" =~ ^(review|verified)$ ]]; then
         log="$SPEC_REQUESTS_DIR/$req/VERIFY-LOG.md"
-        [[ -f "$log" ]] && grep -qE "$pr_head|${pr_head:0:12}" "$log" || finding="${finding:+$finding; }$req: verification is not stamped against PR head ${pr_head:0:12}"
+        _github_verification_covers_head "$req" "$log" "$pr_head" || finding="${finding:+$finding; }$req: verification does not cover PR head ${pr_head:0:12}"
       fi
       if [[ -n "$finding" ]]; then findings="$findings${findings:+$'\n'}$finding"; count=$((count + 1)); fi
     fi

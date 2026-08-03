@@ -65,6 +65,11 @@ printf '%s\n' '---' 'result: pass' '---' '# Verify log' '' "**Outcome:** verifie
 (cd "$WS" && PATH="$BIN:$PATH" "$CLI" github pr ready cache-fix --apply --yes >/dev/null)
 grep -q 'pr ready https://github.com/acme/widget/pull/9' "$GH_LOG" && pass || fail "ready command called"
 grep -q 'pr merge' "$GH_LOG" && fail "bridge must never merge" || pass
+(cd "$WS" && git add .spectacular/requests/cache-fix && git commit -qm lifecycle-metadata && git push -q)
+READY_HEAD=$(cd "$WS" && git rev-parse HEAD)
+sed -i.bak "s/$HEAD_SHA/$READY_HEAD/" "$BIN/gh"; rm -f "$BIN/gh.bak"
+json=$(cd "$WS" && PATH="$BIN:$PATH" "$CLI" github reconcile cache-fix --json)
+assert_has "$json" '"status":"clean"' "request-only lifecycle descendant preserves verification coverage"
 
 echo "Scenario reconciliation is read-only and reports a closed Issue with live work"
 RELEASE_PLAN="$WS/.spectacular/requests/release-check/PLAN.md"

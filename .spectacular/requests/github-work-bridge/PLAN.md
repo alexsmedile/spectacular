@@ -1,5 +1,5 @@
 ---
-status: review
+status: verified
 priority: high
 owner: alex
 updated: 2026-08-03

@@ -7,6 +7,84 @@ when_to_use: Triaging an Issue, creating Issue/goal-derived work, opening or rea
 
 GitHub is the collaborative work queue. Spectacular is the durable destination and coordination layer when a change earns it. Never copy remote bodies or comments into a second local database.
 
+## Collaboration model
+
+Humans and Spectacular design the contract; agents execute an approved
+contract. GitHub Issues are the shared conversation around a prospective or
+in-flight change, while an SPC is the versioned agreement that authorizes
+consequential implementation.
+
+```text
+GitHub Issue                         shared proposal, context, and discussion
+    |
+    +-- direct --------------------> bounded agent work -> implementation PR
+    |
+    +-- request -------------------> request PLAN/TASKS -> implementation PR
+    |
+    +-- spec-first ----------------> draft SPC on a branch
+                                       |
+                                       v
+                                   spec-only PR (line review)
+                                       |
+                                       v
+                                   human approves exact SPC
+                                       |
+                                       v
+                                   approved SPC on shared branch
+                                       |
+                                       v
+                                   request(s) -> agent execution -> implementation PR
+```
+
+Use Issue comments for intent, priority, alternatives, ownership, and
+out-of-scope boundaries. Use the draft SPC and its spec-only PR for
+requirements, scenarios, interfaces, acceptance criteria, and precise
+contract wording. A reviewer approval or comment is evidence; explicit human
+approval through `spectacular spec approve` is the implementation gate.
+
+For shared work, merge an approved SPC before dependent execution begins. A
+single-owner change may carry the SPC in its implementation PR only when no
+other work needs the agreement from the shared branch.
+
+### Stable links and provenance
+
+An Issue is not a second copy of an SPC. It carries a compact coordination
+block that points at the canonical agreement:
+
+```md
+## Coordination
+
+- Route: `spec-first`
+- Specification: `SPC-012`
+- Approved contract: <GitHub permalink to the approval commit>
+- Current execution: `requests/example/` <!-- only when one exists -->
+```
+
+Use an approval-commit permalink rather than only a default-branch file path:
+implemented SPCs eventually archive, while the permalink remains a stable
+review record.
+
+The accepted SPC-origin schema is deliberately distinct from request source
+provenance:
+
+```yaml
+# .spectacular/specs/SPC-012-example.md
+origin_type: issue       # issue | discussion | direct
+origin_ref: owner/repo#123
+```
+
+`origin_*` records where the agreement came from; it must not use
+`source_type`/`source_ref`, which belong to a request's execution source. This
+schema is a documented contract extension pending CLI scaffolding and doctor
+validation. Until those exist, record the same canonical Issue reference in
+the SPC's `related:` field/body without manufacturing a duplicate Issue copy.
+
+```text
+Issue #123 --originates--> SPC-012 --sources--> request(s) --hands off--> PR
+     ^                                                                  |
+     +----------------------------- Refs / Fixes -----------------------+
+```
+
 ## Triage route
 
 For `spectacular github triage <issue>`, read the current Issue and repository conventions on demand, then return one short card:
@@ -30,6 +108,42 @@ Assess expected outcome, acceptance check, relevant boundary, dependencies, prod
 | `spec-first` | Consequential behavior, contract, architecture, schema, or security posture is unsettled | Draft/approved SPC, then request(s) |
 
 If evidence is incomplete, do not guess `direct`. Ask the exact missing question or route to discovery. Suspected protected security content stops normal publication and returns only a redacted blocker.
+
+## Spectacular repository label profile
+
+Labels are concise queue signals for humans and agents. They are repository
+metadata, not a mirrored lifecycle or authorization system: an agent still
+performs readiness, authority, scope, and sensitivity checks before mutation.
+This profile is project-specific; other repositories keep their own semantic
+mappings and Spectacular neither installs nor synchronizes labels.
+
+| Family | Labels | Use |
+|---|---|---|
+| Kind | `bug`, `enhancement`, `documentation` | Classify the report or proposal. `enhancement` is this repository's feature label. |
+| Bridge | `spec-linked` | An SPC or request is linked in the Issue coordination block. |
+| Maintainer queue | `needs-decision`, `needs-repro`, `needs-review`, `auto-fix` | Choose at most one; see rules below. |
+| Risk / impact | `risk:high`, `impact:security`, `impact:ux-friction`, `impact:data-loss` | Add zero or more material risk signals. |
+
+Queue-label rules:
+
+- `needs-decision` means a maintainer must settle a design or architecture
+  choice. It is not a generic request for an agent to ask permission.
+- `needs-repro` means the report is plausible but unconfirmed; a bounded
+  reproduction attempt is the next action.
+- `needs-review` means the Issue needs maintainer assessment, not that a
+  specification is implementation-approved.
+- `auto-fix` means the problem is confirmed, mechanically bounded, and has no
+  unresolved design decision. It queues an automated attempt; it never grants
+  authority by itself.
+- `auto-fix` must not coexist with `needs-decision`, `risk:high`,
+  `impact:security`, or `impact:data-loss` unless a human explicitly narrows
+  the safe action first.
+- Do not add `flow:*`, `accepted`, `agreed`, `stuck`, or `agent-ready` labels.
+  Issue discussion and the linked SPC/request carry those richer facts; a
+  request's current blockage or staleness is derived locally rather than
+  manually synchronized to GitHub.
+- Do not add a generic `task` label. An Issue is already a collaborative work
+  card; durable implementation tasks belong in a linked request's `TASKS.md`.
 
 ## Request provenance
 

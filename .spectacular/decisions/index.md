@@ -3,7 +3,7 @@ type: decisions
 doc: decisions
 mode: index
 version: 1.0
-updated: 2026-08-02
+updated: 2026-08-03
 summary: "Architectural and product decisions log"
 ---
 
@@ -29,3 +29,4 @@ summary: "Architectural and product decisions log"
 - **DEC-018** — Keep Spectacular as the primary lifecycle authority while GitHub provides collaborative surfaces — Spectacular owns intent, dependencies, scope, decisions, and verification interpretation; GitHub collaboration events are queried or linked rather than copied as a second authority. Exact projections remain deferred to SPC-003. #github #collaboration #lifecycle #authority
 - **DEC-019** — Every executed Spectacular request ends through a pull request before integration — Request execution must produce or link a PR; merge remains human-gated; draft-versus-ready timing and exceptions are deferred to SPC-003 grilling. #github #pr #request #lifecycle
 - **DEC-020** — Keep Spectacular questions as local blockers by default — QUE records remain local committed workspace artifacts unless a future explicit sharing workflow is chosen; GitHub comments may inform but cannot directly resolve them. #github #questions #fog #privacy
+- **DEC-021** — Gate parallel request execution with a traffic preflight — Requests permanently retain blocked-by, blocks, and conflicts-with relationships. Spectacular recalculates traffic state at scaffold and activation against current requests, branches, and pull requests; unknown or changed conditions return to the orchestrator or user. Approved run scope avoids repeated confirmations for ordinary in-scope steps but never bypasses declared HITL gates. #github #git #branches #request #lifecycle #agents #traffic

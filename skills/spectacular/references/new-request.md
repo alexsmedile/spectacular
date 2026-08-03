@@ -15,7 +15,8 @@ Canonical spec-driven creation is `spectacular request new [<slug>] --from SPC-N
 
 | Context | Behavior |
 |---|---|
-| Clear description in conversation | Derive slug, draft PLAN.md, show user, confirm, write |
+| Explicit `spectacular new` / `request new` request | Derive slug, draft PLAN.md, show user, confirm, write |
+| Ordinary change request in conversation | First run [[intent-routing]]. A direct PR-shaped change does not need a request; an existing request keeps ownership; only a confirmed durable-work route may scaffold a new request. |
 | Thin context | Ask targeted questions (goal? scope? why now?), then scaffold |
 
 Always show the derived slug before writing. User can override before confirmation.

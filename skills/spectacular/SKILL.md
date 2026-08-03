@@ -1,20 +1,22 @@
 ---
 name: spectacular
 description: |
-  AI-native operational workspace for software projects. Stop losing context. Start shipping.
-  Manages the full lifecycle of a .spectacular/ workspace: reads project state, scaffolds
-  requests, manages lifecycle transitions, writes memory, archives completed work, and
-  grills/refines/reviews any structured doc (PRD, PLAN, TASKS, PRINCIPLES, POLICY, ARCHITECTURE,
-  ROADMAP, STACK, AGENTS, DECISIONS, PERSONAS) plus soft-DB collections (memory, decisions,
-  sessions, ideas, feedback, audit, fixes). Enforces a practice layer (POLICY.md): work-phase hooks gate transitions.
-  Use when: opening /spectacular, scaffolding a request, archiving work, capturing a memory,
-  snapshotting a doc, onboarding to a workspace, or building any canonical doc from scratch.
-  Triggers: /spectacular, spectacular status|new|archive|advance|next|init|snapshot|remember|decide|policy,
-  spectacular <doc> [grill|refine|review], spectacular pack [new|grill|refine|review].
+  AI-native operational workspace for software projects. Operates a .spectacular/ workspace:
+  retrieves state, scaffolds and advances requests, runs lifecycle gates, captures durable records,
+  and grills/refines/reviews canonical documents. Use only for durable workspace work—requests,
+  specs, decisions, ideas, lifecycle, or canonical docs—not merely because a repo has
+  .spectacular/. A bounded code/docs/configuration change that can ship as one PR without durable
+  planning is a direct change. For natural-language work requests, route intent before drafting an
+  SPC or request. Triggers: /spectacular; spectacular status|new|archive|advance|next|init|snapshot|
+  remember|decide|policy; spectacular <doc> [grill|refine|review]; spectacular pack [new|grill|
+  refine|review].
 when_to_use: |
-  Invoke on any project that has a .spectacular/ directory. Routes to reference docs based on
-  the command — never loads full context, always loads minimally and progressively. The
-  generalized doc verbs (grill/refine/review) apply to any doc type listed in doc-index.md.
+  Invoke when the user explicitly requests a Spectacular operation, or when the task needs durable
+  workspace context, planning, lifecycle, or canonical documentation. First distinguish a direct
+  PR-shaped change from workspace work; then determine whether the workspace work needs a new SPC.
+  Routes to reference docs based on the command — never loads full context, always loads minimally
+  and progressively. The generalized doc verbs (grill/refine/review) apply to any doc type listed
+  in doc-index.md.
 version: 1.36.0
 category: devtools
 status: published
@@ -27,6 +29,34 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 
 ---
 
+## First decision — does this need Spectacular?
+
+Before interpreting an ordinary user request as workspace work, run the short
+route in [[intent-routing]]. **A `.spectacular/` directory is context, not an
+automatic trigger.** Choose the smallest fitting route:
+
+| User need | Smallest owner / artifact | Does it create durable workspace state? |
+|---|---|---|
+| Read the codebase or inspect current workspace status | Read code directly; use `spectacular summary`, `status`, or `request <slug>` only when the user asks for workspace state | No |
+| Bounded code, docs, or configuration change with clear outcome, likely files, and check | Direct PR-shaped change plus an in-chat Codex plan if it has several steps | No |
+| Work already owned by a live request | Resume that request; its PLAN/TASKS remain authoritative | No new record |
+| New behavior, contract, product/architecture decision, or multi-session/dependent implementation boundary | New SPC candidate, then a request only after SPC approval | Yes, after explicit confirmation |
+| Missing fact, feasibility result, business choice, or future commitment | `RES`, `SPK`, `QUE`, or `IDEA` | Yes, only when that open loop needs to survive the chat |
+
+`PLAN.md` and `TASKS.md` are durable request artifacts: PLAN owns cross-session
+scope; TASKS owns milestone progress. A Codex/harness plan is an ephemeral
+in-chat execution checklist, and subagent briefs are narrower still. Neither
+creates nor requires a Spectacular request. “Implement this plan” means execute
+the plan already present in chat or named by the user; ask which plan only when
+its scope is unavailable or materially ambiguous.
+
+An explicit terminal `spectacular spec new <slug> --summary <text>` is a
+user-directed mechanical write; it does not infer intent. For a natural-language
+“draft a spec” request, the intent receipt is mandatory before invoking that CLI
+verb.
+
+---
+
 ## Trigger detection
 
 ### Workspace lifecycle
@@ -35,6 +65,7 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 
 | User says / context | Route to |
 |---|---|
+| An ordinary change/build/plan request that does not explicitly name a Spectacular operation | → [[intent-routing]] first: decide read-only orientation vs direct PR-shaped change vs existing request vs new SPC vs an open-loop record. |
 | `/spectacular` with no args | → `references/status.md` (empty workspace → `references/guided-first-run.md`) |
 | `spectacular status` | → `references/status.md` |
 | `spectacular request new [<slug>] --from <SPC>` | → CLI verb; approved-spec PLAN/TASKS scaffold; see [[request-workflow]] and [[new-request]] (`spectacular new` remains the free-form compatibility alias) |
@@ -53,7 +84,8 @@ AI-native operational workspace for software projects. Lean orchestrator — rea
 | `spectacular spike new\|list\|resolve` | → CLI verb; human-authorized feasibility discovery in `spikes/`; see [[spike-rules]] |
 | Choosing research vs spike vs prototype vs tracer bullet, or routing technical debt | → `references/discovery-protocol.md`; use the cheapest sufficient answer and avoid creating redundant nodes |
 | Deciding what must stay current, may remain stale, should archive, or may be deleted | → `references/artifact-retention.md`; derive live/stale-safe/temporary/throwaway from entity, status, and path |
-| `spectacular spec new\|list\|approve\|act\|implement\|deprecate\|archive` | → CLI verbs; evidence-gated specification lifecycle; `confirm` remains an alias for `approve`; see [[spec-lifecycle]], [[lifecycle-contract]], and [[canonical-ids]] |
+| “Draft/create a new spec” / `/spectacular spec draft` | → [[intent-routing]] intent receipt, then `spectacular spec new`; see [[spec-lifecycle]]. Never infer a new SPC from nearby docs impact or repository context. |
+| `spectacular spec new\|list\|approve\|act\|implement\|deprecate\|archive` | → CLI verbs; `spec new` is mechanical only and assumes the user already chose the route and confirmed the summary. Evidence-gated lifecycle follows; `confirm` remains an alias for `approve`; see [[spec-lifecycle]], [[lifecycle-contract]], and [[canonical-ids]] |
 | `spectacular wayfind status\|next\|order\|resolve\|defer\|resume\|path\|route` | → CLI verb; strict dependency-first fog/frontier sequencing and durable open-loop control; see [[wayfinding-sequencer]] |
 | “Park this idea” | → `spectacular wayfind route "park this idea" <slug>`; creates an `IDEA-NNN` record and does not alter active milestone scope |
 | “Put it on ice” / “Icebox” | → `spectacular wayfind route icebox <id> --reason <why>`; durable `status: deferred` |

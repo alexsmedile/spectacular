@@ -20,8 +20,9 @@ activated_against: 142c983bef0b170ea96104a0b42cd27419d185dc
 docs_impact_evidence: Updated README, command/workflow/integration/configuration guides, skill routing/reference contract, PRD/architecture/agent guidance, capability index, and changelog for v1.37.0
 github_pr: "https://github.com/alexsmedile/spectacular/pull/14"
 github_pr_opened_at: 2026-08-03
-github_pr_head: de5a26087e0ebd9f012307c3a2e0a8e804b54544
+github_pr_head: 823c8a6768e5402994c03c7dbd9f1cd96ebe7e84
 issue_resolution: on_merge
+github_pr_ready_at: 2026-08-03
 ---
 
 # Plan — github-work-bridge

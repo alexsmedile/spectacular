@@ -71,7 +71,7 @@ scenario_isolation_and_cleanup() {
 }
 
 scenario_pr_handoff() {
-  echo "Scenario PR: verified/approved/test gates; exact title; no merge"
+  echo "Scenario PR: verified/approved/test gates; reviewer-facing body; no merge"
   local d="/tmp/spectacular-afk-pr" bin="/tmp/spectacular-afk-bin" log="/tmp/spectacular-afk-gh.log" out code
   init_repo "$d"; rm -rf "$bin"; mkdir -p "$bin"; rm -f "$log"
   (cd "$d" && "$CLI" afk configure --enable --branch-prefix codex/ --allow-pr-create --apply --yes >/dev/null)
@@ -84,14 +84,22 @@ scenario_pr_handoff() {
 
   (cd "$d" && "$CLI" afk pr billing-work --version v1.0.0 --name Billing >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "fresh test proof required"
-  out=$(cd "$d" && "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed)
-  [[ "$out" == *"[Spectacular] Executed: v1.0.0 - Billing"* && "$out" == *"stop before merge"* ]] && pass || fail "dry-run prints exact title and merge boundary"
+  out=$(cd "$d" && "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed --summary "Add billing target validation" --summary "Document the retained target boundary" --validation "Contract fixtures pass")
+  [[ "$out" == *"[Spectacular] Executed: v1.0.0 - Billing"* && "$out" == *"## Summary"* && "$out" == *"- Add billing target validation"* && "$out" == *"- Document the retained target boundary"* && "$out" == *"- Contract fixtures pass"* && "$out" == *"stop before merge"* ]] && pass || fail "dry-run prints a reviewer-facing title, body, and merge boundary"
   (cd "$d" && "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed --breaking --apply --yes >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "breaking change requires separate approval"
 
   printf '#!/bin/sh\nprintf "%%s\\n" "$*" > "%s"\nprintf "https://example.test/pr/1\\n"\n' "$log" > "$bin/gh"; chmod +x "$bin/gh"
-  (cd "$d" && PATH="$bin:$PATH" "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed --apply --yes >/dev/null)
+  (cd "$d" && PATH="$bin:$PATH" "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed --summary "Add billing target validation" --summary "Document the retained target boundary" --validation "Contract fixtures pass" --apply --yes >/dev/null)
   assert_contains "$log" "pr create --title [Spectacular] Executed: v1.0.0 - Billing"
+  assert_contains "$log" "## Summary"
+  assert_contains "$log" "Add billing target validation"
+  assert_contains "$log" "Document the retained target boundary"
+  assert_contains "$log" "## Validation"
+  assert_contains "$log" "Contract fixtures pass"
+  assert_contains "$log" "Merge remains human-gated."
+  assert_contains "$log" "Filed with [Spectacular](https://github.com/alexsmedile/spectacular)."
+  grep -qF "Executed s1 through verified request" "$log" && fail "legacy opaque PR body removed" || pass
   [[ "$(cd "$d" && git branch --show-current)" == "codex/feat/v1.0.0-billing" ]] && pass || fail "PR handoff does not merge or switch branch"
   rm -rf "$d" "$bin"; rm -f "$log"
 }

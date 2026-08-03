@@ -5042,13 +5042,16 @@ cmd_afk_cleanup() {
 
 cmd_afk_pr() {
   local slug="${1:-}" version="" name="" base="" apply=false yes=false tests_passed=false breaking=false breaking_ok=false
-  [[ -n "$slug" ]] || die "Usage: spectacular afk pr <request> --version vX.Y.Z --name <name> [--tests-passed] [--apply --yes]"
+  local summaries="" validations="" summary validation
+  [[ -n "$slug" ]] || die "Usage: spectacular afk pr <request> --version vX.Y.Z --name <name> [--summary <change>] [--validation <result>] [--tests-passed] [--apply --yes]"
   shift || true
   while (( $# > 0 )); do
     case "$1" in
       --version) require_value "$1" "${2:-}"; version="$2"; shift 2 ;;
       --name) require_value "$1" "${2:-}"; name="$2"; shift 2 ;;
       --base) require_value "$1" "${2:-}"; base="$2"; shift 2 ;;
+      --summary) require_value "$1" "${2:-}"; summaries="$summaries${summaries:+$'\n'}$2"; shift 2 ;;
+      --validation) require_value "$1" "${2:-}"; validations="$validations${validations:+$'\n'}$2"; shift 2 ;;
       --tests-passed) tests_passed=true; shift ;;
       --breaking) breaking=true; shift ;;
       --breaking-change-approved) breaking_ok=true; shift ;;
@@ -5067,9 +5070,24 @@ cmd_afk_pr() {
   case "$(fm_get "$spec_path" status)" in approved|implemented) ;; *) die "afk pr: source spec $source is not approved" ;; esac
   $tests_passed || die "afk pr: fresh passing tests must be confirmed with --tests-passed"
   $breaking && ! $breaking_ok && die "afk pr: breaking API/schema change requires --breaking-change-approved"
-  local title="[Spectacular] Executed: $version - $name"
+  if [[ -z "$summaries" ]]; then
+    summary=$(_request_section "$plan" Goal | awk 'NF { sub(/^- /, ""); print; exit }')
+    summaries="${summary:-Implements the verified request scope.}"
+  fi
+  local title="[Spectacular] Executed: $version - $name" body
+  body="## Summary"
+  while IFS= read -r summary; do
+    [[ -n "$summary" ]] && body="$body"$'\n'"- $summary"
+  done <<< "$summaries"
+  body="$body"$'\n'"- Source specification: \`$source\` (verified request: \`$slug\`)."$'\n\n'"## Validation"$'\n'"- Request verification is recorded as passed."
+  while IFS= read -r validation; do
+    [[ -n "$validation" ]] && body="$body"$'\n'"- $validation"
+  done <<< "$validations"
+  body="$body"$'\n'"- Passing checks were confirmed at PR handoff."$'\n\n'"## Review notes"$'\n'"- Merge remains human-gated."$'\n\n---\n'"_Filed with [Spectacular](https://github.com/alexsmedile/spectacular)._"
   info "PR title: $title"
-  if ! $apply; then info "Dry-run only. The command will open a PR and stop before merge."; return 0; fi
+  info "PR body:"
+  printf '%s\n' "$body"
+  if ! $apply; then info "Dry-run only. The command will open this PR and stop before merge."; return 0; fi
   _afk_enabled || die "afk pr: AFK Git policy is not enabled"
   _afk_allow_pr || die "afk pr: allow_pr_create is false"
   $yes || die "afk pr: --apply requires --yes"
@@ -5077,7 +5095,7 @@ cmd_afk_pr() {
   local current_branch; current_branch=$(git branch --show-current)
   _afk_is_primary "$current_branch" && die "afk pr: refusing PR handoff from primary branch '$current_branch'"
   command -v gh >/dev/null 2>&1 || die "afk pr: gh CLI not found"
-  local args=(pr create --title "$title" --body "Executed $source through verified request $slug. Merge remains human-gated.")
+  local args=(pr create --title "$title" --body "$body")
   [[ -n "$base" ]] && args+=(--base "$base")
   gh "${args[@]}"
   info "  ✓ pull request opened; merge was not attempted"

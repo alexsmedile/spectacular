@@ -7,6 +7,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.37.0] — 2026-08-03
+
+### GitHub work bridge (SPC-003, b40)
+
+- Added the lean `direct | request | spec-first` routing contract so a short, settled Issue can
+  remain Issue→agent→PR while coordinated or consequential work earns durable Spectacular state.
+- Added Issue- and goal-derived request creation with canonical source provenance, explicit
+  sensitivity classification, compact PLAN/TASKS output, and unchanged approved-spec compatibility.
+- Added dry-run-first draft PR integration manifests, correct `Fixes`/`Refs` relationships,
+  current-head/check/confirmation readiness gates, and permanent human merge ownership.
+- Added read-only GitHub reconciliation for unavailable remote evidence, stale verification heads,
+  merged PRs with live requests, and inconsistent Issue/request resolution state.
+- Unified AFK PR output with the shared draft manifest while preserving its stricter authorization,
+  verification, and breaking-change gates. Added focused fixtures plus user/skill documentation.
+
 ## [1.36.0] — 2026-08-02
 
 ### Wayfinding, evidence, and lifecycle foundation (b32–b38)

@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-blueviolet)
 ![Platform](https://img.shields.io/badge/platform-Claude%20%7C%20Codex%20%7C%20Cursor-lightgrey)
-![Version](https://img.shields.io/badge/version-1.36.0-green)
+![Version](https://img.shields.io/badge/version-1.37.0-green)
 
 </div>
 
@@ -203,6 +203,9 @@ Agent definitions live in `agents/` at the repo root (the source of truth); the 
 |---|---|
 | `/spectacular` | Brief the project and surface blockers |
 | `spectacular request new --from SPC-001` | Create implementation work from an approved spec |
+| `spectacular github triage owner/repo#123` | Decide whether an Issue is direct, request, or spec-first work |
+| `spectacular request new cache-fix --from-issue owner/repo#123 --summary "Prevent stale reads" --sensitivity normal` | Add durable coordination without inventing a spec |
+| `spectacular github pr open <request>` | Preview or open the request's draft integration PR |
 | `/spectacular act SPC-001` | Start gated implementation |
 | `spectacular request <slug> --brief -m2` | Retrieve the smallest useful implementation prompt |
 | `spectacular wayfind next` | Select the dependency-ready next step |

@@ -53,7 +53,7 @@ unconfirmed ───┘                      │
 
 Minor wording, formatting, typo, or evidence-link corrections do not create a revision. A behavior-changing revision creates a new draft/unconfirmed SPC. The old SPC remains implemented until the replacement becomes implemented; that transition atomically marks the old record superseded.
 
-Requests own `source_spec`. Spec-to-request backlinks are derived so one SPC can safely produce several requests. Replacement specs own `supersedes`; `superseded_by` is derived. An archived implemented predecessor remains immutable; the replacement's `supersedes` link is sufficient.
+Requests own general `source_type`/`source_ref` provenance. Spec-derived requests also own `source_spec`; spec-to-request backlinks are derived so one SPC can safely produce several requests. Issue/goal-derived requests are allowed only for already-defined destinations and link rather than copy their source. Replacement specs own `supersedes`; `superseded_by` is derived. An archived implemented predecessor remains immutable; the replacement's `supersedes` link is sufficient.
 
 ## Decision authority
 

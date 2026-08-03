@@ -1,6 +1,6 @@
 ---
-version: 2.1
-updated: 2026-08-02
+version: 2.2
+updated: 2026-08-03
 summary: "AI-native operational workspace for software projects — convention, skill, and CLI"
 related:
   - PRINCIPLES.md
@@ -52,7 +52,7 @@ Spectacular ships as three complementary layers:
 
 PRD vs PLAN clarifier: `.spectacular/PRD.md` is project-wide (this file). Per-request work lives in `requests/<slug>/PLAN.md` + `TASKS.md` — requests never carry their own PRD. Full distinction in [ARCHITECTURE.md § Request files](ARCHITECTURE.md).
 
-Request interface: mechanical entity operations are noun-first (`request new|list|advance|archive`); agentic document work is verb-first (`/spectacular grill|refine|review <doc>`). An approved SPC becomes planned work through `request new --from`; `/spectacular act SPC-NNN` runs gates, records the exact spec/Git activation baseline, compiles an active-only implementation brief, initializes the coding agent's finer session plan, and begins production work. The durable TASKS milestone, native session plan, and narrower subagent brief are complementary layers, never duplicates.
+Request interface: mechanical entity operations are noun-first (`request new|list|advance|archive`); agentic document work is verb-first (`/spectacular grill|refine|review <doc>`). An approved SPC becomes planned work through `request new --from`; an already-defined Issue or goal may create a lean coordinated request through `--from-issue` or `--from-goal`; a bounded one-session/one-PR change stays direct. Activation records the exact source/Git baseline, compiles an active-only implementation brief, initializes the coding agent's finer session plan, and begins production work. The durable TASKS milestone, native session plan, and narrower subagent brief are complementary layers, never duplicates.
 
 ## Goals & success criteria
 

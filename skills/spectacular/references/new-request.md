@@ -1,11 +1,11 @@
 ---
 description: Scaffold a free-form or approved-spec-derived request without authorizing implementation.
-when_to_use: spectacular request new --from SPC-NNN, spectacular new <description>, or spectacular idea promote.
+when_to_use: spectacular request new from SPC/Issue/goal, spectacular new <description>, or spectacular idea promote.
 ---
 
 # New Request — Scaffolding
 
-Canonical spec-driven creation is `spectacular request new [<slug>] --from SPC-NNN`. `spectacular new <description>` remains the compatibility path for free-form work that does not yet have an approved SPC.
+Canonical spec-driven creation is `spectacular request new [<slug>] --from SPC-NNN`. Already-defined work that needs durable coordination may use `--from-issue` or `--from-goal`; see [[github-work-bridge]]. `spectacular new <description>` remains the compatibility path for free-form work that has not yet been routed.
 
 > **@Planning policy gate.** First, run `spectacular policy @Planning` and follow every active policy returned. A `block` policy must be satisfied or you stop; a `warn` policy you surface and continue. See [policy-injection.md](policy-injection.md).
 

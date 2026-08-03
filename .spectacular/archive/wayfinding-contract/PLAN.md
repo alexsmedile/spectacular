@@ -5,6 +5,8 @@ owner: alex
 updated: 2026-08-02
 build: b32
 source_spec: SPC-001
+docs_impact: required
+docs_impact_evidence: "Canonical ID/entity contract documentation and the system spec were delivered and verified in commit bf0756f"
 summary: "Add canonical IDs, decisions/questions/ideas databases, research and spike node contracts, and confirmed/unconfirmed specification state"
 related:
   - PRD.md

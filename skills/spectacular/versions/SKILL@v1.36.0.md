@@ -17,7 +17,7 @@ when_to_use: |
   Routes to reference docs based on the command — never loads full context, always loads minimally
   and progressively. The generalized doc verbs (grill/refine/review) apply to any doc type listed
   in doc-index.md.
-version: 1.37.0
+version: 1.36.0
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
@@ -69,7 +69,6 @@ verb.
 | `/spectacular` with no args | → `references/status.md` (empty workspace → `references/guided-first-run.md`) |
 | `spectacular status` | → `references/status.md` |
 | `spectacular request new [<slug>] --from <SPC>` | → CLI verb; approved-spec PLAN/TASKS scaffold; see [[request-workflow]] and [[new-request]] (`spectacular new` remains the free-form compatibility alias) |
-| `spectacular request new <slug> --from-issue <ref> --summary <outcome> --sensitivity <class>` / `--from-goal <ref>` | → CLI verb; lean durable coordination for an already-defined destination, without manufacturing an SPC; see [[github-work-bridge]] and [[request-workflow]] |
 | `/spectacular act <SPC>` / `/spectacular <SPC>` / compatibility `/spectacular spec act <SPC>` | → [[request-workflow]] approved-spec handoff: resolve one request, run gates, activate with provenance, compile `--brief`, initialize native planning, implement |
 | `spectacular archive <slug>` | → CLI verb; see [[archive]] (its spec-sync step may dispatch `spec-reviewer` — [[spec-sync]]) |
 | `spectacular remember this` | → `references/memory.md` (legacy free-text capture) |
@@ -93,8 +92,6 @@ verb.
 | “Find your way to <destination>” | → `spectacular wayfind path <id>` first; then resolve its dependency-ready discovery path without bypassing gates |
 | “Act on goal <target>” | → resolve the approved SPC, then run `/spectacular act <SPC>` per [[request-workflow]] |
 | `spectacular afk run\|status\|configure\|propose\|preflight\|start\|cleanup\|pr` | → CLI verbs; durable goal authorization plus opt-in, dry-run-first Git isolation and verified PR handoff; see [[afk-git-hygiene]] and [[lifecycle-contract]] |
-| `spectacular github triage <issue>` | → [[github-work-bridge]] agentic readiness card and `direct | request | spec-first` route; assignment/labels are evidence, not authorization |
-| `spectacular github pr open\|ready` / `github reconcile` | → CLI verbs; draft PR integration manifest, current-head ready gate, and read-only discrepancy report; see [[github-work-bridge]] |
 | User authorizes AFK work | → inspect `spectacular afk status`; branch mutation still requires enabled project config plus explicit apply; merge/remote deletion remain HITL |
 | A built-in `/goal` begins in a Spectacular workspace | → create/resume a durable goal-scoped AFK run for that goal; keep it active until completion/cancellation or a declared/unexpected HITL gate |
 | A user refers to `D1`, `Q1`, `R1`, `SPK1`, `S1`, or another entity alias | → normalize via `spectacular id resolve`; persist the canonical ID; see [[canonical-ids]] |
@@ -246,7 +243,6 @@ Never read `archive/` during normal operation.
 - **Memory** (`spectacular remember this`) writes to `.spectacular/memories/` — git-committed, team-visible. Never to `.claude/` memory.
 - Be proactive: surface stale state, propose lifecycle transitions, flag blocked requests.
 - **Execution boundary:** when implementation reveals an unexpected requirement, tangent, or optimization, park it as an idea (or future target) instead of adding it to the active request's PLAN/TASKS. See [[wayfinding-sequencer]].
-- **GitHub work route:** an Issue is a collaborative job card, not automatically a spec or request. Use the smallest sufficient `direct | request | spec-first` path; GitHub owns remote records while Spectacular stores accepted meaning and stable links. See [[github-work-bridge]].
 - **Know when to write to a collection, not just how** — the "When to act" trigger table in [[soft-db-index]]. Cheap/reversible writes on their natural trigger; permanent/team-visible writes (memory, decisions, archive) are proposed → human confirms → written, never autonomous.
 
 ### Task tracking — two layers

@@ -1,6 +1,6 @@
 ---
-version: 1.11
-updated: 2026-08-02
+version: 1.12
+updated: 2026-08-03
 summary: "The .spectacular/ directory — layers, file roles, frontmatter conventions, lifecycle, versioning"
 related:
   - PRD.md
@@ -200,7 +200,7 @@ blocks:
 - `PLAN.md` frontmatter is the **single source of lifecycle state** for a request
 - Capability specs at `specs/<capability>.md` track their own state independently
 
-**Approved-spec activation provenance:** a spec-derived request stores flat fields on PLAN: `source_spec`, `source_spec_version`, `source_spec_digest`, `activated_at`, `activated_by`, and `activated_against`. The digest identifies the exact approved Markdown baseline; `activated_against` is the Git commit (or `uncommitted`). Do not copy the SPC body into the request. `spectacular request new --from SPC-NNN` creates both PLAN and TASKS but leaves them planned; `/spectacular act SPC-NNN` owns the gated transition into production work.
+**Request source and activation provenance:** every newly sourced request stores `source_type: issue | spec | goal` and `source_ref`. Issue/goal sources also record explicit `sensitivity: normal | protected`; protected work cannot use the ordinary PR path. Spec-derived work additionally stores `source_spec`, `source_spec_version`, and `source_spec_digest`; the digest identifies the exact approved Markdown baseline. Activation adds `activated_at`, `activated_by`, and `activated_against` (Git commit or `uncommitted`). Do not copy an SPC, Issue body, or comments into the request. `request new --from SPC-NNN`, `--from-issue`, and `--from-goal` create PLAN/TASKS but leave them planned; the gated activation owns production authorization.
 
 **`hold:` — orthogonal hold (b21-adjacent, 2026-07-10).** The lifecycle is a
 **pure five-state chain** (`planned → active → review → verified → archived`). A

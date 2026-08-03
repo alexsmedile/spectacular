@@ -4,7 +4,7 @@ description: CLI subcommands and agent skill triggers, including the boundary be
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-08-01
+updated: 2026-08-03
 ---
 
 # Commands
@@ -367,6 +367,25 @@ spectacular spec implement s1 --verified-against "commit abc123"
 
 Collaborative specs start `draft`; pass `--afk` for `unconfirmed`. `spec approve` snapshots and authorizes implementation (`confirm` remains an alias). `request new --from` mechanically creates both PLAN and TASKS but leaves them planned. `/spectacular act SPC-001` (or `/spectacular SPC-001`) is the agentic authorization/implementation flow. Terminal `spec act` redirects rather than partially performing it. `implemented` is a historical evidence point, not a freshness promise; code remains authoritative. `spec archive` is dry-run first and accepts implemented specs after verification as well as rejected/abandoned draft, unconfirmed, or approved specs; it records `archived_from`, reason, and dates before moving detail to `archive/specs/`.
 
+### GitHub work bridge *(v1.37.0+)*
+
+An Issue is a collaborative job card, not automatically a spec or request. Triage chooses the smallest sufficient path: direct work, a lean durable request, or spec-first discovery.
+
+```bash
+spectacular github triage owner/repo#123
+spectacular request new cache-fix --from-issue owner/repo#123 --summary "Prevent stale cache reads" --sensitivity normal
+spectacular request new release-check --from-goal release-readiness --summary "Prove release readiness" --sensitivity normal
+
+spectacular github pr open cache-fix --summary "Prevent stale reads" --validation "Regression test passes"
+spectacular github pr open cache-fix --apply --yes       # opens a draft; branch must already be pushed
+spectacular github pr ready cache-fix --apply --yes      # verified current head + acceptable checks
+spectacular github reconcile [cache-fix] [--json]        # read-only discrepancy report
+```
+
+`--from-issue` requires canonical `owner/repo#N` or a GitHub Issue URL plus an explicit accepted-outcome summary. `--from-goal` is for an already-defined destination. Both require the readiness assessment to record `--sensitivity normal|protected`, add `source_type`/`source_ref`, and preserve the normal planned→active→review→verified lifecycle without manufacturing an SPC. Protected work cannot use the ordinary PR path. Existing `--from SPC-NNN` behavior remains compatible and adds the same general provenance alongside its stronger spec digest/version fields.
+
+The PR manifest carries purpose, Issue/SPC/request references, validation, documentation impact, and the merge boundary. Complete `on_merge` work uses `Fixes`; partial or `on_release` work uses `Refs`. Opening is dry-run-first and draft-only. Ready-for-review requires the same local/remote PR head, current required checks (or local verification covering that head when no checks exist), and explicit apply. Request-ledger-only metadata descendants preserve coverage; implementation/doc/config changes invalidate it. Neither command merges. Reconciliation reads remote state on demand and never mutates either system. Use raw `gh` for GitHub-only browsing and administration.
+
 ### Wayfinding fog and frontier *(v1.36.0+)*
 
 Fog is unresolved work. The frontier is the subset whose `blocked_by` dependencies are satisfied and can be addressed now.
@@ -417,7 +436,7 @@ spectacular afk pr billing-work --version v1.2.0 --name "Team Billing" --tests-p
 spectacular afk pr billing-work --version v1.2.0 --name "Team Billing" --tests-passed --apply --yes
 ```
 
-Branch classes are `spec/draft-*`, `spike/prototype-*`, `fork/idea-*`, and `feat/v*-*`. `start` records provenance in `.spectacular/afk/branches.md`. Cleanup writes outcome/evidence under `.spectacular/archive/afk-branches/` before confirmed local deletion and refuses `--remote`. PR apply requires a verified request, a passing `VERIFY-LOG`, a current `source_spec`, fresh `--tests-passed`, policy permission, and a non-primary clean branch. `--breaking` additionally requires `--breaking-change-approved`. The command opens the PR with `[Spectacular] Executed: <version> - <name>` and never merges.
+Branch classes are `spec/draft-*`, `spike/prototype-*`, `fork/idea-*`, and `feat/v*-*`. `start` records provenance in `.spectacular/afk/branches.md`. Cleanup writes outcome/evidence under `.spectacular/archive/afk-branches/` before confirmed local deletion and refuses `--remote`. PR apply requires a verified request, a passing `VERIFY-LOG`, a current `source_spec`, fresh `--tests-passed`, policy permission, and a non-primary clean branch. `--breaking` additionally requires `--breaking-change-approved`. The compatibility command uses the shared integration manifest, opens a draft `[Spectacular] Executed: <version> - <name>` PR, and never merges; `github pr ready` owns readiness.
 
 ### `spectacular policy [@hook | <id> | --principle N | --json | --full]` *(v1.12.0+)*
 

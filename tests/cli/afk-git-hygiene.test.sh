@@ -92,6 +92,7 @@ scenario_pr_handoff() {
   printf '#!/bin/sh\nprintf "%%s\\n" "$*" > "%s"\nprintf "https://example.test/pr/1\\n"\n' "$log" > "$bin/gh"; chmod +x "$bin/gh"
   (cd "$d" && PATH="$bin:$PATH" "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed --summary "Add billing target validation" --summary "Document the retained target boundary" --validation "Contract fixtures pass" --apply --yes >/dev/null)
   assert_contains "$log" "pr create --title [Spectacular] Executed: v1.0.0 - Billing"
+  assert_contains "$log" "--draft"
   assert_contains "$log" "## Summary"
   assert_contains "$log" "Add billing target validation"
   assert_contains "$log" "Document the retained target boundary"

@@ -19,6 +19,8 @@ Mechanical entity operations are noun-first:
 
 ```text
 spectacular request new [<slug>] --from SPC-001
+spectacular request new <slug> --from-issue owner/repo#123 --summary "Accepted outcome" --sensitivity normal
+spectacular request new <slug> --from-goal <goal-ref> [--summary "Accepted outcome"] --sensitivity normal
 spectacular request list
 spectacular request <slug>
 spectacular request <slug> --brief [-m2]
@@ -39,9 +41,13 @@ Agentic document operations are verb-first: `/spectacular grill <doc> [target]`,
 - `--full` emits request-owned Markdown in stable order: PLAN, TASKS, SESSION, UNDERSTANDING, RISKS, VERIFY, VERIFY-LOG, SPEC-DELTA, then remaining Markdown. Linked external records are listed or referenced, never expanded into the bundle.
 - `--json` wraps the chosen view in `schema: spectacular.request.v1`. Arbitrary `--artifact` and `--section` selectors are deferred; read a named file directly when necessary.
 
-## Approved-spec handoff
+## Source and activation handoff
+
+Every new request has one source. `source_type: issue | spec | goal` and `source_ref` are the general provenance fields. Spec-derived requests additionally retain the stronger approved-spec version/digest fields below. Issue/goal sources are valid only when the destination is already established and durable coordination is useful; they never manufacture an SPC. See [[github-work-bridge]].
 
 `spectacular request new [slug] --from SPC-001` is mechanical. It requires an approved SPC, refuses a second live request for the same source, derives both PLAN and TASKS in approved requirement order, records the source version/digest/scaffold Git baseline, and leaves the request `planned`.
+
+`request new <slug> --from-issue <owner/repo#N|URL> --summary <outcome> --sensitivity normal|protected` creates a lean planned request and canonicalizes the Issue identity without copying its body/comments. `--from-goal <ref>` does the same for an already-defined goal. Both require explicit sensitivity classification; protected work cannot use the ordinary PR path. Review the closed outcome and boundaries before advancing either request.
 
 `/spectacular act SPC-001` is agentic. `/spectacular SPC-001` is the unambiguous short form; `/spectacular spec act SPC-001` remains a compatibility form. The terminal only redirects to the skill—it never pretends to authorize or begin work.
 
@@ -51,7 +57,7 @@ The act flow:
 2. Find zero or one live request with `source_spec: SPC-NNN`; refuse ambiguity. If none exists, run `spectacular request new --from SPC-NNN`.
 3. Review PLAN/TASKS against the approved spec. Refuse incomplete structure, a held request, unresolved required-user questions, declared HITL gates, or silent scope additions/removals/reordering.
 4. Run the `@Implementation` policy gate and satisfy understand-before-change.
-5. Transition to active and record flat provenance: `source_spec_version`, `source_spec_digest`, `activated_at`, `activated_by`, and `activated_against` (Git commit or `uncommitted`). Never copy the spec body.
+5. Transition to active and record `activated_at`, `activated_by`, and `activated_against` (Git commit or `uncommitted`). Spec-derived work also refreshes `source_spec_version` and `source_spec_digest`. Never copy a spec or remote body.
 6. Retrieve `spectacular request <slug> --brief`, inspect the named code and tests, create the native session plan at finer granularity, and begin production work.
 
 ## Phase ownership

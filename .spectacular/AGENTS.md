@@ -1,6 +1,6 @@
 ---
-version: 2.0
-updated: 2026-05-21
+version: 2.1
+updated: 2026-08-03
 summary: "Onboarding doc for any agent or human landing inside .spectacular/ — how to operate, what to load, what not to touch"
 related:
   - PRD.md
@@ -67,7 +67,7 @@ When a new skill is added, update this list manually. The skill will warn if it 
 
 ## Creating requests
 
-For approved work, use `spectacular request new [slug] --from SPC-NNN`, then `/spectacular act SPC-NNN`. The first command mechanically creates a planned PLAN/TASKS bundle; the agentic act flow reviews gates, records activation provenance, compiles `request --brief`, creates the finer native session plan, and begins implementation. `spectacular new <description>` remains the free-form compatibility path.
+For consequential unsettled work, use `spectacular request new [slug] --from SPC-NNN`, then `/spectacular act SPC-NNN`. Already-defined Issue or goal work that earns durable coordination may use `request new <slug> --from-issue <owner/repo#N> --summary <outcome> --sensitivity normal|protected` or `--from-goal <ref>` without manufacturing an SPC. All paths create planned PLAN/TASKS; activation reviews gates, records provenance, compiles `request --brief`, creates the finer native session plan, and begins implementation. Protected work never enters the ordinary PR path. A bounded one-session/one-PR change stays direct and creates no request. `spectacular new <description>` remains the free-form compatibility path.
 
 Per-request folders contain `PLAN.md` + `TASKS.md` + (on demand) `SESSION.md`, `RISKS.md`, `VERIFY.md`, `specs/`, `artifacts/`. They **never** contain a `PRD.md` — product intent is project-wide and lives at the root.
 

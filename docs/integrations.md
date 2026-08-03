@@ -4,7 +4,7 @@ description: How Spectacular composes with agent runtimes, Git, and public-docum
 section: guides
 type: explanation
 status: stable
-updated: 2026-08-02
+updated: 2026-08-03
 ---
 
 # Integrations
@@ -26,6 +26,20 @@ The contract is tool-agnostic:
 Commit `.spectacular/` so decisions, requests, verification evidence, and archived work travel with the code. Keep `.spectacular.local/` ignored for personal or machine-local state.
 
 AFK branch isolation, archive-first cleanup, and PR handoff are documented in the [command reference](commands.md) and the internal [AFK Git hygiene contract](../skills/spectacular/references/afk-git-hygiene.md).
+
+## GitHub
+
+GitHub Issues are collaborative job cards; Spectacular is used only when destination design or durable coordination adds value. `spectacular github triage <issue>` routes work to:
+
+- `direct` — Issue → bounded agent session → draft/ready PR, with no Spectacular artifact;
+- `request` — an already-defined destination receives lean PLAN/TASKS through `--from-issue` or `--from-goal`;
+- `spec-first` — consequential or unsettled behavior receives an approved SPC before execution.
+
+GitHub remains authoritative for Issue/Discussion content, labels, comments, assignees, branches, PRs, checks, permissions, and merge state. Spectacular stores canonical references and the accepted interpretation, never copied remote bodies or a second triage inbox.
+
+The bridge opens draft PRs with a reviewer-facing integration manifest, gates ready-for-review on exact-head verification and checks, and performs read-only reconciliation. It never merges. Use raw `gh` for GitHub-only work; use the Spectacular wrapper when local lifecycle interpretation, provenance, safety gates, or reconciliation are required.
+
+Committed `.spectacular/` is shared project knowledge. Keep incomplete ideas, machine/account preferences, and undeclared sensitive material in gitignored `.spectacular.local/`; authentication remains owned by `gh`. Protected vulnerability material never enters ordinary Issues, PR metadata, logs, or committed Spectacular files.
 
 ## Public documentation
 

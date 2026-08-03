@@ -1,6 +1,6 @@
 ---
-version: 3.22
-updated: 2026-08-02
+version: 3.23
+updated: 2026-08-03
 summary: "Per-version scope, phase, and exit criteria. v1.36.0 ships b24 and the b32–b39 Wayfinding, lifecycle, retention, and request-interface foundation; remaining unslotted work stays tbd."
 related:
   - ../PRD.md
@@ -60,7 +60,7 @@ The single source of truth for `build → version` mapping. Every planned reques
 | b37 | discovery-evidence-protocol | Progressive routing for research, spikes, prototypes, tracer bullets, artifacts, and technical debt | themed | v1.36.0 | shipped |
 | b38 | artifact-retention-contract | Live, stale-safe, temporary, and throwaway artifact retention | themed | v1.36.0 | shipped |
 | b39 | request-workflow-interface | Approved-spec request handoff, compiled implementation context, command grammar, and verification evidence gate | full | v1.36.0 | shipped |
-| b40 | github-native-lifecycle | GitHub-friendly collaboration projections and PR-centered request completion | full | tbd | candidate |
+| b40 | github-work-bridge | Issue readiness, direct/request/spec-first routing, and PR-centered request completion | full | v1.37.0 | active |
 
 > **Schema:** `build` = monotonic id (immutable); `slug` = human identity; `tier` = `full` · `themed` · `vision`; `target-version` = mutable when work is slotted; `status` = release-level `candidate · planned · active · shipped · cancelled` (distinct from request lifecycle). `candidate` means likely upcoming but not yet scoped or committed. See [ARCHITECTURE.md — Roadmap ledger](ARCHITECTURE.md).
 

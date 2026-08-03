@@ -4,7 +4,7 @@ description: config.yaml, agent files, tool overrides, request naming, and .spec
 section: ""
 status: stable
 since: 0.1.0
-updated: 2026-08-01
+updated: 2026-08-03
 ---
 
 # Configuration
@@ -142,6 +142,12 @@ required_files:
 `PLAN.md` owns request intent and lifecycle state. `TASKS.md` owns the executable checklist.
 
 Avoid adding many required files. Use optional files such as `SESSION.md`, `RISKS.md`, and `VERIFY.md` only when the request needs them.
+
+## GitHub bridge state
+
+The v1.37 core bridge requires no committed GitHub configuration block. It observes repository conventions on demand through `gh`, maps Issue types and labels by meaning, and stores only request provenance such as `source_type`, `source_ref`, explicit Issue/goal `sensitivity`, `github_pr`, and the PR head used at handoff.
+
+Credentials are never stored by Spectacular. `gh` owns authentication. Machine/account and fork preferences belong in gitignored `.spectacular.local/` if continuity requires them; managed forms, label installation, Actions, CODEOWNERS, and ruleset configuration remain deferred rather than hidden configuration.
 
 ---
 

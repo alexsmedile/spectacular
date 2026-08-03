@@ -1,5 +1,5 @@
 ---
-status: active
+status: review
 updated: 2026-08-03
 related:
   - PLAN.md

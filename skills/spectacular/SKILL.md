@@ -95,6 +95,7 @@ verb.
 | `spectacular afk run\|status\|configure\|propose\|preflight\|start\|cleanup\|pr` | → CLI verbs; durable goal authorization plus opt-in, dry-run-first Git isolation and verified PR handoff; see [[afk-git-hygiene]] and [[lifecycle-contract]] |
 | `spectacular github triage <issue>` | → [[github-work-bridge]] agentic readiness card and `direct | request | spec-first` route; assignment/labels are evidence, not authorization |
 | `spectacular github pr open\|ready` / `github reconcile` | → CLI verbs; draft PR integration manifest, current-head ready gate, and read-only discrepancy report; see [[github-work-bridge]] |
+| `spectacular traffic preflight <request>` | → CLI verb; read-only, local-first `parallel | conditional | serialized | unknown` assessment from durable request declarations. Record confirmed relationships in PLAN frontmatter and rerun; never schedules or mutates requests. |
 | User authorizes AFK work | → inspect `spectacular afk status`; branch mutation still requires enabled project config plus explicit apply; merge/remote deletion remain HITL |
 | A built-in `/goal` begins in a Spectacular workspace | → create/resume a durable goal-scoped AFK run for that goal; keep it active until completion/cancellation or a declared/unexpected HITL gate |
 | A user refers to `D1`, `Q1`, `R1`, `SPK1`, `S1`, or another entity alias | → normalize via `spectacular id resolve`; persist the canonical ID; see [[canonical-ids]] |

@@ -1,11 +1,11 @@
 ---
-description: Progressive routing for research, technical spikes, UX prototypes, production tracer bullets, their artifacts, and technical debt.
-when_to_use: Choosing whether uncertainty needs research, a spike, a prototype, a tracer bullet, direct implementation, or no new node.
+description: Progressive routing for direct clarification, research, Vision, technical spikes, prototypes, production tracer bullets, ambiguous experiments, and technical debt.
+when_to_use: Choosing whether uncertainty needs Vision reaction, research, a spike, a prototype artifact, a tracer bullet, direct implementation, or no new node.
 ---
 
 # Discovery Evidence Protocol
 
-Use discovery to remove a named uncertainty, never as automatic ceremony. If the goal and implementation path are already clear from current code, tests, vendor documentation, or direct user clarification, proceed through the approved specification/request lifecycle without creating a research, spike, prototype, or finding record.
+Use discovery to remove a named uncertainty, never as automatic ceremony. If direction and implementation path are already clear from code, tests, documentation, or direct user clarification, proceed through the appropriate direct/specification/request route without creating Vision, research, spike, prototype, or finding records.
 
 ## Cheapest sufficient answer first
 
@@ -14,16 +14,24 @@ Ask these in order and stop at the first sufficient route:
 | Uncertainty | Route | Owner | Code destination | Durable output |
 |---|---|---|---|---|
 | None: goal, constraints, and implementation path are clear | Direct execution | Approved `SPC` + request | Production branch through normal Git/HITL gates | Code, tests, verification evidence |
+| Product, interaction, workflow, or system direction is unsettled and human reaction would change the contract | Vision | `.spectacular/visions/<slug>/VISION.md` | None; optional showable artifacts only | Approved/rejected direction, fragment reactions, linked evidence; approved may derive draft SPC |
 | A bounded fact, external behavior, or option comparison is unknown | Research | `RES-NNN` | None; read-only investigation | Sources, evidence, options, `supported|refuted|inconclusive` result |
 | Technical feasibility or a risky integration assumption must be tested | Spike | `SPK-NNN` | Disposable `spike/prototype-<SPK-ID>` branch | Hypothesis, experiment, evidence, result; not the code |
-| A UI, CLI, or workflow needs human reaction before its contract is fixed | Prototype | Owning request/vision/feedback entry; `PRT` remains reserved | Mock/sandbox or request `artifacts/prototypes/` | User observations, accepted/rejected flow, open questions, spec delta |
+| A proposed UI, CLI, workflow, or experience needs to become reactable before its contract is fixed | Prototype fragment | Owning Vision (or feedback/request for an already-built target); `PRT` remains reserved | Mock/sandbox or owner-local artifacts | Human reaction and its decision impact; artifact is not the direction by itself |
 | The architecture is chosen but end-to-end production wiring is the next risk | Tracer bullet | Approved `SPC` with `execution_mode: tracer` + request | Production-quality feature branch; retained and extended | Thin integrated code, tests, verification evidence |
 
-Escalation is progressive: direct clarification or inspection before `RES`; `RES` before executable experimentation; `SPK` only when observation cannot settle feasibility; prototype only when human interaction is the evidence; tracer only after approval authorizes production work.
+Escalation is progressive: direct clarification or inspection first; Vision only for material direction uncertainty; `RES` for bounded facts; `SPK` only when observation must settle feasibility; prototype only when interaction is the evidence; tracer only after an approved SPC authorizes production work.
+
+“Experiment” is deliberately not a command alias. Route it by the question:
+
+- fact or option comparison → research;
+- technical feasibility → spike;
+- pre-spec human reaction → Vision fragment/prototype;
+- learning from built behavior → feedback-loop.
 
 ## Entry contract
 
-Every research record, spike, or attached prototype must state:
+Every Vision-linked research record, spike, or prototype artifact must state:
 
 - one question or falsifiable hypothesis;
 - why existing code, tests, docs, or a direct user answer are insufficient;
@@ -38,7 +46,7 @@ Do not create a node for open-ended “exploration.” Split broad uncertainty i
 
 - **Research:** the `RES` record is already the durable evidence artifact. Do not copy every conclusion into `findings/`.
 - **Spike:** delete/archive-isolate experimental code according to [[afk-git-hygiene]]; keep the `SPK` evidence and result.
-- **Prototype:** keep only the artifacts and human observations needed to explain the resulting question, decision, or specification. Mock code is replaced unless explicitly promoted through a newly approved production plan.
+- **Vision/prototype:** keep the approved/rejected fragments and human observations needed to explain the chosen direction and resulting specification. Mock code is replaced unless explicitly promoted through a newly approved production plan.
 - **Tracer bullet:** keep the code. It is a deliberately thin production slice, not a prototype, and must meet the same architecture, security, testing, and review standards as later feature work.
 
 The experimental branch/mock is throwaway; its outcome record is stale-safe history. Apply [[artifact-retention]] before cleanup so knowledge survives while junk code does not.
@@ -67,7 +75,7 @@ Do not create a `debt/` collection or `DEB-NNN` merely to hold an issue. Debt ne
 
 ## Boundary checks
 
-- Discovery cannot silently expand the active milestone; tangents route to an idea or future target.
+- Vision is opt-in and pre-request; it cannot silently expand an active milestone. Tangents route to an idea or future target.
 - Disposable code never merges because it “already works.” Production adoption starts from an approved spec and clean implementation request.
 - A tracer bullet is the smallest real vertical slice, not a shortcut around production quality.
 - Do not create `RES`, `SPK`, prototype artifacts, and `FND` for the same learning by default. Preserve one authoritative record and link downstream decisions/specs to it.

@@ -21,7 +21,7 @@ Canonical spec-driven creation is `spectacular request new [<slug>] --from SPC-N
 
 Always show the derived slug before writing. User can override before confirmation.
 
-**Autopilot passes through the gate.** When the skill drafts PLAN slot bodies itself (the autopilot row), it must run `plan review` on the draft and show the punch list **alongside** the draft, *before* asking for confirmation — never present an unreviewed draft as ready. (Mirrors [[imagine]]'s rule that a derived PLAN always routes through PLAN review.)
+**Autopilot passes through the gate.** When the skill drafts PLAN slot bodies itself (the autopilot row), it must run `plan review` on the draft and show the punch list **alongside** the draft, *before* asking for confirmation — never present an unreviewed draft as ready. An approved Vision does not bypass this: Vision derives a draft SPC; the approved SPC later derives PLAN/TASKS through the normal request gate.
 
 ---
 

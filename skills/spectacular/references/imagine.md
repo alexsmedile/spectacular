@@ -1,94 +1,129 @@
 ---
-description: The `imagine` mode engine — generative-first, imagination-backed planning. Render see-able ASCII artifacts, react per-fragment, derive a draft PLAN.
-when_to_use: spectacular imagine <slug>, or when the user wants to see the shape of a request before committing to milestones.
+description: Generative pre-request direction discovery — Understand, Imagine, Probe, React, Confirm, then derive a draft SPC from approved Vision.
+when_to_use: spectacular imagine <slug>, or when material product, interaction, workflow, or system-shape uncertainty is easier to resolve through concrete proposals than prose requirements.
 ---
 
-# Imagine — the generative-first planning engine
+# Imagine — the generative Vision engine
 
-Loaded when the user runs `spectacular imagine <slug>` inside the agent, or asks to "imagine", "sketch", "mock up", or "see the shape" of a request before planning it.
+`imagine` is an operation; Vision is its durable result. The human supplies
+aspiration, taste, reaction, and approval. The agent grounds the opportunity,
+generates concrete alternatives, and makes them experienceable. “Dream” is useful
+natural language for the human aspiration, not a second command or lifecycle.
 
-> **Thesis.** Spectacular is spec-driven; `imagine` makes it spec-driven **and imagination-backed**. You render artifacts the human reacts to, then derive the spec from what they approved. The spec becomes accountable to the approved vision. Doc-type rules + frontmatter: [[vision-rules]]. Why this exists: `archive/ideas/explore-mode.md` §0.
+## When to suggest it
 
-## The contrast with grill
-
-`grill` **interrogates** — empty slots, one question at a time, the human supplies content. `imagine` **generates** — the skill proposes full artifacts up front, the human reacts and redirects. Never open an `imagine` session with "what's your end goal?" Open it by *showing* a drafted end goal, a flow, and at least one ASCII fragment, then asking "does this match what you see?"
+Suggest Imagine only when interaction, UX, workflow, product direction, or system
+shape is materially uncertain and human reaction would reduce specification risk.
+Do not suggest it merely because work has a UI. Skip it for clearly specified
+backend, maintenance, mechanical migration, and direct work.
 
 ## Preconditions
 
-1. The request exists (`requests/<slug>/`). If not, the user runs `spectacular new <slug>` first.
-2. The `vision/` folder exists. If not, run the CLI scaffold: `spectacular imagine <slug>` (mechanical — creates spine + `stories/` `ui/` `arch/`). The bare in-agent `imagine` should do this scaffold first if absent.
-3. Load context: the request's `PLAN.md` (if any goal/constraints already exist), `PRD.md`, and `PERSONAS.md` (for story personas).
+1. A Spectacular workspace exists. A request, PLAN, and SPC are not required.
+2. Scaffold `.spectacular/visions/<slug>/` with `spectacular imagine <slug>` if it
+   does not exist.
+3. Load project intent plus only the code, behavior, personas, research, or spike
+   evidence needed to understand the opportunity.
 
-## The loop: render → react → derive
+## The loop: Understand → Imagine → Probe → React → Confirm → Derive
 
-### 1. Render (generative-first)
+### 1. Understand
 
-Fill the spine (`vision/VISION.md`) and seed fragments. **Lead with content, not prompts.**
+Ground `VISION.md § Understanding` before proposing solutions:
 
-- **End goal** — one paragraph: what the world looks like when this exists.
-- **Macro dev phases** — the big arcs, NOT milestones: "make it work → make it observable → make it self-serve". 2–4 arcs.
-- **Flow walk** — narrate the imagined user session step by step.
-- **Seed ≥1 fragment of each kind** via `spectacular vision add <kind> <name> --slug <slug> --caption "..."`, then write the ASCII body into each file:
-  - a **story** (`As a <persona>, I want … so that …`, pulling a persona from PERSONAS.md)
-  - a **ui** fragment (ASCII mockup of a screen / CLI output the user will touch)
-  - an **arch** fragment (ASCII structure / data-flow of the system shape)
+- current reality — what exists now, observed rather than assumed;
+- users and needs — whose outcome or experience changes;
+- constraints — product, technical, policy, and operational boundaries;
+- material uncertainties — questions whose answers could change the direction.
 
-Use the CLI mutator to create fragment files (it sets frontmatter + regenerates the manifest); write the ASCII body with Edit/Write. Don't hand-create fragment files — let the mutator own frontmatter + manifest. If a caption legitimately starts with a dash (e.g. it names a flag), use the attached form: `--caption="--stalled view"`.
+This is problem/direction understanding. It does not replace the later
+code-grounded PLAN Understanding gate (how the touched system works / what changes /
+what stays the same).
 
-### 2. React on parts
+### 2. Imagine
 
-Present the rendered artifacts and ask the human to react **per fragment** — approve, redirect, or reject. This is the heart of "imagination-backed": the human reacts to *parts*, not a monolithic plan.
+Lead with proposals, not an empty questionnaire. Draft the Intent, North star,
+Experience signature, meaningful strategies, and a recommended Chosen direction.
+Create only the fragments needed to make the uncertainty discussable:
 
-- On **approve** → set the fragment's `approved: true` (Edit the frontmatter), then run `spectacular doctor vision --fix` so the spine manifest reflects the new state (the manifest mirrors approval; editing frontmatter alone leaves it stale until regenerated).
-- On **redirect** → regenerate **only that fragment** (rewrite its ASCII body), leave `approved: pending`, re-present.
-- On **reject** → set `approved: false` (kept for the record; derivation ignores it).
-
-Add more fragments as the conversation surfaces them (`vision add ...`). A vision can hold many UI screens — that's expected; each is its own file. After each change, the spine manifest reflects current `approved:` state (regenerated by the mutator, or `spectacular doctor vision --fix`).
-
-Loop until the human is satisfied with the approved set. Don't rush to derive — the value is in the human *seeing and shaping* before committing.
-
-### 3. Derive (Build) → draft PLAN
-
-When the human signals satisfaction, **auto-offer** to derive the PLAN: *"Want me to turn this approved vision into a draft PLAN?"* On yes, build `PLAN.md` from the `approved: true` fragments only:
-
-| Vision input | PLAN slot |
+| Kind | Useful when |
 |---|---|
-| End goal + approved stories | **Goal** (one-line) + the intent behind milestones |
-| Macro dev phases + flow walk | **Milestones** (the phase arcs become the ordered M1…Mn outcomes) |
-| Approved ui/arch fragments | **Validation** acceptance surfaces ("the dashboard fragment renders X"; "the flow reaches the empty state") |
-| The whole approved vision | pre-fill PLAN's **`## Understanding`** (how-it-works-now / what-changes / what-stays) |
+| `strategy` | Alternatives and trade-offs need comparison |
+| `story` | A user outcome or scenario needs sharpening |
+| `flow` | Sequence, states, or handoffs are uncertain |
+| `ui` | Screen, CLI output, or interaction needs a vibe check |
+| `arch` | System shape or boundary needs comparison |
+| `prototype` | A runnable/showable artifact will produce better reaction than prose |
 
-Then **stop and hand off to the gate**: the derived PLAN is a *draft*. Run it through the normal PLAN review (`spectacular plan review`) — never mark it final or flip lifecycle on the human's behalf. `imagine` proposes; the human disposes.
+One UI fragment may be enough. A non-visual workflow may need only a story and
+flow. There is no one-of-each rule.
 
-## ASCII palette (Q8 — ship a light convention)
+### 3. Probe
 
-Keep renders consistent and terminal-safe. Use box-drawing characters; don't improvise wildly.
+Use the cheapest sufficient evidence route:
 
-**UI / output frame:**
+- inspect current code or ask the human directly;
+- research a bounded fact in RES;
+- run a human-authorized SPK when technical feasibility must be observed;
+- build a prototype fragment when human interaction is the evidence.
+
+Research and spikes keep their own truth contracts. Link them from Vision; do not
+copy their bodies. A spike can establish that an approach works without choosing
+it. Present a showable conclusion, then let the human choose the direction.
+
+### 4. React on parts
+
+Present fragments individually and ask the human to approve, revise, reject, or
+supersede them. Record reactions mechanically:
+
+```text
+spectacular vision react <slug> <fragment> --approve [--note <why>]
+spectacular vision react <slug> <fragment> --revise  [--note <change>]
+spectacular vision react <slug> <fragment> --reject  [--note <why>]
 ```
-┌─ Screen title ──────────────────┐
-│ label        value              │
-│ [ button ]   ‹ link ›           │
-│ ▸ list item                     │
-└─────────────────────────────────┘
-```
 
-**Architecture / data flow:**
-```
-┌──────────┐      ┌──────────┐      ┌──────────┐
-│  source  │ ───► │  engine  │ ───► │   sink   │
-└──────────┘      └──────────┘      └──────────┘
-        │ ◄─── feedback ───────────────┘
-```
+Revise only the redirected fragment. Keep rejected/superseded fragments as decision
+history. Only `reaction: approved` fragments are load-bearing downstream.
 
-Conventions: `───►` directed flow · `┌─ title ─┐` framed regions · `▸`/`•` list markers · `[ x ]` actionable · `‹ x ›` link/nav. Prefer width ≤ 64 chars so fragments read in a narrow terminal. This is a *light* convention, not a strict grammar — readability over rules.
+### 5. Confirm the whole Vision
 
-## Boundaries (v1)
+Fragments are parts; approval is a coherent whole-direction decision.
 
-- **Request-level only.** No project-altitude `imagine` (around PRD) in v1.
-- **Build-only derivation.** Don't attempt Compare/reconcile (diffing an existing PRD/PLAN against the vision) — that's v2.
-- **Never auto-accept the derived PLAN.** Always route through PLAN review.
-- **Don't auto-route fragments to tasks.** Like ideas, nothing in `vision/` is acted on automatically; the human drives.
-- **Optional.** If a request is small/obvious, say so and suggest skipping straight to PLAN.
+1. Resolve every fragment reaction and ensure at least one is approved.
+2. Make Chosen direction, Boundaries, evidence, and rationale explicit.
+3. Run `spectacular vision propose <slug>`.
+4. Present the whole Vision as a short vibe-check card: North star, Experience
+   signature, Chosen direction, approved/rejected fragments, material conditions.
+5. Only after explicit human approval run:
+   `spectacular vision approve <slug> --approved-by <human> [--note <text>]`.
 
-**Related:** [[vision-rules]] (doc-type + frontmatter + doctor), [[plan-rules]] (the derived doc + its gate), [[new-request]] (request precondition), [[personas-rules]] (story personas), [[grill]] (the interrogative contrast), [[doctor]] (vision area).
+Approval means “derive the contract from this direction.” It does not mean “write
+production code.” Rejection records actor and reason; it is not deletion.
+
+### 6. Derive a draft specification
+
+On approval, offer `/spectacular vision derive <slug>`. Create or update one draft
+SPC using:
+
+- Intent + North star → specification intent;
+- Chosen direction + approved fragments → requirements and scenarios;
+- Boundaries → non-goals/constraints;
+- linked RES/SPK evidence → evidence and decisions;
+- material uncertainties → open questions, never guessed requirements.
+
+Record the Vision path in the SPC's `related:`/evidence and set `derived_to` on
+VISION.md after the draft exists. The SPC remains draft until separately approved.
+Only the approved SPC may seed a request and PLAN.
+
+## Boundaries
+
+- Pre-request and opt-in. No request or PLAN precondition.
+- Vision approval is human-only; agents may propose but never infer approval.
+- Prototypes are artifacts, not an entity or mandatory phase.
+- `experiment` is ambiguous natural language, not a feedback alias; route by the
+  question being answered.
+- Legacy `requests/<slug>/vision/` folders remain readable/diagnosable but do not
+  gain the new whole-Vision lifecycle automatically.
+
+**Related:** [[vision-rules]], [[discovery-protocol]], [[spike-rules]],
+[[spec-lifecycle]], [[plan-rules]], and [[feedback-loop]].

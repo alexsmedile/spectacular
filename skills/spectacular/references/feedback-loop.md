@@ -1,13 +1,13 @@
 ---
-description: Prototyping-stage human-feedback acquisition — 5-step loop, distinct from verification/benchmark.
-when_to_use: Running a feedback loop on a prototype (PRINCIPLES §9).
+description: Human-feedback acquisition from built or prototyped behavior — 5-step loop, distinct from pre-spec Vision approval, verification, and benchmark.
+when_to_use: Learning from a concrete built/prototyped target after direction exists (PRINCIPLES §9).
 ---
 
 # Feedback Loop — prototyping-mode human-feedback acquisition
 
 > Spectacular is in prototyping. This mode operationalizes deliberate human-feedback acquisition on the system itself — a strategy for **acquiring knowledge, insights, use-case validation, and durable preferences from the user**.
 
-**Not** a benchmark harness. **Not** a verification pass. **Not** automated grading. The word "evals" is intentionally avoided — it carries HumanEval/MMLU/accuracy-% baggage that pulls the wrong way.
+**Not** pre-spec Vision approval. **Not** a benchmark harness, verification pass, or automated grading. The word "evals" is intentionally avoided — it carries HumanEval/MMLU/accuracy-% baggage that pulls the wrong way.
 
 ## What this mode does
 
@@ -98,7 +98,7 @@ Body sections (all required):
 - `spectacular feedback-loop resolve <slug> --next-action <action>` — close an entry with a decision; auto-promotes to memory if action signals durable preference
 - `spectacular feedback-loop archive <slug>` — move to `.spectacular/archive/feedbacks/<year>/`
 
-**Hidden aliases (route to `feedback-loop`):** `iterate`, `experiment`, `test`, `probe`, `try`. These work if typed but do not appear in `--help` output. Only `feedback-loop` is documented as the official mode name.
+**Hidden aliases (route to `feedback-loop`):** `iterate`, `test`, `probe`, `try`. `experiment` is intentionally excluded because it may mean research, a technical spike, a Vision prototype, or post-build feedback; [[discovery-protocol]] routes it by question.
 
 ## Proactive surfacing
 
@@ -159,6 +159,8 @@ User during loop says "I always want grill-each to skip empty optional slots wit
 - [[review]] — sister contract on the doc-quality axis
 - [[memory-rules]] — promotion target shape
 - [[archive]] — feedback files are preserved during request archive
+- [[vision-rules]] — pre-spec direction approval boundary
+- [[discovery-protocol]] — ambiguous experiment routing
 - [[doc-index]] — registry entry
 
 ## Implementation contract (for the CLI)

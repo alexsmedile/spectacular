@@ -2,9 +2,10 @@
 title: Troubleshooting
 description: Common setup, install, skill discovery, update, symlink, and workspace state issues.
 section: ""
+type: reference
 status: stable
 since: 0.1.0
-updated: 2026-08-01
+updated: 2026-08-04
 ---
 
 # Troubleshooting
@@ -138,7 +139,7 @@ spectacular doctor frontmatter        # scoped to one area
 spectacular doctor --fix              # apply mechanical repairs (gitignore, missing dirs, dangling symlinks)
 ```
 
-Doctor can scan the whole workspace or one area, including `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions`, `specs`, `docs`, `personas`, `memory`, `sessions`, `feedback`, `ideas`, `debug`, `policies`, `vision`, `decisions`, `roadmap`, and `wayfinding`. The wayfinding area checks canonical IDs, dangling dependencies, and cycles. For repairs requiring judgment (frontmatter drift, missing snapshot, lifecycle mismatch), use the skill side in your AI agent:
+Doctor can scan the whole workspace or one area, including `skill`, `workspace`, `frontmatter`, `snapshots`, `links`, `lifecycle`, `kits`, `conventions`, `specs`, `docs`, `personas`, `memory`, `sessions`, `feedback`, `ideas`, `debug`, `policies`, `vision`, `decisions`, `roadmap`, and `wayfinding`. The wayfinding area checks canonical IDs, dangling dependencies, and cycles. The `vision` area checks spine headers, fragment schemas, manifest coherence, and legacy `requests/<slug>/vision/` locations; `spectacular doctor vision --fix` only regenerates the `Fragment manifest` in `VISION.md`. Human reactions and approval decisions are judgment and are never auto-fixed. For repairs requiring judgment (frontmatter drift, missing snapshot, lifecycle mismatch), use the skill side in your AI agent:
 
 ```text
 /spectacular doctor --fix
@@ -198,7 +199,7 @@ ln -s ~/.agents/skills/spectacular ~/.claude/skills/spectacular
 
 ## A command redirects from the shell to the skill
 
-Most mechanical commands work directly in the shell, including `new`, `advance`, `archive`, `idea`, `question`, `research`, `spike`, `spec`, `wayfind`, and `id`. Commands that require an LLM remain agent skill triggers:
+Most mechanical commands work directly in the shell, including `new`, `advance`, `archive`, `idea`, `question`, `research`, `spike`, `spec`, `wayfind`, `id`, `imagine <slug>` (scaffold), and `vision list|show|add|react|propose|approve|reject`. Commands that require generative LLM reasoning, interviews, or contract translation remain agent skill triggers:
 
 ```text
 /spectacular
@@ -206,13 +207,14 @@ spectacular remember this
 spectacular status
 spectacular verify <slug>
 spectacular sweep [<slug>]
-spectacular imagine <slug>
+/spectacular imagine <slug>          # generative Understand → Imagine → Probe → React → Confirm loop
+/spectacular vision derive <slug>   # agentic derivation from approved Vision → draft SPC
 spectacular prd
 spectacular prd refine
 spectacular prd review
 ```
 
-If a CLI invocation prints a redirect, repeat the command inside Claude Code, Codex, or another agent that has loaded the skill. The redirect is intentional: interviews, semantic review, and verification walks require agent judgment.
+If a CLI invocation prints a redirect, repeat the command inside Claude Code, Codex, or another agent that has loaded the skill. The redirect is intentional: interviews, semantic review, generative imagination, spec derivation, and verification walks require agent judgment.
 
 ---
 

@@ -1,3 +1,12 @@
+---
+title: Fable Spec Quality Review
+description: Corpus audit and quality review of Spectacular spec and planning artifacts.
+section: reviews
+type: explanation
+status: stable
+updated: 2026-07-06
+---
+
 # Fable Review — Spectacular Spec/Planning Quality Uplift
 
 - **Date:** 2026-07-06

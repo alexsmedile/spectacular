@@ -2,9 +2,10 @@
 title: Workflow
 description: The normal Spectacular loop after installation — init, briefing, requests, lifecycle, archive.
 section: ""
+type: how-to
 status: stable
 since: 0.1.0
-updated: 2026-08-03
+updated: 2026-08-04
 ---
 
 # Workflow Guide
@@ -87,10 +88,11 @@ The skill should not dump the whole workspace. It loads context progressively.
 Not every idea should immediately become implementation work. Use typed records to keep exploration explicit:
 
 ```text
-idea → questions / research / spikes → user decision → draft|unconfirmed spec → approved spec → request
+idea/conversation → understand/imagine/probe → reacted fragments → approved Vision → draft SPC → approved SPC → request
 ```
 
 - Park out-of-scope inspiration with `spectacular idea new <slug>`.
+- Shape unsettled pre-request direction with `spectacular imagine <slug>` (`.spectacular/visions/<slug>/`).
 - Record a human-owned ambiguity with `spectacular question new <slug>`.
 - Gather sources and evidence with `spectacular research new <slug>`.
 - Validate feasibility with `spectacular spike new <slug>`; execution requires human approval.
@@ -99,13 +101,21 @@ idea → questions / research / spikes → user decision → draft|unconfirmed s
 
 Each record receives a stable canonical ID such as `QUE-001` or `RES-001`. Compact aliases such as `q1` and `r1` work as input, while saved cross-references use canonical IDs.
 
+### When to suggest Vision (and when to skip)
+
+Suggest Vision (`spectacular imagine <slug>`) only when product, interaction, UX, workflow, or system-shape uncertainty is material and concrete proposals will reduce specification risk.
+- **When to suggest**: UX/CLI interaction changes, novel workflow design, system boundary exploration, or multi-option strategy decisions.
+- **Non-visual example**: A background job orchestration strategy uses `strategy` and `flow` fragments under `.spectacular/visions/<slug>/fragments/` — no UI mockup is required.
+- **When to skip**: Clearly specified UI, backend bug fixes, maintenance tasks, mechanical refactors, database migrations, or direct work. Vision is strictly opt-in and never a required gate.
+
 Use discovery only when it changes what you would build. Start with the cheapest sufficient answer:
 
 | Need | Use | What survives |
 |---|---|---|
 | A fact or comparison you cannot establish from current code/tests/docs | `RES-NNN` research | Sources, evidence, options, and result |
 | A technical feasibility assumption that needs executable proof | `SPK-NNN` spike | Experiment evidence; branch code is disposable |
-| A UI/CLI/workflow that needs human reaction | Prototype attached to the request, vision, or feedback loop | Observations and the resulting spec change |
+| Pre-spec direction or workflow needing human reaction | `VISION.md` + typed fragments via `spectacular imagine <slug>` | Approved `VISION.md` direction (derives draft `SPC`) |
+| Post-build learning or interaction feedback after implementation | `feedbacks/` entry via `spectacular feedback-loop new` | Verified observations and follow-up ideas |
 | A real end-to-end production skeleton after architecture approval | Approved `SPC` with `execution_mode: tracer` | Thin production code and tests, retained for extension |
 
 If the path is already clear, create none of these and implement the approved request. `RES` is canonical (say `R1`); `PRT` remains reserved. Research, spikes, vendor evidence, and interviews can support a decision, but the user or an explicitly authorized AFK gate still makes the choice. “Artifact” is an owned output, not another database entity.

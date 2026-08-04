@@ -2,9 +2,10 @@
 title: Versioning
 description: How Spectacular versions itself — SemVer scheme, the breaking-change trigger, the single canonical version source, pre-release labels, and the optional marketing layer on the roadmap.
 section: ""
+type: reference
 status: stable
 since: 1.9.0
-updated: 2026-05-29
+updated: 2026-08-04
 ---
 
 # Versioning

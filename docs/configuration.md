@@ -2,9 +2,10 @@
 title: Configuration
 description: config.yaml, agent files, tool overrides, request naming, and .spectacular.local/.
 section: ""
+type: reference
 status: stable
 since: 0.1.0
-updated: 2026-08-03
+updated: 2026-08-04
 ---
 
 # Configuration

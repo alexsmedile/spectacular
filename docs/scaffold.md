@@ -2,9 +2,10 @@
 title: Scaffold Reference
 description: Complete .spectacular/ directory spec — every file, frontmatter schema, creation rules, versioning.
 section: ""
+type: reference
 status: stable
 since: 0.1.0
-updated: 2026-08-01
+updated: 2026-08-04
 ---
 
 # Scaffold Reference
@@ -44,7 +45,6 @@ Every file type Spectacular uses, grouped by scope. This table is the quick refe
 | `VERIFY-LOG.md` | Verification evidence | Append-only; one entry per `spectacular verify` walk. |
 | `UNDERSTANDING.md` | Understand-before-change | Optional; alternative to PLAN's Understanding slot; gates `planned → active`. |
 | `RISKS.md` | Risk register | On demand for auth / billing / migration / flagged-sensitive requests. |
-| `VISION.md` | Vision spine | Imagine-mode (`spectacular imagine`), inside `vision/`. Not created by `new`. |
 | `specs/<cap>.md` | Per-capability truth | System-truth spec for one capability (distinct from top-level `specs/index.md`). |
 
 ### Soft-DB collections — folder of entries + index
@@ -53,6 +53,7 @@ Each is a folder of individually-addressable `.md` entries (frontmatter, git-com
 
 | Collection | Index | Role | Write verb |
 |---|---|---|---|
+| `visions/` | — | Pre-request direction workspaces (`.spectacular/visions/<slug>/`) | `spectacular imagine` |
 | `memories/` | `memories/index.md` | Durable standing facts / "always do X" | `spectacular remember` |
 | `decisions/` | `decisions/index.md` | ADR — why A over B | `spectacular decide` |
 | `questions/` | — | Active human-owned blockers and ambiguities (`QUE-NNN`); resolved history moves to `archive/questions/` | `spectacular question new\|resolve` |
@@ -90,9 +91,9 @@ The rule: **a plural folder name is a category directory** — it holds either a
 
 1. **Two `SESSION`s, opposite scope.** Per-request `SESSION.md` (singular — one request's working state, created on `active`) is **unrelated** to the top-level `sessions/` category folder and its `sessions/index.md` (the work-session time-log). Same word, different system — the biggest confusion trap.
 2. **Consolidated specs.** Capability specs are flat files inside `specs/` (e.g. `specs/cli.md`, `specs/doc-engine.md`), indexed by `specs/index.md`. There are no nested spec folders.
-3. **Plural folders.** Collection and execution folders are plural (`memories/`, `roadmaps/`, `decisions/`, `questions/`, `research/`, `spikes/`, `sessions/`, `audits/`, `fixes/`, `feedbacks/`, `ideas/`, `requests/`, `debugs/`, `findings/`, `bugs/`, `benchmarks/`) except `security/`, which is the singular domain name.
-4. **Collections vs. execution trees.** Markdown collections hold flat, individually addressable entries; some also maintain an `index.md`. Execution trees (`requests/`, `debugs/`) hold per-item sub-directories with state files or run logs.
-5. **Canonical identity.** Wayfinding filenames begin with `DEC-NNN`, `QUE-NNN`, `IDEA-NNN`, `RES-NNN`, `SPK-NNN`, or `SPC-NNN`. `PRT-NNN` and `TSK-NNN` remain reserved. Prototype outputs currently belong to a request, vision, feedback entry, or spike; generic artifacts, tracer bullets, and technical debt do not receive `ART`, `TRC`, or `DEB` IDs. Conversational aliases never replace canonical IDs in saved frontmatter.
+3. **Plural folders.** Collection and execution folders are plural (`visions/`, `memories/`, `roadmaps/`, `decisions/`, `questions/`, `research/`, `spikes/`, `sessions/`, `audits/`, `fixes/`, `feedbacks/`, `ideas/`, `requests/`, `debugs/`, `findings/`, `bugs/`, `benchmarks/`) except `security/`, which is the singular domain name.
+4. **Collections vs. execution trees.** Markdown collections hold flat, individually addressable entries; some also maintain an `index.md`. Execution trees (`requests/`, `debugs/`, `visions/`) hold per-item sub-directories with state files or run logs.
+5. **Canonical identity.** Wayfinding filenames begin with `DEC-NNN`, `QUE-NNN`, `IDEA-NNN`, `RES-NNN`, `SPK-NNN`, or `SPC-NNN`. `PRT-NNN` and `TSK-NNN` remain reserved. Prototype outputs belong to a pre-spec Vision workspace (as a `prototype` fragment under `visions/<slug>/fragments/`), a post-build feedback entry (`feedbacks/`), or a spike (`spikes/`); generic artifacts, tracer bullets, and technical debt do not receive `ART`, `TRC`, or `DEB` IDs. Conversational aliases never replace canonical IDs in saved frontmatter.
 
 ---
 
@@ -118,9 +119,15 @@ The rule: **a plural folder name is a category directory** — it holds either a
 │   ├── payments.md
 │   └── subscriptions.md
 │
-├── memories/  decisions/  questions/  research/  spikes/
+├── memories/  decisions/  questions/  research/  spikes/  visions/
 ├── sessions/  ideas/  feedbacks/  audits/  fixes/
 │                        # durable Markdown collections, created on demand
+│
+├── visions/            # pre-request direction workspaces — created on demand
+│   └── <slug>/
+│       ├── VISION.md   # required — 10-slot direction spine & approval gate
+│       ├── fragments/  # flat proposal files (strategy/story/flow/ui/arch/prototype)
+│       └── evidence/   # linked presentation artifacts or notes
 │
 ├── requests/           # active and planned work — one folder per request
 │   └── add-team-billing/
@@ -150,6 +157,7 @@ The rule: **a plural folder name is a category directory** — it holds either a
 |---|---|
 | `specs/` | On `spectacular init` (was `current/` pre-v0.5.0) |
 | `requests/` | On `spectacular init` |
+| `visions/` | On first `spectacular imagine <slug>` |
 | `ideas/` | On first idea file |
 | `questions/` | On first `spectacular question new` |
 | `research/` | On first `spectacular research new` |

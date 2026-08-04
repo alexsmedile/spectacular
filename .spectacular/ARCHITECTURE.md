@@ -1,6 +1,6 @@
 ---
-version: 1.12
-updated: 2026-08-03
+version: 1.13
+updated: 2026-08-04
 summary: "The .spectacular/ directory — layers, file roles, frontmatter conventions, lifecycle, versioning"
 related:
   - PRD.md
@@ -331,9 +331,9 @@ Readiness is derived from canonical dependencies. Unresolved records form the **
 
 # Ideas layer
 
-A **parking space**, not an execution stage. Nothing in `ideas/` is acted on automatically by the skill.
+A **pre-commitment workbench**, not an execution stage. Nothing in `ideas/` is acted on automatically by the skill. A committed idea can be grilled, researched, revised, and given a non-binding working plan while information or decisions remain open.
 
-Use it for: raw thoughts, market observations, UX experiments, discarded approaches, future concepts, unresolved brainstorming.
+Use it for: raw thoughts, market observations, UX experiments, discarded approaches, future concepts, unresolved brainstorming, and locally useful refinement of an idea first captured elsewhere.
 
 ```txt
 ideas/
@@ -343,12 +343,12 @@ ideas/
 ```
 
 **Rules:**
-- low commitment
-- speculative
-- non-canonical
+- low commitment; speculative even when it has a working plan
+- one of several capture entry points: GitHub Issues, GitHub Discussions, `TODO.md`, `FEEDBACK.md`, private notes, and local/committed ideas can all begin the loop
+- a capture stays authoritative where it was first recorded until the human deliberately moves the work forward; link sources rather than automatically mirroring them
 - skill **proposes** saving unresolved decisions here when conversations have open branches
 
-**Promotion to request:** Ideas are not a required gate. A request can be created directly. When an idea is deliberately promoted, the skill scaffolds the request from the idea content and moves the idea file to `archive/ideas/`.
+**Promotion to request:** Ideas are not a required gate. A request can be created directly. A draft implementation plan does not itself promote an idea: promote only after a human accepts an execution outcome and durable coordination is warranted. When deliberately promoted, the skill scaffolds the request from the idea content and moves the idea file to `archive/ideas/`.
 
 **CLI verbs (v1.7.0+):** `spectacular idea new <slug>`, `spectacular idea list [--status <s>]`, `spectacular idea promote <slug>`. Status enum: `parked | exploring | promoted`. Full spec in [[idea-rules]]; doctor area: [[doctor-areas]] § ideas.
 

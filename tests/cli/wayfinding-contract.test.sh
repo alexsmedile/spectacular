@@ -81,6 +81,7 @@ scenario_typed_records() {
 
   [[ -f "$d/.spectacular/decisions/DEC-001-use-the-graph-resolver.md" ]] && pass || fail "canonical decision file"
   [[ -f "$d/.spectacular/ideas/IDEA-001-voice-command-bar.md" ]] && pass || fail "canonical idea file"
+  assert_contains "$d/.spectacular/ideas/IDEA-001-voice-command-bar.md" "## Working plan"
   [[ -f "$d/.spectacular/research/RES-001-auth-options.md" ]] && pass || fail "canonical research file"
   [[ -f "$d/.spectacular/spikes/SPK-001-auth-scale.md" ]] && pass || fail "canonical spike file"
   assert_contains "$d/.spectacular/research/RES-001-auth-options.md" "  - QUE-001"

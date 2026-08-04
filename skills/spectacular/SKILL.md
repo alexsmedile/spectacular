@@ -246,7 +246,7 @@ Never read `archive/` during normal operation.
 - **Memory** (`spectacular remember this`) writes to `.spectacular/memories/` — git-committed, team-visible. Never to `.claude/` memory.
 - Be proactive: surface stale state, propose lifecycle transitions, flag blocked requests.
 - **Execution boundary:** when implementation reveals an unexpected requirement, tangent, or optimization, park it as an idea (or future target) instead of adding it to the active request's PLAN/TASKS. See [[wayfinding-sequencer]].
-- **GitHub work route:** an Issue is a collaborative job card, not automatically a spec or request. Use the smallest sufficient `direct | request | spec-first` path; GitHub owns remote records while Spectacular stores accepted meaning and stable links. See [[github-work-bridge]].
+- **GitHub/Spectacular boundary:** GitHub owns capture, discussion, ownership, PRs, checks, merge, collaboration, and notifications. Spectacular owns reasoning, durable local context, decisions, plans, validation, and coordination. An Issue is a collaborative job card, not automatically a spec or request: use the smallest sufficient `direct | request | spec-first` path and link rather than mirror. See [[github-work-bridge]].
 - **Know when to write to a collection, not just how** — the "When to act" trigger table in [[soft-db-index]]. Cheap/reversible writes on their natural trigger; permanent/team-visible writes (memory, decisions, archive) are proposed → human confirms → written, never autonomous.
 
 ### Task tracking — two layers

@@ -6,7 +6,7 @@ entries-dir: .spectacular/ideas/
 scope: project-wide
 template: templates/idea/base.md
 snapshot-on-edit: false
-summary: "Thinking scratchpad — captured ideas not yet committed to a request. Soft-folder DB; promotion to a request is explicit and one-way."
+summary: "Pre-commitment workbench — ideas can be grilled, researched, and given a working plan before explicit promotion to a request."
 status: active
 ---
 
@@ -16,11 +16,17 @@ Soft-folder database of captured ideas. There is **no top-level `IDEAS.md` index
 
 **Mode: `index`** (no regenerated index file in v1.7.0). Entry files at `entries-dir`.
 
-**Philosophy (carried over from ARCHITECTURE.md § ideas/):** ideas are a **thinking scratchpad, not a workflow stage**. Nothing in `ideas/` is acted on automatically by the skill. The skill creates, lists, doctor-checks, and promotes — it never auto-routes ideas into requests, never re-prioritizes them, never grills them unsolicited.
+**Philosophy (carried over from ARCHITECTURE.md § ideas/):** an idea is a **pre-commitment workbench, not an execution stage**. It can be grilled, revised, researched, and given a non-binding working plan while decisions or information remain open. Nothing is acted on automatically: the skill never auto-routes an idea into a request, re-prioritizes it, or starts grilling it unsolicited.
+
+## Capture sources and authority
+
+An idea may start in a GitHub Issue, GitHub Discussion, phone note, `TODO.md`, `FEEDBACK.md`, `.spectacular.local/ideas/`, or a committed `IDEA`. Capture is deliberately flexible: use the lowest-friction place that is appropriate for its visibility and sensitivity.
+
+Do **not** mirror every capture into `ideas/`. While an Issue or Discussion is being discussed, it remains authoritative for that conversation. Create a committed `IDEA` only when local, agent-readable refinement is useful; record the source in `origin:`/`related:` and link rather than copy it. A private phone note can remain local until the human chooses to publish or promote it.
 
 **Verbs:**
-- `grill` → interactive form to flesh out an idea's slots (Hypothesis / Context / Open questions). Useful when an idea is moving from `parked` → `exploring`. User-initiated only.
-- `refine` → rewrite vague slots into specific ones. Optional.
+- `grill` → interactive form to flesh out an individual idea's hypothesis, context, open questions, evidence links, alternatives, and optional working plan. Useful when an idea is moving from `parked` → `exploring`. User-initiated only.
+- `refine` → rewrite vague slots into specific alternatives, decisions still needed, and plan assumptions. Optional.
 - `review` → validate frontmatter shape across all entries; flag stale `exploring` (>90 days), orphan promoted entries, unknown status values.
 
 **Mutator verbs (CLI, not skill):**
@@ -46,7 +52,7 @@ related: []
 ---
 ```
 
-**Required body sections (template-enforced, not gate-checked):** Hypothesis, Context, Open questions, Promoted-to (placeholder until promotion).
+**Required body sections (template-enforced, not gate-checked):** Hypothesis, Context, Open questions, Working plan, Promoted-to (placeholder until promotion). A Working plan is exploratory: it must name assumptions and unanswered decisions rather than masquerade as approved execution scope.
 
 ## Status lifecycle
 
@@ -57,7 +63,7 @@ parked ──(start shaping)──► exploring ──(promote)──► promote
 ```
 
 - **`parked`** — captured. Not actively being shaped. Default state at creation.
-- **`exploring`** — actively thinking; slots being filled. Doctor flags this state if `updated:` is >90 days old (decide: promote, demote to parked, or delete).
+- **`exploring`** — actively thinking; questions, evidence, alternatives, and a working plan may be filled in. Doctor flags this state if `updated:` is >90 days old (decide: promote, demote to parked, or delete).
 - **`promoted`** — became a request. File should live in `archive/ideas/<slug>.md`, not `.spectacular/ideas/`. Doctor flags promoted entries still in the live folder as orphans.
 
 ## Promotion to request
@@ -71,7 +77,7 @@ When the user runs `spectacular idea promote <slug>`:
 5. Moves file to `.spectacular/archive/ideas/<slug>.md`
 6. Notes in the new PLAN.md: `promoted from ideas/<slug>.md`
 
-Promotion is **one-way and explicit** — never automatic, never reversible by tool (manual revert if needed).
+Promotion is **one-way and explicit** — it means the human has accepted an execution outcome and wants a durable request. A draft implementation plan alone is not promotion, and promotion is never automatic or reversible by tool (manual revert if needed).
 
 ## Doctor area
 
@@ -92,7 +98,7 @@ None in v1.7.0. The word "idea" is short enough and the verb surface clear enoug
 
 ## What this is **not**
 
-- **Not a request.** Ideas don't carry PLAN/TASKS/lifecycle state. Promotion produces a request; the idea itself never gains those structures.
+- **Not a request.** Ideas don't carry PLAN/TASKS/lifecycle state. Their working plan is exploratory and may change with research or decisions; promotion produces a request only after an execution outcome is accepted.
 - **Not memory.** MEMORY.md is for durable preferences and decisions. Ideas are *speculative* — they may never matter again.
 - **Not a backlog.** ROADMAP.md's `## Icebox` section holds vision-tier items tied (loosely) to versions. Ideas have no version, no scope commitment, no exit criteria.
 - **Not feedback.** Feedback entries answer "was that the right thing to ship?" — they're tied to something already built. Ideas are pre-commitment scratchpad for things that *might* get built.

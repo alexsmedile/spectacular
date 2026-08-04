@@ -312,6 +312,29 @@ skills:
 
 ---
 
+## Vision layer (opt-in, pre-request)
+
+`spectacular imagine <slug>` scaffolds `.spectacular/visions/<slug>/` only when
+interaction, product direction, or experience uncertainty benefits from a
+showable proposal. It does not create a request or PLAN.
+
+```text
+visions/<slug>/
+├── VISION.md       # intent, north star, understanding, direction, approval
+├── fragments/      # strategy/story/flow/ui/arch/prototype proposals
+└── evidence/       # research, spikes, screenshots, recordings, notes
+```
+
+Each fragment records its own human reaction. The whole Vision can be approved
+only after its fragments have dispositions and the chosen direction is
+coherent. Approval permits `vision derive` to draft an SPC; it never authorizes
+implementation or derives PLAN directly. See [[imagine]] and [[vision-rules]].
+
+Legacy `requests/<slug>/vision/` folders remain readable and diagnosable; new
+Vision work is written only to the top-level `visions/` collection.
+
+---
+
 ## Requests layer
 
 ### PLAN.md (7-slot decomposition)

@@ -131,6 +131,24 @@ Judgment-only area — no `--fix`. Scans `.spectacular/ideas/*.md`.
 | Stale exploring | ⚠️ per entry | `status: exploring` with `updated` > 90 days ago |
 | Orphan promoted | ⚠️ per entry | `status: promoted` but file still in `.spectacular/ideas/` (should be in `archive/ideas/`) |
 
+## `vision`
+
+Scans top-level `.spectacular/visions/*/` workspaces and legacy
+`.spectacular/requests/*/vision/` folders. `--fix` is deliberately limited to
+regenerating a stale fragment manifest; approval and reaction choices require
+human judgment.
+
+| Check | Severity | Detects |
+|---|---|---|
+| Spine and lifecycle | ⚠️ | Missing `VISION.md`, invalid `status`, or missing required headings |
+| Fragment schema | ⚠️ | Unknown fragment `kind` or reaction outside `pending\|approved\|revise\|rejected\|superseded` |
+| Proposal readiness | ⚠️ | `proposed`/`approved` Vision has incoherent fragment readiness |
+| Reaction completeness | ⚠️ | `proposed`/`approved` Vision still has pending/revise fragments |
+| Approval provenance | ⚠️ | `approved` Vision lacks `approved_by` or `approved_at` |
+| Manifest drift | ⚠️ + mechanical | `VISION.md` manifest does not match the current fragment set and reactions |
+
+See [[vision-rules]] for the lifecycle and compatibility contract.
+
 ## `wayfinding`
 
 Read-only structural validation for canonical discovery records.

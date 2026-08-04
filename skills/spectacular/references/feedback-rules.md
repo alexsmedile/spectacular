@@ -7,7 +7,7 @@ alt-location: .spectacular/requests/<slug>/feedbacks/
 scope: project-wide-and-request-scoped
 template: templates/feedback/entry.md
 snapshot-on-edit: false
-summary: "Prototyping-mode human-feedback loop — capture insights, durable preferences, and use-case validation. NOT a benchmark/eval harness."
+summary: "Feedback from built or prototyped behavior — capture insights, preferences, and use-case validation. Not pre-spec Vision approval or a benchmark."
 status: active
 ---
 
@@ -28,7 +28,7 @@ Soft-folder database of prototyping-mode feedback entries. There is **no top-lev
 - `spectacular feedback-loop resolve <slug> --next-action <action>` — close entry, optionally auto-promote to memory
 - `spectacular feedback-loop archive <slug>` — move to `.spectacular/archive/feedbacks/<year>/`
 
-**Aliases (hidden):** `iterate`, `experiment`, `test`, `probe`, `try` — accepted by CLI dispatch, route to `cmd_feedback_loop`, not documented in `--help`.
+**Aliases (hidden):** `iterate`, `test`, `probe`, `try` — accepted by CLI dispatch, route to `cmd_feedback_loop`, not documented in `--help`. `experiment` is not an alias; route it through [[discovery-protocol]].
 
 **Snapshot-on-edit: false** — entries are durable insight records, not versioned canonical docs.
 
@@ -69,10 +69,11 @@ Never mid-flow. Never unsolicited. Single short prompt; user accepts or declines
 
 **Not** what this is:
 - Not a benchmark or evals harness
+- Not pre-spec fragment reaction or whole-Vision approval
 - Not VERIFY.md (request-scoped conformance pass)
 - Not `review` (doc-quality gate against PRINCIPLES)
 - Not a substitute for memory — feedback is the *acquisition mechanism*, memory is the *durable store* for preferences that emerge
 
 **Relationship to VERIFY.md:** orthogonal. VERIFY answers "did we ship what PLAN said?" — confirmatory, terminates at `verified`. Feedback-loop answers "was that the right thing to ship?" — exploratory, never terminates. Both can run on the same request without overlap.
 
-**Related:** [[feedback-loop]], [[verify]], [[review]], [[memory-rules]], [[doc-index]], [[archive]]
+**Related:** [[feedback-loop]], [[vision-rules]], [[discovery-protocol]], [[verify]], [[review]], [[memory-rules]], [[doc-index]], [[archive]]

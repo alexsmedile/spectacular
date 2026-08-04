@@ -42,6 +42,7 @@ SPEC_QUESTIONS_DIR="$SPEC_WORKSPACE_DIR/questions"
 SPEC_IDEAS_DIR="$SPEC_WORKSPACE_DIR/ideas"
 SPEC_RESEARCH_DIR="$SPEC_WORKSPACE_DIR/research"
 SPEC_SPIKES_DIR="$SPEC_WORKSPACE_DIR/spikes"
+SPEC_VISIONS_DIR="$SPEC_WORKSPACE_DIR/visions"
 SPEC_FINDINGS_DIR="$SPEC_WORKSPACE_DIR/findings"
 SPEC_FIXES_DIR="$SPEC_WORKSPACE_DIR/fixes"
 SPEC_BUGS_DIR="$SPEC_WORKSPACE_DIR/bugs"
@@ -247,6 +248,7 @@ CLI verbs (mutate workspace):
   question <sub>         Open-question database (new|list|resolve)
   research <sub>         Evidence-gathering discovery records (new|list|resolve)
   spike <sub>            Feasibility discovery records (new|list|resolve)
+  vision <sub>           Pre-request direction (list|show|add|react|propose|approve|reject; derive redirects)
   spec <sub>             Specification lifecycle (new|list|approve|implement|deprecate|archive; act redirects)
   wayfind <sub>          Strict discovery sequencing (status|next|order|resolve|defer|resume|path|route)
   afk <sub>              Goal-scoped autonomy + Git policy (run|status|configure|propose|preflight|start|cleanup|pr)
@@ -283,7 +285,7 @@ Skill verbs (run via /spectacular in your AI agent):
   remember               Write an operational lesson to .spectacular/memories/
   verify <slug>          Validation walk — checks by kind, records VERIFY-LOG, gates review→verified
   sweep [<slug>]         Read-only fleet audit via request-auditor agents (never promotes)
-  imagine <slug>         Imagination-backed planning (vision/ fragments → draft PLAN)
+  imagine <slug>         Scaffold pre-request Vision; agent runs Understand → Imagine → React → Confirm
 
 Top-level:
   -v, --version          Print version and exit
@@ -4031,61 +4033,108 @@ _h1_title() {
   awk '/^# / { sub(/^# /, ""); if (index($0, " — ")) sub(/^.* — /, ""); print; exit }' "$1"
 }
 
-# ── vision / imagine (v1.15.0+) ──────────────────────────────────────────────
-# `imagine` is the generative-first planning mode. The CLI does the MECHANICAL
-# part: scaffold the vision/ soft-folder (spine + typed subfolders) and add
-# fragment files. The skill does the AGENTIC part: render artifacts, run the
-# react-on-parts loop, derive a draft PLAN. See references/vision-rules.md.
+# ── vision / imagine (v1.38.0+) ─────────────────────────────────────────────
+# New Vision workspaces are pre-request direction records at visions/<slug>/.
+# Legacy request-owned vision/ folders remain readable and diagnosable.
 
-# Echo every fragment file under a request's vision/ subfolders.
+_vision_find() {
+  local slug="$1"
+  [[ -d "$SPEC_VISIONS_DIR/$slug" ]] && { echo "$SPEC_VISIONS_DIR/$slug"; return 0; }
+  [[ -d "$SPEC_REQUESTS_DIR/$slug/vision" ]] && { echo "$SPEC_REQUESTS_DIR/$slug/vision"; return 0; }
+  return 1
+}
+
+_vision_is_legacy() { [[ "$1" == "$SPEC_REQUESTS_DIR"/*/vision ]]; }
+
 _vision_iter_fragments() {
   local vdir="$1" kind f
+  if [[ -d "$vdir/fragments" ]]; then
+    for f in "$vdir/fragments"/*.md; do [[ -f "$f" ]] && echo "$f"; done
+    return 0
+  fi
   for kind in stories ui arch; do
     [[ -d "$vdir/$kind" ]] || continue
-    for f in "$vdir/$kind"/*.md; do
-      [[ -f "$f" ]] && echo "$f"
-    done
+    for f in "$vdir/$kind"/*.md; do [[ -f "$f" ]] && echo "$f"; done
   done
 }
 
-# Emit the manifest body lines for a vision/ folder (one per fragment, current
-# state). Shared by _regen_vision_manifest (writer) and check_vision (drift).
+_vision_fragment_reaction() {
+  local f="$1" reaction approved
+  reaction=$(fm_get "$f" reaction)
+  if [[ -z "$reaction" ]]; then
+    approved=$(fm_get "$f" approved)
+    case "$approved" in true) reaction=approved ;; false) reaction=rejected ;; *) reaction=pending ;; esac
+  fi
+  echo "$reaction"
+}
+
 _vision_manifest_lines() {
-  local vdir="$1"
-  local f kind caption approved subdir any=false
+  local vdir="$1" f kind caption reaction rel any=false
   while IFS= read -r f; do
     [[ -z "$f" ]] && continue
     any=true
-    kind=$(fm_get "$f" "kind")
-    caption=$(fm_get "$f" "caption")
-    approved=$(fm_get "$f" "approved")
-    subdir=$(basename "$(dirname "$f")")
-    [[ -z "$kind" ]] && kind="?"
-    [[ -z "$caption" ]] && caption="$(basename "$f" .md)"
-    [[ -z "$approved" ]] && approved="pending"
-    printf -- '- `[%s]` %s — **%s** (`%s/%s`)\n' "$kind" "$caption" "$approved" "$subdir" "$(basename "$f")"
+    kind=$(fm_get "$f" kind); caption=$(fm_get "$f" caption)
+    reaction=$(_vision_fragment_reaction "$f")
+    rel="${f#"$vdir/"}"
+    [[ -n "$kind" ]] || kind="?"
+    [[ -n "$caption" ]] || caption="$(basename "$f" .md)"
+    printf -- '- `[%s]` %s — **%s** (`%s`)\n' "$kind" "$caption" "$reaction" "$rel"
   done < <(_vision_iter_fragments "$vdir")
-  $any || printf -- '_No fragments yet. Add one with `spectacular vision add <story|ui|arch> <name>`._\n'
+  $any || printf -- '_No fragments yet. Add only what makes a material uncertainty discussable._\n'
 }
 
-# Regenerate the spine VISION.md ## Manifest section from fragment files.
-# Rewrites only the manifest block (everything from '## Manifest' to EOF).
+# Replace only the Manifest body. New spines keep the following Approval section;
+# legacy spines have Manifest at EOF and continue to work.
 _regen_vision_manifest() {
-  local vdir="$1"
-  local spine="$vdir/VISION.md"
+  local vdir="$1" spine="$1/VISION.md" tmp
   [[ -f "$spine" ]] || return 0
-
-  # Replace everything from the '## Manifest' heading onward.
-  local head
-  head=$(awk '/^## Manifest$/{exit} {print}' "$spine")
-  {
-    printf '%s\n' "$head"
-    printf '## Manifest\n\n'
-    _vision_manifest_lines "$vdir"
-  } > "$spine"
+  tmp=$(mktemp)
+  awk '/^## Manifest$/{exit} {print}' "$spine" > "$tmp"
+  printf '## Manifest\n\n' >> "$tmp"
+  _vision_manifest_lines "$vdir" >> "$tmp"
+  awk 'seen && /^## /{print; copy=1; next} /^## Manifest$/{seen=1; next} copy{print}' "$spine" >> "$tmp"
+  mv "$tmp" "$spine"
 }
 
-# `spectacular imagine <slug>` — scaffold the vision/ folder for a request.
+_vision_section_has_content() {
+  local file="$1" heading="$2"
+  awk -v h="## $heading" '
+    $0 == h { in_section=1; next }
+    in_section && /^## / { exit }
+    in_section { print }
+  ' "$file" | sed '/<!--/,/-->/d' | grep -q '[[:alnum:]]'
+}
+
+_vision_subsection_has_content() {
+  local file="$1" heading="$2"
+  awk -v h="### $heading" '
+    $0 == h { in_section=1; next }
+    in_section && /^##[#]? / { exit }
+    in_section { print }
+  ' "$file" | sed '/<!--/,/-->/d' | grep -q '[[:alnum:]]'
+}
+
+_vision_replace_approval() {
+  local spine="$1" content="$2" tmp
+  tmp=$(mktemp)
+  awk -v content="$content" '
+    /^## Approval$/ { print; print ""; print content; inside=1; next }
+    inside && /^## / { inside=0 }
+    !inside { print }
+  ' "$spine" > "$tmp" && mv "$tmp" "$spine"
+}
+
+_vision_fragment_find() {
+  local vdir="$1" ref="${2%.md}" f found=""
+  while IFS= read -r f; do
+    [[ "$(basename "$f" .md)" == "$ref" ]] || continue
+    [[ -z "$found" ]] || die "vision fragment '$ref' is ambiguous"
+    found="$f"
+  done < <(_vision_iter_fragments "$vdir")
+  [[ -n "$found" ]] || return 1
+  echo "$found"
+}
+
 cmd_imagine() {
   local slug=""
   while (( $# > 0 )); do
@@ -4094,154 +4143,241 @@ cmd_imagine() {
         cat <<EOF
 Usage: spectacular imagine <slug>
 
-Scaffold the imagination-backed planning folder for an existing request:
+Scaffold a pre-request Vision workspace:
 
-  requests/<slug>/vision/
-  ├── VISION.md      spine — narrative slots + regenerable manifest
-  ├── stories/       one user story per file
-  ├── ui/            one ASCII UI/output mockup per file
-  └── arch/          one ASCII architecture sketch per file
+  .spectacular/visions/<slug>/
+  ├── VISION.md      understanding, north star, direction, manifest, approval
+  ├── fragments/     proportional strategy/story/flow/ui/arch/prototype artifacts
+  └── evidence/      links or concise presentation artifacts (RES/SPK stay canonical)
 
-This is the MECHANICAL scaffold only. The generative render (imagining the
-artifacts), the react-on-parts loop, and the draft-PLAN derivation are skill
-work — run /spectacular imagine <slug> inside your AI agent.
-
-Add fragments with:  spectacular vision add <story|ui|arch> <name> --slug <slug>
+The CLI scaffolds only. Run /spectacular imagine <slug> in an AI agent for the
+Understand → Imagine → Probe → React → Confirm loop. Approved Vision derives a
+draft SPC, never a PLAN or implementation authorization.
 EOF
         exit 0 ;;
       -*) die "Unknown flag for imagine: $1" ;;
-      *)
-        [[ -n "$slug" ]] && die "imagine: only one <slug> argument allowed"
-        slug="$1"; shift ;;
+      *) [[ -z "$slug" ]] || die "imagine: only one <slug> argument allowed"; slug="$1"; shift ;;
     esac
   done
-
-  [[ -z "$slug" ]] && die "imagine: <slug> argument required"
+  [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || die "imagine: slug must be kebab-case"
   [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "imagine: not inside a Spectacular workspace"
-
-  local req_dir="$SPEC_REQUESTS_DIR/$slug"
-  [[ -d "$req_dir" ]] || die "imagine: request '$slug' not found at $req_dir. Create it first with 'spectacular new $slug'."
-
-  local vdir="$req_dir/vision"
-  if [[ -d "$vdir" ]]; then
-    die "imagine: vision/ already exists at $vdir. Add fragments with 'spectacular vision add'."
-  fi
-
-  mkdir -p "$vdir/stories" "$vdir/ui" "$vdir/arch"
-
+  local vdir="$SPEC_VISIONS_DIR/$slug" legacy="$SPEC_REQUESTS_DIR/$slug/vision"
+  [[ ! -d "$vdir" ]] || die "imagine: Vision already exists at $vdir"
+  [[ ! -d "$legacy" ]] || die "imagine: legacy request Vision already exists at $legacy; it remains readable via 'spectacular vision show $slug'"
+  mkdir -p "$vdir/fragments" "$vdir/evidence"
   local template rendered spine="$vdir/VISION.md"
-  template=$(_resolve_template "vision/spine.md") || die_recover \
-    "imagine: vision spine template not found" \
-    "Create $spine by hand with a '## End goal', '## Macro dev phases'," \
-    "'## Flow walk', and '## Manifest' section."
+  template=$(_resolve_template "vision/spine.md") || die "imagine: template vision/spine.md not found"
   rendered=$(_render_template "$template" SLUG "$slug" DATE "$TODAY")
   echo "$rendered" > "$spine"
-
   created "$vdir/"
+  info "  → status: draft · pre-request"
   info "  → spine: $spine"
-  info "  → fragment folders: stories/ ui/ arch/"
-  info "  ↳ generative render is skill work: /spectacular imagine $slug"
-  info "  ↳ or add a fragment manually: spectacular vision add ui <name> --slug $slug"
+  info "  ↳ next: /spectacular imagine $slug"
 }
 
-# `spectacular vision add <kind> <name> [--slug <slug>] [--caption <text>]`
-cmd_vision() {
-  local sub="${1:-}"; shift || true
-  case "$sub" in
-    add) cmd_vision_add "$@" ;;
-    --help|-h|"")
-      cat <<EOF
-Usage: spectacular vision <subcommand>
+cmd_vision_list() {
+  local count=0 dir slug spine status updated approved_at
+  printf '%-28s  %-10s  %-10s  %-12s  %s\n' SLUG STATUS UPDATED APPROVED LOCATION
+  printf '%-28s  %-10s  %-10s  %-12s  %s\n' ---- ------ ------- -------- --------
+  if [[ -d "$SPEC_VISIONS_DIR" ]]; then
+    for dir in "$SPEC_VISIONS_DIR"/*; do
+      [[ -d "$dir" && -f "$dir/VISION.md" ]] || continue
+      slug=$(basename "$dir"); spine="$dir/VISION.md"
+      status=$(fm_get "$spine" status); updated=$(fm_get "$spine" updated); approved_at=$(fm_get "$spine" approved_at)
+      printf '%-28s  %-10s  %-10s  %-12s  %s\n' "$slug" "${status:-?}" "${updated:-?}" "${approved_at:---}" "$dir"
+      count=$((count + 1))
+    done
+  fi
+  if [[ -d "$SPEC_REQUESTS_DIR" ]]; then
+    for dir in "$SPEC_REQUESTS_DIR"/*/vision; do
+      [[ -d "$dir" && -f "$dir/VISION.md" ]] || continue
+      slug=$(basename "$(dirname "$dir")")
+      printf '%-28s  %-10s  %-10s  %-12s  %s\n' "$slug" legacy "$(fm_get "$dir/VISION.md" updated)" -- "$dir"
+      count=$((count + 1))
+    done
+  fi
+  (( count > 0 )) || info "(no visions yet — start one with 'spectacular imagine <slug>')"
+}
 
-Subcommands:
-  add <kind> <name>     Add a fragment file to a request's vision/ folder.
-                          kind = story | ui | arch  (maps to the subfolder)
-                          Options: --slug <request-slug>  --caption "<text>"
-
-The vision/ folder is created by 'spectacular imagine <slug>'. Fragments are
-ASCII artifacts the skill renders and the human reacts to (approved: frontmatter).
-See references/vision-rules.md.
-EOF
-      [[ "$sub" == "" ]] && exit 1 || exit 0 ;;
-    *) die "vision: unknown subcommand '$sub'. Use: add" ;;
-  esac
+cmd_vision_show() {
+  local slug="${1:-}"; [[ -n "$slug" ]] || die "Usage: spectacular vision show <slug>"
+  local vdir spine count=0 approved=0 f reaction
+  vdir=$(_vision_find "$slug") || die "vision show: '$slug' not found"
+  spine="$vdir/VISION.md"; [[ -f "$spine" ]] || die "vision show: VISION.md missing at $vdir"
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue; count=$((count + 1)); reaction=$(_vision_fragment_reaction "$f")
+    [[ "$reaction" == approved ]] && approved=$((approved + 1))
+  done < <(_vision_iter_fragments "$vdir")
+  echo "Vision: $slug"
+  if _vision_is_legacy "$vdir"; then echo "Status: legacy"; else echo "Status: $(fm_get "$spine" status)"; fi
+  echo "Fragments: $approved approved / $count total"
+  echo "Path: $vdir"
+  echo ""
+  sed -n '1,220p' "$spine"
 }
 
 cmd_vision_add() {
   local kind="" name="" slug="" caption=""
   while (( $# > 0 )); do
     case "$1" in
-      --slug)      require_value "--slug" "${2:-}"; slug="$2"; shift 2 ;;
-      --slug=*)    slug="${1#--slug=}"; shift ;;
-      # --caption may be free text that legitimately starts with '-' (e.g. a flag
-      # name mentioned in the caption). Accept the attached --caption=<text> form
-      # to bypass the require_value '-*' guard; keep the spaced form for the common case.
-      --caption)   require_value "--caption" "${2:-}"; caption="$2"; shift 2 ;;
+      --slug) require_value "$1" "${2:-}"; slug="$2"; shift 2 ;;
+      --slug=*) slug="${1#--slug=}"; shift ;;
+      --caption) require_value "$1" "${2:-}"; caption="$2"; shift 2 ;;
       --caption=*) caption="${1#--caption=}"; shift ;;
-      --help|-h)
-        cat <<EOF
-Usage: spectacular vision add <kind> <name> [options]
-
-  <kind>             story | ui | arch  (selects the subfolder)
-  <name>             kebab-case fragment name (becomes <name>.md)
-
-Options:
-  --slug <slug>      Request slug (required unless cwd is inside the request)
-  --caption "<text>" One-line caption for the spine manifest (default: name).
-                     Use --caption="--foo ..." if the caption starts with a dash.
-
-Writes requests/<slug>/vision/<kind>/<name>.md with approved: pending and
-regenerates the spine manifest.
-EOF
-        exit 0 ;;
-      -*) die "Unknown flag for vision add: $1" ;;
-      *)
-        if [[ -z "$kind" ]]; then kind="$1"
-        elif [[ -z "$name" ]]; then name="$1"
-        else die "vision add: unexpected argument '$1'"; fi
-        shift ;;
+      -*) die "vision add: unknown flag '$1'" ;;
+      *) if [[ -z "$kind" ]]; then kind="$1"; elif [[ -z "$name" ]]; then name="$1"; else die "vision add: unexpected argument '$1'"; fi; shift ;;
     esac
   done
-
-  [[ -z "$kind" ]] && die "vision add: <kind> required (story | ui | arch)"
-  [[ -z "$name" ]] && die "vision add: <name> required"
-  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "vision add: not inside a Spectacular workspace"
-
-  local subdir tmpl_name
-  case "$kind" in
-    story) subdir="stories"; tmpl_name="story" ;;
-    ui)    subdir="ui";      tmpl_name="ui" ;;
-    arch)  subdir="arch";    tmpl_name="arch" ;;
-    *) die "vision add: invalid kind '$kind'. Must be: story | ui | arch" ;;
-  esac
-
-  if [[ ! "$name" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]]; then
-    die "vision add: invalid name '$name'. Must be kebab-case, lowercase alnum + hyphens, max 64 chars."
-  fi
-
-  # Resolve the request slug: explicit --slug, else infer from cwd if inside a request.
-  if [[ -z "$slug" ]]; then
-    die "vision add: --slug <request-slug> required."
-  fi
-
-  local vdir="$SPEC_REQUESTS_DIR/$slug/vision"
-  [[ -d "$vdir" ]] || die "vision add: vision/ not found at $vdir. Run 'spectacular imagine $slug' first."
-
-  local frag="$vdir/$subdir/$name.md"
-  [[ -e "$frag" ]] && die "vision add: fragment already exists at $frag"
-
-  [[ -z "$caption" ]] && caption="$name"
-
-  local template rendered
-  template=$(_resolve_template "vision/$tmpl_name.md") || die "vision add: template vision/$tmpl_name.md not found"
-  rendered=$(_render_template "$template" NAME "$name" CAPTION "$caption" DATE "$TODAY")
+  in_list "$kind" "strategy story flow ui arch prototype" || die "vision add: kind must be strategy|story|flow|ui|arch|prototype"
+  [[ "$name" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || die "vision add: name must be kebab-case"
+  [[ -n "$slug" ]] || die "vision add: --slug <vision-slug> required"
+  local vdir spine frag template rendered kind_title
+  vdir=$(_vision_find "$slug") || die "vision add: Vision '$slug' not found; run 'spectacular imagine $slug' first"
+  _vision_is_legacy "$vdir" && die "vision add: legacy request Vision is read-compatible only; add manually at $vdir or start a new pre-request Vision"
+  spine="$vdir/VISION.md"; [[ "$(fm_get "$spine" status)" == draft ]] || die "vision add: fragments may be added only while Vision is draft"
+  frag="$vdir/fragments/$name.md"; [[ ! -e "$frag" ]] || die "vision add: fragment already exists: $frag"
+  [[ -n "$caption" ]] || caption="$name"
+  kind_title="$(printf '%s' "$kind" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
+  template=$(_resolve_template "vision/fragment.md") || die "vision add: template vision/fragment.md not found"
+  rendered=$(_render_template "$template" KIND "$kind" KIND_TITLE "$kind_title" NAME "$name" CAPTION "$caption" DATE "$TODAY")
   echo "$rendered" > "$frag"
-
-  _regen_vision_manifest "$vdir"
-
+  _regen_vision_manifest "$vdir"; fm_touch "$spine"
   created "$frag"
-  info "  → kind: $kind · approved: pending"
-  info "  → spine manifest regenerated"
+  info "  → kind: $kind · reaction: pending"
+}
+
+cmd_vision_react() {
+  local slug="${1:-}" ref="${2:-}" reaction="" note=""; shift 2 2>/dev/null || true
+  while (( $# > 0 )); do
+    case "$1" in
+      --approve) reaction=approved; shift ;;
+      --revise) reaction=revise; shift ;;
+      --reject) reaction=rejected; shift ;;
+      --supersede) reaction=superseded; shift ;;
+      --note) require_value "$1" "${2:-}"; note="$2"; shift 2 ;;
+      *) die "vision react: unknown option '$1'" ;;
+    esac
+  done
+  [[ -n "$slug" && -n "$ref" && -n "$reaction" ]] || die "Usage: spectacular vision react <slug> <fragment> --approve|--revise|--reject|--supersede [--note <text>]"
+  local vdir spine frag
+  vdir=$(_vision_find "$slug") || die "vision react: Vision '$slug' not found"
+  _vision_is_legacy "$vdir" && die "vision react: legacy request Vision is read-compatible only"
+  spine="$vdir/VISION.md"; [[ "$(fm_get "$spine" status)" == draft ]] || die "vision react: Vision must be draft"
+  frag=$(_vision_fragment_find "$vdir" "$ref") || die "vision react: fragment '$ref' not found"
+  fm_set "$frag" reaction "$reaction"; fm_set "$frag" reaction_note "$note"; fm_touch "$frag"
+  _regen_vision_manifest "$vdir"; fm_touch "$spine"
+  info "  ✓ $(basename "$frag" .md): $reaction"
+}
+
+_vision_assert_resolved() {
+  local vdir="$1" f reaction approved=0 unresolved=""
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue; reaction=$(_vision_fragment_reaction "$f")
+    [[ "$reaction" == approved ]] && approved=$((approved + 1))
+    case "$reaction" in pending|revise) unresolved="${unresolved:+$unresolved, }$(basename "$f" .md)" ;; esac
+  done < <(_vision_iter_fragments "$vdir")
+  [[ -z "$unresolved" ]] || die "vision: unresolved fragment reactions: $unresolved"
+  (( approved > 0 )) || die "vision: at least one approved fragment is required"
+}
+
+cmd_vision_propose() {
+  local slug="${1:-}" vdir spine heading
+  [[ -n "$slug" ]] || die "Usage: spectacular vision propose <slug>"
+  vdir=$(_vision_find "$slug") || die "vision propose: Vision '$slug' not found"
+  _vision_is_legacy "$vdir" && die "vision propose: legacy request Vision has no whole-Vision lifecycle"
+  spine="$vdir/VISION.md"; [[ "$(fm_get "$spine" status)" == draft ]] || die "vision propose: expected draft"
+  for heading in Intent "North star" Understanding "Experience signature" "Strategies considered" "Chosen direction" Boundaries; do
+    _vision_section_has_content "$spine" "$heading" || die "vision propose: section '$heading' is empty"
+  done
+  for heading in "Current reality" "Users and needs" Constraints "Material uncertainties"; do
+    _vision_subsection_has_content "$spine" "$heading" || die "vision propose: Understanding subsection '$heading' is empty"
+  done
+  _vision_assert_resolved "$vdir"
+  fm_set "$spine" status proposed; fm_set "$spine" proposed_at "$TODAY"; fm_touch "$spine"
+  _vision_replace_approval "$spine" "Proposed $TODAY — awaiting explicit human approval."
+  info "  ✓ $slug: draft → proposed"
+}
+
+cmd_vision_approve() {
+  local slug="${1:-}" approved_by="" note=""; shift || true
+  while (( $# > 0 )); do
+    case "$1" in
+      --approved-by) require_value "$1" "${2:-}"; approved_by="$2"; shift 2 ;;
+      --note) require_value "$1" "${2:-}"; note="$2"; shift 2 ;;
+      *) die "vision approve: unknown option '$1'" ;;
+    esac
+  done
+  [[ -n "$slug" && -n "$approved_by" ]] || die "Usage: spectacular vision approve <slug> --approved-by <human> [--note <text>]"
+  local vdir spine
+  vdir=$(_vision_find "$slug") || die "vision approve: Vision '$slug' not found"
+  _vision_is_legacy "$vdir" && die "vision approve: legacy request Vision has no whole-Vision lifecycle"
+  spine="$vdir/VISION.md"; [[ "$(fm_get "$spine" status)" == proposed ]] || die "vision approve: expected proposed"
+  _vision_assert_resolved "$vdir"
+  fm_set "$spine" status approved; fm_set "$spine" approved_by "$approved_by"; fm_set "$spine" approved_at "$TODAY"; fm_touch "$spine"
+  _vision_replace_approval "$spine" "Approved $TODAY by $approved_by.${note:+ $note}"
+  info "  ✓ $slug: proposed → approved"
+  info "  ↳ next: /spectacular vision derive $slug"
+}
+
+cmd_vision_reject() {
+  local slug="${1:-}" rejected_by="" reason=""; shift || true
+  while (( $# > 0 )); do
+    case "$1" in
+      --rejected-by) require_value "$1" "${2:-}"; rejected_by="$2"; shift 2 ;;
+      --reason) require_value "$1" "${2:-}"; reason="$2"; shift 2 ;;
+      *) die "vision reject: unknown option '$1'" ;;
+    esac
+  done
+  [[ -n "$slug" && -n "$rejected_by" && -n "$reason" ]] || die "Usage: spectacular vision reject <slug> --rejected-by <human> --reason <why>"
+  local vdir spine status
+  vdir=$(_vision_find "$slug") || die "vision reject: Vision '$slug' not found"
+  _vision_is_legacy "$vdir" && die "vision reject: legacy request Vision has no whole-Vision lifecycle"
+  spine="$vdir/VISION.md"; status=$(fm_get "$spine" status)
+  [[ "$status" == draft || "$status" == proposed ]] || die "vision reject: expected draft or proposed"
+  fm_set "$spine" status rejected; fm_set "$spine" rejected_by "$rejected_by"; fm_set "$spine" rejected_at "$TODAY"; fm_set "$spine" rejection_reason "$reason"; fm_touch "$spine"
+  _vision_replace_approval "$spine" "Rejected $TODAY by $rejected_by — $reason"
+  info "  ✓ $slug: $status → rejected"
+}
+
+cmd_vision_derive() {
+  local slug="${1:-}" vdir spine
+  [[ -n "$slug" ]] || die "Usage: spectacular vision derive <slug>"
+  vdir=$(_vision_find "$slug") || die "vision derive: Vision '$slug' not found"
+  _vision_is_legacy "$vdir" && die "vision derive: legacy request Vision already belongs to execution planning"
+  spine="$vdir/VISION.md"; [[ "$(fm_get "$spine" status)" == approved ]] || die "vision derive: Vision must be approved"
+  skill_verb_message "vision derive $slug" \
+    "Derive a draft SPC from this approved Vision, approved fragments only, and linked evidence. Preserve Vision as provenance; do not create a request or authorize implementation."
+}
+
+cmd_vision() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    list) cmd_vision_list "$@" ;;
+    show) cmd_vision_show "$@" ;;
+    add) cmd_vision_add "$@" ;;
+    react) cmd_vision_react "$@" ;;
+    propose) cmd_vision_propose "$@" ;;
+    approve) cmd_vision_approve "$@" ;;
+    reject) cmd_vision_reject "$@" ;;
+    derive) cmd_vision_derive "$@" ;;
+    --help|-h|"")
+      cat <<EOF
+Usage: spectacular vision <list|show|add|react|propose|approve|reject|derive>
+
+  list
+  show <slug>
+  add <strategy|story|flow|ui|arch|prototype> <name> --slug <slug> [--caption <text>]
+  react <slug> <fragment> --approve|--revise|--reject|--supersede [--note <text>]
+  propose <slug>
+  approve <slug> --approved-by <human> [--note <text>]
+  reject <slug> --rejected-by <human> --reason <why>
+  derive <slug>          Agentic: approved Vision → draft SPC
+
+Start with: spectacular imagine <slug>
+EOF
+      [[ -n "$sub" ]] || exit 1 ;;
+    *) die "vision: unknown subcommand '$sub'" ;;
+  esac
 }
 
 # ── archive ──────────────────────────────────────────────────────────────────
@@ -6929,7 +7065,7 @@ EOF
     decisions_file decisions_dir
     memory_index memory_dir
     sessions_index sessions_dir
-    feedback_dir ideas_dir
+    feedback_dir ideas_dir visions_dir
     requests_dir archive_dir snapshots_dir packs_dir
     config skill_lock
   )
@@ -6950,6 +7086,7 @@ EOF
     "$SPEC_SESSIONS_DIR/"
     "$SPEC_WORKSPACE_DIR/feedbacks/"
     "$SPEC_IDEAS_DIR/"
+    "$SPEC_VISIONS_DIR/"
     "$SPEC_REQUESTS_DIR/"
     "$SPEC_ARCHIVE_DIR/"
     "$SPEC_WORKSPACE_DIR/$(config_snapshots_folder)/"
@@ -13629,110 +13766,79 @@ print(len(lf) if isinstance(lf,list) else -1)
     || { [[ -n "$bad" ]] && doc_add "debug" "info" "$top_dir" "$job_count debug job(s) checked — see warnings above"; }
 }
 
-# ── check_vision (v1.15.0+) ──────────────────────────────────────────────────
-# Validates each request's vision/ soft-folder: fragment frontmatter shape,
-# kind-vs-subfolder match, dangling persona refs, manifest-vs-files drift, and
-# approval progress. Mechanical --fix: regenerate the spine manifest.
+# ── check_vision (v1.38.0+) ──────────────────────────────────────────────────
+# Validates first-class pre-request visions plus read-compatible legacy request
+# visions. Mechanical --fix remains manifest regeneration only.
 check_vision() {
-  [[ -d "$SPEC_REQUESTS_DIR" ]] || return 0
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
+  local found_any=false vdir slug legacy spine
+  local candidates=""
+  if [[ -d "$SPEC_VISIONS_DIR" ]]; then
+    for vdir in "$SPEC_VISIONS_DIR"/*; do [[ -d "$vdir" ]] && candidates="${candidates}${candidates:+$'\n'}$vdir"; done
+  fi
+  if [[ -d "$SPEC_REQUESTS_DIR" ]]; then
+    for vdir in "$SPEC_REQUESTS_DIR"/*/vision; do [[ -d "$vdir" ]] && candidates="${candidates}${candidates:+$'\n'}$vdir"; done
+  fi
 
-  local personas="$SPEC_WORKSPACE_DIR/PERSONAS.md"
-  local req vdir found_any=false
-  for req in "$SPEC_REQUESTS_DIR"/*/; do
-    vdir="${req}vision"
-    [[ -d "$vdir" ]] || continue
-    found_any=true
-    local slug; slug=$(basename "$req")
-
-    if [[ ! -f "$vdir/VISION.md" ]]; then
-      doc_add "vision" "warning" "$vdir" "vision/ has no VISION.md spine" \
-        "rerun 'spectacular imagine $slug' or create vision/VISION.md" "judgment"
+  while IFS= read -r vdir; do
+    [[ -n "$vdir" ]] || continue
+    found_any=true; legacy=false
+    _vision_is_legacy "$vdir" && legacy=true
+    if $legacy; then slug=$(basename "$(dirname "$vdir")"); else slug=$(basename "$vdir"); fi
+    spine="$vdir/VISION.md"
+    if [[ ! -f "$spine" ]]; then
+      doc_add "vision" "warning" "$vdir" "Vision has no VISION.md spine" "restore the spine or start a new Vision" "judgment"
+      continue
     fi
 
-    local frag_count=0 malformed="" bad_kind="" dangling="" approved_count=0
-    local f kind caption approved subdir
+    local status="legacy" missing_sections="" heading
+    if ! $legacy; then
+      status=$(fm_get "$spine" status)
+      case "$status" in draft|proposed|approved|rejected) ;; *) doc_add "vision" "warning" "$spine" "invalid Vision status: ${status:-missing}" "use draft|proposed|approved|rejected" "judgment" ;; esac
+      for heading in Intent "North star" Understanding "Experience signature" "Strategies considered" "Chosen direction" Boundaries Evidence Manifest Approval; do
+        grep -qF "## $heading" "$spine" || missing_sections="${missing_sections:+$missing_sections, }$heading"
+      done
+      [[ -z "$missing_sections" ]] || doc_add "vision" "warning" "$spine" "missing spine section(s): $missing_sections" "restore the canonical Vision spine headings" "judgment"
+    fi
+
+    local frag_count=0 approved_count=0 unresolved_count=0 malformed="" invalid=""
+    local f kind caption reaction subdir
     while IFS= read -r f; do
-      [[ -z "$f" ]] && continue
-      frag_count=$((frag_count + 1))
-      kind=$(fm_get "$f" "kind")
-      caption=$(fm_get "$f" "caption")
-      approved=$(fm_get "$f" "approved")
-      subdir=$(basename "$(dirname "$f")")
-
-      if [[ -z "$kind" || -z "$caption" || -z "$approved" ]]; then
-        malformed="${malformed:+$malformed, }$(basename "$f")"
-        continue
-      fi
-
-      case "$kind" in
-        story) [[ "$subdir" == "stories" ]] || bad_kind="${bad_kind:+$bad_kind, }$(basename "$f")(kind=$kind in $subdir/)" ;;
-        ui)    [[ "$subdir" == "ui" ]]      || bad_kind="${bad_kind:+$bad_kind, }$(basename "$f")(kind=$kind in $subdir/)" ;;
-        arch)  [[ "$subdir" == "arch" ]]    || bad_kind="${bad_kind:+$bad_kind, }$(basename "$f")(kind=$kind in $subdir/)" ;;
-        *)     bad_kind="${bad_kind:+$bad_kind, }$(basename "$f")(kind=$kind)" ;;
-      esac
-
-      case "$approved" in
-        true) approved_count=$((approved_count + 1)) ;;
-      esac
-
-      # Dangling persona refs (stories only)
-      if [[ "$kind" == "story" && -f "$personas" ]]; then
-        local plist; plist=$(fm_get "$f" "personas")
-        # personas is a YAML inline list like [a, b]; strip brackets and split
-        plist="${plist#[}"; plist="${plist%]}"
-        local p
-        local IFS_OLD="$IFS"; IFS=','
-        for p in $plist; do
-          p="${p#"${p%%[![:space:]]*}"}"; p="${p%"${p##*[![:space:]]}"}"
-          [[ -z "$p" ]] && continue
-          if ! grep -qi "$p" "$personas"; then
-            dangling="${dangling:+$dangling, }$(basename "$f")→$p"
-          fi
-        done
-        IFS="$IFS_OLD"
+      [[ -n "$f" ]] || continue; frag_count=$((frag_count + 1))
+      kind=$(fm_get "$f" kind); caption=$(fm_get "$f" caption); reaction=$(_vision_fragment_reaction "$f")
+      if [[ -z "$kind" || -z "$caption" ]]; then malformed="${malformed:+$malformed, }$(basename "$f")"; continue; fi
+      if $legacy; then
+        subdir=$(basename "$(dirname "$f")")
+        case "$kind:$subdir" in story:stories|ui:ui|arch:arch) ;; *) invalid="${invalid:+$invalid, }$(basename "$f")(kind=$kind in $subdir/)" ;; esac
+      else
+        in_list "$kind" "strategy story flow ui arch prototype" || invalid="${invalid:+$invalid, }$(basename "$f")(kind=$kind)"
+        case "$reaction" in approved) approved_count=$((approved_count + 1)) ;; pending|revise) unresolved_count=$((unresolved_count + 1)) ;; rejected|superseded) ;; *) invalid="${invalid:+$invalid, }$(basename "$f")(reaction=$reaction)" ;; esac
       fi
     done < <(_vision_iter_fragments "$vdir")
 
-    doc_add "vision" "pass" "$vdir" "$frag_count fragment(s), $approved_count approved [$slug]"
+    doc_add "vision" "pass" "$vdir" "$frag_count fragment(s), $approved_count approved [$slug · $status]"
+    [[ -z "$malformed" ]] || doc_add "vision" "warning" "$vdir" "fragments missing kind/caption: $malformed" "fill required fragment frontmatter" "judgment"
+    [[ -z "$invalid" ]] || doc_add "vision" "warning" "$vdir" "invalid fragment kind, location, or reaction: $invalid" "use the Vision fragment contract" "judgment"
 
-    if [[ -n "$malformed" ]]; then
-      doc_add "vision" "warning" "$vdir" "fragments missing kind/caption/approved: $malformed" \
-        "fill the required frontmatter; see references/vision-rules.md" "judgment"
-    fi
-    if [[ -n "$bad_kind" ]]; then
-      doc_add "vision" "warning" "$vdir" "kind does not match subfolder: $bad_kind" \
-        "move the file to the matching subfolder, or fix its kind:" "judgment"
-    fi
-    if [[ -n "$dangling" ]]; then
-      doc_add "vision" "warning" "$vdir" "story personas not found in PERSONAS.md: $dangling" \
-        "add the persona to PERSONAS.md or correct the story's personas:" "judgment"
-    fi
+    local live_manifest fresh_manifest
+    live_manifest=$(awk '/^## Manifest$/{inside=1; next} inside && /^## /{exit} inside{print}' "$spine" | awk 'BEGIN{s=0}/./{s=1}s{print}')
+    fresh_manifest=$(_vision_manifest_lines "$vdir")
+    [[ "$live_manifest" == "$fresh_manifest" ]] || doc_add "vision" "warning" "$vdir" "spine manifest out of date (fragment state changed)" "regenerate the spine manifest" "mechanical"
 
-    # Manifest drift: compare the live manifest body to a freshly-computed one.
-    # This catches missing/extra fragments AND stale approved-state/captions — the
-    # manifest's whole job is to mirror current fragment state.
-    if [[ -f "$vdir/VISION.md" && $frag_count -gt 0 ]]; then
-      local live_manifest fresh_manifest
-      live_manifest=$(awk 'f{print} /^## Manifest$/{f=1}' "$vdir/VISION.md" | awk 'BEGIN{s=0}/./{s=1}s{print}')
-      fresh_manifest=$(_vision_manifest_lines "$vdir")
-      if [[ "$live_manifest" != "$fresh_manifest" ]]; then
-        doc_add "vision" "warning" "$vdir" "spine manifest out of date (fragment state changed)" \
-          "regenerate the spine manifest" "mechanical"
+    if ! $legacy; then
+      if [[ "$status" == proposed || "$status" == approved ]]; then
+        (( unresolved_count == 0 && approved_count > 0 )) || doc_add "vision" "warning" "$spine" "$status Vision has unresolved/no approved fragments" "resolve reactions before proposing or approving" "judgment"
+      fi
+      if [[ "$status" == approved ]]; then
+        [[ -n "$(fm_get "$spine" approved_by)" && -n "$(fm_get "$spine" approved_at)" ]] || doc_add "vision" "warning" "$spine" "approved Vision lacks approved_by/approved_at" "record explicit human approval provenance" "judgment"
+      fi
+      if [[ "$status" == rejected ]]; then
+        [[ -n "$(fm_get "$spine" rejected_by)" && -n "$(fm_get "$spine" rejection_reason)" ]] || doc_add "vision" "warning" "$spine" "rejected Vision lacks actor/reason" "record rejection provenance" "judgment"
       fi
     fi
+  done <<< "$candidates"
 
-    # Approval progress: active request but nothing reacted-to yet.
-    local req_status; req_status=$(fm_get "${req}PLAN.md" "status")
-    if [[ "$req_status" == "active" && $frag_count -gt 0 && $approved_count -eq 0 ]]; then
-      doc_add "vision" "info" "$vdir" "request active but no fragment approved yet — vision not reacted-to" \
-        "skip" "judgment"
-    fi
-  done
-
-  if ! $found_any; then
-    doc_add "vision" "info" "$SPEC_REQUESTS_DIR/" "no vision/ folders — opt-in via 'spectacular imagine <slug>'" \
-      "skip" "judgment"
-  fi
+  $found_any || doc_add "vision" "info" "$SPEC_VISIONS_DIR/" "no Vision workspaces — opt-in via 'spectacular imagine <slug>'" "skip" "judgment"
 }
 
 # ── check_policies (v1.12.0+) ────────────────────────────────────────────────
@@ -14947,10 +15053,10 @@ main() {
         "Review sweep — read-only audit of the request fleet: cross-checks each review/ticked-active request's claims vs code/tests/evidence via request-auditor subagents, quick-checks planned requests for overlap with shipped work, appends sweep entries to VERIFY-LOG, hands off via SESSION.md. Never promotes — feeds the verify walk." \
         "$@"
       ;;
-    # Feedback (v1.6.0+; renamed from feedback-loop in v1.19.0): canonical name
-    # + hidden aliases. `feedback-loop` is now a hidden alias too. Aliases are
-    # dispatched but NOT documented in --help per the contract.
-    feedback|feedback-loop|iterate|experiment|test|probe|try)
+    # Feedback (v1.6.0+; renamed from feedback-loop in v1.19.0): post-build
+    # learning. `experiment` is intentionally not an alias: route that word by
+    # uncertainty (research, spike, Vision prototype, or feedback).
+    feedback|feedback-loop|iterate|test|probe|try)
       shift; cmd_feedback_loop "$@"; exit $? ;;
     # Idea (v1.7.0+): thinking scratchpad.
     idea)
@@ -14984,15 +15090,12 @@ main() {
       shift; cmd_audit "$@"; exit $? ;;
     fix)
       shift; cmd_fix "$@"; exit $? ;;
-    # Imagine / vision (v1.15.0+): imagination-backed planning.
-    # `imagine <slug>` scaffolds the vision/ folder (mechanical), then the skill
-    # renders + derives. Bare `imagine` (no slug) is a skill verb. `vision add`
-    # is the mechanical fragment mutator.
+    # Imagine / Vision (v1.38.0+): pre-request direction discovery.
     imagine)
       shift
       if [[ $# -eq 0 ]]; then
         skill_verb_message "imagine" \
-          "Imagination-backed planning — render ASCII artifacts (stories/ui/arch), react per-fragment, then derive a draft PLAN. Generative-first; needs an LLM." \
+          "Pre-request direction discovery — Understand current reality, imagine proportional fragments, probe uncertainty, gather human reactions, confirm Vision, then derive a draft SPC." \
           "$@"
       else
         cmd_imagine "$@"; exit $?

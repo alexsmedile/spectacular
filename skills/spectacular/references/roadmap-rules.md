@@ -6,7 +6,7 @@ scope: project-wide
 template: templates/roadmap/base.md
 slots: [Status, Phase, Scope (in), Scope (out), Exit criteria, Linked requests]
 snapshot-on-edit: true
-summary: "Per-version scope + phase + exit criteria (per-block grill; 9-phase chain)"
+summary: "Per-version scope + phase + exit criteria (per-block grill; direction-validation discovery phase, legacy prototype accepted)"
 status: active
 ---
 
@@ -90,14 +90,14 @@ The skill uses these in the slot loop. One question per slot. Each version block
 **Slot 2 — Phase**
 > Where in the build pipeline is this version right now?
 >
-> Pick from the recommended 9-phase chain (see Phase taxonomy below):
-> `intent → discover → prototype → spec-refine → mvp → iterate → test → release-prep → release`
+> Pick from the recommended phase chain (see Phase taxonomy below):
+> `intent → discover → direction-validation → spec-refine → mvp → iterate → test → release-prep → release`
 >
-> Skipped phases recorded explicitly: `Phase: spec-refine (skipped: discover, prototype)`.
+> Skipped phases recorded explicitly: `Phase: spec-refine (skipped: discover, direction-validation)`.
 >
 > Optional alpha/beta/stable qualifier appended in parens: `Phase: mvp (alpha)`.
 >
-> *Example:* `Phase: spec-refine (skipped: prototype)` — discover happened, prototype was unnecessary, currently refining specs against discover findings.
+> *Example:* `Phase: spec-refine (skipped: direction-validation)` — discovery happened, human direction was already settled, and the contract is being refined.
 
 **Slot 2.5 — Outcome** *(required for `full` + `themed` tiers; absent for `vision`)*
 > What business or product outcome does this version move?
@@ -243,7 +243,7 @@ The `## Icebox` section at the end of `ROADMAP.md` holds ideas not yet tied to a
 
 The ritual is intentionally manual: promotion is a commitment, and the friction is the point.
 
-## Phase taxonomy (the 9-phase chain + 3 meta-phase aliases)
+## Phase taxonomy (direction-validation chain + 3 meta-phase aliases)
 
 Spectacular's recommended phase progression. Each version's `Phase:` field declares one current phase. Skipped phases recorded in parens. Skill recommends the next phase; never enforces.
 
@@ -251,13 +251,13 @@ The 9 specific phases group into 3 **meta-phases** that match Cagan's discovery-
 
 | Meta-phase | Specific phases | When to use which |
 |---|---|---|
-| `discover` | intent → discover → prototype | Coarse: "we're figuring it out" — pick when you don't know which specific sub-phase fits, or when reporting up to a non-technical audience |
+| `discover` | intent → discover → direction-validation | Coarse: "we're figuring it out" — pick when you don't know which specific sub-phase fits, or when reporting up to a non-technical audience |
 | `build` | spec-refine → mvp → iterate | Coarse: "we're building" — pick early in build before MVP boundary is clear |
 | `release` | test → release-prep → release | Coarse: "we're shipping" — pick when about to ship and the sub-phase doesn't matter for the audience |
 
 **Coexist rule:** `Phase: build` and `Phase: mvp` are both valid. Start coarse when uncertain; refine to the specific phase as work crystallizes. Example progression for a single version:
 - Early planning → `Phase: discover` (don't yet know if you're researching or prototyping)
-- Mid planning → `Phase: prototype` (specific — actively producing artifacts to validate decisions)
+- Mid discovery → `Phase: direction-validation` (specific — using Vision, prototypes, research, or spikes to settle direction)
 - Build start → `Phase: build` (specific MVP boundary unclear)
 - MVP shipped → `Phase: iterate` (specific — past MVP, refining)
 - Pre-release → `Phase: release` (specific phase doesn't matter; close to shipping)
@@ -270,7 +270,7 @@ The two styles never conflict — they're aliases. Gate check 8 (Phase valid) ac
 |---|---|---|---|---|
 | 1 | `intent` | discover | PRD exists; vision is set | No — given |
 | 2 | `discover` | discover | Interview user; surface scope/risks/options | Yes (when problem is well-known) |
-| 3 | `prototype` | discover | Produce artifact that validates a decision against real tooling or against the user — schema drafts, fake data, mock APIs, ASCII wireframes, interactive mocks, sample CLI output. **Artifact isn't the deliverable; the decision it informs is.** | Yes (often skipped for small features) |
+| 3 | `direction-validation` | discover | Resolve material direction uncertainty through approved Vision, human-reactable prototypes, research, or spikes. **Artifacts/evidence are inputs; the accepted direction is the outcome.** | Yes (skip when direction is already clear) |
 | 4 | `spec-refine` | build | Update PRD/SPEC/PLAN against discovery + prototype findings | No — locks the contract |
 | 5 | `mvp` | build | First shippable version of the feature/version | Sometimes (small features ship complete) |
 | 6 | `iterate` | build | Build out beyond MVP based on use feedback | Yes (one-shot features) |
@@ -280,9 +280,11 @@ The two styles never conflict — they're aliases. Gate check 8 (Phase valid) ac
 
 **Alpha/beta/stable** is a sub-axis qualifier appended in parens, not a separate field: `Phase: mvp (alpha)`, `Phase: release-prep (beta)`, `Phase: release (stable)`.
 
-**Skip notation:** `Phase: spec-refine (skipped: discover, prototype)`. Comma-separated. Multiple skips render in order.
+**Compatibility:** existing `Phase: prototype` values remain valid and mean the legacy form of `direction-validation`; new authoring uses `direction-validation`.
 
-**Grill heuristic for prototype:** ask "what decision will this prototype let you make?" — keeps the phase honest. If the user can't name the decision, the phase shouldn't be `prototype`.
+**Skip notation:** `Phase: spec-refine (skipped: discover, direction-validation)`. Comma-separated. Multiple skips render in order.
+
+**Grill heuristic for direction validation:** ask “what direction will this evidence or human reaction let you choose?” If no choice can change, skip the phase. A prototype is one optional artifact, not the phase itself.
 
 ## Mini-refine patterns
 
@@ -297,7 +299,7 @@ Applied inline by the grill after each slot answer.
 | Date in slot | 3, 4, or 5 | Slot text contains a date pattern (`YYYY-MM-DD`, `Q[1-4]`, `MMM YYYY`) | "Dates don't belong in ROADMAP slots — phase + scope is the contract, not the schedule. Remove the date or move it to a separate `Target ship:` note outside the version block." |
 | Empty scope-in for non-cancelled | 3 only | `Scope (in): []` but `Status:` is not `cancelled` | "Empty in-scope only makes sense when cancelled. Either name what ships or change Status to cancelled." |
 | Missing exit criterion | 5 only | Exit criteria has 0 items | "Every version needs at least one exit criterion — what makes this version 'done'? Cannot pass review gate without it." |
-| Prototype without decision named | 2 only | `Phase: prototype` set, but no comment or body section names the decision being validated | "Prototype phase active. What decision will this prototype let you make? Name it explicitly so the phase has a clear exit." |
+| Direction validation without choice named | 2 only | `Phase: direction-validation` (or legacy `prototype`) set, but no direction/decision is named | "Direction validation is active. What choice will the Vision, prototype, research, or spike let the human make? Name it explicitly." |
 | Phase skip without recommended-first phases | 2 only | Skipping `spec-refine` (declared as 'No — locks the contract' in the chain) | "`spec-refine` is non-skippable in the recommended chain — locking the contract is what makes the rest of the work focused. If you really want to skip, use `--force-skip` and add a one-line rationale." |
 
 ## Vibe → spec rewrite tables (refine mode)
@@ -338,7 +340,7 @@ Applied inline by the grill after each slot answer.
 | Vibe | Spec |
 |---|---|
 | "we're building it" | `Phase: mvp` (if first shippable) or `Phase: iterate` (if MVP shipped) |
-| "still figuring out" | `Phase: discover` (interviewing) or `Phase: prototype` (validating via artifact) |
+| "still figuring out" | `Phase: discover` (gathering context) or `Phase: direction-validation` (seeking evidence/human approval for a direction) |
 | "almost ready" | `Phase: test` or `Phase: release-prep` (be specific — test still in progress or release prep underway) |
 | "released" | `Phase: release (stable)` |
 | "beta" | `Phase: release (beta)` or `Phase: mvp (beta)` depending on whether iteration is still happening |
@@ -355,14 +357,14 @@ Applied inline by the grill after each slot answer.
 | 6a | Themed-tier has Themes + directional exit | themed | Themes (≥1 item) AND Exit criteria (≥1 item) — Scope-in/out NOT required |
 | 6b | Vision-tier has Direction | vision | Direction (free-text, ≥30 chars) — no scope or exit required |
 | 7 | Status is valid | all | Status value is one of `planned`, `active`, `shipped`, `cancelled`, `someday` |
-| 8 | Phase is valid | all | Phase value (stripping qualifier and skip-list) is one of the 9 specific phase values OR one of the 3 meta-phase aliases (`discover`, `build`, `release`). Both styles accepted; coexist per the "start coarse, refine later" rule. |
+| 8 | Phase is valid | all | Phase value (stripping qualifier and skip-list) is one of the specific phase values, legacy `prototype`, OR one of the 3 meta-phase aliases (`discover`, `build`, `release`). New authoring prefers `direction-validation`. |
 | 9 | Scope-in / Scope-out have no overlap | full | No item appears in both lists for the same version |
 | 10 | Non-cancelled full-tier has non-empty Scope (in) | full | If Status ≠ cancelled AND Tier = full, Scope (in) must have ≥1 item |
 | 11 | No vague-scope items in scope slots | full + themed | Slot 3 (Scope-in or Themes), Slot 4 (Scope-out, full only), Slot 5 (Exit criteria) contain none of the vague-scope blocklist |
 | 12 | No date patterns anywhere in themed/vision blocks | themed + vision | Scan entire block (not just scope/exit slots) for `YYYY-MM-DD`, `Q[1-4] YYYY`, or `MMM YYYY` date strings. Cagan's "#1 sin" — long-term tiers should not carry date commitments. Warning, not error. |
 | 12a | No date patterns in scope/exit slots | full | Original check, retained for full-tier blocks where dates are sometimes legitimate elsewhere (Exit criteria can name a launch date when scope is concrete) |
 | 13 | Vision-tier has no concrete commitments | vision | Direction slot contains no checklists, no numbered exit criteria — just paragraph prose |
-| 14 | Phase is consistent with Status | all | `Status: shipped` implies `Phase: release` (any qualifier); `Status: planned` implies Phase is one of `intent | discover | prototype | spec-refine` (or meta-phase `discover`); `Status: someday` implies `Tier: vision`; warn otherwise |
+| 14 | Phase is consistent with Status | all | `Status: shipped` implies `Phase: release` (any qualifier); `Status: planned` implies Phase is one of `intent | discover | direction-validation | prototype | spec-refine` (or meta-phase `discover`); `Status: someday` implies `Tier: vision`; warn otherwise |
 | 15 | Icebox items have no version tag | icebox | Items in `## Icebox` section don't reference specific versions (those should be vision-tier version blocks instead) |
 | 16 | Outcome required for full + themed | full + themed | Outcome slot is present and ≥1 sentence (~20+ chars). For vision tier, Outcome must be absent (Direction covers). Pichler/Torres/Cagan/Gilad convergent: the #1 missing slot. |
 | 17 | Full-tier row count in healthy range | all (counts full blocks) | Tiered warning based on number of `## v` blocks tagged `Tier: full`: ≤4 silent; 5-7 silent (sweet spot); 8-10 info "consider demoting older versions to themed tier"; 11+ warning "full-tier count high — likely roadmap-as-backlog anti-pattern (Cagan)". Never errors. |
@@ -409,9 +411,9 @@ roadmap:
     - publish
 ```
 
-When a pack is active and declares its own chain, the grill uses the pack's chain instead of the default 9-phase chain. Skip notation still works the same way.
+When a pack is active and declares its own chain, the grill uses the pack's chain instead of the default chain. Skip notation still works the same way.
 
-The bundled default chain is the 9-phase software chain. Most users never override.
+The bundled default is the software chain above. Most users never override it.
 
 ## Related
 

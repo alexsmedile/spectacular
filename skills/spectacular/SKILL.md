@@ -83,7 +83,7 @@ verb.
 | `spectacular question new\|list\|resolve` | → CLI verb; active human blockers live in `questions/`; see [[question-rules]] and [[canonical-ids]] |
 | `spectacular research new\|list\|resolve` | → CLI verb; read-only evidence discovery in `research/`; see [[research-rules]] |
 | `spectacular spike new\|list\|resolve` | → CLI verb; human-authorized feasibility discovery in `spikes/`; see [[spike-rules]] |
-| Choosing research vs spike vs prototype vs tracer bullet, or routing technical debt | → `references/discovery-protocol.md`; use the cheapest sufficient answer and avoid creating redundant nodes |
+| Choosing research vs spike vs Vision prototype vs tracer bullet, or routing an “experiment” | → `references/discovery-protocol.md`; route by the uncertainty and avoid redundant nodes |
 | Deciding what must stay current, may remain stale, should archive, or may be deleted | → `references/artifact-retention.md`; derive live/stale-safe/temporary/throwaway from entity, status, and path |
 | “Draft/create a new spec” / `/spectacular spec draft` | → [[intent-routing]] intent receipt, then `spectacular spec new`; see [[spec-lifecycle]]. Never infer a new SPC from nearby docs impact or repository context. |
 | `spectacular spec new\|list\|approve\|act\|implement\|deprecate\|archive` | → CLI verbs; `spec new` is mechanical only and assumes the user already chose the route and confirmed the summary. Evidence-gated lifecycle follows; `confirm` remains an alias for `approve`; see [[spec-lifecycle]], [[lifecycle-contract]], and [[canonical-ids]] |
@@ -168,7 +168,7 @@ Deciding *which store* a piece of knowledge goes in (fact? decision? question? r
 
 ### Feedback-loop mode (v1.6.0+)
 
-`feedback-loop` is a distinct skill mode for prototyping-stage human-feedback acquisition. **Not** a benchmark or verification pass.
+`feedback-loop` is a distinct mode for learning from built or prototyped behavior. **Not** pre-spec Vision approval, a benchmark, or verification pass. The word `experiment` routes through [[discovery-protocol]] instead of aliasing here.
 
 | User says / context | Route to |
 |---|---|
@@ -182,16 +182,17 @@ Deciding *which store* a piece of knowledge goes in (fact? decision? question? r
 
 Proactive-surfacing rules (three checkpoints only, never mid-flow) and the memory auto-promotion contract live in [[feedback-loop]] — loaded whenever the mode runs.
 
-### Imagine mode (v1.15.0+) — imagination-backed planning
+### Imagine + Vision (v1.38.0+) — pre-request direction
 
-`imagine` is a **generative-first** mode: render see-able ASCII artifacts the human reacts to per-fragment, then derive a draft PLAN from the approved vision. Full engine + v1 scope rules: [[imagine]]. Doc-type rules: [[vision-rules]].
+`imagine` is the **generative operation**; Vision is the durable result. The loop is Understand → Imagine → Probe → React → Confirm → Derive. It is opt-in, pre-request, and derives an approved Vision into a draft SPC—not PLAN. Full engine: [[imagine]]. Contract: [[vision-rules]].
 
 | User says / context | Route to |
 |---|---|
-| `spectacular imagine <slug>` (bare, in agent) | → `references/imagine.md` — run the render → react → derive loop |
-| `spectacular imagine <slug>` (CLI, with slug) | → CLI verb scaffolds `requests/<slug>/vision/` (mechanical), then hands to the skill |
-| `spectacular vision add <kind> <name> --slug <s>` | → CLI verb (mechanical fragment mutator); see [[vision-rules]] |
-| `spectacular vision grill\|refine\|review` | → generic engine via [[vision-rules]] (manual spine authoring — rare; `imagine` is the default) |
+| `spectacular imagine <slug>` (bare, in agent) | → [[imagine]] — ground, generate proportional fragments, gather reaction, confirm Vision |
+| `spectacular imagine <slug>` (CLI, with slug) | → scaffold `.spectacular/visions/<slug>/` without a request/SPC/PLAN precondition |
+| `spectacular vision list\|show\|add\|react\|propose\|approve\|reject` | → CLI mechanical Vision lifecycle; see [[vision-rules]] |
+| `spectacular vision derive <slug>` | → [[imagine]] Derive; require approved Vision and produce a draft SPC from approved fragments only |
+| `spectacular vision grill\|refine\|review` | → generic engine via [[vision-rules]] (manual spine authoring — rare) |
 | `spectacular doctor vision` | → `references/doctor.md` (vision area) |
 
 ### Pack-specific verbs (`pack` is the canonical doc-id since v1.19.0)

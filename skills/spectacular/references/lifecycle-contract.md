@@ -15,6 +15,7 @@ Actual code is the source of implemented behavior. Markdown specifications are e
 |---|---|---|---|---|
 | Root anchors | none | Snapshot before meaningful edit; review before accepting the unversioned file | File location + `version:` | Snapshots preserve history |
 | Idea | `parked → exploring → promoted` | Promotion is explicit | Idea entry | Promoted entry moves to `archive/ideas/` |
+| Vision | `draft → proposed → approved`, with `draft|proposed → rejected` | Proposal resolves every fragment and keeps ≥1 approved; whole-Vision approval/rejection requires explicit human provenance | `visions/<slug>/VISION.md` | Approved/rejected direction remains durable; approved may link `derived_to` a draft SPC |
 | Question | `open ↔ deferred → archived (from resolved)` | Deferral needs a reason; resolution records answer provenance before archive | QUE entry | `archive/questions/`; satisfied canonical dependency, excluded from active fog |
 | Research/spike | `open → running | deferred | completed` | Completion requires evidence and `result: supported | refuted | inconclusive` | RES/SPK entry | Completed records remain durable; inconclusive does not clear fog |
 | Decision | `verified → superseded` | User choice, unambiguous sourced user intent, or the narrow authorized AFK evidence gate | DEC entry | Immutable durable history |
@@ -29,7 +30,7 @@ Actual code is the source of implemented behavior. Markdown specifications are e
 | AFK run | `active → gated → active | completed | cancelled` | Scope, allowed actions, declared HITL gates, and approval to resume | AFK run entry | Durable authorization audit trail |
 | Release ledger | `candidate → planned → active → shipped`, or `candidate|planned|active → cancelled` | Human release planning | Roadmap ledger row | Shipped/cancelled history remains indexed |
 
-`PRT` and `TSK` are reserved identifiers only. They have no standalone collection or lifecycle until a concrete consumer is designed. Prototype artifacts inherit the lifecycle of their owning request, vision, feedback entry, or spike; tracer bullets use the approved specification/request lifecycle because their code is production code.
+`PRT` and `TSK` are reserved identifiers only. They have no standalone collection or lifecycle until a concrete consumer is designed. Prototype artifacts inherit the lifecycle of their owning Vision, feedback entry, request, or spike; tracer bullets use the approved specification/request lifecycle because their code is production code.
 
 Advanced engineering collections may be reserved at init with `--with findings,fixes,bugs,security,benchmarks`. `FND`, `BUG`, `SEC`, and `BMK` define future identity/path contracts only; they have no lifecycle, mutator, or autonomous behavior yet. `FIX` is the reserved padded successor to the active legacy `F<N>` verified-fix ledger. Activating it requires an explicitly confirmed migration. Empty optional folders therefore indicate capability intent, not implemented workflow.
 
@@ -65,7 +66,7 @@ The autonomous AFK exception requires all of: an active goal-scoped AFK run; per
 
 `status` records progress; `result` records learning. A completed, refuted experiment can satisfy the question it tested by ruling out a path. A completed inconclusive record remains fog and must link a narrower successor question, research record, or spike before dependents proceed.
 
-Discovery is progressive, not mandatory ceremony. Apply [[discovery-protocol]] before creating a node: inspect current code/tests/docs or ask the user directly when that is sufficient; research bounded facts; spike technical feasibility; attach prototypes only when human interaction is the evidence; execute a tracer bullet only from an approved `SPC` with `execution_mode: tracer`. Generic artifacts and technical debt do not receive standalone lifecycles.
+Discovery is progressive, not mandatory ceremony. Apply [[discovery-protocol]] before creating a node: inspect current code/tests/docs or ask the user directly when sufficient; research bounded facts; spike technical feasibility; use optional Vision when material direction benefits from human reaction; attach prototypes only when interaction is the evidence; execute a tracer bullet only from an approved `SPC` with `execution_mode: tracer`. Approved Vision may derive a draft SPC but never authorizes execution. Generic artifacts and technical debt do not receive standalone lifecycles.
 
 ## Retention and freshness
 
@@ -83,7 +84,7 @@ Documentation is a completion gate, not another lifecycle state. Pageworks owns 
 
 ## Compatibility and migration
 
-Legacy records and singular collection folders remain readable until an explicitly confirmed migration. Migration is preview-first and archive-first. Specification mappings are conservative:
+Legacy records and singular collection folders remain readable until an explicitly confirmed migration. Legacy `requests/<slug>/vision/` folders remain readable and diagnosable while new Vision workspaces write to `visions/<slug>/`; no automatic move rewrites human reaction history. Migration is preview-first and archive-first. Specification mappings are conservative:
 
 ```text
 draft                    → draft
@@ -92,7 +93,7 @@ stable/published/current → approved
 deprecated               → deprecated
 ```
 
-No legacy label becomes `implemented` without a user-supplied commit/build reference. Canonical folders are plural collections: `ideas/`, `questions/`, `research/`, `spikes/`, `decisions/`, `specs/`, `memories/`, `sessions/`, `feedbacks/`, `audits/`, `fixes/`, and `debugs/`. Optional advanced paths are `findings/`, `bugs/`, `security/` (singular domain name), and `benchmarks/`; `fixes/` is both an existing collection and part of that advanced init set.
+No legacy label becomes `implemented` without a user-supplied commit/build reference. Canonical folders are plural collections: `ideas/`, `visions/`, `questions/`, `research/`, `spikes/`, `decisions/`, `specs/`, `memories/`, `sessions/`, `feedbacks/`, `audits/`, `fixes/`, and `debugs/`. Optional advanced paths are `findings/`, `bugs/`, `security/` (singular domain name), and `benchmarks/`; `fixes/` is both an existing collection and part of that advanced init set.
 
 `spectacular collections migrate` previews singular-to-plural moves. `spectacular lifecycle migrate` previews conservative label mappings (`stable|published|current → approved`; statusless legacy memories → `active`). Both require `--apply --yes` and archive originals plus a mapping before mutation. Ambiguous `verified` discovery records are reported for result/evidence review and never guessed.
 

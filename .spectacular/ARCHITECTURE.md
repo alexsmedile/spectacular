@@ -38,6 +38,7 @@ This is distinct from `STACK.md` — STACK describes the **host project's** tech
 ├── memories/           # long-term operational learning — memories/index.md + M<N>-<slug>.md (v2.0 OKF)
 ├── sessions/           # work-session log — sessions/index.md + entries (v1.5.0+; v2.0 OKF)
 ├── ideas/              # parked inspiration — IDEA-NNN-<slug>.md
+├── visions/            # opt-in pre-request direction workspaces — VISION.md + fragments + evidence
 ├── requests/           # active and planned work
 ├── skills/             # project-specific reusable skills
 ├── feedbacks/          # prototyping-mode feedback entries (v1.6.0+; v2.0 OKF)
@@ -306,7 +307,7 @@ Spectacular keeps distinct typed Markdown collections so uncertainty is visible 
 - `decisions/` contains verified, evidence-backed architectural decisions (`DEC-NNN`), not unresolved preferences.
 - `specs/` contains feature specifications (`SPC-NNN`). Their evidence-gated lifecycle is defined by `skills/spectacular/references/lifecycle-contract.md`; only `approved` specs may seed execution requests, while code remains authoritative.
 
-Discovery is progressive, not mandatory. Inspect code/tests/docs or ask directly first; create `RES` for a bounded fact gap, `SPK` for technical feasibility, and a request/vision/feedback-owned prototype only when human interaction is the evidence. `PRT` stays reserved. A tracer bullet is an approved `SPC` with `execution_mode: tracer`: a thin, production-quality vertical slice that is retained and extended, never throwaway discovery code. “Artifact” names an output owned by one of these records or a request, not an `ART` entity or catch-all database.
+Discovery is progressive, not mandatory. Inspect code/tests/docs or ask directly first; create `RES` for a bounded fact gap, `SPK` for technical feasibility, and a Vision-owned prototype fragment when human reaction to a possible experience is the evidence. Post-build feedback may own a prototype used to evaluate something already shipped. `PRT` stays reserved. A tracer bullet is an approved `SPC` with `execution_mode: tracer`: a thin, production-quality vertical slice that is retained and extended, never throwaway discovery code. “Artifact” names an output owned by one of these records or a request, not an `ART` entity or catch-all database.
 
 Technical debt also has no parallel database. Put in-scope remediation in request tasks, likely near-term work in a roadmap `candidate` with `tbd`, uncommitted possibilities in `ideas/`, and deliberate compromises in a decision linked to the cleanup owner. A production mock is routed this way; a spike/prototype mock is disposable evidence. See `skills/spectacular/references/discovery-protocol.md`.
 
@@ -395,11 +396,6 @@ requests/add-team-billing/
 ├── SESSION.md          # created when request moves to active
 ├── RISKS.md            # proposed by skill for high-risk requests
 ├── VERIFY.md           # proposed by skill for user-visible or high-stakes changes
-├── vision/             # imagination-backed planning artifact (v1.15.0+; created by `spectacular imagine`, not `new`)
-│   ├── VISION.md       #   spine — narrative + regenerable fragment manifest
-│   ├── stories/        #   one user story per file
-│   ├── ui/             #   one ASCII UI/output mockup per file
-│   └── arch/           #   one ASCII architecture sketch per file
 ├── feedback/           # request-scoped feedback-loop entries (v1.6.0+; see references/feedback-loop.md)
 ├── specs/              # per-request capability specs (track own frontmatter state)
 └── artifacts/
@@ -513,27 +509,38 @@ Distinct from PLAN.md and TASKS.md:
 
 Contains (when scaffolded): step-by-step manual QA checklist, specific edge cases, regression checklist, rollback validation.
 
-## vision/ (on demand — imagination-backed planning, v1.15.0+)
+## visions/ (on demand — pre-request direction approval)
 
-**On-demand only.** Created by `spectacular imagine <slug>`, never by `spectacular new`. A `vision/` folder is the **divergent** counterpart to PLAN's convergence: where PLAN decomposes a *decided* thing into milestones, a vision **imagines the built thing concretely** — renders see-able ASCII artifacts the human reacts to *before* milestones exist.
+**Opt-in and pre-request.** `spectacular imagine <slug>` creates a bounded
+`.spectacular/visions/<slug>/` workspace only when product, interaction, or
+experience uncertainty benefits from something a human can react to. It never
+creates a request or PLAN.
 
-This is Spectacular's second planning axis: spec-driven **and imagination-backed**. The `imagine` mode renders artifacts, the human reacts per-fragment, and the skill **derives a draft PLAN from the approved vision** — so the spec is accountable to what the human approved, not authored in a vacuum. Full rules: [`references/vision-rules.md`](../../skills/spectacular/references/vision-rules.md).
-
-**Structure — spine + typed subfolders** (an `index`-mode soft-folder, like memory/sessions/ideas, but the index is a narrative *spine*):
-
-```
-vision/
-├── VISION.md      # spine — end-goal, macro dev phases, flow walk + regenerable manifest
-├── stories/       # one user story per file (As a … I want … so that …)
-├── ui/            # one ASCII UI/output mockup per file
-└── arch/          # one ASCII architecture sketch per file
+```text
+visions/<slug>/
+├── VISION.md       # intent, north star, understanding, chosen direction, approval
+├── fragments/      # strategy/story/flow/ui/arch/prototype proposals
+└── evidence/       # research, spike conclusions, screenshots, recordings, notes
 ```
 
-Fragment kind = subfolder (no `kind:`-based routing). Each fragment carries `approved: pending|true|false` frontmatter — the per-fragment human reaction. The derivation step reads only `approved: true` fragments as load-bearing.
+Imagine is the generative operation; Vision is the durable decision artifact.
+The loop is `Understand → Imagine → Probe → React → Confirm → Derive`.
+Fragments carry an explicit human reaction (`pending`, `approved`, `revise`,
+`rejected`, or `superseded`). A Vision moves `draft → proposed → approved`
+(or to `rejected`) only after the chosen direction and fragment dispositions
+form a coherent whole. Whole-Vision approval records actor and date and permits
+derivation of a **draft SPC only**. The approved SPC later creates a request and
+PLAN through the normal execution gate.
 
-**Lifecycle fit:** `idea/brief → imagine → vision/ + draft PLAN → PLAN (grill/review) → active`. The `vision/` folder becomes **read-only context** once PLAN exists (it explains *why behind the shape*); it never owns lifecycle state. `snapshot-on-edit: false` — fragments are scratch-that-graduates.
+A prototype is one possible Vision fragment, not a parallel entity or required
+roadmap phase. A spike contributes technical feasibility evidence
+(`supported|refuted|inconclusive`) but never approves product direction.
+Non-visual work can use strategy, story, flow, or architecture fragments; fully
+specified backend and maintenance work should skip Vision entirely.
 
-**v1 scope:** request-level only, Build-only derivation. Compare/reconcile (diff an existing spec against a vision) and the project altitude (`imagine` near PRD) are deferred to v2 — the latter gated on the PRD-Vision-slot overlap.
+Legacy `requests/<slug>/vision/` folders remain readable and diagnosable. New
+writes use `visions/<slug>/`; no automatic migration rewrites historical human
+reactions. Full rules: [`references/vision-rules.md`](../../skills/spectacular/references/vision-rules.md).
 
 ---
 

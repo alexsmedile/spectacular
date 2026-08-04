@@ -28,11 +28,15 @@ related:
     vision  — Status, Direction (free-text paragraph)
               Use for long-term + speculative
 
-  Phase taxonomy (recommended 9-phase chain + 3 meta-phase aliases):
-    Specific:   intent → discover → prototype → spec-refine → mvp → iterate
+  Phase taxonomy (recommended direction-validation chain + 3 meta-phase aliases):
+    Specific:   intent → discover → direction-validation → spec-refine → mvp → iterate
                 → test → release-prep → release
-    Meta:       discover (intent/discover/prototype) | build (spec-refine/mvp/iterate)
+    Meta:       discover (intent/discover/direction-validation) | build (spec-refine/mvp/iterate)
                 | release (test/release-prep/release)
+
+  `prototype` remains accepted as a legacy phase value. New roadmaps use
+  `direction-validation`; any prototype is evidence inside that phase, not a
+  second lifecycle beside Vision.
 
   Both styles accepted in frontmatter. Start coarse, refine to specific phase
   as work crystallizes. Skill recommends next phase; user can skip with reason.

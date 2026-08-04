@@ -70,6 +70,21 @@ parked ──(start shaping)──► exploring ──(promote)──► promote
 - **`exploring`** — actively thinking; questions, evidence, alternatives, and a working plan may be filled in. Doctor flags this state if `updated:` is >90 days old (decide: promote, demote to parked, or delete).
 - **`promoted`** — was explicitly handed to a request, roadmap Icebox, or existing shared destination. File should live in `archive/ideas/<slug>.md`, not `.spectacular/ideas/`. Doctor flags promoted entries still in the live folder as orphans.
 
+## Shaping versus promotion
+
+An idea is cheap capture. Before promotion, decide whether the destination is
+accepted:
+
+- unsettled product/experience/system direction → start a pre-request Vision and
+  keep the idea as its origin link;
+- accepted consequential behavior/contract → draft and approve an SPC, then
+  create its request;
+- accepted bounded execution destination → direct request promotion remains a
+  compatibility route.
+
+Vision approval does not itself promote or archive the idea. After the derived
+SPC/request is accepted, record `promoted_to` and archive explicitly.
+
 ## Explicit handoff destinations
 
 Choose the destination from uncertainty, visibility, cross-repo scope, commitment, and sensitivity:
@@ -118,7 +133,10 @@ No `--fix` because every finding requires a human decision (promote? demote? del
 
 ## Aliases
 
-None in v1.7.0. The word "idea" is short enough and the verb surface clear enough that hidden routing isn't warranted (unlike feedback-loop's `iterate|experiment|test|probe|try`).
+None in v1.7.0. The word "idea" is short enough and the verb surface clear
+enough that hidden routing isn't warranted. Feedback-loop retains
+`iterate|test|probe|try`; ambiguous `experiment` routes through
+[[discovery-protocol]].
 
 ## What this is **not**
 
@@ -126,5 +144,6 @@ None in v1.7.0. The word "idea" is short enough and the verb surface clear enoug
 - **Not memory.** MEMORY.md is for durable preferences and decisions. Ideas are *speculative* — they may never matter again.
 - **Not a backlog.** ROADMAP.md's `## Icebox` section is the local project-priority surface. Ideas have no version, no scope commitment, and no exit criteria; prefer direct Icebox capture when that is already the intended home.
 - **Not feedback.** Feedback entries answer "was that the right thing to ship?" — they're tied to something already built. Ideas are pre-commitment scratchpad for things that *might* get built.
+- **Not Vision.** An idea captures a maybe. Vision is the structured, human-reactable process for choosing a direction before specification.
 
 **Related:** [[new-request]] (promotion flow), [[archive]] (where promoted ideas land), [[doc-index]], [[scaffold-reference]], [[roadmap-rules]] (icebox vs ideas), [[memory-rules]] (durable vs speculative), [[feedback-rules]] (post-ship vs pre-commit).

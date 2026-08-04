@@ -8,6 +8,10 @@ docs_impact: pending
 summary: "<one-sentence description of what this request changes>"
 related:
   - PRD.md
+# Optional traffic evidence; omit until it is confirmed and complete.
+# conflicts-with: [<request-slug>]
+# traffic-boundaries: [<named, complete launch boundary>]
+# release-constraints: [<shared release or migration constraint>]
 ---
 
 # Plan — <Request Title>

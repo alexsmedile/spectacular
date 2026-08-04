@@ -599,10 +599,34 @@ Read-only inspection verbs that collapse multi-step agent workflows into one det
 | `show <doctype>` | Dump a canonical doc (prd, spec, principles…) |
 | `progress <slug>` | Milestone tick rate |
 | `links [<slug>]` | Cross-request link graph |
+| `traffic preflight <slug>` | Time-bound local request traffic assessment |
 | `paths` | Conventional paths as JSON |
 | `roadmap` | Build-id ledger + version mapping |
 
 Cold-start pattern: `summary → request list --active → request <slug>`. When implementing, continue with `request <slug> --brief`; use `--full` only for review/debugging.
+
+### `spectacular traffic preflight`
+
+Classifies one live request against another live request, or all other live requests,
+using only durable PLAN frontmatter. It is local-first and read-only: no scheduler,
+no request mutation, and no GitHub authentication are involved. Each result is stamped
+with the assessment date and should be recalculated after relationship evidence changes.
+
+```text
+spectacular traffic preflight payments --against schema-migration
+spectacular traffic preflight payments --json
+```
+
+| State | Durable evidence |
+|---|---|
+| `serialized` | `depends-on:`, `blocks:`, `conflicts-with:`, or a shared `release-constraints:` value |
+| `conditional` | Cross-request `related:` link or shared `traffic-boundaries:` value |
+| `parallel` | Both requests declare complete, disjoint `traffic-boundaries:` lists |
+| `unknown` | Insufficient durable evidence; never infer file-level safety |
+
+Record confirmed relationships in the owning PLAN frontmatter. `conflicts-with:` is
+also rendered by `spectacular links`; branch and PR information is optional, read-only
+evidence outside this local command.
 
 ### `spectacular prd` / `spectacular prd grill`
 

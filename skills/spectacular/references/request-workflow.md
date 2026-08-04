@@ -27,9 +27,29 @@ spectacular request <slug> --brief [-m2]
 spectacular request <slug> --full
 spectacular request advance <slug>
 spectacular request archive <slug>
+spectacular traffic preflight <slug> [--against <slug>] [--json]
 ```
 
 The older top-level forms (`new`, `requests`, `advance`, `archive`, `progress`) remain compatibility aliases.
+
+## Request traffic preflight
+
+`spectacular traffic preflight` is a local, read-only launch assessment. It reuses
+SPC-003 / DEC-021's four outcomes: `parallel`, `conditional`, `serialized`, and
+`unknown`; it neither schedules work nor changes lifecycle state. The result is
+explicitly assessed as of the invocation date and must be rerun when evidence changes.
+
+The only inputs are durable PLAN frontmatter declarations. `depends-on:`, `blocks:`,
+and `conflicts-with:` serialize. A shared `release-constraints:` entry serializes
+because the release or migration boundary is shared. A cross-request `related:` link
+or shared `traffic-boundaries:` entry is conditional. `parallel` requires both
+requests to declare complete `traffic-boundaries:` lists and for those named sets to
+be disjoint. Anything else—including absent declarations—is `unknown`, never an
+inference about file-level safety.
+
+Record a confirmed relationship in the requests' own PLAN files, then rerun. The
+preflight does not rewrite either request; GitHub branch/PR evidence remains optional
+and is not required for the local result.
 
 Agentic document operations are verb-first: `/spectacular grill <doc> [target]`, `/spectacular refine ...`, and `/spectacular review ...`. Document-first forms remain aliases. Before changing anything, print the resolved document and target.
 

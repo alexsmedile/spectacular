@@ -274,6 +274,7 @@ Read verbs (v1.8.0+ — collapse multi-step inspection to one call):
   roadmap                Build-id ledger + version mapping
   policy [@hook|<id>]    Policies for a work-phase hook (--principle N, --full, --json)
   links [<slug>]         Cross-request link graph (--json, --all)
+  traffic preflight <slug>  Conservative local request-traffic assessment
 
 Skill verbs (run via /spectacular in your AI agent):
   act <SPC-ID>           Gate, activate, compile brief, initialize native plan, implement
@@ -6095,9 +6096,143 @@ EOF
   fi
 }
 
+# ── cmd_traffic ───────────────────────────────────────────────────────────────
+# Local, evidence-only request traffic assessment.  It does not inspect files,
+# branches, PRs, or working-tree state, and it never writes request metadata.
+# Durable declarations are the input; the date-stamped conclusion is deliberately
+# recalculated on each call rather than persisted as stale coordination state.
+cmd_traffic() {
+  local action="${1:-}"
+  [[ "$action" == "preflight" ]] || die "Usage: spectacular traffic preflight <request> [--against <request>] [--json]"
+  shift
+
+  local slug="" against="" json=false
+  while (( $# > 0 )); do
+    case "$1" in
+      --against) require_value "$1" "${2:-}"; against="$2"; shift 2 ;;
+      --json) json=true; shift ;;
+      --help|-h)
+        cat <<'EOF'
+Usage: spectacular traffic preflight <request> [--against <request>] [--json]
+
+Classify local request traffic using only durable PLAN.md frontmatter:
+  serialized   declared depends-on:/blocks:/conflicts-with:, or a shared
+               release-constraints: entry
+  conditional  related: request link or a shared traffic-boundaries: entry
+  parallel     both requests declare traffic-boundaries: and the named sets are
+               disjoint
+  unknown      insufficient durable evidence (the conservative default)
+
+The output is assessed as of today from the local workspace. It is read-only:
+record confirmed relationships in the relevant PLAN.md frontmatter, then rerun.
+EOF
+        exit 0 ;;
+      -*) die "Unknown flag for traffic preflight: $1" ;;
+      *) [[ -z "$slug" ]] || die "traffic preflight: only one <request> argument allowed"; slug="$1"; shift ;;
+    esac
+  done
+
+  [[ -n "$slug" ]] || die "traffic preflight: <request> argument required"
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "traffic: not inside a Spectacular workspace"
+  local plan="$SPEC_REQUESTS_DIR/$slug/PLAN.md"
+  [[ -f "$plan" ]] || die "traffic preflight: '$slug' is not a live request"
+  if [[ -n "$against" ]]; then
+    [[ "$against" != "$slug" ]] || die "traffic preflight: --against must name another request"
+    [[ -f "$SPEC_REQUESTS_DIR/$against/PLAN.md" ]] || die "traffic preflight: '$against' is not a live request"
+  fi
+
+  _traffic_has_field() {
+    local file="$1" field="$2"
+    awk -v fld="$field" '
+      /^---$/ { fm++; if (fm > 1) exit; next }
+      fm == 1 && $0 ~ "^" fld ":" { found=1; exit }
+      END { exit !found }
+    ' "$file"
+  }
+  _traffic_values() {
+    local file="$1" field="$2"
+    awk -v fld="$field" '
+      /^---$/ { fm++; if (fm > 1) exit; next }
+      fm != 1 { next }
+      found && /^[a-zA-Z]/ { exit }
+      found && /^[[:space:]]*-[[:space:]]+/ {
+        value=$0; sub(/^[[:space:]]*-[[:space:]]+/, "", value)
+        gsub(/^"|"$/, "", value); gsub(/[[:space:]]+$/, "", value)
+        if (value != "") print value
+      }
+      $0 ~ "^" fld ":" { found=1 }
+    ' "$file"
+  }
+  _traffic_contains() {
+    local file="$1" field="$2" wanted="$3" value
+    while IFS= read -r value; do [[ "$value" == "$wanted" ]] && return 0; done < <(_traffic_values "$file" "$field")
+    return 1
+  }
+  _traffic_shared_value() {
+    local left="$1" right="$2" field="$3" value
+    while IFS= read -r value; do _traffic_contains "$right" "$field" "$value" && { echo "$value"; return 0; }; done < <(_traffic_values "$left" "$field")
+    return 1
+  }
+  _traffic_state() {
+    local other="$1" other_plan="" shared=""
+    other_plan="$SPEC_REQUESTS_DIR/$other/PLAN.md"
+    if _traffic_contains "$plan" "depends-on" "$other" || _traffic_contains "$plan" "blocks" "$other" || \
+       _traffic_contains "$other_plan" "depends-on" "$slug" || _traffic_contains "$other_plan" "blocks" "$slug" || \
+       _traffic_contains "$plan" "conflicts-with" "$other" || _traffic_contains "$other_plan" "conflicts-with" "$slug"; then
+      echo "serialized|declared dependency or conflict"; return
+    fi
+    shared=$(_traffic_shared_value "$plan" "$other_plan" "release-constraints" || true)
+    if [[ -n "$shared" ]]; then echo "serialized|shared release constraint: $shared"; return; fi
+    if _traffic_contains "$plan" "related" "$other" || _traffic_contains "$other_plan" "related" "$slug"; then
+      echo "conditional|declared cross-request link"; return
+    fi
+    shared=$(_traffic_shared_value "$plan" "$other_plan" "traffic-boundaries" || true)
+    if [[ -n "$shared" ]]; then echo "conditional|shared boundary: $shared"; return; fi
+    if _traffic_has_field "$plan" "traffic-boundaries" && _traffic_has_field "$other_plan" "traffic-boundaries"; then
+      echo "parallel|complete, disjoint named boundaries"; return
+    fi
+    echo "unknown|insufficient durable traffic evidence"
+  }
+
+  local -a peers=()
+  local dir peer result state reason assessed
+  if [[ -n "$against" ]]; then
+    peers=("$against")
+  else
+    shopt -s nullglob
+    for dir in "$SPEC_REQUESTS_DIR"/*/; do
+      peer="$(basename "$dir")"; [[ "$peer" == "$slug" ]] || peers+=("$peer")
+    done
+    shopt -u nullglob
+  fi
+  assessed=$(date +%F)
+
+  if $json; then
+    printf '{"request":"%s","assessed_at":"%s","evidence":"local durable PLAN.md frontmatter","assessments":[' "$(_json_escape "$slug")" "$assessed"
+    local first=true
+    for peer in "${peers[@]}"; do
+      result=$(_traffic_state "$peer"); state=${result%%|*}; reason=${result#*|}
+      $first && first=false || printf ','
+      printf '{"against":"%s","state":"%s","reason":"%s"}' "$(_json_escape "$peer")" "$state" "$(_json_escape "$reason")"
+    done
+    printf ']}\n'
+    return 0
+  fi
+
+  printf 'Traffic preflight: %s (assessed %s; local durable evidence only)\n' "$slug" "$assessed"
+  if [[ ${#peers[@]} -eq 0 ]]; then
+    echo "  unknown — no other live request supplied for comparison"
+    return 0
+  fi
+  for peer in "${peers[@]}"; do
+    result=$(_traffic_state "$peer"); state=${result%%|*}; reason=${result#*|}
+    printf '  %-11s %-30s %s\n' "$state" "$peer" "$reason"
+  done
+}
+
 # ── cmd_links ─────────────────────────────────────────────────────────────────
 # Build and display the cross-request link graph (v1.16.0+).
-# Forward edges come from depends-on:/blocks:/related: in each PLAN.md.
+# Forward edges come from depends-on:/blocks:/related:/conflicts-with: in each PLAN.md.
 # Inverse edges (required-by:, blocked-by:) are computed at read time — never
 # stored. Use --all to include unlinked requests; default shows only those with
 # at least one edge. Use <slug> to show one request's edges only.
@@ -6121,6 +6256,7 @@ Forward declarations live in each PLAN.md frontmatter:
   related:     touches (symmetric)
   depends-on:  A cannot ship before B  → B gains required-by: A
   blocks:      A must ship before B    → B gains blocked-by:  A
+  conflicts-with: incompatible launch scope (serialized)
 EOF
         exit 0 ;;
       -*) die "Unknown flag for links: $1" ;;
@@ -6182,7 +6318,7 @@ EOF
   shopt -u nullglob
 
   # ── 2. Build graph via temp files (bash 3.2 compatible) ───────────────────
-  # Temp dir: one file per edge type per slug: <dir>/slug.dep, slug.blk, slug.rel
+  # Temp dir: one file per edge type per slug: <dir>/slug.dep, slug.blk, slug.rel, slug.cfl
   # related: entries that contain '/' or '.md' are file refs, not slug refs —
   # skip them (legacy field; depends-on: and blocks: carry the slug edges)
   local _graph_dir
@@ -6191,10 +6327,11 @@ EOF
   for _s in ${active_slugs[@]+"${active_slugs[@]}"}; do
     local _plan="$SPEC_REQUESTS_DIR/$_s/PLAN.md"
     [[ -f "$_plan" ]] || continue
-    local _deps _blks _rels_raw
+    local _deps _blks _rels_raw _conflicts
     _deps=$(_links_parse_list "$_plan" "depends-on")
     _blks=$(_links_parse_list "$_plan" "blocks")
     _rels_raw=$(_links_parse_list "$_plan" "related")
+    _conflicts=$(_links_parse_list "$_plan" "conflicts-with")
     # Filter related: to slug-only entries (no '/' and not ending in .md)
     local _rels=""
     if [[ -n "$_rels_raw" ]]; then
@@ -6207,6 +6344,7 @@ EOF
     [[ -n "$_deps" ]] && printf '%s\n' "$_deps" > "$_graph_dir/$_s.dep"
     [[ -n "$_blks" ]] && printf '%s\n' "$_blks" > "$_graph_dir/$_s.blk"
     [[ -n "$_rels" ]] && printf '%s\n' "$_rels" > "$_graph_dir/$_s.rel"
+    [[ -n "$_conflicts" ]] && printf '%s\n' "$_conflicts" > "$_graph_dir/$_s.cfl"
   done
 
   # ── 3. Compute inverses ────────────────────────────────────────────────────
@@ -6233,6 +6371,7 @@ EOF
     [[ -f "$_graph_dir/$t.dep"    ]] && return 0
     [[ -f "$_graph_dir/$t.blk"    ]] && return 0
     [[ -f "$_graph_dir/$t.rel"    ]] && return 0
+    [[ -f "$_graph_dir/$t.cfl"    ]] && return 0
     [[ -f "$_graph_dir/$t.req_by" ]] && return 0
     [[ -f "$_graph_dir/$t.blk_by" ]] && return 0
     return 1
@@ -6264,11 +6403,12 @@ EOF
       printf '{"slug":"%s"' "$(_json_escape "$_s")"
 
       local _field _ftype
-      for _ftype in dep blk rel; do
+      for _ftype in dep blk rel cfl; do
         case "$_ftype" in
           dep) _field="depends_on" ;;
           blk) _field="blocks"     ;;
           rel) _field="related"    ;;
+          cfl) _field="conflicts_with" ;;
         esac
         printf ',"%s":[' "$_field"
         local _fe=true
@@ -6308,7 +6448,7 @@ EOF
 
   # ── 7. Text output ─────────────────────────────────────────────────────────
   if [[ ${#render_slugs[@]} -eq 0 ]]; then
-    info "No cross-request links declared yet. Add depends-on:/blocks:/related: to a PLAN.md."
+    info "No cross-request links declared yet. Add depends-on:/blocks:/related:/conflicts-with: to a PLAN.md."
     rm -rf "$_graph_dir"
     return 0
   fi
@@ -6334,6 +6474,12 @@ EOF
         [[ -z "$_t" ]] && continue
         printf "  related:     %s%s\n" "$_t" "$(_links_suffix "$_t")"
       done < "$_graph_dir/$_s.rel"
+    fi
+    if [[ -f "$_graph_dir/$_s.cfl" ]]; then
+      while IFS= read -r _t; do
+        [[ -z "$_t" ]] && continue
+        printf "  conflicts-with: %s%s\n" "$_t" "$(_links_suffix "$_t")"
+      done < "$_graph_dir/$_s.cfl"
     fi
     if [[ -f "$_graph_dir/$_s.req_by" ]]; then
       while IFS= read -r _t; do
@@ -11852,10 +11998,11 @@ check_links() {
       fi
       $in_fm || continue
 
-      # Detect which list field we're in (related:, depends-on:, blocks:)
+      # Detect which list field we're in (related:, depends-on:, blocks:, conflicts-with:)
       if [[ "$line" =~ ^related: ]];    then cur_field="related";    continue; fi
       if [[ "$line" =~ ^depends-on: ]]; then cur_field="depends-on"; continue; fi
       if [[ "$line" =~ ^blocks: ]];     then cur_field="blocks";     continue; fi
+      if [[ "$line" =~ ^conflicts-with: ]]; then cur_field="conflicts-with"; continue; fi
       # Exit current field on next top-level key
       if [[ -n "$cur_field" ]] && [[ "$line" =~ ^[a-zA-Z] ]]; then cur_field=""; fi
 
@@ -11867,7 +12014,7 @@ check_links() {
         target="$(echo "$target" | xargs)"
         [[ -z "$target" ]] && continue
 
-        if [[ "$cur_field" == "depends-on" ]] || [[ "$cur_field" == "blocks" ]]; then
+        if [[ "$cur_field" == "depends-on" ]] || [[ "$cur_field" == "blocks" ]] || [[ "$cur_field" == "conflicts-with" ]]; then
           # These fields only accept slugs
           _cl_check_slug "$target" "$f" "$cur_field"
         else
@@ -11895,7 +12042,7 @@ check_links() {
   shopt -u nullglob
 
   if ! echo "$DOC_FINDINGS" | grep -q "^links|warning"; then
-    doc_add "links" "pass" "$SPEC_WORKSPACE_DIR/" "all related:/depends-on:/blocks: targets resolve"
+    doc_add "links" "pass" "$SPEC_WORKSPACE_DIR/" "all related:/depends-on:/blocks:/conflicts-with: targets resolve"
   fi
 }
 
@@ -14818,6 +14965,7 @@ main() {
     sessions)   shift; cmd_sessions "$@";   exit $? ;;
     request)    shift; cmd_request "$@";    exit $? ;;
     links)      shift; cmd_links "$@";      exit $? ;;
+    traffic)    shift; cmd_traffic "$@";    exit $? ;;
     decision)   shift; cmd_decision "$@";   exit $? ;;
     memory)     shift; cmd_memory "$@";     exit $? ;;
     show)       shift; cmd_show "$@";       exit $? ;;

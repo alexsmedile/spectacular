@@ -1,7 +1,10 @@
 ---
 title: Visual Conventions
 description: "ASCII rendering conventions for Spectacular's visual layer — progress bars, summary dashboard, roadmap arc, and app-UI mockup blocks."
-updated: 2026-06-07
+section: guides
+type: reference
+status: stable
+updated: 2026-08-04
 ---
 
 # Visual Conventions
@@ -96,6 +99,8 @@ Bar width is 10 fill characters; each status row is omitted when its count is 0.
 | `themed` | Major (mid-term) | Themed, mid-term |
 | `vision` | Vision (future) | Direction only, no schedule |
 
+> **Note**: The roadmap precision tier `vision` refers exclusively to unscheduled long-term roadmap direction and is distinct from pre-request Vision direction workspaces (`.spectacular/visions/<slug>/`).
+
 **Status indicators:** `✓` shipped · `▶` active · `·` planned
 
 Shipped versions are hidden by default. Use `--all` to include them.
@@ -132,7 +137,7 @@ A mockup block is a fenced code block with language tag `mockup`:
 
 ### Real example — visual-layer workspace progress view
 
-This mockup lives in `.spectacular/requests/visual-layer/vision/ui/dashboard.md` (the approved vision fragment). Reproduced here as the canonical format reference:
+This mockup lives in `.spectacular/visions/visual-layer/fragments/dashboard.md` (the approved UI fragment). Reproduced here as the canonical format reference:
 
 ````
 ```mockup
@@ -157,7 +162,7 @@ This mockup lives in `.spectacular/requests/visual-layer/vision/ui/dashboard.md`
 ### When to use
 
 - In a request `PLAN.md § Validation` or `specs/<capability>.md` to sketch the expected output of a new CLI verb or surface
-- As a vision fragment (`vision/ui/<name>.md`) during `spectacular imagine` — the render→react→derive loop uses these as artifacts for human approval
+- As an optional UI fragment (`visions/<slug>/fragments/<name>.md`) during `spectacular imagine` — ASCII UI (`kind: ui`) is one optional fragment type alongside `strategy`, `story`, `flow`, `arch`, and `prototype`.
 - Never in `CHANGELOG.md` or `README.md` — those are prose documents, not spec artifacts
 
 ---

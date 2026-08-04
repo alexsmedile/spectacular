@@ -22,9 +22,16 @@ sections:
     pages: []      # commands.md / configuration.md / scaffold.md sit in extras for now;
                    # move into reference/ when content's been split per-topic
 
+  - id: reviews
+    title: Reviews
+    order: 4
+    pages:
+      - reviews/fable-spec-quality-review
+
 # Top-level entries (current flat-tree state — pages live at docs/<slug>.md, no section folder)
 # These get sorted into sections as content matures.
 extras:
+  - installation
   - workflow
   - commands
   - integrations

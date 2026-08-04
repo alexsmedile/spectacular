@@ -330,11 +330,11 @@ Cross-references always persist canonical IDs, even when users speak in aliases 
 
 Readiness is derived from canonical dependencies. Unresolved records form the **fog**; dependency-ready records form the **frontier**. The sequencer rejects invalid graphs and uses strict dependency-first topological order. `wayfind next` ranks explicit priority first, then uncertainty: user-input question, spike, research, other question, specification. Strong dependency language across PRD, roadmap, plans, and specs produces advisory doctor findings only; explicit frontmatter remains authoritative and is never silently rewritten.
 
-# Ideas layer
+# Ideas compatibility layer
 
-A **pre-commitment workbench**, not an execution stage. Nothing in `ideas/` is acted on automatically by the skill. A committed idea can be grilled, researched, revised, and given a non-binding working plan while information or decisions remain open.
+A **pre-commitment compatibility workbench**, not an execution stage or the default project backlog. Nothing in `ideas/` is acted on automatically by the skill. Prefer to capture an idea directly where it will be developed and shared. A committed IDEA remains available for private/offline capture or locally useful refinement while information or decisions remain open.
 
-Use it for: raw thoughts, market observations, UX experiments, discarded approaches, future concepts, unresolved brainstorming, and locally useful refinement of an idea first captured elsewhere.
+Use it for: private/offline raw thoughts, market observations, UX experiments, discarded approaches, future concepts, unresolved brainstorming, and locally useful refinement of an idea first captured elsewhere.
 
 ```txt
 ideas/
@@ -345,13 +345,13 @@ ideas/
 
 **Rules:**
 - low commitment; speculative even when it has a working plan
-- one of several capture entry points: GitHub Issues, GitHub Discussions, `TODO.md`, `FEEDBACK.md`, private notes, and local/committed ideas can all begin the loop
+- one of several capture entry points: GitHub Issues, GitHub Discussions, other shared destinations, `TODO.md`, `FEEDBACK.md`, private notes, and local/committed ideas can all begin the loop
 - a capture stays authoritative where it was first recorded until the human deliberately moves the work forward; link sources rather than automatically mirroring them
 - skill **proposes** saving unresolved decisions here when conversations have open branches
 
-**Promotion to request:** Ideas are not a required gate. A request can be created directly. A draft implementation plan does not itself promote an idea: promote only after a human accepts an execution outcome and durable coordination is warranted. When deliberately promoted, the skill scaffolds the request from the idea content and moves the idea file to `archive/ideas/`.
+**Explicit handoff:** Ideas are not a required gate. A request can be created directly. `idea promote --to request` is only for an accepted execution outcome. `--to roadmap --placement icebox` is an explicit priority handoff with no version commitment. `--to shared --ref <reference>` archives only the local source and never creates a remote record. An Issue is a shared destination subtype, not a duplicate authority.
 
-**CLI verbs (v1.7.0+):** `spectacular idea new <slug>`, `spectacular idea list [--status <s>]`, `spectacular idea promote <slug>`. Status enum: `parked | exploring | promoted`. Full spec in [[idea-rules]]; doctor area: [[doctor-areas]] § ideas.
+**CLI verbs:** `spectacular idea new <slug>`, `spectacular idea list [--status <s>]`, `spectacular idea promote <slug> --to request|roadmap|shared`. Status enum: `parked | exploring | promoted`. Full spec in [[idea-rules]]; doctor area: [[doctor-areas]] § ideas.
 
 ---
 

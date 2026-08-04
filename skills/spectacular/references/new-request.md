@@ -93,9 +93,9 @@ The CLI scaffolds both files from the canonical templates — `templates/plan/ba
 
 ---
 
-## Promoting from an idea
+## Promoting from an idea to a request
 
-When user runs `spectacular idea promote <idea-file>`:
+When user runs `spectacular idea promote <idea-file> --to request` (or the temporary omitted-`--to` compatibility form):
 
 1. Read `ideas/<idea-file>.md` for content — use it to pre-fill PLAN.md goal, why, approach
 2. Scaffold request as above (show slug, confirm)

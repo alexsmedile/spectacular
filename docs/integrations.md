@@ -33,7 +33,7 @@ GitHub Issues are collaborative job cards; Spectacular is used only when destina
 
 - `direct` — Issue → bounded agent session → draft/ready PR, with no Spectacular artifact;
 - `request` — an already-defined destination receives lean PLAN/TASKS through `--from-issue` or `--from-goal`;
-- `spec-first` — consequential or unsettled behavior receives an approved SPC before execution.
+- `spec-first` — consequential or unsettled behavior receives an approved SPC before execution. When product or interaction direction is genuinely unsettled, an opt-in Vision workspace (via `spectacular imagine`) shapes and approves direction before deriving the draft SPC.
 
 GitHub remains authoritative for Issue/Discussion content, labels, comments, assignees, branches, PRs, checks, permissions, and merge state. Spectacular stores canonical references and the accepted interpretation, never copied remote bodies or a second triage inbox.
 

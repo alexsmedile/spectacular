@@ -2,9 +2,10 @@
 title: Commands
 description: CLI subcommands and agent skill triggers, including the boundary between shell and skill.
 section: ""
+type: reference
 status: stable
 since: 0.1.0
-updated: 2026-08-03
+updated: 2026-08-04
 ---
 
 # Commands
@@ -313,9 +314,9 @@ Wayfinding records use stable, zero-padded IDs. Aliases are for conversation and
 | Question | `QUE-001` | `q1`, `que1` |
 | Idea | `IDEA-001` | `i1`, `ide1`, legacy `IDE-001` |
 | Research | `RES-001` | `r1`, `res1` |
-| Spike / prototype | `SPK-001` / `PRT-001` | `spk1` / `prt1` |
+| Spike | `SPK-001` | `spk1` |
 | Specification | `SPC-001` | `s1`, `spc1`, legacy `spec1` |
-| Task | `TSK-001` | reserved; not yet assigned to `TASKS.md` items |
+| Prototype / Task | `PRT-001` / `TSK-001` | reserved; not assigned to live entry files |
 
 ```bash
 spectacular id resolve d1
@@ -579,9 +580,31 @@ spectacular fix list
 
 Check `fixes/` **first** when a new bug appears — that's the self-learning loop ([bug-workflow.md](../skills/spectacular/references/bug-workflow.md)).
 
-### `spectacular imagine` / `spectacular vision` *(v1.15.0+)*
+### `spectacular imagine` / `spectacular vision` *(v1.38.0+ / SPC-004)*
 
-Imagination-backed planning: `imagine <slug>` (skill-side; CLI redirects) renders ASCII artifacts (stories/ui/arch) into the request's `vision/` folder, collects per-fragment reactions, then derives a draft PLAN. `vision add <story|ui|arch> <name> [--slug --caption]` adds a fragment file mechanically. See [vision-rules.md](../skills/spectacular/references/vision-rules.md).
+Pre-request Vision direction workspaces (`.spectacular/visions/<slug>/`). `imagine` is the operation; `VISION.md` is the durable result.
+
+**Mechanical CLI subcommands**:
+```bash
+spectacular imagine <slug>                                          # scaffold .spectacular/visions/<slug>/
+spectacular vision list                                             # list vision workspaces
+spectacular vision show <slug>                                      # display VISION.md spine + frontmatter
+spectacular vision add <strategy|story|flow|ui|arch|prototype> <name> --slug <slug> [--caption <text>]
+                                                                    # add a fragment file
+spectacular vision react <slug> <fragment> --approve|--revise|--reject|--supersede [--note <text>]
+                                                                    # record human reaction per fragment
+spectacular vision propose <slug>                                   # check fragment coherence + set status to proposed
+spectacular vision approve <slug> --approved-by <human> [--note <text>]
+                                                                    # human approves whole Vision direction
+spectacular vision reject <slug> --rejected-by <human> --reason <why>
+                                                                    # human rejects whole Vision direction
+```
+
+**Agent skill triggers**:
+- `/spectacular imagine <slug>`: Generative Understand → Imagine → Probe → React → Confirm loop in an AI agent.
+- `/spectacular vision derive <slug>`: Agentic redirect requiring an `approved` Vision workspace; creates or updates a **draft SPC** (`.spectacular/specs/<slug>.md`), never a PLAN or implementation authorization.
+
+> **Note on experiments**: `experiment` is intentionally not a feedback alias or separate command. Natural-language "experiments" route by the question being answered: `research` for facts, `spike` for technical feasibility, Vision fragment/prototype for pre-spec human reaction, and `feedback-loop` for post-build learning.
 
 ### Read verbs *(v1.8.0+)*
 
@@ -652,12 +675,12 @@ Runs the PRD quality gate — 10 checks total (8 base + 2 kit-aware). Reports a 
 
 To keep operation deterministic, Spectacular uses a clear division of labor:
 
-- **CLI mutator verbs** (run in the terminal: `init`, `doctor`, `pack`, `migrate`, `new`, `advance`, `undo`, `next`, `snapshot`, `archive`, `touch`, `decide`, `remember`, `session`, `feedback`, `idea`, `question`, `research`, `spike`, `spec`, `wayfind`, `afk`, `id`, `audit`, `fix`):
-  - These commands run locally in your shell and handle mechanical scaffolding, file moves, and structured data entry edits.
+- **CLI mutator verbs** (run in the terminal: `init`, `doctor`, `pack`, `migrate`, `new`, `advance`, `undo`, `next`, `snapshot`, `archive`, `touch`, `decide`, `remember`, `session`, `feedback`, `idea`, `question`, `research`, `spike`, `spec`, `wayfind`, `afk`, `id`, `audit`, `fix`, `imagine`, `vision`):
+  - These commands run locally in your shell and handle mechanical scaffolding, file moves, lifecycle updates, and structured data entry edits.
   - Some commands (like `touch` and `snapshot`) are **path-based** and expect literal, cwd-relative file paths. They do not resolve request slugs automatically.
-  - Other commands (like `advance` and `archive`) are **slug-based** and accept request slugs directly.
+  - Other commands (like `advance`, `archive`, `imagine`, and `vision`) are **slug-based** and accept slugs directly.
 - **Agent skill triggers** (run via `/spectacular <cmd>` inside your AI agent):
-  - These commands require an LLM to perform interactive interviews, content reviews, and validation walks.
+  - These commands require an LLM to perform interactive interviews, generative vision discovery (`/spectacular imagine`), agentic spec derivation (`/spectacular vision derive`), content reviews, and validation walks.
 
 ### Common confusion
 

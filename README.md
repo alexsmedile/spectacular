@@ -153,6 +153,7 @@ That's the whole idea. The full layout, once a project fills in:
 ├── decisions/          # ADR decision index + D*.md files
  
 │   ── created on demand ─────────────────────────────────────────────
+├── visions/            # pre-request direction workspaces (.spectacular/visions/<slug>/)
 ├── memories/           # long-term operational learning (git-committed)
 ├── feedbacks/          # prototyping-mode feedback entries (v1.6.0+)
 ├── questions/          # active ambiguities that need a human answer
@@ -168,11 +169,11 @@ That's the whole idea. The full layout, once a project fills in:
 
 Wayfinding records use stable canonical IDs: `DEC-001`, `QUE-001`, `IDEA-001`, `RES-001`, `SPK-001`, and `SPC-001`; `PRT-001` remains reserved. You can speak in compact aliases such as `D1`, `Q1`, `I1`, `R1`, or `S1`; persisted cross-references always use the canonical form.
 
-Discovery is progressive: inspect code/tests/docs or ask directly first, use `RES` for a bounded fact gap, `SPK` for disposable technical feasibility work, and an attached prototype only when human interaction is the evidence. A tracer bullet is retained production execution from an approved spec, not a prototype. Artifacts inherit their owner, and technical debt stays in requests, roadmap candidates, ideas, or linked decisions instead of a parallel backlog.
+Discovery is progressive: inspect code/tests/docs or ask directly first, use `RES` for a bounded fact gap, `SPK` for disposable technical feasibility work, and an opt-in Vision workspace (`spectacular imagine`) when product, workflow, or experience uncertainty requires human reaction on concrete proposals before drafting a spec. Approved Vision derives a draft SPC, which upon approval seeds the implementation request (approved Vision → draft SPC → approved SPC → request). A tracer bullet is retained production execution from an approved spec, not a prototype. Artifacts inherit their owner, and technical debt stays in requests, roadmap candidates, ideas, or linked decisions instead of a parallel backlog.
 
 Artifact freshness is lifecycle-derived: live state stays synchronized at named checkpoints; stale-safe history remains retrievable but must be checked against code before reuse; temporary context closes with its owner; throwaway branches/mocks are deleted only after their learning and recovery pointer survive. Open human questions surface before every session briefing. Resolved questions and implemented/rejected detailed specs archive out of active context. The live roadmap is `.spectacular/roadmaps/index.md`; shipped prose compacts into per-version files.
 
-The on-demand folders (`memories/`, `decisions/`, `questions/`, `research/`, `spikes/`, `sessions/`, `feedbacks/`, `ideas/`, `audits/`, `fixes/`) keep durable Markdown records in git, so humans and agents can inspect the same project state without a service or database.
+The on-demand folders (`visions/`, `memories/`, `decisions/`, `questions/`, `research/`, `spikes/`, `sessions/`, `feedbacks/`, `ideas/`, `audits/`, `fixes/`) keep durable Markdown records in git, so humans and agents can inspect the same project state without a service or database.
 
 A typical coding project (`spectacular init --kit coding`) scaffolds the always-set + `STACK.md` + `ARCHITECTURE.md`. A doc-only or research project (`spectacular init --kit research` or `--kit blank`) gets only the always-set. Smart-init never overwrites existing files — re-running is always safe.
 

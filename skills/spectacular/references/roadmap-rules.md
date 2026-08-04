@@ -218,7 +218,7 @@ When `Tier: vision`, only Slots 1 (Status), 2 (Phase — usually `intent`), and 
 
 ### Icebox (no tier — separate section)
 
-The `## Icebox` section at the end of `ROADMAP.md` holds ideas not yet tied to any version. Flat list, free-text items.
+The `## Icebox` section at the end of `ROADMAP.md` holds ideas not yet tied to any version. Flat list, free-text items. `spectacular idea promote <slug> --to roadmap --placement icebox` is an explicit local handoff into this section; it snapshots the roadmap but does not perform the version/tier promotion ritual.
 
 > **Why "Icebox"** — convergent dev-tool idiom: GitHub Projects, Pivotal Tracker, Linear all use this name (or close cognates: "Idea Bank" in GIST, "Someday/Maybe" in GTD). Distinguishes "unbound idea" from "planned but vague" (which is what `vision`-tier version blocks are for).
 

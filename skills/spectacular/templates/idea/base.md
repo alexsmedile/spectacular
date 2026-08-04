@@ -28,6 +28,6 @@ related: []
 
 <OPTIONAL DRAFT: approaches, assumptions, research links, and decisions still needed before execution>
 
-## Promoted to
+## Handed off to
 
 —

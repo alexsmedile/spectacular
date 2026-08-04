@@ -5,7 +5,7 @@ when_to_use: Creating, approving, revising, implementing, deprecating, archiving
 
 # Specification Lifecycle
 
-The idea loop explores possibilities. A specification is the convergent artifact that follows.
+Ideas capture possibilities. Optional Vision workspaces shape materially unsettled direction through grounded alternatives and explicit human approval. A specification is the convergent implementation contract that follows either an already-settled destination or an approved Vision.
 
 The authoritative state machine and gates live in [[lifecycle-contract]]. In short:
 
@@ -18,6 +18,8 @@ implemented → superseded|deprecated → archived
 `draft` means collaboratively unfinished; `unconfirmed` means AFK-authored. Only `approved` authorizes implementation. `implemented` is a historical claim that requires a verified request, closed docs impact, `implemented_at`, and `verified_against`; it never claims continuous agreement with code. After verified integration/merge, the detailed SPC should leave active context through explicit dry-run-first `spec archive`; code/tests and the capability index become the live truth.
 
 Canonical specs use `SPC-NNN-<slug>.md`. `spectacular spec approve` snapshots before approval (`confirm` is a compatibility alias). `spectacular request new --from SPC-NNN` mechanically creates a planned PLAN/TASKS bundle; `/spectacular act SPC-NNN` (or the unambiguous `/spectacular SPC-NNN`) owns authorization, activation provenance, compiled context, native planning, and implementation. Terminal `spec act` redirects instead of partially executing that agentic flow. See [[request-workflow]]. Behavior-changing revisions use a new SPC with `supersedes`; an active implemented predecessor transitions atomically to superseded, while an already archived implemented predecessor remains immutable and is linked from the replacement.
+
+`/spectacular vision derive <slug>` requires `status: approved` and drafts an SPC from the Vision's Chosen direction, Boundaries, approved fragments, and linked evidence. It records the Vision as provenance and updates `derived_to` after the draft exists. Derivation never approves the SPC, creates a request, or copies rejected/pending fragments into requirements.
 
 For a natural-language request to draft a specification, first run
 [[intent-routing]] and show the user an intent receipt. A new SPC is appropriate

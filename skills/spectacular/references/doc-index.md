@@ -39,7 +39,7 @@ Human catalog of every document type in a Spectacular workspace.
 |---|---|---|---|
 | `plan` | grill | `.spectacular/requests/<slug>/PLAN.md` | [plan-rules](plan-rules.md) |
 | `tasks` | stub | `.spectacular/requests/<slug>/TASKS.md` | [tasks-rules](tasks-rules.md) |
-| `vision` | index (`imagine`) | `.spectacular/requests/<slug>/vision/` | [vision-rules](vision-rules.md) |
+| `vision` | index (`imagine`) | `.spectacular/visions/<slug>/` | [vision-rules](vision-rules.md) |
 
 ## User-scope docs
 
@@ -86,7 +86,7 @@ A stub's rules file therefore only needs its **frontmatter** (the engine's dispa
 | `grill-loop` | Wide pass first, then narrows to deepen slots that look vague. |
 | `append` | Capture one entry, append to file. No slot loop. |
 | `index` | Soft-folder DB. Index file regenerated from entries in `entries-dir/`. CLI mutators write entries; agentic verbs operate on the collection. |
-| `imagine` | Generative-first variant of `index`. Agent **renders** ASCII fragments (stories/ui/arch) into a soft-folder + spine, human reacts per-fragment (`approved:`), then it **derives a draft PLAN** from the approved vision. Distinct from `grill` (which interrogates). Only the `vision` doc uses it. See [vision-rules](vision-rules.md). |
+| `imagine` | Generative pre-request variant of `index`. Agent grounds Understanding and renders only the strategy/story/flow/UI/architecture/prototype fragments needed; the human reacts per fragment, approves the whole Vision, then the agent derives a draft SPC. Distinct from `grill` (which interrogates). Only `vision` uses it. See [vision-rules](vision-rules.md). |
 | `stub` | Scaffold + exit. User edits directly thereafter. |
 | `freeform` | Agent improvises shape (reserved — no docs use this in v1.4). |
 | `reference` | Skill-internal doc, not user-facing. |

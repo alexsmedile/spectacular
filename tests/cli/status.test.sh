@@ -223,12 +223,54 @@ scenario_5_hold_modifier() {
   rm -rf "$dir"
 }
 
+scenario_6_actionable_brief() {
+  echo "Scenario 6: status --brief compiles blockers, health, and one safe next action"
+  local dir="/tmp/status-test-6"
+  seed_ws "$dir"
+  seed_request "$dir" "stale-active" "active" "medium" "b1" "2026-01-01" "stale" "finish it"
+  cat > "$dir/.spectacular/requests/stale-active/TASKS.md" <<'EOF'
+---
+status: active
+---
+# Tasks
+### M1 — one
+- [x] done
+EOF
+  seed_request "$dir" "review-ready" "review" "high" "b2" "2026-08-04" "review" "verify it"
+  mkdir -p "$dir/.spectacular/questions"
+  cat > "$dir/.spectacular/questions/QUE-001-fixture.md" <<'EOF'
+---
+id: QUE-001
+status: open
+requires_user_input: true
+summary: "Choose the fixture direction"
+---
+# Question
+EOF
+
+  local out
+  out=$(cd "$dir" && "$CLI" status --brief --json)
+  assert_output_contains "$out" '"schema":"spectacular.status.v2"' "brief JSON has a versioned envelope"
+  assert_output_contains "$out" '"id":"QUE-001"' "brief surfaces user blocker"
+  assert_output_contains "$out" '"kind":"stale_active"' "brief surfaces stale active health"
+  assert_output_contains "$out" '"kind":"ready_for_review"' "brief surfaces completed active health"
+  assert_output_contains "$out" '"kind":"resolve_question"' "blocker is the first next action"
+  assert_output_contains "$out" '"command":"spectacular question resolve QUE-001"' "next action names a safe command"
+
+  rm -f "$dir/.spectacular/questions/QUE-001-fixture.md"
+  out=$(cd "$dir" && "$CLI" status --brief --json)
+  assert_output_contains "$out" '"kind":"verify_request"' "review request is next after blockers clear"
+  assert_output_contains "$out" '"target":"review-ready"' "review request is selected by priority"
+  rm -rf "$dir"
+}
+
 echo "═══ status.test.sh ═══"
 scenario_1_fleet_table
 scenario_2_body_signals
 scenario_3_json_contract
 scenario_4_card_missing_slug
 scenario_5_hold_modifier
+scenario_6_actionable_brief
 
 echo ""
 echo "  Asserts: $pass_count passed, $fail_count failed"

@@ -59,11 +59,12 @@ label. Research and decisions may be recorded in Issue comments while the
 Issue owns the discussion. Promote only when the result needs an approved
 contract (`spec-first`) or durable execution coordination (`request`).
 
-### Local IDEA frontmatter schema
+### Local IDEA compatibility schema
 
-The current CLI-supported local entry schema stays deliberately small. It
-records a free-text source plus stable links; it does not copy the Issue body
-or infer a remote status:
+The current CLI-supported local entry schema stays deliberately small. It is
+for private/offline capture or locally useful refinement, records a free-text
+source plus stable links, and does not copy the Issue body or infer remote
+status:
 
 ```yaml
 ---
@@ -74,7 +75,7 @@ priority: low | medium | high
 owner: <name>
 origin: "GitHub Issue owner/repo#123" # or phone note, TODO.md, FEEDBACK.md
 updated: YYYY-MM-DD
-promoted_to: requests/<slug>/ | null
+promoted_to: requests/<slug>/ | roadmaps/index.md#icebox | shared:<reference> | null
 related:
   - <relative local path or stable external reference>
 ---

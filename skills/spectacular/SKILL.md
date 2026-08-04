@@ -79,7 +79,7 @@ verb.
 | `spectacular session start\|end` | → CLI verb; see [[sessions-rules]] |
 | `spectacular idea new <slug>` | → CLI verb; see [[idea-rules]] for entry shape |
 | `spectacular idea list` | → CLI verb |
-| `spectacular idea promote <slug>` | → CLI verb; scaffolds request, moves source to `archive/ideas/` |
+| `spectacular idea promote <slug> --to request\|roadmap\|shared` | → CLI verb; explicit local handoff. `shared` requires an existing reference and never creates a remote record; see [[idea-rules]]. |
 | `spectacular question new\|list\|resolve` | → CLI verb; active human blockers live in `questions/`; see [[question-rules]] and [[canonical-ids]] |
 | `spectacular research new\|list\|resolve` | → CLI verb; read-only evidence discovery in `research/`; see [[research-rules]] |
 | `spectacular spike new\|list\|resolve` | → CLI verb; human-authorized feasibility discovery in `spikes/`; see [[spike-rules]] |

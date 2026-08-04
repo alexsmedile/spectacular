@@ -3325,17 +3325,21 @@ Subcommands:
                                   --origin <text>       Where it came from
                                   --priority <level>    low|medium|high (default: medium)
   list [--status <s>]         List idea entries (parked|exploring|promoted|all)
-  promote <slug>              Scaffold a request from the idea and move source
+  promote <slug>              Hand the idea to an explicit destination and move source
                                 to archive/ideas/. Options:
+                                  --to <destination>    request|roadmap|shared
+                                                        (default: request; compatibility)
                                   --request-slug <s>    Override request slug
                                                         (default: idea's slug)
-                                  --target-version <v>  Target version for PLAN
+                                  --placement <p>       roadmap only: icebox
+                                  --ref <reference>     shared only: existing stable reference
 
 Idea files live at:
   .spectacular/ideas/IDEA-NNN-<slug>.md
 
 Ideas are a thinking scratchpad — nothing in ideas/ is acted on automatically.
-Promotion to a request is explicit and one-way. See references/idea-rules.md.
+Promotion is explicit and one-way. Shared promotion never creates a remote record.
+See references/idea-rules.md.
 EOF
       [[ -z "$sub" ]] && exit 1 || exit 0 ;;
     *) die "idea: unknown subcommand '$sub'. Use: new | list | promote" ;;
@@ -3539,27 +3543,29 @@ EOF
 }
 
 cmd_idea_promote() {
-  local slug="" request_slug=""
+  local slug="" request_slug="" destination="request" destination_set=false placement="" shared_ref=""
   while (( $# > 0 )); do
     case "$1" in
+      --to)             require_value "--to"             "${2:-}"; destination="$2"; destination_set=true; shift 2 ;;
       --request-slug)   require_value "--request-slug"   "${2:-}"; request_slug="$2"; shift 2 ;;
+      --placement)      require_value "--placement"      "${2:-}"; placement="$2"; shift 2 ;;
+      --ref)            require_value "--ref"            "${2:-}"; shared_ref="$2"; shift 2 ;;
       --help|-h)
         cat <<EOF
 Usage: spectacular idea promote <slug> [options]
 
 Options:
+  --to <destination>   request | roadmap | shared (default: request; compatibility)
   --request-slug <s>    Override request slug (default: idea's slug)
+  --placement <p>       roadmap only: icebox
+  --ref <reference>     shared only: existing stable URL or provider reference
 
-Version targeting lives in the ROADMAP ledger (build -> target-version),
-never in PLAN frontmatter.
+Destinations:
+  request              scaffolds a request (the legacy default)
+  roadmap              requires --placement icebox; snapshots then adds an Icebox item
+  shared               requires --ref; records the existing destination without network access
 
-Scaffolds a new request via 'spectacular new', then:
-  - Sets the idea's status to 'promoted'
-  - Sets the idea's promoted_to: requests/<slug>/
-  - Moves the idea file to .spectacular/archive/ideas/<slug>.md
-  - Notes the promotion source in the new PLAN.md
-
-This action is one-way. Manual file moves required to revert.
+Every destination archives the source locally. The undo command supports request promotion only.
 EOF
         exit 0 ;;
       -*) die "Unknown flag for idea promote: $1" ;;
@@ -3572,6 +3578,30 @@ EOF
   [[ -z "$slug" ]] && die "idea promote: <slug> argument required"
   [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "idea promote: not inside a Spectacular workspace"
 
+  case "$destination" in
+    request|roadmap|shared) ;;
+    *) die "idea promote: invalid --to '$destination'. Must be: request | roadmap | shared" ;;
+  esac
+  if ! $destination_set; then
+    warn "idea promote without --to is deprecated — use '--to request' (compatibility default)"
+  fi
+  case "$destination" in
+    request)
+      [[ -z "$placement" ]] || die "idea promote: --placement is valid only with --to roadmap"
+      [[ -z "$shared_ref" ]] || die "idea promote: --ref is valid only with --to shared"
+      ;;
+    roadmap)
+      [[ -z "$request_slug" ]] || die "idea promote: --request-slug is valid only with --to request"
+      [[ -z "$shared_ref" ]] || die "idea promote: --ref is valid only with --to shared"
+      [[ "$placement" == "icebox" ]] || die "idea promote: --to roadmap requires '--placement icebox'. Version/tier promotion is an explicit roadmap skill flow."
+      ;;
+    shared)
+      [[ -z "$request_slug" ]] || die "idea promote: --request-slug is valid only with --to request"
+      [[ -z "$placement" ]] || die "idea promote: --placement is valid only with --to roadmap"
+      [[ -n "$shared_ref" ]] || die "idea promote: --to shared requires '--ref <stable-reference>'"
+      ;;
+  esac
+
   local idea_path idea_file idea_slug
   idea_path=$(_idea_find "$slug") || die "idea promote: idea '$slug' not found in .spectacular/ideas/"
   idea_file=$(basename "$idea_path")
@@ -3582,60 +3612,74 @@ EOF
   idea_prev_status="$(fm_get "$idea_path" "status")"
   [[ -z "$idea_prev_status" ]] && idea_prev_status="exploring"
 
-  [[ -z "$request_slug" ]] && request_slug="$idea_slug"
-
-  # Refuse if request slug already taken
-  if [[ -d "$SPEC_REQUESTS_DIR/$request_slug" ]] || [[ -d "$SPEC_ARCHIVE_DIR/$request_slug" ]]; then
-    die "idea promote: request slug '$request_slug' already exists. Use --request-slug <other>."
-  fi
-
-  # Read idea metadata for the request scaffold
-  local idea_origin idea_priority
-  idea_origin=$(fm_get "$idea_path" "origin")
-  idea_priority=$(fm_get "$idea_path" "priority")
-  [[ -z "$idea_priority" ]] && idea_priority="medium"
-
-  local summary="Promoted from ideas/$idea_file (origin: ${idea_origin:-captured})"
-
-  # Scaffold the request
-  local new_args=(--summary "$summary" --priority "$idea_priority")
-  cmd_new "${new_args[@]}" "$request_slug" || die "idea promote: 'spectacular new $request_slug' failed"
-
-  # Append a promotion note to the new PLAN.md
-  local new_plan="$SPEC_REQUESTS_DIR/$request_slug/PLAN.md"
-  if [[ -f "$new_plan" ]]; then
-    # Add a note section just below the title
-    cat >> "$new_plan" <<EOF
+  local promoted_to="" archive_dir archived_path
+  case "$destination" in
+    request)
+      [[ -z "$request_slug" ]] && request_slug="$idea_slug"
+      if [[ -d "$SPEC_REQUESTS_DIR/$request_slug" ]] || [[ -d "$SPEC_ARCHIVE_DIR/$request_slug" ]]; then
+        die "idea promote: request slug '$request_slug' already exists. Use --request-slug <other>."
+      fi
+      local idea_origin idea_priority summary new_plan
+      idea_origin=$(fm_get "$idea_path" "origin")
+      idea_priority=$(fm_get "$idea_path" "priority")
+      [[ -z "$idea_priority" ]] && idea_priority="medium"
+      summary="Promoted from ideas/$idea_file (origin: ${idea_origin:-captured})"
+      local new_args=(--summary "$summary" --priority "$idea_priority")
+      cmd_new "${new_args[@]}" "$request_slug" || die "idea promote: request scaffold failed"
+      new_plan="$SPEC_REQUESTS_DIR/$request_slug/PLAN.md"
+      cat >> "$new_plan" <<EOF
 
 ---
 
 > **Promoted from idea** \`ideas/$idea_file\` (now at \`archive/ideas/$idea_file\`).
 > Idea body content is preserved in the archive — review for hypotheses, context, and open questions that should fold into the slots above.
 EOF
-  fi
+      promoted_to="requests/$request_slug/"
+      ;;
+    roadmap)
+      local roadmap hypothesis
+      roadmap="$SPEC_WORKSPACE_DIR/roadmaps/index.md"
+      [[ -f "$roadmap" ]] || die "idea promote: --to roadmap requires .spectacular/roadmaps/index.md"
+      hypothesis=$(awk '/^## Hypothesis/{found=1; next} found && /^## /{exit} found && NF{print; exit}' "$idea_path")
+      [[ -n "$hypothesis" ]] || hypothesis="$idea_slug"
+      cmd_snapshot ".spectacular/roadmaps/index.md" >/dev/null || die "idea promote: could not snapshot roadmap"
+      if ! grep -q '^## Icebox' "$roadmap"; then
+        printf '\n## Icebox\n' >> "$roadmap"
+      fi
+      printf '%s\n' "- $hypothesis _(from $idea_file)_" >> "$roadmap"
+      fm_touch "$roadmap"
+      promoted_to="roadmaps/index.md#icebox"
+      ;;
+    shared)
+      promoted_to="shared:$shared_ref"
+      ;;
+  esac
 
-  # Update idea frontmatter, then move
+  # Update idea frontmatter, then archive the local handoff record.
   fm_set "$idea_path" "status" "promoted"
-  fm_set "$idea_path" "promoted_to" "requests/$request_slug/"
+  fm_set "$idea_path" "promoted_to" "$promoted_to"
   fm_set "$idea_path" "updated" "$TODAY"
 
-  local archive_dir="$SPEC_ARCHIVE_DIR/ideas"
+  archive_dir="$SPEC_ARCHIVE_DIR/ideas"
   mkdir -p "$archive_dir"
-  local archived_path="$archive_dir/$idea_file"
+  archived_path="$archive_dir/$idea_file"
   if [[ -e "$archived_path" ]]; then
     die "idea promote: archive target already exists: $archived_path (manual cleanup needed)"
   fi
   mv "$idea_path" "$archived_path"
 
-  # Breadcrumb for `spectacular undo` (single-level). Records the idea slug and the
-  # scaffolded request so undo can restore the source; the request dir is left in
-  # place on undo unless the user confirms removal (per decision D9).
-  _breadcrumb_write "idea-promote" "$idea_slug" "request_slug=$request_slug" "idea_prev_status=$idea_prev_status" "idea_file=$idea_file"
-
-  created "$SPEC_REQUESTS_DIR/$request_slug/"
+  if [[ "$destination" == "request" ]]; then
+    # Breadcrumb applies only to the request flow, whose scaffold undo understands.
+    _breadcrumb_write "idea-promote" "$idea_slug" "request_slug=$request_slug" "idea_prev_status=$idea_prev_status" "idea_file=$idea_file"
+    created "$SPEC_REQUESTS_DIR/$request_slug/"
+  fi
   info "  → idea archived: $archived_path"
-  info "  → status: promoted"
-  info "  ↳ next: cd into the request and flesh out PLAN slots"
+  info "  → destination: $promoted_to"
+  case "$destination" in
+    request) info "  ↳ next: cd into the request and flesh out PLAN slots" ;;
+    roadmap) info "  ↳ next: use the roadmap Icebox-promotion ritual before choosing a version/tier" ;;
+    shared)  info "  ↳ next: continue discussion at the referenced shared destination" ;;
+  esac
 }
 
 # ── audit / fixes (v1.25.0+) ─────────────────────────────────────────────────

@@ -34,7 +34,7 @@ Each doc declares a `mode:` in its rules-file frontmatter. The `grill-*` family 
 
 If `mode:` is **not** grill-family (i.e. `append` / `index` / `stub` / `freeform` / `reference`), route accordingly:
 - `append` → `refine` skill in append mode (`refine.md` § append)
-- `index` → soft-folder DB; grill doesn't fill a single file. Redirect: "`<doc>` is a soft-DB collection — add entries with its CLI mutator (e.g. `spectacular remember`, `spectacular decide`, `spectacular session start`, `spectacular idea new`, `spectacular feedback-loop new`). `grill`/`refine`/`review` operate on the collection, not one file." See [[doc-index]] mode taxonomy.
+- `index` → soft-folder DB; grill normally doesn't fill a single file. Redirect: "`<doc>` is a soft-DB collection — add entries with its CLI mutator (e.g. `spectacular remember`, `spectacular decide`, `spectacular session start`, `spectacular idea new`, `spectacular feedback-loop new`). `grill`/`refine`/`review` operate on the collection, not one file." **Exception — `idea <IDEA-NNN|slug>`:** when the user explicitly names one idea, load that entry and run its user-directed workbench pass (hypothesis, context, open questions, evidence/alternatives, and optional working plan). Do not promote it or create a request unless the user separately asks. See [[idea-rules]].
 - `stub` → polite no-op: "`<doc>` is a stub doc. Open in editor, or pass `--wide` to grill it ad-hoc for this session."
 - `freeform` → open-ended prompt: "What do you want to capture here?" Skill infers a slot list from the answer and walks it.
 - `reference` → error: "`<doc>` is skill-internal, not user-facing."

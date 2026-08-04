@@ -7,6 +7,83 @@ when_to_use: Triaging an Issue, creating Issue/goal-derived work, opening or rea
 
 GitHub is the collaborative work queue. Spectacular is the durable destination and coordination layer when a change earns it. Never copy remote bodies or comments into a second local database.
 
+## Authority boundary
+
+The bridge brings Spectacular's **method** to GitHub—capture, clarification,
+research, decision, and route selection—without rebuilding Spectacular's local
+data model in labels, comments, or automation.
+
+| GitHub owns | Spectacular owns |
+|---|---|
+| Capture, discussion, ownership, Issues/Discussions, PRs, checks, merge, collaboration, notifications | Reasoning, durable local context, decisions, plans, validation, coordination |
+
+An Issue is the canonical workbench while a shared idea is being discussed.
+An SPC or request becomes canonical only for the explicit agreement or
+execution plan it owns. Link the two at promotion; never maintain copied
+bodies, duplicate checklists, or synchronized lifecycle labels.
+
+### Issue capture page schema
+
+Use this as a lightweight Issue form or body shape when GitHub is the capture
+surface. It is a human-readable page schema, not a new CLI schema or a
+mandatory workflow state machine.
+
+```md
+## Capture
+
+What sparked this? What problem, observation, or opportunity might exist?
+
+## Current hypothesis
+
+What might we change or build? This is allowed to be wrong.
+
+## Open questions
+
+- What information is missing?
+- Which decision needs a human owner?
+- What evidence would change the direction?
+
+## Working plan
+
+Optional and non-binding: approaches, research, experiments, and assumptions.
+
+## Triage
+
+- Route: `direct` | `explore` | `request` | `spec-first`
+- Next action: <one concrete action>
+- Canonical plan: <this Issue | linked SPC | linked request>
+```
+
+`explore` is a conversational capture/refinement route, not a GitHub lifecycle
+label. Research and decisions may be recorded in Issue comments while the
+Issue owns the discussion. Promote only when the result needs an approved
+contract (`spec-first`) or durable execution coordination (`request`).
+
+### Local IDEA frontmatter schema
+
+The current CLI-supported local entry schema stays deliberately small. It
+records a free-text source plus stable links; it does not copy the Issue body
+or infer a remote status:
+
+```yaml
+---
+type: idea
+id: IDEA-NNN
+status: parked | exploring | promoted
+priority: low | medium | high
+owner: <name>
+origin: "GitHub Issue owner/repo#123" # or phone note, TODO.md, FEEDBACK.md
+updated: YYYY-MM-DD
+promoted_to: requests/<slug>/ | null
+related:
+  - <relative local path or stable external reference>
+---
+```
+
+If a richer machine-readable remote-origin schema is needed later, it is a
+separate CLI/doctor contract change—not a reason to hand-maintain a mirrored
+database today.
+
 ## Collaboration model
 
 Humans and Spectacular design the contract; agents execute an approved

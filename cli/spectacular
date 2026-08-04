@@ -281,7 +281,7 @@ Read verbs (v1.8.0+ — collapse multi-step inspection to one call):
 Skill verbs (run via /spectacular in your AI agent):
   act <SPC-ID>           Gate, activate, compile brief, initialize native plan, implement
   grill|refine|review <doc> [target]    Canonical conversational document grammar
-  status [--against-latest|--since <date>]    Briefing of project state
+  status [--brief] [--json]  Fleet state; --brief adds blockers, health, and next action
   remember               Write an operational lesson to .spectacular/memories/
   verify <slug>          Validation walk — checks by kind, records VERIFY-LOG, gates review→verified
   sweep [<slug>]         Read-only fleet audit via request-auditor agents (never promotes)
@@ -2198,9 +2198,10 @@ cmd_spec_record() {
     implement) cmd_spec_implement "$@" ;;
     deprecate) cmd_spec_deprecate "$@" ;;
     archive) cmd_spec_archive "$@" ;;
-    ""|--help|-h)
+  ""|--help|-h)
       cat <<EOF
 Usage: spectacular spec <new|list|approve|act|implement|deprecate|archive> [options]
+       spectacular spec <id> [--json]
 
   new <slug> --summary <text> [--afk] [--supersedes <SPC>] [--target-version <v>]
   list [--status draft|unconfirmed|approved|implemented|superseded|deprecated|all]
@@ -2210,11 +2211,13 @@ Usage: spectacular spec <new|list|approve|act|implement|deprecate|archive> [opti
   deprecate <id|alias> --reason <why>
   archive <id|alias> --reason <why> [--apply --yes]
 
+  <id> [--json]  Compact named-spec overview (state, intent, linked request, next action)
+
 Only an approved spec can create an implementation request. `confirm` remains
 a compatibility alias for `approve`.
 EOF
       ;;
-    *) die "spec: unknown subcommand '$sub'. Use: new | list | confirm | act" ;;
+    *) cmd_spec_show "$sub" "$@" ;;
   esac
 }
 
@@ -2295,6 +2298,51 @@ cmd_spec_list() {
     count=$((count + 1))
   done < <(_iter_md specs)
   (( count > 0 )) || info "(no specifications match)"
+}
+
+# Read-only named specification view. Mirrors `request <slug>`: frontmatter
+# first, one Intent line, linked live request, and a safe next action.
+cmd_spec_show() {
+  local ref="$1"; shift
+  local json=false
+  while (( $# > 0 )); do
+    case "$1" in --json) json=true; shift ;; *) die "spec: unknown option '$1' (use: spec <id> [--json])" ;; esac
+  done
+  local path id status summary target intent linked="" f command reason kind
+  path=$(_spec_find "$ref") || die "spec: '$ref' not found"
+  id=$(fm_get "$path" id); status=$(fm_get "$path" status); summary=$(fm_get "$path" summary)
+  target=$(fm_get "$path" target_version)
+  intent=$(awk '/^## Intent[[:space:]]*$/{inside=1;next} inside && /^## /{exit} inside && NF && !/^_\(/{print;exit}' "$path")
+  while IFS= read -r f; do
+    [[ "$(fm_get "$f" source_spec)" == "$id" ]] || continue
+    linked=$(basename "$(dirname "$f")"); break
+  done < <(_request_iter_all)
+  case "$status" in
+    draft|unconfirmed)
+      kind=review_spec; command="/spectacular review spec $id"; reason="specification is not approved" ;;
+    approved)
+      kind=act_spec; command="/spectacular act $id"; reason="approved specification can authorize one request" ;;
+    implemented|superseded|deprecated)
+      kind=archive_spec; command="spectacular spec archive $id --reason <why>"; reason="historical specification is ready for archive review" ;;
+    archived)
+      kind=none; command=""; reason="specification is archived history" ;;
+    *)
+      kind=inspect_spec; command="/spectacular review spec $id"; reason="unknown lifecycle state needs review" ;;
+  esac
+  if $json; then
+    printf '{"schema":"spectacular.spec.v1","id":"%s","status":"%s","summary":"%s","target_version":"%s","intent":"%s","linked_request":"%s","next_action":{"kind":"%s","command":"%s","reason":"%s"}}\n' \
+      "$(_json_escape "$id")" "$(_json_escape "$status")" "$(_json_escape "$summary")" "$(_json_escape "$target")" \
+      "$(_json_escape "$intent")" "$(_json_escape "$linked")" "$(_json_escape "$kind")" \
+      "$(_json_escape "$command")" "$(_json_escape "$reason")"
+  else
+    printf "┌─ %s · %s\n" "$id" "$status"
+    [[ -n "$summary" ]] && printf "│ summary    %s\n" "$summary"
+    [[ -n "$intent" ]] && printf "│ intent     %s\n" "$intent"
+    [[ -n "$target" ]] && printf "│ target     %s\n" "$target"
+    [[ -n "$linked" ]] && printf "│ request    %s\n" "$linked"
+    [[ -n "$command" ]] && printf "│ next       %s\n" "$command"
+    printf "└─\n"
+  fi
 }
 
 cmd_spec_approve() {
@@ -10112,6 +10160,109 @@ _status_sort_rank() {
   esac
 }
 
+# Open human-owned questions are the highest-priority status signal.  Keep this
+# deliberately shallow: it reads only question frontmatter, not question bodies
+# or the broader discovery graph.  Output: ID|summary.
+_status_open_blockers() {
+  local f id status required label
+  [[ -d "$SPEC_QUESTIONS_DIR" ]] || return 0
+  for f in "$SPEC_QUESTIONS_DIR"/*.md; do
+    [[ -f "$f" ]] || continue
+    required=$(fm_get "$f" requires_user_input)
+    status=$(fm_get "$f" status)
+    [[ "$required" == true ]] || continue
+    case "$status" in resolved|deferred|archived) continue ;; esac
+    id=$(fm_get "$f" id); [[ -n "$id" ]] || continue
+    label=$(fm_get "$f" summary); [[ -n "$label" ]] || label=$(basename "$f" .md)
+    printf '%s|%s\n' "$id" "$label"
+  done
+}
+
+# Local request health signals. Output: kind|slug|detail. These are advisory;
+# doctor remains the authoritative substrate validator.
+_status_health_signals() {
+  local f dir slug status updated hold age milestone
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    dir=$(dirname "$f"); slug=$(basename "$dir")
+    status=$(fm_get "$f" status); updated=$(fm_get "$f" updated)
+    hold=$(fm_get "$f" hold); [[ "$hold" == none ]] && hold=""
+    if [[ -n "$hold" ]]; then printf 'held_request|%s|%s\n' "$slug" "$hold"; fi
+    age=$(_status_age_days "$updated")
+    if [[ "$status" == active ]] && (( age > 14 && age < 999999 )); then
+      printf 'stale_active|%s|%sd since update\n' "$slug" "$age"
+    fi
+    if [[ "$status" == active ]]; then
+      _status_progress "$dir/TASKS.md"
+      if (( _ST_TOTAL > 0 && _ST_OPEN == 0 )); then
+        printf 'ready_for_review|%s|all top-level tasks complete\n' "$slug"
+      fi
+    fi
+  done < <(_request_iter_all)
+}
+
+# Pick the most urgent unheld request in one lifecycle state. Priority wins,
+# then the most recently updated request. Stdout: slug or empty.
+_status_pick_request() {
+  local wanted="$1" f slug status priority updated hold weight
+  local best="" best_weight=9 best_updated=""
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    status=$(fm_get "$f" status); [[ "$status" == "$wanted" ]] || continue
+    hold=$(fm_get "$f" hold); [[ -n "$hold" && "$hold" != none ]] && continue
+    priority=$(fm_get "$f" priority); weight=$(_prio_weight "$priority")
+    updated=$(fm_get "$f" updated); slug=$(basename "$(dirname "$f")")
+    if (( weight < best_weight )) || { (( weight == best_weight )) && [[ "$updated" > "$best_updated" ]]; }; then
+      best="$slug"; best_weight="$weight"; best_updated="$updated"
+    fi
+  done < <(_request_iter_all)
+  printf '%s' "$best"
+}
+
+# Output: kind|slug-or-id|command|reason. This is advisory only: lifecycle
+# changes still run their normal policy and evidence gates.
+_status_next_action() {
+  local blocker id label slug
+  blocker=$(_status_open_blockers | head -1 || true)
+  if [[ -n "$blocker" ]]; then
+    IFS='|' read -r id label <<< "$blocker"
+    printf 'resolve_question|%s|spectacular question resolve %s|requires user input: %s\n' "$id" "$id" "$label"
+    return 0
+  fi
+  slug=$(_status_pick_request review)
+  if [[ -n "$slug" ]]; then
+    printf 'verify_request|%s|/spectacular verify %s|request is in review\n' "$slug" "$slug"
+    return 0
+  fi
+  slug=$(_status_pick_request active)
+  if [[ -n "$slug" ]]; then
+    printf 'resume_request|%s|spectacular request %s --brief|highest-priority active request\n' "$slug" "$slug"
+    return 0
+  fi
+  slug=$(_status_pick_request planned)
+  if [[ -n "$slug" ]]; then
+    printf 'inspect_request|%s|spectacular request %s|highest-priority planned request\n' "$slug" "$slug"
+    return 0
+  fi
+  printf 'create_request||spectacular request new|no live requests\n'
+}
+
+_status_action_footer() {
+  local row kind slug detail action target command reason count=0
+  while IFS='|' read -r kind slug detail; do
+    [[ -z "$kind" ]] && continue
+    (( count == 0 )) && { echo ""; info "── Health ──"; }
+    info "  ⚠ $slug — $detail"
+    count=$((count + 1))
+  done < <(_status_health_signals)
+  while IFS='|' read -r kind target command reason; do
+    echo ""
+    info "── Next action ──"
+    info "  ▸ $command"
+    info "    $reason"
+  done < <(_status_next_action)
+}
+
 # `spectacular status` (bare) → aligned fleet table, sorted active→planned.
 cmd_status_fleet() {
   [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "status: not inside a Spectacular workspace"
@@ -10158,6 +10309,8 @@ cmd_status_fleet() {
     printf "%-26s  %-18s  %-7s  %-6s  %-8s  %s\n" \
       "$slug_disp" "$status" "$priority" "$build" "$progress" "$right"
   done <<< "$sorted"
+
+  _status_action_footer
 
   return 0
 }
@@ -10241,6 +10394,37 @@ cmd_status_json() {
   done < <(_request_iter_all)
   printf ']\n'
   return 0
+}
+
+# `spectacular status --brief [--json]` — bounded, action-oriented orientation.
+# Plain --json remains the v1 fleet array for compatibility; this is a separate
+# v2 envelope that adds blockers, health signals, and one next action.
+cmd_status_brief() {
+  local json="$1" blockers="" health="" action="" first=true
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "status: not inside a Spectacular workspace"
+  if [[ "$json" != true ]]; then
+    cmd_status_fleet
+    return 0
+  fi
+  printf '{"schema":"spectacular.status.v2","blockers":['
+  while IFS='|' read -r id label; do
+    [[ -z "$id" ]] && continue
+    $first || printf ','; first=false
+    printf '{"id":"%s","summary":"%s"}' "$(_json_escape "$id")" "$(_json_escape "$label")"
+  done < <(_status_open_blockers)
+  printf '],"health":['; first=true
+  while IFS='|' read -r kind slug detail; do
+    [[ -z "$kind" ]] && continue
+    $first || printf ','; first=false
+    printf '{"kind":"%s","slug":"%s","detail":"%s"}' \
+      "$(_json_escape "$kind")" "$(_json_escape "$slug")" "$(_json_escape "$detail")"
+  done < <(_status_health_signals)
+  printf '],"next_action":'
+  IFS='|' read -r kind target command reason <<< "$(_status_next_action)"
+  printf '{"kind":"%s","target":"%s","command":"%s","reason":"%s"},"requests":' \
+    "$(_json_escape "$kind")" "$(_json_escape "$target")" "$(_json_escape "$command")" "$(_json_escape "$reason")"
+  cmd_status_json | tr -d '\n'
+  printf '}\n'
 }
 
 # `spectacular status --against-latest` — one-line workspace-schema verdict.
@@ -14982,6 +15166,7 @@ main() {
     status)
       shift
       # Intercept CLI-mechanical flags/args before falling through to the skill stub.
+      local _status_brief=false _status_json=false
       local _i=0
       while (( _i < $# )); do
         _i=$((_i + 1))
@@ -14997,9 +15182,17 @@ main() {
             cmd_status_since "${arg#--since=}"
             exit $?
             ;;
-          --json) cmd_status_json; exit $? ;;
+          --brief) _status_brief=true ;;
+          --json) _status_json=true ;;
         esac
       done
+      if $_status_brief; then
+        # `--brief` has no positional form; it is a bounded orientation view.
+        for arg in "$@"; do
+          case "$arg" in --brief|--json) ;; *) die "status --brief: unknown argument '$arg'" ;; esac; done
+        cmd_status_brief "$_status_json"; exit $?
+      fi
+      if $_status_json; then cmd_status_json; exit $?; fi
       # Positional: bare `status` → fleet table; `status <slug>` → request card.
       if [[ $# -eq 0 ]]; then
         cmd_status_fleet; exit $?
@@ -15070,7 +15263,8 @@ main() {
     spec)
       case "${2:-}" in
         new|list|approve|confirm|act|implement|deprecate|archive) shift; cmd_spec_record "$@"; exit $? ;;
-        *) : ;;
+        ""|grill|refine|review) : ;;
+        *) shift; cmd_spec_record "$@"; exit $? ;;
       esac
       ;;
     wayfind)

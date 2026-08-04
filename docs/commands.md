@@ -145,6 +145,7 @@ table drifts out of sync (status-fleet-view, b23).
 spectacular status            # aligned fleet table (slug · status · pri · build · progress · milestone/goal)
 spectacular status <slug>     # single request card (goal · summary · progress · current milestone · related · stale flag)
 spectacular status --json     # machine-readable fleet — the agent opt-in contract
+spectacular status --brief --json  # bounded agent orientation: blockers · health · next action · fleet
 ```
 
 Body signals assume the enforced PLAN/TASKS schema (canonical `## Goal`, `### M`
@@ -152,7 +153,11 @@ milestones, flush-left checkboxes; `doctor` enforces it on active requests).
 Progress counts flush-left `- [ ]`/`- [x]` only; `- [~]` is deferred, shown
 separately (`5/8 (+1 def)`); indented sub-bullets are not counted.
 
-The bare/`<slug>`/`--json` forms are CLI-mechanical. The richer conversational
+Plain `status` now ends with a compact health/next-action footer. `status --brief
+--json` is the one-call agent orientation view: its versioned
+`spectacular.status.v2` envelope carries open user blockers, local request-health
+signals, one safe recommended next action, and the legacy fleet data. Bare
+`status --json` remains the compatibility fleet array. The richer conversational
 briefing (`/spectacular` with signal detection) still runs in the agent, and
 `--against-latest` / `--since` remain as before.
 
@@ -612,7 +617,8 @@ Read-only inspection verbs that collapse multi-step agent workflows into one det
 
 | Verb | Returns |
 |---|---|
-| `summary` | One-page workspace overview |
+| `summary` | One-page workspace overview (dashboard, not task selection) |
+| `status --brief --json` | Bounded agent orientation: blockers, health signals, one next action, and fleet |
 | `request list` / `request <slug>` | Fleet list / cheap request overview (`requests` remains an alias) |
 | `request <slug> --brief [-m2]` | Active implementation prompt compiled from PLAN, TASKS, SESSION, provenance, and boundaries |
 | `request <slug> --full` | Ordered request-owned Markdown bundle; external linked records stay unexpanded |
@@ -626,7 +632,7 @@ Read-only inspection verbs that collapse multi-step agent workflows into one det
 | `paths` | Conventional paths as JSON |
 | `roadmap` | Build-id ledger + version mapping |
 
-Cold-start pattern: `summary → request list --active → request <slug>`. When implementing, continue with `request <slug> --brief`; use `--full` only for review/debugging.
+Cold-start pattern: `status --brief --json → request <slug>`. When implementing, continue with `request <slug> --brief`; use `summary` for a broad human-facing dashboard and `--full` only for review/debugging.
 
 ### `spectacular traffic preflight`
 

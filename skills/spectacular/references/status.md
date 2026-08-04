@@ -7,6 +7,25 @@ when_to_use: /spectacular with no arguments.
 
 Triggered by: `/spectacular` with no arguments, or `spectacular status`.
 
+## Compact orientation view
+
+For a cold agent landing in an established workspace, start with:
+
+```text
+spectacular status --brief --json
+```
+
+It returns the existing fleet plus open user blockers, local request-health
+signals, and one safe recommended next action. It is a bounded navigation view:
+follow its named `request <slug>` or `request <slug> --brief` command instead of
+opening request files wholesale. The legacy `status --json` array remains the
+fleet-only compatibility contract.
+
+This compact view does **not** replace the substrate check below. If it cannot
+read the workspace or a session needs full health validation, run the listed
+`doctor` scope and surface its findings; never treat a clean compact payload as
+proof that the substrate is healthy.
+
 ---
 
 ## Substrate check (auto-invoked on failure)

@@ -131,6 +131,7 @@ Always prefer these over walking the filesystem or hand-reading multiple PLAN/TA
 |---|---|
 | `spectacular requests [--active\|--status\|--since\|--json]` | → CLI verb. Lists requests with frontmatter view. |
 | `spectacular request <slug>` | → CLI verb. Cheap overview. `--brief [-mN]` compiles active implementation context; `--full` emits the ordered request-owned Markdown bundle. See [[request-workflow]]. |
+| `spectacular spec <id> [--json]` | → CLI verb. Compact SPC state, intent, linked request, and safe next action; use `spec list` only to discover IDs. |
 | `spectacular decisions [--tag\|--since\|--json]` | → CLI verb. Lists decisions. |
 | `spectacular decision <slug>` | → CLI verb. Skim view of one decision. |
 | `spectacular memories [--tag\|--since\|--json]` | → CLI verb. Lists memory entries. |
@@ -139,12 +140,13 @@ Always prefer these over walking the filesystem or hand-reading multiple PLAN/TA
 | `spectacular sessions show <slug>` | → CLI verb. Skim view of one session. |
 | `spectacular show <doctype>` | → CLI verb. Dumps a canonical doc (prd/spec/principles/...). `--section <name>` filters to one H2. |
 | `spectacular summary` | → CLI verb. One-page workspace overview (counts + active requests). Cheap cold-start. |
+| `spectacular status --brief [--json]` | → CLI verb. Bounded orientation: blockers, request-health signals, fleet, and one safe next action. `--json` uses `spectacular.status.v2`; bare `status --json` remains the fleet-array contract. |
 | `spectacular progress <slug>` | → CLI verb. Milestone tick rate parsed from TASKS.md. |
 | `spectacular paths` | → CLI verb. JSON map of conventional paths. Use when locating files programmatically. |
 
 **Universal flags:** `--status <s>`, `--since <Nd\|Nh\|Nw>`, `--limit N` (default 20), `--all`, `--json`. Detail verbs add `--full` to bypass skim mode.
 
-**Cold-start pattern:** prefer `spectacular summary` first → `spectacular requests --active` for context → `spectacular request <slug>` for the one you'll work on. Three CLI calls beats walking the filesystem.
+**Cold-start pattern:** prefer `spectacular status --brief --json` → follow its named `request <slug>` (or `--brief` for active implementation). Use `summary` for a human-facing dashboard, not task selection.
 
 ### Doc-writing (generalized — works for any registered doc)
 
@@ -233,7 +235,7 @@ Verification always runs against *some* artifact — "VERIFY.md is opt-in" means
 Load **only** what the task needs (principle 6 — progressive disclosure). Two authorities, no third list:
 
 - **What to load per task type** — `.spectacular/AGENTS.md`'s context-loading table is authoritative; follow it over guessing or re-deriving a read list.
-- **How to read state** — prefer the read verbs (§ Cold-start pattern above: `summary` → `requests --active` → `request <slug>`) over walking the filesystem; the flow docs (`status.md`, `active-request.md`) own their own read steps.
+- **How to read state** — prefer the read verbs (§ Cold-start pattern above: `status --brief --json` → named `request` view) over walking the filesystem; the flow docs (`status.md`, `active-request.md`) own their own read steps.
 
 Never read `archive/` during normal operation.
 

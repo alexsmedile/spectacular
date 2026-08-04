@@ -22,6 +22,10 @@ activated_at: 2026-08-04
 activated_by: alex
 activated_against: a5b4d5fbf3073c8e4f87de24255d5959d1e3f0ea
 docs_impact_evidence: .spectacular/requests/vision-workflow/artifacts/pageworks-handoff.md — audited README.md and docs/{workflow,commands,scaffold,visual-conventions,troubleshooting,integrations}.md; Pageworks-owned rewrite deferred with exact acceptance checks
+github_pr: "https://github.com/alexsmedile/spectacular/pull/22"
+github_pr_opened_at: 2026-08-04
+github_pr_head: 6431697f531b11a08d011aa6d3df4caef7b737f6
+issue_resolution: on_merge
 ---
 
 # Plan — vision-workflow

@@ -1,6 +1,6 @@
 ---
-status: planned
-updated: 2026-08-04
+status: active
+updated: 2026-08-05
 related:
   - PLAN.md
 source_type: issue

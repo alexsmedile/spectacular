@@ -1,8 +1,8 @@
 ---
-status: planned
+status: active
 priority: medium
 owner: alex
-updated: 2026-08-04
+updated: 2026-08-05
 build: b44
 docs_impact: pending
 summary: "Audit soft-DB read views and specify compact entity projections, escalation paths, and omission-regression tests"
@@ -11,6 +11,9 @@ related:
 source_type: issue
 source_ref: "alexsmedile/spectacular#12"
 sensitivity: normal
+activated_at: 2026-08-05
+activated_by: alex
+activated_against: 0de02e1491b82da3fffc0d2346aba2e363fe3599
 ---
 
 # Plan — soft-db-projection-inventory

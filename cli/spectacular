@@ -1877,7 +1877,7 @@ Usage: spectacular question <new|list|resolve> [options]
   resolve <id|alias> --answer <text> [--resolved-by <actor>] [--source <provenance>] [--decision <DEC>]
 EOF
       ;;
-    *) die "question: unknown subcommand '$sub'. Use: new | list | resolve" ;;
+    *) cmd_question_show "$sub" "$@" ;;
   esac
 }
 
@@ -1919,6 +1919,7 @@ cmd_question_new() {
 id: $id
 type: question
 status: open
+summary: "${question:-$slug}"
 priority: $priority
 requires_user_input: true
 target_version: "$target_version"
@@ -1954,11 +1955,11 @@ EOF
 }
 
 cmd_question_list() {
-  local filter="active" f id status priority updated question count=0 dir stored_status
+  local filter="active" f id status priority updated summary count=0 dir stored_status
   while (( $# > 0 )); do
     case "$1" in --status) require_value "--status" "${2:-}"; filter="$2"; shift 2 ;; *) die "question list: unknown option '$1'" ;; esac
   done
-  printf '%-10s  %-10s  %-8s  %-10s  %s\n' "ID" "STATUS" "PRIORITY" "UPDATED" "QUESTION"
+  printf '%-10s  %-10s  %-8s  %-10s  %s\n' "ID" "STATUS" "PRIORITY" "UPDATED" "SUMMARY"
   printf '%-10s  %-10s  %-8s  %-10s  %s\n' "--" "------" "--------" "-------" "--------"
   case "$filter" in active|open|deferred|archived|resolved|all) ;; *) die "question list: --status must be active|open|deferred|archived|resolved|all" ;; esac
   for dir in "$SPEC_QUESTIONS_DIR" "$SPEC_ARCHIVE_DIR/questions"; do
@@ -1974,12 +1975,28 @@ cmd_question_list() {
       else
         [[ "$filter" == archived || "$filter" == resolved || "$filter" == all ]] || continue
       fi
-      question=$(awk '/^## Question/{getline; getline; print; exit}' "$f")
-      printf '%-10s  %-10s  %-8s  %-10s  %s\n' "$id" "$status" "$priority" "$updated" "$question"
+      summary=$(fm_get "$f" summary); [[ -n "$summary" ]] || summary="(legacy record — inspect $id)"
+      printf '%-10s  %-10s  %-8s  %-10s  %s\n' "$id" "$status" "$priority" "$updated" "$summary"
       count=$((count + 1))
     done
   done
   (( count > 0 )) || info "(no questions${filter:+ matching $filter})"
+}
+
+cmd_question_show() {
+  local ref="$1"; shift
+  local full=false json=false f id
+  while (( $# > 0 )); do case "$1" in --full) full=true; shift ;; --json) json=true; shift ;; *) die "question: unknown option '$1'" ;; esac; done
+  f=$(_question_find "$ref") || die "question: '$ref' not found"
+  $full && { cat "$f"; return 0; }
+  id=$(fm_get "$f" id)
+  if $json; then
+    printf '{"schema":"spectacular.question.v1","id":"%s","status":"%s","priority":"%s","requires_user_input":"%s","summary":"%s","question":"%s","context":"%s","options":"%s"}\n' \
+      "$(_json_escape "$id")" "$(_json_escape "$(fm_get "$f" status)")" "$(_json_escape "$(fm_get "$f" priority)")" "$(_json_escape "$(fm_get "$f" requires_user_input)")" "$(_json_escape "$(fm_get "$f" summary)")" "$(_json_escape "$(_section_body "$f" Question)")" "$(_json_escape "$(_section_body "$f" Context)")" "$(_json_escape "$(_section_body "$f" Options)")"
+    return 0
+  fi
+  printf 'Question: %s\nStatus: %s · Priority: %s · Requires user input: %s\n\nQuestion\n%s\n\nContext\n%s\n\nOptions\n%s\n\nFull evidence: spectacular question %s --full\n' \
+    "$id" "$(fm_get "$f" status)" "$(fm_get "$f" priority)" "$(fm_get "$f" requires_user_input)" "$(_section_body "$f" Question)" "$(_section_body "$f" Context)" "$(_section_body "$f" Options)" "$ref"
 }
 
 cmd_question_resolve() {
@@ -2044,7 +2061,7 @@ Usage: spectacular $kind <new|list|resolve> [options]
   resolve <id|alias> --result supported|refuted|inconclusive --outcome <text> --evidence <source>
 EOF
       ;;
-    *) die "$kind: unknown subcommand '$sub'. Use: new | list | resolve" ;;
+    *) _discovery_show "$kind" "$collection" "$sub" "$@" ;;
   esac
 }
 
@@ -2084,6 +2101,7 @@ _discovery_new() {
 id: $id
 type: $kind
 status: open
+summary: "${summary:-$slug}"
 result: pending
 target_version: "$target_version"
 ${blocked_yaml}
@@ -2126,20 +2144,37 @@ EOF
 
 _discovery_list() {
   local kind="$1" collection="$2"; shift 2
-  local filter=all f id status updated title count=0
+  local filter=all f id status updated summary result count=0
   while (( $# > 0 )); do
     case "$1" in --status) require_value "--status" "${2:-}"; filter="$2"; shift 2 ;; *) die "$kind list: unknown option '$1'" ;; esac
   done
-  printf '%-10s  %-10s  %-10s  %s\n' "ID" "STATUS" "UPDATED" "GOAL"
+  printf '%-10s  %-10s  %-12s  %-10s  %s\n' "ID" "STATUS" "RESULT" "UPDATED" "SUMMARY"
   printf '%-10s  %-10s  %-10s  %s\n' "--" "------" "-------" "----"
   while IFS= read -r f; do
-    id=$(fm_get "$f" id); status=$(fm_get "$f" status); updated=$(fm_get "$f" updated)
+    id=$(fm_get "$f" id); status=$(fm_get "$f" status); updated=$(fm_get "$f" updated); result=$(fm_get "$f" result); summary=$(fm_get "$f" summary)
     [[ "$filter" == all || "$filter" == "$status" ]] || continue
-    title=$(awk '/^## Goal/{getline; getline; print; exit}' "$f")
-    printf '%-10s  %-10s  %-10s  %s\n' "$id" "$status" "$updated" "$title"
+    [[ -n "$summary" ]] || summary="(legacy record — inspect $id)"
+    printf '%-10s  %-10s  %-12s  %-10s  %s\n' "$id" "$status" "${result:-unknown}" "$updated" "$summary"
     count=$((count + 1))
   done < <(_iter_md "$collection")
   (( count > 0 )) || info "(no $collection match)"
+}
+
+_discovery_show() {
+  local kind="$1" collection="$2" ref="$3"; shift 3
+  local full=false json=false f id approval label
+  while (( $# > 0 )); do case "$1" in --full) full=true; shift ;; --json) json=true; shift ;; *) die "$kind: unknown option '$1'" ;; esac; done
+  f=$(_discovery_find "$collection" "$kind" "$ref") || die "$kind: '$ref' not found"
+  $full && { cat "$f"; return 0; }
+  id=$(fm_get "$f" id); approval=$(fm_get "$f" execution_requires_approval)
+  case "$kind" in research) label="Research" ;; spike) label="Spike" ;; *) label="$kind" ;; esac
+  if $json; then
+    printf '{"schema":"spectacular.%s.v1","id":"%s","status":"%s","result":"%s","summary":"%s","execution_requires_approval":"%s","goal":"%s","outcome":"%s","evidence":"%s"}\n' \
+      "$kind" "$(_json_escape "$id")" "$(_json_escape "$(fm_get "$f" status)")" "$(_json_escape "$(fm_get "$f" result)")" "$(_json_escape "$(fm_get "$f" summary)")" "$(_json_escape "$approval")" "$(_json_escape "$(_section_body "$f" Goal)")" "$(_json_escape "$(_section_body "$f" Outcome)")" "$(_json_escape "$(_section_body "$f" Evidence)")"
+    return 0
+  fi
+  printf '%s: %s\nStatus: %s · Result: %s%s\n\nGoal\n%s\n\nOutcome\n%s\n\nEvidence\n%s\n\nFull evidence: spectacular %s %s --full\n' \
+    "$label" "$id" "$(fm_get "$f" status)" "$(fm_get "$f" result)" "${approval:+ · Execution requires approval: $approval}" "$(_section_body "$f" Goal)" "$(_section_body "$f" Outcome)" "$(_section_body "$f" Evidence)" "$kind" "$ref"
 }
 
 _discovery_resolve() {

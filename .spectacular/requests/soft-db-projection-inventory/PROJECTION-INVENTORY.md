@@ -1,7 +1,9 @@
 # Soft-DB projection inventory
 
-**Status:** design inventory for Issue `alexsmedile/spectacular#12`; no CLI
-implementation is authorized. **Upstream baseline:** merged Issue #11 selected
+**Status:** implemented first slice for Issue `alexsmedile/spectacular#12`:
+named entity details, literal `--full` escalation, queryable summary signals,
+and omission regression coverage. Generic filters, caches, derived indexes,
+and broad YAML parsing remain deferred. **Upstream baseline:** merged Issue #11 selected
 `spectacular status --brief --json` as the workspace-orientation command. This
 request extends that route only after a collection is selected; it does not
 create or choose another cold-start command.
@@ -124,6 +126,17 @@ The detail renderer may extract named, entity-owned body sections such as a
 fix's `## Root cause`; this is a stable record contract, not a generic heading
 slicer. The list renderer must rely on frontmatter so selection never needs to
 load arbitrary bodies.
+
+### Implementation checkpoint
+
+The first slice now implements named `--json`/`--full` details for questions,
+research, spikes, ideas, audits, fixes, decisions, and memories. It replaces
+the decision/memory generic skim with explicit fields, keeps the established
+request overview/brief intact, and adds `tests/cli/read-projections.test.sh`.
+The re-run of `tests/benchmarks/retrieval-baseline.sh` retained the #11
+`status --brief` orientation at 731 bytes with zero full-body reads; it offers
+no evidence to add a compiled workspace briefing, generic filter, index, or
+cache. Those remain future, separately scoped proposals.
 
 ## Decision-risk analysis
 

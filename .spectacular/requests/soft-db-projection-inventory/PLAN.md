@@ -4,7 +4,7 @@ priority: medium
 owner: alex
 updated: 2026-08-05
 build: b44
-docs_impact: pending
+docs_impact: required
 summary: "Audit soft-DB read views and specify compact entity projections, escalation paths, and omission-regression tests"
 related:
   - PRD.md
@@ -14,6 +14,7 @@ sensitivity: normal
 activated_at: 2026-08-05
 activated_by: alex
 activated_against: 0de02e1491b82da3fffc0d2346aba2e363fe3599
+docs_impact_evidence: skills/spectacular/SKILL.md and references/soft-db-index.md updated for list-detail-full guidance
 ---
 
 # Plan — soft-db-projection-inventory
@@ -38,9 +39,10 @@ activated_against: 0de02e1491b82da3fffc0d2346aba2e363fe3599
 Define the compact, entity-specific read contract that lets an agent select and
 inspect a high-use soft-DB record without batch-reading Markdown, while
 preserving the record body as evidence. This serves the PRD success criterion
-for a correct cold briefing from navigation signals and is a **design/test
-inventory only**: no query engine, parser, cache, or production CLI change is
-authorized here.
+for a correct cold briefing from navigation signals. The approved implementation
+slice is limited to named entity details, frontmatter selection signals, and
+omission-regression tests; it does not authorize a query engine, broad parser,
+or cache.
 ## Constraints
 
 - Preserve the accepted outcome and named boundaries of Issue alexsmedile/spectacular#12.
@@ -110,6 +112,11 @@ route remains outside this request's collection-projection scope.
 - Deferred constrained filters, index rebuild, frontmatter-subset validation,
   and caching until the basic omission contract is proven in real collection
   reads.
+- Re-ran the #11 retrieval harness after the named-detail slice. The selected
+  `status --brief` orientation remains 731 bytes with no full-body read;
+  therefore no compiled briefing, generic filter, derived index, or cache is
+  justified by this request. Those remain separate proposals if new collection
+  measurements demonstrate a need.
 
 ## Milestones
 
@@ -117,9 +124,8 @@ route remains outside this request's collection-projection scope.
   contract and reserve the collection-only implementation boundary.
 - M2 — Entity detail contracts and omission-regression fixtures are specified
   for the high-use collections.
-- M3 — The smallest compatible CLI slice is implemented only after M1/M2,
-  followed by documentation and a measurement-based decision on subsequent
-  work.
+- M3 — The smallest compatible CLI slice is implemented after M1/M2, followed
+  by documentation and a measurement-based decision on subsequent work.
 ## Tasks
 
 <!-- Pointer. The executable checklist lives in TASKS.md, grouped by milestone. -->
@@ -149,4 +155,5 @@ See `TASKS.md`.
 - `PROJECTION-INVENTORY.md`: current-command audit, proposed compact grammar,
   decision-risk analysis, test inventory, and #11 alignment.
 - A sequenced `TASKS.md` that starts implementation only after Issue #11.
-- No implementation, commit, push, or pull request in this design request.
+- A narrow, locally committed implementation of the named-detail contract and
+  its regression suite; no push or pull request without a separate user ask.

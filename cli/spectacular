@@ -1991,12 +1991,12 @@ cmd_question_show() {
   $full && { cat "$f"; return 0; }
   id=$(fm_get "$f" id)
   if $json; then
-    printf '{"schema":"spectacular.question.v1","id":"%s","status":"%s","priority":"%s","requires_user_input":"%s","summary":"%s","question":"%s","context":"%s","options":"%s"}\n' \
-      "$(_json_escape "$id")" "$(_json_escape "$(fm_get "$f" status)")" "$(_json_escape "$(fm_get "$f" priority)")" "$(_json_escape "$(fm_get "$f" requires_user_input)")" "$(_json_escape "$(fm_get "$f" summary)")" "$(_json_escape "$(_section_body "$f" Question)")" "$(_json_escape "$(_section_body "$f" Context)")" "$(_json_escape "$(_section_body "$f" Options)")"
+    printf '{"schema":"spectacular.question.v1","id":"%s","status":"%s","priority":"%s","requires_user_input":"%s","blocked_by":"%s","summary":"%s","question":"%s","context":"%s","options":"%s"}\n' \
+      "$(_json_escape "$id")" "$(_json_escape "$(fm_get "$f" status)")" "$(_json_escape "$(fm_get "$f" priority)")" "$(_json_escape "$(fm_get "$f" requires_user_input)")" "$(_json_escape "$(fm_get "$f" blocked_by)")" "$(_json_escape "$(fm_get "$f" summary)")" "$(_json_escape "$(_section_body "$f" Question)")" "$(_json_escape "$(_section_body "$f" Context)")" "$(_json_escape "$(_section_body "$f" Options)")"
     return 0
   fi
-  printf 'Question: %s\nStatus: %s · Priority: %s · Requires user input: %s\n\nQuestion\n%s\n\nContext\n%s\n\nOptions\n%s\n\nFull evidence: spectacular question %s --full\n' \
-    "$id" "$(fm_get "$f" status)" "$(fm_get "$f" priority)" "$(fm_get "$f" requires_user_input)" "$(_section_body "$f" Question)" "$(_section_body "$f" Context)" "$(_section_body "$f" Options)" "$ref"
+  printf 'Question: %s\nStatus: %s · Priority: %s · Requires user input: %s\nBlocked by: %s\n\nQuestion\n%s\n\nContext\n%s\n\nOptions\n%s\n\nFull evidence: spectacular question %s --full\n' \
+    "$id" "$(fm_get "$f" status)" "$(fm_get "$f" priority)" "$(fm_get "$f" requires_user_input)" "$(fm_get "$f" blocked_by)" "$(_section_body "$f" Question)" "$(_section_body "$f" Context)" "$(_section_body "$f" Options)" "$ref"
 }
 
 cmd_question_resolve() {
@@ -2169,12 +2169,28 @@ _discovery_show() {
   id=$(fm_get "$f" id); approval=$(fm_get "$f" execution_requires_approval)
   case "$kind" in research) label="Research" ;; spike) label="Spike" ;; *) label="$kind" ;; esac
   if $json; then
-    printf '{"schema":"spectacular.%s.v1","id":"%s","status":"%s","result":"%s","summary":"%s","execution_requires_approval":"%s","goal":"%s","outcome":"%s","evidence":"%s"}\n' \
-      "$kind" "$(_json_escape "$id")" "$(_json_escape "$(fm_get "$f" status)")" "$(_json_escape "$(fm_get "$f" result)")" "$(_json_escape "$(fm_get "$f" summary)")" "$(_json_escape "$approval")" "$(_json_escape "$(_section_body "$f" Goal)")" "$(_json_escape "$(_section_body "$f" Outcome)")" "$(_json_escape "$(_section_body "$f" Evidence)")"
+    printf '{"schema":"spectacular.%s.v1","id":"%s","status":"%s","result":"%s","summary":"%s","blocked_by":"%s","execution_requires_approval":"%s","goal":"%s","outcome":"%s","evidence":"%s"}\n' \
+      "$kind" "$(_json_escape "$id")" "$(_json_escape "$(fm_get "$f" status)")" "$(_json_escape "$(fm_get "$f" result)")" "$(_json_escape "$(fm_get "$f" summary)")" "$(_json_escape "$(fm_get "$f" blocked_by)")" "$(_json_escape "$approval")" "$(_json_escape "$(_section_body "$f" Goal)")" "$(_json_escape "$(_discovery_outcome "$f")")" "$(_json_escape "$(_discovery_evidence "$f")")"
     return 0
   fi
-  printf '%s: %s\nStatus: %s · Result: %s%s\n\nGoal\n%s\n\nOutcome\n%s\n\nEvidence\n%s\n\nFull evidence: spectacular %s %s --full\n' \
-    "$label" "$id" "$(fm_get "$f" status)" "$(fm_get "$f" result)" "${approval:+ · Execution requires approval: $approval}" "$(_section_body "$f" Goal)" "$(_section_body "$f" Outcome)" "$(_section_body "$f" Evidence)" "$kind" "$ref"
+  printf '%s: %s\nStatus: %s · Result: %s%s\nBlocked by: %s\n\nGoal\n%s\n\nOutcome\n%s\n\nEvidence\n%s\n\nFull evidence: spectacular %s %s --full\n' \
+    "$label" "$id" "$(fm_get "$f" status)" "$(fm_get "$f" result)" "${approval:+ · Execution requires approval: $approval}" "$(fm_get "$f" blocked_by)" "$(_section_body "$f" Goal)" "$(_discovery_outcome "$f")" "$(_discovery_evidence "$f")" "$kind" "$ref"
+}
+
+# Discovery resolution appends its durable outcome/evidence markers. These are
+# collection-owned fields, deliberately separate from the generic section helper.
+_discovery_outcome() {
+  local value
+  value=$(awk '/^\*\*Completed [^:]+:\*\*/ { sub(/^\*\*Completed [^:]+:\*\*[[:space:]]*/, ""); last=$0 } END { print last }' "$1")
+  [[ -n "$value" ]] && { printf '%s\n' "$value"; return 0; }
+  _section_body "$1" Outcome
+}
+
+_discovery_evidence() {
+  local value
+  value=$(awk '/^\*\*Evidence:\*\*/ { sub(/^\*\*Evidence:\*\*[[:space:]]*/, ""); last=$0 } END { print last }' "$1")
+  [[ -n "$value" ]] && { printf '%s\n' "$value"; return 0; }
+  _section_body "$1" Evidence
 }
 
 _discovery_resolve() {
@@ -3427,7 +3443,7 @@ Promotion is explicit and one-way. Shared promotion never creates a remote recor
 See references/idea-rules.md.
 EOF
       [[ -z "$sub" ]] && exit 1 || exit 0 ;;
-    *) die "idea: unknown subcommand '$sub'. Use: new | list | promote" ;;
+    *) cmd_idea_show "$sub" "$@" ;;
   esac
 }
 
@@ -3550,6 +3566,7 @@ EOF
     ID "$id" \
     OWNER "$owner" \
     ORIGIN "$origin_text" \
+    SUMMARY "$hyp_text" \
     DATE "$TODAY" \
     SLUG "$slug" \
     HYPOTHESIS "$hyp_text" \
@@ -3573,6 +3590,22 @@ EOF
   info "  → status: parked"
   info "  ↳ shape it with: spectacular idea grill $slug"
   info "  ↳ when ready: spectacular idea promote $slug"
+}
+
+cmd_idea_show() {
+  local ref="$1"; shift
+  local full=false json=false f id
+  while (( $# > 0 )); do case "$1" in --full) full=true; shift ;; --json) json=true; shift ;; *) die "idea: unknown option '$1'" ;; esac; done
+  f=$(_idea_find "$ref") || die "idea: '$ref' not found"
+  $full && { cat "$f"; return 0; }
+  id=$(fm_get "$f" id)
+  if $json; then
+    printf '{"schema":"spectacular.idea.v1","id":"%s","status":"%s","priority":"%s","summary":"%s","origin":"%s","hypothesis":"%s","open_questions":"%s","promoted_to":"%s"}\n' \
+      "$(_json_escape "$id")" "$(_json_escape "$(fm_get "$f" status)")" "$(_json_escape "$(fm_get "$f" priority)")" "$(_json_escape "$(fm_get "$f" summary)")" "$(_json_escape "$(fm_get "$f" origin)")" "$(_json_escape "$(_section_body "$f" Hypothesis)")" "$(_json_escape "$(_section_body "$f" "Open questions")")" "$(_json_escape "$(fm_get "$f" promoted_to)")"
+    return 0
+  fi
+  printf 'Idea: %s\nStatus: %s · Priority: %s\nOrigin: %s\n\nHypothesis\n%s\n\nOpen questions\n%s\n\nFull evidence: spectacular idea %s --full\n' \
+    "$id" "$(fm_get "$f" status)" "$(fm_get "$f" priority)" "$(fm_get "$f" origin)" "$(_section_body "$f" Hypothesis)" "$(_section_body "$f" "Open questions")" "$ref"
 }
 
 cmd_idea_list() {
@@ -3816,7 +3849,7 @@ audit/ is the diagnostic scratchpad between "something's off" and "here's the pl
 See references/audit-rules.md.
 EOF
       [[ -z "$sub" ]] && exit 1 || exit 0 ;;
-    *) die "audit: unknown subcommand '$sub'. Use: new | list | resolve" ;;
+    *) cmd_audit_show "$sub" "$@" ;;
   esac
 }
 
@@ -3848,7 +3881,7 @@ cmd_audit_new() {
   template=$(_resolve_template "audit/entry.md") \
     || die "audit new: audit template not found (skills/spectacular/templates/audit/entry.md)"
   rendered=$(_render_template "$template" \
-    ID "$id" TITLE "$title" SEVERITY "$severity" DATE "$TODAY" \
+    ID "$id" TITLE "$title" SUMMARY "$title" SEVERITY "$severity" DATE "$TODAY" \
     PROBLEM "${problem:-_(fill in)_}" \
     INTENDED "${intended:-_(what SHOULD happen instead — the contract the bug violates)_}")
 
@@ -3870,8 +3903,8 @@ cmd_audit_list() {
   done
   [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "audit list: not inside a Spectacular workspace"
 
-  local count=0 f status severity updated id disposition
-  printf "%-6s  %-9s  %-8s  %-10s  %s\n" "ID" "STATUS" "SEVERITY" "UPDATED" "DISPOSITION"
+  local count=0 f status severity updated id disposition summary
+  printf "%-6s  %-9s  %-8s  %-10s  %-18s  %s\n" "ID" "STATUS" "SEVERITY" "UPDATED" "DISPOSITION" "SUMMARY"
   printf "%-6s  %-9s  %-8s  %-10s  %s\n" "--" "------" "--------" "-------" "-----------"
   while IFS= read -r f; do
     [[ -z "$f" ]] && continue
@@ -3879,8 +3912,9 @@ cmd_audit_list() {
     [[ "$status_filter" != "all" && "$status" != "$status_filter" ]] && continue
     severity=$(fm_get "$f" "severity"); updated=$(fm_get "$f" "updated")
     disposition=$(fm_get "$f" "disposition")
-    id=$(basename "$f" .md)
-    printf "%-6s  %-9s  %-8s  %-10s  %s\n" "$id" "$status" "${severity:-?}" "${updated:-?}" "${disposition:-—}"
+    id=$(basename "$f" .md); id="${id%%-*}"
+    summary=$(fm_get "$f" summary); [[ -n "$summary" ]] || summary="(legacy record — inspect $id)"
+    printf "%-6s  %-9s  %-8s  %-10s  %-18s  %s\n" "$id" "$status" "${severity:-?}" "${updated:-?}" "${disposition:-—}" "$summary"
     count=$((count + 1))
   done < <(_iter_md audit)
   if [[ $count -eq 0 ]]; then
@@ -3888,6 +3922,29 @@ cmd_audit_list() {
       && info "(no audits yet — start one with 'spectacular audit new \"<title>\"')" \
       || info "(no audits with status: $status_filter)"
   fi
+}
+
+_audit_find() {
+  local ref="$1" f compact
+  compact=$(printf '%s' "$ref" | tr '[:lower:]' '[:upper:]')
+  for f in "$SPEC_AUDITS_DIR"/"$ref"*.md "$SPEC_AUDITS_DIR"/"$compact"*.md; do [[ -f "$f" ]] && { echo "$f"; return 0; }; done
+  return 1
+}
+
+cmd_audit_show() {
+  local ref="$1"; shift
+  local full=false json=false f id
+  while (( $# > 0 )); do case "$1" in --full) full=true; shift ;; --json) json=true; shift ;; *) die "audit: unknown option '$1'" ;; esac; done
+  f=$(_audit_find "$ref") || die "audit: '$ref' not found"
+  $full && { cat "$f"; return 0; }
+  id=$(basename "$f" .md); id="${id%%-*}"
+  if $json; then
+    printf '{"schema":"spectacular.audit.v1","id":"%s","status":"%s","severity":"%s","summary":"%s","problem":"%s","root_cause":"%s","proposed_fix":"%s","disposition":"%s"}\n' \
+      "$(_json_escape "$id")" "$(_json_escape "$(fm_get "$f" status)")" "$(_json_escape "$(fm_get "$f" severity)")" "$(_json_escape "$(fm_get "$f" summary)")" "$(_json_escape "$(_section_body "$f" Problem)")" "$(_json_escape "$(_section_body "$f" "Root cause")")" "$(_json_escape "$(_section_body "$f" "Proposed fix")")" "$(_json_escape "$(fm_get "$f" disposition)")"
+    return 0
+  fi
+  printf 'Audit: %s\nStatus: %s · Severity: %s\nDisposition: %s\n\nProblem\n%s\n\nRoot cause\n%s\n\nProposed fix\n%s\n\nFull evidence: spectacular audit %s --full\n' \
+    "$id" "$(fm_get "$f" status)" "$(fm_get "$f" severity)" "$(fm_get "$f" disposition)" "$(_section_body "$f" Problem)" "$(_section_body "$f" "Root cause")" "$(_section_body "$f" "Proposed fix")" "$ref"
 }
 
 cmd_audit_resolve() {
@@ -3983,7 +4040,7 @@ _fix_scaffold() {
   local template rendered
   template=$(_resolve_template "fixes/entry.md") || { echo ""; return 1; }
   rendered=$(_render_template "$template" \
-    ID "$id" TITLE "${f_title:-untitled}" SEVERITY "${f_severity:-medium}" \
+    ID "$id" TITLE "${f_title:-untitled}" SUMMARY "${f_title:-untitled}" SEVERITY "${f_severity:-medium}" \
     OPENED "$TODAY" VERIFIED "$verified_date" FROM_AUDIT "${f_from_audit:-null}" \
     DEBUG_JOB "${f_debug_job:-null}" \
     SIGNATURE "${f_signature:-}" \
@@ -4025,8 +4082,31 @@ Subcommands:
 fixes/ logs a bug fix ONLY once fully resolved and verified. See references/fixes-rules.md.
 EOF
       [[ -z "$sub" ]] && exit 1 || exit 0 ;;
-    *) die "fix: unknown subcommand '$sub'. Use: new | list" ;;
+    *) cmd_fix_show "$sub" "$@" ;;
   esac
+}
+
+_fix_find() {
+  local ref="$1" f compact
+  compact=$(printf '%s' "$ref" | tr '[:lower:]' '[:upper:]')
+  for f in "$SPEC_FIXES_DIR"/"$ref"*.md "$SPEC_FIXES_DIR"/"$compact"*.md; do [[ -f "$f" ]] && { echo "$f"; return 0; }; done
+  return 1
+}
+
+cmd_fix_show() {
+  local ref="$1"; shift
+  local full=false json=false f id
+  while (( $# > 0 )); do case "$1" in --full) full=true; shift ;; --json) json=true; shift ;; *) die "fix: unknown option '$1'" ;; esac; done
+  f=$(_fix_find "$ref") || die "fix: '$ref' not found"
+  $full && { cat "$f"; return 0; }
+  id=$(basename "$f" .md); id="${id%%-*}"
+  if $json; then
+    printf '{"schema":"spectacular.fix.v1","id":"%s","verified":"%s","signature":"%s","severity":"%s","summary":"%s","root_cause":"%s","fix":"%s","verified_by":"%s"}\n' \
+      "$(_json_escape "$id")" "$(_json_escape "$(fm_get "$f" verified)")" "$(_json_escape "$(fm_get "$f" signature)")" "$(_json_escape "$(fm_get "$f" severity)")" "$(_json_escape "$(fm_get "$f" summary)")" "$(_json_escape "$(_section_body "$f" "Root cause")")" "$(_json_escape "$(_section_body "$f" Fix)")" "$(_json_escape "$(_section_body "$f" "Verified by")")"
+    return 0
+  fi
+  printf 'Fix: %s\nVerified: %s · Severity: %s\nSignature: %s\n\nRoot cause\n%s\n\nFix\n%s\n\nVerified by\n%s\n\nFull evidence: spectacular fix %s --full\n' \
+    "$id" "$(fm_get "$f" verified)" "$(fm_get "$f" severity)" "$(fm_get "$f" signature)" "$(_section_body "$f" "Root cause")" "$(_section_body "$f" Fix)" "$(_section_body "$f" "Verified by")" "$ref"
 }
 
 cmd_fix_new() {
@@ -4084,7 +4164,7 @@ cmd_fix_new() {
 }
 
 cmd_fix_list() {
-  local since=""
+  local since="" since_epoch
   while (( $# > 0 )); do
     case "$1" in
       --since) require_value "--since" "${2:-}"; since="$2"; shift 2 ;;
@@ -4093,18 +4173,24 @@ cmd_fix_list() {
     esac
   done
   [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "fix list: not inside a Spectacular workspace"
+  since_epoch=$(_parse_since "$since")
 
-  local count=0 f verified severity id from_audit
-  printf "%-6s  %-12s  %-8s  %-10s  %s\n" "ID" "VERIFIED" "SEVERITY" "FROM" "TITLE"
-  printf "%-6s  %-12s  %-8s  %-10s  %s\n" "--" "--------" "--------" "----" "-----"
+  local count=0 f verified severity id from_audit signature summary verified_epoch
+  printf "%-6s  %-12s  %-8s  %-10s  %-18s  %s\n" "ID" "VERIFIED" "SEVERITY" "FROM" "SIGNATURE" "SUMMARY"
+  printf "%-6s  %-12s  %-8s  %-10s  %-18s  %s\n" "--" "--------" "--------" "----" "---------" "-------"
   while IFS= read -r f; do
     [[ -z "$f" ]] && continue
     verified=$(fm_get "$f" "verified"); [[ -z "$verified" || "$verified" == "null" ]] && verified="unverified"
+    if (( since_epoch > 0 )); then
+      verified_epoch=$(_date_to_epoch "$verified")
+      (( verified_epoch < since_epoch )) && continue
+    fi
     severity=$(fm_get "$f" "severity"); from_audit=$(fm_get "$f" "from_audit")
+    signature=$(fm_get "$f" "signature")
     [[ -z "$from_audit" || "$from_audit" == "null" ]] && from_audit="—"
-    id=$(basename "$f" .md)
-    local title; title=$(_h1_title "$f")
-    printf "%-6s  %-12s  %-8s  %-10s  %s\n" "$id" "$verified" "${severity:-?}" "$from_audit" "${title:-?}"
+    id=$(basename "$f" .md); id="${id%%-*}"
+    summary=$(fm_get "$f" summary); [[ -n "$summary" ]] || summary="(legacy record — inspect $id)"
+    printf "%-6s  %-12s  %-8s  %-10s  %-18s  %s\n" "$id" "$verified" "${severity:-?}" "$from_audit" "${signature:-?}" "$summary"
     count=$((count + 1))
   done < <(_iter_md fixes)
   [[ $count -eq 0 ]] && info "(no fixes yet — log one with 'spectacular fix new \"<title>\" --verified-by \"...\"')"
@@ -6797,8 +6883,31 @@ cmd_decision() {
   [[ -f "$f" ]] || die "decision: '$slug' not found in .spectacular/decisions/"
 
   if $full; then cat "$f"; return 0; fi
-  if $json; then _skim_file_json "$f"; return 0; fi
-  _skim_file "$f"
+  local id title context decision consequences status decided tags related
+  id=$(fm_get "$f" id); [[ -n "$id" ]] || id=$(basename "$f" .md)
+  title=$(_h1_title "$f")
+  context=$(_decision_field "$f" Context)
+  decision=$(_decision_field "$f" Decision)
+  consequences=$(_decision_field "$f" Consequences)
+  status=$(fm_get "$f" status); decided=$(fm_get "$f" updated)
+  tags=$(fm_get "$f" tags); related=$(fm_get "$f" related)
+  if $json; then
+    printf '{"schema":"spectacular.decision.v1","id":"%s","title":"%s","status":"%s","decided":"%s","tags":"%s","related":"%s","context":"%s","decision":"%s","consequences":"%s"}\n' \
+      "$(_json_escape "$id")" "$(_json_escape "$title")" "$(_json_escape "$status")" "$(_json_escape "$decided")" "$(_json_escape "$tags")" "$(_json_escape "$related")" "$(_json_escape "$context")" "$(_json_escape "$decision")" "$(_json_escape "$consequences")"
+    return 0
+  fi
+  printf 'Decision: %s — %s\nStatus: %s · Decided: %s\nTags: %s\n\nDecision\n%s\n\nContext\n%s\n\nConsequences\n%s\n\nFull evidence: spectacular decision %s --full\n' \
+    "$id" "${title:-not recorded}" "${status:-not recorded}" "${decided:-not recorded}" "${tags:-not recorded}" "${decision:-not recorded}" "${context:-not recorded}" "${consequences:-not recorded}" "$slug"
+}
+
+# Extract a known ADR field; this is intentionally limited to the decision
+# entry contract and is not a reusable Markdown-heading parser.
+_decision_field() {
+  awk -v h="**$2:**" '
+    $0 == h { grab=1; next }
+    grab && /^\*\*[^*]+:\*\*/ { exit }
+    grab { if (!started && $0 ~ /./) started=1; if (started) print }
+  ' "$1"
 }
 
 cmd_memory() {
@@ -6823,8 +6932,28 @@ cmd_memory() {
   f=$(_memory_find "$slug") || die "memory: '$slug' not found in .spectacular/memories/"
 
   if $full; then cat "$f"; return 0; fi
-  if $json; then _skim_file_json "$f"; return 0; fi
-  _skim_file "$f"
+  local id status date tags related lesson
+  id=$(basename "$f" .md); status=$(fm_get "$f" status); date=$(fm_get "$f" date)
+  tags=$(fm_get "$f" tags); related=$(fm_get "$f" related); lesson=$(_memory_lesson "$f")
+  if $json; then
+    printf '{"schema":"spectacular.memory.v1","id":"%s","status":"%s","date":"%s","tags":"%s","related":"%s","lesson":"%s"}\n' \
+      "$(_json_escape "$id")" "$(_json_escape "$status")" "$(_json_escape "$date")" "$(_json_escape "$tags")" "$(_json_escape "$related")" "$(_json_escape "$lesson")"
+    return 0
+  fi
+  printf 'Memory: %s\nStatus: %s · Date: %s\nTags: %s\nRelated: %s\n\nLesson\n%s\n\nFull evidence: spectacular memory %s --full\n' \
+    "$id" "${status:-not recorded}" "${date:-not recorded}" "${tags:-not recorded}" "${related:-not recorded}" "${lesson:-not recorded}" "$slug"
+}
+
+# A memory body is its lesson. Read it only after the caller has named a record.
+_memory_lesson() {
+  awk '
+    /^---$/ { delimiters++; next }
+    delimiters >= 2 {
+      if (!started && $0 !~ /./) next
+      started=1
+      print
+    }
+  ' "$1"
 }
 
 _memory_find() {

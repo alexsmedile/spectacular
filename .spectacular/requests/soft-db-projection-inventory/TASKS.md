@@ -31,12 +31,12 @@ source_ref: "alexsmedile/spectacular#12"
 - [x] Confirm the first #12 slice is collection-only named details plus omission tests; filters, caches, and YAML-schema hardening remain deferred.
 
 ### M2 — Projection contract and regression fixtures
-- [ ] Implement the named entity-detail projections from `PROJECTION-INVENTORY.md` for the highest-value missing views, preserving literal `--full` evidence expansion.
-- [ ] Add per-entity omission fixtures and deterministic human/JSON output tests for requests, decisions, memories, questions, research, spikes, ideas, audits, and fixes.
+- [x] Implement the named entity-detail projections from `PROJECTION-INVENTORY.md` for the highest-value missing views, preserving literal `--full` evidence expansion.
+- [x] Add per-entity omission fixtures and deterministic human/JSON output tests for requests, decisions, memories, questions, research, spikes, ideas, audits, and fixes.
 
 ### M3 — Compatibility, guidance, and measured follow-up
-- [ ] Update CLI-first guidance with the explicit direct-named-file escape hatch, only after commands and tests exist.
-- [ ] Re-run the agreed retrieval measurements and decide, from evidence, whether compiled workspace briefing, constrained filters, index checks, or caching earns a separate request.
+- [x] Update CLI-first guidance with the explicit direct-named-file escape hatch, only after commands and tests exist.
+- [x] Re-run the agreed retrieval measurements and decide, from evidence, whether compiled workspace briefing, constrained filters, index checks, or caching earns a separate request.
 ## v2 (deferred)
 
 - [~] General equality filters or an indexed-frontmatter subset contract (separate approved scope only).

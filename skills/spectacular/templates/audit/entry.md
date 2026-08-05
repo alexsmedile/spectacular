@@ -1,7 +1,7 @@
 <!--
   One audit entry — a bug/quirk investigation BEFORE a fix is planned.
   Written to .spectacular/audits/A<N>.md by `spectacular audit new`.
-  Substitution tokens (filled by CLI): <ID> <TITLE> <SEVERITY> <DATE> <PROBLEM> <INTENDED>.
+  Substitution tokens (filled by CLI): <ID> <TITLE> <SUMMARY> <SEVERITY> <DATE> <PROBLEM> <INTENDED>.
   Other bracketed text is a fill-in hint left in place. See references/audit-rules.md.
 
   The body follows the bug-fixing skeleton:
@@ -12,6 +12,7 @@
 ---
 type: audit
 status: open
+summary: <SUMMARY>
 severity: <SEVERITY>
 opened: <DATE>
 updated: <DATE>

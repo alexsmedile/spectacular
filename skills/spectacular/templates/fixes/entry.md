@@ -1,7 +1,7 @@
 <!--
   One fix entry — a FULLY RESOLVED AND VERIFIED bug fix.
   Written to .spectacular/fixes/F<N>.md by `spectacular fix new`.
-  Substitution tokens (filled by CLI): <ID> <TITLE> <SEVERITY> <OPENED> <VERIFIED>
+  Substitution tokens (filled by CLI): <ID> <TITLE> <SUMMARY> <SEVERITY> <OPENED> <VERIFIED>
   <FROM_AUDIT> <DEBUG_JOB> <PROBLEM> <INTENDED> <CAUSE> <FIX> <CRITERIA> <VERIFIED_BY> <SIGNATURE>.
   Other bracketed text is a fill-in hint left in place. See references/fixes-rules.md.
 
@@ -12,6 +12,7 @@
 
 ---
 type: fix
+summary: <SUMMARY>
 opened: <OPENED>
 verified: <VERIFIED>
 severity: <SEVERITY>

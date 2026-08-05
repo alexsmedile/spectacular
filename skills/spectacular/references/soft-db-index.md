@@ -7,6 +7,15 @@ when_to_use: Deciding where a piece of information belongs (memory vs decision v
 
 Spectacular stores operational knowledge in **soft-DB collections**: folders of `.md` entries with frontmatter, under `.spectacular/`. This is the single routing index — it answers *what each collection is for, when to use it, and when NOT to*. Per-collection detail (entry frontmatter, lifecycle, doctor checks) lives in each `references/<id>-rules.md`; dispatch lives in that file's frontmatter. **This doc is the map; the rules files are the territory.** Wayfinding adds `questions/` as the first explicit open-loop store; research and spike records join this table when their CLI substrates ship.
 
+## Reading collection records
+
+Use a bounded list to select a record, then its entity-specific named detail
+(`decision <id>`, `memory <id>`, `question <id>`, `research <id>`, `spike <id>`,
+`idea <id>`, `audit <id>`, or `fix <id>`). Each detail has `--full` for the
+unchanged Markdown evidence. Direct named-file access is also valid after
+selection and for repair/debugging. Frontmatter is the selection signal; do not
+make a list scan entry bodies or introduce generic query syntax.
+
 **What makes something a soft-DB collection:** a folder of individually-addressable `.md` entries (not a single canonical doc), each with frontmatter the skill reads as a signal layer, appended over time and never overwritten in place. All are **committed to git** (team-visible) and iterated via the CLI's `_iter_md <collection>`.
 
 Before routing to any collection, apply [[discovery-protocol]]'s cheapest-sufficient-answer gate. Clear paths create no discovery node; a generic output does not become a new “artifact” entity.

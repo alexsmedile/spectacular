@@ -80,9 +80,9 @@ verb.
 | `spectacular idea new <slug>` | → CLI verb; see [[idea-rules]] for entry shape |
 | `spectacular idea list` | → CLI verb |
 | `spectacular idea promote <slug> --to request\|roadmap\|shared` | → CLI verb; explicit local handoff. `shared` requires an existing reference and never creates a remote record; see [[idea-rules]]. |
-| `spectacular question new\|list\|resolve` | → CLI verb; active human blockers live in `questions/`; see [[question-rules]] and [[canonical-ids]] |
-| `spectacular research new\|list\|resolve` | → CLI verb; read-only evidence discovery in `research/`; see [[research-rules]] |
-| `spectacular spike new\|list\|resolve` | → CLI verb; human-authorized feasibility discovery in `spikes/`; see [[spike-rules]] |
+| `spectacular question new\|list\|resolve` / `question <id>` | → CLI verb; select an active human blocker, then read its bounded detail or `--full`; see [[question-rules]] and [[canonical-ids]] |
+| `spectacular research new\|list\|resolve` / `research <id>` | → CLI verb; select evidence work, then read its bounded detail or `--full`; see [[research-rules]] |
+| `spectacular spike new\|list\|resolve` / `spike <id>` | → CLI verb; select human-authorized feasibility work, then read its bounded detail or `--full`; see [[spike-rules]] |
 | Choosing research vs spike vs Vision prototype vs tracer bullet, or routing an “experiment” | → `references/discovery-protocol.md`; route by the uncertainty and avoid redundant nodes |
 | Deciding what must stay current, may remain stale, should archive, or may be deleted | → `references/artifact-retention.md`; derive live/stale-safe/temporary/throwaway from entity, status, and path |
 | “Draft/create a new spec” / `/spectacular spec draft` | → [[intent-routing]] intent receipt, then `spectacular spec new`; see [[spec-lifecycle]]. Never infer a new SPC from nearby docs impact or repository context. |
@@ -100,8 +100,8 @@ verb.
 | A built-in `/goal` begins in a Spectacular workspace | → create/resume a durable goal-scoped AFK run for that goal; keep it active until completion/cancellation or a declared/unexpected HITL gate |
 | A user refers to `D1`, `Q1`, `R1`, `SPK1`, `S1`, or another entity alias | → normalize via `spectacular id resolve`; persist the canonical ID; see [[canonical-ids]] |
 | A bug/quirk/regression is reported (any "why does X do Y", "this is broken") | → **`references/bug-workflow.md`** — load before diagnosing; routes the debug fleet + the ceremony/fan-out gates. (Rationale: `bug-workflow-doctrine.md`, only if a routing call is uncertain.) |
-| `spectacular audit new\|list\|resolve` | → CLI verb; bug investigation before a fix. `resolve --into-fix` graduates to a fix (copies all slots). See [[audit-rules]], [[bug-workflow]] |
-| `spectacular fix new\|list` | → CLI verb; log a **verified, signed** fix. See [[fixes-rules]], [[bug-workflow]] |
+| `spectacular audit new\|list\|resolve` / `audit <id>` | → CLI verb; bug investigation before a fix. Named detail exposes diagnosis; `resolve --into-fix` graduates to a fix. See [[audit-rules]], [[bug-workflow]] |
+| `spectacular fix new\|list` / `fix <id>` | → CLI verb; retrieve or log a **verified, signed** fix. See [[fixes-rules]], [[bug-workflow]] |
 | "record a fix" / "log this fix" / "the bug is fixed and verified" | → `spectacular fix new` once resolved+verified, **with `--signature`**; see [[fixes-rules]] |
 | "investigate this bug" / "audit this quirk" before planning | → `spectacular audit new`; see [[audit-rules]] |
 | "have we seen this bug before?" / starting to diagnose | → **[[bug-workflow]] Step 0** — grep `.spectacular/fixes/` signatures first (self-learning loop) |
@@ -133,9 +133,9 @@ Always prefer these over walking the filesystem or hand-reading multiple PLAN/TA
 | `spectacular request <slug>` | → CLI verb. Cheap overview. `--brief [-mN]` compiles active implementation context; `--full` emits the ordered request-owned Markdown bundle. See [[request-workflow]]. |
 | `spectacular spec <id> [--json]` | → CLI verb. Compact SPC state, intent, linked request, and safe next action; use `spec list` only to discover IDs. |
 | `spectacular decisions [--tag\|--since\|--json]` | → CLI verb. Lists decisions. |
-| `spectacular decision <slug>` | → CLI verb. Skim view of one decision. |
+| `spectacular decision <slug>` | → CLI verb. Entity detail: decision, context, consequences; `--full` is literal evidence. |
 | `spectacular memories [--tag\|--since\|--json]` | → CLI verb. Lists memory entries. |
-| `spectacular memory <slug>` | → CLI verb. Skim view of one memory. |
+| `spectacular memory <slug>` | → CLI verb. Entity detail: active/retracted status, lesson, tags; `--full` is literal evidence. |
 | `spectacular sessions [--status\|--since\|--json]` | → CLI verb. Lists sessions (read-only — distinct from `session start\|end` mutators). |
 | `spectacular sessions show <slug>` | → CLI verb. Skim view of one session. |
 | `spectacular show <doctype>` | → CLI verb. Dumps a canonical doc (prd/spec/principles/...). `--section <name>` filters to one H2. |
@@ -146,7 +146,7 @@ Always prefer these over walking the filesystem or hand-reading multiple PLAN/TA
 
 **Universal flags:** `--status <s>`, `--since <Nd\|Nh\|Nw>`, `--limit N` (default 20), `--all`, `--json`. Detail verbs add `--full` to bypass skim mode.
 
-**Cold-start pattern:** prefer `spectacular status --brief --json` → follow its named `request <slug>` (or `--brief` for active implementation). Use `summary` for a human-facing dashboard, not task selection.
+**Cold-start pattern:** prefer `spectacular status --brief --json` → follow its named `request <slug>` (or `--brief` for active implementation). After selecting a collection record, use its named detail, then literal `--full` only when needed. Direct named-file access remains valid after selection and for repair/debugging. Use `summary` for a human-facing dashboard, not task selection.
 
 ### Doc-writing (generalized — works for any registered doc)
 

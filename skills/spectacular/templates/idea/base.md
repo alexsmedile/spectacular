@@ -2,6 +2,7 @@
 id: <ID>
 type: idea
 status: parked
+summary: <SUMMARY>
 priority: medium
 owner: <OWNER>
 origin: <ORIGIN>

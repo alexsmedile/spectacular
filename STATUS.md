@@ -3,7 +3,7 @@
 **Updated:** 2026-08-05
 **Repo:** `alexsmedile/spectacular`
 **Audited against:** `main` @ `a5b4d5f` ("Merge pull request #21 from alexsmedile/codex/traffic-preflight")
-**Open issues:** 19 (14 pre-existing + 5 filed by this audit)
+**Open issues:** 20 (14 pre-existing + 6 filed by this audit)
 
 ---
 
@@ -14,7 +14,7 @@ Audited all open issues for **quality and currency** — are they written well e
 - Verified every factual claim in all 14 pre-existing issues against the working tree
 - Posted an audit comment to each of the 14
 - Backfilled the missing `**One-liner:**` (per #26) into the 8 issues lacking it
-- Filed 5 new issues for gaps that no existing issue named — **#28, #29, #30, #31, #32**
+- Filed 6 new issues for gaps that no existing issue named — **#28, #29, #30, #31, #32, #33**
 - Confirmed the `to-issues` agent **did fire reliably** — see below
 
 ### Issues filed by this audit
@@ -26,6 +26,7 @@ Audited all open issues for **quality and currency** — are they written well e
 | **30** | Portfolio-level issue review workflow | user feedback — the recurring prompt |
 | **31** | Graph engineering: nodes as agent execution substrate | user feedback — parent thesis for #20/#24 |
 | **32** | PR bodies need a plain-language one-liner before the manifest | user feedback — corrects a mis-scope in #26 |
+| **33** | Always close with a concrete next action | user feedback — wiring gap, primitives already exist |
 
 ## to-issues agent: verified working
 
@@ -43,7 +44,7 @@ Four messages were sent to the `to-issues` agent. Three required filing; all thr
 
 ## User items resolved 2026-08-05
 
-Four enhancement requests, each checked against the code before answering.
+Five enhancement requests, each checked against the code before answering.
 
 ### 1. Backlog review workflow → **filed #30**
 
@@ -72,6 +73,21 @@ The user's framing is bigger than #24 as filed:
 **Correction to this audit's earlier reading.** #26 was interpreted as covering GitHub *Issue* bodies. The user clarified: *"pr = pull request on github. I had difficulties understanding what the pr, filed by spectacular, was about."*
 
 The manifest at `github-work-bridge.md:242` requires no plain-language opening line; "purpose" is a change summary inside a structured body, and provenance fields lead. **#26 will not fix this.** Filed **#32** for the PR side. #26 remains valid for Issue bodies.
+
+### 5. "Now what?" at the end of work → **filed #33**
+
+> "At the end of gates, implementation, requests work, I keep asking spectacular, 'now what?' 'what is next?' 'how do we continue?' I think at the end you should always leave clear prosecution action."
+
+**A wiring gap, not a missing capability.** The primitives already exist and are good:
+
+- **`spectacular next`** (`cli/spectacular:4376-4440`) already ranks by lifecycle state and priority, tie-breaks on recency, and prints the literal follow-up command (`when done: spectacular advance <slug>`). It solves the hard part.
+- **`spectacular wayfind`** (`cli/spectacular:4611`) provides "dependency-first fog/frontier sequencing and durable open-loop control".
+- **`## Next actions`** already exists as a section in `references/active-request.md:55`.
+- **`lifecycle-contract.md:24`** already requires a next action for Feedback resolution — the right precedent, not yet generalized.
+
+**The gap:** the output rule "Identify the single highest-priority next action" (`SKILL.md:261`) sits under briefing-scoped output and governs `status`. It is **not** in the "Canonical rules (always apply)" block at `SKILL.md:240-254`. So gate outcomes, milestone completion, `advance` transitions, verification results, and sub-agent returns have no required closing action — exactly the moments the user reports losing the thread.
+
+Fix is to promote it to canonical scope and have completion paths call the logic `cmd_next` already implements.
 
 ---
 
@@ -130,8 +146,11 @@ TOKEN / RETRIEVAL LANE
         └──►  #4 (trim + glossary, inside #11 P1)
                                                           └──►  #19 (grouping)
 
-WORKFLOW LANE
+WORKFLOW / UX-CONTRACT LANE
   #30 (portfolio backlog review)  — builds on existing `github triage`, consumes #26
+  #33 (always close with next action) — promotes SKILL.md:261 to canonical, reuses `cmd_next`
+  #19 (group by concept)          — same class: presentation contract
+        └─ all three shape how output is delivered, not what work happens
 
 UNSEQUENCED
   #9 (evidence-blocked)   #10 (needs reframe)   #26 (needs target confirmation)
@@ -162,6 +181,7 @@ Legend: **Ready** = an independent session can act now · **Blocked** = needs a 
 | **17** | Intent/goal in schemas | **Ready\*** | \*Tighten "meaningful" → checkable (presence/length); `doctor` can't validate meaningfulness. Share a branch with #32 |
 | **19** | Group by concept | **Ready\*** | \*Name one first target flow (recommend decision review); ideally fold into #12 |
 | **30** | Backlog review workflow *(new)* | **Ready\*** | \*Decide command shape (`triage --all` vs `backlog review`) and whether it emits a prompt or a durable artifact |
+| **33** | Always close with next action *(new)* | **Ready\*** | \*Confirm whether `wayfind` already covers the gate case — may be pure surfacing. Otherwise a `SKILL.md` canonical-rule change reusing `cmd_next` |
 | **26** | Issue one-liner | **Partial** | Body backfill ready (list below). Convention enforcement blocked: is the to-issues format defined in this repo or in the agent's own skill? |
 | **5** | AFK commit scoping | **Blocked** | Merge with #25 + #29 onto one branch — three issues editing one absent section |
 | **25** | AFK approval gate | **Blocked** | Rescope per finding 1 + decide: does scope-drift block, or warn and log? |
@@ -182,16 +202,16 @@ Legend: **Ready** = an independent session can act now · **Blocked** = needs a 
 
 Ordered by leverage, not by issue number.
 
-1. **Answer the 8 blocking questions** (below). Most of the backlog is blocked on maintainer decisions, not on work.
+1. **Answer the 9 blocking questions** (below). Most of the backlog is blocked on maintainer decisions, not on work.
 2. **Recover the #9 evidence now.** Session history decays; everything else in this backlog can wait, that cannot.
 3. **Dispatch #18** as the first build. Unblocked, self-contained, de-risks #24 and #31.
 4. **Merge #25 + #5 + #29 onto one branch**, order #25 → #5. Three issues, one absent section, guaranteed conflict otherwise.
 5. **Grill #31 with #20**, not after. #31's execution requirements determine what #20's data model must support; designing the model first and retrofitting concurrency is the expensive order.
 6. **Pair #17 + #32** on one branch — both edit the PR manifest, and both are candidates to derive text from PLAN `## Goal`.
-7. **Consider #30 early despite its position.** It automates this entire audit. Every subsequent backlog review gets cheaper, and it builds on the existing `github triage` card rather than new machinery.
+7. **Consider #30 and #33 early despite their position.** Both are high-leverage and cheap. #30 automates this entire audit. #33 removes a friction the user hits at the end of *every* piece of work, and is likely a `SKILL.md` rule change plus reuse of `cmd_next` rather than new machinery.
 8. **Edit the 8 issue bodies** to add the one-liner — comments do not satisfy #26's stated purpose.
 
-### The 8 blocking questions
+### The 9 blocking questions
 
 | # | Question | Blocks |
 |---|---|---|
@@ -203,6 +223,7 @@ Ordered by leverage, not by issue number.
 | 6 | Mission/node = new doc type, linked requests, or generalized AFK run record? | #20, #24, #31 |
 | 7 | Where does the PR one-liner text come from — new flag, request goal, or `--summary`? | #32, #17 |
 | 8 | Backlog review command shape, and does it emit a prompt or a durable artifact? | #30 |
+| 9 | Does `wayfind` already cover gate-level continuation, making #33 a surfacing problem rather than a new rule? | #33 |
 
 **Note on Q6:** the AFK run record is already a durable, goal-scoped, gate-aware object that survives sessions and moves `active → gated → active`. That is structurally close to what a node needs. Worth evaluating before inventing a new doc type.
 

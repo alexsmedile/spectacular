@@ -1,8 +1,8 @@
 ---
-updated: 2026-08-03
+updated: 2026-08-06
 verdict: go-for-spec-no-go-for-migration
-against: 70745412435a846089ee5e3019427e6b2af4a3db
-traffic: parallel
+against: 9ba090cf260ed2ac7897d9a6063ae0afc6cb2bf8
+traffic: unknown
 ---
 
 # Workspace migration readiness report
@@ -17,11 +17,11 @@ The repository is not blocked by corruption or a detected private-data leak. It 
 
 ## What is ready
 
-- Baseline and remote main matched exactly after fetch.
-- No open PR or active request conflicts with this request.
-- Full doctor reported zero errors; migration registry chain validates.
+- Current `main` and `origin/main` matched exactly after fetch at `9ba090c`.
+- The original 2026-08-03 `parallel` traffic assessment is expired; current traffic is `unknown` until a follow-up request declares its boundaries and runs preflight.
+- The workspace and migration registry remain schema-2.0-current with the same three-entry registry chain.
 - `.spectacular.local/` is ignored, absent, untracked, and absent from reachable Git-history pathnames.
-- D22 and D23 define the private boundary, schema numbering, compatibility window, branch isolation, and recovery model.
+- D22 defines the private boundary; D24 supersedes D23's assumed immediate 2.0-to-3.0 transition while retaining its compatibility, branch-isolation, and recovery protocol for any future real break.
 - Existing migration infrastructure can host a future `2.0 → 3.0` edge after the contract is frozen.
 
 ## What prevents migration apply
@@ -31,11 +31,11 @@ The repository is not blocked by corruption or a detected private-data leak. It 
 3. The local override prose is broader than the confirmed security boundary and has no general CLI implementation.
 4. `status --against-latest` does not correctly explain a newer workspace.
 5. A global fail-closed mutator guard for unknown newer schemas was not found.
-6. Schema 2.0 currently tolerates tracked root ephemera (`.last-mutation` and `.DS_Store`); the generated singular `debug/` residue was removed, while D27 preserves the lightweight migration receipt as an explicit operational exception.
+6. The remaining schema-2.0 concerns are contract gaps, not live root-artifact drift: the former `.last-mutation`, `.DS_Store`, and `migrations.log` claims are no longer current on `main`.
 
 ## Proposed next specification
 
-Create `SPC-004 — Workspace boundary and migration safety` with this smallest scope:
+If the safeguards are prioritized later, create a newly allocated SPC — never reuse an existing canonical ID — with this smallest scope:
 
 - schema/product version independence, D24's schema-2 retention rule, and corrected roadmap terminology;
 - explicit required/optional/forbidden shared-path contract;
@@ -46,7 +46,7 @@ Create `SPC-004 — Workspace boundary and migration safety` with this smallest 
 - migration manifest/rollback invariants and fixture matrix;
 - explicit exclusions that keep GitHub collaboration behavior in SPC-003 and cleanup debt outside the schema migration.
 
-No schema migration request should be created unless a later approved specification names a real breaking delta. SPC-004 may seed an additive hardening request after grilling and approval.
+No schema migration request should be created unless a later approved specification names a real breaking delta. The future additive hardening SPC may seed a request only after grilling and approval.
 
 ## Interview resolutions
 
@@ -57,4 +57,4 @@ No schema migration request should be created unless a later approved specificat
 
 ## Traffic recheck requirement
 
-Before SPC-004 execution or any migration branch begins, fetch again and recalculate traffic. A changed branch/PR/request graph invalidates this report's `parallel` assessment without erasing its evidence.
+Before any additive-hardening execution or migration branch begins, fetch again and recalculate traffic. A changed branch/PR/request graph invalidates the original `parallel` assessment without erasing its historical evidence.

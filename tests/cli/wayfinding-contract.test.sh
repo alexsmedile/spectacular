@@ -176,6 +176,19 @@ scenario_doctor_dag() {
   rm -rf "$d"
 }
 
+scenario_doctor_duplicate_spec_id() {
+  echo "Scenario doctor: duplicate spec IDs are rejected"
+  local d="/tmp/spectacular-wayfinding-duplicate-spec" out code
+  new_ws "$d"
+  mkdir -p "$d/.spectacular/specs"
+  printf '%s\n' '---' 'id: SPC-001' 'type: specification' 'status: draft' '---' '# First' > "$d/.spectacular/specs/SPC-001-first.md"
+  printf '%s\n' '---' 'id: SPC-001' 'type: specification' 'status: draft' '---' '# Second' > "$d/.spectacular/specs/SPC-002-second.md"
+  out=$(cd "$d" && "$CLI" doctor wayfinding 2>&1); code=$?
+  assert_exit "$code" 2 "duplicate spec ID is an error"
+  [[ "$out" == *"duplicate canonical ID(s): SPC-001"* ]] && pass || fail "duplicate spec ID named"
+  rm -rf "$d"
+}
+
 scenario_id_migration() {
   echo "Scenario migration: dry-run is inert; apply archives originals and rewrites IDs"
   local d="/tmp/spectacular-wayfinding-migrate" out code
@@ -210,6 +223,7 @@ scenario_typed_records
 scenario_spec_lifecycle
 scenario_frontier
 scenario_doctor_dag
+scenario_doctor_duplicate_spec_id
 scenario_id_migration
 
 echo ""

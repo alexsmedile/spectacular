@@ -1,5 +1,5 @@
 ---
-id: SPC-004
+id: SPC-005
 type: specification
 status: implemented
 target_version: "tbd"
@@ -17,7 +17,7 @@ implemented_at: 2026-08-04
 verified_against: uncommitted
 ---
 
-# SPC-004 — Define destination-based idea routing and local IDEA deprecation
+# SPC-005 — Define destination-based idea routing and local IDEA deprecation
 
 ## Intent
 

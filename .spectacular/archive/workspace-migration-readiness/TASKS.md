@@ -1,6 +1,6 @@
 ---
-status: review
-updated: 2026-08-03
+status: verified
+updated: 2026-08-06
 related:
   - PLAN.md
 ---

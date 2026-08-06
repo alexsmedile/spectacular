@@ -1,8 +1,8 @@
 ---
-status: review
+status: archived
 priority: medium
 owner: alex
-updated: 2026-08-03
+updated: 2026-08-06
 build: b41
 docs_impact: none
 docs_impact_reason: "Internal readiness artifacts only; public documentation waits for an approved schema-3 contract"
@@ -12,6 +12,7 @@ related:
   - ../../specs/SPC-003-github-native-lifecycle.md
   - ../../decisions/DEC-022-keep-spectacular-local-subordinate-private-and-lazily.md
   - ../../decisions/DEC-023-migrate-workspace-schema-2-0-to-3-0.md
+archived: 2026-08-06
 ---
 
 # Plan — workspace-migration-readiness

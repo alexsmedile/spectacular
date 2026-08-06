@@ -105,9 +105,33 @@ scenario_pr_handoff() {
   rm -rf "$d" "$bin"; rm -f "$log"
 }
 
+scenario_authority_record() {
+  echo "Scenario authority record: opt-in record/event paths are auditable and make no Git mutation"
+  local d="/tmp/spectacular-afk-authority" out code head branch
+  init_repo "$d"
+  head=$(cd "$d" && git rev-parse HEAD); branch=$(cd "$d" && git branch --show-current)
+  (cd "$d" && "$CLI" afk run start afk-001 --goal "Validate AFK record" --authority-record --authorized-by alex --session S-001 --base main --goal-node N-001 --apply --yes >/dev/null)
+  assert_contains "$d/.spectacular/afk/runs/afk-001.md" "authority_version: 1"
+  assert_contains "$d/.spectacular/afk/runs/afk-001.md" "integration_branch: \"afk/afk-001/integration\""
+  assert_contains "$d/.spectacular/afk/runs/afk-001.md" "### E-001 — authorization"
+  [[ "$(cd "$d" && git rev-parse HEAD)" == "$head" && "$(cd "$d" && git branch --show-current)" == "$branch" ]] && pass || fail "authority record start makes no Git mutation"
+  (cd "$d" && "$CLI" afk run event technical-choice --scope N-001 --rationale "Reuse existing helper" --evidence "cli/spectacular" >/dev/null)
+  grep -q "E-002" "$d/.spectacular/afk/runs/afk-001.md" && fail "dry-run event must not append" || pass
+  (cd "$d" && "$CLI" afk run event technical-choice --scope N-001 --rationale "Reuse existing helper" --evidence "cli/spectacular" --apply --yes >/dev/null)
+  assert_contains "$d/.spectacular/afk/runs/afk-001.md" "### E-002 — technical-choice"
+  out=$(cd "$d" && "$CLI" afk run status)
+  [[ "$out" == *"authority: alex · session S-001"* && "$out" == *"events: 2"* ]] && pass || fail "status exposes authority and event count"
+  (cd "$d" && "$CLI" doctor afk) >/dev/null && pass || fail "doctor accepts complete authority record"
+  sed -i.bak 's/### E-002/### E-004/' "$d/.spectacular/afk/runs/afk-001.md"; rm -f "$d/.spectacular/afk/runs/afk-001.md.bak"
+  out=$(cd "$d" && "$CLI" doctor afk)
+  [[ "$out" == *"non-monotonic IDs"* ]] && pass || fail "doctor detects invalid event ordering"
+  rm -rf "$d"
+}
+
 scenario_policy_and_names
 scenario_isolation_and_cleanup
 scenario_pr_handoff
+scenario_authority_record
 
 echo ""
 echo "Results: $pass_count passed, $fail_count failed"

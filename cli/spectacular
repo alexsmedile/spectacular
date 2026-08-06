@@ -5287,23 +5287,54 @@ _afk_active_run() {
   return 1
 }
 
+_afk_event_type_valid() {
+  case "$1" in
+    authorization|node-added|technical-choice|delegated|returned|verification|acceptance|integration|git-action|gate|resume|handoff|completion|cancellation|cleanup) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+_afk_event_next_id() {
+  awk '/^### E-[0-9][0-9][0-9] — / { n=substr($2,3)+0 } END { printf "%03d", n + 1 }' "$1"
+}
+
+_afk_event_append() {
+  local path="$1" type="$2" scope="$3" rationale="$4" evidence="$5" result="${6:-recorded}" id stamp
+  id=$(_afk_event_next_id "$path")
+  stamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+  printf '\n### E-%s — %s\n- at: %s\n- actor: orchestrator\n- scope: %s\n- rationale: %s\n- evidence: %s\n- result: %s\n' \
+    "$id" "$type" "$stamp" "$scope" "$rationale" "$evidence" "$result" >> "$path"
+}
+
 cmd_afk_run() {
   local sub="${1:-}"; shift || true
   case "$sub" in
     start)
-      local slug="" goal="" request="" allowed="research,spikes,draft-specs" gates="merge,breaking-api-schema,product-business,undeclared-auth-browser-sensitive-data" apply=false yes=false
-      while (( $# > 0 )); do case "$1" in --goal) require_value "$1" "${2:-}"; goal="$2"; shift 2 ;; --request) require_value "$1" "${2:-}"; request="$2"; shift 2 ;; --allowed-actions) require_value "$1" "${2:-}"; allowed="$2"; shift 2 ;; --hitl-gates) require_value "$1" "${2:-}"; gates="$2"; shift 2 ;; --apply) apply=true; shift ;; --yes) yes=true; shift ;; -*) die "afk run start: unknown flag '$1'" ;; *) [[ -z "$slug" ]] || die "afk run start: only one slug allowed"; slug="$1"; shift ;; esac; done
+      local slug="" goal="" request="" allowed="research,spikes,draft-specs" gates="merge,breaking-api-schema,product-business,undeclared-auth-browser-sensitive-data" authorized_by="" session="" base="" nodes="" authority=false apply=false yes=false
+      while (( $# > 0 )); do case "$1" in --goal) require_value "$1" "${2:-}"; goal="$2"; shift 2 ;; --request) require_value "$1" "${2:-}"; request="$2"; shift 2 ;; --allowed-actions) require_value "$1" "${2:-}"; allowed="$2"; shift 2 ;; --hitl-gates) require_value "$1" "${2:-}"; gates="$2"; shift 2 ;; --authority-record) authority=true; shift ;; --authorized-by) require_value "$1" "${2:-}"; authorized_by="$2"; shift 2 ;; --session) require_value "$1" "${2:-}"; session="$2"; shift 2 ;; --base) require_value "$1" "${2:-}"; base="$2"; shift 2 ;; --goal-node) require_value "$1" "${2:-}"; nodes="${nodes}${nodes:+,}$2"; shift 2 ;; --apply) apply=true; shift ;; --yes) yes=true; shift ;; -*) die "afk run start: unknown flag '$1'" ;; *) [[ -z "$slug" ]] || die "afk run start: only one slug allowed"; slug="$1"; shift ;; esac; done
       [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ && -n "$goal" ]] || die "Usage: spectacular afk run start <slug> --goal <exact-goal> [--request <slug>] [--allowed-actions <csv>] [--apply --yes]"
+      if $authority; then
+        [[ -n "$authorized_by" && -n "$session" && -n "$base" && -n "$nodes" ]] || die "afk run start: --authority-record requires --authorized-by, --session, --base, and at least one --goal-node"
+      fi
       _afk_active_run >/dev/null && die "afk run start: an AFK run is already active or gated; complete/cancel it first"
       local path="$SPEC_WORKSPACE_DIR/afk/runs/$slug.md"
       [[ ! -e "$path" ]] || die "afk run start: run '$slug' already exists"
       info "AFK run proposal: $slug — $goal"
       info "  allowed_actions: $allowed"
       info "  hitl_gates: $gates"
+      $authority && info "  authority_record: afk/$slug/integration (base: $base)"
       $apply || { info "Dry-run only. Apply with --apply --yes"; return 0; }
       $yes || die "afk run start: --apply requires --yes"
       mkdir -p "$SPEC_AFK_DIR/runs"
-      printf '%s\n' '---' "id: $slug" 'type: afk-run' 'status: active' "goal: \"$goal\"" "request: \"$request\"" "allowed_actions: \"$allowed\"" "hitl_gates: \"$gates\"" "started_at: $TODAY" "updated: $TODAY" '---' '' "# AFK run — $slug" '' "## Goal" '' "$goal" > "$path"
+      printf '%s\n' '---' "id: $slug" 'type: afk-run' 'status: active' "goal: \"$goal\"" "request: \"$request\"" "allowed_actions: \"$allowed\"" "hitl_gates: \"$gates\"" "started_at: $TODAY" "updated: $TODAY" > "$path"
+      if $authority; then
+        printf '%s\n' 'authority_version: 1' "authorized_by: \"$authorized_by\"" "authorized_at: $(date -u '+%Y-%m-%dT%H:%M:%SZ')" "session: \"$session\"" "base: \"$base\"" "integration_branch: \"afk/$slug/integration\"" "goal_nodes: \"$nodes\"" >> "$path"
+      fi
+      printf '%s\n' '---' '' "# AFK run — $slug" '' "## Goal" '' "$goal" >> "$path"
+      if $authority; then
+        printf '%s\n' '' '## Goal graph' '' "$nodes" '' '## Events' >> "$path"
+        _afk_event_append "$path" authorization "$slug" "Human authorized the declared AFK goal graph." "authorization-block" authorized
+      fi
       created "$path" ;;
     status)
       local active; active=$(_afk_active_run) || { info "No active or gated AFK run"; return 0; }
@@ -5311,7 +5342,27 @@ cmd_afk_run() {
       info "  goal: $(fm_get "$active" goal)"
       info "  request: $(fm_get "$active" request)"
       info "  allowed_actions: $(fm_get "$active" allowed_actions)"
-      info "  hitl_gates: $(fm_get "$active" hitl_gates)" ;;
+      info "  hitl_gates: $(fm_get "$active" hitl_gates)"
+      if [[ -n "$(fm_get "$active" authority_version)" ]]; then
+        info "  authority: $(fm_get "$active" authorized_by) · session $(fm_get "$active" session)"
+        info "  base: $(fm_get "$active" base) → $(fm_get "$active" integration_branch)"
+        info "  goal_nodes: $(fm_get "$active" goal_nodes)"
+        info "  events: $(grep -c '^### E-' "$active" || true)"
+      else
+        info "  authority: legacy record (no new-format Git authority)"
+      fi ;;
+    event)
+      local type="" scope="" rationale="" evidence="" result="recorded" apply=false yes=false active
+      while (( $# > 0 )); do case "$1" in --scope) require_value "$1" "${2:-}"; scope="$2"; shift 2 ;; --rationale) require_value "$1" "${2:-}"; rationale="$2"; shift 2 ;; --evidence) require_value "$1" "${2:-}"; evidence="$2"; shift 2 ;; --result) require_value "$1" "${2:-}"; result="$2"; shift 2 ;; --apply) apply=true; shift ;; --yes) yes=true; shift ;; -*) die "afk run event: unknown flag '$1'" ;; *) [[ -z "$type" ]] || die "afk run event: only one event type allowed"; type="$1"; shift ;; esac; done
+      _afk_event_type_valid "$type" || die "afk run event: event type must be authorization|node-added|technical-choice|delegated|returned|verification|acceptance|integration|git-action|gate|resume|handoff|completion|cancellation|cleanup"
+      [[ -n "$scope" && -n "$rationale" && -n "$evidence" ]] || die "Usage: spectacular afk run event <type> --scope <scope> --rationale <text> --evidence <ref> [--result <value>] [--apply --yes]"
+      active=$(_afk_active_run) || die "afk run event: no active or gated run"
+      [[ -n "$(fm_get "$active" authority_version)" ]] || die "afk run event: legacy AFK run has no event ledger; start a new run with --authority-record"
+      info "AFK event proposal: $type ($scope)"
+      $apply || { info "Dry-run only. Apply with --apply --yes"; return 0; }
+      $yes || die "afk run event: --apply requires --yes"
+      _afk_event_append "$active" "$type" "$scope" "$rationale" "$evidence" "$result"
+      fm_touch "$active"; info "  ✓ event appended" ;;
     gate|resume|complete|cancel)
       local active reason=""; active=$(_afk_active_run) || die "afk run $sub: no active or gated run"
       while (( $# > 0 )); do case "$1" in --reason) require_value "$1" "${2:-}"; reason="$2"; shift 2 ;; *) die "afk run $sub: unknown option '$1'" ;; esac; done
@@ -5323,7 +5374,7 @@ cmd_afk_run() {
         cancel) [[ -n "$reason" ]] || die "afk run cancel: --reason is required"; fm_set "$active" status cancelled; fm_set "$active" cancelled_at "$TODAY"; fm_set "$active" cancellation_reason "$reason" ;;
       esac
       fm_touch "$active"; info "  ✓ AFK run $(fm_get "$active" id): $current → $(fm_get "$active" status)" ;;
-    ""|--help|-h) echo "Usage: spectacular afk run <start|status|gate|resume|complete|cancel>" ;;
+    ""|--help|-h) echo "Usage: spectacular afk run <start|status|event|gate|resume|complete|cancel>" ;;
     *) die "afk run: unknown subcommand '$sub'" ;;
   esac
 }
@@ -5543,6 +5594,8 @@ Usage: spectacular afk <run|status|configure|propose|preflight|start|cleanup|pr>
 
 Read-only by default. Branch creation, cleanup, and PR creation require enabled
 project policy plus explicit --apply --yes. Merge and remote deletion are never performed.
+Authority records (`afk run start --authority-record`, `afk run event`) mutate
+only .spectacular Markdown; they do not mutate Git history, branches, or remotes.
 EOF
       ;;
     *) die "afk: unknown subcommand '$sub'" ;;
@@ -14641,7 +14694,7 @@ check_fixes() {
 }
 
 check_afk() {
-  local dir="$SPEC_AFK_DIR/runs" f status active=0 count=0
+  local dir="$SPEC_AFK_DIR/runs" f status active=0 count=0 field id branch
   [[ -d "$dir" ]] || { doc_add "afk" "info" "$dir" "no AFK authorization runs yet"; return 0; }
   for f in "$dir"/*.md; do
     [[ -f "$f" ]] || continue; count=$((count + 1)); status=$(fm_get "$f" status)
@@ -14649,6 +14702,26 @@ check_afk() {
     for field in goal allowed_actions hitl_gates started_at; do
       [[ -n "$(fm_get "$f" "$field")" ]] || doc_add "afk" "warning" "$f" "AFK run missing $field" "record the authorization boundary" "judgment"
     done
+    if [[ -n "$(fm_get "$f" authority_version)" ]]; then
+      [[ "$(fm_get "$f" authority_version)" == 1 ]] || doc_add "afk" "warning" "$f" "unknown AFK authority_version: $(fm_get "$f" authority_version)" "use authority_version: 1 or omit fields for a legacy run" "judgment"
+      for field in authorized_by authorized_at session base integration_branch goal_nodes; do
+        [[ -n "$(fm_get "$f" "$field")" ]] || doc_add "afk" "warning" "$f" "new-format AFK run missing $field" "record complete authorization evidence" "judgment"
+      done
+      id=$(fm_get "$f" id); branch=$(fm_get "$f" integration_branch)
+      [[ "$branch" == "afk/$id/integration" ]] || doc_add "afk" "warning" "$f" "integration_branch must be afk/$id/integration" "keep task branches as sibling refs under afk/$id/" "judgment"
+      if ! awk '
+        function check() { if (seen && (!at || !actor || !scope || !rationale || !evidence)) exit 1 }
+        /^### E-[0-9][0-9][0-9] — / { check(); seen=1; want++; if ((substr($2,3)+0) != want) exit 1; at=actor=scope=rationale=evidence=0; next }
+        seen && /^- at: .+/ { at=1 }
+        seen && /^- actor: .+/ { actor=1 }
+        seen && /^- scope: .+/ { scope=1 }
+        seen && /^- rationale: .+/ { rationale=1 }
+        seen && /^- evidence: .+/ { evidence=1 }
+        END { check(); if (!seen) exit 1 }
+      ' "$f"; then
+        doc_add "afk" "warning" "$f" "new-format event log has missing evidence or non-monotonic IDs" "append complete E-001, E-002, ... events through the CLI" "judgment"
+      fi
+    fi
   done
   (( active <= 1 )) || doc_add "afk" "error" "$dir" "$active AFK runs are active/gated simultaneously" "complete or cancel all but one" "judgment"
   (( count > 0 )) && doc_add "afk" "pass" "$dir" "$count AFK run record(s) inspected"

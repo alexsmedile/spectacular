@@ -40,7 +40,7 @@ skills:
 #   primary_branches: "main,master,develop"
 #   allow_pr_create: false
 
-last_build: 44
+last_build: 45
 
 afk_git:
   enabled: true

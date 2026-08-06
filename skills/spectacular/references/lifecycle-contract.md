@@ -27,7 +27,7 @@ Actual code is the source of implemented behavior. Markdown specifications are e
 | Fix | terminal verified record | Concrete `verified-by` evidence required at creation | Fix entry | Permanent trusted corpus |
 | Session | `open → closed` | At most one open session; docs impact assessed at end | Session entry | Durable time record |
 | Debug run | `investigating → researching → planning → fixing → verifying → resolved | folded | wont-fix` | Existing debug trace contract | Trace remains durable |
-| AFK run | `active → gated → active | completed | cancelled` | Scope, allowed actions, declared HITL gates, and approval to resume | AFK run entry | Durable authorization audit trail |
+| AFK run | `active → gated → active | completed | cancelled` | Scope, allowed actions, declared HITL gates, and approval to resume | AFK run entry | Durable authorization audit trail; new-format records are CLI-appended and doctor-validated, not tamper-proof |
 | Release ledger | `candidate → planned → active → shipped`, or `candidate|planned|active → cancelled` | Human release planning | Roadmap ledger row | Shipped/cancelled history remains indexed |
 
 `PRT` and `TSK` are reserved identifiers only. They have no standalone collection or lifecycle until a concrete consumer is designed. Prototype artifacts inherit the lifecycle of their owning Vision, feedback entry, request, or spike; tracer bullets use the approved specification/request lifecycle because their code is production code.

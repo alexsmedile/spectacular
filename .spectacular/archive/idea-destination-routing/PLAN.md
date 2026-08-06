@@ -1,8 +1,8 @@
 ---
-status: verified
+status: archived
 priority: medium
 owner: alex
-updated: 2026-08-04
+updated: 2026-08-06
 build: b43
 docs_impact: required
 summary: "Implement SPC-004: Define destination-based idea routing and reduce local IDEA storage"
@@ -22,6 +22,7 @@ activated_at: 2026-08-04
 activated_by: alex
 activated_against: a5b4d5fbf3073c8e4f87de24255d5959d1e3f0ea
 docs_impact_evidence: Updated internal idea-routing references and architecture; public docs intentionally left unchanged
+archived: 2026-08-06
 ---
 
 # Plan — idea-destination-routing

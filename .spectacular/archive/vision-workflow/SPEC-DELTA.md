@@ -1,0 +1,1 @@
+NONE — `.spectacular/specs/index.md` already records the shipped Vision workflow, including its pre-request ownership, explicit approval boundary, typed fragments, CLI verbs, and legacy compatibility.

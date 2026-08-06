@@ -1,5 +1,5 @@
 ---
-status: verified
+status: archived
 priority: medium
 owner: alex
 updated: 2026-08-06
@@ -15,6 +15,7 @@ activated_at: 2026-08-05
 activated_by: alex
 activated_against: 0de02e1491b82da3fffc0d2346aba2e363fe3599
 docs_impact_evidence: skills/spectacular/SKILL.md and references/soft-db-index.md updated for list-detail-full guidance
+archived: 2026-08-06
 ---
 
 # Plan — soft-db-projection-inventory

@@ -1,8 +1,8 @@
 ---
-status: verified
+status: archived
 priority: high
 owner: alex
-updated: 2026-08-04
+updated: 2026-08-06
 build: b43
 docs_impact: required
 summary: "Implement SPC-004: Pre-request Vision workspaces turn grounded imagination, human-reviewed fragments, prototypes, and spike evidence into an explicitly approved direction before specification and execution planning"
@@ -26,6 +26,7 @@ github_pr: "https://github.com/alexsmedile/spectacular/pull/22"
 github_pr_opened_at: 2026-08-04
 github_pr_head: 6431697f531b11a08d011aa6d3df4caef7b737f6
 issue_resolution: on_merge
+archived: 2026-08-06
 ---
 
 # Plan — vision-workflow

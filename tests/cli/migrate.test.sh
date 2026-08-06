@@ -27,6 +27,10 @@ assert_file_exists() {
   if [[ -f "$1" ]]; then pass_count=$((pass_count + 1))
   else echo "    ✗ expected file: $1"; fail_count=$((fail_count + 1)); fi
 }
+assert_file_absent() {
+  if [[ ! -e "$1" ]]; then pass_count=$((pass_count + 1))
+  else echo "    ✗ expected absent file: $1"; fail_count=$((fail_count + 1)); fi
+}
 assert_dir_exists() {
   if [[ -d "$1" ]]; then pass_count=$((pass_count + 1))
   else echo "    ✗ expected dir: $1"; fail_count=$((fail_count + 1)); fi
@@ -42,6 +46,10 @@ assert_file_contains() {
 assert_output_contains() {
   if echo "$1" | grep -qF -- "$2"; then pass_count=$((pass_count + 1))
   else echo "    ✗ expected output to contain: $2"; fail_count=$((fail_count + 1)); fi
+}
+assert_output_not_contains() {
+  if ! echo "$1" | grep -qF -- "$2"; then pass_count=$((pass_count + 1))
+  else echo "    ✗ output must not contain: $2"; fail_count=$((fail_count + 1)); fi
 }
 assert_exit() {
   if [[ "$1" -eq "$2" ]]; then pass_count=$((pass_count + 1))
@@ -423,6 +431,26 @@ EOF
   rm -rf "$dir"
 }
 
+scenario_14_tracked_local_path_refuses() {
+  echo "Scenario 14: tracked .spectacular.local path refuses migration without exposing contents"
+  local dir="/tmp/spectacular-migrate-test-14"
+  rm -rf "$dir"; mkdir -p "$dir"
+  (cd "$dir" && "$CLI" init --kit blank >/dev/null 2>&1)
+  sed -i.bak 's/workspace_schema: "2.0"/workspace_schema: "0.6"/' "$dir/.spectacular/config.yaml"
+  rm -f "$dir/.spectacular/config.yaml.bak"
+  (cd "$dir" && git init -q && mkdir -p .spectacular.local && printf 'synthetic-secret\n' > .spectacular.local/token && git add -f .spectacular.local/token)
+
+  local out code
+  out=$(cd "$dir" && "$CLI" migrate 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "tracked local path refuses migration"
+  assert_output_contains "$out" ".spectacular.local/token"
+  assert_output_not_contains "$out" "synthetic-secret"
+  assert_file_contains "$dir/.spectacular/config.yaml" 'workspace_schema: "0.6"'
+  assert_file_absent "$dir/.spectacular/migrations.log"
+
+  rm -rf "$dir"
+}
+
 scenario_7_help_flag() {
   echo "Scenario 7: migrate --help shows usage"
   local out code
@@ -449,6 +477,7 @@ scenario_10_downgrade_refused
 scenario_11_v06_okf_migration
 scenario_12_v06_idempotent
 scenario_13_v06_memory_collision
+scenario_14_tracked_local_path_refuses
 
 echo ""
 echo "Results: ${pass_count} passed, ${fail_count} failed"

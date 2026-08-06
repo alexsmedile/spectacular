@@ -363,6 +363,28 @@ scenario_11_status_against_latest() {
     fail_count=$((fail_count + 1))
   fi
 
+  # A workspace newer than this CLI must receive update guidance, never a
+  # downgrade/migration suggestion. Mutators must refuse before writing.
+  echo 'workspace_schema: "3.0"' >> "$dir/.spectacular/config.yaml"
+  local out_newer code_newer
+  out_newer=$(cd "$dir" && "$CLI" status --against-latest 2>&1)
+  code_newer=$?
+  if [[ "$code_newer" -eq 0 ]] && echo "$out_newer" | grep -q "newer than this CLI" && ! echo "$out_newer" | grep -q "spectacular migrate"; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ newer schema: expected update guidance without migrate, got: $out_newer"
+    fail_count=$((fail_count + 1))
+  fi
+
+  local out_refuse code_refuse
+  out_refuse=$(cd "$dir" && "$CLI" remember "must not write" 2>&1) && code_refuse=0 || code_refuse=$?
+  if [[ "$code_refuse" -ne 0 ]] && echo "$out_refuse" | grep -q "Refusing to modify workspace_schema 3.0" && [[ ! -d "$dir/.spectacular/memories" ]]; then
+    pass_count=$((pass_count + 1))
+  else
+    echo "    ✗ newer schema mutator: expected refusal before write, got: $out_refuse (exit $code_refuse)"
+    fail_count=$((fail_count + 1))
+  fi
+
   # Outside a workspace → exit 1
   local out_outside code_outside
   out_outside=$(cd /tmp && "$CLI" status --against-latest 2>&1) && code_outside=0 || code_outside=$?

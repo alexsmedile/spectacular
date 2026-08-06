@@ -10134,6 +10134,127 @@ schema_lt() {
   [[ "$first" == "$a" ]]
 }
 
+# Classify the workspace's declared schema relative to this CLI. Keep this
+# separate from schema_lt(): callers need all three states, not just "older".
+workspace_schema_relation() {
+  local declared="$1" supported="$2"
+  if [[ "$declared" == "$supported" ]]; then
+    echo "equal"
+  elif schema_lt "$declared" "$supported"; then
+    echo "older"
+  else
+    echo "newer"
+  fi
+}
+
+# Return success when the invocation is diagnostics-only. The default is
+# deliberately conservative: an unclassified command must prove it is
+# read-only before it can operate on a newer workspace.
+schema_write_gate_required() {
+  local subcmd="${1:-}" verb="${2:-}" arg
+  case "$subcmd" in
+    status|requests|decisions|memories|sessions|links|traffic|decision|memory|show|summary|progress|paths|next|policy|collections)
+      return 1
+      ;;
+    request)
+      [[ "$verb" == "new" || "$verb" == "advance" || "$verb" == "archive" ]]
+      return
+      ;;
+    spec)
+      [[ "$verb" == "new" || "$verb" == "approve" || "$verb" == "confirm" || "$verb" == "implement" || "$verb" == "deprecate" || "$verb" == "archive" ]]
+      return
+      ;;
+    doctor)
+      for arg in "$@"; do [[ "$arg" == "--fix" ]] && return 0; done
+      return 1
+      ;;
+    migrate)
+      for arg in "$@"; do
+        case "$arg" in --list|--help|-h|--dry-run) return 1 ;; esac
+      done
+      return 0
+      ;;
+    pack)
+      [[ "$verb" == "install" || "$verb" == "remove" ]]
+      return
+      ;;
+    feedback|feedback-loop)
+      [[ "$verb" != "list" && "$verb" != "show" ]]
+      return
+      ;;
+    idea)
+      [[ "$verb" == "new" || "$verb" == "promote" ]]
+      return
+      ;;
+    question)
+      [[ "$verb" == "new" || "$verb" == "resolve" ]]
+      return
+      ;;
+    research|spike)
+      [[ "$verb" != "list" ]]
+      return
+      ;;
+    audit)
+      [[ "$verb" == "new" || "$verb" == "resolve" ]]
+      return
+      ;;
+    fix)
+      [[ "$verb" == "new" ]]
+      return
+      ;;
+    vision)
+      [[ "$verb" == "add" || "$verb" == "react" || "$verb" == "propose" || "$verb" == "approve" || "$verb" == "reject" ]]
+      return
+      ;;
+    wayfind)
+      case "$verb" in status|next|order|path) return 1 ;; esac
+      return 0
+      ;;
+    roadmap)
+      [[ "$verb" == "migrate" ]]
+      return
+      ;;
+    afk)
+      [[ "$verb" != "status" && "$verb" != "preflight" ]]
+      return
+      ;;
+    github)
+      [[ "$verb" != "reconcile" ]]
+      return
+      ;;
+    id)
+      [[ "$verb" == "migrate" ]]
+      return
+      ;;
+  esac
+  return 0
+}
+
+# Refuse a write before its first mutation when the workspace was created by a
+# newer CLI. First-time init has no workspace to protect and therefore passes.
+require_supported_workspace_schema_for_write() {
+  [[ -d "$SPEC_WORKSPACE_DIR" ]] || return 0
+  local declared relation
+  declared="$(config_workspace_schema)"
+  relation="$(workspace_schema_relation "$declared" "$CURRENT_SCHEMA")"
+  [[ "$relation" != "newer" ]] && return 0
+  die "Refusing to modify workspace_schema ${declared}: this CLI supports ${CURRENT_SCHEMA}. Update Spectacular first; read-only diagnostics remain available."
+}
+
+# Migration must never write when private local material is already tracked.
+# Deliberately print only repository pathnames; do not inspect file contents.
+require_no_tracked_local_paths_for_migration() {
+  local paths
+  paths="$(git ls-files -- .spectacular.local 2>/dev/null || true)"
+  [[ -z "$paths" ]] && return 0
+  echo "Refusing migrate — tracked .spectacular.local path(s) require explicit security handling:" >&2
+  while IFS= read -r path; do
+    [[ -n "$path" ]] && echo "  - $path" >&2
+  done <<< "$paths"
+  echo "Stop before reading local contents. Classify exposure with the designated security authority." >&2
+  return 1
+}
+
 cmd_migrate() {
   local dry_run=false
   local opt_to="" opt_from="" opt_list=false opt_skip_doctor=false
@@ -10230,6 +10351,12 @@ EOF
 
   if [[ ! -d "$SPEC_WORKSPACE_DIR" ]]; then
     die "Not inside a Spectacular workspace (no .spectacular/ here)."
+  fi
+
+  # Dry-run/list/help are diagnostics-only. Every apply-capable migration must
+  # stop before doctor or registry work can lead to a write.
+  if ! $dry_run; then
+    require_no_tracked_local_paths_for_migration || return 1
   fi
 
   local current target start_schema
@@ -10668,25 +10795,32 @@ cmd_status_brief() {
 }
 
 # `spectacular status --against-latest` — one-line workspace-schema verdict.
-# Prints whether the workspace is up-to-date or behind the CLI's CURRENT_SCHEMA,
-# plus the suggested verb to catch up. Always exits 0 (informational), unless
-# the user is not inside a Spectacular workspace at all (exits 1).
+# Distinguishes an older workspace (which can migrate forward) from a newer one
+# (which requires a CLI update). Always exits 0 when inside a workspace.
 cmd_status_against_latest() {
   if [[ ! -d "$SPEC_WORKSPACE_DIR" ]]; then
     echo "Not inside a Spectacular workspace (no .spectacular/ here)." >&2
     return 1
   fi
-  local declared
+  local declared relation
   declared="$(config_workspace_schema)"
-  if [[ "$declared" == "$CURRENT_SCHEMA" ]]; then
-    echo "workspace_schema: ${declared}  ✓  up to date (CLI expects ${CURRENT_SCHEMA})"
-    return 0
-  fi
-  # Behind: tell user what to run.
-  echo "workspace_schema: ${declared}  ⚠  behind CLI (expects ${CURRENT_SCHEMA})"
-  echo ""
-  echo "  Run:  spectacular migrate            # apply pending migrations"
-  echo "        spectacular migrate --dry-run  # preview without writing"
+  relation="$(workspace_schema_relation "$declared" "$CURRENT_SCHEMA")"
+  case "$relation" in
+    equal)
+      echo "workspace_schema: ${declared}  ✓  up to date (CLI expects ${CURRENT_SCHEMA})"
+      ;;
+    older)
+      echo "workspace_schema: ${declared}  ⚠  behind CLI (expects ${CURRENT_SCHEMA})"
+      echo ""
+      echo "  Run:  spectacular migrate            # apply pending migrations"
+      echo "        spectacular migrate --dry-run  # preview without writing"
+      ;;
+    newer)
+      echo "workspace_schema: ${declared}  ⚠  newer than this CLI (supports ${CURRENT_SCHEMA})"
+      echo ""
+      echo "  Update Spectacular before running a mutating command."
+      ;;
+  esac
   return 0
 }
 
@@ -15376,6 +15510,10 @@ main() {
       top_usage; exit 0
       ;;
   esac
+
+  if schema_write_gate_required "$@"; then
+    require_supported_workspace_schema_for_write
+  fi
 
   # Skill-owned interactive verbs — explain and exit, don't pretend to dispatch.
   # Exception: `status --against-latest` is a CLI-mechanical flag (no skill needed).

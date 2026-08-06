@@ -252,6 +252,7 @@ Never read `archive/` during normal operation.
 - **Execution boundary:** when implementation reveals an unexpected requirement, tangent, or optimization, park it as an idea (or future target) instead of adding it to the active request's PLAN/TASKS. See [[wayfinding-sequencer]].
 - **GitHub/Spectacular boundary:** GitHub owns capture, discussion, ownership, PRs, checks, merge, collaboration, and notifications. Spectacular owns reasoning, durable local context, decisions, plans, validation, and coordination. An Issue is a collaborative job card, not automatically a spec or request: use the smallest sufficient `direct | request | spec-first` path and link rather than mirror. See [[github-work-bridge]].
 - **Know when to write to a collection, not just how** — the "When to act" trigger table in [[soft-db-index]]. Cheap/reversible writes on their natural trigger; permanent/team-visible writes (memory, decisions, archive) are proposed → human confirms → written, never autonomous.
+- **Completion language closes verified work** — when the user says “finish,” “conclude,” “wrap up,” or equivalent after a request is verified, treat it as archive authorization. Run the normal archive closure gate (spec delta, verification evidence, policy) and archive; ask only if a gate reveals a real blocker or a required archival choice.
 
 ### Task tracking — two layers
 

@@ -176,7 +176,12 @@ convention_pack:
 
 ## .spectacular.local/
 
-Personal override layer — never committed. Use for local dev overrides, personal config variations, sensitive local paths. The skill reads `.spectacular.local/` if present and merges with `.spectacular/`, with local taking precedence.
+Private, feature-owned working layer — never committed. Use it for personal
+configuration variations and sensitive local paths only where the owning feature
+explicitly allows it. It may supplement machine/user operation, but never
+overrides shared repository identity, approved specifications, decisions,
+request lifecycle, dependencies, authority mappings, policy, security gates, or
+verification. Create local paths lazily; `.gitignore` protects the root path.
 
 ---
 

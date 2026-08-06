@@ -9,6 +9,13 @@ AFK Git behavior is disabled by default and every mutating command is dry-run fi
 
 Explicit AFK continuation or a built-in `/goal` activates the durable run. It lasts until goal completion/cancellation or an irreversible/blocking gate. Approval resumes the same run; it never silently broadens the recorded goal or allowed actions.
 
+`afk run start --authority-record` is an opt-in M1 record format. It records
+the human, session, base, derived `afk/<run-id>/integration` branch, and goal
+nodes; `afk run event` appends structured evidence through the CLI. The record
+is append-only by CLI and doctor-validated, not tamper-proof Markdown. These
+commands do not stage, commit, amend, push, open a PR, merge, reset, stash, or
+otherwise mutate Git state.
+
 `spectacular session end` may show a read-only commit review for any session,
 including an AFK session. That inspection is not an AFK Git action and grants no
 additional authority: it never stages, commits, amends, pushes, merges, resets,
@@ -27,7 +34,7 @@ An optional host prefix is prepended, never replaced—for example `codex/spike/
 
 ## Lifecycle
 
-1. `afk run start ... --apply --yes` records the exact goal, optional request, allowed actions, HITL gates, and start time under `.spectacular/afk/runs/`. The same run moves `active → gated → active` when approval is needed.
+1. `afk run start ... --apply --yes` records the exact goal, optional request, allowed actions, HITL gates, and start time under `.spectacular/afk/runs/`. With `--authority-record`, it also requires `--authorized-by`, `--session`, `--base`, and one or more `--goal-node`; `afk run event <type> ... --apply --yes` adds a structured event. The same run moves `active → gated → active` when approval is needed.
 2. `afk status` inspects policy/repository state without mutation; `afk propose` prints a deterministic name.
 3. `afk start ... --apply --yes` creates the branch only when a run is active, policy is enabled, and the tree is clean; provenance is appended to `.spectacular/afk/branches.md`.
 4. Work and verification happen on the isolated branch. Spike code is evidence, not implementation.

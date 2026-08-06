@@ -25,11 +25,22 @@ Soft-folder database. The index file (`SESSIONS.md`) is regenerated from individ
 
 **Mutator verbs (CLI, not skill):**
 - `spectacular session start [--tag a,b]` → create entry with `status: open`, append index row
-- `spectacular session end` → flip `status: closed`, set `end_date`, recompute linked-entry counts
+- `spectacular session end` → before closing, print a read-only Git commit review when inside a repository; then flip `status: closed`, set `end_date`, recompute linked-entry counts
 
 **Lifecycle invariant:** at most one session has `status: open` at any time. `spectacular session start` errors if one is already open and suggests `end` first.
 
 **Session boundaries:** before the working briefing, surface `spectacular wayfind status --blockers-only`. At session end, if the session contained a major update, heavy request, release/roadmap change, or architecture decision, re-evaluate the live indexes (`roadmaps/index.md`, `specs/index.md`, and affected collection indexes) and record any deliberate deferral. Routine small edits do not trigger index churn. See [[artifact-retention]].
+
+**Git commit review:** `session end` inspects only the current branch, Git porcelain
+status, and staged/unstaged diff statistics before it writes its own session
+metadata. It separately reports staged, unstaged, and untracked files; direct
+`.spectacular/requests/<slug>/` path matches are ownership hints only. It labels
+any follow-up as **"Suggested, human must verify"** because paths and diffs do
+not prove whether one change or several commits are appropriate. It may print
+ordinary `git diff`, `git status`, `git add -p`, and `git commit` commands, but
+never runs Git mutation: no staging, commit, amend, push, merge, reset, or stash.
+Outside a Git repository, session closure still succeeds and reports that the
+review is unavailable.
 
 **Snapshot-on-edit: false** — entries are factual records of when work happened; immutable by convention.
 

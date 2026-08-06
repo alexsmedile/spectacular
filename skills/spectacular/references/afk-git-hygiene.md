@@ -9,6 +9,11 @@ AFK Git behavior is disabled by default and every mutating command is dry-run fi
 
 Explicit AFK continuation or a built-in `/goal` activates the durable run. It lasts until goal completion/cancellation or an irreversible/blocking gate. Approval resumes the same run; it never silently broadens the recorded goal or allowed actions.
 
+`spectacular session end` may show a read-only commit review for any session,
+including an AFK session. That inspection is not an AFK Git action and grants no
+additional authority: it never stages, commits, amends, pushes, merges, resets,
+or stashes, and it does not satisfy any AFK authorization layer.
+
 ## Branch classes
 
 | Work | Spectacular class |

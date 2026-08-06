@@ -2810,6 +2810,77 @@ cmd_session_start() {
   fi
 }
 
+_session_git_commit_review() {
+  command -v git >/dev/null 2>&1 || {
+    info "  Git commit review unavailable: git is not installed."
+    return 0
+  }
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+    info "  Git commit review unavailable: not inside a Git repository."
+    return 0
+  }
+
+  local branch line x y path request_paths="" other_paths=""
+  local staged=0 unstaged=0 untracked=0
+  branch=$(git branch --show-current 2>/dev/null)
+  [[ -n "$branch" ]] || branch="(detached HEAD)"
+
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    x=${line:0:1}; y=${line:1:1}; path=${line:3}
+    if [[ "$x$y" == "??" ]]; then
+      untracked=$((untracked + 1))
+    else
+      [[ "$x" != " " ]] && staged=$((staged + 1))
+      [[ "$y" != " " ]] && unstaged=$((unstaged + 1))
+    fi
+    case "$path" in
+      .spectacular/requests/*) request_paths="${request_paths}${request_paths:+\n}    $path" ;;
+      *) other_paths="${other_paths}${other_paths:+\n}    $path" ;;
+    esac
+  done < <(git status --porcelain --untracked-files=all)
+
+  info ""
+  info "── Git commit review (read-only) ──"
+  info "  Branch: $branch"
+  if [[ $staged -eq 0 && $unstaged -eq 0 && $untracked -eq 0 ]]; then
+    info "  Working tree: clean; no commit proposal."
+    return 0
+  fi
+
+  info "  Staged files: $staged"
+  info "  Unstaged files: $unstaged"
+  info "  Untracked files: $untracked"
+  info "  Changed files:"
+  git status --short --untracked-files=all | sed 's/^/    /'
+  if [[ -n "$request_paths" ]]; then
+    info "  Request-owned paths (direct folder match only):"
+    printf '%b\n' "$request_paths"
+  fi
+  if [[ -n "$other_paths" ]]; then
+    info "  Other paths (no ownership inferred):"
+    printf '%b\n' "$other_paths"
+  fi
+  if [[ $staged -gt 0 ]]; then
+    info "  Staged diffstat:"
+    git diff --cached --stat | sed 's/^/    /'
+  fi
+  if [[ $unstaged -gt 0 ]]; then
+    info "  Unstaged diffstat:"
+    git diff --stat | sed 's/^/    /'
+  fi
+  if [[ $untracked -gt 0 ]]; then
+    info "  Untracked files have no diffstat until staged."
+  fi
+
+  info "Suggested, human must verify:"
+  info "  Spectacular cannot determine whether these changes are one commit or several."
+  info "  Review: git diff --cached && git diff && git status --short"
+  info "  Select hunks if needed: git add -p"
+  info "  Commit after review: git commit -m \"<human-verified conventional message>\""
+  info "  Spectacular did not stage, commit, amend, push, merge, reset, or stash."
+}
+
 cmd_session_end() {
   local dry_run=false
   while (( $# > 0 )); do
@@ -2853,8 +2924,13 @@ cmd_session_end() {
     echo "   end_date: $end_ts"
     echo "   decisions_count: $decisions_count"
     echo "   memories_count: $memories_count"
+    _session_git_commit_review
     return 0
   fi
+
+  # Review before writing the closed-session record so this command's own
+  # metadata updates never appear as user changes or a commit suggestion.
+  _session_git_commit_review
 
   fm_set "$entry_path" "status" "closed"
   fm_set "$entry_path" "end_date" "$end_ts"

@@ -1,8 +1,8 @@
 ---
-status: active
+status: verified
 priority: medium
 owner: alex
-updated: 2026-08-05
+updated: 2026-08-06
 build: b44
 docs_impact: required
 summary: "Audit soft-DB read views and specify compact entity projections, escalation paths, and omission-regression tests"

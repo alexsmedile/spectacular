@@ -1,8 +1,8 @@
 ---
-status: review
+status: verified
 priority: medium
 owner: alex
-updated: 2026-08-04
+updated: 2026-08-06
 build: b42
 docs_impact: pending
 summary: "Add a conservative local-first request traffic preflight using durable request evidence"

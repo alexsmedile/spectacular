@@ -1,6 +1,6 @@
 ---
-status: active
-updated: 2026-08-05
+status: verified
+updated: 2026-08-06
 related:
   - PLAN.md
 source_type: issue

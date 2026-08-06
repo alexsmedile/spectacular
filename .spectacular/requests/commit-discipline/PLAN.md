@@ -3,9 +3,9 @@ status: planned
 hold: deferred
 priority: low
 owner: alex
-updated: 2026-07-10
+updated: 2026-08-06
 build: b20
-summary: "Add a soft periodic-commit nudge for in-progress code work — Spectacular currently ships zero commit guidance"
+summary: "Read-only session-end commit review shipped; runtime reminder hook remains deferred"
 related:
   - ../../PRD.md
   - ../../POLICY.md
@@ -23,6 +23,15 @@ related:
 > hold rather than `status: parked` to keep the five-state lifecycle pure — holds
 > are orthogonal modifiers, matching how the substrate keeps non-lifecycle states
 > out of the linear chain.)
+
+> **Reaffirmed (2026-08-06, GitHub #5)** — the bounded CLI M1 shipped in
+> `2d8a8f9` (`feat: add session-end commit review`). `spectacular session end`
+> now reports staged, unstaged, untracked, and path-based ownership evidence
+> before it writes its own session metadata, then suggests human-verified Git
+> commands. It does not mutate Git. M2 remains deferred: a runtime `Stop` or
+> `SessionEnd` hook would be tool-specific, trusted separately by each runtime,
+> and adds no demonstrated value beyond the CLI review. Reconsider it only if
+> users repeatedly miss the explicit `session end` review.
 
 ## Goal
 
@@ -42,8 +51,10 @@ with hours of uncommitted work — closing a gap that hits Codex harder than Cla
 
 ### How it works now
 
-Spectacular ships **zero** commit guidance (confirmed by full read of POLICY.md,
-PRINCIPLES.md, and all skill references):
+At the original assessment, Spectacular shipped **zero** commit guidance
+(confirmed by full read of POLICY.md, PRINCIPLES.md, and all skill references).
+The prose M1 below subsequently shipped; GitHub #5 added the read-only CLI
+review recorded above.
 
 - **POLICY.md** — 9 work-phase hooks, none about git. The closest is
   `@SessionEnd → summarize-before-handoff` (`severity: warn`), which nudges a

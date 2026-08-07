@@ -41,7 +41,7 @@ contract: 019fdd18-96a0-73b5-81b5-38cda98d36f4
 - [ ] → check: untracked spec preservation commits only its explicit path and never stashes/resets.
 
 ### M4 — Verified cleanup
-- [ ] Implement read-only branch inventory with local ancestry plus optional forge state.
+- [x] Implement read-only branch inventory with local ancestry plus optional forge state.
 - [ ] Implement guarded deletion requiring fresh shared base, reachability or durable declined evidence, and explicit confirmation.
 - [ ] → check: stale-base and open-PR deletion refuse; declined committed branch remains preview-only until confirmed.
 

@@ -5557,6 +5557,17 @@ _workspace_preserve() {
   git switch "$original"
   info "  ✓ preserved: $branch at $commit_sha"
 }
+_workspace_cleanup_inventory() {
+  local base branch current state
+  _workspace_require_repo; base=$(_workspace_base); current=$(_workspace_current_branch)
+  info "── Workspace cleanup inventory (read-only) ──"
+  for branch in $(git for-each-ref --format='%(refname:short)' refs/heads); do
+    [[ "$branch" == "$base" || "$branch" == "$current" ]] && continue
+    if git merge-base --is-ancestor "$branch" "$base" 2>/dev/null; then state=merged-local; else state=unmerged-or-unknown; fi
+    info "  - $branch: $state · provider PR/MR: unknown"
+  done
+  info "  deletion requires: explicit branch, --apply --yes, fresh shared base, reachable merged tip, and preserved archive ref"
+}
 cmd_workspace() {
   local sub="${1:-}"; shift || true
   case "$sub" in
@@ -5586,7 +5597,9 @@ Usage: spectacular workspace <preflight|plan|preserve|cleanup>
   preserve / cleanup            Reserved for the explicit mutation workflow.
 EOF
       ;;
-    cleanup) die "workspace cleanup: not implemented yet; use preflight to inspect without mutation" ;;
+    cleanup)
+      [[ $# -eq 0 ]] && { _workspace_cleanup_inventory; return 0; }
+      die "workspace cleanup <branch>: guarded deletion is not implemented yet; inventory is read-only" ;;
     *) die "Usage: spectacular workspace <preflight|plan|preserve|cleanup>" ;;
   esac
 }

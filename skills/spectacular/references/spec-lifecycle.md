@@ -1,6 +1,6 @@
 ---
 description: Wayfinding lifecycle for feature specifications from collaborative or AFK drafting through historically verified implementation.
-when_to_use: Creating, approving, revising, implementing, deprecating, archiving, or acting on an SPC-NNN specification.
+when_to_use: Creating, merging, revising, implementing, deprecating, archiving, or acting on a specification contract.
 ---
 
 # Specification Lifecycle
@@ -15,9 +15,9 @@ draft|unconfirmed → approved → implemented → archived
 implemented → superseded|deprecated → archived
 ```
 
-`draft` means collaboratively unfinished; `unconfirmed` means AFK-authored. Only `approved` authorizes implementation. `implemented` is a historical claim that requires a verified request, closed docs impact, `implemented_at`, and `verified_against`; it never claims continuous agreement with code. After verified integration/merge, the detailed SPC should leave active context through explicit dry-run-first `spec archive`; code/tests and the capability index become the live truth.
+`draft` means collaboratively unfinished; `unconfirmed` means AFK-authored. A spec becomes an approved shared contract when its spec-branch commit is merged into the configured shared base (normally `main`). `status: approved` is retained only as a compatibility signal, never the authority for new work. `implemented` is a historical claim that requires a verified request, closed docs impact, `implemented_at`, and `verified_against`; it never claims continuous agreement with code. After verified integration/merge, the detailed spec should leave active context through explicit dry-run-first `spec archive`; code/tests and the capability index become the live truth.
 
-Canonical specs use `SPC-NNN-<slug>.md`. `spectacular spec approve` snapshots before approval (`confirm` is a compatibility alias). `spectacular request new --from SPC-NNN` mechanically creates a planned PLAN/TASKS bundle; `/spectacular act SPC-NNN` (or the unambiguous `/spectacular SPC-NNN`) owns authorization, activation provenance, compiled context, native planning, and implementation. Terminal `spec act` redirects instead of partially executing that agentic flow. See [[request-workflow]]. Behavior-changing revisions use a new SPC with `supersedes`; an active implemented predecessor transitions atomically to superseded, while an already archived implemented predecessor remains immutable and is linked from the replacement.
+New specs use UUIDv7 `id` values and `specs/<slug>.md` paths. The ID is immutable and global; the slug is the human-facing locator and may change without changing links. Author a spec on a `spec/` branch and merge its PR into the configured shared base to approve it. `spectacular request new --from <slug|UUIDv7>` mechanically creates a planned PLAN/TASKS bundle only when that merged commit is in the execution branch ancestry. `approve`/`confirm` are compatibility commands for older records. See [[request-workflow]]. Behavior-changing revisions use a new spec with `supersedes`; an active implemented predecessor transitions atomically to superseded, while an already archived implemented predecessor remains immutable and is linked from the replacement.
 
 `/spectacular vision derive <slug>` requires `status: approved` and drafts an SPC from the Vision's Chosen direction, Boundaries, approved fragments, and linked evidence. It records the Vision as provenance and updates `derived_to` after the draft exists. Derivation never approves the SPC, creates a request, or copies rejected/pending fragments into requirements.
 

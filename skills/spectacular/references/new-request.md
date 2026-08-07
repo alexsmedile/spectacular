@@ -5,7 +5,7 @@ when_to_use: spectacular request new from SPC/Issue/goal, spectacular new <descr
 
 # New Request — Scaffolding
 
-Canonical spec-driven creation is `spectacular request new [<slug>] --from SPC-NNN`. Already-defined work that needs durable coordination may use `--from-issue` or `--from-goal`; see [[github-work-bridge]]. `spectacular new <description>` remains the compatibility path for free-form work that has not yet been routed.
+Canonical spec-driven creation is `spectacular request new [<slug>] --from <spec-slug-or-uuidv7>`. The spec PR must already be merged into `forge.shared_base` and the execution branch must contain that merge. Already-defined work that needs durable coordination may use `--from-issue` or `--from-goal`; see [[github-work-bridge]]. `spectacular new <description>` remains the compatibility path for free-form work that has not yet been routed.
 
 > **@Planning policy gate.** First, run `spectacular policy @Planning` and follow every active policy returned. A `block` policy must be satisfied or you stop; a `warn` policy you surface and continue. See [policy-injection.md](policy-injection.md).
 

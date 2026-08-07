@@ -18,7 +18,7 @@ Spectacular owns durable intent and evidence. The coding agent owns the current 
 Mechanical entity operations are noun-first:
 
 ```text
-spectacular request new [<slug>] --from SPC-001
+spectacular request new [<slug>] --from <spec-slug-or-uuidv7>
 spectacular request new <slug> --from-issue owner/repo#123 --summary "Accepted outcome" --sensitivity normal
 spectacular request new <slug> --from-goal <goal-ref> [--summary "Accepted outcome"] --sensitivity normal
 spectacular request list
@@ -63,9 +63,9 @@ Agentic document operations are verb-first: `/spectacular grill <doc> [target]`,
 
 ## Source and activation handoff
 
-Every new request has one source. `source_type: issue | spec | goal` and `source_ref` are the general provenance fields. Spec-derived requests additionally retain the stronger approved-spec version/digest fields below. Issue/goal sources are valid only when the destination is already established and durable coordination is useful; they never manufacture an SPC. See [[github-work-bridge]].
+Every new request has one source. A spec-derived request uses only `contract: <UUIDv7>`; the merge ancestry is the approval evidence, so it does not copy a digest, revision, or provider field. Issue/goal sources use `source_type: issue | goal`, `source_ref`, and an absolute `origin:` when applicable. See [[github-work-bridge]].
 
-`spectacular request new [slug] --from SPC-001` is mechanical. It requires an approved SPC, refuses a second live request for the same source, derives both PLAN and TASKS in approved requirement order, records the source version/digest/scaffold Git baseline, and leaves the request `planned`.
+`spectacular request new [slug] --from <spec-slug-or-uuidv7>` is mechanical. It requires the spec commit to be merged into `forge.shared_base` and present in the current execution branch ancestry, refuses a second live request for the same contract, derives both PLAN and TASKS, records `contract: <UUIDv7>`, and leaves the request `planned`.
 
 `request new <slug> --from-issue <owner/repo#N|URL> --summary <outcome> --sensitivity normal|protected` creates a lean planned request and canonicalizes the Issue identity without copying its body/comments. `--from-goal <ref>` does the same for an already-defined goal. Both require explicit sensitivity classification; protected work cannot use the ordinary PR path. Review the closed outcome and boundaries before advancing either request.
 
@@ -73,11 +73,11 @@ Every new request has one source. `source_type: issue | spec | goal` and `source
 
 The act flow:
 
-1. Resolve the SPC and require `status: approved`.
-2. Find zero or one live request with `source_spec: SPC-NNN`; refuse ambiguity. If none exists, run `spectacular request new --from SPC-NNN`.
+1. Resolve the spec and require its commit to be merged into the shared base and present in the execution branch ancestry.
+2. Find zero or one live request with `contract: <UUIDv7>`; refuse ambiguity. If none exists, run `spectacular request new --from <spec-slug-or-uuidv7>`.
 3. Review PLAN/TASKS against the approved spec. Refuse incomplete structure, a held request, unresolved required-user questions, declared HITL gates, or silent scope additions/removals/reordering.
 4. Run the `@Implementation` policy gate and satisfy understand-before-change.
-5. Transition to active and record `activated_at`, `activated_by`, and `activated_against` (Git commit or `uncommitted`). Spec-derived work also refreshes `source_spec_version` and `source_spec_digest`. Never copy a spec or remote body.
+5. Transition to active and record `activated_at`, `activated_by`, and `activated_against` (Git commit or `uncommitted`). Never copy a spec or remote body.
 6. Retrieve `spectacular request <slug> --brief`, inspect the named code and tests, create the native session plan at finer granularity, and begin production work.
 
 ## Phase ownership

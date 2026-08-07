@@ -232,7 +232,7 @@ CLI verbs (mutate workspace):
   doctor [area] [--fix]  Scoped substrate self-check; --fix applies mechanical repairs
   pack <list|install|show|remove>      Manage convention packs
   migrate [--to|--from|--list|--dry-run]   Apply workspace schema migrations
-  request new [slug] --from <SPC>      Scaffold planned work from an approved spec
+  request new [slug] --from <contract> Scaffold planned work from a merged contract
   request new <slug> --from-issue <ref> --summary <outcome> --sensitivity normal|protected
   request new <slug> --from-goal <ref> [--summary <outcome>] --sensitivity normal|protected
                                          Scaffold lean coordinated work without inventing a spec
@@ -755,6 +755,12 @@ skills:
 #   primary_branches: "main,master,develop"
 #   allow_pr_create: false     # merge and remote deletion remain human-only
 
+# Forge scope — optional portable approval boundary for capability contracts.
+# The default shared base is main; provider adapters may add PR/MR mechanics,
+# but durable records keep only provider-neutral IDs and absolute origins.
+# forge:
+#   shared_base: "main"
+
 # Policies — override layer over POLICY.md (the always-set practice layer).
 # POLICY.md defines the policies; this block tunes them per-project. See
 # 'spectacular policy' and references/policies-contract.md.
@@ -1157,37 +1163,19 @@ _regen_decisions_index() {
         D[0-9]*) id=$(printf '%s' "$base" | sed -E 's/^(D[0-9]+).*/\1/') ;;
       esac
     fi
-    n=$(printf '%s' "$id" | grep -oE '[0-9]+' | head -1)
-    [[ "$n" =~ ^[0-9]+$ ]] || continue
+    [[ -n "$id" ]] || continue
+    n="$id"
     title=$(grep -m1 '^# ' "$file" | sed -E 's/^# (DEC-|D)?[0-9]+[[:space:]]+[—-][[:space:]]+//' | tr '\t' ' ')
     [[ -n "$title" ]] || title=$(basename "$file" .md)
     rationale=$(awk '/^\*\*Consequences:\*\*/{found=1;next} found && NF{print;exit}' "$file" | tr '\t' ' ' | sed -E 's/( #[[:alnum:]_-]+)+[[:space:]]*$//')
     tags=$(fm_get "$file" tags | tr -d '[]' | sed 's/, */ #/g; s/^/#/' | sed 's/^#$//')
-    printf '%s\t%s\t%s\t%s\t%s\n' "$((10#$n))" "$id" "$title" "$rationale" "$tags" >> "$rows"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$n" "$id" "$title" "$rationale" "$tags" >> "$rows"
   done
   tmp=$(mktemp)
-  sort -n -k1,1 "$rows" | awk -F'\t' '
+  sort -k1,1 "$rows" | awk -F'\t' '
     { num[NR]=$1; id[NR]=$2; title[NR]=$3; why[NR]=$4; tags[NR]=$5 }
     END {
-      total=NR; old_end=total-100; mid_end=total-50
-      i=1
-      while (i <= total) {
-        if (i <= old_end) { size=50; boundary=old_end }
-        else if (i <= mid_end) { size=10; boundary=mid_end }
-        else { size=1; boundary=total }
-        end=i+size-1; if (end>boundary) end=boundary
-        if (size==1 || i==end) {
-          printf "- **%s** — %s", id[i], title[i]
-          if (why[i] != "") printf " — %s", why[i]
-          if (tags[i] != "") printf " %s", tags[i]
-          print ""
-        } else {
-          topic=""
-          for (j=i;j<=end;j++) if (tags[j] != "") topic=topic " " tags[j]
-          printf "- **D%d–D%d** — compact decision block (%d records); retrieve individual IDs/frontmatter%s\n", num[i], num[end], end-i+1, topic
-        }
-        i=end+1
-      }
+      for (i=1;i<=NR;i++) { printf "- **%s** — %s", id[i], title[i]; if (why[i] != "") printf " — %s", why[i]; if (tags[i] != "") printf " %s", tags[i]; print "" }
     }
   ' > "$tmp"
   cat > "$index" <<EOF
@@ -1393,10 +1381,10 @@ EOF
   fi
 
   # ── Index mode ──────────────────────────────────────────────────────────────
-  # Canonical allocation scans both DEC-NNN and legacy D<N> files.
+  # UUIDv7 IDs avoid branch-local counter allocation; the slug remains the path.
   local dnum
-  dnum=$(_next_canonical_id decisions DEC)
-  local entry_slug="${dnum}-${decision_slug}"
+  dnum=$(_uuidv7)
+  local entry_slug="${decision_slug}"
   local entry_path="${decisions_dir}/${entry_slug}.md"
 
   # Build the index line with the canonical ID.
@@ -1418,7 +1406,9 @@ EOF
   prose=$(printf '%s\n' \
     '---' \
     "id: $dnum" \
-    'type: decision' \
+    "slug: $decision_slug" \
+    'kind: decision' \
+    'scope: project' \
     'status: verified' \
     "origin: $origin" \
     "derived_from: \"$derived_from\"" \
@@ -1426,9 +1416,10 @@ EOF
     "evidence: \"${evidence:-user direction}\"" \
     "tags: [$(printf '%s' "$tags_csv" | sed 's/,/, /g')]" \
     "updated: $TODAY" \
+    'references: []' \
     '---' \
     '' \
-    "# $dnum — $title" \
+    "# $title" \
     '' \
     '**Context:**' \
     "$context" \
@@ -1480,8 +1471,7 @@ EOF
   fi
   created "$entry_path"
   _regen_decisions_index
-  local spoken_n=$((10#${dnum#DEC-}))
-  info "  ✓  decision D${spoken_n} (${dnum}): $title"
+  info "  ✓  decision $dnum: $title"
   [[ -n "$session" ]] && info "  ↳ linked to session: $session"
   return 0
 }
@@ -1518,6 +1508,67 @@ _canonical_pad() {
   printf "%0${width}d" "$n"
 }
 
+_is_uuidv7() {
+  printf '%s\n' "$1" | grep -Eq '^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+}
+
+_uuidv7() {
+  # Bash 3.2 has neither nanosecond date formatting nor a portable UUID helper.
+  # The Unix-second portion still gives UUIDv7 chronological ordering; RANDOM
+  # supplies the remaining entropy so independent branches never share a counter.
+  local millis time_high time_low rand_a variant rand_b1 rand_b2 rand_b3 rand_b4
+  millis=$(( $(date +%s) * 1000 ))
+  time_high=$(( millis / 65536 ))
+  time_low=$(( millis % 65536 ))
+  rand_a=$(( RANDOM & 4095 ))
+  variant=$(( 8 + (RANDOM & 3) ))
+  rand_b1=$(( RANDOM & 4095 ))
+  rand_b2=$(( (RANDOM << 1) | (RANDOM & 1) ))
+  rand_b3=$(( (RANDOM << 1) | (RANDOM & 1) ))
+  rand_b4=$(( (RANDOM << 1) | (RANDOM & 1) ))
+  printf '%08x-%04x-7%03x-%x%03x-%04x%04x%04x\n' \
+    "$time_high" "$time_low" "$rand_a" "$variant" "$rand_b1" "$rand_b2" "$rand_b3" "$rand_b4"
+}
+
+_collection_for_context() {
+  case "$1" in
+    decision|decisions) echo decisions ;;
+    question|questions) echo questions ;;
+    idea|ideas) echo ideas ;;
+    research) echo research ;;
+    spike|spikes) echo spikes ;;
+    spec|specs|specification|specifications) echo specs ;;
+    *) return 1 ;;
+  esac
+}
+
+_record_slug() {
+  local file="$1" base slug
+  slug=$(fm_get "$file" slug)
+  [[ -n "$slug" ]] && { printf '%s\n' "$slug"; return 0; }
+  base=$(basename "$file" .md)
+  printf '%s\n' "$base" | sed -E 's/^(DEC|QUE|IDEA|RES|SPK|SPC)-[0-9]+-//; s/^D[0-9]+-//'
+}
+
+_resolve_uuid_or_slug() {
+  local ref="$1" context="$2" collection f id aliases found=""
+  ref=$(printf '%s' "$ref" | tr '[:upper:]' '[:lower:]')
+  _is_uuidv7 "$ref" && { printf '%s\n' "$ref"; return 0; }
+  collection=$(_collection_for_context "$context") || return 1
+  for f in "$SPEC_WORKSPACE_DIR/$collection"/*.md "$SPEC_ARCHIVE_DIR/$collection"/*.md; do
+    [[ -f "$f" ]] || continue
+    [[ "$(basename "$f")" == index.md ]] && continue
+    aliases=$(fm_get "$f" aliases | tr '[:upper:]' '[:lower:]')
+    [[ "$(_record_slug "$f")" == "$ref" || "$aliases" == "$ref" ]] || continue
+    id=$(fm_get "$f" id)
+    [[ -n "$id" ]] || continue
+    [[ -z "$found" ]] || die "id resolve: slug '$ref' is ambiguous in $collection"
+    found="$id"
+  done
+  [[ -n "$found" ]] || return 1
+  printf '%s\n' "$found"
+}
+
 _collection_slug_exists() {
   local collection="$1" slug="$2" f base dir
   for dir in "$SPEC_WORKSPACE_DIR/$collection" "$SPEC_ARCHIVE_DIR/$collection"; do
@@ -1542,6 +1593,11 @@ _require_unique_collection_slug() {
 
 _canonical_resolve() {
   local ref="$1" context="${2:-}" compact prefix digits
+  ref=$(printf '%s' "$ref" | tr '[:upper:]' '[:lower:]')
+  _is_uuidv7 "$ref" && { printf '%s\n' "$ref"; return 0; }
+  if [[ -n "$context" ]]; then
+    _resolve_uuid_or_slug "$ref" "$context" 2>/dev/null && return 0
+  fi
   compact=$(printf '%s' "$ref" | tr -d ' _-' | tr '[:lower:]' '[:upper:]')
 
   if [[ "$compact" =~ ^([A-Z]+)([0-9]+)$ ]]; then
@@ -1583,6 +1639,10 @@ _next_canonical_id() {
 cmd_id() {
   local sub="${1:-}"; shift || true
   case "$sub" in
+    generate)
+      (( $# == 0 )) || die "id generate: no arguments expected"
+      _uuidv7
+      ;;
     resolve)
       local ref="" context=""
       while (( $# > 0 )); do
@@ -1612,8 +1672,9 @@ cmd_id() {
     ""|--help|-h)
       cat <<EOF
 Usage:
+  spectacular id generate
   spectacular id resolve <ref> [--context <entity>]
-  spectacular id migrate [--dry-run | --apply --yes]
+  spectacular id migrate [--uuidv7] [--dry-run | --apply --yes]
 
 Examples:
   spectacular id resolve d1                 # DEC-001
@@ -1621,7 +1682,8 @@ Examples:
   spectacular id resolve 3 --context question  # QUE-003
 
 Naked numbers require context. Persisted cross-references always use the
-canonical ID, even when input used an alias.
+canonical ID, even when input used an alias. `--uuidv7` is preview-first and
+preserves previous IDs as read-only aliases.
 EOF
       ;;
     *) die "id: unknown subcommand '$sub'. Use: resolve | migrate" ;;
@@ -1652,12 +1714,13 @@ _id_migration_add_frontmatter() {
 }
 
 cmd_id_migrate() {
-  local apply=false yes=false
+  local apply=false yes=false uuidv7=false
   while (( $# > 0 )); do
     case "$1" in
       --dry-run) apply=false; shift ;;
       --apply) apply=true; shift ;;
       --yes) yes=true; shift ;;
+      --uuidv7) uuidv7=true; shift ;;
       --help|-h)
         cat <<EOF
 Usage: spectacular id migrate [--dry-run | --apply --yes]
@@ -1673,6 +1736,7 @@ EOF
   done
   [[ -d "$SPEC_WORKSPACE_DIR" ]] || die "id migrate: not inside a Spectacular workspace"
   $apply && ! $yes && die "id migrate: --apply requires --yes after reviewing the dry-run"
+  $uuidv7 && { _id_migrate_uuidv7 "$apply"; return $?; }
 
   local tmp map f base suffix num id old new next_idea=1 next_spec=1
   tmp=$(mktemp -d); map="$tmp/mapping.tsv"; : > "$map"
@@ -1771,6 +1835,54 @@ EOF
   rm -rf "$tmp"
 }
 
+_id_migrate_uuidv7() {
+  local apply="$1" collection f oldid slug new_id old new kind status tmp map count=0 stamp archive_root mf
+  tmp=$(mktemp -d); map="$tmp/mapping.tsv"; : > "$map"
+  for collection in specs decisions questions research spikes ideas memories feedbacks audits fixes sessions; do
+    [[ -d "$SPEC_WORKSPACE_DIR/$collection" ]] || continue
+    for f in "$SPEC_WORKSPACE_DIR/$collection"/*.md; do
+      [[ -f "$f" && "$(basename "$f")" != index.md ]] || continue
+      oldid=$(fm_get "$f" id); [[ -n "$oldid" ]] || oldid=$(basename "$f" .md)
+      _is_uuidv7 "$oldid" && continue
+      slug=$(_record_slug "$f")
+      new_id=$(_uuidv7); old=${f#"$SPEC_WORKSPACE_DIR"/}; new="$collection/$slug.md"
+      [[ "$old" == "$new" || ! -e "$SPEC_WORKSPACE_DIR/$new" ]] || die "id migrate --uuidv7: target collision: $new"
+      kind=$(fm_get "$f" kind); [[ -n "$kind" ]] || kind=$(fm_get "$f" type); [[ -n "$kind" ]] || kind="${collection%s}"
+      status=$(fm_get "$f" status)
+      printf '%s|%s|%s|%s|%s|%s\n' "$old" "$new" "$oldid" "$new_id" "$kind" "$status" >> "$map"
+      count=$((count + 1))
+    done
+  done
+  (( count > 0 )) || { info "  ✓ UUIDv7 migration already complete"; rm -rf "$tmp"; return 0; }
+  info "── UUIDv7 identity migration ($count record(s)) ──"
+  while IFS='|' read -r old new oldid new_id _kind _status; do info "  $oldid → $new_id  ($old → $new)"; done < "$map"
+  if [[ "$apply" != true ]]; then info "Dry-run only. Apply with: spectacular id migrate --uuidv7 --apply --yes"; rm -rf "$tmp"; return 0; fi
+  stamp=$(date +%Y%m%d-%H%M%S); archive_root="$SPEC_ARCHIVE_DIR/id-migrations/$stamp"; mkdir -p "$archive_root"; cp "$map" "$archive_root/uuidv7-mapping.tsv"
+  while IFS='|' read -r old new oldid new_id kind status; do
+    mkdir -p "$archive_root/$(dirname "$old")" "$(dirname "$SPEC_WORKSPACE_DIR/$new")"
+    cp "$SPEC_WORKSPACE_DIR/$old" "$archive_root/$old"
+    [[ "$old" == "$new" ]] || mv "$SPEC_WORKSPACE_DIR/$old" "$SPEC_WORKSPACE_DIR/$new"
+  done < "$map"
+  # Rewrite references before restoring the old value as a compatibility alias.
+  # Otherwise a global old-ID substitution would turn the alias into the new ID.
+  while IFS='|' read -r old new oldid new_id _kind _status; do
+    while IFS= read -r mf; do
+      sed -i.bak "s|$old|$new|g; s|$oldid|$new_id|g" "$mf"
+      rm -f "$mf.bak"
+    done < <(find "$SPEC_WORKSPACE_DIR" -type f -name '*.md' ! -path "$SPEC_ARCHIVE_DIR/id-migrations/*")
+  done < "$map"
+  while IFS='|' read -r _old new oldid new_id kind _status; do
+    fm_set "$SPEC_WORKSPACE_DIR/$new" id "$new_id"
+    fm_set "$SPEC_WORKSPACE_DIR/$new" slug "$(_record_slug "$SPEC_WORKSPACE_DIR/$new")"
+    fm_set "$SPEC_WORKSPACE_DIR/$new" kind "$kind"
+    [[ -n "$(fm_get "$SPEC_WORKSPACE_DIR/$new" scope)" ]] || fm_set "$SPEC_WORKSPACE_DIR/$new" scope project
+    fm_set "$SPEC_WORKSPACE_DIR/$new" aliases "$oldid"
+    fm_touch "$SPEC_WORKSPACE_DIR/$new"
+  done < "$map"
+  info "  ✓ migrated $count record(s); originals and uuidv7-mapping.tsv archived at $archive_root"
+  rm -rf "$tmp"
+}
+
 cmd_collections() {
   local sub="${1:-}"; shift || true
   [[ "$sub" == migrate ]] || die "Usage: spectacular collections migrate [--dry-run | --apply --yes]"
@@ -1852,9 +1964,16 @@ cmd_lifecycle_migrate() {
 
 _question_find() {
   local ref="$1" canonical f dir
-  canonical=$(_canonical_resolve "$ref" question)
+  if _resolve_uuid_or_slug "$ref" question >/dev/null 2>&1; then
+    canonical=$(_resolve_uuid_or_slug "$ref" question)
+  else
+    canonical=$(_canonical_resolve "$ref" question)
+  fi
   for dir in "$SPEC_QUESTIONS_DIR" "$SPEC_WORKSPACE_DIR/question"; do
-    for f in "$dir"/"$canonical"-*.md "$dir"/"$canonical".md; do
+    for f in "$dir"/*.md; do
+      [[ -f "$f" && "$(fm_get "$f" id)" == "$canonical" ]] && { echo "$f"; return 0; }
+    done
+    for f in "$dir"/"$canonical"-*.md "$dir"/"$canonical".md "$dir"/"$ref".md; do
       [[ -f "$f" ]] && { echo "$f"; return 0; }
     done
   done
@@ -1902,8 +2021,8 @@ cmd_question_new() {
 
   local dir="$SPEC_QUESTIONS_DIR" id path blocked_yaml="blocked_by: []" item canonical
   mkdir -p "$dir"
-  id=$(_next_canonical_id questions QUE)
-  path="$dir/$id-$slug.md"
+  id=$(_uuidv7)
+  path="$dir/$slug.md"
   if [[ -n "$blocked_csv" ]]; then
     blocked_yaml="blocked_by:"$'\n'
     local IFS=','
@@ -1917,7 +2036,9 @@ cmd_question_new() {
   rendered=$(cat <<EOF
 ---
 id: $id
-type: question
+slug: $slug
+kind: question
+scope: project
 status: open
 summary: "${question:-$slug}"
 priority: $priority
@@ -1925,10 +2046,11 @@ requires_user_input: true
 target_version: "$target_version"
 ${blocked_yaml}
 related: []
+references: []
 updated: $TODAY
 ---
 
-# $id — ${question:-$slug}
+# ${question:-$slug}
 
 ## Question
 
@@ -1951,7 +2073,7 @@ EOF
   [[ ! -e "$path" ]] || die "question new: target exists: $path"
   printf '%s\n' "$rendered" > "$path"
   created "$path"
-  info "  → $id (Q$((10#${id#QUE-}))) requires user input"
+  info "  → $id requires user input"
 }
 
 cmd_question_list() {
@@ -2035,10 +2157,17 @@ cmd_question_resolve() {
 
 _discovery_find() {
   local collection="$1" context="$2" ref="$3" canonical f dir legacy=""
-  canonical=$(_canonical_resolve "$ref" "$context")
+  if _resolve_uuid_or_slug "$ref" "$context" >/dev/null 2>&1; then
+    canonical=$(_resolve_uuid_or_slug "$ref" "$context")
+  else
+    canonical=$(_canonical_resolve "$ref" "$context")
+  fi
   [[ "$collection" == spikes ]] && legacy=spike
   for dir in "$SPEC_WORKSPACE_DIR/$collection" ${legacy:+"$SPEC_WORKSPACE_DIR/$legacy"}; do
-    for f in "$dir"/"$canonical"-*.md "$dir"/"$canonical".md; do
+    for f in "$dir"/*.md; do
+      [[ -f "$f" && "$(fm_get "$f" id)" == "$canonical" ]] && { echo "$f"; return 0; }
+    done
+    for f in "$dir"/"$canonical"-*.md "$dir"/"$canonical".md "$dir"/"$ref".md; do
       [[ -f "$f" ]] && { echo "$f"; return 0; }
     done
   done
@@ -2084,8 +2213,8 @@ _discovery_new() {
   local dir="$SPEC_WORKSPACE_DIR/$collection" id path blocked_yaml="blocked_by: []" item canonical human_gate=false
   [[ "$kind" == spike ]] && human_gate=true
   mkdir -p "$dir"
-  id=$(_next_canonical_id "$collection" "$prefix")
-  path="$dir/$id-$slug.md"
+  id=$(_uuidv7)
+  path="$dir/$slug.md"
   if [[ -n "$blocked_csv" ]]; then
     blocked_yaml="blocked_by:"$'\n'
     local IFS=','
@@ -2099,7 +2228,9 @@ _discovery_new() {
   rendered=$(cat <<EOF
 ---
 id: $id
-type: $kind
+slug: $slug
+kind: $kind
+scope: project
 status: open
 summary: "${summary:-$slug}"
 result: pending
@@ -2108,10 +2239,11 @@ ${blocked_yaml}
 requires_user_input: false
 execution_requires_approval: $human_gate
 related: []
+references: []
 updated: $TODAY
 ---
 
-# $id — ${summary:-$slug}
+# ${summary:-$slug}
 
 ## Goal
 
@@ -2224,9 +2356,16 @@ _discovery_resolve() {
 }
 
 _spec_find() {
-  local ref="$1" canonical f path compact dir
+  local ref="$1" canonical f path compact dir id slug
   path="$SPEC_SPECS_DIR/$ref.md"
   [[ -f "$path" ]] && { echo "$path"; return 0; }
+  for f in "$SPEC_SPECS_DIR"/*.md "$SPEC_ARCHIVE_DIR/specs"/*.md; do
+    [[ -f "$f" ]] || continue
+    [[ "$(basename "$f")" == index.md ]] && continue
+    id=$(fm_get "$f" id)
+    slug=$(_record_slug "$f")
+    [[ "$ref" == "$id" || "$ref" == "$slug" ]] && { echo "$f"; return 0; }
+  done
   compact=$(printf '%s' "$ref" | tr -d ' _-' | tr '[:lower:]' '[:upper:]')
   if [[ "$compact" =~ ^(S|SPC|SPEC)([0-9]+)$ ]] || [[ "$compact" =~ ^[0-9]+$ ]]; then
     canonical=$(_canonical_resolve "$ref" spec)
@@ -2264,8 +2403,8 @@ Usage: spectacular spec <new|list|approve|act|implement|deprecate|archive> [opti
 
   <id> [--json]  Compact named-spec overview (state, intent, linked request, next action)
 
-Only an approved spec can create an implementation request. `confirm` remains
-a compatibility alias for `approve`.
+Only a spec whose commit is merged into the configured shared base can create
+an implementation request. `approve`/`confirm` remain compatibility commands.
 EOF
       ;;
     *) cmd_spec_show "$sub" "$@" ;;
@@ -2296,22 +2435,25 @@ cmd_spec_new() {
       die "spec new: $supersedes must be an implemented live/archive predecessor"
   fi
   mkdir -p "$SPEC_SPECS_DIR"
-  id=$(_next_canonical_id specs SPC)
-  path="$SPEC_SPECS_DIR/$id-$slug.md"
+  id=$(_uuidv7)
+  path="$SPEC_SPECS_DIR/$slug.md"
   [[ ! -e "$path" ]] || die "spec new: target exists: $path"
   cat > "$path" <<EOF
 ---
 id: $id
-type: specification
+slug: $slug
+kind: spec
+scope: project
 status: $status
 target_version: "$target_version"
 supersedes: "${supersedes}"
 updated: $TODAY
 summary: "$summary"
 related: []
+references: []
 ---
 
-# $id — $summary
+# $summary
 
 ## Intent
 
@@ -2342,7 +2484,7 @@ cmd_spec_list() {
   printf '%-10s  %-12s  %-20s  %-10s  %s\n' "--" "------" "------" "-------" "-------"
   while IFS= read -r f; do
     [[ "$(basename "$f")" == index.md ]] && continue
-    id=$(fm_get "$f" id); [[ "$id" == SPC-* ]] || continue
+    id=$(fm_get "$f" id); _is_uuidv7 "$id" || [[ "$id" == SPC-* ]] || continue
     status=$(fm_get "$f" status); [[ "$filter" == all || "$filter" == "$status" ]] || continue
     target=$(fm_get "$f" target_version); updated=$(fm_get "$f" updated); summary=$(fm_get "$f" summary)
     printf '%-10s  %-12s  %-20s  %-10s  %s\n' "$id" "$status" "$target" "$updated" "$summary"
@@ -2365,12 +2507,16 @@ cmd_spec_show() {
   target=$(fm_get "$path" target_version)
   intent=$(awk '/^## Intent[[:space:]]*$/{inside=1;next} inside && /^## /{exit} inside && NF && !/^_\(/{print;exit}' "$path")
   while IFS= read -r f; do
-    [[ "$(fm_get "$f" source_spec)" == "$id" ]] || continue
+    [[ "$(fm_get "$f" contract)" == "$id" || "$(fm_get "$f" source_spec)" == "$id" ]] || continue
     linked=$(basename "$(dirname "$f")"); break
   done < <(_request_iter_all)
   case "$status" in
     draft|unconfirmed)
-      kind=review_spec; command="/spectacular review spec $id"; reason="specification is not approved" ;;
+      if _contract_is_merged "$path"; then
+        kind=act_spec; command="/spectacular act $id"; reason="merged contract can authorize one request"
+      else
+        kind=review_spec; command="/spectacular review spec $id"; reason="contract is not yet merged into $(_contract_shared_base)"
+      fi ;;
     approved)
       kind=act_spec; command="/spectacular act $id"; reason="approved specification can authorize one request" ;;
     implemented|superseded|deprecated)
@@ -2439,7 +2585,9 @@ cmd_spec_act() {
   local path id status
   path=$(_spec_find "$ref") || die "spec act: '$ref' not found"
   id=$(fm_get "$path" id); status=$(fm_get "$path" status)
-  [[ "$status" == approved ]] || die "spec act: $id is '$status'; only an approved spec can authorize implementation"
+  if [[ "$status" != approved ]] && ! _contract_is_merged "$path"; then
+    die "spec act: $id is '$status' and its contract commit is not merged into $(_contract_shared_base)"
+  fi
   warn "'spectacular spec act' is now an agentic flow; terminal execution does not create or activate a request"
   local -a forwarded=()
   [[ -n "$request_slug" ]] && forwarded+=(--request-slug "$request_slug")
@@ -2463,7 +2611,7 @@ _request_docs_impact_closed() {
 
 _request_docs_impact_is_heavy() {
   local plan="$1" priority source
-  priority=$(fm_get "$plan" priority); source=$(fm_get "$plan" source_spec)
+  priority=$(fm_get "$plan" priority); source=$(fm_get "$plan" contract); [[ -n "$source" ]] || source=$(fm_get "$plan" source_spec)
   [[ "$priority" == high || -n "$source" ]]
 }
 
@@ -2507,10 +2655,12 @@ cmd_spec_implement() {
   local path id status plan linked=0 supersedes old_path old_status old_archived_from
   path=$(_spec_find "$ref") || die "spec implement: '$ref' not found"
   id=$(fm_get "$path" id); status=$(fm_get "$path" status)
-  [[ "$status" == approved ]] || die "spec implement: $id is '$status', expected approved"
+  if [[ "$status" != approved ]] && ! _contract_is_merged "$path"; then
+    die "spec implement: $id is '$status' and its contract commit is not merged into $(_contract_shared_base)"
+  fi
   for plan in "$SPEC_REQUESTS_DIR"/*/PLAN.md "$SPEC_ARCHIVE_DIR"/*/PLAN.md; do
     [[ -f "$plan" ]] || continue
-    [[ "$(fm_get "$plan" source_spec)" == "$id" ]] || continue
+    [[ "$(fm_get "$plan" contract)" == "$id" || "$(fm_get "$plan" source_spec)" == "$id" ]] || continue
     linked=$((linked + 1))
     case "$(fm_get "$plan" status)" in verified|archived) ;; *) die "spec implement: linked request $(basename "$(dirname "$plan")") is not verified/archived" ;; esac
     _request_docs_impact_closed "$plan" || die "spec implement: linked request $(basename "$(dirname "$plan")") has unresolved docs impact"
@@ -3556,6 +3706,12 @@ _idea_find() {
   local slug="$1" f path compact canonical
   path="$SPEC_IDEAS_DIR/$slug.md"
   [[ -f "$path" ]] && { echo "$path"; return 0; }
+  if _resolve_uuid_or_slug "$slug" idea >/dev/null 2>&1; then
+    canonical=$(_resolve_uuid_or_slug "$slug" idea)
+    for f in "$SPEC_IDEAS_DIR"/*.md; do
+      [[ -f "$f" && "$(fm_get "$f" id)" == "$canonical" ]] && { echo "$f"; return 0; }
+    done
+  fi
   compact=$(printf '%s' "$slug" | tr -d ' _-' | tr '[:lower:]' '[:upper:]')
   if [[ "$compact" =~ ^(I|IDE|IDEA)([0-9]+)$ ]] || [[ "$compact" =~ ^[0-9]+$ ]]; then
     canonical=$(_canonical_resolve "$slug" idea)
@@ -3613,8 +3769,8 @@ EOF
   _require_unique_collection_slug ideas "$slug" "idea new"
 
   local id entry_path
-  id=$(_next_canonical_id ideas IDEA)
-  entry_path="$entries_dir/$id-$slug.md"
+  id=$(_uuidv7)
+  entry_path="$entries_dir/$slug.md"
   [[ -e "$entry_path" ]] && die "idea new: '$slug' already exists at $entry_path"
 
   # Also refuse if already in archive (don't shadow promoted ideas)
@@ -3662,7 +3818,7 @@ EOF
   fi
 
   created "$entry_path"
-  info "  → $id (I$((10#${id#IDEA-})))"
+  info "  → $id"
   info "  → status: parked"
   info "  ↳ shape it with: spectacular idea grill $slug"
   info "  ↳ when ready: spectacular idea promote $slug"
@@ -4967,6 +5123,14 @@ _wayfind_topological_iter() {
 
 _wayfind_find_id() {
   local id="$1" prefix dir f n archive_dir=""
+  if _is_uuidv7 "$id"; then
+    for dir in decisions questions ideas research spikes specs; do
+      for f in "$SPEC_WORKSPACE_DIR/$dir"/*.md "$SPEC_ARCHIVE_DIR/$dir"/*.md; do
+        [[ -f "$f" && "$(fm_get "$f" id)" == "$id" ]] && { echo "$f"; return 0; }
+      done
+    done
+    return 1
+  fi
   prefix="${id%%-*}"
   case "$prefix" in
     DEC) dir=decisions ;;
@@ -5151,12 +5315,15 @@ cmd_wayfind_order() {
 cmd_wayfind_resolve() {
   local ref="${1:-}"; [[ -n "$ref" ]] || die "wayfind resolve: ID required"
   shift || true
-  local id prefix
-  id=$(_canonical_resolve "$ref"); prefix="${id%%-*}"
+  local id prefix record
+  id=$(_canonical_resolve "$ref")
+  record=$(_wayfind_find_id "$id") || die "wayfind resolve: $id not found"
+  prefix="${id%%-*}"
+  _is_uuidv7 "$id" && prefix=$(fm_get "$record" kind)
   case "$prefix" in
-    QUE) cmd_question_resolve "$id" "$@" ;;
-    RES) _discovery_resolve research research "$id" "$@" ;;
-    SPK) _discovery_resolve spike spikes "$id" "$@" ;;
+    QUE|question) cmd_question_resolve "$id" "$@" ;;
+    RES|research) _discovery_resolve research research "$id" "$@" ;;
+    SPK|spike) _discovery_resolve spike spikes "$id" "$@" ;;
     *) die "wayfind resolve: $id is not resolvable here; use its lifecycle command" ;;
   esac
 }
@@ -5228,6 +5395,42 @@ _afk_enabled() { [[ "$(_afk_config_get enabled)" == true ]]; }
 _afk_allow_pr() { [[ "$(_afk_config_get allow_pr_create)" == true ]]; }
 _afk_prefix() { _afk_config_get branch_prefix; }
 _afk_primary_list() { local v; v=$(_afk_config_get primary_branches); echo "${v:-main,master,develop}"; }
+
+_forge_config_get() {
+  local key="$1"
+  [[ -f "$SPEC_CONFIG_FILE" ]] || return 0
+  awk -v key="$key" '
+    /^forge:[[:space:]]*$/ { inside=1; next }
+    inside && /^[^[:space:]]/ { exit }
+    inside && $0 ~ "^[[:space:]]+" key ":[[:space:]]*" {
+      sub("^[[:space:]]+" key ":[[:space:]]*", ""); gsub(/^"|"$/, ""); print; exit
+    }
+  ' "$SPEC_CONFIG_FILE"
+}
+
+_contract_shared_base() { local base; base=$(_forge_config_get shared_base); echo "${base:-main}"; }
+
+_contract_commit() {
+  local spec="$1" commit
+  commit=$(git log --diff-filter=A --format=%H -- "$spec" 2>/dev/null | tail -1)
+  [[ -n "$commit" ]] || commit=$(git log -1 --format=%H -- "$spec" 2>/dev/null)
+  [[ -n "$commit" ]] || return 1
+  printf '%s\n' "$commit"
+}
+
+_contract_is_merged() {
+  local spec="$1" base commit
+  base=$(_contract_shared_base)
+  git rev-parse --verify "$base^{commit}" >/dev/null 2>&1 || return 1
+  commit=$(_contract_commit "$spec") || return 1
+  git merge-base --is-ancestor "$commit" "$base" 2>/dev/null
+}
+
+_execution_contains_contract() {
+  local spec="$1" commit
+  commit=$(_contract_commit "$spec") || return 1
+  git merge-base --is-ancestor "$commit" HEAD 2>/dev/null
+}
 _afk_is_primary() {
   local branch="$1" item list
   list=$(_afk_primary_list); local IFS=','
@@ -5546,9 +5749,13 @@ cmd_afk_pr() {
   [[ -f "$plan" ]] || die "afk pr: request not found: $slug"
   [[ "$(fm_get "$plan" status)" == verified ]] || die "afk pr: request '$slug' must be verified"
   [[ -f "$log" ]] && grep -q '\*\*Outcome:\*\* verified' "$log" || die "afk pr: verified request has no passing VERIFY-LOG outcome"
-  source=$(fm_get "$plan" source_spec); [[ -n "$source" ]] || die "afk pr: request has no source_spec provenance"
-  spec_path=$(_spec_find "$source") || die "afk pr: source spec not found: $source"
-  case "$(fm_get "$spec_path" status)" in approved|implemented) ;; *) die "afk pr: source spec $source is not approved" ;; esac
+  source=$(fm_get "$plan" contract); [[ -n "$source" ]] || source=$(fm_get "$plan" source_spec)
+  [[ -n "$source" ]] || die "afk pr: request has no contract provenance"
+  spec_path=$(_spec_find "$source") || die "afk pr: contract not found: $source"
+  case "$(fm_get "$spec_path" status)" in
+    approved|implemented) ;;
+    *) _contract_is_merged "$spec_path" || die "afk pr: contract $source is not merged into $(_contract_shared_base)" ;;
+  esac
   $tests_passed || die "afk pr: fresh passing tests must be confirmed with --tests-passed"
   $breaking && ! $breaking_ok && die "afk pr: breaking API/schema change requires --breaking-change-approved"
   if [[ -z "$summaries" ]]; then
@@ -5606,7 +5813,7 @@ EOF
 
 _github_request_source() {
   local plan="$1" source_type source_ref source_spec
-  source_spec=$(fm_get "$plan" source_spec)
+  source_spec=$(fm_get "$plan" contract); [[ -n "$source_spec" ]] || source_spec=$(fm_get "$plan" source_spec)
   source_type=$(fm_get "$plan" source_type); [[ -n "$source_type" ]] || { [[ -n "$source_spec" ]] && source_type=spec || source_type=goal; }
   source_ref=$(fm_get "$plan" source_ref); [[ -n "$source_ref" ]] || source_ref="$source_spec"
   printf '%s|%s\n' "$source_type" "$source_ref"
@@ -5638,7 +5845,8 @@ _github_pr_manifest() {
   local slug="$1" plan="$2" name="$3" issue="$4" resolution="$5" summaries="$6" validations="$7"
   local source_pair source_type source_ref source_spec docs_impact status summary validation relationship="" goal unchanged
   source_pair=$(_github_request_source "$plan"); source_type=${source_pair%%|*}; source_ref=${source_pair#*|}
-  source_spec=$(fm_get "$plan" source_spec); docs_impact=$(fm_get "$plan" docs_impact); status=$(fm_get "$plan" status)
+  source_spec=$(fm_get "$plan" contract); [[ -n "$source_spec" ]] || source_spec=$(fm_get "$plan" source_spec)
+  docs_impact=$(fm_get "$plan" docs_impact); status=$(fm_get "$plan" status)
   goal=$(_request_section "$plan" Goal | awk 'NF { sub(/^- /, ""); print; exit }')
   [[ -n "$summaries" ]] || summaries="$goal"
   [[ -n "$summaries" ]] || summaries="Implements the accepted request outcome."
@@ -6282,7 +6490,7 @@ _request_brief() {
   if [[ -z "$milestone" ]]; then milestone=$(_request_current_milestone "$tasks" || true); fi
   [[ -n "$milestone" ]] || die "request --brief: '$slug' has no open milestone; advance it to review and run /spectacular verify $slug"
   _request_milestone_block "$tasks" "$milestone" | grep -q . || die "request --brief: milestone $milestone was not found in '$slug'"
-  source=$(fm_get "$plan" source_spec)
+  source=$(fm_get "$plan" contract); [[ -n "$source" ]] || source=$(fm_get "$plan" source_spec)
   source_type=$(fm_get "$plan" source_type); [[ -n "$source_type" ]] || { [[ -n "$source" ]] && source_type=spec || source_type=goal; }
   source_ref=$(fm_get "$plan" source_ref); [[ -n "$source_ref" ]] || source_ref="$source"
   cat <<EOF
@@ -6291,9 +6499,7 @@ _request_brief() {
 Status: $status
 Build: $(fm_get "$plan" build)
 Source: $source_type ${source_ref:-none}
-Source specification: ${source:-none}
-Specification version: $(fm_get "$plan" source_spec_version)
-Specification digest: $(fm_get "$plan" source_spec_digest)
+Contract: ${source:-none}
 Activated by: $(fm_get "$plan" activated_by)
 Activated at: $(fm_get "$plan" activated_at)
 Git baseline: $(fm_get "$plan" activated_against)
@@ -6432,7 +6638,7 @@ EOF
 
   _skim_file "$plan"
   local _source_type _source_ref _source_spec
-  _source_spec=$(fm_get "$plan" source_spec)
+  _source_spec=$(fm_get "$plan" contract); [[ -n "$_source_spec" ]] || _source_spec=$(fm_get "$plan" source_spec)
   _source_type=$(fm_get "$plan" source_type); [[ -n "$_source_type" ]] || { [[ -n "$_source_spec" ]] && _source_type=spec || _source_type=goal; }
   _source_ref=$(fm_get "$plan" source_ref); [[ -n "$_source_ref" ]] || _source_ref="$_source_spec"
   echo "Source:    $_source_type ${_source_ref:-none}"
@@ -8890,18 +9096,14 @@ EOF
   esac
 
   if [[ "$current" == planned && "$target" == active ]]; then
-    local activation_spec activation_path activation_digest activation_version activation_baseline activation_type activation_ref
-    activation_spec=$(fm_get "$plan" source_spec)
+    local activation_spec activation_path activation_baseline activation_type activation_ref
+    activation_spec=$(fm_get "$plan" contract); [[ -n "$activation_spec" ]] || activation_spec=$(fm_get "$plan" source_spec)
     activation_type=$(fm_get "$plan" source_type)
     activation_ref=$(fm_get "$plan" source_ref)
     if [[ -n "$activation_spec" ]]; then
       activation_path=$(_spec_find "$activation_spec") || die "advance: source specification '$activation_spec' not found"
-      [[ "$(fm_get "$activation_path" status)" == approved ]] || die "advance: source specification '$activation_spec' is not approved"
-      activation_version=$(fm_get "$activation_path" version); [[ -n "$activation_version" ]] || activation_version=unversioned
-      if command -v shasum >/dev/null 2>&1; then activation_digest="sha256:$(shasum -a 256 "$activation_path" | awk '{print $1}')"
-      else activation_digest="sha256:$(sha256sum "$activation_path" | awk '{print $1}')"; fi
-      fm_set "$plan" source_spec_version "$activation_version"
-      fm_set "$plan" source_spec_digest "$activation_digest"
+      _contract_is_merged "$activation_path" || die "advance: contract '$activation_spec' is not merged into $(_contract_shared_base)"
+      _execution_contains_contract "$activation_path" || die "advance: current branch does not contain contract '$activation_spec'; merge or rebase $(_contract_shared_base) first"
     elif [[ -n "$activation_type" || -n "$activation_ref" ]]; then
       case "$activation_type" in issue|goal) ;; *) die "advance: source_type must be issue or goal when source_spec is absent" ;; esac
       [[ -n "$activation_ref" ]] || die "advance: $activation_type-derived request has no source_ref"
@@ -9251,6 +9453,8 @@ EOF
   local _next_build=$(( _last_build + 1 ))
   _build_id="b${_next_build}"
 
+  local request_id
+  request_id=$(_uuidv7)
   mkdir -p "$target"
 
   # PLAN.md from template
@@ -9261,6 +9465,8 @@ EOF
   fi
   if [[ -f "$plan_template" ]]; then
     sed -e "s|<OWNER>|${owner}|g" \
+        -e "s|<ID>|${request_id}|g" \
+        -e "s|<SLUG>|${slug}|g" \
         -e "s|<DATE>|${TODAY}|g" \
         -e "s|<BUILD>|${_build_id}|g" \
         -e "s|<one-sentence description of what this request changes>|${opt_summary:-<one-sentence description of what this request changes>}|" \
@@ -9273,6 +9479,10 @@ EOF
     # Fallback minimal scaffold
     cat > "$target/PLAN.md" <<EOF
 ---
+id: $request_id
+slug: $slug
+kind: request
+scope: project
 status: $opt_status
 priority: $opt_priority
 owner: $owner
@@ -9281,6 +9491,7 @@ build: $_build_id
 docs_impact: pending
 summary: "${opt_summary}"
 related: []
+references: []
 ---
 
 # Plan — $slug
@@ -9485,27 +9696,21 @@ EOF
     info "  • request remains planned; review its closed outcome/boundaries before activation"
     return 0
   fi
-  local spec id status summary spec_slug existing plan tasks tmp req_file version digest baseline reqs intent
+  local spec id status summary spec_slug existing plan tasks tmp req_file baseline reqs intent
   spec=$(_spec_find "$from") || die "request new: specification '$from' not found"
   id=$(fm_get "$spec" id); status=$(fm_get "$spec" status); summary=$(fm_get "$spec" summary)
-  [[ "$status" == approved ]] || die "request new: $id is '$status'; only an approved specification may seed implementation"
-  spec_slug=$(basename "$spec" .md | sed -E 's/^SPC-[0-9]+-//')
+  _contract_is_merged "$spec" || die "request new: contract '$id' is not merged into $(_contract_shared_base); merge its spec PR before creating execution work"
+  _execution_contains_contract "$spec" || die "request new: current execution branch does not contain contract '$id'; merge or rebase $(_contract_shared_base) first"
+  spec_slug=$(_record_slug "$spec")
   [[ -z "$slug" ]] && slug="$spec_slug"
-  existing=$(grep -lE "^source_spec:[[:space:]]*[\"']?${id}[\"']?[[:space:]]*$" "$SPEC_REQUESTS_DIR"/*/PLAN.md 2>/dev/null | head -1 || true)
+  existing=$(grep -lE "^contract:[[:space:]]*[\"']?${id}[\"']?[[:space:]]*$" "$SPEC_REQUESTS_DIR"/*/PLAN.md 2>/dev/null | head -1 || true)
   [[ -z "$existing" ]] || die "request new: $id already seeds request '$(basename "$(dirname "$existing")")'"
 
   cmd_new "$slug" --summary "Implement $id: $summary" --priority "$priority"
   plan="$SPEC_REQUESTS_DIR/$slug/PLAN.md"; tasks="$SPEC_REQUESTS_DIR/$slug/TASKS.md"
-  version=$(fm_get "$spec" version); [[ -n "$version" ]] || version="unversioned"
-  if command -v shasum >/dev/null 2>&1; then digest="sha256:$(shasum -a 256 "$spec" | awk '{print $1}')"
-  else digest="sha256:$(sha256sum "$spec" | awk '{print $1}')"; fi
   baseline="uncommitted"
   git rev-parse --verify HEAD >/dev/null 2>&1 && baseline=$(git rev-parse HEAD)
-  fm_set "$plan" source_spec "$id"
-  fm_set "$plan" source_type spec
-  fm_set "$plan" source_ref "$id"
-  fm_set "$plan" source_spec_version "$version"
-  fm_set "$plan" source_spec_digest "$digest"
+  fm_set "$plan" contract "$id"
   fm_set "$plan" scaffolded_against "$baseline"
   intent=$(_request_section "$spec" Intent | awk 'NF && $0 !~ /^<!--/ && $0 !~ /^_/ {print}' | head -1)
   [[ -n "$intent" ]] || intent="Implement the approved $id specification: $summary."
@@ -9534,11 +9739,9 @@ EOF
     !skip { print }
   ' "$tasks" > "$tmp" && mv "$tmp" "$tasks"
   rm -f "$req_file"
-  fm_set "$tasks" source_spec "$id"
-  fm_set "$tasks" source_type spec
-  fm_set "$tasks" source_ref "$id"
+  fm_set "$tasks" contract "$id"
   fm_touch "$tasks"
-  info "  ↳ source baseline: $id v$version ($digest)"
+  info "  ↳ approved contract: $id on $(_contract_shared_base)"
   info "  • request remains planned; next: /spectacular act $id"
 }
 
@@ -12969,7 +13172,7 @@ check_lifecycle() {
     status=$(awk -F': ' '/^---$/{c++; next} c==1 && /^status:/ { print $2; exit }' "$plan" | tr -d '"' | tr -d "'" | xargs)
 
     local source_spec source_type source_ref sensitivity provenance_missing="" provenance_key
-    source_spec=$(fm_get "$plan" source_spec)
+    source_spec=$(fm_get "$plan" contract); [[ -n "$source_spec" ]] || source_spec=$(fm_get "$plan" source_spec)
     source_type=$(fm_get "$plan" source_type); source_ref=$(fm_get "$plan" source_ref)
     sensitivity=$(fm_get "$plan" sensitivity)
     if [[ -n "$source_type" || -n "$source_ref" ]]; then
@@ -13001,15 +13204,10 @@ check_lifecycle() {
         done
       fi
     fi
-    if [[ -n "$source_spec" && "$status" =~ ^(active|review|verified)$ ]]; then
-      for provenance_key in source_spec_version source_spec_digest; do
-        [[ -n "$(fm_get "$plan" "$provenance_key")" ]] || provenance_missing="${provenance_missing:+$provenance_missing, }$provenance_key"
-      done
-    fi
     if [[ -n "$provenance_missing" ]]; then
       doc_add "lifecycle" "error" "$plan" \
         "request '$slug' has incomplete source/activation provenance: $provenance_missing" \
-        "record source identity, activation actor/date/Git baseline, and exact spec version/digest when applicable" \
+        "record the contract identity and activation actor/date/Git baseline" \
         "mechanical"
       issues=$((issues + 1))
     fi
@@ -14169,7 +14367,7 @@ check_wayfinding() {
     id=$(fm_get "$f" id)
     [[ -n "$id" ]] || continue
     count=$((count + 1))
-    if [[ ! "$id" =~ ^(QUE|RES|SPK|SPC)-[0-9]{3,}$ ]]; then
+    if ! _is_uuidv7 "$id" && [[ ! "$id" =~ ^(QUE|RES|SPK|SPC)-[0-9]{3,}$ ]]; then
       malformed="${malformed:+$malformed, }$id"
     fi
     if grep -q "^${id}|" "$nodes" 2>/dev/null; then
@@ -14199,7 +14397,7 @@ check_wayfinding() {
 
   while IFS='|' read -r id dep; do
     [[ -n "$id" && -n "$dep" ]] || continue
-    if [[ ! "$dep" =~ ^(DEC|QUE|IDEA|RES|SPK|PRT|SPC|TSK)-[0-9]{3,}$ ]]; then
+    if ! _is_uuidv7 "$dep" && [[ ! "$dep" =~ ^(DEC|QUE|IDEA|RES|SPK|PRT|SPC|TSK)-[0-9]{3,}$ ]]; then
       malformed="${malformed:+$malformed, }${id}→${dep}"
       continue
     fi
@@ -14271,7 +14469,7 @@ check_wayfinding() {
         elif [[ -z "$source_id" ]]; then
           signal_files="${signal_files:+$signal_files, }${f#"$SPEC_WORKSPACE_DIR"/}→${ref}"
         fi
-      done < <(printf '%s\n' "$line" | grep -Eo '(DEC|QUE|IDEA|RES|SPK|PRT|SPC|TSK)-[0-9]{3,}' | sort -u)
+      done < <(printf '%s\n' "$line" | grep -Eo '([0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|(DEC|QUE|IDEA|RES|SPK|PRT|SPC|TSK)-[0-9]{3,})' | sort -u)
     done < <(grep -Ei 'depends[- ]on|blocked[- _]by|requires|prerequisite' "$f" 2>/dev/null || true)
 
     # Request PLAN body links under Dependencies must agree with either side of

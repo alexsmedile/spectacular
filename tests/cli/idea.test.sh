@@ -29,7 +29,7 @@ scenario_request_and_legacy() {
   (cd "$d" && "$CLI" idea new explicit >/dev/null)
   (cd "$d" && "$CLI" idea promote explicit --to request >/dev/null)
   assert_file "$d/.spectacular/requests/explicit/PLAN.md"
-  assert_file "$d/.spectacular/archive/ideas/IDEA-001-explicit.md"
+  assert_file "$d/.spectacular/archive/ideas/explicit.md"
 
   (cd "$d" && "$CLI" idea new legacy >/dev/null)
   out=$(cd "$d" && "$CLI" idea promote legacy 2>&1)
@@ -45,11 +45,11 @@ scenario_shared_is_local_only() {
   (cd "$d" && "$CLI" idea new discuss >/dev/null)
   out=$(cd "$d" && "$CLI" idea promote discuss --to shared 2>&1 || true)
   assert_output "$out" "requires '--ref <stable-reference>'"
-  assert_file "$d/.spectacular/ideas/IDEA-001-discuss.md"
+  assert_file "$d/.spectacular/ideas/discuss.md"
 
   (cd "$d" && "$CLI" idea promote discuss --to shared --ref "https://tracker.example/item/42" >/dev/null)
-  assert_file "$d/.spectacular/archive/ideas/IDEA-001-discuss.md"
-  assert_contains "$d/.spectacular/archive/ideas/IDEA-001-discuss.md" "shared:https://tracker.example/item/42"
+  assert_file "$d/.spectacular/archive/ideas/discuss.md"
+  assert_contains "$d/.spectacular/archive/ideas/discuss.md" "shared:https://tracker.example/item/42"
   assert_absent "$d/.spectacular/requests/discuss"
   rm -rf "$d"
 }
@@ -61,10 +61,10 @@ scenario_roadmap_requires_icebox_choice() {
   (cd "$d" && "$CLI" idea new roadmap-entry --hypothesis "Better capture routing" >/dev/null)
   out=$(cd "$d" && "$CLI" idea promote roadmap-entry --to roadmap 2>&1 || true)
   assert_output "$out" "requires '--placement icebox'"
-  assert_file "$d/.spectacular/ideas/IDEA-001-roadmap-entry.md"
+  assert_file "$d/.spectacular/ideas/roadmap-entry.md"
 
   (cd "$d" && "$CLI" idea promote roadmap-entry --to roadmap --placement icebox >/dev/null)
-  assert_file "$d/.spectacular/archive/ideas/IDEA-001-roadmap-entry.md"
+  assert_file "$d/.spectacular/archive/ideas/roadmap-entry.md"
   assert_contains "$d/.spectacular/roadmaps/index.md" "Better capture routing"
   assert_absent "$d/.spectacular/requests/roadmap-entry"
   rm -rf "$d"
@@ -77,7 +77,7 @@ scenario_request_only_flags_rejected() {
   (cd "$d" && "$CLI" idea new guard >/dev/null)
   out=$(cd "$d" && "$CLI" idea promote guard --to shared --request-slug no 2>&1 || true)
   assert_output "$out" "--request-slug is valid only with --to request"
-  assert_file "$d/.spectacular/ideas/IDEA-001-guard.md"
+  assert_file "$d/.spectacular/ideas/guard.md"
   rm -rf "$d"
 }
 

@@ -1,10 +1,10 @@
 ---
-status: planned
+status: verified
 priority: medium
 owner: alex
 updated: 2026-08-07
 build: b46
-docs_impact: pending
+docs_impact: none
 summary: "Implement UUIDv7 identities, slug paths, and merged-spec-PR request gating"
 related:
   - PRD.md
@@ -13,6 +13,7 @@ related:
 # conflicts-with: [<request-slug>]
 # traffic-boundaries: [<named, complete launch boundary>]
 # release-constraints: [<shared release or migration constraint>]
+docs_impact_reason: Workflow references and CLI help were updated; no public docs surface is owned by this repository.
 ---
 
 # Plan — identity-contract-workflow

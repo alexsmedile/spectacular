@@ -15,7 +15,9 @@ seed_workspace() {
   rm -rf "$d"; mkdir -p "$d"
   (cd "$d" && "$CLI" init --kit blank --name session-review >/dev/null)
   (cd "$d" && git init -q && git config user.email test@example.com && git config user.name Test && git add . && git commit -qm init)
-  (cd "$d" && "$CLI" spec new owned --summary "Ownership fixture" >/dev/null && "$CLI" spec approve s1 --evidence approved >/dev/null && "$CLI" request new owned --from s1 >/dev/null && git add . && git commit -qm request)
+  (cd "$d" && "$CLI" spec new owned --summary "Ownership fixture" >/dev/null && git add . && git commit -qm contract && git switch -q -c request/owned)
+  local contract_id; contract_id=$(awk '/^id:/{print $2; exit}' "$d/.spectacular/specs/owned.md")
+  (cd "$d" && "$CLI" request new owned --from "$contract_id" >/dev/null && git add . && git commit -qm request)
   (cd "$d" && "$CLI" session start --tag commit-review >/dev/null && git add . && git commit -qm session-start)
 }
 

@@ -15,7 +15,7 @@ Triggered by: skill detects user is actively implementing a request, or user ask
 
 When a request transitions from `planned` → `active`:
 
-1. Use the activation flow in [[request-workflow]]; record the approved specification version/digest, actor, date, and Git baseline before changing `status: active`.
+1. Use the activation flow in [[request-workflow]]; verify the merged contract is in branch ancestry, then record actor, date, and Git baseline before changing `status: active`.
 2. Create `SESSION.md` if it doesn't exist (see template below)
 3. Start with `spectacular request <slug> --brief`. Load a named file or linked capability spec only when the brief identifies a need; do not reload the discovery history.
 

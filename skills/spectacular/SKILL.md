@@ -168,6 +168,8 @@ The conversational canonical grammar is verb-first: `/spectacular grill|refine|r
 
 Deciding *which store* a piece of knowledge goes in (fact? decision? question? research? spike? fix? idea?) → **`references/soft-db-index.md`**, the canonical collection index. Load it whenever the routing isn't obvious.
 
+Adding, revising, splitting, or deciding whether to add a Spectacular-specific glossary term → **`references/glossary.md`**.
+
 ### Feedback-loop mode (v1.6.0+)
 
 `feedback-loop` is a distinct mode for learning from built or prototyped behavior. **Not** pre-spec Vision approval, a benchmark, or verification pass. The word `experiment` routes through [[discovery-protocol]] instead of aliasing here.

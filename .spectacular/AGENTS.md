@@ -80,17 +80,17 @@ Spectacular tracks work at **two distinct granularities** that must not be confu
 | Layer | Tool | Scope | Lifetime |
 |---|---|---|---|
 | **Milestone blocks** | On-disk `requests/<slug>/TASKS.md` | Whole request, persisted in git, team-visible | Days to weeks; survives sessions |
-| **Session micro-tasks** | Harness `TaskCreate` / `TaskUpdate` (Claude Code built-in) | Current working session, ephemeral, agent-only | Minutes to hours; ends with session |
+| **Session micro-tasks** | Runtime-native plan/task tool (`update_plan` in Codex; `TaskCreate` / `TaskUpdate` in Claude) | Current working session, ephemeral, agent-only | Minutes to hours; ends with session |
 
-**Rule:** when starting a non-trivial session of work on any request, the agent creates harness tasks for the granular steps (file-by-file, gate-by-gate) and marks them `in_progress` / `completed` as work proceeds. On-disk `TASKS.md` continues to own the **milestone-level checklist** that the user reads to understand request status.
+**Rule:** when starting a non-trivial session of work on any request, the agent creates native session-plan items for the granular steps (file-by-file, gate-by-gate), keeps exactly one `in_progress`, and marks them `completed` as work proceeds. On-disk `TASKS.md` continues to own the **milestone-level checklist** that the user reads to understand request status. A terminal response is forbidden while the native plan has pending or in-progress work unless a real blocker is recorded.
 
 The two layers complement each other:
-- Harness micro-tasks **silence the runtime's "task tools haven't been used" warning** while preserving the live progress signal in the CLI UI.
-- On-disk `TASKS.md` items are **never duplicated** as harness tasks one-to-one. Harness tasks are *finer* — they decompose a single TASKS.md milestone into the concrete edits / commits / tests that complete it.
-- When a session ends, harness tasks evaporate; their results live on in committed code + ticked on-disk TASKS items.
-- **Decomposing a large milestone** ([[build-workflow]] B2): when a milestone spans several verify-points, record its sub-steps as **nested `- [ ]` bullets** under its `### M<n>` block (durable checkpoints, not counted in progress) *and* mirror them as harness tasks (the live signal). The nested bullets are the persisted record a human reads; the harness tasks drive the CLI progress UI. This is the same two-layer split applied one level below the milestone — the checkpoints that keep a fat milestone from running as one opaque block.
+- Native micro-tasks preserve the runtime's live progress signal and make the execution turn's remaining work explicit.
+- On-disk `TASKS.md` items are **never duplicated** as native plan items one-to-one. Native plan items are *finer* — they decompose a single TASKS.md milestone into the concrete edits / commits / tests that complete it.
+- When a session ends, native plan items evaporate; their results live on in committed code + ticked on-disk TASKS items.
+- **Decomposing a large milestone** ([[build-workflow]] B2): when a milestone spans several verify-points, record its sub-steps as **nested `- [ ]` bullets** under its `### M<n>` block (durable checkpoints, not counted in progress) *and* mirror them as native plan items (the live signal). The nested bullets are the persisted record a human reads; the native plan drives the runtime progress UI. This is the same two-layer split applied one level below the milestone — the checkpoints that keep a fat milestone from running as one opaque block.
 
-Anti-pattern: copying every line from `TASKS.md` into the harness one-for-one. That defeats the granularity split and creates duplicate maintenance.
+Anti-pattern: copying every line from `TASKS.md` into the native plan one-for-one. That defeats the granularity split and creates duplicate maintenance.
 
 ---
 

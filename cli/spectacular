@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.37.0"
+SPECTACULAR_VERSION="1.37.1"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -6534,6 +6534,10 @@ EOF
 ## Execution boundary
 
 Implement only the approved request scope. Park unexpected discoveries as ideas or future work; do not silently expand this milestone. Stop at declared HITL, authorization, breaking-schema, merge, or irreversible gates.
+
+## Completion contract
+
+Combine the user's requested terminal condition with the open tasks above, this milestone's Validation, and the request Deliverables. Create a native session plan with exactly one item in progress. Remain RUNNING while any plan item or completion condition remains: progress updates are non-terminal and must be followed by the next action. A failed check starts in-scope diagnosis and repair; it is BLOCKED only when that path is exhausted or needs a real decision, declared HITL gate, separate authority, or scope expansion. Emit a terminal response only when COMPLETE or BLOCKED, never as “I'm continuing” or “I'll continue”.
 EOF
 }
 

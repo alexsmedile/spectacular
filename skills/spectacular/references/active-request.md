@@ -71,6 +71,11 @@ Monitor `TASKS.md` for completion signals:
 - When **all items in a group** are checked, note it proactively — this is also the `commit-checkpoint` policy's moment (see `POLICY.md` `@Implementation`): include a soft `git commit` reminder without pausing for approval before moving on
 - When **all items in TASKS.md** are checked → tier-reveal one line: `Next: spectacular advance <slug> to move it to review.` (see `lifecycle.md`); this is a lifecycle boundary, so stop only if advancing needs required evidence or human approval
 
+A failed task check remains part of execution: diagnose it, repair it within the approved scope, and
+rerun it. Record `BLOCKED` only when that path is exhausted or requires a real decision, declared
+HITL gate, separate authority, or scope expansion. Never use a progress acknowledgement as the
+terminal response while the native session plan still has pending or in-progress work.
+
 ---
 
 ## Context loading during active work

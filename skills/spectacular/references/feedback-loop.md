@@ -102,13 +102,13 @@ Body sections (all required):
 
 ## Proactive surfacing
 
-The skill **does not** spontaneously interrupt the user with feedback prompts. It surfaces feedback-loop opportunities **only at request checkpoints**:
+The skill **does not** spontaneously interrupt the user with feedback prompts. It surfaces feedback-loop opportunities **only at request checkpoints**, and never uses an offer to end an otherwise approved, unblocked implementation turn:
 
 - **Milestone completion** — when the user ticks a milestone in `TASKS.md`, the skill may offer: "Want to feedback-loop M<N> before moving on?"
 - **Request enters `review`** — same offer, scoped to the request as a whole.
 - **Archive flow** — at the end of `spectacular archive <slug>`, the skill may offer: "Anything worth feedback-looping before this leaves the active set?"
 
-The user can always decline. The skill should make these offers low-friction — single short prompt, accept/decline, move on. Never two-step interrogation at a checkpoint.
+The user can always decline. The skill should make these offers low-friction — single short prompt, accept/decline, move on. During active implementation, defer an optional offer until the approved work is otherwise complete or a real boundary has already stopped execution. Never two-step interrogation at a checkpoint.
 
 The skill **may not** auto-surface feedback opportunities outside these three checkpoints. No "haven't probed X in N weeks" suggestions. No mid-flow nags.
 

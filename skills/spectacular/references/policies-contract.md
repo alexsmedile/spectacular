@@ -12,7 +12,7 @@ when_to_use: Authoring a custom policy, auditing POLICY.md structure, or underst
 | `PRINCIPLES.md` | theory | *why we work this way* (beliefs) | optional (kit-triggered) |
 | `POLICY.md` | practice | *how we actually work* (executable rules) | **always-set** (every init) |
 
-The asymmetry is deliberate: theory is optional reading, **practice is the operational floor**. A workspace can hold zero stated principles, but it always ships with a policy contract — 19 prefilled defaults, enabled, from the first `spectacular init`.
+The asymmetry is deliberate: theory is optional reading, **practice is the operational floor**. A workspace can hold zero stated principles, but it always ships with an enabled policy contract from the first `spectacular init`.
 
 A **policy** is a rule filed under a named **work-phase hook**. When the skill enters a phase, it retrieves *only that hook's* policies and injects them — progressive disclosure (Principle 6) applied to the rule layer itself. The skill never loads all policies at once.
 
@@ -92,7 +92,7 @@ These 9 are the **only** valid hooks. `review` on POLICY.md flags any `## @<hook
 
 **Deferred (v2):** `@SessionStart` (wants a real harness runtime), `@Decide`. **Folded:** `@Request`/`@RequestTask` → `@Planning`. **Rejected:** `@Doctor` (circular), `@BeforeCommit` (wrong runtime).
 
-## The prefilled defaults — 4 block · 15 warn
+## The prefilled defaults
 
 Every `spectacular init` writes these enabled:
 
@@ -101,7 +101,7 @@ Every `spectacular init` writes these enabled:
 | `@Init` | `scaffold-contract` | 4 | warn |
 | `@Planning` | `request-shape` + `scope-down` + `milestones-in-build-order` | 3 / 7 / 10 / 11 | warn |
 | `@Implementation` | **`understand-before-change`** | 7 | **block** |
-| `@Implementation` | `build-order` + `earn-the-verification` + `prefer-cli-mutator` | 11 / 6 | warn |
+| `@Implementation` | `build-order` + `earn-the-verification` + `prefer-cli-mutator` + `commit-checkpoint` + `decompose-large-milestone` | 11 / 6 / 10 | warn |
 | `@Debugging` | `check-prior-fixes` + `ceremony-matches-uncertainty` + `fix-root-not-symptom` + `log-only-verified-reusable` + `use-audit-fix-verbs` | 5 / 11 / 6 | warn |
 | `@Verification` | **`verification-present`** | 7 / 9 | **block** |
 | `@Archive` | `spec-sync` + `memory-propose` | 2 / 5 | warn |
@@ -133,6 +133,19 @@ policies:
 `spectacular policy` reads POLICY.md, applies these overrides, and returns the merged result. They are **layers, not competing copies** — there is no "which wins" ambiguity: POLICY.md is the definition, config is the per-project tune.
 
 **Scope model: config-only for v1.** A single `policies:` block in `.spectacular/config.yaml`. The 4-tier scope precedence (project → user → app-store → bundled) used by convention packs is a **v2 candidate**, noted not built.
+
+## What users may customize
+
+Policies are deliberately **human/project-editable practice**, not an unchangeable Spectacular kernel. Use the right layer for the kind of rule:
+
+| Kind of rule | Owner | Can a project change it? | Examples |
+|---|---|---|---|
+| Framework invariant | Skill / CLI | No, except through a documented command-specific override | canonical IDs and paths, archive-first behavior, lifecycle data shape, CLI validation |
+| Lifecycle or safety gate | Skill / CLI plus its named evidence flow | Not by disabling a policy; use only the explicit override the flow records, where one exists | approved-spec requirement, verification evidence, snapshot-before-overwrite, archive closure checks |
+| Project practice | `POLICY.md`, tuned by `config.yaml` | Yes—edit, disable, or change severity deliberately | build order, commit reminders, review habits |
+| Session preference | The user's request or agent instructions | Yes, for this task/session | verbosity, whether to delegate, a one-off request to pause at each milestone |
+
+Use `POLICY.md` when the team wants a durable, shared operating preference. Use `config.yaml` when a project wants to tune a shipped policy without copying its definition. Use a user prompt for a temporary preference. A `severity: block` policy may stop the **skill's** workflow, but it never bypasses independent CLI/lifecycle safeguards; conversely, a `warn` policy must surface and continue, not manufacture a consent prompt.
 
 ## Editability
 

@@ -53,7 +53,7 @@ related: []
 
 **Required body sections:** Target, Hypothesis / hunch, Proposal, Question asked, User response, Insight, Decision. See [[feedback-loop]] for full template + examples.
 
-**Proactive surfacing rules:** Skill may surface a feedback-loop offer at three checkpoints only:
+**Proactive surfacing rules:** Skill may surface a feedback-loop offer at three checkpoints only, but it must not use one to interrupt approved, unblocked implementation. Defer an optional offer until execution has reached a real stopping boundary:
 1. Milestone completion (`TASKS.md` tick)
 2. Request status flip to `review`
 3. End of `spectacular archive <slug>` flow

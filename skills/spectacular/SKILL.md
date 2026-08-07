@@ -262,9 +262,24 @@ On-disk `requests/<slug>/TASKS.md` owns milestones (persistent, team-visible); h
 
 ---
 
+## Operating modes and continuation
+
+Choose behavior from the work state, not from the presence of a checklist:
+
+| Mode | Agent behavior | When to ask or stop |
+|---|---|---|
+| **Explore / grill / refine / review** | Investigate, compare options, expose ambiguity, and draft or critique artifacts. Do not silently turn an unresolved choice into implementation. | Ask for the missing fact, preference, or acceptance that determines the direction. |
+| **Plan** | Turn an accepted direction into a bounded request, PLAN, and TASKS chain; make validation and scope explicit. | Stop at the approval boundary for a new durable behavior, contract, or scope that the user has not approved. |
+| **Execute** | Once a request is approved and active, use its brief and complete its ordered, in-scope tasks autonomously. Tick/check/report normal checkpoints, then continue. | Stop only for a failed required check, a real decision, a declared HITL gate, exhausted approved scope, or a request to perform an action needing its own authority. |
+| **Close** | Collect evidence, move lifecycle only through its defined gates, and prepare the handoff/archive path. | Stop where the lifecycle requires evidence or explicit human confirmation; do not mistake completion reporting for permission to archive or make irreversible writes. |
+
+**Checkpoint rule:** a task, sub-step, milestone, harness update, or soft reminder is visibility—not a consent boundary. It never by itself ends an approved execution turn.
+
+---
+
 ## Output format
 
-Conversational briefing with a minimal embedded table. Never a raw dump. Identify the single highest-priority next action and ask what the user wants to do.
+Conversational briefing with a minimal embedded table. Never a raw dump. During approved, unblocked implementation, treat normal task and milestone checkpoints as progress updates and continue to the next planned action; do not end the turn or ask for confirmation at those checkpoints. Ask what the user wants to do only when work is complete, a real blocker or declared HITL gate needs their decision, or the next action would exceed the approved request.
 
 ---
 

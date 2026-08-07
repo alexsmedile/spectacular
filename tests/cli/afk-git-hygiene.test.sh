@@ -85,7 +85,7 @@ scenario_pr_handoff() {
   (cd "$d" && "$CLI" afk pr billing-work --version v1.0.0 --name Billing >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "fresh test proof required"
   out=$(cd "$d" && "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed --summary "Add billing target validation" --summary "Document the retained target boundary" --validation "Contract fixtures pass")
-  [[ "$out" == *"[Spectacular] Executed: v1.0.0 - Billing"* && "$out" == *"## Summary"* && "$out" == *"- Add billing target validation"* && "$out" == *"- Document the retained target boundary"* && "$out" == *"- Contract fixtures pass"* && "$out" == *"stop before merge"* ]] && pass || fail "dry-run prints a reviewer-facing title, body, and merge boundary"
+  [[ "$out" == *"[Spectacular] Executed: v1.0.0 - Billing"* && "$out" == *"## In plain language"* && "$out" == *"## What this PR changes"* && "$out" == *"- Add billing target validation"* && "$out" == *"- Document the retained target boundary"* && "$out" == *"- Contract fixtures pass"* && "$out" == *"stop before merge"* ]] && pass || fail "dry-run prints a reviewer-facing title, body, and merge boundary"
   (cd "$d" && "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed --breaking --apply --yes >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "breaking change requires separate approval"
 
@@ -93,7 +93,7 @@ scenario_pr_handoff() {
   (cd "$d" && PATH="$bin:$PATH" "$CLI" afk pr billing-work --version v1.0.0 --name Billing --tests-passed --summary "Add billing target validation" --summary "Document the retained target boundary" --validation "Contract fixtures pass" --apply --yes >/dev/null)
   assert_contains "$log" "pr create --title [Spectacular] Executed: v1.0.0 - Billing"
   assert_contains "$log" "--draft"
-  assert_contains "$log" "## Summary"
+  assert_contains "$log" "## In plain language"
   assert_contains "$log" "Add billing target validation"
   assert_contains "$log" "Document the retained target boundary"
   assert_contains "$log" "## Validation"

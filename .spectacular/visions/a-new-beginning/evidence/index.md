@@ -1,0 +1,69 @@
+---
+type: refactor-intake-index
+updated: 2026-08-08
+---
+
+# Refactor intake index
+
+## Workflow
+
+- [Refactor method](../METHOD.md) — end-to-end intake, decision, promotion, execution, and retrospective method
+- [Orchestration contract](../ORCHESTRATION.md) — program authority, typed handoffs, checkpoints, and branch/worktree rules
+- [Foundation Plan](../FOUNDATION-PLAN.md) — recovery capsule for the twelve sessions and top 20 priorities
+- [Side-session handoffs](../handoffs/README.md) — authorized queue and copy-ready bounded prompts
+- [WORKFLOW.md](WORKFLOW.md) — intake, comparison, decisions, promotion, and retrospective
+
+## Sources
+
+| Source | Authority | Scope | Status |
+|---|---|---|---|
+| [Source 001](source-001-skill-and-scaffold.md) | proposal | skill, references, init, kits, measurement | ingested |
+| [Source 002](source-002-mission-vocabulary.md) | proposal | vocabulary, product model, lifecycle, positioning, truth | ingested |
+| [Source 003](source-003-reduction-program.md) | proposal; partial | reduction, retention, lifecycle hygiene, migration | ingested |
+| [Source 004](source-004-usage-led-reduction.md) | proposal; partial | usage evidence, protected core, subsystem cuts, policy, agents, CLI | ingested |
+| [Source 005](source-005-cli-contract-audit.md) | code-audit proposal | CLI defects, command grammar, Git boundary, docs, implementation | ingested |
+| [Source 006](source-006-trustworthy-mission-loop.md) | proposal | baseline, capabilities, Missions, autonomy, evidence, resume, MVP | ingested |
+| [Source 007](source-007-system-contract-graph.md) | synthesized proposal | graph contracts, Mission compiler, gates, runs, integration, taxonomy | ingested |
+| [Source 008](source-008-graph-harness-protocols.md) | unsourced protocol synthesis | orchestration, graph memory, harness, verification, infrastructure, state | ingested |
+| [Source 009](source-009-expanded-graph-engineering.md) | unsourced expanded synthesis | handoffs, harness evidence, semantics, visual compression, alignment | ingested |
+| [Source 010](source-010-abstraction-and-orchestration.md) | unsourced expanded synthesis | abstraction layers, semantic adapters, modules, handoffs, bounded review | ingested |
+| [Source 011](source-011-github-open-issues.md) | owner-authored proposal corpus | 23 open GitHub issues: retrieval, goals, graphs, delivery, governance, capture | ingested |
+| [Source 012](source-012-decision-density.md) | user-provided unsourced proposal | decision density, variants, grilling, logic harnesses, critic gates, wayfinding pack | ingested |
+| [Source 013](source-013-ai-ux-stress-testing.md) | user-provided unsourced proposal plus owner hypothesis | UX tensions, parametric prototypes, adversarial personas, consequence audits, decision multiplexer | ingested |
+| [Source 014](source-014-reversible-architecture-decisions.md) | user-provided unsourced proposal | reversibility, decision ownership, spikes, product/ADR boundary, optionality, interface compatibility | ingested |
+
+## Concept database
+
+- [Concept index](concepts/index.md) — one row per atomic piece
+- [Contradiction matrix](concepts/conflicts.md) — open collisions and dependencies
+- [Domain map](domains.md) — cross-cutting comparison and decision frontier
+- [Derived decision map](decision-map.md) — experimental Mermaid projection over decision-critical cards
+- [Derived abstraction map](abstraction-map.md) — experimental layer-boundary audit projection
+- [Responsibility boundaries](responsibility-boundaries.md) — proposed core, companion, role, mode, mechanism, and adapter ownership
+- [Decisive refactor sessions](decision-sessions.md) — four batches and twelve contract-producing decision sessions
+- [Top 20 foundational decisions](top-20-foundational-decisions.md) — ranked make-or-break architecture priorities
+- [Synthesis checkpoint 001](synthesis-001.md) — convergence, contradictions, and evidence gaps
+- [Synthesis checkpoint 002](synthesis-002.md) — execution-authority fork and mission-loop convergence
+- [Synthesis checkpoint 003](synthesis-003.md) — graph adoption levels and Source 006/007 contradictions
+- [Synthesis checkpoint 004](synthesis-004.md) — graph/harness composition rules and rejected absolutes
+- [Synthesis checkpoint 005](synthesis-005.md) — Source 009 clarification and refactor-method applications
+- [Synthesis checkpoint 006](synthesis-006.md) — abstraction audit and bounded orchestration corrections
+- [Synthesis checkpoint 007](synthesis-007.md) — open-issue actionability, product-contract gaps, and decision order
+- [Synthesis checkpoint 008](synthesis-008.md) — transition from intake to responsibility-led decision sessions
+- [Synthesis checkpoint 009](synthesis-009.md) — high-fidelity decision artifacts and corrected density claims
+- [Synthesis checkpoint 010](synthesis-010.md) — decision-multiplexer boundary and AI UX profile recommendation
+- [Synthesis checkpoint 011](synthesis-011.md) — reversibility-calibrated governance and architecture boundaries
+- [Synthesis checkpoint 012](synthesis-012.md) — distributed orchestration contract and constitutional dispatch order
+- [Ingestion status recap](recap-001-ingestion-status.md) — brief focus map for Sources 001–014
+- [GitHub issue evidence](issues/) — one provenance card per open issue and comment thread
+
+## Current counts
+
+- Sources: 14
+- Concept pieces: 171
+- GitHub issue evidence cards: 23
+- Human dispositions: 0
+- Promoted fragments: 0
+
+Update this index after every source ingestion. Counts describe the intake
+workbench only; they are not Spectacular product metrics.

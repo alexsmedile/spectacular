@@ -42,6 +42,9 @@ out3=$(cd "$WS" && "$CLI" request auth-build --brief -m1)
 [[ "$out1" == "$out2" && "$out2" == "$out3" ]] && pass || fail "milestone aliases return identical brief"
 assert_has "$out1" "Contract: " "brief contract provenance"
 assert_has "$out1" "Execution boundary" "brief scope boundary"
+assert_has "$out1" "Completion contract" "brief execution-turn completion contract"
+assert_has "$out1" "Remain RUNNING while any plan item or completion condition remains" "brief forbids checkpoint handoff"
+assert_has "$out1" "A failed check starts in-scope diagnosis and repair" "brief keeps failed checks in execution"
 grep -q '^activated_against:' "$PLAN" && pass || fail "activation git baseline recorded"
 overview=$(cd "$WS" && "$CLI" request auth-build)
 assert_has "$overview" "Task:" "overview current task"

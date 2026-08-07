@@ -10,7 +10,7 @@ Spectacular owns durable intent and evidence. The coding agent owns the current 
 | Layer | Owner | Lifetime | Granularity |
 |---|---|---|---|
 | `PLAN.md` + `TASKS.md` | Spectacular | Cross-session, committed | Goal, constraints, milestones, durable checkpoints |
-| Native Codex/Claude plan | Coding agent | Current session | Concrete edits, checks, and sequencing for the active milestone |
+| Native runtime plan/task tool | Coding agent | Current session | Concrete edits, checks, and sequencing for the active milestone |
 | Subagent brief | Dispatching agent | One bounded delegation | Narrow task, named files, acceptance check, return contract |
 
 ## Canonical commands
@@ -56,7 +56,7 @@ Agentic document operations are verb-first: `/spectacular grill <doc> [target]`,
 ## Views
 
 - Bare `request <slug>` is the cheap overview: frontmatter outline, source spec, lifecycle mode, current milestone/task, blockers, and progress.
-- `--brief` is allowed only for `status: active`. It compiles the implementation start prompt from PLAN goal/constraints/validation/deliverables, the selected open TASKS milestone, SESSION handoff, activation provenance, and the execution boundary. It is generated, never stored.
+- `--brief` is allowed only for `status: active`. It compiles the implementation start prompt from PLAN goal/constraints/validation/deliverables, the selected open TASKS milestone, SESSION handoff, activation provenance, the execution boundary, and the execution-turn completion contract. It is generated, never stored.
 - `--milestone M2`, `-m 2`, and `-m2` are identical. Without a selector, use the first milestone containing an open top-level task. Refuse a missing milestone or a request with no open milestone.
 - `--full` emits request-owned Markdown in stable order: PLAN, TASKS, SESSION, UNDERSTANDING, RISKS, VERIFY, VERIFY-LOG, SPEC-DELTA, then remaining Markdown. Linked external records are listed or referenced, never expanded into the bundle.
 - `--json` wraps the chosen view in `schema: spectacular.request.v1`. Arbitrary `--artifact` and `--section` selectors are deferred; read a named file directly when necessary.
@@ -78,7 +78,7 @@ The act flow:
 3. Review PLAN/TASKS against the approved spec. Refuse incomplete structure, a held request, unresolved required-user questions, declared HITL gates, or silent scope additions/removals/reordering.
 4. Run the `@Implementation` policy gate and satisfy understand-before-change.
 5. Transition to active and record `activated_at`, `activated_by`, and `activated_against` (Git commit or `uncommitted`). Never copy a spec or remote body.
-6. Retrieve `spectacular request <slug> --brief`, inspect the named code and tests, create the native session plan at finer granularity, and begin production work.
+6. Retrieve `spectacular request <slug> --brief`, inspect the named code and tests, compile the user's terminal condition with the brief's Completion contract, create the native session plan at finer granularity, and begin production work in `RUNNING` state. Do not emit a terminal response while any native plan item remains pending or in progress.
 
 ## Phase ownership
 

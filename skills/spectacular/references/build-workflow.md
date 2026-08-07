@@ -276,6 +276,9 @@ wasn't as disjoint as routed — next time serialize.
    selectively, not wholesale). Start with the 1–2 C3 points. **Delegated work is confirmed harder
    than self-built.** For parallel fan-out, D1 comes first.
 2. **Run (or re-run) the Success criteria** if you didn't watch it run.
+   A failure starts an in-scope diagnose → repair → rerun loop; it does not by itself end the turn.
+   Declare `BLOCKED` only when the repair path is exhausted or requires a real decision, declared
+   HITL gate, separate authority, or work outside the approved boundary.
 3. **Optional — arms-length review + verify (judgment-gated, on risk not by default):**
    - **[[code-reviewer]]** — when the diff is substantial or medium+ blast radius. Returns ranked
      findings; you triage → `debug-fixer` (single-site) or `spec-builder` (larger) with a closed

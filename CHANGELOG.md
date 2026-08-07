@@ -17,6 +17,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Added request `branch`/`base` metadata validation, shared mutation preflight enforcement,
   documentation, and regression coverage for the coordination contract.
 
+## [1.37.1] — 2026-08-07
+
+### Fixed
+
+- Prevented approved execution from ending at task, milestone, test, or reporting checkpoints by
+  adding an explicit `RUNNING | BLOCKED | COMPLETE` turn-state contract. Terminal responses are
+  now forbidden while native plan items or completion conditions remain.
+- Compiled the completion contract directly into `spectacular request <slug> --brief`, made native
+  task planning portable across Codex and Claude, and prohibited future-tense handoffs such as
+  “I'll continue” when the next approved action can be performed immediately.
+- Changed failed-check handling from an automatic stop into an in-scope diagnose → repair → rerun
+  loop, reserving `BLOCKED` for exhausted repair paths, genuine decisions, HITL gates, separate
+  authority, or scope expansion.
+- Added static continuation-contract coverage and an adversarial behavior eval for explicit
+  “continue till completion” requests and initially failing checks.
+
 ## [1.37.0] — 2026-08-03
 
 ### GitHub work bridge (SPC-003, b40)

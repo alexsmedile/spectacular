@@ -5568,6 +5568,27 @@ _workspace_cleanup_inventory() {
   done
   info "  deletion requires: explicit branch, --apply --yes, fresh shared base, reachable merged tip, and preserved archive ref"
 }
+_workspace_cleanup_apply() {
+  local branch="$1" apply="$2" yes="$3" base current tip archive_ref
+  _workspace_require_repo; base=$(_workspace_base); current=$(_workspace_current_branch)
+  [[ "$branch" != "$current" && "$branch" != "$base" ]] || die "workspace cleanup: refusing current or base branch"
+  git show-ref --verify --quiet "refs/heads/$branch" || die "workspace cleanup: local branch not found: $branch"
+  tip=$(git rev-parse "$branch")
+  git merge-base --is-ancestor "$tip" "$base" 2>/dev/null || die "workspace cleanup: $branch is not reachable from $base; preserve or resolve it first"
+  if git remote get-url origin >/dev/null 2>&1; then
+    git rev-parse --verify "origin/$base^{commit}" >/dev/null 2>&1 || die "workspace cleanup: origin/$base is unknown; fetch and fast-forward first"
+    [[ "$(git rev-parse "$base")" == "$(git rev-parse "origin/$base")" ]] || die "workspace cleanup: local $base is stale; fast-forward it before deletion"
+  fi
+  archive_ref="refs/spectacular/archive/$(date +%Y%m%d-%H%M%S)-$(_afk_slug "$branch")"
+  info "Cleanup proposal: $branch (tip $tip)"
+  info "  exact mutations: git update-ref $archive_ref $tip; git branch -d $branch"
+  $apply || { info "Dry-run only. Apply with --apply --yes"; return 0; }
+  $yes || die "workspace cleanup: --apply requires --yes"
+  git update-ref "$archive_ref" "$tip"
+  [[ "$(git rev-parse "$archive_ref")" == "$tip" ]] || die "workspace cleanup: archive ref verification failed"
+  git branch -d "$branch"
+  info "  ✓ deleted $branch; recovery ref: $archive_ref"
+}
 cmd_workspace() {
   local sub="${1:-}"; shift || true
   case "$sub" in
@@ -5599,7 +5620,9 @@ EOF
       ;;
     cleanup)
       [[ $# -eq 0 ]] && { _workspace_cleanup_inventory; return 0; }
-      die "workspace cleanup <branch>: guarded deletion is not implemented yet; inventory is read-only" ;;
+      local branch="" apply=false yes=false
+      while (( $# > 0 )); do case "$1" in --apply) apply=true; shift ;; --yes) yes=true; shift ;; -*) die "Usage: spectacular workspace cleanup <branch> [--apply --yes]" ;; *) [[ -z "$branch" ]] || die "workspace cleanup: only one branch allowed"; branch="$1"; shift ;; esac; done
+      _workspace_cleanup_apply "$branch" "$apply" "$yes" ;;
     *) die "Usage: spectacular workspace <preflight|plan|preserve|cleanup>" ;;
   esac
 }

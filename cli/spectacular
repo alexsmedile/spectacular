@@ -5440,6 +5440,114 @@ _afk_is_primary() {
 _afk_require_repo() { git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "afk: not inside a Git repository"; }
 _afk_require_clean() { [[ -z "$(git status --porcelain 2>/dev/null)" ]] || die "afk: working tree is dirty; commit, stash, or park changes before branch mutation"; }
 
+# ── Workspace coordination ──────────────────────────────────────────────────
+# This intentionally has no persistent path-ownership registry. A branch is
+# evidence about a request, not evidence that every dirty source file belongs
+# to it. Unrecognised paths remain preservation candidates.
+_workspace_require_repo() { git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "workspace: not inside a Git repository"; }
+_workspace_current_branch() { git branch --show-current 2>/dev/null || true; }
+_workspace_base() { _contract_shared_base; }
+_workspace_request_for_branch() {
+  local branch="$1" plan
+  for plan in "$SPEC_REQUESTS_DIR"/*/PLAN.md; do
+    [[ -f "$plan" ]] || continue
+    [[ "$(fm_get "$plan" branch)" == "$branch" ]] && { basename "$(dirname "$plan")"; return 0; }
+  done
+  return 1
+}
+_workspace_path_owner() {
+  local path="$1" current="$2" request
+  case "$path" in
+    .spectacular/requests/*/*)
+      request=$(printf '%s' "$path" | cut -d/ -f3)
+      [[ -f "$SPEC_REQUESTS_DIR/$request/PLAN.md" ]] && { echo "$request|high|belongs-to-known-work"; return 0; } ;;
+    .spectacular/specs/*.md)
+      request=$(basename "$path" .md)
+      [[ -f "$SPEC_SPECS_DIR/$request.md" ]] && { echo "spec:$request|high|belongs-to-known-work"; return 0; } ;;
+  esac
+  # A caller can explicitly name the request; still only its durable request
+  # folder receives automatic ownership. Arbitrary code paths stay unowned.
+  if [[ -n "$current" && "$path" == ".spectacular/requests/$current/"* ]]; then
+    echo "$current|high|belongs-to-current-request"
+  else
+    echo "unowned|none|needs-preservation-branch"
+  fi
+}
+_workspace_changed_paths() {
+  local record code path
+  git status --porcelain=v1 -z 2>/dev/null | while IFS= read -r -d '' record; do
+    code=${record:0:2}; path=${record:3}
+    # Rename/copy records carry a second NUL path; report the destination, the
+    # user-visible changed path that needs a disposition.
+    if [[ "$code" == *R* || "$code" == *C* ]]; then IFS= read -r -d '' _old || true; fi
+    case "$code" in
+      \?\?) printf 'untracked\t%s\n' "$path" ;;
+      *)
+        [[ "${code:0:1}" != ' ' ]] && printf 'staged\t%s\n' "$path"
+        [[ "${code:1:1}" != ' ' ]] && printf 'unstaged\t%s\n' "$path"
+        ;;
+    esac
+  done
+}
+_workspace_report() {
+  local request="${1:-}" branch upstream base ahead behind owner confidence disposition group path any=false
+  _workspace_require_repo
+  branch=$(_workspace_current_branch); base=$(_workspace_base)
+  upstream=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || true)
+  if git rev-parse --verify "$base^{commit}" >/dev/null 2>&1; then
+    read -r behind ahead <<EOF
+$(git rev-list --left-right --count "$base...HEAD" 2>/dev/null || echo "unknown unknown")
+EOF
+  else behind=unknown; ahead=unknown; fi
+  info "── Workspace coordination (read-only) ──"
+  info "  branch:   ${branch:-(detached)}"
+  info "  upstream: ${upstream:-unknown}"
+  info "  base:     $base"
+  info "  divergence from base: ahead ${ahead:-unknown}, behind ${behind:-unknown}"
+  [[ -n "$request" ]] || request=$(_workspace_request_for_branch "$branch" 2>/dev/null || true)
+  info "  associated request: ${request:-unknown}"
+  info "  provider PR/MR facts: unknown (adapter not consulted)"
+  info "  changed paths:"
+  while IFS=$'\t' read -r group path; do
+    any=true
+    IFS='|' read -r owner confidence disposition <<EOF
+$(_workspace_path_owner "$path" "$request")
+EOF
+    info "    - [$group] $path"
+    info "      owner: $owner (confidence: $confidence) · disposition: $disposition"
+  done < <(_workspace_changed_paths)
+  if ! $any; then
+    info "    - none"
+    info "  blockers: none"
+    info "  safe next action: inspect and implement on this clean branch"
+  else
+    info "  blockers: unowned paths require explicit intent or preservation"
+    info "  safe next action: spectacular workspace preserve <slug> --paths <unowned-paths>"
+    info "  mutation commands: none (read-only report)"
+  fi
+}
+cmd_workspace() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    preflight|plan)
+      local request=""
+      while (( $# > 0 )); do case "$1" in --request) require_value "$1" "${2:-}"; request="$2"; shift 2 ;; *) die "Usage: spectacular workspace $sub [--request <slug>]" ;; esac; done
+      [[ -z "$request" || -f "$SPEC_REQUESTS_DIR/$request/PLAN.md" ]] || die "workspace: request not found: $request"
+      _workspace_report "$request" ;;
+    ""|--help|-h)
+      cat <<EOF
+Usage: spectacular workspace <preflight|plan|preserve|cleanup>
+
+  preflight [--request <slug>]  Read-only coordination report and safe next action.
+  plan [--request <slug>]       Read-only path-to-disposition plan.
+  preserve / cleanup            Reserved for the explicit mutation workflow.
+EOF
+      ;;
+    preserve|cleanup) die "workspace $sub: not implemented yet; use preflight to inspect without mutation" ;;
+    *) die "Usage: spectacular workspace <preflight|plan|preserve|cleanup>" ;;
+  esac
+}
+
 _afk_slug() {
   printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
 }
@@ -15941,6 +16049,8 @@ main() {
       shift; cmd_wayfind "$@"; exit $? ;;
     afk)
       shift; cmd_afk "$@"; exit $? ;;
+    workspace)
+      shift; cmd_workspace "$@"; exit $? ;;
     github)
       shift; cmd_github "$@"; exit $? ;;
     id)
@@ -16066,7 +16176,7 @@ Run inside Claude Code or Codex:  /spectacular $subcmd <verb>"
 
   if [[ "$subcmd" != "init" ]]; then
     die "Unknown command: '${subcmd}'.
-CLI verbs:   init | doctor | pack | migrate | new | advance | undo | next | snapshot | archive | touch | decide | remember | session | feedback | idea | question | research | spike | spec | wayfind | afk | id | audit | fix
+CLI verbs:   init | doctor | pack | migrate | new | advance | undo | next | snapshot | archive | touch | decide | remember | session | feedback | idea | question | research | spike | spec | wayfind | afk | workspace | id | audit | fix
 Read verbs:  summary | requests | request | decisions | decision | memories | memory | sessions | show | progress | paths (v1.8.0+)
 Skill verbs (run via /spectacular in your AI agent): status | remember this | verify <slug> | <doc> grill | <doc> refine | <doc> review"
   fi

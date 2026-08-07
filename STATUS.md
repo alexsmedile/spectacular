@@ -2,7 +2,7 @@
 
 **Updated:** 2026-08-07
 **Repo:** `alexsmedile/spectacular`
-**Verified against:** `main` @ `e6ec0f6` (`Clarify intent routing precedence and adversarial boundaries`)
+**Verified against:** `main` @ `1af58fc` (`Merge pull request #46 from alexsmedile/codex/freaking-pauses`)
 
 ## Current objective
 
@@ -23,7 +23,8 @@ work without duplicating solved work or reopening closed decisions.
   author.
 - Closed **#25** as already covered by AFK's durable goal, policy, and explicit
   apply/confirmation gates; #29 owns the missing commit behavior.
-- Approved the capture-routing model:
+- Proposed the capture-routing model, pending SPC review and explicit maintainer
+  approval:
 
   ```text
   capture → route to a deliberate destination
@@ -79,8 +80,8 @@ work without duplicating solved work or reopening closed decisions.
 
 - GitHub open-issue state was refreshed on 2026-08-07.
 - Closed Issue #6 and its expanded agent-signal-capture comment were read again
-  on 2026-08-07. Draft `SPC-007-capture-routing.md` is the successor and has
-  passed its document review; it is intentionally unapproved and unimplemented.
+  on 2026-08-07. Draft `SPC-007-capture-routing.md` is the successor; it is
+  intentionally unapproved and unimplemented pending document review.
 - `gh auth status` confirmed the active `alexsmedile` GitHub account with `repo`
   scope; no PR or code changes were created in this conclusion session.
 - Working tree was clean at conclusion (`git status --short --branch` produced

@@ -7,6 +7,14 @@ updated: 2026-08-07
 
 **Outcome:** verified
 
+## 2026-08-07 19:44 CEST — reverify (3 passed, 0 blocked, 0 skipped)
+
+- ✓ [exec] Full CLI regression suite — `bash tests/run.sh` exit 0 (30 test files passed) — against: `c1bf5b2` · local CLI workspace
+- ✓ [exec] Bash syntax — `bash -n cli/spectacular cli/install.sh scripts/hooks/pre-commit` exit 0 — against: `c1bf5b2` · local CLI workspace
+- ✓ [exec] Version consistency — `scripts/hooks/pre-commit --check` exit 0 — against: `c1bf5b2` · local CLI workspace
+
+**Outcome:** verified
+
 - against: `feat/worktree-coordination`
 - `bash tests/cli/workspace.test.sh` — 17 assertions passed.
 - `bash tests/cli/afk-git-hygiene.test.sh` — 43 assertions passed.

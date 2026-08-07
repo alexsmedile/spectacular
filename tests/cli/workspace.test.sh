@@ -21,7 +21,7 @@ after=$(cd "$W" && git status --porcelain)
 
 echo "── read-only mixed worktree preflight ──"
 assert_contains "$out" "[untracked] .spectacular/requests/current/NOTE.md"
-assert_contains "$out" "belongs-to-known-work"
+assert_contains "$out" "belongs-to-current-request"
 assert_contains "$out" "[untracked] unrelated.txt"
 assert_contains "$out" "needs-preservation-branch"
 assert_contains "$(cd "$W" && bash "$CLI" workspace plan --request current --json)" '"schema":"spectacular.workspace-plan.v1"'
@@ -41,9 +41,18 @@ printf 'project:\n  name: cleanup-test\n' > "$W/.spectacular/config.yaml"
 (cd "$W" && git show-ref --verify --quiet refs/heads/merged) && fail "confirmed cleanup deletes merged branch" || pass
 archive=$(cd "$W" && git for-each-ref --format='%(refname)' refs/spectacular/archive | head -1)
 [[ -n "$archive" ]] && pass || fail "cleanup preserves archive ref"
-receipt=$(find "$W/.spectacular/archive/workspace-branches" -name '*.md' -print -quit 2>/dev/null)
-[[ -n "$receipt" ]] && pass || fail "cleanup writes durable deletion receipt"
+[[ -z "$(cd "$W" && git status --porcelain)" ]] && pass || fail "cleanup leaves no workspace residue"
 rm -rf "$W"
+
+echo "── merged cleanup deletes a matching remote branch after its one confirmation ──"
+W=$(mktemp -d); R=$(mktemp -d)
+rm -rf "$R"; git init --bare -q "$R"; mkdir -p "$W/.spectacular"
+printf 'project:\n  name: remote-cleanup-test\n' > "$W/.spectacular/config.yaml"
+(cd "$W" && git init -q && git branch -M main && git config user.email test@example.com && git config user.name Test && git add . && git commit -qm init && git remote add origin "$R" && git push -qu origin main && git switch -q -c merged && touch merged.txt && git add merged.txt && git commit -qm merged && git push -qu origin merged && git switch -q main && git merge -q merged && git push -q origin main)
+(cd "$W" && bash "$CLI" workspace cleanup merged --refresh --apply --yes >/dev/null)
+[[ -z "$(git --git-dir="$R" for-each-ref --format='%(refname)' refs/heads/merged)" ]] && pass || fail "workspace cleanup deletes matching remote branch"
+[[ -z "$(cd "$W" && git status --porcelain)" ]] && pass || fail "remote cleanup leaves no workspace residue"
+rm -rf "$W" "$R"
 
 echo "── provider evidence stays explicit and blocks open PR cleanup ──"
 W=$(mktemp -d); mkdir -p "$W/.spectacular" "$W/bin"

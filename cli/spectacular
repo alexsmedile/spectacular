@@ -5526,6 +5526,12 @@ EOF
     info "  mutation commands: none (read-only report)"
   fi
 }
+_workspace_mutation_gate() {
+  # Shared first-write guard for Spectacular-owned Git mutators. The report is
+  # intentionally emitted before refusal so ambiguous paths are actionable.
+  _workspace_report "${1:-}"
+  [[ -z "$(git status --porcelain 2>/dev/null)" ]] || die "workspace: mutation refused while changed paths are unowned or unresolved; preserve or commit them first"
+}
 _workspace_preserve() {
   local slug="$1" paths="$2" apply="$3" yes="$4" original branch path commit_sha remote
   _workspace_require_repo
@@ -5861,6 +5867,7 @@ cmd_afk_start() {
   local active_run; active_run=$(_afk_active_run) || die "afk start: no active AFK run; authorize one with 'spectacular afk run start'"
   [[ "$(fm_get "$active_run" status)" == active ]] || die "afk start: AFK run is gated"
   $yes || die "afk start: --apply requires --yes"
+  _workspace_mutation_gate
   _afk_require_repo; _afk_require_clean
   git show-ref --verify --quiet "refs/heads/$branch" && die "afk start: branch already exists: $branch"
   git switch -c "$branch" >/dev/null
@@ -5888,6 +5895,7 @@ cmd_afk_cleanup() {
   case "$disposition" in merged|abandoned) ;; *) die "afk cleanup: --disposition must be merged|abandoned" ;; esac
   [[ -n "$outcome" && -n "$evidence" ]] || die "afk cleanup: --outcome and --evidence are required before cleanup"
   $remote && die "afk cleanup: remote deletion remains a human-only gate; delete it explicitly with your Git provider"
+  _workspace_mutation_gate
   _afk_require_repo
   local current; current=$(git branch --show-current)
   [[ "$current" != "$branch" ]] || die "afk cleanup: cannot delete the current branch"
@@ -5961,6 +5969,7 @@ cmd_afk_pr() {
   _afk_enabled || die "afk pr: AFK Git policy is not enabled"
   _afk_allow_pr || die "afk pr: allow_pr_create is false"
   $yes || die "afk pr: --apply requires --yes"
+  _workspace_mutation_gate "$slug"
   _afk_require_repo; _afk_require_clean
   local current_branch; current_branch=$(git branch --show-current)
   _afk_is_primary "$current_branch" && die "afk pr: refusing PR handoff from primary branch '$current_branch'"
@@ -6121,6 +6130,7 @@ cmd_github_pr_open() {
   printf '%s\n' "$body"
   if ! $apply; then info "Dry-run only. Apply with --apply --yes to open a draft PR; merge is never attempted."; return 0; fi
   $yes || die "github pr open: --apply requires --yes"
+  _workspace_mutation_gate "$slug"
   _afk_require_repo; _afk_require_clean
   local current_branch baseline commit_count upstream pr_url head
   current_branch=$(git branch --show-current); _afk_is_primary "$current_branch" && die "github pr open: refusing PR handoff from primary branch '$current_branch'"

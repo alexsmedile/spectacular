@@ -28,8 +28,7 @@ lifecycle.
 
 ```text
 capture → route to a deliberate destination
-                 ├─ issue
-                 ├─ shared
+                 ├─ shared (including an issue)
                  ├─ roadmap
                  ├─ vision
                  └─ request
@@ -60,16 +59,16 @@ the resulting proposal must say so rather than inventing confidence.
 
 Routing considers sensitivity first, then whether the signal belongs inside
 current work, its audience/scope, uncertainty, and commitment. Current-work
-checkpoints and audits resolve existing internal work before the five approved
-capture destinations are selected. The selected destination becomes the
+checkpoints and audits resolve existing internal work before a destination
+category is selected. The selected destination becomes the
 authority for its conversation and lifecycle.
 
 | Destination | Use when | Authority and constraint |
 |---|---|---|
 | current request checkpoint | A defect or friction is introduced or found while doing already-owned work. | Keep the regression evidence in that request's TASKS/SESSION/verification flow; do not manufacture an Issue. |
 | audit | An independently observed symptom is unclear. | Use the existing investigation path before proposing a fix or public report. |
-| `issue` | An independently actionable, repository-specific collaborative report or proposal is ready for human review. | The remote Issue owns discussion; it is not a roadmap, SPC, or implementation commitment. |
-| `shared` | Collaboration spans repositories or needs a provider-configured external surface. | The external record owns discussion. Spectacular stores only a stable reference when needed. |
+| `issue` | An independently actionable, repository-specific collaborative report or proposal is ready for human review. | A remote `issue` is a documented subtype of `shared`; it owns discussion and is not a roadmap, SPC, or implementation commitment. |
+| `shared` | Collaboration spans repositories or needs a provider-configured external surface. | The external record owns discussion. Spectacular stores only a stable reference when needed; it must not create a second local authority. |
 | `roadmap` | A human has intentionally made a project-priority choice. | Explicit Icebox/version/tier placement is required; capture never infers a commitment. |
 | `vision` | Product direction needs grounded alternatives and human reaction before an implementation contract. | Vision remains opt-in and can derive only a draft SPC after approval. |
 | `request` | The outcome is defined and needs durable execution coordination. | Create only after an explicit human decision and normal lifecycle gates. |
@@ -183,9 +182,9 @@ Validation must demonstrate at least:
 
 - [GitHub Issue #6](https://github.com/alexsmedile/spectacular/issues/6),
   including its expanded proposal for governed agent signal capture.
-- `STATUS.md` (2026-08-07): approved source-neutral capture-routing model and
-  constraints for external destinations, confirmation-gated remote creation,
-  and local IDEA fallback.
+- `STATUS.md` (2026-08-07): portfolio recommendation for the source-neutral
+  capture-routing model and its constraints. It is not an approval of this
+  SPC; approval remains at this specification's merged-PR gate.
 - `SPC-005-idea-destination-routing.md`: implemented destination-routing
   precedent; this successor preserves its no-mirroring and compatibility
   decisions while covering the broader source/adapter boundary excluded there.
@@ -197,5 +196,6 @@ Validation must demonstrate at least:
 
 ## Confirmation
 
-draft — created from the approved routing model. Not eligible for implementation
-until the maintainer explicitly approves this exact SPC.
+draft — this branch and its draft spec-review PR are the document-review stage.
+The specification is approved only when that PR merges to the configured shared
+base branch. Until then it cannot seed a request or authorize implementation.

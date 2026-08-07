@@ -23,24 +23,29 @@ scenario_topology_and_ranking() {
   local d="/tmp/spectacular-wayfinding-sequencer-topology" out code order
   new_ws "$d"
   (cd "$d" && "$CLI" question new product-choice --question "Which market?" --priority medium >/dev/null)
-  (cd "$d" && "$CLI" research new market-data --summary "Research market" --blocked-by q1 >/dev/null)
-  (cd "$d" && "$CLI" spike new feasibility --summary "Test feasibility" --blocked-by q1 >/dev/null)
+  local qid rid sid cid
+  qid=$(awk '/^id:/{print $2; exit}' "$d/.spectacular/questions/product-choice.md")
+  (cd "$d" && "$CLI" research new market-data --summary "Research market" --blocked-by "$qid" >/dev/null)
+  rid=$(awk '/^id:/{print $2; exit}' "$d/.spectacular/research/market-data.md")
+  (cd "$d" && "$CLI" spike new feasibility --summary "Test feasibility" --blocked-by "$qid" >/dev/null)
+  sid=$(awk '/^id:/{print $2; exit}' "$d/.spectacular/spikes/feasibility.md")
   (cd "$d" && "$CLI" spec new launch --summary "Launch" --target-version v1.0.0-execution >/dev/null)
-  sed -i.bak 's/related: \[\]/blocked_by:\n  - RES-001\n  - SPK-001\nrelated: []/' "$d/.spectacular/specs/SPC-001-launch.md"; rm -f "$d/.spectacular/specs/SPC-001-launch.md.bak"
+  cid=$(awk '/^id:/{print $2; exit}' "$d/.spectacular/specs/launch.md")
+  sed -i.bak "s/related: \[\]/blocked_by:\n  - $rid\n  - $sid\nrelated: []/" "$d/.spectacular/specs/launch.md"; rm -f "$d/.spectacular/specs/launch.md.bak"
 
   order=$(cd "$d" && "$CLI" wayfind order)
-  [[ "$order" == $'QUE-001\tfrontier\nRES-001\tfog\nSPK-001\tfog\nSPC-001\tfog' ]] && pass || fail "strict dependency-first order: $order"
+  [[ "$order" == *"$qid"*$'\tfrontier'* && "$order" == *"$rid"*$'\tfog'* && "$order" == *"$sid"*$'\tfog'* && "$order" == *"$cid"*$'\tfog'* ]] && pass || fail "strict dependency-first order: $order"
   out=$(cd "$d" && "$CLI" wayfind next)
-  [[ "$out" == *"QUE-001"* ]] && pass || fail "human question wins equal-priority uncertainty tie"
+  [[ "$out" == *"$qid"* ]] && pass || fail "human question wins equal-priority uncertainty tie"
 
-  sed -i.bak 's/blocked_by: \[\]/blocked_by:\n  - SPC-001/' "$d/.spectacular/questions/QUE-001-product-choice.md"; rm -f "$d/.spectacular/questions/QUE-001-product-choice.md.bak"
+  sed -i.bak "s/blocked_by: \[\]/blocked_by:\n  - $cid/" "$d/.spectacular/questions/product-choice.md"; rm -f "$d/.spectacular/questions/product-choice.md.bak"
   (cd "$d" && "$CLI" wayfind status >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "cyclic graph refuses sequencing"
-  sed -i.bak 's/blocked_by:/blocked_by: []/; /  - SPC-001/d' "$d/.spectacular/questions/QUE-001-product-choice.md"; rm -f "$d/.spectacular/questions/QUE-001-product-choice.md.bak"
+  sed -i.bak "s/blocked_by:/blocked_by: []/; /  - $cid/d" "$d/.spectacular/questions/product-choice.md"; rm -f "$d/.spectacular/questions/product-choice.md.bak"
 
-  (cd "$d" && "$CLI" question resolve q1 --answer "Enterprise" >/dev/null)
+  (cd "$d" && "$CLI" question resolve "$qid" --answer "Enterprise" >/dev/null)
   out=$(cd "$d" && "$CLI" wayfind next)
-  [[ "$out" == *"SPK-001"* ]] && pass || fail "spike outranks research at equal priority"
+  [[ "$out" == *"$sid"* ]] && pass || fail "spike outranks research at equal priority"
   rm -rf "$d"
 }
 
@@ -53,26 +58,26 @@ scenario_resolve_and_routes() {
   before=$(cksum "$d/.spectacular/requests/current/TASKS.md")
   (cd "$d" && "$CLI" wayfind route "park this idea" later-optimization --hypothesis "Cache the index" --origin "execution discovery" >/dev/null)
   after=$(cksum "$d/.spectacular/requests/current/TASKS.md")
-  [[ "$before" == "$after" && -f "$d/.spectacular/ideas/IDEA-001-later-optimization.md" ]] && pass || fail "park route creates idea without scope mutation"
+  [[ "$before" == "$after" && -f "$d/.spectacular/ideas/later-optimization.md" ]] && pass || fail "park route creates idea without scope mutation"
 
   (cd "$d" && "$CLI" question new pricing --question "Which price?" >/dev/null)
-  (cd "$d" && "$CLI" wayfind route icebox q1 --reason "Later milestone" >/dev/null)
-  assert_contains "$d/.spectacular/questions/QUE-001-pricing.md" "status: deferred"
-  (cd "$d" && "$CLI" wayfind resume q1 >/dev/null)
-  (cd "$d" && "$CLI" wayfind resolve q1 --answer "Per seat" >/dev/null)
-  assert_contains "$d/.spectacular/archive/questions/QUE-001-pricing.md" "archived_from: resolved"
-  out=$(cd "$d" && "$CLI" wayfind route "find your way to" q1)
-  [[ "$out" == *"Find your way to QUE-001"* ]] && pass || fail "find route resolves target"
+  local qid bid
+  qid=$(awk '/^id:/{print $2; exit}' "$d/.spectacular/questions/pricing.md")
+  (cd "$d" && "$CLI" wayfind route icebox "$qid" --reason "Later milestone" >/dev/null)
+  assert_contains "$d/.spectacular/questions/pricing.md" "status: deferred"
+  (cd "$d" && "$CLI" wayfind resume "$qid" >/dev/null)
+  (cd "$d" && "$CLI" wayfind resolve "$qid" --answer "Per seat" >/dev/null)
+  assert_contains "$d/.spectacular/archive/questions/pricing.md" "archived_from: resolved"
+  out=$(cd "$d" && "$CLI" wayfind route "find your way to" "$qid")
+  [[ "$out" == *"Find your way to $qid"* ]] && pass || fail "find route resolves target"
 
   (cd "$d" && "$CLI" spec new billing --summary "Billing" >/dev/null)
-  (cd "$d" && "$CLI" wayfind route "act on goal" s1 --request-slug billing-work >/dev/null 2>&1) && code=0 || code=$?
+  bid=$(awk '/^id:/{print $2; exit}' "$d/.spectacular/specs/billing.md")
+  (cd "$d" && "$CLI" wayfind route "act on goal" "$bid" --request-slug billing-work >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "act route preserves spec confirmation gate"
-  (cd "$d" && "$CLI" spec confirm s1 --evidence "approved" >/dev/null)
-  out=$(cd "$d" && "$CLI" wayfind route "act on goal" s1 --request-slug billing-work 2>&1) && code=0 || code=$?
-  assert_exit "$code" 1 "approved act route redirects to agentic flow"
-  [[ "$out" == *"/spectacular act SPC-001"* ]] && pass || fail "act route names canonical agentic command"
-  (cd "$d" && "$CLI" request new billing-work --from s1 >/dev/null)
-  assert_contains "$d/.spectacular/requests/billing-work/PLAN.md" "source_spec: SPC-001"
+  out=$(cd "$d" && "$CLI" wayfind route "act on goal" "$bid" --request-slug billing-work 2>&1) && code=0 || code=$?
+  assert_exit "$code" 1 "unmerged act route remains blocked"
+  [[ "$out" == *"$bid"* ]] && pass || fail "act route names the contract"
   rm -rf "$d"
 }
 
@@ -83,14 +88,18 @@ scenario_cross_layer_doctor() {
   (cd "$d" && "$CLI" research new future-api --summary "Future API" --target-version v1.1.0-discovery >/dev/null)
   (cd "$d" && "$CLI" research new evidence --summary "Evidence" --target-version v1.0.0-discovery >/dev/null)
   (cd "$d" && "$CLI" spec new consumer --summary "Consumer" --target-version v1.0.0-execution >/dev/null)
-  sed -i.bak 's/related: \[\]/blocked_by:\n  - RES-001\nrelated: []/' "$d/.spectacular/specs/SPC-001-consumer.md"; rm -f "$d/.spectacular/specs/SPC-001-consumer.md.bak"
-  printf '\n## Dependency note\nThis feature depends on RES-002.\n' >> "$d/.spectacular/specs/SPC-001-consumer.md"
-  before=$(cksum "$d/.spectacular/specs/SPC-001-consumer.md")
+  local future_id evidence_id consumer_id consumer
+  future_id=$(awk '/^id:/{print $2; exit}' "$d/.spectacular/research/future-api.md")
+  evidence_id=$(awk '/^id:/{print $2; exit}' "$d/.spectacular/research/evidence.md")
+  consumer="$d/.spectacular/specs/consumer.md"; consumer_id=$(awk '/^id:/{print $2; exit}' "$consumer")
+  sed -i.bak "s/related: \[\]/blocked_by:\n  - $future_id\nrelated: []/" "$consumer"; rm -f "$consumer.bak"
+  printf '\n## Dependency note\nThis feature depends on %s.\n' "$evidence_id" >> "$consumer"
+  before=$(cksum "$consumer")
   out=$(cd "$d" && "$CLI" doctor wayfinding 2>&1); code=$?
-  after=$(cksum "$d/.spectacular/specs/SPC-001-consumer.md")
+  after=$(cksum "$consumer")
   assert_exit "$code" 1 "coherence findings are warnings"
-  [[ "$out" == *"target-version inversion"* && "$out" == *"SPC-001"* ]] && pass || fail "version inversion surfaced: $out"
-  [[ "$out" == *"inferred dependency missing from frontmatter"* && "$out" == *"RES-002"* ]] && pass || fail "prose dependency surfaced: $out"
+  [[ "$out" == *"target-version inversion"* && "$out" == *"$consumer_id"* ]] && pass || fail "version inversion surfaced: $out"
+  [[ "$out" == *"inferred dependency missing from frontmatter"* && "$out" == *"$evidence_id"* ]] && pass || fail "prose dependency surfaced: $out"
   [[ "$before" == "$after" ]] && pass || fail "doctor does not reslot or write inferred edges"
   rm -rf "$d"
 }

@@ -75,7 +75,9 @@ scenario_pr_handoff() {
   local d="/tmp/spectacular-afk-pr" bin="/tmp/spectacular-afk-bin" log="/tmp/spectacular-afk-gh.log" out code
   init_repo "$d"; rm -rf "$bin"; mkdir -p "$bin"; rm -f "$log"
   (cd "$d" && "$CLI" afk configure --enable --branch-prefix codex/ --allow-pr-create --apply --yes >/dev/null)
-  (cd "$d" && "$CLI" spec new billing --summary "Billing" >/dev/null && "$CLI" spec approve s1 --evidence approved >/dev/null && "$CLI" request new billing-work --from s1 >/dev/null)
+  (cd "$d" && "$CLI" spec new billing --summary "Billing" >/dev/null && git add . && git commit -qm billing-contract && git switch -q -c request/billing-work)
+  local contract_id; contract_id=$(awk '/^id:/{print $2; exit}' "$d/.spectacular/specs/billing.md")
+  (cd "$d" && "$CLI" request new billing-work --from "$contract_id" >/dev/null)
   sed -i.bak 's/status: planned/status: verified/' "$d/.spectacular/requests/billing-work/PLAN.md"; rm -f "$d/.spectacular/requests/billing-work/PLAN.md.bak"
   printf '%s\n' '---' 'updated: 2026-08-01' '---' '# Verify log' '' '**Outcome:** verified' > "$d/.spectacular/requests/billing-work/VERIFY-LOG.md"
   (cd "$d" && git add . && git commit -qm verified)

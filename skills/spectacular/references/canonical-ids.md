@@ -1,11 +1,26 @@
 ---
-description: Canonical identity, alias, padding, and cross-reference contract for Wayfinding entities.
+description: UUIDv7 identity, slug, alias, and cross-reference contract for durable entities.
 when_to_use: Creating, resolving, linking, renaming, or migrating decisions, questions, ideas, research, spikes, prototypes, specs, or reserved tasks.
 ---
 
 # Canonical IDs
 
-Canonical IDs are stable machine references. Conversational aliases are input conveniences only; frontmatter always persists the canonical form.
+New durable records use UUIDv7 as the stable machine reference. Their slug is the human-facing locator and filename; it can change without changing the ID. Markdown plus YAML frontmatter remains the canonical portable store.
+
+```yaml
+id: 019fdce6-72b0-7108-8024-b42a68765a85 # immutable UUIDv7
+slug: durable-identity-contract-workflow    # human locator and filename
+kind: spec
+scope: project
+status: draft
+summary: "..."
+related: []
+references: []
+```
+
+Legacy numeric IDs are read-only aliases after an explicit `spectacular id migrate --uuidv7 --apply --yes`; newly created records never receive a counter alias. `spectacular id resolve <slug|UUIDv7|legacy-alias> --context <entity>` returns the UUIDv7 to persist in cross-references.
+
+The historical table below applies only while old records have not migrated.
 
 | Canonical | Entity | Accepted aliases | Preferred speech |
 |---|---|---|---|

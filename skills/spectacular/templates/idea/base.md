@@ -1,6 +1,8 @@
 ---
 id: <ID>
-type: idea
+slug: <SLUG>
+kind: idea
+scope: project
 status: parked
 summary: <SUMMARY>
 priority: medium
@@ -9,9 +11,10 @@ origin: <ORIGIN>
 updated: <DATE>
 promoted_to: null
 related: []
+references: []
 ---
 
-# <ID> — <SLUG>
+# <SLUG>
 
 ## Hypothesis
 

@@ -1,4 +1,8 @@
 ---
+id: <ID>
+slug: <SLUG>
+kind: request
+scope: project
 status: planned
 priority: medium
 owner: <OWNER>
@@ -8,6 +12,7 @@ docs_impact: pending
 summary: "<one-sentence description of what this request changes>"
 related:
   - PRD.md
+references: []
 # Optional traffic evidence; omit until it is confirmed and complete.
 # conflicts-with: [<request-slug>]
 # traffic-boundaries: [<named, complete launch boundary>]

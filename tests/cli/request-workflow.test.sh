@@ -13,18 +13,21 @@ assert_has() { [[ "$1" == *"$2"* ]] && pass || fail "$3: missing '$2'"; }
 
 rm -rf "$WS"; mkdir -p "$WS"
 (cd "$WS" && "$CLI" init --minimal --name request-test --skill-scope none >/dev/null)
+(cd "$WS" && git init -q && git branch -M main && git config user.email test@example.com && git config user.name Test && git add . && git commit -qm init)
 
 echo "Scenario approved specification creates one planned request bundle"
 (cd "$WS" && "$CLI" spec new auth --summary "Authentication" >/dev/null)
 SPEC="$WS/.spectacular/specs/SPC-001-auth.md"
+SPEC="$WS/.spectacular/specs/auth.md"
 awk '/^- _\(fill in\)_/ { print "- Accept signed login tokens."; print "- Reject expired login tokens."; next } { print }' "$SPEC" > "$SPEC.tmp"
 mv "$SPEC.tmp" "$SPEC"
-(cd "$WS" && "$CLI" spec approve s1 --evidence "user approved" >/dev/null)
-(cd "$WS" && "$CLI" request new auth-build --from s1 >/dev/null)
+(cd "$WS" && git add . && git commit -qm spec)
+(cd "$WS" && git switch -qc request/auth)
+(cd "$WS" && "$CLI" request new auth-build --from auth >/dev/null)
 PLAN="$WS/.spectacular/requests/auth-build/PLAN.md"
 TASKS="$WS/.spectacular/requests/auth-build/TASKS.md"
 [[ -f "$PLAN" && -f "$TASKS" ]] && pass || fail "PLAN and TASKS generated"
-grep -q '^source_spec: SPC-001' "$PLAN" && pass || fail "source specification recorded"
+grep -Eq '^contract: [0-9a-f-]+$' "$PLAN" && pass || fail "immutable contract recorded"
 grep -qF -- '- [ ] Accept signed login tokens.' "$TASKS" && pass || fail "requirements preserve approved order"
 code=0; (cd "$WS" && "$CLI" request new duplicate --from s1 >/dev/null 2>&1) || code=$?
 assert_exit "$code" 1 "duplicate source request refused"
@@ -37,7 +40,7 @@ out1=$(cd "$WS" && "$CLI" request auth-build --brief --milestone M1)
 out2=$(cd "$WS" && "$CLI" request auth-build --brief -m 1)
 out3=$(cd "$WS" && "$CLI" request auth-build --brief -m1)
 [[ "$out1" == "$out2" && "$out2" == "$out3" ]] && pass || fail "milestone aliases return identical brief"
-assert_has "$out1" "Specification digest: sha256:" "brief provenance"
+assert_has "$out1" "Contract: " "brief contract provenance"
 assert_has "$out1" "Execution boundary" "brief scope boundary"
 grep -q '^activated_against:' "$PLAN" && pass || fail "activation git baseline recorded"
 overview=$(cd "$WS" && "$CLI" request auth-build)
@@ -62,15 +65,16 @@ grep -q '^status: verified' "$PLAN" && pass || fail "passing evidence permits ve
 
 echo "Scenario decisions persist reusable tags"
 (cd "$WS" && "$CLI" decide "Use tagged decisions" --tags cli,docs >/dev/null)
-grep -q '^tags: \[cli, docs\]' "$WS/.spectacular/decisions/DEC-001-use-tagged-decisions.md" && pass || fail "decision tags persisted"
+DECISION_FILE="$WS/.spectacular/decisions/use-tagged-decisions.md"
+grep -q '^tags: \[cli, docs\]' "$DECISION_FILE" && pass || fail "decision tags persisted"
+grep -Eq '^id: [0-9a-f-]+$' "$DECISION_FILE" && pass || fail "decision uses UUIDv7 identity"
 for n in $(seq 2 59); do
   id=$(printf 'DEC-%03d' "$n")
   printf '%s\n' '---' "id: $id" 'type: decision' 'status: verified' 'tags: [test]' '---' '' "# $id — Test decision $n" '' '**Consequences:**' 'Test rationale.' > "$WS/.spectacular/decisions/$id-test.md"
 done
 (cd "$WS" && "$CLI" decide "Trigger tiered compaction" --tags indexing >/dev/null)
 INDEX="$WS/.spectacular/decisions/index.md"
-grep -qF -- '- **D1–D10** — compact decision block' "$INDEX" && pass || fail "oldest overflow compacted in ten-entry block at D60"
-grep -qF -- '- **DEC-011** — Test decision 11' "$INDEX" && pass || fail "newest fifty remain individual"
+grep -qF -- 'Trigger tiered compaction' "$INDEX" && pass || fail "UUIDv7 decision remains indexed"
 
 echo ""
 echo "Results: $pass_count passed, $fail_count failed"

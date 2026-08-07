@@ -24,12 +24,16 @@ scenario_details_are_entity_specific() {
   (
     cd "$d" || exit 1
     "$CLI" decide "Use named projections" --context "Selection needs bounded signals" --consequences "Bodies remain evidence" --tags cli,read >/dev/null
+    DECISION_ID=$(awk '/^id:/{print $2; exit}' .spectacular/decisions/use-named-projections.md)
     "$CLI" remember "Never make a list read a long evidence-only paragraph." --tag cli >/dev/null
-    "$CLI" question new release-owner --question "Who owns the release?" --context "LONG-CONTEXT-ONLY" --priority high --blocked-by DEC-001 >/dev/null
-    "$CLI" research new provider-limit --summary "Check provider limit" --blocked-by QUE-001 >/dev/null
-    "$CLI" research resolve RES-001 --result inconclusive --outcome "Limit remains unknown" --evidence "provider-doc-v2" >/dev/null
-    "$CLI" spike new parser-prototype --summary "Prototype parser" --blocked-by RES-001 >/dev/null
-    "$CLI" spike resolve SPK-001 --result supported --outcome "Parser works" --evidence "prototype-log" >/dev/null
+    "$CLI" question new release-owner --question "Who owns the release?" --context "LONG-CONTEXT-ONLY" --priority high --blocked-by "$DECISION_ID" >/dev/null
+    QUESTION_ID=$(awk '/^id:/{print $2; exit}' .spectacular/questions/release-owner.md)
+    "$CLI" research new provider-limit --summary "Check provider limit" --blocked-by "$QUESTION_ID" >/dev/null
+    RESEARCH_ID=$(awk '/^id:/{print $2; exit}' .spectacular/research/provider-limit.md)
+    "$CLI" research resolve "$RESEARCH_ID" --result inconclusive --outcome "Limit remains unknown" --evidence "provider-doc-v2" >/dev/null
+    "$CLI" spike new parser-prototype --summary "Prototype parser" --blocked-by "$RESEARCH_ID" >/dev/null
+    SPIKE_ID=$(awk '/^id:/{print $2; exit}' .spectacular/spikes/parser-prototype.md)
+    "$CLI" spike resolve "$SPIKE_ID" --result supported --outcome "Parser works" --evidence "prototype-log" >/dev/null
     "$CLI" idea new quick-import --hypothesis "Import is viable" --origin "support call" --priority high >/dev/null
     "$CLI" audit new "Config regression" --severity high --problem "Config is dropped" --intended "Config persists" >/dev/null
     sed -i.bak 's|_(the actual cause, once found — or "not yet found")_|Wrong key|' .spectacular/audits/A1-config-regression.md
@@ -38,11 +42,11 @@ scenario_details_are_entity_specific() {
     "$CLI" fix new "Config regression" --cause "Wrong key" --fix "Use canonical key" --verified-by "tests/config.test.sh" --signature "config-key" >/dev/null
   )
 
-  out=$(cd "$d" && "$CLI" decision DEC-001)
+  out=$(cd "$d" && "$CLI" decision use-named-projections)
   assert_output "$out" "Use named projections"
   assert_output "$out" "Bodies remain evidence"
-  assert_output "$out" "Full evidence: spectacular decision DEC-001 --full"
-  out=$(cd "$d" && "$CLI" decision DEC-001 --json)
+  assert_output "$out" "Full evidence: spectacular decision use-named-projections --full"
+  out=$(cd "$d" && "$CLI" decision use-named-projections --json)
   assert_output "$out" '"schema":"spectacular.decision.v1"'
   assert_output "$out" '"decision":"Use named projections"'
 
@@ -50,21 +54,21 @@ scenario_details_are_entity_specific() {
   assert_output "$out" "Never make a list"
   assert_output "$out" "Status: active"
 
-  out=$(cd "$d" && "$CLI" question QUE-001)
+  out=$(cd "$d" && "$CLI" question release-owner)
   assert_output "$out" "Requires user input: true"
   assert_output "$out" "Blocked by:"
   out=$(cd "$d" && "$CLI" question list)
   assert_output "$out" "Who owns the release?"
   assert_absent "$out" "LONG-CONTEXT-ONLY"
 
-  out=$(cd "$d" && "$CLI" research RES-001 --json)
+  out=$(cd "$d" && "$CLI" research provider-limit --json)
   assert_output "$out" '"result":"inconclusive"'
   assert_output "$out" '"evidence":"provider-doc-v2"'
-  out=$(cd "$d" && "$CLI" spike SPK-001)
+  out=$(cd "$d" && "$CLI" spike parser-prototype)
   assert_output "$out" "Execution requires approval: true"
   assert_output "$out" "Parser works"
 
-  out=$(cd "$d" && "$CLI" idea IDEA-001)
+  out=$(cd "$d" && "$CLI" idea quick-import)
   assert_output "$out" "Import is viable"
   assert_output "$out" "support call"
   out=$(cd "$d" && "$CLI" audit A1 --json)

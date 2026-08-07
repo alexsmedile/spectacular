@@ -5526,6 +5526,37 @@ EOF
     info "  mutation commands: none (read-only report)"
   fi
 }
+_workspace_preserve() {
+  local slug="$1" paths="$2" apply="$3" yes="$4" original branch path commit_sha remote
+  _workspace_require_repo
+  [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || die "workspace preserve: slug must be kebab-case"
+  [[ -n "$paths" ]] || die "workspace preserve: --paths is required"
+  original=$(_workspace_current_branch); [[ -n "$original" ]] || die "workspace preserve: detached HEAD is not supported"
+  branch="preserve/${slug}-$(date +%Y%m%d-%H%M%S)"
+  info "── Workspace preservation proposal ──"
+  info "  source branch: $original"
+  info "  preservation branch: $branch"
+  info "  paths: $paths"
+  info "  commit: preserve: $slug"
+  info "  exact mutations: git switch -c $branch; git add -- <paths>; git commit --only -- <paths>; git push -u origin $branch (if origin exists); git switch $original"
+  $apply || { info "Dry-run only. Apply with --apply --yes"; return 0; }
+  $yes || die "workspace preserve: --apply requires --yes"
+  for path in ${paths//,/ }; do [[ -e "$path" || -n "$(git ls-files -- "$path")" ]] || die "workspace preserve: path not found: $path"; done
+  git show-ref --verify --quiet "refs/heads/$branch" && die "workspace preserve: branch already exists: $branch"
+  git switch -c "$branch"
+  for path in ${paths//,/ }; do git add -- "$path"; done
+  # --only ensures a staged unrelated file remains staged but is not committed.
+  git commit --only -m "preserve: $slug" -- ${paths//,/ }
+  commit_sha=$(git rev-parse HEAD)
+  if remote=$(git remote get-url origin 2>/dev/null); then
+    git push -u origin "$branch"
+    info "  pushed: $remote"
+  else
+    info "  remote: unknown (no origin; preserved locally)"
+  fi
+  git switch "$original"
+  info "  ✓ preserved: $branch at $commit_sha"
+}
 cmd_workspace() {
   local sub="${1:-}"; shift || true
   case "$sub" in
@@ -5534,6 +5565,18 @@ cmd_workspace() {
       while (( $# > 0 )); do case "$1" in --request) require_value "$1" "${2:-}"; request="$2"; shift 2 ;; *) die "Usage: spectacular workspace $sub [--request <slug>]" ;; esac; done
       [[ -z "$request" || -f "$SPEC_REQUESTS_DIR/$request/PLAN.md" ]] || die "workspace: request not found: $request"
       _workspace_report "$request" ;;
+    preserve)
+      local slug="" paths="" apply=false yes=false
+      while (( $# > 0 )); do
+        case "$1" in
+          --paths) require_value "$1" "${2:-}"; paths="$2"; shift 2 ;;
+          --apply) apply=true; shift ;;
+          --yes) yes=true; shift ;;
+          -*) die "Usage: spectacular workspace preserve <slug> --paths <path[,path...]> [--apply --yes]" ;;
+          *) [[ -z "$slug" ]] || die "workspace preserve: only one slug allowed"; slug="$1"; shift ;;
+        esac
+      done
+      _workspace_preserve "$slug" "$paths" "$apply" "$yes" ;;
     ""|--help|-h)
       cat <<EOF
 Usage: spectacular workspace <preflight|plan|preserve|cleanup>
@@ -5543,7 +5586,7 @@ Usage: spectacular workspace <preflight|plan|preserve|cleanup>
   preserve / cleanup            Reserved for the explicit mutation workflow.
 EOF
       ;;
-    preserve|cleanup) die "workspace $sub: not implemented yet; use preflight to inspect without mutation" ;;
+    cleanup) die "workspace cleanup: not implemented yet; use preflight to inspect without mutation" ;;
     *) die "Usage: spectacular workspace <preflight|plan|preserve|cleanup>" ;;
   esac
 }

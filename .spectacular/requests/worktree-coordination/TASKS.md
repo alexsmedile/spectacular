@@ -36,8 +36,8 @@ contract: 019fdd18-96a0-73b5-81b5-38cda98d36f4
 - [ ] → check: mixed current/unrelated paths separate without mutation.
 
 ### M3 — Explicit scoped preservation
-- [ ] Implement preview-first `workspace preserve` with explicit paths, branch name, staged set, and commit message.
-- [ ] Apply only after `--apply --yes`; prove undeclared paths remain untouched.
+- [x] Implement preview-first `workspace preserve` with explicit paths, branch name, staged set, and commit message.
+- [x] Apply only after `--apply --yes`; prove undeclared paths remain untouched.
 - [ ] → check: untracked spec preservation commits only its explicit path and never stashes/resets.
 
 ### M4 — Verified cleanup

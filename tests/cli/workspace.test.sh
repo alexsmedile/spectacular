@@ -27,6 +27,18 @@ assert_contains "$out" "needs-preservation-branch"
 [[ "$before" == "$after" ]] && pass || fail "preflight must not mutate Git state"
 rm -rf "$W"
 
+echo "── merged local branch cleanup is preview-first and archive-backed ──"
+W=$(mktemp -d); mkdir -p "$W/.spectacular"
+printf 'project:\n  name: cleanup-test\n' > "$W/.spectacular/config.yaml"
+(cd "$W" && git init -q && git branch -M main && git config user.email test@example.com && git config user.name Test && git add . && git commit -qm init && git switch -q -c merged && touch merged.txt && git add merged.txt && git commit -qm merged && git switch -q main && git merge -q merged)
+(cd "$W" && bash "$CLI" workspace cleanup merged >/dev/null)
+(cd "$W" && git show-ref --verify --quiet refs/heads/merged) && pass || fail "cleanup preview preserves branch"
+(cd "$W" && bash "$CLI" workspace cleanup merged --apply --yes >/dev/null)
+(cd "$W" && git show-ref --verify --quiet refs/heads/merged) && fail "confirmed cleanup deletes merged branch" || pass
+archive=$(cd "$W" && git for-each-ref --format='%(refname)' refs/spectacular/archive | head -1)
+[[ -n "$archive" ]] && pass || fail "cleanup preserves archive ref"
+rm -rf "$W"
+
 echo "── scoped preservation keeps staged unrelated work intact ──"
 W=$(mktemp -d)
 mkdir -p "$W/.spectacular"

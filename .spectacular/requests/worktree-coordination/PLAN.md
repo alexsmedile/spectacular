@@ -3,7 +3,7 @@ id: 019fdd26-9c78-77cc-9d43-8d2c7ca2f54e
 slug: worktree-coordination
 kind: request
 scope: project
-status: active
+status: verified
 priority: medium
 owner: alex
 updated: 2026-08-07

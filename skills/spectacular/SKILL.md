@@ -17,7 +17,7 @@ when_to_use: |
   Routes to reference docs based on the command — never loads full context, always loads minimally
   and progressively. The generalized doc verbs (grill/refine/review) apply to any doc type listed
   in doc-index.md.
-version: 1.37.0
+version: 1.37.2
 category: devtools
 status: published
 tags: [workspace, project-management, context, agents, lifecycle, doc-writing]

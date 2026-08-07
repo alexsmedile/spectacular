@@ -71,7 +71,7 @@ the product promise and protected loop are known. S01 and S02 were reordered acc
 - Human dispositions: 0.
 - Promoted specifications: 0.
 - Product decisions approved: 0.
-- Planning baseline still requires a focused commit before independent tasks rely on it.
+- Planning baseline established at commit `c8ff3fd`; H01 and H04 are ready for read-only dispatch.
 
 This checkpoint changes the operating method and session order. It does not approve the product
 constitution, companion topology, implementation architecture, or any subsystem deletion.

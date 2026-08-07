@@ -292,6 +292,6 @@ A future agent or session resumes in this order:
 - Promoted specifications: 0.
 - Active handoff queue: H01 evidence audit + H04 independent foundation review in parallel →
   orchestration checkpoint → H02 S01 Product Constitution → H03 skeptic.
-- Baseline precondition: review and commit only this Vision workbench before dispatching side tasks
-  that need a shared Git baseline; unrelated untracked files remain excluded.
+- Planning baseline: commit `c8ff3fd`; H01 and H04 are ready for read-only dispatch. Unrelated
+  untracked files remain excluded from this program.
 - Next source ID remains `source-015`.

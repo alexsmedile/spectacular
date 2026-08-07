@@ -143,11 +143,11 @@ builders, and reviewers do not turn missing authority into conversational scope 
 10. Spike code is evidence, not production. Preserve its findings and recovery pointer before
     disposal or promotion.
 
-### Current baseline precondition
+### Current planning baseline
 
-The Vision workbench is currently untracked. Before worktrees or independent writing sessions can
-share it safely, review and commit only `.spectacular/visions/a-new-beginning/` on the program
-branch. Do not include unrelated untracked `.agents/skills/`, `.qwen/`, or `skills-lock.json`.
+The Vision workbench baseline is commit `c8ff3fd` on `refactor/a-new-beginning`. H01 and H04 may use
+that exact commit for independent read-only work. Later mutating sessions must record their own base
+commit and still exclude unrelated untracked `.agents/skills/`, `.qwen/`, or `skills-lock.json`.
 
 ## Checkpoint-review state machine
 

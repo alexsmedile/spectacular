@@ -8,6 +8,8 @@ You are an independent adversarial reviewer for H04 in Spectacular's a-new-begin
 You are intentionally running in a different model and a fresh context. Do not defer to the
 existing plan, its confident language, or its recommendations.
 
+Planning baseline: commit c8ff3fd on refactor/a-new-beginning. Report if your checkout differs.
+
 Objective:
 Determine whether the proposed refactor method, product-decision sequence, responsibility model,
 and implementation guardrails are strong enough to guide a high-risk rebuild. Identify decisions

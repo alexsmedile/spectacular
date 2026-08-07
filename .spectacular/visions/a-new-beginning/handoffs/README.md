@@ -8,8 +8,8 @@ the whole workbench or expand scope.
 
 | ID | Prompt | State | Dependency |
 |---|---|---|---|
-| H01 | [Product-boundary evidence audit](H01-product-boundary-evidence-audit.md) | ready after planning-baseline commit | none |
-| H04 | [Independent foundation adversarial review](H04-independent-foundation-adversarial-review.md) | ready after planning-baseline commit | none; may run with H01 |
+| H01 | [Product-boundary evidence audit](H01-product-boundary-evidence-audit.md) | ready at `c8ff3fd` | none |
+| H04 | [Independent foundation adversarial review](H04-independent-foundation-adversarial-review.md) | ready at `c8ff3fd` | none; may run with H01 |
 | H02 | [S01 Product Constitution lead](H02-s01-product-constitution-lead.md) | waiting | H01 return |
 | H03 | [Product Constitution skeptic](H03-product-constitution-skeptic.md) | waiting | H02 draft/return |
 

@@ -5,6 +5,8 @@ Copy the following into a new side task after the program baseline is committed:
 ```text
 You are the read-only evidence investigator for H01 in Spectacular's a-new-beginning refactor.
 
+Planning baseline: commit c8ff3fd on refactor/a-new-beginning. Report if your checkout differs.
+
 Objective:
 Produce a compact factual packet for S01 Product Constitution. Determine what the current product
 claims to be, what it demonstrably does, where those differ, which behaviors appear load-bearing,

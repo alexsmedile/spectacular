@@ -169,9 +169,9 @@ must not prejudge the v2 product surface.
 ## Current checkpoint
 
 Distributed decision orchestration is set up, but no product disposition has been accepted. The
-untracked Vision workbench must be reviewed and committed as a planning baseline before independent
-tasks rely on it. H01 may then audit product-boundary evidence while H04 independently stress-tests
-the entire foundation with a different model. This task dispositions H04 before H02 runs S01; H03
+Vision workbench planning baseline is commit `c8ff3fd`. H01 may audit product-boundary evidence
+while H04 independently stress-tests the entire foundation with a different model. This task
+dispositions H04 before H02 runs S01; H03
 then independently reviews the proposed constitution before the final S01 checkpoint. New material
 uses `source-015` onward, but does not interrupt an active constitutional session unless it contains
 named evidence capable of reversing its result.

@@ -25,6 +25,8 @@ scaffolded_against: 8b1dee1f4060899636685c9bd03e7bccb1aef00a
 activated_at: 2026-08-07
 activated_by: alex
 activated_against: 8b1dee1f4060899636685c9bd03e7bccb1aef00a
+github_pr_ready_at: 2026-08-07
+github_pr_head: 49c3a9f37c5397fe696f7792f9c5885f5decaff2
 ---
 
 # Plan — worktree-coordination

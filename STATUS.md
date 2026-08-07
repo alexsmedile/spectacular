@@ -54,8 +54,9 @@ work without duplicating solved work or reopening closed decisions.
 1. Review and explicitly approve or correct draft
    `.spectacular/specs/SPC-007-capture-routing.md`; do not create implementation
    work until that approval.
-2. Run the fresh #11 assessment/benchmark. #28 then selects the one compiled
-   briefing command/schema before #11/#12 implementation.
+2. Run the fresh #11 assessment/benchmark. The shipped
+   `status --brief --json` / `spectacular.status.v2` contract resolves #28;
+   #11/#12 must consume it rather than introduce a competing briefing command.
 3. Implement #17 and #32 on one branch: durable request/PR intent plus a
    plain-language PR opening line.
 4. Implement #29: a read-only AFK commit-plan checkpoint. It must not stage,
@@ -68,8 +69,8 @@ work without duplicating solved work or reopening closed decisions.
 ## Other open issue disposition
 
 - **#18, #19, #33, #42:** presentation/workflow UX; review after the core
-  routing/retrieval work. #42's premise needs correction: approved Vision derives
-  a draft SPC, not directly a PLAN.
+  routing/retrieval work. #42 is reframed around making the existing
+  Vision → draft-SPC handoff discoverable and appropriately lightweight.
 - **#35, #36, #38, #39, #40, #41:** independent, lower-priority hygiene or
   convention work; dispatch only after their small design choices are confirmed.
 - **#26:** belongs to the external issue-filing agent's format, unless that

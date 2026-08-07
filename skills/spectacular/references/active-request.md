@@ -67,9 +67,9 @@ Update SESSION.md at natural breakpoints: after a meaningful chunk of work, when
 
 Monitor `TASKS.md` for completion signals:
 
-- When a task item is checked off, acknowledge it
-- When **all items in a group** are checked, note it proactively — this is also the `commit-checkpoint` policy's moment (see `POLICY.md` `@Implementation`): surface a soft reminder to `git commit` the milestone's work before moving on
-- When **all items in TASKS.md** are checked → tier-reveal one line: `Next: spectacular advance <slug> to move it to review.` (see `lifecycle.md`)
+- When a task item is checked off, acknowledge it in a concise progress update and continue through approved, unblocked work
+- When **all items in a group** are checked, note it proactively — this is also the `commit-checkpoint` policy's moment (see `POLICY.md` `@Implementation`): include a soft `git commit` reminder without pausing for approval before moving on
+- When **all items in TASKS.md** are checked → tier-reveal one line: `Next: spectacular advance <slug> to move it to review.` (see `lifecycle.md`); this is a lifecycle boundary, so stop only if advancing needs required evidence or human approval
 
 ---
 

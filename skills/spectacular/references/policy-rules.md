@@ -12,7 +12,7 @@ always-set: true
 
 # POLICY Rules
 
-The practice layer. Always-set: scaffolded on every `spectacular init` with 19 prefilled policies (4 block / 15 warn). Structure-bound — CLI-managed *and* hand-editable. Full spec: [policies-contract.md](policies-contract.md). Runtime loop: [policy-injection.md](policy-injection.md).
+The practice layer. Always-set: scaffolded on every `spectacular init` with an enabled policy contract. Structure-bound — CLI-managed *and* hand-editable. Full spec: [policies-contract.md](policies-contract.md). Runtime loop: [policy-injection.md](policy-injection.md).
 
 **Verbs:**
 - `grill` → polite no-op + hint: "POLICY ships prefilled. Add a policy by editing POLICY.md, or `--wide` to grill ad-hoc." (Policies are authored, not interviewed.)

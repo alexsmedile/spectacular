@@ -191,9 +191,10 @@ If multi-phase:
 1. **Write the sub-steps as nested `- [ ]` bullets** under the milestone's `### M<n>` block in
    `TASKS.md` (not counted in `x/total` progress). Mirror them as harness `TaskCreate` items — the
    live signal; the nested bullets are the durable record ([[AGENTS]] § Task tracking).
-2. **Do one sub-step at a time, in order.** Build (or dispatch), run its check, report + tick its
-   nested bullet before starting the next. The checkpoint is where you confirm the phase landed and
-   re-plan the next against the new state.
+2. **Do one sub-step at a time, in order.** Build (or dispatch), run its check, tick its nested
+   bullet, and emit a concise progress update before starting the next. The checkpoint confirms the
+   phase landed and re-plans the next against the new state; it is not a request for permission or a
+   terminal turn unless it reveals a real blocker or declared HITL gate.
 3. **When dispatching a multi-phase milestone, send one closed sub-brief per sub-step in
    sequence** — confirm each return before dispatching the next. Never hand one opaque fat brief.
    Ordered sub-steps are the same-file/ordered case from B1 — **serialize, never parallelize**.

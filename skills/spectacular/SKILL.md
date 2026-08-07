@@ -93,6 +93,7 @@ verb.
 | “Find your way to <destination>” | → `spectacular wayfind path <id>` first; then resolve its dependency-ready discovery path without bypassing gates |
 | “Act on goal <target>” | → resolve the approved SPC, then run `/spectacular act <SPC>` per [[request-workflow]] |
 | `spectacular afk run\|status\|configure\|propose\|preflight\|start\|cleanup\|pr` | → CLI verbs; durable goal authorization plus opt-in, dry-run-first Git isolation and verified PR handoff; see [[afk-git-hygiene]] and [[lifecycle-contract]] |
+| `spectacular workspace preflight\|plan\|preserve\|cleanup` | → CLI verbs; inspect Git/request evidence before branch, publish, or cleanup mutation. Use named, path-scoped preservation commits instead of stash; provider facts remain unknown when no adapter can prove them. |
 | `spectacular github triage <issue>` | → [[github-work-bridge]] agentic readiness card and `direct | request | spec-first` route; assignment/labels are evidence, not authorization |
 | `spectacular github pr open\|ready` / `github reconcile` | → CLI verbs; draft PR integration manifest, current-head ready gate, and read-only discrepancy report; see [[github-work-bridge]] |
 | `spectacular traffic preflight <request>` | → CLI verb; read-only, local-first `parallel | conditional | serialized | unknown` assessment from durable request declarations. Record confirmed relationships in PLAN frontmatter and rerun; never schedules or mutates requests. |

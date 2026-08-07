@@ -27,6 +27,7 @@ grep -q '^source_ref: "acme/widget#12"' "$ISSUE_PLAN" && pass || fail "Issue URL
 code=0; (cd "$WS" && "$CLI" request new duplicate --from-issue acme/widget#12 --summary duplicate --sensitivity normal >/dev/null 2>&1) || code=$?
 assert_exit "$code" 1 "duplicate Issue owner refused"
 (cd "$WS" && "$CLI" request new release-check --from-goal release-readiness --summary "Prove release readiness" --sensitivity normal >/dev/null)
+(cd "$WS" && git add -- .spectacular/requests/release-check && git commit -qm release-check-request)
 grep -q '^source_type: goal' "$WS/.spectacular/requests/release-check/PLAN.md" && pass || fail "goal source type recorded"
 grep -q '^source_ref: release-readiness' "$WS/.spectacular/requests/release-check/PLAN.md" && pass || fail "goal source reference recorded"
 code=0; (cd "$WS" && "$CLI" request new invalid --from-issue '#7' --summary invalid --sensitivity normal >/dev/null 2>&1) || code=$?

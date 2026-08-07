@@ -24,6 +24,10 @@ assert_contains "$out" "[untracked] .spectacular/requests/current/NOTE.md"
 assert_contains "$out" "belongs-to-known-work"
 assert_contains "$out" "[untracked] unrelated.txt"
 assert_contains "$out" "needs-preservation-branch"
+assert_contains "$(cd "$W" && bash "$CLI" workspace plan --request current --json)" '"schema":"spectacular.workspace-plan.v1"'
+printf 'staged\n' > "$W/staged.txt"
+(cd "$W" && git add -- staged.txt)
+assert_contains "$(cd "$W" && bash "$CLI" workspace preflight --request current)" "[staged] staged.txt"
 [[ "$before" == "$after" ]] && pass || fail "preflight must not mutate Git state"
 rm -rf "$W"
 
@@ -37,6 +41,19 @@ printf 'project:\n  name: cleanup-test\n' > "$W/.spectacular/config.yaml"
 (cd "$W" && git show-ref --verify --quiet refs/heads/merged) && fail "confirmed cleanup deletes merged branch" || pass
 archive=$(cd "$W" && git for-each-ref --format='%(refname)' refs/spectacular/archive | head -1)
 [[ -n "$archive" ]] && pass || fail "cleanup preserves archive ref"
+receipt=$(find "$W/.spectacular/archive/workspace-branches" -name '*.md' -print -quit 2>/dev/null)
+[[ -n "$receipt" ]] && pass || fail "cleanup writes durable deletion receipt"
+rm -rf "$W"
+
+echo "── provider evidence stays explicit and blocks open PR cleanup ──"
+W=$(mktemp -d); mkdir -p "$W/.spectacular" "$W/bin"
+printf 'project:\n  name: provider-test\n' > "$W/.spectacular/config.yaml"
+(cd "$W" && git init -q && git branch -M main && git config user.email test@example.com && git config user.name Test && git add . && git commit -qm init && git switch -q -c merged && touch merged.txt && git add merged.txt && git commit -qm merged && git switch -q main && git merge -q merged && git remote add origin git@github.com:example/repo.git)
+printf '#!/usr/bin/env bash\nprintf "OPEN\\n"\n' > "$W/bin/gh"
+chmod +x "$W/bin/gh"
+out=$(cd "$W" && PATH="$W/bin:$PATH" bash "$CLI" workspace cleanup merged 2>&1 || true)
+assert_contains "$out" "open PR/MR"
+(cd "$W" && git show-ref --verify --quiet refs/heads/merged) && pass || fail "open PR cleanup preserves branch"
 rm -rf "$W"
 
 echo "── scoped preservation keeps staged unrelated work intact ──"

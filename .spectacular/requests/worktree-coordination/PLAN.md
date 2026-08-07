@@ -10,7 +10,8 @@ updated: 2026-08-07
 build: b47
 branch: feat/worktree-coordination
 base: main
-docs_impact: pending
+docs_impact: required
+docs_impact_evidence: "docs/commands.md and skills/spectacular/SKILL.md updated with workspace coordination behavior"
 summary: "Implement 019fdd18-96a0-73b5-81b5-38cda98d36f4: Add durable, evidence-backed coordination before Git mutations in concurrent worktrees"
 related:
   - PRD.md

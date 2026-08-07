@@ -444,6 +444,29 @@ spectacular afk pr billing-work --version v1.2.0 --name "Team Billing" --tests-p
 
 Branch classes are `spec/draft-*`, `spike/prototype-*`, `fork/idea-*`, and `feat/v*-*`. `start` records provenance in `.spectacular/afk/branches.md`. Cleanup writes outcome/evidence under `.spectacular/archive/afk-branches/` before confirmed local deletion and refuses `--remote`. PR apply requires a verified request, a passing `VERIFY-LOG`, a current `source_spec`, fresh `--tests-passed`, policy permission, and a non-primary clean branch. `--breaking` additionally requires `--breaking-change-approved`. The compatibility command uses the shared integration manifest, opens a draft `[Spectacular] Executed: <version> - <name>` PR, and never merges; `github pr ready` owns readiness.
 
+### Workspace coordination
+
+Use `workspace preflight` before Git-affecting work in a shared checkout. It is
+read-only and classifies staged, unstaged, and untracked paths as request/spec
+evidence or unowned preservation candidates. `workspace plan --json` exposes
+the same facts to automation. Provider facts are optional adapter evidence:
+GitLab, Bitbucket, absent remotes, or unavailable adapters report `unknown` and
+are never guessed.
+
+```bash
+spectacular workspace preflight --request billing
+spectacular workspace plan --json
+spectacular workspace preserve draft-billing --paths docs/draft.md --apply --yes
+spectacular workspace cleanup
+spectacular workspace cleanup feat/old-work --refresh --apply --yes
+```
+
+Preservation uses a named branch and a commit containing only the explicit
+paths; it never uses stash, reset, bulk `git add -A`, discard, or overwrite.
+Cleanup is preview-first, never removes a remote branch, requires a fresh base
+when `origin` exists, refuses an open PR/MR, records an archive ref plus a
+Markdown deletion receipt, and requires `--apply --yes`.
+
 ### `spectacular policy [@hook | <id> | --principle N | --json | --full]` *(v1.12.0+)*
 
 Reads the merged **policy contract** — `POLICY.md` (the always-set practice layer) with any `config.yaml` `policies:` overrides applied. The skill calls `spectacular policy @<hook>` on entering a work phase to retrieve only that phase's rules (progressive disclosure). Each row leads with the policy's own `directive:` one-liner; the principle trailer is tiered — full line on `block` rows, `P<n> — <title>` on `warn` rows (title fallback when no directive is authored).

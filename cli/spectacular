@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.37.2"
+SPECTACULAR_VERSION="1.37.3"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -5641,8 +5641,15 @@ _workspace_cleanup_inventory() {
   done
   info "  deletion requires: explicit branch, --apply --yes, fresh shared base, reachable merged tip, and preserved archive ref"
 }
+_workspace_remote_branch_tip() {
+  local branch="$1" line
+  git remote get-url origin >/dev/null 2>&1 || return 0
+  line=$(git ls-remote --heads origin "refs/heads/$branch") || die "workspace cleanup: could not inspect remote branch origin/$branch"
+  [[ -n "$line" ]] || return 0
+  printf '%s\n' "${line%%$'\t'*}"
+}
 _workspace_cleanup_apply() {
-  local branch="$1" apply="$2" yes="$3" refresh="$4" base current tip archive_ref provider receipt stamp safe
+  local branch="$1" apply="$2" yes="$3" refresh="$4" base current tip archive_ref provider stamp safe remote_tip remote_action="no-origin" remote_mutation=""
   _workspace_require_repo; base=$(_workspace_base); current=$(_workspace_current_branch)
   [[ "$branch" != "$current" && "$branch" != "$base" ]] || die "workspace cleanup: refusing current or base branch"
   git show-ref --verify --quiet "refs/heads/$branch" || die "workspace cleanup: local branch not found: $branch"
@@ -5654,23 +5661,32 @@ _workspace_cleanup_apply() {
     $refresh || die "workspace cleanup: remote freshness is unknown; rerun with --refresh to fetch $base before deletion"
     git rev-parse --verify "origin/$base^{commit}" >/dev/null 2>&1 || die "workspace cleanup: origin/$base is unknown; fetch and fast-forward first"
     [[ "$(git rev-parse "$base")" == "$(git rev-parse "origin/$base")" ]] || die "workspace cleanup: local $base is stale; fast-forward it before deletion"
+    remote_tip=$(_workspace_remote_branch_tip "$branch")
+    if [[ -n "$remote_tip" ]]; then
+      [[ "$remote_tip" == "$tip" ]] || die "workspace cleanup: remote branch origin/$branch moved past the verified local tip; preserve it for review"
+      remote_action="delete origin/$branch"
+      remote_mutation="git push origin --delete $branch; "
+    else
+      remote_action="already absent"
+    fi
   fi
   stamp=$(date +%Y%m%d-%H%M%S); safe=$(_afk_slug "$branch")
   archive_ref="refs/spectacular/archive/${stamp}-${safe}"
-  receipt="$SPEC_ARCHIVE_DIR/workspace-branches/${stamp}-${safe}.md"
   info "Cleanup proposal: $branch (tip $tip)"
-  info "  exact mutations: ${refresh:+git fetch origin $base; }git update-ref $archive_ref $tip; write $receipt; git branch -d $branch"
+  info "  exact mutations: ${refresh:+git fetch origin $base; }git update-ref $archive_ref $tip; ${remote_mutation}git branch -d $branch"
   $apply || { info "Dry-run only. Apply with --apply --yes"; return 0; }
   $yes || die "workspace cleanup: --apply requires --yes"
   $refresh && git fetch origin "$base"
   if git remote get-url origin >/dev/null 2>&1; then [[ "$(git rev-parse "$base")" == "$(git rev-parse "origin/$base")" ]] || die "workspace cleanup: local $base is stale after refresh; fast-forward it before deletion"; fi
   git update-ref "$archive_ref" "$tip"
   [[ "$(git rev-parse "$archive_ref")" == "$tip" ]] || die "workspace cleanup: archive ref verification failed"
-  mkdir -p "$(dirname "$receipt")"
-  printf '%s\n' '---' "branch: \"$branch\"" "deleted_at: $TODAY" "tip_sha: $tip" "base: \"$base\"" "archive_ref: \"$archive_ref\"" "provider_state: \"$provider\"" '---' '' "# Workspace branch deletion — $branch" '' "Restore with: \`git branch $branch $archive_ref\`." > "$receipt"
+  if [[ "$remote_action" == "delete origin/$branch" ]]; then
+    git push origin --delete "$branch" || die "workspace cleanup: remote deletion failed; local branch remains preserved"
+  fi
   git branch -d "$branch"
   info "  ✓ deleted $branch; recovery ref: $archive_ref"
-  info "  ✓ deletion receipt: $receipt"
+  [[ "$remote_action" == "delete origin/$branch" ]] && info "  ✓ deleted remote origin/$branch"
+  info "  ↳ restore with: git branch $branch $archive_ref"
 }
 cmd_workspace() {
   local sub="${1:-}"; shift || true
@@ -5702,7 +5718,7 @@ Usage: spectacular workspace <preflight|plan|preserve|cleanup>
                               Create and push a scoped preservation commit.
   cleanup                       Read-only branch inventory.
   cleanup <branch> [--refresh --apply --yes]
-                              Delete only a locally merged, archive-backed branch.
+                              Delete a merged, archive-backed branch locally and remotely when safe.
 EOF
       ;;
     cleanup)
@@ -5955,7 +5971,7 @@ cmd_afk_start() {
 }
 
 cmd_afk_cleanup() {
-  local branch="${1:-}" disposition="" node="" outcome="" evidence="" apply=false yes=false remote=false
+  local branch="${1:-}" disposition="" node="" outcome="" evidence="" apply=false yes=false keep_remote=false
   [[ -n "$branch" ]] || die "Usage: spectacular afk cleanup <branch> --disposition merged|abandoned --outcome <text> --evidence <ref> [--apply --yes]"
   shift || true
   while (( $# > 0 )); do
@@ -5964,7 +5980,8 @@ cmd_afk_cleanup() {
       --node) require_value "$1" "${2:-}"; node="$2"; shift 2 ;;
       --outcome) require_value "$1" "${2:-}"; outcome="$2"; shift 2 ;;
       --evidence) require_value "$1" "${2:-}"; evidence="$2"; shift 2 ;;
-      --remote) remote=true; shift ;;
+      --remote) shift ;;
+      --keep-remote) keep_remote=true; shift ;;
       --apply) apply=true; shift ;;
       --yes) yes=true; shift ;;
       *) die "afk cleanup: unknown option '$1'" ;;
@@ -5972,32 +5989,50 @@ cmd_afk_cleanup() {
   done
   case "$disposition" in merged|abandoned) ;; *) die "afk cleanup: --disposition must be merged|abandoned" ;; esac
   [[ -n "$outcome" && -n "$evidence" ]] || die "afk cleanup: --outcome and --evidence are required before cleanup"
-  $remote && die "afk cleanup: remote deletion remains a human-only gate; delete it explicitly with your Git provider"
   _workspace_mutation_gate
   _afk_require_repo
   local current; current=$(git branch --show-current)
   [[ "$current" != "$branch" ]] || die "afk cleanup: cannot delete the current branch"
   _afk_is_primary "$branch" && die "afk cleanup: refusing primary branch '$branch'"
   git show-ref --verify --quiet "refs/heads/$branch" || die "afk cleanup: local branch not found: $branch"
+  local tip_sha remote_tip="" remote_action="no-origin"
+  tip_sha=$(git rev-parse "refs/heads/$branch")
+  if [[ "$disposition" == merged ]]; then
+    git merge-base --is-ancestor "$tip_sha" HEAD 2>/dev/null || die "afk cleanup: merged disposition requires the branch tip to be reachable from the current branch"
+    if git remote get-url origin >/dev/null 2>&1; then
+      remote_tip=$(_workspace_remote_branch_tip "$branch")
+      if $keep_remote; then
+        remote_action="retained by --keep-remote"
+      elif [[ -z "$remote_tip" ]]; then
+        remote_action="already absent"
+      elif [[ "$remote_tip" == "$tip_sha" ]]; then
+        remote_action="delete origin/$branch"
+      else
+        die "afk cleanup: remote branch origin/$branch moved past the merged local tip; preserve it for review"
+      fi
+    fi
+  elif git remote get-url origin >/dev/null 2>&1; then
+    remote_action="retained (only merged branches are deleted remotely)"
+  fi
   info "Cleanup plan: archive evidence, then delete local branch '$branch' ($disposition)"
+  info "  remote: $remote_action"
   if ! $apply; then info "Dry-run only. Apply with: --apply --yes"; return 0; fi
   _afk_enabled || die "afk cleanup: AFK Git policy is not enabled"
   $yes || die "afk cleanup: --apply requires --yes"
-  local stamp safe archive tip_sha archive_ref restore_command
+  local stamp safe archive_ref restore_command
   stamp=$(date +%Y%m%d-%H%M%S); safe=$(_afk_slug "$branch")
-  archive="$SPEC_ARCHIVE_DIR/afk-branches/${stamp}-${safe}.md"
-  tip_sha=$(git rev-parse "refs/heads/$branch")
   archive_ref="refs/spectacular/archive/${safe}-${stamp}-${tip_sha:0:12}"
   restore_command="git branch $branch $archive_ref"
   git update-ref "$archive_ref" "$tip_sha"
   [[ "$(git rev-parse "$archive_ref")" == "$tip_sha" ]] || die "afk cleanup: failed to verify durable archive ref; branch was not deleted"
-  mkdir -p "$(dirname "$archive")"
-  printf '%s\n' '---' "branch: \"$branch\"" "disposition: $disposition" "node: \"$node\"" "archived: $TODAY" "tip_sha: $tip_sha" "archive_ref: $archive_ref" "restore_command: \"$restore_command\"" '---' '' "# AFK branch archive — $branch" '' "**Outcome:** $outcome" '' "**Evidence:** $evidence" '' "**Restore:** \`$restore_command\`" > "$archive"
+  if [[ "$remote_action" == "delete origin/$branch" ]]; then
+    git push origin --delete "$branch" || die "afk cleanup: remote deletion failed; local branch remains preserved"
+  fi
   if [[ "$disposition" == merged ]]; then git branch -d "$branch" >/dev/null; else git branch -D "$branch" >/dev/null; fi
-  info "  ✓ archived: $archive"
   info "  ✓ deleted local branch: $branch"
   info "  ↳ durable ref: $archive_ref ($tip_sha)"
-  info "  ↳ restore with: $restore_command; remote branch untouched"
+  [[ "$remote_action" == "delete origin/$branch" ]] && info "  ✓ deleted remote origin/$branch"
+  info "  ↳ restore with: $restore_command"
 }
 
 cmd_afk_pr() {
@@ -6077,7 +6112,8 @@ cmd_afk() {
 Usage: spectacular afk <run|status|configure|propose|preflight|start|cleanup|pr>
 
 Read-only by default. Branch creation, cleanup, and PR creation require enabled
-project policy plus explicit --apply --yes. Merge and remote deletion are never performed.
+project policy plus explicit --apply --yes. Merge remains human-gated; confirmed cleanup deletes
+matching merged remote branches by default (use --keep-remote to retain one).
 Authority records (`afk run start --authority-record`, `afk run event`) mutate
 only .spectacular Markdown; they do not mutate Git history, branches, or remotes.
 EOF

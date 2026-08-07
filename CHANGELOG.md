@@ -7,6 +7,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.37.3] — 2026-08-07
+
+### Autonomous merged-branch housekeeping
+
+- Confirmed cleanup now deletes matching merged local and `origin` branches in one guarded
+  operation, while retaining a durable Git recovery ref and printing its restore command.
+- Refuses cleanup when the remote tip moved, a PR remains open, or merge evidence is incomplete;
+  `--keep-remote` retains a merged remote branch explicitly.
+- Removed generated cleanup receipts from the worktree so routine housekeeping does not leave
+  untracked files that block subsequent autonomous actions.
+
 ## [1.37.2] — 2026-08-07
 
 ### Concurrent worktree coordination

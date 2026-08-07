@@ -442,7 +442,7 @@ spectacular afk pr billing-work --version v1.2.0 --name "Team Billing" --tests-p
 spectacular afk pr billing-work --version v1.2.0 --name "Team Billing" --tests-passed --apply --yes
 ```
 
-Branch classes are `spec/draft-*`, `spike/prototype-*`, `fork/idea-*`, and `feat/v*-*`. `start` records provenance in `.spectacular/afk/branches.md`. Cleanup writes outcome/evidence under `.spectacular/archive/afk-branches/` before confirmed local deletion and refuses `--remote`. PR apply requires a verified request, a passing `VERIFY-LOG`, a current `source_spec`, fresh `--tests-passed`, policy permission, and a non-primary clean branch. `--breaking` additionally requires `--breaking-change-approved`. The compatibility command uses the shared integration manifest, opens a draft `[Spectacular] Executed: <version> - <name>` PR, and never merges; `github pr ready` owns readiness.
+Branch classes are `spec/draft-*`, `spike/prototype-*`, `fork/idea-*`, and `feat/v*-*`. `start` records provenance in `.spectacular/afk/branches.md`. For a merged branch, confirmed cleanup retains a recovery ref, reports its restore command, and deletes the matching `origin` branch by default; `--keep-remote` opts out. It refuses remote deletion when the remote tip differs from the locally verified merged tip and leaves no untracked workspace receipt. PR apply requires a verified request, a passing `VERIFY-LOG`, a current `source_spec`, fresh `--tests-passed`, policy permission, and a non-primary clean branch. `--breaking` additionally requires `--breaking-change-approved`. The compatibility command uses the shared integration manifest, opens a draft `[Spectacular] Executed: <version> - <name>` PR, and never merges; `github pr ready` owns readiness.
 
 ### Workspace coordination
 
@@ -463,9 +463,11 @@ spectacular workspace cleanup feat/old-work --refresh --apply --yes
 
 Preservation uses a named branch and a commit containing only the explicit
 paths; it never uses stash, reset, bulk `git add -A`, discard, or overwrite.
-Cleanup is preview-first, never removes a remote branch, requires a fresh base
-when `origin` exists, refuses an open PR/MR, records an archive ref plus a
-Markdown deletion receipt, and requires `--apply --yes`.
+Cleanup is preview-first, requires a fresh base when `origin` exists, refuses
+an open PR/MR, records an archive ref without dirtying the worktree, and
+requires `--apply --yes`. Once that confirmation is supplied, it deletes a
+matching merged remote branch by default; a changed or unknown remote tip is a
+blocker rather than a deletion candidate.
 
 ### `spectacular policy [@hook | <id> | --principle N | --json | --full]` *(v1.12.0+)*
 

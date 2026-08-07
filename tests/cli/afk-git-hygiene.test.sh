@@ -57,17 +57,33 @@ scenario_isolation_and_cleanup() {
   (cd "$d" && git switch -q main)
   (cd "$d" && "$CLI" afk cleanup "$branch" --disposition abandoned --outcome "Approach failed" --evidence "SPK-001 benchmark" >/dev/null)
   (cd "$d" && git show-ref --verify --quiet "refs/heads/$branch") && pass || fail "dry-run cleanup preserves branch"
-  [[ ! -d "$d/.spectacular/archive/afk-branches" ]] && pass || fail "dry-run cleanup writes no archive"
+  [[ ! -d "$d/.spectacular/archive/afk-branches" ]] && pass || fail "dry-run cleanup writes no workspace residue"
   (cd "$d" && "$CLI" afk cleanup "$branch" --disposition abandoned --outcome "Approach failed" --evidence "SPK-001 benchmark" --apply --yes >/dev/null)
   (cd "$d" && git show-ref --verify --quiet "refs/heads/$branch") && code=0 || code=$?
   assert_exit "$code" 1 "confirmed cleanup deletes local branch"
-  local archived; archived=$(find "$d/.spectacular/archive/afk-branches" -type f | head -1)
-  assert_contains "$archived" "archive_ref: refs/spectacular/archive/"
-  assert_contains "$archived" "restore_command:"
-  assert_contains "$archived" "**Evidence:** SPK-001 benchmark"
+  (cd "$d" && git for-each-ref --format='%(refname)' refs/spectacular/archive | grep -q '^refs/spectacular/archive/') && pass || fail "confirmed cleanup preserves an archive ref"
+  [[ -z "$(cd "$d" && git status --porcelain)" ]] && pass || fail "confirmed cleanup leaves no workspace residue"
   (cd "$d" && "$CLI" afk cleanup nowhere --disposition abandoned --outcome x --evidence y --remote >/dev/null 2>&1) && code=0 || code=$?
   assert_exit "$code" 1 "remote deletion remains closed"
   rm -rf "$d"
+}
+
+scenario_merged_remote_cleanup() {
+  echo "Scenario merged cleanup: one confirmation deletes a matching remote branch and preserves mismatches"
+  local d="/tmp/spectacular-afk-remote-cleanup" remote="/tmp/spectacular-afk-remote-cleanup.git" branch="feat/remote-cleanup" guard="feat/remote-mismatch" code out archived
+  init_repo "$d"; rm -rf "$remote"; git init --bare -q "$remote"
+  (cd "$d" && "$CLI" afk configure --enable --apply --yes >/dev/null && git add . && git commit -qm policy && git remote add origin "$remote" && git push -q -u origin main && git switch -q -c "$branch" && touch remote.txt && git add remote.txt && git commit -qm feature && git push -q -u origin "$branch" && git switch -q main && git merge -q "$branch" && git push -q origin main)
+  out=$(cd "$d" && "$CLI" afk cleanup "$branch" --disposition merged --outcome "Merged" --evidence "PR-1")
+  [[ "$out" == *"remote: delete origin/$branch"* ]] && pass || fail "merged cleanup previews remote deletion"
+  (cd "$d" && "$CLI" afk cleanup "$branch" --disposition merged --outcome "Merged" --evidence "PR-1" --apply --yes >/dev/null)
+  (cd "$d" && git show-ref --verify --quiet "refs/heads/$branch") && code=0 || code=$?
+  assert_exit "$code" 1 "merged cleanup deletes local branch"
+  [[ -z "$(git --git-dir="$remote" for-each-ref --format='%(refname)' "refs/heads/$branch")" ]] && pass || fail "merged cleanup deletes matching remote branch"
+  (cd "$d" && git switch -q -c "$guard" && touch guard.txt && git add guard.txt && git commit -qm guard && git push -q -u origin "$guard" && git switch -q main && git merge -q "$guard" && git push -q origin main && git switch -q -c remote-advance "$guard" && touch remote-advance.txt && git add remote-advance.txt && git commit -qm remote-advance && git push -q origin HEAD:"$guard" && git switch -q main && git branch -D remote-advance >/dev/null)
+  out=$(cd "$d" && "$CLI" afk cleanup "$guard" --disposition merged --outcome "Merged" --evidence "PR-2" 2>&1 || true)
+  [[ "$out" == *"moved past the merged local tip"* ]] && pass || fail "mismatched remote branch blocks cleanup"
+  (cd "$d" && git show-ref --verify --quiet "refs/heads/$guard") && pass || fail "mismatched remote branch remains local"
+  rm -rf "$d" "$remote"
 }
 
 scenario_pr_handoff() {
@@ -132,6 +148,7 @@ scenario_authority_record() {
 
 scenario_policy_and_names
 scenario_isolation_and_cleanup
+scenario_merged_remote_cleanup
 scenario_pr_handoff
 scenario_authority_record
 

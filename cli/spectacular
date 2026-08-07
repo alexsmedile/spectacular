@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ── constants ────────────────────────────────────────────────────────────────
-SPECTACULAR_VERSION="1.37.1"
+SPECTACULAR_VERSION="1.37.2"
 # Resolve symlinks so SCRIPT_DIR points at the real cli/ dir even when the
 # binary is invoked via a symlink (e.g. ~/.local/bin/spectacular → …/cli/spectacular).
 # Without this, template resolution (_resolve_template Path 3) breaks for the
@@ -252,6 +252,7 @@ CLI verbs (mutate workspace):
   spec <sub>             Specification lifecycle (new|list|approve|implement|deprecate|archive; act redirects)
   wayfind <sub>          Strict discovery sequencing (status|next|order|resolve|defer|resume|path|route)
   afk <sub>              Goal-scoped autonomy + Git policy (run|status|configure|propose|preflight|start|cleanup|pr)
+  workspace <sub>        Concurrent-work coordination (preflight|plan|preserve|cleanup)
   github <sub>           GitHub work bridge (triage|pr open|pr ready|reconcile)
   id resolve <ref>       Resolve a canonical ID or shorthand alias
   collections migrate   Preview/apply archive-first singular→plural folder migration
@@ -5440,6 +5441,279 @@ _afk_is_primary() {
 _afk_require_repo() { git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "afk: not inside a Git repository"; }
 _afk_require_clean() { [[ -z "$(git status --porcelain 2>/dev/null)" ]] || die "afk: working tree is dirty; commit, stash, or park changes before branch mutation"; }
 
+# ── Workspace coordination ──────────────────────────────────────────────────
+# This intentionally has no persistent path-ownership registry. A branch is
+# evidence about a request, not evidence that every dirty source file belongs
+# to it. Unrecognised paths remain preservation candidates.
+_workspace_require_repo() { git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "workspace: not inside a Git repository"; }
+_workspace_current_branch() { git branch --show-current 2>/dev/null || true; }
+_workspace_base() { _contract_shared_base; }
+_workspace_remote_base_state() {
+  local base="$1"
+  if ! git remote get-url origin >/dev/null 2>&1; then echo "no-remote"; return; fi
+  if ! git rev-parse --verify "origin/$base^{commit}" >/dev/null 2>&1; then echo "unknown (origin/$base not fetched)"; return; fi
+  if [[ "$(git rev-parse "$base" 2>/dev/null || true)" == "$(git rev-parse "origin/$base")" ]]; then
+    echo "fresh (local $base equals origin/$base)"
+  else
+    echo "stale (local $base differs from origin/$base)"
+  fi
+}
+_workspace_provider_state() {
+  # Git ancestry is primary. Provider data is optional evidence and must never
+  # be inferred from the presence of a remote.
+  local branch="$1" remote state
+  remote=$(git remote get-url origin 2>/dev/null || true)
+  [[ -n "$remote" ]] || { echo "unknown (no remote)"; return; }
+  case "$remote" in *github.com*) ;; *) echo "unknown (no provider adapter)"; return ;; esac
+  command -v gh >/dev/null 2>&1 || { echo "unknown (GitHub adapter unavailable)"; return; }
+  state=$(gh pr list --head "$branch" --state all --json state --jq '.[0].state' 2>/dev/null || true)
+  [[ -n "$state" ]] && echo "$state" || echo "none (adapter found no PR)"
+}
+_workspace_request_for_branch() {
+  local branch="$1" plan
+  for plan in "$SPEC_REQUESTS_DIR"/*/PLAN.md; do
+    [[ -f "$plan" ]] || continue
+    [[ "$(fm_get "$plan" branch)" == "$branch" ]] && { basename "$(dirname "$plan")"; return 0; }
+  done
+  return 1
+}
+_workspace_path_owner() {
+  local path="$1" current="$2" request
+  case "$path" in
+    .spectacular/requests/*/*)
+      request=$(printf '%s' "$path" | cut -d/ -f3)
+      [[ -f "$SPEC_REQUESTS_DIR/$request/PLAN.md" ]] && {
+        [[ "$request" == "$current" ]] && echo "$request|high|belongs-to-current-request" || echo "$request|high|belongs-to-known-work"
+        return 0
+      } ;;
+    .spectacular/specs/*.md)
+      request=$(basename "$path" .md)
+      [[ -f "$SPEC_SPECS_DIR/$request.md" ]] && { echo "spec:$request|high|belongs-to-known-work"; return 0; } ;;
+  esac
+  # A caller can explicitly name the request; still only its durable request
+  # folder receives automatic ownership. Arbitrary code paths stay unowned.
+  if [[ -n "$current" && "$path" == ".spectacular/requests/$current/"* ]]; then
+    echo "$current|high|belongs-to-current-request"
+  else
+    echo "unowned|none|needs-preservation-branch"
+  fi
+}
+_workspace_changed_paths() {
+  local record code path
+  git status --porcelain=v1 -z 2>/dev/null | while IFS= read -r -d '' record; do
+    code=${record:0:2}; path=${record:3}
+    # Rename/copy records carry a second NUL path; report the destination, the
+    # user-visible changed path that needs a disposition.
+    if [[ "$code" == *R* || "$code" == *C* ]]; then IFS= read -r -d '' _old || true; fi
+    case "$code" in
+      \?\?) printf 'untracked\t%s\n' "$path" ;;
+      *)
+        [[ "${code:0:1}" != ' ' ]] && printf 'staged\t%s\n' "$path"
+        [[ "${code:1:1}" != ' ' ]] && printf 'unstaged\t%s\n' "$path"
+        ;;
+    esac
+  done
+}
+_workspace_report() {
+  local request="${1:-}" branch upstream base ahead behind owner confidence disposition group path any=false remote_state provider_state
+  _workspace_require_repo
+  branch=$(_workspace_current_branch); base=$(_workspace_base)
+  upstream=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || true)
+  if git rev-parse --verify "$base^{commit}" >/dev/null 2>&1; then
+    read -r behind ahead <<EOF
+$(git rev-list --left-right --count "$base...HEAD" 2>/dev/null || echo "unknown unknown")
+EOF
+  else behind=unknown; ahead=unknown; fi
+  info "── Workspace coordination (read-only) ──"
+  info "  branch:   ${branch:-(detached)}"
+  info "  upstream: ${upstream:-unknown}"
+  info "  base:     $base"
+  info "  divergence from base: ahead ${ahead:-unknown}, behind ${behind:-unknown}"
+  remote_state=$(_workspace_remote_base_state "$base")
+  info "  remote base freshness: $remote_state"
+  [[ -n "$request" ]] || request=$(_workspace_request_for_branch "$branch" 2>/dev/null || true)
+  info "  associated request: ${request:-unknown}"
+  provider_state=$(_workspace_provider_state "$branch")
+  info "  provider PR/MR facts: $provider_state"
+  info "  changed paths:"
+  while IFS=$'\t' read -r group path; do
+    any=true
+    IFS='|' read -r owner confidence disposition <<EOF
+$(_workspace_path_owner "$path" "$request")
+EOF
+    info "    - [$group] $path"
+    info "      owner: $owner (confidence: $confidence) · disposition: $disposition"
+  done < <(_workspace_changed_paths)
+  if ! $any; then
+    info "    - none"
+    info "  blockers: none"
+    info "  safe next action: inspect and implement on this clean branch"
+  else
+    info "  blockers: unowned paths require explicit intent or preservation"
+    info "  safe next action: spectacular workspace preserve <slug> --paths <unowned-paths>"
+    info "  mutation commands: none (read-only report)"
+  fi
+}
+_workspace_report_json() {
+  # A compact stable envelope for scripts. The human report remains the full
+  # path-by-path explanation; JSON deliberately preserves unknown evidence.
+  local request="${1:-}" branch base upstream ahead behind remote_state provider_state
+  _workspace_require_repo; branch=$(_workspace_current_branch); base=$(_workspace_base)
+  upstream=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || true)
+  if git rev-parse --verify "$base^{commit}" >/dev/null 2>&1; then read -r behind ahead <<EOF
+$(git rev-list --left-right --count "$base...HEAD" 2>/dev/null || echo "unknown unknown")
+EOF
+  else behind=unknown; ahead=unknown; fi
+  [[ -n "$request" ]] || request=$(_workspace_request_for_branch "$branch" 2>/dev/null || true)
+  remote_state=$(_workspace_remote_base_state "$base"); provider_state=$(_workspace_provider_state "$branch")
+  printf '{"schema":"spectacular.workspace-plan.v1","branch":"%s","upstream":"%s","base":"%s","divergence":{"ahead":"%s","behind":"%s"},"remote_base":"%s","request":"%s","provider":"%s","changed_paths":[' \
+    "$(_json_escape "${branch:-detached}")" "$(_json_escape "${upstream:-unknown}")" "$(_json_escape "$base")" "$(_json_escape "$ahead")" "$(_json_escape "$behind")" "$(_json_escape "$remote_state")" "$(_json_escape "${request:-unknown}")" "$(_json_escape "$provider_state")"
+  local first=true group path owner confidence disposition
+  while IFS=$'\t' read -r group path; do
+    $first && first=false || printf ','
+    IFS='|' read -r owner confidence disposition <<EOF
+$(_workspace_path_owner "$path" "$request")
+EOF
+    printf '{"group":"%s","path":"%s","owner":"%s","confidence":"%s","disposition":"%s"}' "$(_json_escape "$group")" "$(_json_escape "$path")" "$(_json_escape "$owner")" "$(_json_escape "$confidence")" "$(_json_escape "$disposition")"
+  done < <(_workspace_changed_paths)
+  printf '],"mutations":[]}\n'
+}
+_workspace_mutation_gate() {
+  # Shared first-write guard for Spectacular-owned Git mutators. The report is
+  # intentionally emitted before refusal so ambiguous paths are actionable.
+  local request="${1:-}" group path owner confidence disposition blocked=false
+  _workspace_report "$request"
+  while IFS=$'\t' read -r group path; do
+    IFS='|' read -r owner confidence disposition <<EOF
+$(_workspace_path_owner "$path" "$request")
+EOF
+    [[ "$disposition" == belongs-to-current-request ]] || blocked=true
+  done < <(_workspace_changed_paths)
+  $blocked && die "workspace: mutation refused while changed paths are unowned or belong to another request; preserve or make scope explicit first"
+  return 0
+}
+_workspace_preserve() {
+  local slug="$1" paths="$2" apply="$3" yes="$4" original branch path commit_sha remote
+  _workspace_require_repo
+  [[ "$slug" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || die "workspace preserve: slug must be kebab-case"
+  [[ -n "$paths" ]] || die "workspace preserve: --paths is required"
+  original=$(_workspace_current_branch); [[ -n "$original" ]] || die "workspace preserve: detached HEAD is not supported"
+  branch="preserve/${slug}-$(date +%Y%m%d-%H%M%S)"
+  info "── Workspace preservation proposal ──"
+  info "  source branch: $original"
+  info "  preservation branch: $branch"
+  info "  paths: $paths"
+  info "  commit: preserve: $slug"
+  info "  exact mutations: git switch -c $branch; git add -- <paths>; git commit --only -- <paths>; git push -u origin $branch (if origin exists); git switch $original"
+  $apply || { info "Dry-run only. Apply with --apply --yes"; return 0; }
+  $yes || die "workspace preserve: --apply requires --yes"
+  for path in ${paths//,/ }; do [[ -e "$path" || -n "$(git ls-files -- "$path")" ]] || die "workspace preserve: path not found: $path"; done
+  git show-ref --verify --quiet "refs/heads/$branch" && die "workspace preserve: branch already exists: $branch"
+  git switch -c "$branch"
+  for path in ${paths//,/ }; do git add -- "$path"; done
+  # --only ensures a staged unrelated file remains staged but is not committed.
+  git commit --only -m "preserve: $slug" -- ${paths//,/ }
+  commit_sha=$(git rev-parse HEAD)
+  if remote=$(git remote get-url origin 2>/dev/null); then
+    if ! git push -u origin "$branch"; then
+      # The scoped commit is already durable locally. Return the user to the
+      # original branch and make the recoverable state explicit; never stash or
+      # roll back a failed publication.
+      git switch "$original"
+      die "workspace preserve: push failed; local preservation remains at $branch ($commit_sha)"
+    fi
+    info "  pushed: $remote"
+  else
+    info "  remote: unknown (no origin; preserved locally)"
+  fi
+  git switch "$original"
+  info "  ✓ preserved: $branch at $commit_sha"
+}
+_workspace_cleanup_inventory() {
+  local base branch current state provider
+  _workspace_require_repo; base=$(_workspace_base); current=$(_workspace_current_branch)
+  info "── Workspace cleanup inventory (read-only) ──"
+  for branch in $(git for-each-ref --format='%(refname:short)' refs/heads); do
+    [[ "$branch" == "$base" || "$branch" == "$current" ]] && continue
+    if git merge-base --is-ancestor "$branch" "$base" 2>/dev/null; then state=merged-local; else state=unmerged-or-unknown; fi
+    provider=$(_workspace_provider_state "$branch")
+    info "  - $branch: $state · provider PR/MR: $provider"
+  done
+  info "  deletion requires: explicit branch, --apply --yes, fresh shared base, reachable merged tip, and preserved archive ref"
+}
+_workspace_cleanup_apply() {
+  local branch="$1" apply="$2" yes="$3" refresh="$4" base current tip archive_ref provider receipt stamp safe
+  _workspace_require_repo; base=$(_workspace_base); current=$(_workspace_current_branch)
+  [[ "$branch" != "$current" && "$branch" != "$base" ]] || die "workspace cleanup: refusing current or base branch"
+  git show-ref --verify --quiet "refs/heads/$branch" || die "workspace cleanup: local branch not found: $branch"
+  tip=$(git rev-parse "$branch")
+  git merge-base --is-ancestor "$tip" "$base" 2>/dev/null || die "workspace cleanup: $branch is not reachable from $base; preserve or resolve it first"
+  provider=$(_workspace_provider_state "$branch")
+  [[ "$provider" != OPEN && "$provider" != open ]] || die "workspace cleanup: $branch has an open PR/MR; do not delete it"
+  if git remote get-url origin >/dev/null 2>&1; then
+    $refresh || die "workspace cleanup: remote freshness is unknown; rerun with --refresh to fetch $base before deletion"
+    git rev-parse --verify "origin/$base^{commit}" >/dev/null 2>&1 || die "workspace cleanup: origin/$base is unknown; fetch and fast-forward first"
+    [[ "$(git rev-parse "$base")" == "$(git rev-parse "origin/$base")" ]] || die "workspace cleanup: local $base is stale; fast-forward it before deletion"
+  fi
+  stamp=$(date +%Y%m%d-%H%M%S); safe=$(_afk_slug "$branch")
+  archive_ref="refs/spectacular/archive/${stamp}-${safe}"
+  receipt="$SPEC_ARCHIVE_DIR/workspace-branches/${stamp}-${safe}.md"
+  info "Cleanup proposal: $branch (tip $tip)"
+  info "  exact mutations: ${refresh:+git fetch origin $base; }git update-ref $archive_ref $tip; write $receipt; git branch -d $branch"
+  $apply || { info "Dry-run only. Apply with --apply --yes"; return 0; }
+  $yes || die "workspace cleanup: --apply requires --yes"
+  $refresh && git fetch origin "$base"
+  if git remote get-url origin >/dev/null 2>&1; then [[ "$(git rev-parse "$base")" == "$(git rev-parse "origin/$base")" ]] || die "workspace cleanup: local $base is stale after refresh; fast-forward it before deletion"; fi
+  git update-ref "$archive_ref" "$tip"
+  [[ "$(git rev-parse "$archive_ref")" == "$tip" ]] || die "workspace cleanup: archive ref verification failed"
+  mkdir -p "$(dirname "$receipt")"
+  printf '%s\n' '---' "branch: \"$branch\"" "deleted_at: $TODAY" "tip_sha: $tip" "base: \"$base\"" "archive_ref: \"$archive_ref\"" "provider_state: \"$provider\"" '---' '' "# Workspace branch deletion — $branch" '' "Restore with: \`git branch $branch $archive_ref\`." > "$receipt"
+  git branch -d "$branch"
+  info "  ✓ deleted $branch; recovery ref: $archive_ref"
+  info "  ✓ deletion receipt: $receipt"
+}
+cmd_workspace() {
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    preflight|plan)
+      local request="" json=false
+      while (( $# > 0 )); do case "$1" in --request) require_value "$1" "${2:-}"; request="$2"; shift 2 ;; --json) json=true; shift ;; *) die "Usage: spectacular workspace $sub [--request <slug>] [--json]" ;; esac; done
+      [[ -z "$request" || -f "$SPEC_REQUESTS_DIR/$request/PLAN.md" ]] || die "workspace: request not found: $request"
+      $json && _workspace_report_json "$request" || _workspace_report "$request" ;;
+    preserve)
+      local slug="" paths="" apply=false yes=false
+      while (( $# > 0 )); do
+        case "$1" in
+          --paths) require_value "$1" "${2:-}"; paths="$2"; shift 2 ;;
+          --apply) apply=true; shift ;;
+          --yes) yes=true; shift ;;
+          -*) die "Usage: spectacular workspace preserve <slug> --paths <path[,path...]> [--apply --yes]" ;;
+          *) [[ -z "$slug" ]] || die "workspace preserve: only one slug allowed"; slug="$1"; shift ;;
+        esac
+      done
+      _workspace_preserve "$slug" "$paths" "$apply" "$yes" ;;
+    ""|--help|-h)
+      cat <<EOF
+Usage: spectacular workspace <preflight|plan|preserve|cleanup>
+
+  preflight [--request <slug>]  Read-only coordination report and safe next action.
+  plan [--request <slug>]       Read-only path-to-disposition plan.
+  preserve <slug> --paths <p,...> [--apply --yes]
+                              Create and push a scoped preservation commit.
+  cleanup                       Read-only branch inventory.
+  cleanup <branch> [--refresh --apply --yes]
+                              Delete only a locally merged, archive-backed branch.
+EOF
+      ;;
+    cleanup)
+      [[ $# -eq 0 ]] && { _workspace_cleanup_inventory; return 0; }
+      local branch="" apply=false yes=false refresh=false
+      while (( $# > 0 )); do case "$1" in --refresh) refresh=true; shift ;; --apply) apply=true; shift ;; --yes) yes=true; shift ;; -*) die "Usage: spectacular workspace cleanup <branch> [--refresh --apply --yes]" ;; *) [[ -z "$branch" ]] || die "workspace cleanup: only one branch allowed"; branch="$1"; shift ;; esac; done
+      _workspace_cleanup_apply "$branch" "$apply" "$yes" "$refresh" ;;
+    *) die "Usage: spectacular workspace <preflight|plan|preserve|cleanup>" ;;
+  esac
+}
+
 _afk_slug() {
   printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
 }
@@ -5671,6 +5945,7 @@ cmd_afk_start() {
   local active_run; active_run=$(_afk_active_run) || die "afk start: no active AFK run; authorize one with 'spectacular afk run start'"
   [[ "$(fm_get "$active_run" status)" == active ]] || die "afk start: AFK run is gated"
   $yes || die "afk start: --apply requires --yes"
+  _workspace_mutation_gate
   _afk_require_repo; _afk_require_clean
   git show-ref --verify --quiet "refs/heads/$branch" && die "afk start: branch already exists: $branch"
   git switch -c "$branch" >/dev/null
@@ -5698,6 +5973,7 @@ cmd_afk_cleanup() {
   case "$disposition" in merged|abandoned) ;; *) die "afk cleanup: --disposition must be merged|abandoned" ;; esac
   [[ -n "$outcome" && -n "$evidence" ]] || die "afk cleanup: --outcome and --evidence are required before cleanup"
   $remote && die "afk cleanup: remote deletion remains a human-only gate; delete it explicitly with your Git provider"
+  _workspace_mutation_gate
   _afk_require_repo
   local current; current=$(git branch --show-current)
   [[ "$current" != "$branch" ]] || die "afk cleanup: cannot delete the current branch"
@@ -5771,6 +6047,7 @@ cmd_afk_pr() {
   _afk_enabled || die "afk pr: AFK Git policy is not enabled"
   _afk_allow_pr || die "afk pr: allow_pr_create is false"
   $yes || die "afk pr: --apply requires --yes"
+  _workspace_mutation_gate "$slug"
   _afk_require_repo; _afk_require_clean
   local current_branch; current_branch=$(git branch --show-current)
   _afk_is_primary "$current_branch" && die "afk pr: refusing PR handoff from primary branch '$current_branch'"
@@ -5931,6 +6208,7 @@ cmd_github_pr_open() {
   printf '%s\n' "$body"
   if ! $apply; then info "Dry-run only. Apply with --apply --yes to open a draft PR; merge is never attempted."; return 0; fi
   $yes || die "github pr open: --apply requires --yes"
+  _workspace_mutation_gate "$slug"
   _afk_require_repo; _afk_require_clean
   local current_branch baseline commit_count upstream pr_url head
   current_branch=$(git branch --show-current); _afk_is_primary "$current_branch" && die "github pr open: refusing PR handoff from primary branch '$current_branch'"
@@ -5978,6 +6256,7 @@ cmd_github_pr_ready() {
   info "Ready plan: mark $pr ready for review at verified head $short_head"
   if ! $apply; then info "Dry-run only. Apply with --apply --yes; merge is never attempted."; return 0; fi
   $yes || die "github pr ready: --apply requires --yes"
+  _workspace_mutation_gate "$slug"
   gh pr ready "$pr" >/dev/null || die "github pr ready: GitHub did not mark the pull request ready"
   fm_set "$plan" github_pr_ready_at "$TODAY"; fm_set "$plan" github_pr_head "$head"
   info "  ✓ pull request is ready for review; merge was not attempted"
@@ -13216,6 +13495,22 @@ check_lifecycle() {
       issues=$((issues + 1))
     fi
 
+    # Optional coordination metadata is deliberately additive: legacy requests
+    # remain valid when it is absent, but a supplied value must be usable Git
+    # evidence rather than a free-form label.
+    local declared_branch declared_base
+    declared_branch=$(fm_get "$plan" branch); declared_base=$(fm_get "$plan" base)
+    if [[ -n "$declared_branch" && ! "$declared_branch" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]]; then
+      doc_add "lifecycle" "warning" "$plan" "request '$slug' has malformed optional branch: '$declared_branch'" \
+        "use a Git branch name, or omit branch: when unknown" "judgment"
+      issues=$((issues + 1))
+    fi
+    if [[ -n "$declared_base" && ! "$declared_base" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]]; then
+      doc_add "lifecycle" "warning" "$plan" "request '$slug' has malformed optional base: '$declared_base'" \
+        "use a Git base branch name, or omit base: when unknown" "judgment"
+      issues=$((issues + 1))
+    fi
+
     local docs_impact; docs_impact=$(fm_get "$plan" docs_impact)
     if [[ -n "$docs_impact" && "$status" =~ ^(active|review|verified)$ ]] && ! _request_docs_impact_closed "$plan"; then
       doc_add "lifecycle" "warning" "$plan" "request '$slug' has unresolved docs impact ($docs_impact)" \
@@ -15945,6 +16240,8 @@ main() {
       shift; cmd_wayfind "$@"; exit $? ;;
     afk)
       shift; cmd_afk "$@"; exit $? ;;
+    workspace)
+      shift; cmd_workspace "$@"; exit $? ;;
     github)
       shift; cmd_github "$@"; exit $? ;;
     id)
@@ -16070,7 +16367,7 @@ Run inside Claude Code or Codex:  /spectacular $subcmd <verb>"
 
   if [[ "$subcmd" != "init" ]]; then
     die "Unknown command: '${subcmd}'.
-CLI verbs:   init | doctor | pack | migrate | new | advance | undo | next | snapshot | archive | touch | decide | remember | session | feedback | idea | question | research | spike | spec | wayfind | afk | id | audit | fix
+CLI verbs:   init | doctor | pack | migrate | new | advance | undo | next | snapshot | archive | touch | decide | remember | session | feedback | idea | question | research | spike | spec | wayfind | afk | workspace | id | audit | fix
 Read verbs:  summary | requests | request | decisions | decision | memories | memory | sessions | show | progress | paths (v1.8.0+)
 Skill verbs (run via /spectacular in your AI agent): status | remember this | verify <slug> | <doc> grill | <doc> refine | <doc> review"
   fi

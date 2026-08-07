@@ -7,6 +7,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+## [1.37.2] — 2026-08-07
+
+### Concurrent worktree coordination
+
+- Added provider-neutral `workspace preflight`, `plan`, `preserve`, and `cleanup` flows that
+  classify local Git/request evidence before mutation, preserve selected paths explicitly, and
+  enforce conservative cleanup gates for concurrent worktrees.
+- Added request `branch`/`base` metadata validation, shared mutation preflight enforcement,
+  documentation, and regression coverage for the coordination contract.
+
 ## [1.37.1] — 2026-08-07
 
 ### Fixed

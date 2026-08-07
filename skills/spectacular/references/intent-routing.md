@@ -27,6 +27,35 @@ Use a Spectacular read view when workspace state answers the user's question.
 Use normal repository inspection when code answers it. The presence of
 `.spectacular/` never changes a direct code review into a planning ceremony.
 
+## Route precedence
+
+Classify the requested outcome before selecting a Spectacular verb or document
+format. Apply these routes in order; stop at the first route that fits:
+
+1. **Inspect or clarify** — read-only inspection; create nothing.
+2. **Existing owner** — resume the named or clearly applicable live request,
+   including its documentation-impact/spec-sync closure work.
+3. **Bounded change** — direct PR-shaped code, documentation, or configuration
+   work with a clear outcome and check.
+4. **Unresolved meaning** — ask one focused routing question; create nothing.
+5. **New durable boundary** — only then consider a new SPC and show its intent
+   receipt before writing.
+
+Words such as “spec,” “plan,” “documentation,” “diagram,” or a named file
+describe a requested format or surface; they do not establish a new durable
+boundary. A new SPC candidate must satisfy all of the following:
+
+- the user wants to establish or change a durable behavior, contract,
+  architecture, schema, or security boundary;
+- the outcome is not already owned by a live request or its closure work; and
+- the outcome cannot truthfully be delivered as one bounded direct change with
+  a clear acceptance check.
+
+An explicit natural-language request to draft a spec selects the drafting
+format only after this classification. It never bypasses the confirmation
+receipt. An explicit terminal `spectacular spec new` command remains the
+user-directed mechanical exception described below.
+
 ## Route in order
 
 1. **Restate the user's requested outcome.** Use their words where possible.
@@ -52,7 +81,7 @@ Use normal repository inspection when code answers it. The presence of
 | Condition | Agent behavior |
 |---|---|
 | The outcome, scope, and acceptance check are clear; the user says to implement | Proceed as a direct change. Make a concise in-chat Codex plan when the work has multiple steps. |
-| The user explicitly asks for Spectacular, a spec, a request, or durable tracking | Use the corresponding workflow. Before a natural-language SPC draft, show the intent receipt. |
+| The user explicitly asks for Spectacular, a spec, a request, or durable tracking | Select the matching workflow only after route classification. A natural-language spec request still needs a new durable boundary and the intent receipt. |
 | “Implement this plan” points to a plan already visible in chat or named unambiguously | Execute it; do not manufacture a request. |
 | “Implement this plan” has no recoverable plan, or could mean materially different outcomes | Ask which plan or restate the two plausible interpretations. Do not infer one from nearby repository context. |
 | The task grows from a direct change into a contract/decision/dependency problem | Explain the escalation and propose the smallest Spectacular artifact; wait for confirmation before writing it. |
@@ -107,8 +136,11 @@ change in routing rather than silently upgrading the work.
 | User request | Correct route |
 |---|---|
 | “Fix the README link and run its link check.” | Direct PR-shaped change. |
+| “Inspect the CMS editorial docs and tell me whether the README and diagrams disagree with the current contract.” | Read-only inspection; no SPC, request, or receipt. |
+| “Update `README.md` and the architecture SVG to describe the already-approved CMS handoff, and run the docs check.” | Direct PR-shaped documentation change; no SPC or request. |
 | “Close the current CMS request and make its docs truthful.” | Existing request's docs-impact/spec-sync flow. |
 | “Define a durable CMS handoff contract that future adapters must implement.” | New SPC candidate; show receipt before drafting. |
+| “Make the CMS docs right for future adapters.” | Ask whether this is an update to existing documentation or a new durable adapter contract; create nothing until answered. |
 | “Should the CMS be Sanity or Strapi?” | `QUE` if the user must choose; `RES` if evidence is needed first. |
 
 **Related:** [[new-request]], [[spec-lifecycle]], [[spec-sync]],

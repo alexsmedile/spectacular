@@ -8,6 +8,7 @@ SKILL="$REPO_ROOT/skills/spectacular/SKILL.md"
 ROUTING="$REPO_ROOT/skills/spectacular/references/intent-routing.md"
 REQUEST="$REPO_ROOT/skills/spectacular/references/new-request.md"
 LIFECYCLE="$REPO_ROOT/skills/spectacular/references/spec-lifecycle.md"
+FIXTURE="$REPO_ROOT/tests/cli/fixtures/intent-routing-adversarial.md"
 
 pass_count=0; fail_count=0
 pass() { pass_count=$((pass_count + 1)); }
@@ -31,6 +32,19 @@ assert_contains "$ROUTING" "not permission to create"
 assert_contains "$ROUTING" "## What each layer is for"
 assert_contains "$ROUTING" "direct change +"
 assert_contains "$ROUTING" "no need for a formal request"
+assert_contains "$ROUTING" "## Route precedence"
+assert_contains "$ROUTING" "they do not establish a new durable"
+assert_contains "$ROUTING" "must satisfy all of the following"
+assert_contains "$ROUTING" "only after route classification"
+
+echo "Scenario adversarial route boundaries remain explicit"
+assert_contains "$FIXTURE" "Route: read-only inspection"
+assert_contains "$FIXTURE" "Route: direct PR-shaped documentation change"
+assert_contains "$FIXTURE" "Route: new SPC candidate"
+assert_contains "$FIXTURE" "Route: ask one focused routing question"
+assert_contains "$FIXTURE" 'Forbidden: `spectacular spec new`'
+assert_contains "$FIXTURE" '`spectacular request new`'
+assert_contains "$FIXTURE" "Draft this SPC? (yes / correct it)"
 
 echo "Scenario request and lifecycle flows share the guard"
 assert_contains "$REQUEST" "First run [[intent-routing]]."

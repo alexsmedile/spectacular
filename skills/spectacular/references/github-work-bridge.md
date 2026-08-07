@@ -58,6 +58,10 @@ Optional and non-binding: approaches, research, experiments, and assumptions.
 label. Research and decisions may be recorded in Issue comments while the
 Issue owns the discussion. Promote only when the result needs an approved
 contract (`spec-first`) or durable execution coordination (`request`).
+When triage selects `explore`, ask the missing routing question or use the
+smallest suitable `RES`, `SPK`, `QUE`, or `IDEA` record; it must not draft an
+SPC or scaffold a request merely because an Issue names documentation, a plan,
+or a possible implementation surface.
 
 ### Local IDEA compatibility schema
 

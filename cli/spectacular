@@ -5636,16 +5636,37 @@ _github_verification_covers_head() {
 
 _github_pr_manifest() {
   local slug="$1" plan="$2" name="$3" issue="$4" resolution="$5" summaries="$6" validations="$7"
-  local source_pair source_type source_ref source_spec docs_impact status summary validation relationship=""
+  local source_pair source_type source_ref source_spec docs_impact status summary validation relationship="" goal unchanged
   source_pair=$(_github_request_source "$plan"); source_type=${source_pair%%|*}; source_ref=${source_pair#*|}
   source_spec=$(fm_get "$plan" source_spec); docs_impact=$(fm_get "$plan" docs_impact); status=$(fm_get "$plan" status)
-  [[ -n "$summaries" ]] || summaries=$(_request_section "$plan" Goal | awk 'NF { sub(/^- /, ""); print; exit }')
+  goal=$(_request_section "$plan" Goal | awk 'NF { sub(/^- /, ""); print; exit }')
+  [[ -n "$summaries" ]] || summaries="$goal"
   [[ -n "$summaries" ]] || summaries="Implements the accepted request outcome."
+  unchanged=$(_request_section "$plan" Understanding | awk '
+    /^### What stays the same$/ { inside=1; next }
+    inside && /^### / { exit }
+    inside && /^- / { sub(/^- /, ""); print; exit }
+    inside && NF && $0 !~ /^<!--/ { print; exit }
+  ')
+  [[ -n "$unchanged" ]] || unchanged="No other behavior is intended to change."
   if [[ -n "$issue" ]]; then
     if [[ "$resolution" == on_merge ]]; then relationship="Fixes $issue"; else relationship="Refs $issue"; fi
   fi
-  printf '%s\n' "## Summary"
+  printf '%s\n' "## In plain language"
+  printf '%s\n' "This PR makes a focused change that can be reviewed without reading the technical files first."
+  printf '\n## Why this matters\n'
+  printf '%s\n' "- It moves this request toward its agreed outcome: ${goal:-$summaries}"
+  printf '\n## Decision requested\n'
+  printf '%s\n' "- Confirm that this change is clear, appropriately scoped, and ready to merge."
+  printf '\n## What this PR changes\n'
   while IFS= read -r summary; do [[ -n "$summary" ]] && printf '%s\n' "- $summary"; done <<< "$summaries"
+  printf '\n## What this PR does not change\n'
+  printf '%s\n' "- $unchanged"
+  printf '\n## Review focus\n'
+  printf '%s\n' "- Does the proposed change solve the stated need without expanding the scope?"
+  printf '\n## Follow-up\n'
+  printf '%s\n' "- Merge remains human-gated; follow-on work stays in the linked request."
+  printf '\n<details>\n<summary>Technical details</summary>\n'
   printf '\n## Integration manifest\n'
   [[ -n "$issue" ]] && printf '%s\n' "- Issue: $relationship"
   [[ -n "$source_ref" ]] && printf '%s\n' "- Source: \`$source_type $source_ref\`"
@@ -5660,7 +5681,7 @@ _github_pr_manifest() {
   printf '\n## Documentation impact\n- %s\n' "${docs_impact:-pending}"
   printf '\n## Review notes\n- Merge remains human-gated.\n'
   [[ "$resolution" == on_release ]] && printf '%s\n' "- Issue resolution is release-gated; this PR must not close it on merge."
-  printf '\n---\n_Filed with [Spectacular](https://github.com/alexsmedile/spectacular)._\n'
+  printf '\n</details>\n\n---\n_Filed with [Spectacular](https://github.com/alexsmedile/spectacular)._\n'
 }
 
 cmd_github_pr_open() {

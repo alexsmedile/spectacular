@@ -244,7 +244,11 @@ A request from an Issue or goal is valid only when existing code, tests, docs, d
 
 ## Pull-request handoff
 
-The PR body is the integration manifest: purpose, Issue relationship, source, SPC when present, request, validation, documentation impact, and merge boundary.
+The PR body is a reviewer brief followed by a collapsible integration manifest.
+Its visible sections are **In plain language**, **Why this matters**, **Decision
+requested**, **What this PR changes**, **What this PR does not change**,
+**Review focus**, and **Follow-up**. Issue/source/SPC provenance, validation,
+documentation impact, and the merge boundary appear under **Technical details**.
 
 ```bash
 spectacular github pr open <request> [--issue owner/repo#N] \

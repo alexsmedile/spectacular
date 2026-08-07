@@ -44,6 +44,14 @@ sed -i.bak \
 git init -q --bare "$REMOTE"
 (cd "$WS" && git remote add origin "$REMOTE" && git switch -q -c codex/cache-fix && printf 'change\n' > implementation.txt && git add implementation.txt && git commit -qm implementation && git push -qu origin codex/cache-fix)
 out=$(cd "$WS" && "$CLI" github pr open cache-fix --name "Cache fix" --summary "Prevent stale reads" --validation "Regression test passes")
+assert_has "$out" "## In plain language" "manifest leads with plain-language context"
+assert_has "$out" "## Why this matters" "manifest explains why the request matters"
+assert_has "$out" "## Decision requested" "manifest states the review decision"
+assert_has "$out" "## What this PR changes" "manifest separates the change list"
+assert_has "$out" "## What this PR does not change" "manifest makes the boundary explicit"
+assert_has "$out" "## Review focus" "manifest tells reviewers what to assess"
+assert_has "$out" "## Follow-up" "manifest explains the next boundary"
+assert_has "$out" "<summary>Technical details</summary>" "manifest collapses technical provenance"
 assert_has "$out" "Fixes acme/widget#12" "on-merge Issue closes from manifest"
 assert_has "$out" "Spectacular request: \`cache-fix\`" "request provenance in manifest"
 assert_has "$out" "open a draft PR" "dry run declares draft boundary"

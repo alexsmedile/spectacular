@@ -25,6 +25,8 @@ updated: 2026-08-08
   protected governing loop, capability boundary, non-goals, and downstream constraints.
 - [`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md) — accepted S03A authority,
   provenance, freshness, projection, conflict, and unknown-information floor.
+- [`SUCCESS-EVIDENCE-CONSTITUTION.md`](SUCCESS-EVIDENCE-CONSTITUTION.md) — accepted S02
+  protected gates, evidence rules, anti-gaming, survival, prototype, and scenario ruler.
 
 ## Intent
 
@@ -208,6 +210,7 @@ Out of scope until explicitly promoted:
 - `evidence/synthesis-014.md` — accepted S01 Product Constitution, harness-specific orchestration
   evidence, human authority guard, and S03A prerequisite.
 - `evidence/synthesis-015.md` — accepted S03A truth/provenance floor and S02 authorization.
+- `evidence/synthesis-016.md` — accepted S02 success/evidence constitution and S03B authorization.
 - `evidence/responsibility-boundaries.md` — working ownership model for Spectacular,
   companions, agents, modes, deterministic mechanisms, host runtime, and providers.
 - `evidence/decision-sessions.md` — four decision batches that turn pending concepts into
@@ -222,7 +225,8 @@ Out of scope until explicitly promoted:
   orchestration, mechanism, truth, and adapter responsibilities.
 - `handoffs/README.md` — current side-session queue and copy-ready bounded prompts.
 - `PRODUCT-CONSTITUTION.md` — accepted S01 product boundary contract.
-- `TRUTH-PROVENANCE-FLOOR.md` — accepted S03A prerequisite; S02 is the next constitutional session.
+- `TRUTH-PROVENANCE-FLOOR.md` — accepted S03A prerequisite.
+- `SUCCESS-EVIDENCE-CONSTITUTION.md` — accepted S02 ruler; S03B is the next constitutional session.
 
 ## Manifest
 

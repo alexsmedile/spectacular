@@ -3,7 +3,7 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: s03a-accepted
+checkpoint: s02-accepted
 decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-08
@@ -26,9 +26,10 @@ Distributed work and checkpoint authority live in [`ORCHESTRATION.md`](ORCHESTRA
 below is an accepted product decision until its session records the owner's disposition and this
 orchestration task reconciles the reviewed packet.
 
-S01 is accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md), and S03A is accepted in
-[`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md). S02 is the next authorized sitting;
-later recommendations remain conditional.
+S01, S03A, and S02 are accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md),
+[`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md), and
+[`SUCCESS-EVIDENCE-CONSTITUTION.md`](SUCCESS-EVIDENCE-CONSTITUTION.md). S03B is the next authorized
+sitting; later recommendations remain conditional.
 
 ## Decision batches
 
@@ -45,8 +46,8 @@ later recommendations remain conditional.
    Spectacular and which attractive responsibilities it refuses.
 2. **S03A — Minimum truth/provenance floor.** Define enough authority, provenance, freshness, and
    missing-information semantics for evidence to be meaningful.
-3. **S02 — Refactor success function and evidence constitution.** Define weighted metrics,
-   survival evidence, prototype rules, and anti-gaming checks against the accepted identity.
+3. **S02 — Refactor success function and evidence constitution.** Define protected gates,
+   qualitative regression review, survival evidence, prototype rules, and anti-gaming checks.
 4. **S03B — Full truth hierarchy and contract model.** Define authority, freshness, provenance,
    Capability Contract shape, and the graph adoption level.
 5. **S04 — Work-unit ontology and lifecycle.** Define Capability, SPC/spec, Mission/request,

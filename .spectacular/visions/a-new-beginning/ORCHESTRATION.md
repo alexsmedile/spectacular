@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s03a-accepted
-active_stage: s02-ready
+checkpoint: s02-accepted
+active_stage: s03b-ready
 updated: 2026-08-08
 ---
 
@@ -232,6 +232,14 @@ non-authority, and explicit unknowns with bounded continuation. Central disposit
 accepted**. The canonical result is
 [`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md). S02 is now the next authorized owner
 decision session; S03B and all later sessions remain blocked by their declared dependencies.
+
+H07 then ran S02 and obtained explicit owner dispositions for protected-loop gates, a no-numeric
+lightweight comparative review, claim-specific evidence, anti-gaming, reversibility, subsystem
+survival, disposable prototypes, and three provider-neutral acceptance scenarios. Central
+disposition: **S02 accepted with normalization**. The later no-numeric disposition supersedes the
+earlier “weighted scorecard” wording. The canonical result is
+[`SUCCESS-EVIDENCE-CONSTITUTION.md`](SUCCESS-EVIDENCE-CONSTITUTION.md). S03B is the next authorized
+owner-decision session.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

@@ -13,9 +13,11 @@ the whole workbench or expand scope.
 | H02 | [S01 Product Constitution lead](H02-s01-product-constitution-lead.md) | revision 2 accepted; [return](../evidence/returns/H02-product-constitution-r2.md) | H03 required changes resolved |
 | H03 | [Product Constitution skeptic](H03-product-constitution-skeptic.md) | complete; [return](../evidence/returns/H03-product-constitution-skeptic.md) | H01 + H02 + reconciled H04 |
 | H06 | S03A truth/provenance owner-decision task | accepted; [return](../evidence/returns/H06-s03a-truth-provenance.md) | accepted S01 |
+| H07 | S02 success/evidence owner-decision task | accepted; [return](../evidence/returns/H07-s02-success-evidence.md) | accepted S01 + S03A |
 
-S01 is centrally accepted in [`../PRODUCT-CONSTITUTION.md`](../PRODUCT-CONSTITUTION.md), and S03A is
-accepted in [`../TRUTH-PROVENANCE-FLOOR.md`](../TRUTH-PROVENANCE-FLOOR.md). S02 is the next
+S01, S03A, and S02 are centrally accepted in [`../PRODUCT-CONSTITUTION.md`](../PRODUCT-CONSTITUTION.md),
+[`../TRUTH-PROVENANCE-FLOOR.md`](../TRUTH-PROVENANCE-FLOOR.md), and
+[`../SUCCESS-EVIDENCE-CONSTITUTION.md`](../SUCCESS-EVIDENCE-CONSTITUTION.md). S03B is the next
 authorized owner-decision session.
 | H05 | [Competing-skills research study](H05-competing-skills-research-study.md) | accepted; [return review](../evidence/returns/H05-competing-skills-study.md) | ingested as source-015 |
 

@@ -59,6 +59,8 @@ updated: 2026-08-08
 - [Synthesis checkpoint 014](synthesis-014.md) — accepted S01 Product Constitution and S03A handoff boundary
 - [Synthesis checkpoint 015](synthesis-015.md) — accepted S03A truth/provenance floor and S02 authorization
 - [H06 return review](returns/H06-s03a-truth-provenance.md) — accepted owner-decision packet for S03A
+- [Synthesis checkpoint 016](synthesis-016.md) — accepted S02 success/evidence constitution and S03B authorization
+- [H07 return review](returns/H07-s02-success-evidence.md) — accepted owner-decision packet for S02
 - [H05 return review](returns/H05-competing-skills-study.md) — accepted comparative study and bounded-ingestion disposition
 - [Ingestion status recap](recap-001-ingestion-status.md) — brief focus map for Sources 001–015
 - [GitHub issue evidence](issues/) — one provenance card per open issue and comment thread
@@ -68,8 +70,8 @@ updated: 2026-08-08
 - Sources: 15
 - Concept pieces: 173
 - GitHub issue evidence cards: 23
-- Human dispositions: S01 and S03A reconciled and accepted
-- Accepted constitutional contracts: 2
+- Human dispositions: S01, S03A, and S02 reconciled and accepted
+- Accepted constitutional contracts: 3
 - Promoted fragments: 0
 
 Update this index after every source ingestion. Counts describe the intake

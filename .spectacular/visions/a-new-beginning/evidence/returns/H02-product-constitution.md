@@ -2,7 +2,8 @@
 type: handoff-return
 handoff_id: H02
 status: complete
-disposition: pending-skeptical-review
+disposition: superseded
+superseded_by: H02-product-constitution-r2.md
 baseline: 7a85469
 source_thread: 019fe0e8-3df6-78e2-b85d-1f5677c3c359
 authority: owner-disposition-evidence

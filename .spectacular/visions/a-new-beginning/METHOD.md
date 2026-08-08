@@ -432,14 +432,14 @@ A future agent or session resumes in this order:
 ## Current state
 
 - Branch: `refactor/a-new-beginning`.
-- Current phase: H03 complete; S01 bounced to H02 for bounded owner/boundary repair; later sources may
+- Current phase: S01 Product Constitution accepted; S03A minimum truth/provenance is next; later sources may
   still be ingested without interrupting an active decision unless they contain reversal evidence.
 - Ingested baseline: Sources 001–015, 173 concept cards, 23 GitHub issue cards.
-- Latest synthesis: checkpoint 013.
-- Human dispositions: H02 owner dispositions recorded; central accepted product decisions: 0.
+- Latest synthesis: checkpoint 014.
+- Human dispositions: H02 owner dispositions reconciled; central accepted product decisions: 1 (S01).
 - Promoted specifications: 0.
-- Active handoff queue: H01 accepted as evidence; H04 accepted with repairs; H03 accepted as review;
-  H02 bounded repair is next. S01 and S02 remain unaccepted/blocked. H05 is an independent
+- Active handoff queue: H01/H03/H04 accepted as evidence/review; H02 revision 2 reconciled; S01
+  accepted and hashed; S03A is next. S02 remains blocked pending S03A. H05 is an independent
   research-intake lane for named competing skills; H05 was accepted with bounded ingestion as
   Source 015 and added PZL-172–173 without changing decision order.
 - Planning baseline: commit `c8ff3fd`; each new handoff must declare and validate a fresh immutable

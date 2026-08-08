@@ -1,10 +1,10 @@
 ---
 type: refactor-foundation-plan
-status: proposed
+status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: synthesis-012
-decision_sessions: 12
+checkpoint: s01-accepted
+decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-08
 ---
@@ -25,6 +25,9 @@ analysis lives in [`evidence/responsibility-boundaries.md`](evidence/responsibil
 Distributed work and checkpoint authority live in [`ORCHESTRATION.md`](ORCHESTRATION.md). No item
 below is an accepted product decision until its session records the owner's disposition and this
 orchestration task reconciles the reviewed packet.
+
+S01 is now accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md). S03A is the next
+authorized sitting; later recommendations remain conditional.
 
 ## Decision batches
 

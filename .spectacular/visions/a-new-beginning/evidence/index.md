@@ -9,7 +9,7 @@ updated: 2026-08-08
 
 - [Refactor method](../METHOD.md) — end-to-end intake, decision, promotion, execution, and retrospective method
 - [Orchestration contract](../ORCHESTRATION.md) — program authority, typed handoffs, checkpoints, and branch/worktree rules
-- [Foundation Plan](../FOUNDATION-PLAN.md) — recovery capsule for the twelve sessions and top 20 priorities
+- [Foundation Plan](../FOUNDATION-PLAN.md) — recovery capsule for the fourteen sittings and top 20 priorities
 - [Side-session handoffs](../handoffs/README.md) — authorized queue and copy-ready bounded prompts
 - [WORKFLOW.md](WORKFLOW.md) — intake, comparison, decisions, promotion, and retrospective
 
@@ -41,7 +41,7 @@ updated: 2026-08-08
 - [Derived decision map](decision-map.md) — experimental Mermaid projection over decision-critical cards
 - [Derived abstraction map](abstraction-map.md) — experimental layer-boundary audit projection
 - [Responsibility boundaries](responsibility-boundaries.md) — proposed core, companion, role, mode, mechanism, and adapter ownership
-- [Decisive refactor sessions](decision-sessions.md) — four batches and twelve contract-producing decision sessions
+- [Decisive refactor sessions](decision-sessions.md) — four batches and fourteen contract-producing sittings
 - [Top 20 foundational decisions](top-20-foundational-decisions.md) — ranked make-or-break architecture priorities
 - [Synthesis checkpoint 001](synthesis-001.md) — convergence, contradictions, and evidence gaps
 - [Synthesis checkpoint 002](synthesis-002.md) — execution-authority fork and mission-loop convergence
@@ -56,6 +56,7 @@ updated: 2026-08-08
 - [Synthesis checkpoint 011](synthesis-011.md) — reversibility-calibrated governance and architecture boundaries
 - [Synthesis checkpoint 012](synthesis-012.md) — distributed orchestration contract and constitutional dispatch order
 - [Synthesis checkpoint 013](synthesis-013.md) — competing-skill evidence, reconciliation envelope, and subordinate run ledger
+- [Synthesis checkpoint 014](synthesis-014.md) — accepted S01 Product Constitution and S03A handoff boundary
 - [H05 return review](returns/H05-competing-skills-study.md) — accepted comparative study and bounded-ingestion disposition
 - [Ingestion status recap](recap-001-ingestion-status.md) — brief focus map for Sources 001–015
 - [GitHub issue evidence](issues/) — one provenance card per open issue and comment thread
@@ -65,7 +66,8 @@ updated: 2026-08-08
 - Sources: 15
 - Concept pieces: 173
 - GitHub issue evidence cards: 23
-- Human dispositions: 0
+- Human dispositions: S01 reconciled and accepted
+- Accepted constitutional contracts: 1
 - Promoted fragments: 0
 
 Update this index after every source ingestion. Counts describe the intake

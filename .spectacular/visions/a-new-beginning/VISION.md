@@ -19,8 +19,10 @@ updated: 2026-08-08
 - [`METHOD.md`](METHOD.md) — end-to-end refactor method, resume protocol, and retrospective questions.
 - [`ORCHESTRATION.md`](ORCHESTRATION.md) — current program authority, handoffs, checkpoint review,
   and branch/worktree contract.
-- [`FOUNDATION-PLAN.md`](FOUNDATION-PLAN.md) — four decision batches, twelve sessions, top 20
+- [`FOUNDATION-PLAN.md`](FOUNDATION-PLAN.md) — four decision batches, fourteen sittings, top 20
   priorities, responsibility baseline, and sequencing rules.
+- [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md) — accepted S01 identity, promises,
+  protected governing loop, capability boundary, non-goals, and downstream constraints.
 
 ## Intent
 
@@ -201,6 +203,8 @@ Out of scope until explicitly promoted:
   typed return packets, and first constitutional dispatch order.
 - `evidence/synthesis-013.md` — competing-skill evidence, machine-checkable reconciliation envelope,
   subordinate run ledger, and unchanged constitutional order.
+- `evidence/synthesis-014.md` — accepted S01 Product Constitution, harness-specific orchestration
+  evidence, human authority guard, and S03A prerequisite.
 - `evidence/responsibility-boundaries.md` — working ownership model for Spectacular,
   companions, agents, modes, deterministic mechanisms, host runtime, and providers.
 - `evidence/decision-sessions.md` — four decision batches that turn pending concepts into
@@ -214,6 +218,7 @@ Out of scope until explicitly promoted:
 - `evidence/abstraction-map.md` — experimental derived Mermaid view of intent,
   orchestration, mechanism, truth, and adapter responsibilities.
 - `handoffs/README.md` — current side-session queue and copy-ready bounded prompts.
+- `PRODUCT-CONSTITUTION.md` — accepted S01 contract; S03A is the next constitutional session.
 
 ## Manifest
 

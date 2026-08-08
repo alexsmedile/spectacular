@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: h03-returned
-active_stage: s01-bounced-h02-repair
+checkpoint: s01-accepted
+active_stage: s03a-ready
 updated: 2026-08-08
 ---
 
@@ -221,7 +221,11 @@ return:
 H03 returned `pass-with-required-changes`. The central checkpoint accepted the review and bounced
 H02 for neutral ontology/vocabulary, responsibility-neutral tool boundaries, explicit separation
 of authorization policy from provider enforcement, and owner disposition of Git, Skill/CLI,
-P8–P9, and governing-versus-owning-delivery wording. S01 remains unaccepted; S02 remains blocked.
+P8–P9, and governing-versus-owning-delivery wording. H02 revision 2 satisfied every required change
+with explicit owner dispositions. Central disposition: **S01 accepted**. The canonical result is
+[`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md). S03A is authorized next; S02 remains blocked
+until S03A establishes the minimum truth/provenance floor. Accepted Constitution SHA-256:
+`99565c58316c4c193fe6108b514b04f664bdee966a840ad2e982ecf580e7dab7`.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

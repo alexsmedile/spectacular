@@ -391,7 +391,7 @@ The dependency-ready decisions are not “what do we delete?” They are:
 Once those are explicit, backlog triage, skill/scaffold design, vocabulary testing,
 and subsystem survival can be evaluated consistently.
 
-The current dependency ordering is formalized as twelve sessions in
+The repaired dependency ordering is formalized as fourteen sittings across twelve domains in
 [`decision-sessions.md`](decision-sessions.md). The twenty decisions with the highest blast radius,
 dependency fan-out, and reversal cost are ranked in
 [`top-20-foundational-decisions.md`](top-20-foundational-decisions.md).

@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s07-accepted
-active_stage: s08-ready
+checkpoint: s08-accepted
+active_stage: s09-ready
 updated: 2026-08-08
 ---
 
@@ -263,7 +263,11 @@ The canonical result is
 accepted with an optional-companion clarification: Pageworks, Bugworks, and Specwright remain
 specialists and do not displace the core loop. The canonical result is
 [`RESPONSIBILITY-PLACEMENT-CONTRACT.md`](RESPONSIBILITY-PLACEMENT-CONTRACT.md). S08 is next-ready
-and has not been dispatched.
+and has not been dispatched. H13 then ran S08 and obtained explicit owner dispositions for
+scope-relative cold starts, non-authoritative projections, earned workspace growth, and deferred
+advisory retrieval. Central disposition: **S08 accepted**. The canonical result is
+[`RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md`](RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md). S09 is
+next-ready and has not been dispatched.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

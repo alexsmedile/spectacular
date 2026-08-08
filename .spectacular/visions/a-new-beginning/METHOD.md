@@ -3,7 +3,7 @@ type: refactor-method-record
 status: active
 owner: alex
 vision: a-new-beginning
-current_phase: s07-accepted-s08-ready
+current_phase: s08-accepted-s09-ready
 next_source: source-016
 updated: 2026-08-08
 ---
@@ -437,14 +437,14 @@ A future agent or session resumes in this order:
 ## Current state
 
 - Branch: `refactor/a-new-beginning`.
-- Current phase: S01, S03A, S02, S03B, S04, S05, S06, and S07 accepted; S08 retrieval and earned workspace are next; later sources may
+- Current phase: S01, S03A, S02, S03B, S04, S05, S06, S07, and S08 accepted; S09 language and interface grammar are next; later sources may
   still be ingested without interrupting an active decision unless they contain reversal evidence.
 - Ingested baseline: Sources 001–015, 173 concept cards, 23 GitHub issue cards.
-- Latest synthesis: checkpoint 021.
-- Human dispositions: H02, H06, H07, H08, H09, H10, H11, and H12 owner dispositions reconciled; central accepted foundation contracts: 8 (S01, S03A, S02, S03B, S04, S05, S06, S07).
+- Latest synthesis: checkpoint 022.
+- Human dispositions: H02, H06, H07, H08, H09, H10, H11, H12, and H13 owner dispositions reconciled; central accepted foundation contracts: 9 (S01, S03A, S02, S03B, S04, S05, S06, S07, S08).
 - Promoted specifications: 0.
 - Active handoff queue: H01/H03/H04 accepted as evidence/review; H02 revision 2 reconciled; S01
-  accepted and hashed; H06/S03A, H07/S02, H08/S03B, H09/S04, H10/S05, H11/S06, and H12/S07 accepted; S08 is ready. H05 is an independent
+  accepted and hashed; H06/S03A, H07/S02, H08/S03B, H09/S04, H10/S05, H11/S06, H12/S07, and H13/S08 accepted; S09 is ready. H05 is an independent
   research-intake lane for named competing skills; H05 was accepted with bounded ingestion as
   Source 015 and added PZL-172–173 without changing decision order.
 - Planning baseline: commit `c8ff3fd`; each new handoff must declare and validate a fresh immutable

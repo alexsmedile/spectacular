@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s06-accepted
-active_stage: s07-ready
+checkpoint: s07-accepted
+active_stage: s08-ready
 updated: 2026-08-08
 ---
 
@@ -260,7 +260,10 @@ explicit owner acceptance for claim-scoped evidence, risk-triggered independent 
 repair, closure order, and a pointer-first terminal return. Central disposition: **S06 accepted**.
 The canonical result is
 [`EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md`](EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md). S07 is
-next-ready and has not been dispatched.
+accepted with an optional-companion clarification: Pageworks, Bugworks, and Specwright remain
+specialists and do not displace the core loop. The canonical result is
+[`RESPONSIBILITY-PLACEMENT-CONTRACT.md`](RESPONSIBILITY-PLACEMENT-CONTRACT.md). S08 is next-ready
+and has not been dispatched.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

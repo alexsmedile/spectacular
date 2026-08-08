@@ -64,6 +64,7 @@ updated: 2026-08-08
 - [Synthesis checkpoint 018](synthesis-018.md) — accepted S04 work-unit/lifecycle contract and S05 readiness
 - [Synthesis checkpoint 019](synthesis-019.md) — accepted S05 execution-authority contract and S06 readiness
 - [Synthesis checkpoint 020](synthesis-020.md) — accepted S06 evidence/closure/continuity contract and S07 readiness
+- [Synthesis checkpoint 021](synthesis-021.md) — accepted S07 responsibility-placement contract and S08 readiness
 - [H07 return review](returns/H07-s02-success-evidence.md) — accepted owner-decision packet for S02
 - [H05 return review](returns/H05-competing-skills-study.md) — accepted comparative study and bounded-ingestion disposition
 - [Ingestion status recap](recap-001-ingestion-status.md) — brief focus map for Sources 001–015
@@ -74,8 +75,8 @@ updated: 2026-08-08
 - Sources: 15
 - Concept pieces: 173
 - GitHub issue evidence cards: 23
-- Human dispositions: S01, S03A, S02, S03B, S04, S05, and S06 reconciled and accepted
-- Accepted constitutional contracts: 7
+- Human dispositions: S01, S03A, S02, S03B, S04, S05, S06, and S07 reconciled and accepted
+- Accepted constitutional contracts: 8
 - Promoted fragments: 0
 
 Update this index after every source ingestion. Counts describe the intake

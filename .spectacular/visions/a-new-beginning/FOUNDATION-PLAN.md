@@ -3,7 +3,7 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: s06-accepted
+checkpoint: s07-accepted
 decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-08
@@ -26,13 +26,14 @@ Distributed work and checkpoint authority live in [`ORCHESTRATION.md`](ORCHESTRA
 below is an accepted product decision until its session records the owner's disposition and this
 orchestration task reconciles the reviewed packet.
 
-S01, S03A, S02, S03B, S04, S05, and S06 are accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md),
+S01, S03A, S02, S03B, S04, S05, S06, and S07 are accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md),
 [`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md), and
 [`SUCCESS-EVIDENCE-CONSTITUTION.md`](SUCCESS-EVIDENCE-CONSTITUTION.md), and
 [`PRODUCT-TRUTH-CONTRACT-MODEL.md`](PRODUCT-TRUTH-CONTRACT-MODEL.md), and
 [`WORK-UNIT-LIFECYCLE-CONTRACT.md`](WORK-UNIT-LIFECYCLE-CONTRACT.md), and
 [`EXECUTION-AUTHORITY-CONTRACT.md`](EXECUTION-AUTHORITY-CONTRACT.md), and
-[`EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md`](EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md). S07 is the
+[`EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md`](EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md), and
+[`RESPONSIBILITY-PLACEMENT-CONTRACT.md`](RESPONSIBILITY-PLACEMENT-CONTRACT.md). S08 is the
 next-ready sitting; later recommendations remain conditional.
 
 ## Decision batches
@@ -187,9 +188,6 @@ must not prejudge the v2 product surface.
 
 ## Current checkpoint
 
-H01 evidence and the complete owner-disposed H02 Constitution are recorded. H04 returned
-`sound-with-required-changes`; B1–B4 were accepted with the temporal qualification that H02 now
-supplies dispositions for the control-plane proposal while downstream placements remain pending.
-H03 independently reviews the proposed Constitution before the final S01 checkpoint. New material
-uses `source-015` onward, but does not interrupt an active constitutional session unless it contains
-named evidence capable of reversing its result.
+S01, S03A, S02, S03B, S04, S05, S06, and S07 are accepted and hashed. The operating loop and its
+responsibility boundary are stable enough for S08. New material may still be ingested, but it does
+not interrupt an active decision unless it supplies named reversal-grade evidence.

@@ -183,7 +183,7 @@ Gap:
   open → resolved | withdrawn
 
 Decision:
-  settled-current | rejected → superseded
+  settled-current | rejected | superseded
 ```
 
 `blocked` and `deferred` are orthogonal conditions, not multiplied lifecycle

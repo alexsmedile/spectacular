@@ -20,7 +20,7 @@ Contract before authorized reconciliation.
 
 ```text
 current Capability Contract
-  ← Proposal / accepted target delta
+  + accepted target delta
   → Mission
   → durable Objectives
   → boundary-based Runs

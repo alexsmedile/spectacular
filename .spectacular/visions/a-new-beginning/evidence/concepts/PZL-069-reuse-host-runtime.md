@@ -3,7 +3,7 @@ type: concept-piece
 id: PZL-069
 status: captured
 domain: runtime-boundary
-sources: [source-006, source-007]
+sources: [source-006, source-007, source-015]
 source_authority: proposal
 assessment: strong
 evidence_status: supported
@@ -12,7 +12,7 @@ depends_on: [PZL-062]
 overlaps_with: [PZL-051, PZL-054, PZL-071, PZL-091, PZL-098]
 conflicts_with: []
 tags: [runtime, coding-agent, scheduler, platform, boundary]
-updated: 2026-08-07
+updated: 2026-08-08
 ---
 
 # Reuse the host coding runtime
@@ -37,6 +37,8 @@ This aligns with the PRD's orchestration-platform non-goal, but a shell command
 that starts and manages a mission run may itself become a runtime abstraction.
 Source 007 proposes several typed runs and agents while still rejecting generalized
 scheduling, making the platform boundary more important and less settled.
+Source 015 supplies concrete examples where execution value depends on host-provided subagents,
+worktrees, and runtime routing; it reinforces the adapter boundary without proving one launch API.
 
 ## Trade-offs and recommendation
 

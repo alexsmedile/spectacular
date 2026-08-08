@@ -3,7 +3,7 @@ type: concept-piece
 id: PZL-119
 status: captured
 domain: orchestration-contract
-sources: [source-009, source-010]
+sources: [source-009, source-010, source-015]
 source_authority: unsourced-expanded-synthesis
 assessment: strong
 evidence_status: partial
@@ -12,7 +12,7 @@ depends_on: [PZL-104, PZL-105]
 overlaps_with: [PZL-070, PZL-091]
 conflicts_with: []
 tags: [handoff, schema, provenance, edges]
-updated: 2026-08-07
+updated: 2026-08-08
 ---
 
 # Typed inter-node handoff contract

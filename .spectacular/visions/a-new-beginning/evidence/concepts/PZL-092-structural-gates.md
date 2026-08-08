@@ -3,7 +3,7 @@ type: concept-piece
 id: PZL-092
 status: captured
 domain: enforcement-model
-sources: [source-007]
+sources: [source-007, source-015]
 source_authority: synthesized-proposal
 assessment: strong
 evidence_status: partial
@@ -12,7 +12,7 @@ depends_on: [PZL-091]
 overlaps_with: [PZL-034, PZL-040, PZL-093, PZL-094, PZL-095]
 conflicts_with: []
 tags: [gates, enforcement, prompts, policy]
-updated: 2026-08-07
+updated: 2026-08-08
 ---
 
 # Structural gates over prompt advice
@@ -35,6 +35,8 @@ Makes compliance observable and reduces universal prompt context.
 
 The attachments mostly provide prompt advice; current Spectacular already mixes policy
 directives, lifecycle gates, and doctor checks. Their effectiveness is not measured.
+Source 015 adds primary examples of explicit gate taxonomies and bounded repair, plus a prompt-led
+status/version drift example; effectiveness and user value remain unmeasured.
 
 ## Trade-offs and recommendation
 

@@ -3,7 +3,7 @@ type: concept-piece
 id: PZL-074
 status: captured
 domain: closure-lifecycle
-sources: [source-006, source-007]
+sources: [source-006, source-007, source-015]
 source_authority: proposal
 assessment: strong
 evidence_status: supported
@@ -12,7 +12,7 @@ depends_on: [PZL-073]
 overlaps_with: [PZL-019, PZL-066, PZL-073, PZL-080, PZL-088]
 conflicts_with: []
 tags: [closure, reconciliation, snapshot, archive, truth]
-updated: 2026-08-07
+updated: 2026-08-08
 ---
 
 # Closure reconciles current truth
@@ -37,6 +37,8 @@ Archive/spec-sync and closure gates already implement this protected outcome in 
 different shape. The source strengthens it rather than proving a new mission schema.
 Source 007 formalizes reconciliation over graph baseline, delta, implementation, and
 evidence, but must retain code/runtime authority and drift detection.
+Source 015 identifies the missing executable edge between evidence and lifecycle, while its studied
+targets do not themselves demonstrate contract reconciliation.
 
 ## Trade-offs and recommendation
 

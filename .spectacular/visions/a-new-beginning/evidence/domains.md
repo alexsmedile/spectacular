@@ -1,6 +1,6 @@
 ---
 type: concept-domain-map
-checkpoint: synthesis-012
+checkpoint: synthesis-013
 updated: 2026-08-08
 ---
 
@@ -172,6 +172,8 @@ host-owned run, or remain a lifecycle control layer around existing workflows?
 - PZL-077 — Minimal mission workspace
 - PZL-078 — End-to-end MVP acceptance test
 - PZL-079 — Explicit MVP deferral fence
+- PZL-172 — Machine-checkable evidence reconciliation envelope
+- PZL-173 — Run-local ledger subordinate to Mission state
 
 Primary collision: the source's protected outcomes strongly align with current
 intent, but its CLI-owned autonomous runner directly reverses current execution
@@ -205,6 +207,7 @@ must earn its cost through a thin vertical slice?
 - PZL-100 — Mission-owned local semantics
 - PZL-101 — Graph-oriented workspace candidate
 - PZL-102 — Thin vertical graph slice
+- PZL-172 — Machine-checkable evidence reconciliation envelope
 
 Primary separation: capability/architecture distinction, provenance, explicit unknowns,
 evidence-first work, and hypothesis-driven retries are useful rules without a graph
@@ -235,6 +238,7 @@ turning Spectacular into a scheduler, memory platform, or infrastructure stack?
 - PZL-120 — Derived Mermaid decision map
 - PZL-121 — Evaluate the model-harness system
 - PZL-122 — Separate semantics, inference, and validation
+- PZL-173 — Run-local ledger subordinate to Mission state
 
 Primary separation: dependency graphs and attempt state machines are complementary;
 bounded context and independent review need typed shared contracts; deterministic checks

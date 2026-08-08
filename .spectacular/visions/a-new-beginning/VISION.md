@@ -174,6 +174,8 @@ Out of scope until explicitly promoted:
 - `evidence/source-014-reversible-architecture-decisions.md` — reversibility-calibrated
   governance, accountable advice, product/architecture separation, earned seams, and
   executable interface compatibility.
+- `evidence/source-015-competing-skills-study.md` — primary-repository comparison of bounded gates,
+  artifact-addressed continuity, runtime coupling, evidence reconciliation, and status drift.
 - `evidence/WORKFLOW.md` — prototype source-to-concept-to-decision workflow.
 - `evidence/index.md` — source and concept database entry point.
 - `evidence/domains.md` — rolling cross-source domain map and decision frontier.
@@ -197,6 +199,8 @@ Out of scope until explicitly promoted:
   architecture boundaries, and interface-compatibility implications.
 - `evidence/synthesis-012.md` — distributed orchestration requirement, root/side-session authority,
   typed return packets, and first constitutional dispatch order.
+- `evidence/synthesis-013.md` — competing-skill evidence, machine-checkable reconciliation envelope,
+  subordinate run ledger, and unchanged constitutional order.
 - `evidence/responsibility-boundaries.md` — working ownership model for Spectacular,
   companions, agents, modes, deterministic mechanisms, host runtime, and providers.
 - `evidence/decision-sessions.md` — four decision batches that turn pending concepts into
@@ -204,7 +208,7 @@ Out of scope until explicitly promoted:
 - `evidence/top-20-foundational-decisions.md` — ranked high-blast-radius choices whose
   reversal cost and dependency fan-out make them foundational.
 - `evidence/recap-001-ingestion-status.md` — brief focus map and ingestion totals for
-  Sources 001–014.
+  Sources 001–015.
 - `evidence/decision-map.md` — experimental derived Mermaid view of the active
   decision frontier; concept cards remain authoritative.
 - `evidence/abstraction-map.md` — experimental derived Mermaid view of intent,

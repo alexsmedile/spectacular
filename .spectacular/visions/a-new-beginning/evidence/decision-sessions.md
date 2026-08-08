@@ -2,8 +2,8 @@
 type: decision-program
 status: proposed
 authority: none
-checkpoint: synthesis-012
-sessions: 12
+checkpoint: synthesis-013
+sessions: 14
 updated: 2026-08-08
 ---
 
@@ -24,8 +24,9 @@ flowchart LR
   B3 --> B4["Batch IV · Reduction and delivery"]
 
   B1 --> S1["S01 protected core"]
-  B1 --> S2["S02 success function"]
-  B1 --> S3["S03 truth + contracts"]
+  B1 --> S3A["S03A minimal truth"]
+  S3A --> S2["S02 success function"]
+  S2 --> S3B["S03B contract model"]
   B2 --> S4["S04 work units"]
   B2 --> S5["S05 execution authority"]
   B2 --> S6["S06 evidence + continuity"]
@@ -34,7 +35,8 @@ flowchart LR
   B3 --> S9["S09 language + interface"]
   B4 --> S10["S10 subsystem survival"]
   B4 --> S11["S11 implementation + migration"]
-  B4 --> S12["S12 spec and execution program"]
+  B4 --> S12A["S12A specification approval"]
+  S12A --> S12B["S12B executable program"]
 ```
 
 ## Session contract
@@ -98,6 +100,19 @@ standalone/no-mandatory-tool invariant.
 
 **Exit gate:** deletion and extraction proposals can be rejected for crossing the product boundary.
 
+### S03A — Minimum truth and provenance prerequisite
+
+**Decide:** the minimum authority, provenance, freshness, and missing-information semantics needed
+before evidence can be scored or a subsystem can earn survival.
+
+**Inputs:** accepted S01 contract; PZL-013, 019, 073–074, 086, 122, 169, 172.
+
+**Required output:** provisional authority layers, source/provenance identity, freshness rule,
+projection non-authority rule, and explicit unknown/missing behavior. This is a prerequisite floor,
+not the final contract graph.
+
+**Exit gate:** S02 can define evidence without circularly deciding what counts as truth.
+
 ### S02 — Refactor success function and evidence constitution
 
 **Decide:** what the refactor optimizes relative to the accepted Product Constitution, how
@@ -112,7 +127,7 @@ unit; reversibility/impact rubric; predeclared survival and prototype rules.
 **Exit gate:** later sessions can compare two designs with the same rubric without redefining the
 product being optimized.
 
-### S03 — Truth hierarchy and contract model
+### S03B — Full truth hierarchy and contract model
 
 **Decide:** the authority order among intent, accepted contracts, code/tests, production behavior,
 evidence, decisions, and history; capability-first versus typed system-graph depth.
@@ -147,7 +162,9 @@ which effects require human gates; which mutations belong to native providers.
 168.
 
 **Required output:** authority matrix, permission envelope, stop conditions, Git/GitHub boundary,
-human approval policy by consequence, and advice/escalation contract for owned decisions.
+human approval policy by consequence, and advice/escalation contract for owned decisions. Define
+capabilities, effects, proof, and recovery without assigning final core/runtime/companion ownership;
+S07 owns that placement.
 
 **Exit gate:** every mutation and lifecycle transition has exactly one authorized owner.
 
@@ -156,10 +173,12 @@ human approval policy by consequence, and advice/escalation contract for owned d
 **Decide:** what proof is required by change class, who may verify, how closure reconciles truth,
 and what state allows cold resume after interruption.
 
-**Inputs:** PZL-073–075, 092–097, 108, 110, 114, 116, 118–119, 126–127, 140, 154.
+**Inputs:** PZL-073–075, 092–097, 108, 110, 114, 116, 118–119, 126–127, 140, 154,
+172–173.
 
 **Required output:** evidence envelope, independent-review triggers, bounded repair loop, completion
-states, retention rules, and terminal next-action schema.
+states, retention rules, and terminal next-action schema. Define required behavior and authority
+without pre-assigning final core/runtime/companion ownership; S07 owns that placement.
 
 **Exit gate:** a fresh agent can explain and resume a Mission from durable state alone.
 
@@ -206,6 +225,12 @@ schema, deprecation table, and one derived visual convention.
 
 ## Batch IV — Reduction and delivery
 
+### Compatibility-floor checkpoint — required before S10
+
+Using accepted S01 and S03–S09 contracts, define the minimum supported population, compatibility
+window, deprecation promise, recovery boundary, and meaning of recoverable deletion. Detailed code
+and migration mechanics remain S11. No subsystem may be retired before this checkpoint is accepted.
+
 ### S10 — Subsystem, collection, policy, and fleet survival
 
 **Decide:** keep, simplify, extract, merge, or retire each contested subsystem using the S01 rubric.
@@ -231,24 +256,36 @@ migration/deprecation policy, recovery refs, and explicit no-rewrite criteria.
 **Exit gate:** target code architecture follows accepted product boundaries rather than preserving
 or replacing the monolith by instinct.
 
-### S12 — Specification topology and executable refactor program
+### S12A — Specification topology and approval
 
-**Decide:** the fewest coherent specs, their dependency order, vertical-slice checkpoints, and safe
-implementation batches.
+**Decide:** the fewest coherent specifications and their dependency/acceptance topology.
 
 **Inputs:** all accepted session contracts; PZL-023, 029–033, 036, 078–079, 102, 121.
 
-**Required output:** approved Vision fragments, draft spec map, acceptance tests, migration sequence,
-implementation requests, stop checkpoints, and retrospective plan.
+**Required output:** approved Vision fragments, draft specifications, acceptance tests,
+compatibility/migration requirements, dependency map, skeptical review, and explicit approvals.
 
-**Exit gate:** every implementation step traces to an approved contract and measurable validation.
+**Exit gate:** every specification is approved and dependency-consistent; no Mission/request exists.
+
+### S12B — Executable refactor program
+
+**Decide:** vertical slices, implementation Missions, dependency waves, joins, stop checkpoints,
+rollback, and retrospective plan using only approved S12A specifications.
+
+**Inputs:** approved spec IDs/versions from S12A and all accepted foundation contracts.
+
+**Required output:** traceable Mission DAG, one implementation boundary per Mission, immutable
+baselines, permissions, required evidence, join owners, stale-return rules, checkpoints, and rollback.
+
+**Exit gate:** every Mission traces `promise → contract → approved spec → evidence gate → rollback`.
 
 ## Recommended cadence
 
-Run one session per sitting. S01–S06 are mandatory and sequential. S07–S09 may only begin after the
-operating model is stable; they may be separate sittings but should not be decided independently.
-S10 is the first legitimate deletion session. S11 follows the final surface. S12 is the only session
-authorized to produce the final implementation program.
+Run one session per sitting. Constitutional order is S01 → S03A → S02 → S03B → S04–S06. S07–S09
+may only begin after the operating model is stable; they may be separate sittings but should not be
+decided independently. The compatibility-floor checkpoint precedes S10, the first legitimate
+deletion session. S11 follows the final surface. S12A approves specifications; only S12B may produce
+the executable program.
 
 ## Immediate precondition
 

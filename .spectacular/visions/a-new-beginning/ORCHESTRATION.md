@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: synthesis-012
-active_stage: constitutional-dispatch-setup
+checkpoint: h04-reconciled
+active_stage: h03-ready
 updated: 2026-08-08
 ---
 
@@ -58,13 +58,14 @@ mutation-isolation boundary. None is a synonym for another.
 
 ```mermaid
 flowchart TD
-  O["Orchestration and checkpoint session"] --> C["S01–S06 constitutional decisions"]
+  O["Orchestration and checkpoint session"] --> C["S01, S03A, S02, S03B–S06 constitutional decisions"]
   C --> G["Foundation coherence gate"]
   G --> S["S07–S09 responsibility and surfaces"]
   S --> R["S10 subsystem survival"]
   R --> A["S11 architecture and migration"]
-  A --> P["S12 specifications and Mission DAG"]
-  P --> M["Implementation Mission waves"]
+  A --> P["S12A approved specifications"]
+  P --> D["S12B executable Mission DAG"]
+  D --> M["Implementation Mission waves"]
 
   O --> H["Typed side-session handoff"]
   H --> W["Decision / evidence / spike / spec / build work"]
@@ -131,16 +132,19 @@ builders, and reviewers do not turn missing authority into conversational scope 
 3. A separate top-level session creates a branch only when it will mutate durable files.
 4. Concurrent mutating sessions require separate worktrees and branches from an exact recorded
    baseline.
-5. One implementation Mission owns one branch and one reviewable PR.
-6. Do not create a branch per agent; parallel builders share the Mission branch only when file
+5. Before any mutation, validate the declared baseline against the actual commit/tree, dirty state,
+   worktrees, named files, generated/shared surfaces, and accepted upstream-contract versions. A
+   mismatch is `reject` unless this task explicitly revalidates and reissues the handoff.
+6. One implementation Mission owns one branch and one reviewable PR.
+7. Do not create a branch per agent; parallel builders share the Mission branch only when file
    ownership is disjoint and the orchestrator has designed the join.
-7. Serialize changes to `cli/spectacular`, lifecycle schemas, command registries, canonical
+8. Serialize changes to `cli/spectacular`, lifecycle schemas, command registries, canonical
    contracts, shared tests, or the same file.
-8. Never stash, reset, overwrite unrelated changes, merge, mark a PR ready, deploy, or delete a
+9. Never stash, reset, overwrite unrelated changes, merge, mark a PR ready, deploy, or delete a
    remote branch unless the handoff grants that exact authority.
-9. Local commits, push, and draft-PR creation are separate permissions. A normal implementation
+10. Local commits, push, and draft-PR creation are separate permissions. A normal implementation
    handoff may grant them; merge remains human-gated.
-10. Spike code is evidence, not production. Preserve its findings and recovery pointer before
+11. Spike code is evidence, not production. Preserve its findings and recovery pointer before
     disposal or promotion.
 
 ### Current planning baseline
@@ -170,13 +174,26 @@ At every return, the orchestration task checks:
    decision;
 8. the one safe next action.
 
+The first check is deterministic: `schema_version`, handoff identity/hash, immutable input refs,
+accepted-contract versions, reviewer/runtime identity, read set, and reviewed commit/tree must match
+the issued handoff. Baseline drift is never silently normalized.
+
 ## Universal return packet
 
 ```yaml
 return:
+  schema_version: spectacular.handoff-return.v2
   handoff_id: <HNN>
+  handoff_hash: <sha256-of-issued-handoff>
   status: complete | blocked | failed
-  baseline: <commit-or-read-only-snapshot>
+  baseline:
+    commit: <immutable-commit>
+    tree: <reviewed-tree>
+    dirty_state: clean | declared-pre-existing
+  input_refs: [<immutable source refs and versions>]
+  upstream_contracts: [<accepted contract id@version>]
+  reviewer: <task/thread/model-or-runtime identity>
+  read_set: [<files, commits, provider refs actually inspected>]
   result: <one-paragraph outcome>
   decisions: [<explicit owner decisions only>]
   facts: [<verified facts with refs>]
@@ -194,14 +211,28 @@ return:
    - **H01 — Product-boundary evidence audit:** read-only current-product and contradiction packet.
    - **H04 — Independent foundation adversarial review:** different-model, fresh-context audit of
      the entire proposed method, decision order, responsibility model, and implementation guards.
-2. Orchestration checkpoint: disposition H04's blocking findings and repair the program if needed.
-3. **H02 — S01 Product Constitution lead:** owner grilling informed by H01 and any accepted H04
-   corrections; returns a proposed
-   Product Constitution packet with explicit dispositions.
-4. **H03 — Product Constitution skeptic:** fresh-context audit after H02, before reconciliation.
+2. Orchestration checkpoint: H04 was accepted with required repairs B1–B4; see
+   [`evidence/returns/H04-foundation-adversarial-review.md`](evidence/returns/H04-foundation-adversarial-review.md).
+3. **H02 — S01 Product Constitution lead:** completed with owner dispositions; see
+   [`evidence/returns/H02-product-constitution.md`](evidence/returns/H02-product-constitution.md).
+4. **H03 — Product Constitution skeptic:** fresh-context audit of H02 against H01 and reconciled H04.
 5. Orchestration checkpoint: accept, bounce, or escalate S01; only then authorize S02.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
+
+## Parallel research-intake lane
+
+H05 may study named competing or adjacent skills while the constitutional sequence proceeds. It is
+read-only and returns comparative evidence only; it cannot ingest concepts, edit this workbench, or
+authorize a product direction. This orchestration task reviews the return and selects which atomic
+findings, if any, become `source-015` or later. Research interrupts an accepted upstream contract
+only when it supplies named, verifiable, reversal-grade evidence and accounts for the downstream
+contracts affected.
+
+H05 returned against baseline `7a85469` and was accepted with bounded ingestion as Source 015. It
+added PZL-172 and PZL-173 to S06, reinforced existing runtime/handoff/repair/projection concepts,
+and supplied no reversal-grade finding. No reconciliation spike or companion extraction is yet
+authorized because S03 and S05 own prerequisite truth and authority contracts.
 
 ## Method evaluation
 

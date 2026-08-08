@@ -3,7 +3,7 @@ type: concept-piece
 id: PZL-105
 status: captured
 domain: context-compilation
-sources: [source-008, source-009, source-010]
+sources: [source-008, source-009, source-010, source-015]
 source_authority: unsourced-protocol-synthesis
 assessment: strong
 evidence_status: partial
@@ -12,7 +12,7 @@ depends_on: [PZL-070]
 overlaps_with: [PZL-091, PZL-104]
 conflicts_with: []
 tags: [context, isolation, specialization, contracts]
-updated: 2026-08-07
+updated: 2026-08-08
 ---
 
 # Isolated bounded node context

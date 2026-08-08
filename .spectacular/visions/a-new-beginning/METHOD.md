@@ -4,7 +4,7 @@ status: active
 owner: alex
 vision: a-new-beginning
 current_phase: distributed-decision-orchestration
-next_source: source-015
+next_source: source-016
 updated: 2026-08-08
 ---
 
@@ -46,6 +46,10 @@ side sessions, agents, and implementation Missions without turning summaries int
 14. Side sessions receive bounded packets and return typed facts, evidence, decisions, conflicts,
     and one next action; they do not silently promote or reconcile their own result.
 15. Sessions, agents, Missions, runs, native plans, and branches are distinct boundaries.
+16. Evidence rules follow a minimum truth/provenance contract; destructive survival decisions follow
+    an accepted compatibility floor.
+17. Handoffs and returns bind to immutable inputs, accepted-contract versions, reviewer/read set, and
+    reviewed tree; baseline drift is rejected or explicitly revalidated.
 
 ## End-to-end lifecycle
 
@@ -139,8 +143,10 @@ owns some high-ambiguity work behind a typed handoff.
 
 ## Phase 4 — Decide in bounded domain sessions
 
-When intake is sufficiently complete, run the sessions in `FOUNDATION-PLAN.md`. Each sitting loads
-only its linked concepts, conflicts, current repository evidence, and accepted upstream contracts.
+When intake is sufficiently complete, run the sessions in `FOUNDATION-PLAN.md`. Constitutional
+order is S01 → S03A → S02 → S03B → S04–S06; later responsibility and reduction work follows only
+after the stated coherence and compatibility gates. Each sitting loads only its linked concepts,
+conflicts, current repository evidence, and accepted upstream contracts.
 Use a copy-ready handoff from [`handoffs/`](handoffs/) for side tasks; every result returns here for
 checkpoint review before a successor is authorized.
 
@@ -180,6 +186,148 @@ can settle the uncertainty.
 Do not interleave domains. Reopen an accepted upstream decision only with named new evidence and an
 explicit account of the downstream contracts it invalidates.
 
+### Constitutional exploration and grilling loop
+
+H02 / S01 exposed a reusable method for turning ambiguous product direction into a shared
+constitutional contract. This is not ordinary requirements interviewing. It is progressive
+contract formation: exploration opens a bounded decision space, grilling makes the consequences of
+each viable direction explicit, and an owner disposition promotes one direction into authority.
+
+The observed transformation was:
+
+```text
+contradiction
+→ responsibility/domain map
+→ end-to-end user-success flow
+→ protected gates
+→ primary user and job
+→ atomic promise stack
+→ owned responsibilities
+→ tool and non-goal boundaries
+→ removal/failure test
+→ Product Constitution
+```
+
+#### Exploration and grilling are separate modes
+
+**Exploration** asks what might be true and what evidence could distinguish the viable worlds. It
+may use repository research for factual uncertainty, prototypes for experiential uncertainty,
+spikes for feasibility uncertainty, and consequence maps for value or policy uncertainty. It stops
+when no more than three coherent worlds can be compared honestly or when a named evidence gap
+prevents comparison.
+
+**Grilling** asks what the owner is willing to make authoritative. It does not manufacture more
+options once the consequential alternatives are understood. It exposes the accepted trade-off,
+reversal cost, failure modes, and downstream constraints, then requires an explicit
+`adopt | adapt | reject | defer | needs-evidence` disposition.
+
+The promotion boundary is:
+
+```text
+possibility
+→ compared option
+→ recommendation plus strongest alternative
+→ owner challenge or adaptation
+→ explicit disposition
+→ accepted contract
+→ derived downstream constraints
+```
+
+No recommendation, positive reaction, repeated summary, or lack of objection crosses that boundary
+by implication.
+
+#### Roles in the decision session
+
+The owner supplies product ambition, lived user reality, desired experience, value judgments,
+accepted risk, and final disposition. The decision lead supplies decomposition, contradiction
+detection, coherent alternatives, consequence mapping, boundary pressure, precise restatement, and
+dependency order. The collaboration is model-building rather than question answering:
+
+```text
+lead proposes a model
+→ owner supplies a counterexample, correction, or adaptation
+→ lead reconstructs the model
+→ both inspect consequences
+→ owner disposes
+→ lead derives constraints and the next dependent question
+```
+
+Specialists may research, prototype, spike, or review inside a decision. They do not inherit the
+owner's disposition authority or promote their own output. The decision lead remains accountable
+for comparing and reconciling their returns.
+
+#### One dependent decision at a time
+
+For each decision:
+
+1. state the exact decision and the upstream contract constraining it;
+2. present no more than three coherent worlds rather than an arbitrary feature menu;
+3. recommend one world and explain why;
+4. present the strongest real alternative, not a deliberately weak foil;
+5. expose user value, accepted trade-off, reversal cost, failure modes, and downstream constraints;
+6. invite correction or adaptation using concrete counterexamples;
+7. restate the adapted choice precisely without inflating it;
+8. require an explicit owner disposition;
+9. record the rationale and rejected/deferred alternatives, not only the winning sentence;
+10. derive the next question from the accepted choice instead of switching domains.
+
+Recommendations create anchoring risk. Counter it with a credible strongest alternative,
+independent skeptical review, preserved rejected paths, and permission for the owner to reconstruct
+the option rather than merely select it.
+
+#### Establish flow before ownership
+
+When a product boundary is unclear, first explain the user-success journey in the simplest possible
+macro-flow. Only then assign each node and edge to core, host runtime, native tool, companion, agent
+role, or human authority. Beginning from current commands, folders, agents, or subsystems biases the
+session toward preserving implementation shape.
+
+Separate ownership of a gate from performance of work inside it. The control plane may own why work
+is needed, authoritative inputs, uncertainty, evidence threshold, comparison, acceptance, and
+promotion while delegating research, design, prototyping, architecture analysis, implementation, or
+review. Delegation does not transfer responsibility for integrating the return.
+
+#### Audit promises atomically
+
+A single positioning sentence is not sufficient for constitutional accountability. Split it into
+standalone promises and classify each as `core | supporting | partial | understated | overstated |
+wrong`. A core promise must pass all of these tests:
+
+1. the product can govern the promised behavior;
+2. failure is observable rather than rhetorical;
+3. enough state survives to recover from failure;
+4. the product remains accountable when performance is delegated;
+5. no optional companion is required to fulfil it.
+
+Keep behavioral guarantees separate from desired outcomes that still require S02 measurement.
+Claims such as higher quality, lower owner overhead, fewer wasted generations, or faster delivery
+must not become unconditional guarantees merely because they are important.
+
+#### Build a constitution in dependency order
+
+The observed order is load-bearing:
+
+1. primary beneficiary and operating participants;
+2. job-to-be-done;
+3. umbrella promise and atomic promise stack;
+4. protected behavioral loop and acceptance gates;
+5. responsibilities required to uphold the promises;
+6. tool, authority, and non-goal boundaries;
+7. failure/removal test;
+8. accepted trade-offs, reversibility, and downstream constraints.
+
+Each layer constrains the next. The failure test distinguishes a constitution from a description of
+the current product: if removing a behavior means the result is no longer the same product, that
+behavior is protected even when its implementation is replaceable.
+
+#### Method checkpoint
+
+The H02 session is positive evidence for this loop, not final validation. H03 must test whether the
+recommended options anchored the owner, whether broad option bundles hid material sub-decisions,
+whether any accepted wording overpromises, and whether the resulting Constitution is coherent with
+the evidence packet. Preserve those findings before promoting this protocol into a product workflow
+or companion skill.
+
 ## Phase 5 — Confirm boundaries and contracts
 
 Before spec promotion, confirm as a coherent whole:
@@ -205,11 +353,11 @@ not combine into an incoherent product.
 4. Derive small specifications around stable behavior or interface boundaries—not source documents,
    sessions, or code folders.
 5. Give every spec acceptance criteria, compatibility impact, migration behavior, and evidence path.
-6. Resolve dependencies among specs before creating implementation requests.
+6. Resolve dependencies and approve every spec version before creating implementation requests.
 
 ## Phase 7 — Build the executable refactor program
 
-Only after specifications are approved:
+Only after S12A specifications are approved may S12B:
 
 1. separate immediate safety/correctness stabilization from architectural change;
 2. order work by contract dependencies and vertical slices;
@@ -284,14 +432,17 @@ A future agent or session resumes in this order:
 ## Current state
 
 - Branch: `refactor/a-new-beginning`.
-- Current phase: distributed orchestration and constitutional-decision setup; later sources may
+- Current phase: H04-reconciled, H03-ready constitutional review; later sources may
   still be ingested without interrupting an active decision unless they contain reversal evidence.
-- Ingested baseline: Sources 001–014, 171 concept cards, 23 GitHub issue cards.
-- Latest synthesis: checkpoint 012.
-- Human dispositions: 0.
+- Ingested baseline: Sources 001–015, 173 concept cards, 23 GitHub issue cards.
+- Latest synthesis: checkpoint 013.
+- Human dispositions: H02 owner dispositions recorded; central accepted product decisions: 0.
 - Promoted specifications: 0.
-- Active handoff queue: H01 evidence audit + H04 independent foundation review in parallel →
-  orchestration checkpoint → H02 S01 Product Constitution → H03 skeptic.
-- Planning baseline: commit `c8ff3fd`; H01 and H04 are ready for read-only dispatch. Unrelated
+- Active handoff queue: H01 accepted as evidence; H02 complete; H04 accepted with required program
+  repairs; H03 skeptic is next. H05 is an independent
+  research-intake lane for named competing skills; H05 was accepted with bounded ingestion as
+  Source 015 and added PZL-172–173 without changing decision order.
+- Planning baseline: commit `c8ff3fd`; each new handoff must declare and validate a fresh immutable
+  baseline plus content hash. Unrelated
   untracked files remain excluded from this program.
-- Next source ID remains `source-015`.
+- Next source ID is `source-016`.

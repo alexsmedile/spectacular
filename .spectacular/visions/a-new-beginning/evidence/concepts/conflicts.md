@@ -1,6 +1,6 @@
 ---
 type: concept-conflict-matrix
-updated: 2026-08-07
+updated: 2026-08-08
 ---
 
 # Contradiction and dependency matrix
@@ -233,6 +233,9 @@ updated: 2026-08-07
 | PZL-170 | “Monolith first” and “boring technology” are defaults, not substitutes for repository constraints, failure analysis, or measured fit | heuristic boundary | verified |
 | PZL-171 + PZL-110 | Schema diffs detect declared structural compatibility, not every semantic, behavioral, security, or operational break | assurance boundary | verified |
 | PZL-171 | Generated mocks become a second truth if they are not reproducibly derived from the accepted interface schema | projection-drift risk | open |
+| PZL-172 | A reconciliation envelope can validate closed properties but becomes gameable ceremony if document presence substitutes for semantic evidence | assurance boundary | open |
+| PZL-173 + PZL-099 | A run ledger duplicates authority if it independently stores Mission goal, lifecycle, contract delta, or accepted evidence | state-authority collision | verified |
+| source-015 | Primary repository mechanisms establish existence, not comparative user value or the correct Spectacular product boundary | evidence limit | verified |
 
 Add cross-source contradictions here as soon as they are observed. A row records
 the collision; it does not choose the winner.

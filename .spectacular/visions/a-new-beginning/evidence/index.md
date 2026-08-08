@@ -31,6 +31,7 @@ updated: 2026-08-08
 | [Source 012](source-012-decision-density.md) | user-provided unsourced proposal | decision density, variants, grilling, logic harnesses, critic gates, wayfinding pack | ingested |
 | [Source 013](source-013-ai-ux-stress-testing.md) | user-provided unsourced proposal plus owner hypothesis | UX tensions, parametric prototypes, adversarial personas, consequence audits, decision multiplexer | ingested |
 | [Source 014](source-014-reversible-architecture-decisions.md) | user-provided unsourced proposal | reversibility, decision ownership, spikes, product/ADR boundary, optionality, interface compatibility | ingested |
+| [Source 015](source-015-competing-skills-study.md) | primary-repository comparative study | workflow artifacts, gates, runtime boundaries, evidence reconciliation, continuity, status drift | ingested |
 
 ## Concept database
 
@@ -54,13 +55,15 @@ updated: 2026-08-08
 - [Synthesis checkpoint 010](synthesis-010.md) — decision-multiplexer boundary and AI UX profile recommendation
 - [Synthesis checkpoint 011](synthesis-011.md) — reversibility-calibrated governance and architecture boundaries
 - [Synthesis checkpoint 012](synthesis-012.md) — distributed orchestration contract and constitutional dispatch order
-- [Ingestion status recap](recap-001-ingestion-status.md) — brief focus map for Sources 001–014
+- [Synthesis checkpoint 013](synthesis-013.md) — competing-skill evidence, reconciliation envelope, and subordinate run ledger
+- [H05 return review](returns/H05-competing-skills-study.md) — accepted comparative study and bounded-ingestion disposition
+- [Ingestion status recap](recap-001-ingestion-status.md) — brief focus map for Sources 001–015
 - [GitHub issue evidence](issues/) — one provenance card per open issue and comment thread
 
 ## Current counts
 
-- Sources: 14
-- Concept pieces: 171
+- Sources: 15
+- Concept pieces: 173
 - GitHub issue evidence cards: 23
 - Human dispositions: 0
 - Promoted fragments: 0

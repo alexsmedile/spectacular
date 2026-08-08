@@ -35,32 +35,38 @@ orchestration task reconciles the reviewed packet.
 | III · Responsibility and surfaces | S07–S09 | Core/companion ownership, retrieval/scaffold, vocabulary and interface | Sharp boundaries with one authority per responsibility |
 | IV · Reduction and delivery | S10–S12 | Subsystem survival, target implementation/migration, final spec program | Approved specs and an executable refactor sequence |
 
-## Twelve decisive sessions
+## Fourteen decisive sittings across twelve domains
 
 1. **S01 — Product identity, protected core, and non-goals.** Define what makes the result
    Spectacular and which attractive responsibilities it refuses.
-2. **S02 — Refactor success function and evidence constitution.** Define weighted metrics,
+2. **S03A — Minimum truth/provenance floor.** Define enough authority, provenance, freshness, and
+   missing-information semantics for evidence to be meaningful.
+3. **S02 — Refactor success function and evidence constitution.** Define weighted metrics,
    survival evidence, prototype rules, and anti-gaming checks against the accepted identity.
-3. **S03 — Truth hierarchy and contract model.** Define authority, freshness, provenance,
+4. **S03B — Full truth hierarchy and contract model.** Define authority, freshness, provenance,
    Capability Contract shape, and the graph adoption level.
-4. **S04 — Work-unit ontology and lifecycle.** Define Capability, SPC/spec, Mission/request,
+5. **S04 — Work-unit ontology and lifecycle.** Define Capability, SPC/spec, Mission/request,
    portfolio goal, objective, run, task, decision, discovery node, and record.
-5. **S05 — Execution authority, human authority, and side effects.** Allocate execution,
+6. **S05 — Execution authority, human authority, and side effects.** Allocate execution,
    lifecycle, approval, Git/GitHub, and provider mutations.
-6. **S06 — Verification, evidence, closure, and continuity.** Define proof, independent review,
+7. **S06 — Verification, evidence, closure, and continuity.** Define proof, independent review,
    bounded repair, reconciliation, durable resume, and terminal next action.
-7. **S07 — Core, companions, agents, modes, and adapters.** Decide pageworks, specwright,
+8. **S07 — Core, companions, agents, modes, and adapters.** Decide pageworks, specwright,
    bugworks, verifyworks, Wayfinder, AFK, roles, namespaces, and handoffs.
-8. **S08 — Retrieval architecture, instruction layers, and earned workspace.** Define universal
+9. **S08 — Retrieval architecture, instruction layers, and earned workspace.** Define universal
    context, projections, registries, reference tiers, minimal scaffold, and grow-on-write.
-9. **S09 — Public language and interface grammar.** Define canonical vocabulary, CLI/skill
+10. **S09 — Public language and interface grammar.** Define canonical vocabulary, CLI/skill
    grammar, readable artifact leads, status views, visual conventions, and deprecations.
-10. **S10 — Subsystem, collection, policy, and fleet survival.** Apply S01's rubric to every
+11. **Compatibility-floor checkpoint.** Fix the supported population, deprecation promise,
+    recovery boundary, and minimum compatibility window before any retirement.
+12. **S10 — Subsystem, collection, policy, and fleet survival.** Apply S01's rubric to every
     contested capability; this is the first legitimate deletion session.
-11. **S11 — Implementation architecture and compatibility strategy.** Define module seams,
+13. **S11 — Implementation architecture and migration strategy.** Define module seams,
     Bash/port posture, tests, migration mechanics, compatibility window, and recovery.
-12. **S12 — Specification topology and executable refactor program.** Produce the fewest coherent
-    specs, acceptance tests, dependency order, implementation batches, and stop checkpoints.
+14. **S12A — Specification topology and approval.** Produce, review, dependency-check, and approve
+    the fewest coherent specs.
+15. **S12B — Executable refactor program.** Compile only approved specs into implementation
+    Missions, dependency waves, joins, evidence gates, rollback, and stop checkpoints.
 
 ## Top 20 foundational priorities
 
@@ -87,7 +93,11 @@ Ranked by product blast radius, dependency fan-out, cost of reversal, and mainte
 19. Target implementation architecture.
 20. Compatibility and migration strategy.
 
-## Working responsibility baseline
+## Conditional responsibility hypothesis
+
+The following is input to S01/H03 and S07, not accepted authority. H02 has owner-disposed the
+control-plane direction, but central S01 acceptance is still pending; detailed owner placement
+remains conditional until its named session.
 
 - **Spectacular:** project control plane—durable context, accepted contracts, bounded work intent,
   decisions, lifecycle, evidence requirements, reconciliation, status, and resume.
@@ -117,16 +127,17 @@ Companion starting position:
 
 ## Program rules
 
-1. S01–S06 are mandatory and sequential.
+1. Constitutional order is S01 → S03A → S02 → S03B → S04–S06.
 2. S07–S09 follow the accepted operating model and must remain mutually coherent.
-3. No subsystem deletion before S10.
+3. No subsystem deletion before an accepted compatibility-floor checkpoint and S10.
 4. No target code architecture before the final product surface is known.
 5. No implementation task without an approved specification and validation path.
 6. One implementation request per accepted boundary, not per decision sitting.
 7. Graphs begin as relationships and derived views; scheduling/concurrency must earn promotion.
 8. Spectacular remains standalone; companion integrations are optional.
 9. Reopen upstream decisions only with named new evidence and an impact audit.
-10. S12 is the only session authorized to produce the final executable refactor program.
+10. S12A may derive and approve specifications but cannot create implementation work; only S12B is
+    authorized to produce the executable refactor program from approved spec versions.
 11. This task is the program orchestrator: side sessions investigate, grill, spike, specify, build,
     or review; they return typed packets and never authorize successors or reconcile themselves.
 12. Read-only evidence work may run in parallel when questions are independent. Type-1 decisions
@@ -168,10 +179,9 @@ must not prejudge the v2 product surface.
 
 ## Current checkpoint
 
-Distributed decision orchestration is set up, but no product disposition has been accepted. The
-Vision workbench planning baseline is commit `c8ff3fd`. H01 may audit product-boundary evidence
-while H04 independently stress-tests the entire foundation with a different model. This task
-dispositions H04 before H02 runs S01; H03
-then independently reviews the proposed constitution before the final S01 checkpoint. New material
+H01 evidence and the complete owner-disposed H02 Constitution are recorded. H04 returned
+`sound-with-required-changes`; B1–B4 were accepted with the temporal qualification that H02 now
+supplies dispositions for the control-plane proposal while downstream placements remain pending.
+H03 independently reviews the proposed Constitution before the final S01 checkpoint. New material
 uses `source-015` onward, but does not interrupt an active constitutional session unless it contains
 named evidence capable of reversing its result.

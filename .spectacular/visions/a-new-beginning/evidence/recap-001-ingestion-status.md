@@ -1,7 +1,7 @@
 ---
 type: ingestion-recap
-sources: 14
-concepts: 171
+sources: 15
+concepts: 173
 github_issue_cards: 23
 human_dispositions: 0
 promoted_fragments: 0
@@ -28,14 +28,15 @@ updated: 2026-08-08
 | 012 | Decision density, contrastive prototypes, optioned grilling, logic harnesses, pre-human critic gates, ambiguity routing |
 | 013 | UX tension mapping, parametric boundary-state prototypes, adversarial persona limits, AI resilience patterns, decision-multiplexer boundary |
 | 014 | Reversibility-calibrated decisions, accountable advice, PRD/ADR separation, earned optionality seams, executable interface compatibility |
+| 015 | Competing-skill study: bounded gates, artifact-addressed continuity, runtime coupling, reconciliation-envelope gap, status drift |
 
 ## Current corpus
 
-- 14 normalized source cards.
-- 171 atomic concept pieces, each retaining provenance, assumptions, evidence, collisions, trade-offs,
+- 15 normalized source cards.
+- 173 atomic concept pieces, each retaining provenance, assumptions, evidence, collisions, trade-offs,
   recommendation, and an explicit pending disposition.
 - 23 GitHub issue evidence cards covering every issue open on 2026-08-07 and its comments.
-- Two derived Mermaid maps, a domain map, a contradiction matrix, and twelve synthesis checkpoints.
+- Two derived Mermaid maps, a domain map, a contradiction matrix, and thirteen synthesis checkpoints.
 - A proposed responsibility model, twelve decision sessions, and a ranked top-20 foundation list.
 - Zero human dispositions and zero promoted specifications: capture and comparison are complete for
   the material supplied so far, but product choices have not been inferred.

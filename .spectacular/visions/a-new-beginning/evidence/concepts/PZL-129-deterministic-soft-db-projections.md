@@ -3,7 +3,7 @@ type: concept-piece
 id: PZL-129
 status: captured
 domain: context-retrieval
-sources: [source-011]
+sources: [source-011, source-015]
 source_authority: owner-authored-proposal-corpus
 assessment: strong
 evidence_status: supported
@@ -12,7 +12,7 @@ depends_on: [PZL-002, PZL-055, PZL-123]
 overlaps_with: [PZL-053, PZL-070]
 conflicts_with: []
 tags: [soft-db, projections, json, briefing]
-updated: 2026-08-07
+updated: 2026-08-08
 ---
 
 # Deterministic decision-capable soft-DB projections
@@ -34,6 +34,8 @@ The CLI can derive projections from canonical frontmatter and stable body signal
 
 Issue #12 extends the already-proven `status --json` pattern. It overlaps read-view consolidation
 and must not duplicate the measurement or briefing schema proposed by #11.
+Source 015 supplies a concrete counterexample: fixed progress percentages and mismatched manifest
+and instruction versions show how independently maintained status can drift.
 
 ## Trade-offs and recommendation
 

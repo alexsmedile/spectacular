@@ -13,7 +13,10 @@ updated: 2026-08-08
 
 These are ranked by combined product blast radius, dependency fan-out, cost of later reversal, and
 long-term maintenance effect—not by ease, novelty, or current line count. Recommendations are
-starting positions for the named decision sessions; every disposition remains pending.
+starting hypotheses for the named decision sessions, not defaults. H02 has supplied owner
+dispositions for S01, but they remain pending H03 and central acceptance; all other rows remain
+undisposed. Every session must include a credible narrower alternative and must not inherit another
+row's working answer as authority.
 
 | Rank | Foundational decision | Working recommendation | Why a wrong choice is expensive | Session |
 |---:|---|---|---|---|

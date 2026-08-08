@@ -37,7 +37,11 @@ discovery, AFK/Git, policy, and agent-fleet behavior. Pageworks already proves t
 can leave Spectacular behind a sharp, optional, standalone file handoff. Git-ops proves that native
 Git/GitHub workflow and safety do not need to be reimplemented inside Spectacular.
 
-## Recommended responsibility stack
+## Conditional responsibility stack
+
+This diagram is a hypothesis to challenge in S05 and S07. H02 proposes the control-plane boundary;
+H03 and central S01 acceptance are still pending, and no detailed responsibility placement below is
+authorized merely by appearing here.
 
 ```mermaid
 flowchart TB
@@ -69,7 +73,7 @@ flowchart TB
 | Companion skill | One complete specialist job and its own substrate/output | Direct mutation of Spectacular lifecycle or duplicated canonical truth |
 | Agent role | One closed brief and bounded result | Independent product surface, durable collection, or lifecycle authority |
 
-## Spectacular's proposed protected responsibility
+## Spectacular's H02-proposed protected responsibility
 
 Spectacular is the **project control plane**, not the executor or every specialist:
 

@@ -75,12 +75,12 @@ updated: 2026-08-07
 | PZL-066 | [Mission as approved contract delta](PZL-066-mission-contract-delta.md) | work-unit-model | promising | partial | pending | sources 006/007 |
 | PZL-067 | [One mandatory execution approval](PZL-067-one-execution-approval.md) | approval-authority | disputed | partial | pending | sources 006/007 |
 | PZL-068 | [Outcome-oriented mission objectives](PZL-068-outcome-oriented-objectives.md) | planning-contract | strong | supported | pending | sources 006/007 |
-| PZL-069 | [Reuse the host coding runtime](PZL-069-reuse-host-runtime.md) | runtime-boundary | strong | supported | pending | sources 006/007 |
+| PZL-069 | [Reuse the host coding runtime](PZL-069-reuse-host-runtime.md) | runtime-boundary | strong | supported | pending | sources 006/007/015 |
 | PZL-070 | [Compile bounded run context](PZL-070-bounded-run-context.md) | context-compilation | strong | partial | pending | sources 006/007 |
 | PZL-071 | [Single-agent checkpointed run](PZL-071-single-agent-checkpointed-run.md) | autonomous-execution | disputed | partial | pending | sources 006/007 |
 | PZL-072 | [Explicit autonomous stop conditions](PZL-072-explicit-stop-conditions.md) | autonomy-safety | strong | supported | pending | sources 006/007 |
 | PZL-073 | [Evidence mapped to contract clauses](PZL-073-clause-mapped-evidence.md) | verification-contract | strong | partial | pending | sources 006/007 |
-| PZL-074 | [Closure reconciles current truth](PZL-074-closure-reconciles-truth.md) | closure-lifecycle | strong | supported | pending | sources 006/007 |
+| PZL-074 | [Closure reconciles current truth](PZL-074-closure-reconciles-truth.md) | closure-lifecycle | strong | supported | pending | sources 006/007/015 |
 | PZL-075 | [Cold-agent status and resume](PZL-075-cold-agent-resume.md) | continuity | strong | supported | pending | sources 006/007 |
 | PZL-076 | [One compact mission lifecycle](PZL-076-compact-mission-lifecycle.md) | lifecycle-model | disputed | partial | pending | sources 006/007 |
 | PZL-077 | [Minimal mission workspace](PZL-077-minimal-mission-workspace.md) | workspace-shape | mixed | partial | pending | sources 006/007 |
@@ -98,7 +98,7 @@ updated: 2026-08-07
 | PZL-089 | [Objective DAG with proof prerequisites](PZL-089-objective-proof-dag.md) | planning-contract | strong | partial | pending | source-007 |
 | PZL-090 | [Authoritative graph-first retrieval](PZL-090-graph-first-retrieval.md) | context-retrieval | promising | partial | pending | source-007 |
 | PZL-091 | [Mission compiler and run manifest](PZL-091-mission-compiler.md) | context-compilation | promising | partial | pending | source-007 |
-| PZL-092 | [Structural gates over prompt advice](PZL-092-structural-gates.md) | enforcement-model | strong | partial | pending | source-007 |
+| PZL-092 | [Structural gates over prompt advice](PZL-092-structural-gates.md) | enforcement-model | strong | partial | pending | sources 007/015 |
 | PZL-093 | [Reconnaissance gate](PZL-093-reconnaissance-gate.md) | execution-gate | strong | supported | pending | source-007 |
 | PZL-094 | [Contract and repository scope gate](PZL-094-scope-drift-gate.md) | execution-gate | strong | partial | pending | source-007 |
 | PZL-095 | [Evidence-first strategy by change class](PZL-095-evidence-first-strategy.md) | verification-method | strong | supported | pending | source-007 |
@@ -111,7 +111,7 @@ updated: 2026-08-07
 | PZL-102 | [Thin vertical graph slice](PZL-102-thin-vertical-graph-slice.md) | acceptance-method | strong | not-needed | pending | source-007 |
 | PZL-103 | [Dependency DAG plus bounded attempts](PZL-103-dependency-dag-bounded-attempts.md) | orchestration-model | strong | partial | pending | sources 008–010 |
 | PZL-104 | [Split, work, check, merge](PZL-104-split-work-check-merge.md) | orchestration-pattern | strong | partial | pending | sources 008–010 |
-| PZL-105 | [Isolated bounded node context](PZL-105-isolated-node-context.md) | context-compilation | strong | partial | pending | sources 008–010 |
+| PZL-105 | [Isolated bounded node context](PZL-105-isolated-node-context.md) | context-compilation | strong | partial | pending | sources 008–010/015 |
 | PZL-106 | [Graph memory for structural retrieval](PZL-106-graph-memory.md) | context-retrieval | promising | partial | pending | sources 008/009 |
 | PZL-107 | [Explicit semantic ontology](PZL-107-semantic-ontology.md) | semantic-contract | promising | partial | pending | sources 008–010 |
 | PZL-108 | [Pointer-first externalized evidence](PZL-108-pointer-first-evidence.md) | evidence-storage | strong | supported | pending | sources 008–010 |
@@ -125,7 +125,7 @@ updated: 2026-08-07
 | PZL-116 | [Targeted error-feedback repair](PZL-116-targeted-error-feedback.md) | diagnostic-loop | strong | supported | pending | sources 008–010 |
 | PZL-117 | [PostgreSQL consolidation option](PZL-117-postgres-consolidation.md) | infrastructure-option | disputed | partial | pending | source-008 |
 | PZL-118 | [Crash-resumable external state](PZL-118-crash-resumable-state.md) | continuity | strong | supported | pending | sources 008–010 |
-| PZL-119 | [Typed inter-node handoff contract](PZL-119-typed-handoff-contract.md) | orchestration-contract | strong | partial | pending | sources 009/010 |
+| PZL-119 | [Typed inter-node handoff contract](PZL-119-typed-handoff-contract.md) | orchestration-contract | strong | partial | pending | sources 009/010/015 |
 | PZL-120 | [Derived Mermaid decision map](PZL-120-derived-mermaid-map.md) | information-architecture | strong | partial | pending | source-009 + owner signal |
 | PZL-121 | [Evaluate the model-harness system](PZL-121-model-harness-evaluation.md) | evaluation-method | strong | supported | pending | source-009 |
 | PZL-122 | [Separate semantics, inference, and validation](PZL-122-semantics-inference-validation.md) | semantic-contract | strong | supported | pending | sources 009/010 |
@@ -133,9 +133,9 @@ updated: 2026-08-07
 | PZL-124 | [Semantic query adapter](PZL-124-semantic-query-adapter.md) | semantic-access | promising | partial | pending | source-010 |
 | PZL-125 | [Grey-box delegation with internal invariants](PZL-125-grey-box-invariants.md) | implementation-quality | strong | supported | pending | source-010 |
 | PZL-126 | [Budgeted handoff capsule](PZL-126-budgeted-handoff-capsule.md) | orchestration-contract | strong | partial | pending | source-010 |
-| PZL-127 | [Bounded review-repair cycle](PZL-127-bounded-review-repair.md) | verification-architecture | strong | partial | pending | source-010 |
+| PZL-127 | [Bounded review-repair cycle](PZL-127-bounded-review-repair.md) | verification-architecture | strong | partial | pending | sources 010/012/015 |
 | PZL-128 | [Frequency-weighted runtime cards](PZL-128-frequency-weighted-runtime-cards.md) | context-retrieval | strong | partial | pending | source-011 |
-| PZL-129 | [Deterministic decision-capable soft-DB projections](PZL-129-deterministic-soft-db-projections.md) | context-retrieval | strong | supported | pending | source-011 |
+| PZL-129 | [Deterministic decision-capable soft-DB projections](PZL-129-deterministic-soft-db-projections.md) | context-retrieval | strong | supported | pending | sources 011/015 |
 | PZL-130 | [Optional advisory retrieval provider](PZL-130-advisory-retrieval-provider.md) | context-retrieval | promising | partial | pending | source-011 |
 | PZL-131 | [Durable goal propagation](PZL-131-durable-goal-propagation.md) | intent-contract | strong | supported | pending | source-011 |
 | PZL-132 | [Derived visual renderer](PZL-132-derived-visual-renderer.md) | information-architecture | strong | partial | pending | source-011 |
@@ -178,6 +178,8 @@ updated: 2026-08-07
 | PZL-169 | [Product contract before architecture choice](PZL-169-product-contract-before-architecture-choice.md) | design-authority | strong | partial | pending | source-014 |
 | PZL-170 | [Earned optionality seams](PZL-170-earned-optionality-seams.md) | implementation-architecture | promising | partial | pending | source-014 |
 | PZL-171 | [Executable interface compatibility](PZL-171-executable-interface-compatibility.md) | contract-verification | strong | partial | pending | source-014 |
+| PZL-172 | [Machine-checkable evidence reconciliation envelope](PZL-172-evidence-reconciliation-envelope.md) | closure-lifecycle | strong | partial | pending | sources 006/007/015 |
+| PZL-173 | [Run-local ledger subordinate to Mission state](PZL-173-subordinate-run-ledger.md) | continuity | strong | partial | pending | sources 007/015 |
 
 ## Filter examples
 

@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s04-accepted
-active_stage: s05-ready
+checkpoint: s05-accepted
+active_stage: s06-ready
 updated: 2026-08-08
 ---
 
@@ -252,7 +252,10 @@ Mission-owned Objectives, boundary-based Runs, run-local Tasks, linked goals, ty
 intra-Mission Handoffs, compact lifecycles, and cold resume. Central disposition: **S04 accepted
 with normalization**: Proposal acceptance authorizes a target delta but does not replace the
 current Capability Contract before reconciliation. The canonical result is
-[`WORK-UNIT-LIFECYCLE-CONTRACT.md`](WORK-UNIT-LIFECYCLE-CONTRACT.md). S05 is next-ready and has not
+[`WORK-UNIT-LIFECYCLE-CONTRACT.md`](WORK-UNIT-LIFECYCLE-CONTRACT.md). S05 is accepted with an
+explicit Autopilot clarification: only the owner resolves a Mission or changes current Capability
+Contract truth. The canonical result is
+[`EXECUTION-AUTHORITY-CONTRACT.md`](EXECUTION-AUTHORITY-CONTRACT.md). S06 is next-ready and has not
 been dispatched.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).

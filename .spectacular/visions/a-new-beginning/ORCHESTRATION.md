@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s05-accepted
-active_stage: s06-ready
+checkpoint: s06-accepted
+active_stage: s07-ready
 updated: 2026-08-08
 ---
 
@@ -255,8 +255,12 @@ current Capability Contract before reconciliation. The canonical result is
 [`WORK-UNIT-LIFECYCLE-CONTRACT.md`](WORK-UNIT-LIFECYCLE-CONTRACT.md). S05 is accepted with an
 explicit Autopilot clarification: only the owner resolves a Mission or changes current Capability
 Contract truth. The canonical result is
-[`EXECUTION-AUTHORITY-CONTRACT.md`](EXECUTION-AUTHORITY-CONTRACT.md). S06 is next-ready and has not
-been dispatched.
+[`EXECUTION-AUTHORITY-CONTRACT.md`](EXECUTION-AUTHORITY-CONTRACT.md). H11 then ran S06 and obtained
+explicit owner acceptance for claim-scoped evidence, risk-triggered independent review, bounded
+repair, closure order, and a pointer-first terminal return. Central disposition: **S06 accepted**.
+The canonical result is
+[`EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md`](EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md). S07 is
+next-ready and has not been dispatched.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

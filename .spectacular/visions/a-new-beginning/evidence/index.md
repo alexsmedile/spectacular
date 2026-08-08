@@ -60,6 +60,7 @@ updated: 2026-08-08
 - [Synthesis checkpoint 015](synthesis-015.md) — accepted S03A truth/provenance floor and S02 authorization
 - [H06 return review](returns/H06-s03a-truth-provenance.md) — accepted owner-decision packet for S03A
 - [Synthesis checkpoint 016](synthesis-016.md) — accepted S02 success/evidence constitution and S03B authorization
+- [Synthesis checkpoint 017](synthesis-017.md) — accepted S03B product truth/contract model and S04 readiness
 - [H07 return review](returns/H07-s02-success-evidence.md) — accepted owner-decision packet for S02
 - [H05 return review](returns/H05-competing-skills-study.md) — accepted comparative study and bounded-ingestion disposition
 - [Ingestion status recap](recap-001-ingestion-status.md) — brief focus map for Sources 001–015

@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s02-accepted
-active_stage: s03b-ready
+checkpoint: s03b-accepted
+active_stage: s04-ready
 updated: 2026-08-08
 ---
 
@@ -240,6 +240,12 @@ disposition: **S02 accepted with normalization**. The later no-numeric dispositi
 earlier “weighted scorecard” wording. The canonical result is
 [`SUCCESS-EVIDENCE-CONSTITUTION.md`](SUCCESS-EVIDENCE-CONSTITUTION.md). S03B is the next authorized
 owner-decision session.
+
+H08 then ran S03B and obtained explicit owner dispositions for claim-scoped authority, the Minimum
+Capability Contract envelope, named gaps, a small Level-1 relationship ceiling, and
+non-authoritative drill-down projections. Central disposition: **S03B accepted**. The canonical
+result is [`PRODUCT-TRUTH-CONTRACT-MODEL.md`](PRODUCT-TRUTH-CONTRACT-MODEL.md). S04 is now the next
+ready owner-decision session; it has not yet been dispatched.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

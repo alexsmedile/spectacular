@@ -23,6 +23,8 @@ updated: 2026-08-08
   priorities, responsibility baseline, and sequencing rules.
 - [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md) — accepted S01 identity, promises,
   protected governing loop, capability boundary, non-goals, and downstream constraints.
+- [`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md) — accepted S03A authority,
+  provenance, freshness, projection, conflict, and unknown-information floor.
 
 ## Intent
 
@@ -205,6 +207,7 @@ Out of scope until explicitly promoted:
   subordinate run ledger, and unchanged constitutional order.
 - `evidence/synthesis-014.md` — accepted S01 Product Constitution, harness-specific orchestration
   evidence, human authority guard, and S03A prerequisite.
+- `evidence/synthesis-015.md` — accepted S03A truth/provenance floor and S02 authorization.
 - `evidence/responsibility-boundaries.md` — working ownership model for Spectacular,
   companions, agents, modes, deterministic mechanisms, host runtime, and providers.
 - `evidence/decision-sessions.md` — four decision batches that turn pending concepts into
@@ -218,7 +221,8 @@ Out of scope until explicitly promoted:
 - `evidence/abstraction-map.md` — experimental derived Mermaid view of intent,
   orchestration, mechanism, truth, and adapter responsibilities.
 - `handoffs/README.md` — current side-session queue and copy-ready bounded prompts.
-- `PRODUCT-CONSTITUTION.md` — accepted S01 contract; S03A is the next constitutional session.
+- `PRODUCT-CONSTITUTION.md` — accepted S01 product boundary contract.
+- `TRUTH-PROVENANCE-FLOOR.md` — accepted S03A prerequisite; S02 is the next constitutional session.
 
 ## Manifest
 

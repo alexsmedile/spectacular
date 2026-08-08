@@ -3,7 +3,7 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: s01-accepted
+checkpoint: s03a-accepted
 decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-08
@@ -26,8 +26,9 @@ Distributed work and checkpoint authority live in [`ORCHESTRATION.md`](ORCHESTRA
 below is an accepted product decision until its session records the owner's disposition and this
 orchestration task reconciles the reviewed packet.
 
-S01 is now accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md). S03A is the next
-authorized sitting; later recommendations remain conditional.
+S01 is accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md), and S03A is accepted in
+[`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md). S02 is the next authorized sitting;
+later recommendations remain conditional.
 
 ## Decision batches
 
@@ -98,9 +99,8 @@ Ranked by product blast radius, dependency fan-out, cost of reversal, and mainte
 
 ## Conditional responsibility hypothesis
 
-The following is input to S01/H03 and S07, not accepted authority. H02 has owner-disposed the
-control-plane direction, but central S01 acceptance is still pending; detailed owner placement
-remains conditional until its named session.
+The following remains a conditional responsibility hypothesis for S07. S01 has accepted the
+control-plane product boundary, but detailed placement remains conditional until its named session.
 
 - **Spectacular:** project control plane—durable context, accepted contracts, bounded work intent,
   decisions, lifecycle, evidence requirements, reconciliation, status, and resume.

@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s01-accepted
-active_stage: s03a-ready
+checkpoint: s03a-accepted
+active_stage: s02-ready
 updated: 2026-08-08
 ---
 
@@ -223,9 +223,15 @@ H02 for neutral ontology/vocabulary, responsibility-neutral tool boundaries, exp
 of authorization policy from provider enforcement, and owner disposition of Git, Skill/CLI,
 P8–P9, and governing-versus-owning-delivery wording. H02 revision 2 satisfied every required change
 with explicit owner dispositions. Central disposition: **S01 accepted**. The canonical result is
-[`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md). S03A is authorized next; S02 remains blocked
-until S03A establishes the minimum truth/provenance floor. Accepted Constitution SHA-256:
+[`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md). Accepted Constitution SHA-256:
 `99565c58316c4c193fe6108b514b04f664bdee966a840ad2e982ecf580e7dab7`.
+
+H06 then ran S03A from the accepted S01 baseline and obtained explicit owner dispositions for
+claim-scoped authority, lean pointer-first provenance, claim-scoped freshness, projection
+non-authority, and explicit unknowns with bounded continuation. Central disposition: **S03A
+accepted**. The canonical result is
+[`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md). S02 is now the next authorized owner
+decision session; S03B and all later sessions remain blocked by their declared dependencies.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

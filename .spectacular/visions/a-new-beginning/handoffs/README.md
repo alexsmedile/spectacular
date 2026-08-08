@@ -12,9 +12,11 @@ the whole workbench or expand scope.
 | H04 | [Independent foundation adversarial review](H04-independent-foundation-adversarial-review.md) | accepted with repairs; [return](../evidence/returns/H04-foundation-adversarial-review.md) | none; fresh-context review |
 | H02 | [S01 Product Constitution lead](H02-s01-product-constitution-lead.md) | revision 2 accepted; [return](../evidence/returns/H02-product-constitution-r2.md) | H03 required changes resolved |
 | H03 | [Product Constitution skeptic](H03-product-constitution-skeptic.md) | complete; [return](../evidence/returns/H03-product-constitution-skeptic.md) | H01 + H02 + reconciled H04 |
+| H06 | S03A truth/provenance owner-decision task | accepted; [return](../evidence/returns/H06-s03a-truth-provenance.md) | accepted S01 |
 
-S01 is centrally accepted in [`../PRODUCT-CONSTITUTION.md`](../PRODUCT-CONSTITUTION.md). S03A is the
-next authorized decision session; S02 remains blocked until its truth/provenance prerequisite passes.
+S01 is centrally accepted in [`../PRODUCT-CONSTITUTION.md`](../PRODUCT-CONSTITUTION.md), and S03A is
+accepted in [`../TRUTH-PROVENANCE-FLOOR.md`](../TRUTH-PROVENANCE-FLOOR.md). S02 is the next
+authorized owner-decision session.
 | H05 | [Competing-skills research study](H05-competing-skills-research-study.md) | accepted; [return review](../evidence/returns/H05-competing-skills-study.md) | ingested as source-015 |
 
 ## Templates

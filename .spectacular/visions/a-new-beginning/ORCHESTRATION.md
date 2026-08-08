@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s03b-accepted
-active_stage: s04-ready
+checkpoint: s04-accepted
+active_stage: s05-ready
 updated: 2026-08-08
 ---
 
@@ -246,6 +246,14 @@ Capability Contract envelope, named gaps, a small Level-1 relationship ceiling, 
 non-authoritative drill-down projections. Central disposition: **S03B accepted**. The canonical
 result is [`PRODUCT-TRUTH-CONTRACT-MODEL.md`](PRODUCT-TRUTH-CONTRACT-MODEL.md). S04 is now the next
 ready owner-decision session; it has not yet been dispatched.
+
+H09 then ran S04 and obtained explicit owner dispositions for one durable Mission work unit,
+Mission-owned Objectives, boundary-based Runs, run-local Tasks, linked goals, typed Gaps,
+intra-Mission Handoffs, compact lifecycles, and cold resume. Central disposition: **S04 accepted
+with normalization**: Proposal acceptance authorizes a target delta but does not replace the
+current Capability Contract before reconciliation. The canonical result is
+[`WORK-UNIT-LIFECYCLE-CONTRACT.md`](WORK-UNIT-LIFECYCLE-CONTRACT.md). S05 is next-ready and has not
+been dispatched.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

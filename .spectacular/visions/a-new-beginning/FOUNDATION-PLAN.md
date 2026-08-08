@@ -3,7 +3,7 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: s09-accepted
+checkpoint: compatibility-floor-accepted
 decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-09
@@ -26,7 +26,7 @@ Distributed work and checkpoint authority live in [`ORCHESTRATION.md`](ORCHESTRA
 below is an accepted product decision until its session records the owner's disposition and this
 orchestration task reconciles the reviewed packet.
 
-S01, S03A, S02, S03B, S04, S05, S06, S07, S08, and S09 are accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md),
+S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, and the compatibility floor are accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md),
 [`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md), and
 [`SUCCESS-EVIDENCE-CONSTITUTION.md`](SUCCESS-EVIDENCE-CONSTITUTION.md), and
 [`PRODUCT-TRUTH-CONTRACT-MODEL.md`](PRODUCT-TRUTH-CONTRACT-MODEL.md), and
@@ -35,8 +35,9 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, S08, and S09 are accepted in [`PRODUCT
 [`EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md`](EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md), and
 [`RESPONSIBILITY-PLACEMENT-CONTRACT.md`](RESPONSIBILITY-PLACEMENT-CONTRACT.md), and
 [`RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md`](RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md), and
-[`PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md`](PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md). The
-compatibility-floor checkpoint is next-ready; later recommendations remain conditional.
+[`PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md`](PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md), and
+[`CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md`](CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md).
+S10 is next-ready; later recommendations remain conditional.
 
 ## Decision batches
 
@@ -190,7 +191,7 @@ must not prejudge the v2 product surface.
 
 ## Current checkpoint
 
-S01, S03A, S02, S03B, S04, S05, S06, S07, S08, and S09 are accepted and hashed. The operating loop,
-responsibility boundary, retrieval model, and public language are stable enough for the
-compatibility-floor checkpoint. New material may still be ingested, but it does not interrupt an
+S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, and the compatibility floor are accepted and
+hashed. The clean v2 support boundary and recovery preconditions are stable enough for S10 to
+evaluate subsystem survival. New material may still be ingested, but it does not interrupt an
 active decision unless it supplies named reversal-grade evidence.

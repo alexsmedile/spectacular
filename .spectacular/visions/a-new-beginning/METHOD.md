@@ -3,7 +3,7 @@ type: refactor-method-record
 status: active
 owner: alex
 vision: a-new-beginning
-current_phase: s09-accepted-compatibility-floor-ready
+current_phase: compatibility-floor-accepted-s10-ready
 next_source: source-016
 updated: 2026-08-09
 ---
@@ -47,7 +47,7 @@ side sessions, agents, and implementation Missions without turning summaries int
     and one next action; they do not silently promote or reconcile their own result.
 15. Sessions, agents, Missions, runs, native plans, and branches are distinct boundaries.
 16. Evidence rules follow a minimum truth/provenance contract; destructive survival decisions follow
-    an accepted compatibility floor.
+    the accepted clean-break cutover and recovery contract.
 17. Handoffs and returns bind to immutable inputs, accepted-contract versions, reviewer/read set, and
     reviewed tree; baseline drift is rejected or explicitly revalidated.
 

@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s09-accepted
-active_stage: compatibility-floor-ready
+checkpoint: compatibility-floor-accepted
+active_stage: s10-ready
 updated: 2026-08-09
 ---
 
@@ -271,7 +271,11 @@ accepted with earned-record and compatibility normalizations. H14 established ca
 identity shapes, Skill/CLI grammar, source-backed cards, and the typed authority spine. The
 canonical result is
 [`PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md`](PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md). The
-compatibility-floor checkpoint is next-ready and has not been dispatched.
+compatibility-floor checkpoint is accepted. H15 established a frozen v1 release, v2-only core,
+whole-project atomic migration, an isolated disposable migration capsule, and evidence-gated
+retirement. The canonical result is
+[`CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md`](CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md).
+S10 is next-ready and has not been dispatched.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

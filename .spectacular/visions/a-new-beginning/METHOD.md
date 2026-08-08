@@ -3,8 +3,8 @@ type: refactor-method-record
 status: active
 owner: alex
 vision: a-new-beginning
-current_phase: compatibility-floor-accepted-s10-ready
-next_source: source-016
+current_phase: pre-s10-sdlc-coherence-review
+next_source: source-017
 updated: 2026-08-09
 ---
 

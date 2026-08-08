@@ -3,7 +3,7 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: compatibility-floor-accepted
+checkpoint: pre-s10-sdlc-coherence-review
 decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-09
@@ -37,7 +37,7 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, and the compatibility floor 
 [`RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md`](RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md), and
 [`PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md`](PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md), and
 [`CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md`](CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md).
-S10 is next-ready; later recommendations remain conditional.
+H16 is the read-only SDLC coherence gate before S10; later recommendations remain conditional.
 
 ## Decision batches
 
@@ -192,6 +192,6 @@ must not prejudge the v2 product surface.
 ## Current checkpoint
 
 S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, and the compatibility floor are accepted and
-hashed. The clean v2 support boundary and recovery preconditions are stable enough for S10 to
-evaluate subsystem survival. New material may still be ingested, but it does not interrupt an
-active decision unless it supplies named reversal-grade evidence.
+hashed. Source 016 supplied no reversal-grade evidence, but H16 will stress the accepted model
+against requirements, design, iterative delivery, deployment, maintenance, incidents, and
+multi-actor coordination before S10 evaluates subsystem survival.

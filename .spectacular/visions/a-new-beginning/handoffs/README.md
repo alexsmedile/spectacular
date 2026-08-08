@@ -20,6 +20,7 @@ S01, S03A, and S02 are centrally accepted in [`../PRODUCT-CONSTITUTION.md`](../P
 [`../SUCCESS-EVIDENCE-CONSTITUTION.md`](../SUCCESS-EVIDENCE-CONSTITUTION.md). S03B is the next
 authorized owner-decision session.
 | H05 | [Competing-skills research study](H05-competing-skills-research-study.md) | accepted; [return review](../evidence/returns/H05-competing-skills-study.md) | ingested as source-015 |
+| H16 | [SDLC coherence adversarial review](H16-sdlc-coherence-adversarial-review.md) | ready; read-only pre-S10 gate | accepted contracts + source-016 |
 
 ## Templates
 

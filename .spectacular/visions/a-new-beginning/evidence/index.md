@@ -32,6 +32,7 @@ updated: 2026-08-09
 | [Source 013](source-013-ai-ux-stress-testing.md) | user-provided unsourced proposal plus owner hypothesis | UX tensions, parametric prototypes, adversarial personas, consequence audits, decision multiplexer | ingested |
 | [Source 014](source-014-reversible-architecture-decisions.md) | user-provided unsourced proposal | reversibility, decision ownership, spikes, product/ADR boundary, optionality, interface compatibility | ingested |
 | [Source 015](source-015-competing-skills-study.md) | primary-repository comparative study | workflow artifacts, gates, runtime boundaries, evidence reconciliation, continuity, status drift | ingested |
+| [Source 016](source-016-sdlc-agentic-frameworks.md) | user-provided unsourced overview | SDLC coverage, delivery methods, agentic roles, orchestration, operations, checkpoints | ingested |
 
 ## Concept database
 
@@ -68,6 +69,7 @@ updated: 2026-08-09
 - [Synthesis checkpoint 022](synthesis-022.md) — accepted S08 retrieval/earned-workspace contract and S09 readiness
 - [Synthesis checkpoint 023](synthesis-023.md) — accepted S09 public-language/interface contract and compatibility-floor readiness
 - [Synthesis checkpoint 024](synthesis-024.md) — accepted clean-break cutover/recovery contract and S10 readiness
+- [Synthesis checkpoint 025](synthesis-025.md) — full-SDLC coherence audit and H16 pre-S10 review gate
 - [H15 return review](returns/H15-compatibility-floor.md) — accepted owner-decision packet for the compatibility floor
 - [H07 return review](returns/H07-s02-success-evidence.md) — accepted owner-decision packet for S02
 - [H05 return review](returns/H05-competing-skills-study.md) — accepted comparative study and bounded-ingestion disposition
@@ -76,7 +78,7 @@ updated: 2026-08-09
 
 ## Current counts
 
-- Sources: 15
+- Sources: 16
 - Concept pieces: 173
 - GitHub issue evidence cards: 23
 - Human dispositions: S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, and compatibility floor reconciled and accepted

@@ -1,6 +1,6 @@
 ---
 type: refactor-intake-index
-updated: 2026-08-08
+updated: 2026-08-09
 ---
 
 # Refactor intake index
@@ -66,6 +66,7 @@ updated: 2026-08-08
 - [Synthesis checkpoint 020](synthesis-020.md) — accepted S06 evidence/closure/continuity contract and S07 readiness
 - [Synthesis checkpoint 021](synthesis-021.md) — accepted S07 responsibility-placement contract and S08 readiness
 - [Synthesis checkpoint 022](synthesis-022.md) — accepted S08 retrieval/earned-workspace contract and S09 readiness
+- [Synthesis checkpoint 023](synthesis-023.md) — accepted S09 public-language/interface contract and compatibility-floor readiness
 - [H07 return review](returns/H07-s02-success-evidence.md) — accepted owner-decision packet for S02
 - [H05 return review](returns/H05-competing-skills-study.md) — accepted comparative study and bounded-ingestion disposition
 - [Ingestion status recap](recap-001-ingestion-status.md) — brief focus map for Sources 001–015
@@ -76,8 +77,8 @@ updated: 2026-08-08
 - Sources: 15
 - Concept pieces: 173
 - GitHub issue evidence cards: 23
-- Human dispositions: S01, S03A, S02, S03B, S04, S05, S06, S07, and S08 reconciled and accepted
-- Accepted constitutional contracts: 9
+- Human dispositions: S01, S03A, S02, S03B, S04, S05, S06, S07, S08, and S09 reconciled and accepted
+- Accepted constitutional contracts: 10
 - Promoted fragments: 0
 
 Update this index after every source ingestion. Counts describe the intake

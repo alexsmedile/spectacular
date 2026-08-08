@@ -3,10 +3,10 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: s08-accepted
+checkpoint: s09-accepted
 decision_sessions: 14
 foundational_priorities: 20
-updated: 2026-08-08
+updated: 2026-08-09
 ---
 
 # Foundation Plan — Spectacular refactor
@@ -26,7 +26,7 @@ Distributed work and checkpoint authority live in [`ORCHESTRATION.md`](ORCHESTRA
 below is an accepted product decision until its session records the owner's disposition and this
 orchestration task reconciles the reviewed packet.
 
-S01, S03A, S02, S03B, S04, S05, S06, S07, and S08 are accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md),
+S01, S03A, S02, S03B, S04, S05, S06, S07, S08, and S09 are accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md),
 [`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md), and
 [`SUCCESS-EVIDENCE-CONSTITUTION.md`](SUCCESS-EVIDENCE-CONSTITUTION.md), and
 [`PRODUCT-TRUTH-CONTRACT-MODEL.md`](PRODUCT-TRUTH-CONTRACT-MODEL.md), and
@@ -34,8 +34,9 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, and S08 are accepted in [`PRODUCT-CONS
 [`EXECUTION-AUTHORITY-CONTRACT.md`](EXECUTION-AUTHORITY-CONTRACT.md), and
 [`EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md`](EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md), and
 [`RESPONSIBILITY-PLACEMENT-CONTRACT.md`](RESPONSIBILITY-PLACEMENT-CONTRACT.md), and
-[`RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md`](RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md). S09 is
-the next-ready sitting; later recommendations remain conditional.
+[`RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md`](RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md), and
+[`PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md`](PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md). The
+compatibility-floor checkpoint is next-ready; later recommendations remain conditional.
 
 ## Decision batches
 
@@ -189,6 +190,7 @@ must not prejudge the v2 product surface.
 
 ## Current checkpoint
 
-S01, S03A, S02, S03B, S04, S05, S06, and S07 are accepted and hashed. The operating loop and its
-responsibility boundary are stable enough for S08. New material may still be ingested, but it does
-not interrupt an active decision unless it supplies named reversal-grade evidence.
+S01, S03A, S02, S03B, S04, S05, S06, S07, S08, and S09 are accepted and hashed. The operating loop,
+responsibility boundary, retrieval model, and public language are stable enough for the
+compatibility-floor checkpoint. New material may still be ingested, but it does not interrupt an
+active decision unless it supplies named reversal-grade evidence.

@@ -4,9 +4,9 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s08-accepted
-active_stage: s09-ready
-updated: 2026-08-08
+checkpoint: s09-accepted
+active_stage: compatibility-floor-ready
+updated: 2026-08-09
 ---
 
 # Refactor orchestration and checkpoint contract
@@ -267,7 +267,11 @@ and has not been dispatched. H13 then ran S08 and obtained explicit owner dispos
 scope-relative cold starts, non-authoritative projections, earned workspace growth, and deferred
 advisory retrieval. Central disposition: **S08 accepted**. The canonical result is
 [`RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md`](RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md). S09 is
-next-ready and has not been dispatched.
+accepted with earned-record and compatibility normalizations. H14 established canonical language,
+identity shapes, Skill/CLI grammar, source-backed cards, and the typed authority spine. The
+canonical result is
+[`PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md`](PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md). The
+compatibility-floor checkpoint is next-ready and has not been dispatched.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

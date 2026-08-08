@@ -10,8 +10,8 @@ the whole workbench or expand scope.
 |---|---|---|---|
 | H01 | [Product-boundary evidence audit](H01-product-boundary-evidence-audit.md) | accepted as [primary evidence](../evidence/returns/H01-product-boundary-audit.md) | none |
 | H04 | [Independent foundation adversarial review](H04-independent-foundation-adversarial-review.md) | accepted with repairs; [return](../evidence/returns/H04-foundation-adversarial-review.md) | none; fresh-context review |
-| H02 | [S01 Product Constitution lead](H02-s01-product-constitution-lead.md) | complete; [draft Constitution](../evidence/returns/H02-product-constitution.md) | H01 return |
-| H03 | [Product Constitution skeptic](H03-product-constitution-skeptic.md) | ready | H01 + H02 + reconciled H04 |
+| H02 | [S01 Product Constitution lead](H02-s01-product-constitution-lead.md) | bounced for bounded repair; [draft](../evidence/returns/H02-product-constitution.md) | H03 required changes |
+| H03 | [Product Constitution skeptic](H03-product-constitution-skeptic.md) | complete; [return](../evidence/returns/H03-product-constitution-skeptic.md) | H01 + H02 + reconciled H04 |
 | H05 | [Competing-skills research study](H05-competing-skills-research-study.md) | accepted; [return review](../evidence/returns/H05-competing-skills-study.md) | ingested as source-015 |
 
 ## Templates

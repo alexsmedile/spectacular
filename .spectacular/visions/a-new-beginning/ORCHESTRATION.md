@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: h04-reconciled
-active_stage: h03-ready
+checkpoint: h03-returned
+active_stage: s01-bounced-h02-repair
 updated: 2026-08-08
 ---
 
@@ -217,6 +217,11 @@ return:
    [`evidence/returns/H02-product-constitution.md`](evidence/returns/H02-product-constitution.md).
 4. **H03 — Product Constitution skeptic:** fresh-context audit of H02 against H01 and reconciled H04.
 5. Orchestration checkpoint: accept, bounce, or escalate S01; only then authorize S02.
+
+H03 returned `pass-with-required-changes`. The central checkpoint accepted the review and bounced
+H02 for neutral ontology/vocabulary, responsibility-neutral tool boundaries, explicit separation
+of authorization policy from provider enforcement, and owner disposition of Git, Skill/CLI,
+P8–P9, and governing-versus-owning-delivery wording. S01 remains unaccepted; S02 remains blocked.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

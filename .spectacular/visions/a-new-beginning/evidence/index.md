@@ -13,6 +13,11 @@ updated: 2026-08-09
 - [Side-session handoffs](../handoffs/README.md) — authorized queue and copy-ready bounded prompts
 - [WORKFLOW.md](WORKFLOW.md) — intake, comparison, decisions, promotion, and retrospective
 
+## Pending program amendments
+
+- [MVP scenario-sequencing proposal](program-amendment-mvp-scenario-sequencing.md) — owner-requested,
+  advisory amendment packet for central orchestration review; no lifecycle or program authority
+
 ## Sources
 
 | Source | Authority | Scope | Status |

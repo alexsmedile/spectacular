@@ -1,6 +1,11 @@
 package workspace
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/alexsmedile/spectacular/v2/internal/domain"
+	"go.yaml.in/yaml/v3"
+)
 
 const stableMission = "---\n" +
 	"type: Mission\n" +
@@ -94,30 +99,23 @@ func TestFingerprintPreservesUnknownYAMLTagMeaning(t *testing.T) {
 	}
 }
 
-func TestFingerprintDistinguishesAliasGraphFromDuplicatedTree(t *testing.T) {
+func TestCanonicalAndFingerprintRefuseProgrammaticSharedYAMLGraph(t *testing.T) {
 	t.Parallel()
 
-	aliasGraph := "---\n" +
-		"type: Proposal\n" +
-		"id: 018f2d8e-7b12-7cc3-8a45-123456789abc\n" +
-		"opaque:\n" +
-		"  first: &shared\n" +
-		"    value: retained\n" +
-		"  second: *shared\n" +
-		"---\n"
-	duplicatedTree := "---\n" +
-		"type: Proposal\n" +
-		"id: 018f2d8e-7b12-7cc3-8a45-123456789abc\n" +
-		"opaque:\n" +
-		"  first:\n" +
-		"    value: retained\n" +
-		"  second:\n" +
-		"    value: retained\n" +
-		"---\n"
-	aliasFingerprint := fingerprintForText(t, aliasGraph)
-	duplicatedFingerprint := fingerprintForText(t, duplicatedTree)
-	if aliasFingerprint == duplicatedFingerprint {
-		t.Fatalf("alias graph and duplicated tree collapsed to fingerprint %s", aliasFingerprint)
+	document, err := Parse([]byte("---\ntype: Proposal\nid: 018f2d8e-7b12-7cc3-8a45-123456789abc\n---\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	shared := &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: "shared"}
+	document.Unknown = map[string]*yaml.Node{
+		"alpha": shared,
+		"zeta":  shared,
+	}
+	if _, err := Canonical(document); !domain.RefusalHasCode(err, domain.RefusalUnsupportedYAMLGraph) {
+		t.Fatalf("Canonical error = %v, want unsupported_yaml_graph", err)
+	}
+	if _, err := Fingerprint(document); !domain.RefusalHasCode(err, domain.RefusalUnsupportedYAMLGraph) {
+		t.Fatalf("Fingerprint error = %v, want unsupported_yaml_graph", err)
 	}
 }
 

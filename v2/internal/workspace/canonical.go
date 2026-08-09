@@ -60,6 +60,13 @@ func Canonical(document *Document) ([]byte, error) {
 		unknownNames = append(unknownNames, name)
 	}
 	sort.Strings(unknownNames)
+	unknownValues := make([]*yaml.Node, 0, len(unknownNames))
+	for _, name := range unknownNames {
+		unknownValues = append(unknownValues, document.Unknown[name])
+	}
+	if err := validateYAMLTree(unknownValues...); err != nil {
+		return nil, err
+	}
 	for _, name := range unknownNames {
 		valueNode, err := normalizeYAMLNode(document.Unknown[name])
 		if err != nil {
@@ -125,170 +132,90 @@ func appendOptionalString(mapping *yaml.Node, name string, value *string) {
 }
 
 func normalizeYAMLNode(root *yaml.Node) (*yaml.Node, error) {
-	normalizer := yamlGraphNormalizer{
-		clones:       make(map[*yaml.Node]*yaml.Node),
-		aliasTargets: make(map[*yaml.Node]bool),
-	}
-	normalized, err := normalizer.clone(root)
-	if err != nil {
-		return nil, err
-	}
-	normalizer.sortMappings(normalized, make(map[*yaml.Node]bool))
-	if err := normalizer.canonicalizeAnchors(normalized); err != nil {
-		return nil, err
-	}
-	return normalized, nil
-}
-
-type yamlGraphNormalizer struct {
-	clones       map[*yaml.Node]*yaml.Node
-	aliasTargets map[*yaml.Node]bool
-}
-
-func (normalizer *yamlGraphNormalizer) clone(node *yaml.Node) (*yaml.Node, error) {
-	if node == nil {
+	if root == nil {
 		return nil, fmt.Errorf("nil YAML node")
 	}
-	if existing, found := normalizer.clones[node]; found {
-		return existing, nil
-	}
-	if node.Kind == yaml.DocumentNode {
+	if root.Kind == yaml.DocumentNode {
 		return nil, fmt.Errorf("unknown property must be a YAML value, not a document")
 	}
-	if node.Kind == yaml.AliasNode && node.Alias == nil {
-		return nil, fmt.Errorf("YAML alias has no target")
-	}
 
-	cloned := *node
-	cloned.Style = 0
-	cloned.HeadComment = ""
-	cloned.LineComment = ""
-	cloned.FootComment = ""
-	cloned.Content = nil
-	cloned.Alias = nil
-	if node.Anchor != "" {
-		cloned.Anchor = "pending"
-	}
-	if node.Kind == yaml.AliasNode {
-		cloned.Value = ""
-	}
-	normalizer.clones[node] = &cloned
-
-	for _, child := range node.Content {
-		clonedChild, err := normalizer.clone(child)
+	normalized := *root
+	normalized.Style = 0
+	normalized.HeadComment = ""
+	normalized.LineComment = ""
+	normalized.FootComment = ""
+	normalized.Anchor = ""
+	normalized.Alias = nil
+	normalized.Content = nil
+	for _, child := range root.Content {
+		normalizedChild, err := normalizeYAMLNode(child)
 		if err != nil {
 			return nil, err
 		}
-		cloned.Content = append(cloned.Content, clonedChild)
+		normalized.Content = append(normalized.Content, normalizedChild)
 	}
-	if node.Alias != nil {
-		clonedTarget, err := normalizer.clone(node.Alias)
-		if err != nil {
-			return nil, err
-		}
-		cloned.Alias = clonedTarget
-		normalizer.aliasTargets[clonedTarget] = true
-	}
-	return &cloned, nil
-}
-
-func (normalizer *yamlGraphNormalizer) sortMappings(node *yaml.Node, visited map[*yaml.Node]bool) {
-	if node == nil || visited[node] {
-		return
-	}
-	visited[node] = true
-	for _, child := range node.Content {
-		normalizer.sortMappings(child, visited)
-	}
-	normalizer.sortMappings(node.Alias, visited)
-	if node.Kind != yaml.MappingNode || len(node.Content)%2 != 0 {
-		return
+	if normalized.Kind != yaml.MappingNode || len(normalized.Content)%2 != 0 {
+		return &normalized, nil
 	}
 
 	type pair struct {
 		key   *yaml.Node
 		value *yaml.Node
 	}
-	pairs := make([]pair, 0, len(node.Content)/2)
-	for index := 0; index < len(node.Content); index += 2 {
-		pairs = append(pairs, pair{key: node.Content[index], value: node.Content[index+1]})
+	pairs := make([]pair, 0, len(normalized.Content)/2)
+	for index := 0; index < len(normalized.Content); index += 2 {
+		pairs = append(pairs, pair{key: normalized.Content[index], value: normalized.Content[index+1]})
 	}
 	sort.SliceStable(pairs, func(left, right int) bool {
 		return nodeSortKey(pairs[left].key) < nodeSortKey(pairs[right].key)
 	})
-	node.Content = node.Content[:0]
+	normalized.Content = normalized.Content[:0]
 	for _, item := range pairs {
-		node.Content = append(node.Content, item.key, item.value)
+		normalized.Content = append(normalized.Content, item.key, item.value)
 	}
+	return &normalized, nil
 }
 
-func (normalizer *yamlGraphNormalizer) canonicalizeAnchors(root *yaml.Node) error {
+const unsupportedYAMLGraphDetail = "YAML anchors, aliases, shared graphs, and cyclic graphs are unsupported"
+
+func validateYAMLTree(roots ...*yaml.Node) error {
 	visited := make(map[*yaml.Node]bool)
-	anchorNames := make(map[*yaml.Node]string)
-	var assign func(*yaml.Node)
-	assign = func(node *yaml.Node) {
-		if node == nil || visited[node] {
-			return
+	visiting := make(map[*yaml.Node]bool)
+	var unsupported func(*yaml.Node) bool
+	unsupported = func(node *yaml.Node) bool {
+		if node == nil {
+			return false
 		}
-		visited[node] = true
-		if node.Kind != yaml.AliasNode && (node.Anchor != "" || normalizer.aliasTargets[node]) {
-			name := fmt.Sprintf("a%d", len(anchorNames)+1)
-			anchorNames[node] = name
-			node.Anchor = name
+		if node.Anchor != "" || node.Kind == yaml.AliasNode || node.Alias != nil || visiting[node] || visited[node] {
+			return true
 		}
+		visiting[node] = true
 		for _, child := range node.Content {
-			assign(child)
-		}
-		assign(node.Alias)
-	}
-	assign(root)
-
-	visited = make(map[*yaml.Node]bool)
-	var updateAliases func(*yaml.Node) error
-	updateAliases = func(node *yaml.Node) error {
-		if node == nil || visited[node] {
-			return nil
-		}
-		visited[node] = true
-		if node.Kind == yaml.AliasNode {
-			name, found := anchorNames[node.Alias]
-			if !found {
-				return fmt.Errorf("YAML alias target has no canonical anchor")
-			}
-			node.Value = name
-		}
-		for _, child := range node.Content {
-			if err := updateAliases(child); err != nil {
-				return err
+			if unsupported(child) {
+				return true
 			}
 		}
-		return updateAliases(node.Alias)
+		delete(visiting, node)
+		visited[node] = true
+		return false
 	}
-	return updateAliases(root)
+	for _, root := range roots {
+		if unsupported(root) {
+			return domain.NewRefusal(
+				domain.RefusalUnsupportedYAMLGraph,
+				"",
+				unsupportedYAMLGraphDetail,
+				nil,
+			)
+		}
+	}
+	return nil
 }
 
-func nodeSortKey(root *yaml.Node) string {
-	var key strings.Builder
-	seen := make(map[*yaml.Node]int)
-	var appendNode func(*yaml.Node)
-	appendNode = func(node *yaml.Node) {
-		if node == nil {
-			key.WriteString("nil;")
-			return
-		}
-		if index, found := seen[node]; found {
-			fmt.Fprintf(&key, "ref:%d;", index)
-			return
-		}
-		index := len(seen)
-		seen[node] = index
-		fmt.Fprintf(&key, "node:%d:%d:%d:%s:%d:%s:%t:[", index, node.Kind, len(node.Tag), node.Tag, len(node.Value), node.Value, node.Anchor != "")
-		for _, child := range node.Content {
-			appendNode(child)
-		}
-		key.WriteString("]alias:")
-		appendNode(node.Alias)
+func nodeSortKey(node *yaml.Node) string {
+	encoded, err := yaml.Marshal(node)
+	if err != nil {
+		return node.Tag + "\x00" + node.Value
 	}
-	appendNode(root)
-	return key.String()
+	return node.Tag + "\x00" + string(encoded)
 }

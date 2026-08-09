@@ -44,6 +44,9 @@ func Parse(data []byte) (*Document, error) {
 			err,
 		)
 	}
+	if err := validateYAMLTree(&root); err != nil {
+		return nil, err
+	}
 	mapping, err := mappingRoot(&root)
 	if err != nil {
 		return nil, err

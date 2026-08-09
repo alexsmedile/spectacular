@@ -21,6 +21,7 @@ const (
 	RefusalTargetTypeMismatch   RefusalCode = "target_type_mismatch"
 	RefusalInvalidWorkspacePath RefusalCode = "invalid_workspace_path"
 	RefusalInvalidFrontmatter   RefusalCode = "invalid_frontmatter"
+	RefusalUnsupportedYAMLGraph RefusalCode = "unsupported_yaml_graph"
 	RefusalInvalidUTF8          RefusalCode = "invalid_utf8"
 	RefusalPersistence          RefusalCode = "persistence_failed"
 )

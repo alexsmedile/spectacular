@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: p0-charter-accepted
-active_stage: p0-implementation-dispatched
+checkpoint: p0-implementation-return-accepted
+active_stage: p0-independent-review-dispatched
 updated: 2026-08-09
 ---
 
@@ -298,9 +298,11 @@ in [`evidence/returns/H21-R1-integration-correction.md`](evidence/returns/H21-R1
 the return is [`evidence/returns/H21-R1-s12b-corrected-refactor-program.md`](evidence/returns/H21-R1-s12b-corrected-refactor-program.md).
 H22 completed P0 preparation with explicit owner approval. Central orchestration accepted
 [`P0-V1-SAFETY-MISSION-CHARTER.md`](P0-V1-SAFETY-MISSION-CHARTER.md) and activated P0 on the
-isolated local branch `codex/fix/v1-safety-stabilization`. H23 is the implementation Run; push, PR,
-provider effects, release, migration, and W0 remain forbidden. P0 cannot close until independent
-review and the Pageworks-owned public-document correction both pass.
+isolated local branch `codex/fix/v1-safety-stabilization`. H23 returned one clean local
+implementation commit with the required checks passing; central accepted it only as review-ready.
+H24 is the independent read-only safety review. Push, PR, provider effects, release, migration, and
+W0 remain forbidden. P0 cannot close until H24 and the Pageworks-owned public-document correction
+both pass.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

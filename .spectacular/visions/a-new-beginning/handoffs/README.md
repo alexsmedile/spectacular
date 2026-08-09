@@ -21,7 +21,7 @@ S01, S03A, and S02 are centrally accepted in [`../PRODUCT-CONSTITUTION.md`](../P
 authorized owner-decision session.
 | H05 | [Competing-skills research study](H05-competing-skills-research-study.md) | accepted; [return review](../evidence/returns/H05-competing-skills-study.md) | ingested as source-015 |
 | H16 | [SDLC coherence adversarial review](H16-sdlc-coherence-adversarial-review.md) | accepted; [return](../evidence/returns/H16-sdlc-coherence-adversarial-review.md) | accepted contracts + source-016 |
-| H17 | S10 subsystem survival | active at Cluster C; [interim A/B checkpoint](../evidence/returns/H17-s10-interim-clusters-a-b.md) | twelve accepted contracts; S11 remains blocked |
+| H17 | S10 subsystem survival | active at Cluster D; [interim A/B checkpoint](../evidence/returns/H17-s10-interim-clusters-a-b.md), [Cluster C delta](../evidence/returns/H17-s10-interim-cluster-c.md) | twelve accepted contracts; S11 remains blocked |
 
 ## Templates
 

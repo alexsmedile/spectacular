@@ -5,7 +5,7 @@ authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
 checkpoint: s11-accepted
-active_stage: s12a-next-ready
+active_stage: s12a-active
 updated: 2026-08-09
 ---
 
@@ -283,7 +283,9 @@ explicit owner decisions and central acceptance. The canonical result is
 [`IMPLEMENTATION-ARCHITECTURE-AND-MIGRATION-CONTRACT.md`](IMPLEMENTATION-ARCHITECTURE-AND-MIGRATION-CONTRACT.md);
 the reviewed return is
 [`evidence/returns/H18-s11-implementation-architecture.md`](evidence/returns/H18-s11-implementation-architecture.md).
-S12A is next-ready but remains unauthorized until separately dispatched.
+H19 is the separately dispatched, read-only S12A owner-decision session. It must establish the
+smallest approved specification topology and return to central accept, bounce, or escalate; S12B
+remains blocked.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

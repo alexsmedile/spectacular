@@ -23,6 +23,7 @@ authorized owner-decision session.
 | H16 | [SDLC coherence adversarial review](H16-sdlc-coherence-adversarial-review.md) | accepted; [return](../evidence/returns/H16-sdlc-coherence-adversarial-review.md) | accepted contracts + source-016 |
 | H17 | S10 subsystem survival | accepted; [final return](../evidence/returns/H17-s10-subsystem-survival.md), [interim A/B checkpoint](../evidence/returns/H17-s10-interim-clusters-a-b.md), [Cluster C delta](../evidence/returns/H17-s10-interim-cluster-c.md) | thirteen accepted contracts; S11 next-ready |
 | H18 | [S11 implementation architecture](H18-s11-implementation-architecture.md) | accepted; [return](../evidence/returns/H18-s11-implementation-architecture.md) | architecture contract accepted; S12A next-ready |
+| H19 | [S12A specification topology](H19-s12a-specification-topology.md) | active; return pending | fourteen accepted contracts; S12B blocked |
 
 ## Templates
 

@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: p0-implementation-return-accepted
-active_stage: p0-independent-review-dispatched
+checkpoint: p0-abandoned-by-owner
+active_stage: w0-shared-scaffold-ready
 updated: 2026-08-09
 ---
 
@@ -290,19 +290,20 @@ result is [`SPECIFICATION-TOPOLOGY-CONTRACT.md`](SPECIFICATION-TOPOLOGY-CONTRACT
 return is [`evidence/returns/H19-s12a-specification-topology.md`](evidence/returns/H19-s12a-specification-topology.md).
 H21's original S12B Mission boundaries were **bounced** after independent slicing evidence. That
 correction is recorded in [`evidence/returns/H21-s12b-boundary-bounce.md`](evidence/returns/H21-s12b-boundary-bounce.md).
-H21-R1 then verified P0 remained unproven and obtained fresh owner approval for P0 → W0 → M1–M5.
+H21-R1 then verified P0 remained unproven and originally obtained owner approval for P0 → W0 →
+M1–M5; the later v1-deprioritization decision supersedes that critical path.
 Central disposition: **S12B-R1 accepted with integration correction**. The sole authoritative
 current program is [`EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md`](EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md);
 the original H21 v1.0 program is preserved in its snapshot tree. The integration review is recorded
 in [`evidence/returns/H21-R1-integration-correction.md`](evidence/returns/H21-R1-integration-correction.md);
 the return is [`evidence/returns/H21-R1-s12b-corrected-refactor-program.md`](evidence/returns/H21-R1-s12b-corrected-refactor-program.md).
-H22 completed P0 preparation with explicit owner approval. Central orchestration accepted
-[`P0-V1-SAFETY-MISSION-CHARTER.md`](P0-V1-SAFETY-MISSION-CHARTER.md) and activated P0 on the
-isolated local branch `codex/fix/v1-safety-stabilization`. H23 returned one clean local
-implementation commit with the required checks passing; central accepted it only as review-ready.
-H24 is the independent read-only safety review. Push, PR, provider effects, release, migration, and
-W0 remain forbidden. P0 cannot close until H24 and the Pageworks-owned public-document correction
-both pass.
+H22 prepared and activated P0; H23 returned a clean local implementation; H24 independently
+bounced one evidence-neutral remote-reporting defect. Before repair, the owner explicitly stopped
+all v1 investment. Central recorded
+[`V1-DEPRIORITIZATION-DECISION.md`](V1-DEPRIORITIZATION-DECISION.md), abandoned P0 without merging
+its branch, cancelled its repair and Pageworks gates, and removed generic v1 release/migration work
+from the critical path. The sole current program is v1.2: W0 → M1 → M2 → M3 → M4. W0 is
+next-ready; no implementation Mission is active.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

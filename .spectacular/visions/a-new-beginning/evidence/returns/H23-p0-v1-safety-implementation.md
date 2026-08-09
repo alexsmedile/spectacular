@@ -3,15 +3,18 @@ schema_version: spectacular.handoff-return.v2
 handoff_id: H23
 mission: P0-v1-safety-stabilization
 status: implementation-complete-pending-independent-review
-central_disposition: accepted-as-review-ready
+central_disposition: superseded-by-owner-v1-deprioritization
 baseline_commit: ea0aba4eeceba008066aabd1d672235284aa9cd0
 final_commit: e6b1bfab5b2bb9e50ec8bdb94944a9ee21f0f054
 final_tree: ba1897c763c864195d658c5e187a361f8f36d601
 branch: codex/fix/v1-safety-stabilization
-next_action: H24-independent-review
+next_action: none
 ---
 
 # H23 return — P0 v1 safety implementation
+
+> **Terminal update:** the owner later deprioritized all v1 work. This implementation remains on
+> its unmerged branch as historical evidence and must not re-enter the critical path.
 
 Central orchestration accepts this return as evidence that P0 is ready for independent review. It
 does not accept or close P0 and does not unblock W0.

@@ -2,7 +2,7 @@
 type: implementation-mission-charter
 mission: P0-v1-safety-stabilization
 version: 1.0
-status: active
+status: abandoned
 source_handoff: H22
 accepted_by: owner
 accepted_at: 2026-08-09
@@ -11,10 +11,17 @@ baseline_commit: ea0aba4eeceba008066aabd1d672235284aa9cd0
 branch: codex/fix/v1-safety-stabilization
 push: forbidden
 draft_pr: forbidden
-next_action: implementation
+terminal_reason: owner-deprioritized-v1
+result_commit: e6b1bfab5b2bb9e50ec8bdb94944a9ee21f0f054
+result_disposition: retained-unmerged
+next_action: none
 ---
 
 # P0 Mission Charter — v1 safety stabilization
+
+> **Terminal disposition:** abandoned by explicit owner direction on 2026-08-09. The implementation
+> branch and review evidence remain recoverable but must not be merged. Remaining repair,
+> documentation, review, and closure gates are cancelled; this charter is historical.
 
 ## Outcome
 

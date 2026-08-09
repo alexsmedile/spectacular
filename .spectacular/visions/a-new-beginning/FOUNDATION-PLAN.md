@@ -40,8 +40,9 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16
 [`MISSION-PREPARATION-CONTRACT.md`](MISSION-PREPARATION-CONTRACT.md), and
 [`SUBSYSTEM-SURVIVAL-CONTRACT.md`](SUBSYSTEM-SURVIVAL-CONTRACT.md).
 S11 and S12A are accepted. H21's original S12B Mission boundaries are bounced without reopening
-the foundation. H21-R1 accepted P0 as a prerequisite and obtained fresh owner approval of the
-corrected program; P0 preparation is next-ready while W0 remains blocked.
+the foundation. H21-R1 originally made P0 a prerequisite; the owner later deprioritized all v1
+work. P0 is abandoned unmerged, generic migration work leaves the critical path, and W0 is
+next-ready.
 
 ## Decision batches
 
@@ -187,15 +188,16 @@ Decision ownership follows an advice process: one authorized owner seeks affecte
 records material dissent, and decides or escalates. Ownership never collapses separate product,
 security, provider, irreversible-action, or policy authority.
 
-## Immediate stabilization precondition
+## V1 critical-path exclusion
 
-Before the large refactor, handle the verified `kind/type` compatibility-reader defect and the
-implicit remote-branch deletion contract conflict as a narrow safety/correctness patch. This patch
-must not prejudge the v2 product surface.
+V1 stabilization, documentation reconciliation, a new final-v1 release, universal mapping, and a
+generic migration capsule do not block the rebuild. Existing Git history is recovery evidence only.
+Any actual migration is a later project-specific Mission with isolated helpers and no v2-core
+compatibility behavior.
 
 ## Current checkpoint
 
 S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16, S10, S11, and
 S12A are accepted. The v2 responsibility surface, retirement boundaries, implementation
-architecture, and five-spec topology are fixed. The corrected S12B program begins with P0 v1 safety
-stabilization and then W0 → M1–M5. Only P0 preparation is next-ready; no Mission is active.
+architecture, and five-spec topology are fixed. The current v1.2 executable program is W0 → M1 →
+M2 → M3 → M4. W0 is next-ready; no implementation Mission is active.

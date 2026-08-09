@@ -1,77 +1,67 @@
 ---
 type: refactor-program-contract
 contract: executable-refactor-program
-version: 1.1
+version: 1.2
 status: accepted
-decision_session: S12B-R1
-source_handoff: H21-R1
+decision_session: owner-v1-deprioritization
+source_handoff: V1-DEPRIORITIZATION-DECISION.md
 accepted_by: owner
 accepted_at: 2026-08-09
 central_disposition: accept
-supersedes: _snapshots/EXECUTABLE-REFACTOR-PROGRAM-CONTRACT/@v1.0.md
+supersedes: _snapshots/EXECUTABLE-REFACTOR-PROGRAM-CONTRACT/@v1.1.md
 upstream:
+  - V1-DEPRIORITIZATION-DECISION.md@1.0
   - SPECIFICATION-TOPOLOGY-CONTRACT.md@1.0
   - IMPLEMENTATION-ARCHITECTURE-AND-MIGRATION-CONTRACT.md@1.0
   - SUBSYSTEM-SURVIVAL-CONTRACT.md@1.0
   - MISSION-PREPARATION-CONTRACT.md@1.0
   - EXECUTION-AUTHORITY-CONTRACT.md@1.0
   - EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md@1.0
-next_action: P0-v1-safety-stabilization-preparation
+next_action: W0-shared-scaffold-design-sufficiency
 ---
 
 # Executable Refactor Program Contract
 
 ## Purpose
 
-This accepted S12B-R1 contract supersedes only the original H21 implementation-Mission slicing.
-All foundation contracts and the approved S12A specification topology remain intact. The original
-H21 v1.0 program is preserved in the snapshot tree; this unversioned file is the sole current
-program authority. It activates no code, migration, deletion, release, provider effect, P0, W0, or
-implementation Mission.
+This v1.2 program incorporates the owner's scoped decision to stop investing in v1. The approved
+S12A topology and v2 foundation remain intact. Earlier program versions are preserved in the
+snapshot tree; this unversioned file is the sole current program authority. It activates no code,
+migration, deletion, release, provider effect, W0, or implementation Mission.
 
-## P0 safety disposition
+## V1 disposition
 
-P0 is required and is the sole next-ready Mission. On H21-R1's verified baseline, PZL-047 and
-PZL-048 were still pending: Wayfinder directly reads legacy `type`, and ordinary cleanup deletes
-matching remote branches. No immutable accepted evidence proved these v1 defects fixed and
-reconciled.
+P0 is abandoned and its branch is not merged. No repair, Pageworks reconciliation, new final-v1
+release, universal mapping inventory, or generic migration capsule blocks v2. Existing Git history
+and published tags remain recovery evidence, not supported product behavior. The controlling
+scope override is [`V1-DEPRIORITIZATION-DECISION.md`](V1-DEPRIORITIZATION-DECISION.md).
 
-P0 restores only those v1 contracts: a shared canonical `kind` reader with required legacy `type`
-fallback in affected readers, and separately consented remote deletion so local cleanup never
-implies a remote deletion. It requires focused regressions, reference reconciliation, and
-independent review. It cannot adopt v2 semantics, publish/freeze v1, migrate a project, or make a
-real provider effect.
+Real migrations are later project-specific Missions. They may earn isolated scripts, reference
+guidance, or a disposable capsule, but v2 core contains no compatibility behavior.
 
 ## Current program
 
 ```text
-P0 v1 safety stabilization
-  → W0 shared-scaffold Design Sufficiency gate
+W0 shared-scaffold Design Sufficiency gate
   → M1 semantic records + canonical workspace substrate
   → M2 durable governed Mission loop
   → M3 guided Skill + registry-generated CLI + retrieval/integrity
-  → M4 frozen v1 release + final reviewed mapping inventory
-  → M5 isolated capsule + v2 release readiness
+  → M4 clean-v2 release readiness
 ```
 
-The program is strictly serialized. W0 remains blocked until P0 is separately prepared, activated,
-evidenced, independently reviewed, accepted, and reconciled. No implementation Missions run
-concurrently. A read-only v1 mapping inventory may begin after M1 fixes target semantics, but joins
-M4 only after independent review establishes complete classification, recovery pointers, and no
-unresolved ambiguity. Real project migrations and cutovers are later project-specific Missions,
-outside M5.
+The program is strictly serialized and W0 is the sole next-ready gate. No implementation Missions
+run concurrently. Real project migrations and cutovers are later project-specific Missions and do
+not block clean-v2 release readiness.
 
 ## Mission charter floor
 
 | Stage | Bounded outcome | Required evidence and stop |
 |---|---|---|
-| P0 | narrow v1 safety repair | focused regressions, reference reconciliation, independent review; stop on wider v1 scope, ambiguous consent, or failed check |
 | W0 | shared package/file/generated-surface ownership and first-slice joinability | Design Sufficiency and Slice Quality verdicts; stop on duplicate authority, legacy leakage, or unresolved shared boundary |
 | M1 | semantic records and canonical Markdown substrate | semantic/property/round-trip proof; stop on ambiguity, data loss, or overlap |
 | M2 | governed lifecycle, assessment, and reconciliation | transition/refusal/provider-neutral proof; stop on authority/evidence/reconciliation conflict |
 | M3 | guided Skill, registry CLI, retrieval, cards/Fog, and integrity | cold-entry/interruption/conflict/drill-down/context plus registry/integrity proof; stop on authority leakage or seam conflict |
-| M4 | frozen v1 and reviewed mapping inventory | behavior/recovery/fresh-install and independent inventory proof; stop on unclassified/ambiguous mapping or missing recovery pointer |
-| M5 | isolated capsule and v2 release readiness | candidate/idempotence/rollback/capsule-removal proof; stop on core dependency, invalid candidate, or missing readiness evidence |
+| M4 | clean-v2 release readiness | native build/distribution, provider-neutral end-to-end acceptance, install/recovery, and legacy-exclusion proof; stop on authority leakage, legacy dependency, unsupported release claim, or missing recovery evidence |
 
 Each stage requires a separate Mission charter before activation: exact scope/effects, baseline,
 branch/worktree choice, checks, retry budget, review trigger, owner gates, recovery point, and
@@ -80,5 +70,5 @@ terminal continuity return. Retry or resume never widens authority.
 ## Deferred Type-2 details
 
 Record encoding/stable keys, receipt/repair representation, card/cache serialization thresholds, Go
-package/library/locking/CI choices, and capsule signing/release naming remain for W0 or individual
-Mission preparation.
+package/library/locking/CI choices and release signing remain for W0 or individual Mission
+preparation. Migration-tool details belong only to a later project-specific migration Mission.

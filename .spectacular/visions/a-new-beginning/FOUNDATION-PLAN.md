@@ -39,7 +39,7 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16
 [`CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md`](CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md), and
 [`MISSION-PREPARATION-CONTRACT.md`](MISSION-PREPARATION-CONTRACT.md), and
 [`SUBSYSTEM-SURVIVAL-CONTRACT.md`](SUBSYSTEM-SURVIVAL-CONTRACT.md).
-S11 is next-ready; later recommendations remain conditional.
+S11 is accepted; S12A is next-ready and later recommendations remain conditional.
 
 ## Decision batches
 
@@ -194,6 +194,6 @@ must not prejudge the v2 product surface.
 ## Current checkpoint
 
 S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16, and S10 are
-accepted. The v2 responsibility surface and retirement boundaries are fixed. S11 may now choose
-implementation architecture and migration mechanics against the accepted surface; it may not
-restore retired v1 structures for convenience.
+accepted. The v2 responsibility surface, retirement boundaries, and implementation architecture
+are fixed. S12A may now derive the smallest coherent specification topology against those accepted
+contracts; it may not restore retired v1 structures for convenience.

@@ -22,7 +22,7 @@ authorized owner-decision session.
 | H05 | [Competing-skills research study](H05-competing-skills-research-study.md) | accepted; [return review](../evidence/returns/H05-competing-skills-study.md) | ingested as source-015 |
 | H16 | [SDLC coherence adversarial review](H16-sdlc-coherence-adversarial-review.md) | accepted; [return](../evidence/returns/H16-sdlc-coherence-adversarial-review.md) | accepted contracts + source-016 |
 | H17 | S10 subsystem survival | accepted; [final return](../evidence/returns/H17-s10-subsystem-survival.md), [interim A/B checkpoint](../evidence/returns/H17-s10-interim-clusters-a-b.md), [Cluster C delta](../evidence/returns/H17-s10-interim-cluster-c.md) | thirteen accepted contracts; S11 next-ready |
-| H18 | [S11 implementation architecture](H18-s11-implementation-architecture.md) | active in Codex thread `019fe697-77b5-7f63-ab75-702044c02ae1` | thirteen accepted contracts; S12A blocked |
+| H18 | [S11 implementation architecture](H18-s11-implementation-architecture.md) | accepted; [return](../evidence/returns/H18-s11-implementation-architecture.md) | architecture contract accepted; S12A next-ready |
 
 ## Templates
 

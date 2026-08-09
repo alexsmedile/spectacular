@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s10-accepted
-active_stage: s11-active
+checkpoint: s11-accepted
+active_stage: s12a-next-ready
 updated: 2026-08-09
 ---
 
@@ -278,10 +278,12 @@ retirement. The canonical result is
 H17 completed S10 and central orchestration accepted it with normalization. The authoritative
 result is [`SUBSYSTEM-SURVIVAL-CONTRACT.md`](SUBSYSTEM-SURVIVAL-CONTRACT.md); the complete reviewed
 return is [`evidence/returns/H17-s10-subsystem-survival.md`](evidence/returns/H17-s10-subsystem-survival.md).
-The earlier A/B and C checkpoint files remain historical progress records. H18 now runs S11 as a
-read-only, interactive owner-decision session in Codex thread
-`019fe697-77b5-7f63-ab75-702044c02ae1`. It must resolve clusters A–E one at a time and return to
-central accept, bounce, or escalate; S12A remains blocked.
+The earlier A/B and C checkpoint files remain historical progress records. H18 completed S11 with
+explicit owner decisions and central acceptance. The canonical result is
+[`IMPLEMENTATION-ARCHITECTURE-AND-MIGRATION-CONTRACT.md`](IMPLEMENTATION-ARCHITECTURE-AND-MIGRATION-CONTRACT.md);
+the reviewed return is
+[`evidence/returns/H18-s11-implementation-architecture.md`](evidence/returns/H18-s11-implementation-architecture.md).
+S12A is next-ready but remains unauthorized until separately dispatched.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

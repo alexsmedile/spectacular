@@ -264,6 +264,11 @@ validation boundary.
 **Exit gate:** target code architecture follows accepted product boundaries rather than preserving
 or replacing the monolith by instinct.
 
+**Disposition:** accepted through H18. The authoritative result is
+[`../IMPLEMENTATION-ARCHITECTURE-AND-MIGRATION-CONTRACT.md`](../IMPLEMENTATION-ARCHITECTURE-AND-MIGRATION-CONTRACT.md);
+the complete central return is
+[`returns/H18-s11-implementation-architecture.md`](returns/H18-s11-implementation-architecture.md).
+
 ### S12A — Specification topology and approval
 
 **Decide:** the fewest coherent specifications and their dependency/acceptance topology.

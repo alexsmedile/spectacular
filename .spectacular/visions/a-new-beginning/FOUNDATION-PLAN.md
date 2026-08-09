@@ -40,8 +40,8 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16
 [`MISSION-PREPARATION-CONTRACT.md`](MISSION-PREPARATION-CONTRACT.md), and
 [`SUBSYSTEM-SURVIVAL-CONTRACT.md`](SUBSYSTEM-SURVIVAL-CONTRACT.md).
 S11 and S12A are accepted. H21's original S12B Mission boundaries are bounced without reopening
-the foundation; H21-R1 must decide the P0 prerequisite and obtain fresh owner approval before W0
-or any implementation Mission becomes ready.
+the foundation. H21-R1 accepted P0 as a prerequisite and obtained fresh owner approval of the
+corrected program; W0 is next-ready but not active.
 
 ## Decision batches
 
@@ -197,6 +197,5 @@ must not prejudge the v2 product surface.
 
 S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16, S10, S11, and
 S12A are accepted. The v2 responsibility surface, retirement boundaries, implementation
-architecture, and five-spec topology are fixed. The original S12B slicing is bounced: H21-R1 must
-recompile it around P0 v1 safety stabilization, then obtain fresh owner approval. No W0 or
-implementation Mission may activate.
+architecture, and five-spec topology are fixed. The corrected S12B program begins with P0 v1 safety
+stabilization and then W0 → M1–M5. W0 is next-ready but no implementation Mission is active.

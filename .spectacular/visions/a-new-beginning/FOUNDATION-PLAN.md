@@ -3,7 +3,7 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: m1-activated
+checkpoint: m1-implementation-returned
 decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-09
@@ -42,8 +42,8 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16
 S11 and S12A are accepted. H21's original S12B Mission boundaries are bounced without reopening
 the foundation. H21-R1 originally made P0 a prerequisite; the owner later deprioritized all v1
 work. P0 is abandoned unmerged, generic migration work leaves the critical path, W0 is accepted,
-and the M1 charter is owner-approved, centrally accepted, and activated through H27. M1 is the only
-active implementation Mission.
+and the M1 charter is owner-approved and active. H27 implementation returned and is pending H28
+independent review; M1 is not accepted.
 
 ## Decision batches
 
@@ -201,5 +201,5 @@ compatibility behavior.
 S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16, S10, S11, and
 S12A, W0, and the M1 charter are accepted. The v2 responsibility surface, retirement boundaries,
 implementation architecture, five-spec topology, shared scaffold, and first Mission envelope are
-fixed. The current v1.5 executable program is W0 accepted → M1 active → M2 → M3 → M4. H27
-implementation evidence and independent H28 review are next; M2 remains blocked.
+fixed. The current v1.6 executable program is W0 accepted → M1 implemented/under review → M2 → M3
+→ M4. H28 review is next; M1 is not accepted and M2 remains blocked.

@@ -18,9 +18,12 @@ date: 2026-08-09
 **Accepted.** H21-R1 verified its detached clean baseline, handoff, and all fifteen foundation
 contracts. It confirmed P0 is unproven, then obtained Alex's new explicit approval of the corrected
 P0 → W0 → M1–M5 program. The earlier H21 approval was not transferred. The authoritative result is
-[`../../CORRECTED-EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md`](../../CORRECTED-EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md).
+[`../../EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md`](../../EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md);
+the original H21 v1.0 content is preserved in its snapshot tree.
 
-This acceptance makes only W0 next-ready. It activates neither W0 nor an implementation Mission.
+This acceptance makes only P0 preparation next-ready. W0 remains blocked until P0 is separately
+prepared, activated, evidenced, independently reviewed, accepted, and reconciled. This record
+activates neither P0, W0, nor an implementation Mission.
 
 ## Owner decision
 

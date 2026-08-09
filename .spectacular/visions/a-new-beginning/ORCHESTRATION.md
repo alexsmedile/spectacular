@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s12b-r1-accepted
-active_stage: w0-shared-scaffold-ready
+checkpoint: s12b-r1-integration-corrected
+active_stage: p0-v1-safety-preparation-ready
 updated: 2026-08-09
 ---
 
@@ -291,10 +291,12 @@ return is [`evidence/returns/H19-s12a-specification-topology.md`](evidence/retur
 H21's original S12B Mission boundaries were **bounced** after independent slicing evidence. That
 correction is recorded in [`evidence/returns/H21-s12b-boundary-bounce.md`](evidence/returns/H21-s12b-boundary-bounce.md).
 H21-R1 then verified P0 remained unproven and obtained fresh owner approval for P0 → W0 → M1–M5.
-Central disposition: **S12B-R1 accepted**. The authoritative current program is
-[`CORRECTED-EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md`](CORRECTED-EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md);
+Central disposition: **S12B-R1 accepted with integration correction**. The sole authoritative
+current program is [`EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md`](EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md);
+the original H21 v1.0 program is preserved in its snapshot tree. The integration review is recorded
+in [`evidence/returns/H21-R1-integration-correction.md`](evidence/returns/H21-R1-integration-correction.md);
 the return is [`evidence/returns/H21-R1-s12b-corrected-refactor-program.md`](evidence/returns/H21-R1-s12b-corrected-refactor-program.md).
-W0 is next-ready, but no implementation Mission is active.
+Only P0 preparation is next-ready. W0 remains blocked, and no Mission is active.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

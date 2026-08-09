@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s12b-accepted
-active_stage: w0-shared-scaffold-ready
+checkpoint: s12b-boundaries-bounced
+active_stage: h21-r1-corrected-program-dispatched
 updated: 2026-08-09
 ---
 
@@ -288,13 +288,12 @@ baseline and all fourteen accepted contracts, obtained explicit owner approval, 
 the independent H20 review corrections. Central disposition: **S12A accepted**. The authoritative
 result is [`SPECIFICATION-TOPOLOGY-CONTRACT.md`](SPECIFICATION-TOPOLOGY-CONTRACT.md); the reviewed
 return is [`evidence/returns/H19-s12a-specification-topology.md`](evidence/returns/H19-s12a-specification-topology.md).
-H21 completed S12B as a read-only owner-decision session. It verified the exact baseline and all
-fifteen accepted contracts, then obtained explicit owner approval for the five-Mission program.
-Central disposition: **S12B accepted**. The authoritative result is
-[`EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md`](EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md); the reviewed
-return is [`evidence/returns/H21-s12b-executable-refactor-program.md`](evidence/returns/H21-s12b-executable-refactor-program.md).
-Only W0 shared-scaffold Design Sufficiency preparation is next-ready; no implementation Mission is
-active.
+H21 completed S12B as a read-only owner-decision session, but its original Mission boundaries are
+**bounced** after independent slicing evidence. This does not reopen foundation contracts or S12A.
+The correction and P0 evidence disposition are recorded in
+[`evidence/returns/H21-s12b-boundary-bounce.md`](evidence/returns/H21-s12b-boundary-bounce.md).
+H21-R1 is reissued to obtain fresh owner approval of P0 → W0 → M1–M5. Neither W0 nor an
+implementation Mission is active.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

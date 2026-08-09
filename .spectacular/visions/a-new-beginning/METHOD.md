@@ -3,7 +3,7 @@ type: refactor-method-record
 status: active
 owner: alex
 vision: a-new-beginning
-current_phase: pre-s10-sdlc-coherence-review
+current_phase: h16-accepted-s10-ready
 next_source: source-017
 updated: 2026-08-09
 ---
@@ -344,6 +344,7 @@ Before spec promotion, confirm as a coherent whole:
 - evidence, closure, retention, and resume contracts;
 - Spectacular versus companion/agent/mode/adapter responsibilities;
 - retrieval, scaffold, vocabulary, and command boundaries;
+- proportional Mission preparation, Design Sufficiency, Slice Quality, and drift-triggered re-entry;
 - subsystem survival and graph/multi-agent ceiling;
 - compatibility and migration posture.
 
@@ -358,7 +359,9 @@ not combine into an incoherent product.
 4. Derive small specifications around stable behavior or interface boundaries—not source documents,
    sessions, or code folders.
 5. Give every spec acceptance criteria, compatibility impact, migration behavior, and evidence path.
-6. Resolve dependencies and approve every spec version before creating implementation requests.
+6. Expose material design constraints, Gaps, failure behavior, interface consequences, proof, and
+   operational boundaries without demanding low-level design for every change.
+7. Resolve dependencies and approve every spec version before creating implementation requests.
 
 ## Phase 7 — Build the executable refactor program
 
@@ -373,6 +376,8 @@ Only after S12A specifications are approved may S12B:
 7. delay language ports or rewrites until the final surface and measured need are known.
 8. apply the Mission, baseline, branch/worktree, permission, stop-condition, and return contracts in
    [`ORCHESTRATION.md`](ORCHESTRATION.md); never treat a branch as a work unit or create one per agent.
+9. apply the Mission preparation contract: outcome independence, slice coherence, evidence,
+   cancellation state, dependency joins, and re-entry after material discovery.
 
 ## Phase 8 — Execute, verify, and reconcile
 

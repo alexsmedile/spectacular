@@ -3,7 +3,7 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: pre-s10-sdlc-coherence-review
+checkpoint: h16-accepted
 decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-09
@@ -26,7 +26,7 @@ Distributed work and checkpoint authority live in [`ORCHESTRATION.md`](ORCHESTRA
 below is an accepted product decision until its session records the owner's disposition and this
 orchestration task reconciles the reviewed packet.
 
-S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, and the compatibility floor are accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md),
+S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, and H16 are accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md),
 [`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md), and
 [`SUCCESS-EVIDENCE-CONSTITUTION.md`](SUCCESS-EVIDENCE-CONSTITUTION.md), and
 [`PRODUCT-TRUTH-CONTRACT-MODEL.md`](PRODUCT-TRUTH-CONTRACT-MODEL.md), and
@@ -36,8 +36,9 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, and the compatibility floor 
 [`RESPONSIBILITY-PLACEMENT-CONTRACT.md`](RESPONSIBILITY-PLACEMENT-CONTRACT.md), and
 [`RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md`](RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md), and
 [`PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md`](PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md), and
-[`CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md`](CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md).
-H16 is the read-only SDLC coherence gate before S10; later recommendations remain conditional.
+[`CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md`](CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md), and
+[`MISSION-PREPARATION-CONTRACT.md`](MISSION-PREPARATION-CONTRACT.md).
+S10 is next-ready; later recommendations remain conditional.
 
 ## Decision batches
 
@@ -191,7 +192,7 @@ must not prejudge the v2 product surface.
 
 ## Current checkpoint
 
-S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, and the compatibility floor are accepted and
-hashed. Source 016 supplied no reversal-grade evidence, but H16 will stress the accepted model
-against requirements, design, iterative delivery, deployment, maintenance, incidents, and
-multi-actor coordination before S10 evaluates subsystem survival.
+S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, and H16 are accepted.
+The accepted model passed the four SDLC scenarios, and Mission preparation now has a proportional
+Design Sufficiency and Slice Quality gate. S10 may evaluate subsystem survival without reopening
+the foundation or presuming that any current implementation survives.

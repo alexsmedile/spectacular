@@ -235,7 +235,8 @@ and migration mechanics remain S11. No subsystem may be retired before this chec
 
 **Decide:** keep, simplify, extract, merge, or retire each contested subsystem using the S01 rubric.
 
-**Inputs:** PZL-027–028, 034, 039–045, 061, 100, 113, 133, 138, 141–148 plus measured repository use.
+**Inputs:** accepted Mission Preparation Contract; PZL-027–028, 034, 039–045, 061, 100, 113, 133,
+138, 141–148 plus measured repository use.
 
 **Required output:** disposition table for collections, entity types, policy hooks, agents, Vision,
 wayfinding, AFK, feedback, memory, sessions, roadmap, and document engine.
@@ -247,11 +248,13 @@ wayfinding, AFK, feedback, memory, sessions, roadmap, and document engine.
 **Decide:** stabilize versus restructure, Bash source modularization versus port/rewrite, distribution
 artifact, version boundary, migration mechanics, and recoverable deletion policy.
 
-**Inputs:** PZL-031, 035, 042, 046–060, 102, 110–111, 121, 125, 170–171.
+**Inputs:** accepted Mission Preparation Contract; PZL-031, 035, 042, 046–060, 102, 110–111, 121,
+125, 170–171.
 
 **Required output:** target module boundaries, earned optionality seams, command registry
 implementation, interface-compatibility gates, test architecture, compatibility window,
-migration/deprecation policy, recovery refs, and explicit no-rewrite criteria.
+migration/deprecation policy, recovery refs, explicit no-rewrite criteria, and the proportional
+Design Sufficiency/Slice Quality method with its mechanical validation boundary.
 
 **Exit gate:** target code architecture follows accepted product boundaries rather than preserving
 or replacing the monolith by instinct.
@@ -263,7 +266,8 @@ or replacing the monolith by instinct.
 **Inputs:** all accepted session contracts; PZL-023, 029–033, 036, 078–079, 102, 121.
 
 **Required output:** approved Vision fragments, draft specifications, acceptance tests,
-compatibility/migration requirements, dependency map, skeptical review, and explicit approvals.
+compatibility/migration requirements, material design constraints and Gaps, failure/interface/proof
+and operational boundaries, dependency map, skeptical review, and explicit approvals.
 
 **Exit gate:** every specification is approved and dependency-consistent; no Mission/request exists.
 
@@ -275,7 +279,8 @@ rollback, and retrospective plan using only approved S12A specifications.
 **Inputs:** approved spec IDs/versions from S12A and all accepted foundation contracts.
 
 **Required output:** traceable Mission DAG, one implementation boundary per Mission, immutable
-baselines, permissions, required evidence, join owners, stale-return rules, checkpoints, and rollback.
+baselines, permissions, required evidence, join owners, stale-return rules, checkpoints, rollback,
+and outcome/independence/coherence/evidence/cancellation-state tests for every compiled Mission.
 
 **Exit gate:** every Mission traces `promise → contract → approved spec → evidence gate → rollback`.
 

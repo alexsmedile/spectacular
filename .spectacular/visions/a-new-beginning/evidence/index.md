@@ -70,6 +70,8 @@ updated: 2026-08-09
 - [Synthesis checkpoint 023](synthesis-023.md) — accepted S09 public-language/interface contract and compatibility-floor readiness
 - [Synthesis checkpoint 024](synthesis-024.md) — accepted clean-break cutover/recovery contract and S10 readiness
 - [Synthesis checkpoint 025](synthesis-025.md) — full-SDLC coherence audit and H16 pre-S10 review gate
+- [Synthesis checkpoint 026](synthesis-026.md) — accepted H16 coherence review and Mission preparation contract
+- [H16 return review](returns/H16-sdlc-coherence-adversarial-review.md) — accepted SDLC audit and owner-approved preparation loop
 - [H15 return review](returns/H15-compatibility-floor.md) — accepted owner-decision packet for the compatibility floor
 - [H07 return review](returns/H07-s02-success-evidence.md) — accepted owner-decision packet for S02
 - [H05 return review](returns/H05-competing-skills-study.md) — accepted comparative study and bounded-ingestion disposition
@@ -81,8 +83,8 @@ updated: 2026-08-09
 - Sources: 16
 - Concept pieces: 173
 - GitHub issue evidence cards: 23
-- Human dispositions: S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, and compatibility floor reconciled and accepted
-- Accepted constitutional contracts: 11
+- Human dispositions: S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, compatibility floor, and H16 reconciled and accepted
+- Accepted constitutional contracts: 12
 - Promoted fragments: 0
 
 Update this index after every source ingestion. Counts describe the intake

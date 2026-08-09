@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: pre-s10-sdlc-coherence-review
-active_stage: h16-ready
+checkpoint: h16-accepted
+active_stage: s10-ready
 updated: 2026-08-09
 ---
 

@@ -283,9 +283,12 @@ explicit owner decisions and central acceptance. The canonical result is
 [`IMPLEMENTATION-ARCHITECTURE-AND-MIGRATION-CONTRACT.md`](IMPLEMENTATION-ARCHITECTURE-AND-MIGRATION-CONTRACT.md);
 the reviewed return is
 [`evidence/returns/H18-s11-implementation-architecture.md`](evidence/returns/H18-s11-implementation-architecture.md).
-H19 is the separately dispatched, read-only S12A owner-decision session in Codex thread
-`019fe6d0-e75c-7f81-9606-7dbd5a7face6`. It must establish the smallest approved specification
-topology and return to central accept, bounce, or escalate; S12B remains blocked.
+H19 completed S12A in Codex thread `019fe6d0-e75c-7f81-9606-7dbd5a7face6`. It verified its
+baseline and all fourteen accepted contracts, obtained explicit owner approval, and incorporated
+the independent H20 review corrections. Central disposition: **S12A accepted**. The authoritative
+result is [`SPECIFICATION-TOPOLOGY-CONTRACT.md`](SPECIFICATION-TOPOLOGY-CONTRACT.md); the reviewed
+return is [`evidence/returns/H19-s12a-specification-topology.md`](evidence/returns/H19-s12a-specification-topology.md).
+S12B is now next-ready to compile—not implement—the executable refactor program.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

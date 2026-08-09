@@ -3,7 +3,7 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: h16-accepted
+checkpoint: s10-accepted
 decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-09
@@ -26,7 +26,7 @@ Distributed work and checkpoint authority live in [`ORCHESTRATION.md`](ORCHESTRA
 below is an accepted product decision until its session records the owner's disposition and this
 orchestration task reconciles the reviewed packet.
 
-S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, and H16 are accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md),
+S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16, and S10 are accepted in [`PRODUCT-CONSTITUTION.md`](PRODUCT-CONSTITUTION.md),
 [`TRUTH-PROVENANCE-FLOOR.md`](TRUTH-PROVENANCE-FLOOR.md), and
 [`SUCCESS-EVIDENCE-CONSTITUTION.md`](SUCCESS-EVIDENCE-CONSTITUTION.md), and
 [`PRODUCT-TRUTH-CONTRACT-MODEL.md`](PRODUCT-TRUTH-CONTRACT-MODEL.md), and
@@ -37,8 +37,9 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, and
 [`RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md`](RETRIEVAL-AND-EARNED-WORKSPACE-CONTRACT.md), and
 [`PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md`](PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md), and
 [`CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md`](CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md), and
-[`MISSION-PREPARATION-CONTRACT.md`](MISSION-PREPARATION-CONTRACT.md).
-S10 is next-ready; later recommendations remain conditional.
+[`MISSION-PREPARATION-CONTRACT.md`](MISSION-PREPARATION-CONTRACT.md), and
+[`SUBSYSTEM-SURVIVAL-CONTRACT.md`](SUBSYSTEM-SURVIVAL-CONTRACT.md).
+S11 is next-ready; later recommendations remain conditional.
 
 ## Decision batches
 
@@ -71,12 +72,12 @@ S10 is next-ready; later recommendations remain conditional.
    context, projections, registries, reference tiers, minimal scaffold, and grow-on-write.
 10. **S09 — Public language and interface grammar.** Define canonical vocabulary, CLI/skill
    grammar, readable artifact leads, status views, visual conventions, and deprecations.
-11. **Compatibility-floor checkpoint.** Fix the supported population, deprecation promise,
-    recovery boundary, and minimum compatibility window before any retirement.
+11. **Compatibility-floor checkpoint.** Fix the supported population, frozen-v1 boundary,
+    clean-v2 cutover, and recovery promise before any retirement.
 12. **S10 — Subsystem, collection, policy, and fleet survival.** Apply S01's rubric to every
     contested capability; this is the first legitimate deletion session.
 13. **S11 — Implementation architecture and migration strategy.** Define module seams,
-    Bash/port posture, tests, migration mechanics, compatibility window, and recovery.
+    Bash/port posture, tests, capsule/cutover mechanics, and recovery.
 14. **S12A — Specification topology and approval.** Produce, review, dependency-check, and approve
     the fewest coherent specs.
 15. **S12B — Executable refactor program.** Compile only approved specs into implementation
@@ -192,7 +193,7 @@ must not prejudge the v2 product surface.
 
 ## Current checkpoint
 
-S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, and H16 are accepted.
-The accepted model passed the four SDLC scenarios, and Mission preparation now has a proportional
-Design Sufficiency and Slice Quality gate. S10 may evaluate subsystem survival without reopening
-the foundation or presuming that any current implementation survives.
+S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16, and S10 are
+accepted. The v2 responsibility surface and retirement boundaries are fixed. S11 may now choose
+implementation architecture and migration mechanics against the accepted surface; it may not
+restore retired v1 structures for convenience.

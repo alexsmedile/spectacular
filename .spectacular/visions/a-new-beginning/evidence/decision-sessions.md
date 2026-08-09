@@ -2,7 +2,7 @@
 type: decision-program
 status: proposed
 authority: none
-checkpoint: synthesis-013
+checkpoint: synthesis-027
 sessions: 14
 updated: 2026-08-08
 ---
@@ -233,6 +233,9 @@ and migration mechanics remain S11. No subsystem may be retired before this chec
 
 ### S10 — Subsystem, collection, policy, and fleet survival
 
+**Central disposition:** accepted with normalization in
+[`../SUBSYSTEM-SURVIVAL-CONTRACT.md`](../SUBSYSTEM-SURVIVAL-CONTRACT.md). S11 is next-ready.
+
 **Decide:** keep, simplify, extract, merge, or retire each contested subsystem using the S01 rubric.
 
 **Inputs:** accepted Mission Preparation Contract; PZL-027–028, 034, 039–045, 061, 100, 113, 133,
@@ -243,18 +246,20 @@ wayfinding, AFK, feedback, memory, sessions, roadmap, and document engine.
 
 **Exit gate:** every surviving subsystem has a unique outcome, owner, evidence, and context budget.
 
-### S11 — Implementation architecture and compatibility strategy
+### S11 — Implementation architecture and migration strategy
 
 **Decide:** stabilize versus restructure, Bash source modularization versus port/rewrite, distribution
-artifact, version boundary, migration mechanics, and recoverable deletion policy.
+artifact, version boundary, disposable migration-capsule mechanics, cutover, recovery, and
+recoverable deletion policy.
 
 **Inputs:** accepted Mission Preparation Contract; PZL-031, 035, 042, 046–060, 102, 110–111, 121,
 125, 170–171.
 
 **Required output:** target module boundaries, earned optionality seams, command registry
-implementation, interface-compatibility gates, test architecture, compatibility window,
-migration/deprecation policy, recovery refs, explicit no-rewrite criteria, and the proportional
-Design Sufficiency/Slice Quality method with its mechanical validation boundary.
+implementation, executable interface gates, test architecture, clean-v2 dependency boundary,
+v1 freeze and capsule design, cutover/rollback evidence, recovery refs, explicit no-rewrite
+criteria, and the proportional Design Sufficiency/Slice Quality method with its mechanical
+validation boundary.
 
 **Exit gate:** target code architecture follows accepted product boundaries rather than preserving
 or replacing the monolith by instinct.

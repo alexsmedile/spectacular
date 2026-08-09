@@ -40,7 +40,7 @@ side sessions, agents, and implementation Missions without turning summaries int
 9. Skills, agents, modes, adapters, and mechanisms are different abstractions; file movement is not
    evidence of a good boundary.
 10. No implementation begins without approved specifications and measurable validation.
-11. Every destructive reduction has a recoverable Git boundary and explicit compatibility strategy.
+11. Every destructive reduction has a recoverable Git boundary and explicit cutover/recovery strategy.
 12. At completion, review the method itself before turning it into tooling or a skill.
 13. One orchestration task owns program reconciliation, checkpoint state, and successor authorization.
 14. Side sessions receive bounded packets and return typed facts, evidence, decisions, conflicts,
@@ -442,16 +442,15 @@ A future agent or session resumes in this order:
 ## Current state
 
 - Branch: `refactor/a-new-beginning`.
-- Current phase: twelve foundation contracts are accepted through H16. H17/S10 is active; Clusters
-  A, B, and C are filed as interim owner-decision checkpoints, while Cluster D remains open.
-  S10 is not centrally accepted and S11 is not authorized.
+- Current phase: thirteen foundation contracts are accepted through S10. H17 fixed the surviving
+  v2 responsibility surface, retirement boundaries, and role/authoring/assurance consolidation.
+  S11 is next-ready but has not been dispatched.
 - Ingested baseline: Sources 001–016, 173 concept cards, 23 GitHub issue cards.
-- Latest synthesis: checkpoint 026.
-- Human dispositions: H02 and H06–H16 are reconciled into twelve accepted foundation contracts.
-  H17 Cluster A/B/C dispositions are durable but interim and do not constitute S10 acceptance.
+- Latest synthesis: checkpoint 027.
+- Human dispositions: H02 and H06–H17 are reconciled into thirteen accepted foundation contracts.
 - Promoted specifications: 0.
-- Active handoff queue: H01–H16 are complete and reconciled according to their recorded central
-  dispositions. H17/S10 remains active at Cluster D after filing its Cluster A/B and C checkpoints.
+- Active handoff queue: H01–H17 are complete and reconciled according to their recorded central
+  dispositions. S11 is the next authorized owner-decision session.
 - Planning baseline: H17 was issued at commit `6a0c6c3d3b165d4216c209a5fb8052fbdb4604c6`;
   each new handoff must declare and validate a fresh immutable
   baseline plus content hash. Unrelated

@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: h17-interim-a-c-filed
-active_stage: s10-active-cluster-d
+checkpoint: s10-accepted
+active_stage: s11-ready
 updated: 2026-08-09
 ---
 
@@ -275,11 +275,11 @@ compatibility-floor checkpoint is accepted. H15 established a frozen v1 release,
 whole-project atomic migration, an isolated disposable migration capsule, and evidence-gated
 retirement. The canonical result is
 [`CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md`](CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md).
-H17 is actively running S10. Clusters A and B are filed in
-[`evidence/returns/H17-s10-interim-clusters-a-b.md`](evidence/returns/H17-s10-interim-clusters-a-b.md),
-and Cluster C is filed as a second non-accepting checkpoint in
-[`evidence/returns/H17-s10-interim-cluster-c.md`](evidence/returns/H17-s10-interim-cluster-c.md).
-Cluster D remains open. S10 has no central disposition, and S11 is not authorized.
+H17 completed S10 and central orchestration accepted it with normalization. The authoritative
+result is [`SUBSYSTEM-SURVIVAL-CONTRACT.md`](SUBSYSTEM-SURVIVAL-CONTRACT.md); the complete reviewed
+return is [`evidence/returns/H17-s10-subsystem-survival.md`](evidence/returns/H17-s10-subsystem-survival.md).
+The earlier A/B and C checkpoint files remain historical progress records. S11 is next-ready but
+has not yet been dispatched.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

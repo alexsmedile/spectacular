@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: s11-accepted
-active_stage: s12a-active
+checkpoint: s12a-accepted
+active_stage: s12b-dispatched
 updated: 2026-08-09
 ---
 
@@ -288,7 +288,8 @@ baseline and all fourteen accepted contracts, obtained explicit owner approval, 
 the independent H20 review corrections. Central disposition: **S12A accepted**. The authoritative
 result is [`SPECIFICATION-TOPOLOGY-CONTRACT.md`](SPECIFICATION-TOPOLOGY-CONTRACT.md); the reviewed
 return is [`evidence/returns/H19-s12a-specification-topology.md`](evidence/returns/H19-s12a-specification-topology.md).
-S12B is now next-ready to compile—not implement—the executable refactor program.
+H21 is the separately dispatched, read-only S12B owner-decision session. It may compile—but not
+implement—the executable refactor program, then return to central accept, bounce, or escalate.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

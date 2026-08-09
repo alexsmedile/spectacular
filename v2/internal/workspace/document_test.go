@@ -198,6 +198,115 @@ func TestComplexKeyUnknownValueIsPreserved(t *testing.T) {
 	}
 }
 
+func TestNonCyclicAliasGraphRoundTrips(t *testing.T) {
+	t.Parallel()
+
+	input := "---\n" +
+		"type: Proposal\n" +
+		"id: 018f2d8e-7b12-7cc3-8a45-123456789abc\n" +
+		"opaque:\n" +
+		"  first: &shared\n" +
+		"    value: retained\n" +
+		"  second: *shared\n" +
+		"---\n"
+	document, err := Parse([]byte(input))
+	if err != nil {
+		t.Fatalf("Parse alias graph: %v", err)
+	}
+	canonical, err := Canonical(document)
+	if err != nil {
+		t.Fatalf("Canonical alias graph: %v", err)
+	}
+	roundTripped, err := Parse(canonical)
+	if err != nil {
+		t.Fatalf("Parse canonical alias graph: %v\n%s", err, canonical)
+	}
+	first := mappingValue(roundTripped.Unknown["opaque"], "first")
+	second := mappingValue(roundTripped.Unknown["opaque"], "second")
+	if first == nil || second == nil || second.Kind != yaml.AliasNode || second.Alias != first {
+		t.Fatalf("alias graph was not retained: first=%#v second=%#v\n%s", first, second, canonical)
+	}
+	canonicalAgain, err := Canonical(roundTripped)
+	if err != nil {
+		t.Fatalf("Canonical round trip: %v", err)
+	}
+	if !bytes.Equal(canonical, canonicalAgain) {
+		t.Fatalf("alias graph changed:\nfirst:\n%s\nsecond:\n%s", canonical, canonicalAgain)
+	}
+}
+
+func TestCyclicAliasGraphRoundTrips(t *testing.T) {
+	t.Parallel()
+
+	input := "---\n" +
+		"type: Proposal\n" +
+		"id: 018f2d8e-7b12-7cc3-8a45-123456789abc\n" +
+		"opaque: &loop\n" +
+		"  self: *loop\n" +
+		"---\n"
+	document, err := Parse([]byte(input))
+	if err != nil {
+		t.Fatalf("Parse cyclic alias graph: %v", err)
+	}
+	canonical, err := Canonical(document)
+	if err != nil {
+		t.Fatalf("Canonical cyclic alias graph: %v", err)
+	}
+	roundTripped, err := Parse(canonical)
+	if err != nil {
+		t.Fatalf("Parse canonical cyclic alias graph: %v\n%s", err, canonical)
+	}
+	opaque := roundTripped.Unknown["opaque"]
+	self := mappingValue(opaque, "self")
+	if opaque == nil || self == nil || self.Kind != yaml.AliasNode || self.Alias != opaque {
+		t.Fatalf("cyclic alias graph was not retained: opaque=%#v self=%#v\n%s", opaque, self, canonical)
+	}
+	canonicalAgain, err := Canonical(roundTripped)
+	if err != nil {
+		t.Fatalf("Canonical cyclic round trip: %v", err)
+	}
+	if !bytes.Equal(canonical, canonicalAgain) {
+		t.Fatalf("cyclic alias graph changed:\nfirst:\n%s\nsecond:\n%s", canonical, canonicalAgain)
+	}
+}
+
+func TestCanonicalAnchorNamesAreDeterministic(t *testing.T) {
+	t.Parallel()
+
+	withAnchor := func(name string) string {
+		return "---\n" +
+			"type: Proposal\n" +
+			"id: 018f2d8e-7b12-7cc3-8a45-123456789abc\n" +
+			"opaque:\n" +
+			"  first: &" + name + " [one, two]\n" +
+			"  second: *" + name + "\n" +
+			"---\n"
+	}
+	left, err := Parse([]byte(withAnchor("left")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	right, err := Parse([]byte(withAnchor("right")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	leftCanonical, err := Canonical(left)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rightCanonical, err := Canonical(right)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(leftCanonical, rightCanonical) {
+		t.Fatalf("anchor spelling changed canonical content:\nleft:\n%s\nright:\n%s", leftCanonical, rightCanonical)
+	}
+	text := string(leftCanonical)
+	if !strings.Contains(text, "&a1") || !strings.Contains(text, "*a1") || strings.Contains(text, "left") {
+		t.Fatalf("canonical anchor name is not deterministic:\n%s", text)
+	}
+}
+
 func TestInvalidUTF8IsRefused(t *testing.T) {
 	t.Parallel()
 

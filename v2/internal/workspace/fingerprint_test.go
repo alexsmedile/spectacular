@@ -94,6 +94,33 @@ func TestFingerprintPreservesUnknownYAMLTagMeaning(t *testing.T) {
 	}
 }
 
+func TestFingerprintDistinguishesAliasGraphFromDuplicatedTree(t *testing.T) {
+	t.Parallel()
+
+	aliasGraph := "---\n" +
+		"type: Proposal\n" +
+		"id: 018f2d8e-7b12-7cc3-8a45-123456789abc\n" +
+		"opaque:\n" +
+		"  first: &shared\n" +
+		"    value: retained\n" +
+		"  second: *shared\n" +
+		"---\n"
+	duplicatedTree := "---\n" +
+		"type: Proposal\n" +
+		"id: 018f2d8e-7b12-7cc3-8a45-123456789abc\n" +
+		"opaque:\n" +
+		"  first:\n" +
+		"    value: retained\n" +
+		"  second:\n" +
+		"    value: retained\n" +
+		"---\n"
+	aliasFingerprint := fingerprintForText(t, aliasGraph)
+	duplicatedFingerprint := fingerprintForText(t, duplicatedTree)
+	if aliasFingerprint == duplicatedFingerprint {
+		t.Fatalf("alias graph and duplicated tree collapsed to fingerprint %s", aliasFingerprint)
+	}
+}
+
 func fingerprintForText(t *testing.T, text string) string {
 	t.Helper()
 	document, err := Parse([]byte(text))

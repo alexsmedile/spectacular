@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: m1-implementation-returned
-active_stage: m1-independent-review-dispatched
+checkpoint: m1-accepted-and-integrated
+active_stage: scenario-a-preparation-next-ready
 updated: 2026-08-09
 ---
 
@@ -310,10 +310,15 @@ H26 completed M1 preparation with explicit owner dispositions and final charter 
 disposition: **M1 charter accepted**. The authoritative charter is
 [`M1-SEMANTIC-SUBSTRATE-MISSION-CHARTER.md`](M1-SEMANTIC-SUBSTRATE-MISSION-CHARTER.md); the reviewed
 return is [`evidence/returns/H26-m1-semantic-substrate-preparation.md`](evidence/returns/H26-m1-semantic-substrate-preparation.md).
-H27 returned M1 implementation at `489bd6008e1720e4b0310b999a0bac02c62df6dc`. Central reproduced
-its branch, scope, cleanliness, module verification, and full tests. The sole current program is
-v1.6: W0 accepted → M1 implemented/under review → M2 → M3 → M4. H28 independent review is
-dispatching; M1 is not accepted and M2 remains blocked.
+H27 returned M1 implementation and H28 independently exposed semantic defects beyond the initial
+green suite. The builder and reviewer then converged directly through bounded repair/re-review
+messages. Central resolved already-settled lifecycle vocabulary, selected stable YAML v3, and
+ultimately simplified canonical frontmatter to tree-shaped YAML with deterministic refusal of
+anchors, aliases, shared graphs, and cycles. H28 accepted exact head `a488b2e…`; the owner accepted
+M1 and the scenario-first amendment with “OK CONTINUE”; central integrated the branch at
+`7759461a…` and reran the complete readonly Go matrix successfully. The sole current program is
+v1.7: W0/M1 accepted → Scenario A cold recovery → B governed work → C closure/fresh resume → R
+release hardening. Scenario A preparation is next-ready; no successor Mission is active.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

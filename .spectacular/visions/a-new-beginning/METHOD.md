@@ -392,6 +392,14 @@ For each implementation batch:
 7. preserve a precise next action and recovery point after every terminal state.
 8. keep one Mission orchestrator as the only lifecycle/checkpoint mutator; parallel builders are
    permitted only for closed, disjoint-file units with an explicit join.
+9. bind every review verdict to one exact commit/tree; later heads require a new review generation;
+   stale verdicts remain historical evidence rather than current authority;
+10. let builder and independent reviewer converge directly through bounded fix/re-review messages
+    while scope, authority, dependencies, and effects remain unchanged; interrupt the owner only for
+    a genuine product, authority, provider, irreversible-effect, or boundary decision;
+11. stop adversarial expansion when it exceeds product value: clarify the smallest supported
+    contract and prefer deterministic refusal over implementing a general engine the product does
+    not need.
 
 ## Phase 9 — Refactor retrospective and method recovery
 
@@ -442,17 +450,17 @@ A future agent or session resumes in this order:
 ## Current state
 
 - Branch: `refactor/a-new-beginning`.
-- Current phase: thirteen foundation contracts are accepted through S10. H17 fixed the surviving
-  v2 responsibility surface, retirement boundaries, and role/authoring/assurance consolidation.
-  S11 is next-ready but has not been dispatched.
+- Current phase: the foundation, implementation architecture, specification topology, W0 scaffold,
+  M1 charter, M1 implementation, and scenario-first program amendment are accepted. M1 is integrated
+  and independently reverified. Scenario A cold-recovery preparation is the sole next-ready action.
 - Ingested baseline: Sources 001–016, 173 concept cards, 23 GitHub issue cards.
 - Latest synthesis: checkpoint 027.
-- Human dispositions: H02 and H06–H17 are reconciled into thirteen accepted foundation contracts.
-- Promoted specifications: 0.
-- Active handoff queue: H01–H17 are complete and reconciled according to their recorded central
-  dispositions. S11 is the next authorized owner-decision session.
-- Planning baseline: H17 was issued at commit `6a0c6c3d3b165d4216c209a5fb8052fbdb4604c6`;
-  each new handoff must declare and validate a fresh immutable
-  baseline plus content hash. Unrelated
-  untracked files remain excluded from this program.
+- Human dispositions: foundation sessions through S12, W0, M1, and the Scenario A→B→C→R amendment
+  are reconciled into accepted contracts and decisions.
+- Promoted implementation: M1 semantic substrate at reviewed head `a488b2e…`, integrated by
+  `7759461a…`.
+- Active handoff queue: prior handoffs through H28 are complete and reconciled. Scenario A Mission
+  preparation is next-ready; no successor implementation Mission is active.
+- Planning baseline: each new handoff must declare and validate a fresh immutable commit/tree plus
+  content hashes. Unrelated untracked files remain excluded from this program.
 - Next source ID is `source-017`.

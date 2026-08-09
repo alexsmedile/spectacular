@@ -16,7 +16,13 @@ updated: 2026-08-09
 ## Pending program amendments
 
 - [MVP scenario-sequencing proposal](program-amendment-mvp-scenario-sequencing.md) — owner-requested,
-  advisory amendment packet for central orchestration review; no lifecycle or program authority
+  advisory source accepted with normalization by
+  [`MVP-SCENARIO-CLI-SEQUENCING-DECISION.md`](../MVP-SCENARIO-CLI-SEQUENCING-DECISION.md)
+
+## Current implementation evidence
+
+- [H28 M1 independent review and repair](returns/H28-m1-independent-review-and-repair.md) — exact-head
+  adversarial review, bounded builder/reviewer convergence, final acceptance, and integration evidence
 
 ## Sources
 

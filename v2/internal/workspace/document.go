@@ -4,22 +4,31 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
-	"go.yaml.in/yaml/v4"
+	"go.yaml.in/yaml/v3"
 )
 
 // Document is one canonical Spectacular Markdown record. Unknown contains
-// decoded YAML values that are preserved semantically but have no authority in
-// the Proposal or Mission grammar.
+// tag-aware YAML nodes that are preserved semantically but have no authority
+// in the Proposal or Mission grammar.
 type Document struct {
 	Record  domain.Record
-	Unknown map[string]any
+	Unknown map[string]*yaml.Node
 	Body    string
 }
 
 // Parse reads flat record frontmatter and its opaque Markdown body.
 func Parse(data []byte) (*Document, error) {
+	if !utf8.Valid(data) {
+		return nil, domain.NewRefusal(
+			domain.RefusalInvalidUTF8,
+			"",
+			"record must be valid UTF-8",
+			nil,
+		)
+	}
 	normalized := normalizeLineEndings(string(data))
 	frontmatter, body, err := splitFrontmatter(normalized)
 	if err != nil {
@@ -112,21 +121,12 @@ func Parse(data []byte) (*Document, error) {
 		return nil, err
 	}
 
-	unknown := make(map[string]any)
+	unknown := make(map[string]*yaml.Node)
 	for name, node := range properties {
 		if domain.IsReservedField(name) {
 			continue
 		}
-		var value any
-		if err := node.Decode(&value); err != nil {
-			return nil, domain.NewRefusal(
-				domain.RefusalInvalidFrontmatter,
-				name,
-				"decode unknown property",
-				err,
-			)
-		}
-		unknown[name] = value
+		unknown[name] = cloneYAMLNode(node)
 	}
 
 	return &Document{Record: record, Unknown: unknown, Body: body}, nil
@@ -241,4 +241,27 @@ func optionalString(properties map[string]*yaml.Node, name string, allowTimestam
 func normalizeLineEndings(content string) string {
 	content = strings.ReplaceAll(content, "\r\n", "\n")
 	return strings.ReplaceAll(content, "\r", "\n")
+}
+
+func cloneYAMLNode(root *yaml.Node) *yaml.Node {
+	clones := make(map[*yaml.Node]*yaml.Node)
+	var clone func(*yaml.Node) *yaml.Node
+	clone = func(node *yaml.Node) *yaml.Node {
+		if node == nil {
+			return nil
+		}
+		if existing, found := clones[node]; found {
+			return existing
+		}
+		copied := *node
+		copied.Content = nil
+		copied.Alias = nil
+		clones[node] = &copied
+		for _, child := range node.Content {
+			copied.Content = append(copied.Content, clone(child))
+		}
+		copied.Alias = clone(node.Alias)
+		return &copied
+	}
+	return clone(root)
 }

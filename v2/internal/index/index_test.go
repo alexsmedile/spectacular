@@ -100,6 +100,29 @@ func TestDuplicateIdentityRefusalIsDeterministic(t *testing.T) {
 	}
 }
 
+func TestDuplicatePathRefusalIsDiscoveryOrderIndependent(t *testing.T) {
+	t.Parallel()
+
+	proposal := fixtureEntry(t, "same/record.md", "positive", "proposal.md")
+	mission := fixtureEntry(t, "same/record.md", "negative", "wrong-type-target.md")
+	_, forwardError := New([]Entry{proposal, mission})
+	_, reverseError := New([]Entry{mission, proposal})
+	if !domain.RefusalHasCode(forwardError, domain.RefusalDuplicatePath) {
+		t.Fatalf("forward error = %v, want duplicate_path", forwardError)
+	}
+	if !domain.RefusalHasCode(reverseError, domain.RefusalDuplicatePath) {
+		t.Fatalf("reverse error = %v, want duplicate_path", reverseError)
+	}
+	if forwardError.Error() != reverseError.Error() {
+		t.Fatalf("duplicate-path refusal depends on discovery order:\nforward: %v\nreverse: %v", forwardError, reverseError)
+	}
+	for _, identity := range []string{proposal.Record.ID.String(), mission.Record.ID.String()} {
+		if !strings.Contains(forwardError.Error(), identity) {
+			t.Fatalf("duplicate-path refusal lacks identity %s: %v", identity, forwardError)
+		}
+	}
+}
+
 func TestBrokenTargetIsRefusedAfterDiscovery(t *testing.T) {
 	t.Parallel()
 

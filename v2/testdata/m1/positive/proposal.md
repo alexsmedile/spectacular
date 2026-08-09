@@ -3,7 +3,7 @@ type: Proposal
 id: 018f2d8e-7b12-7cc3-8a45-123456789abc
 title: Semantic substrate
 description: Prove the minimum linked-record substrate.
-status: approved
+status: accepted
 created_by: owner
 created: "2026-08-09T10:00:00Z"
 updated: "2026-08-09T10:30:00Z"

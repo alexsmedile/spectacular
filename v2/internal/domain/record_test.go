@@ -29,7 +29,7 @@ func TestRecordValidateProposalAndMissionGrammars(t *testing.T) {
 		Type:      Proposal,
 		ID:        proposalID,
 		Title:     pointer("Semantic substrate"),
-		Status:    pointer("approved"),
+		Status:    pointer("accepted"),
 		CreatedBy: pointer("owner"),
 		Created:   pointer("2026-08-09T10:00:00Z"),
 		Updated:   pointer("2026-08-09T10:30:00Z"),
@@ -41,6 +41,65 @@ func TestRecordValidateProposalAndMissionGrammars(t *testing.T) {
 	mission := Record{Type: Mission, ID: missionID, Source: &source}
 	if err := mission.Validate(); err != nil {
 		t.Fatalf("mission.Validate: %v", err)
+	}
+}
+
+func TestRecordValidateExactStatusVocabulary(t *testing.T) {
+	t.Parallel()
+
+	id := mustID(t, proposalIDText)
+	allowed := map[RecordType][]string{
+		Proposal: {"draft", "submitted", "accepted", "rejected", "withdrawn"},
+		Mission:  {"defined", "active", "awaiting-assessment", "resolved"},
+	}
+	for recordType, statuses := range allowed {
+		recordType := recordType
+		for _, status := range statuses {
+			status := status
+			t.Run(string(recordType)+"/"+status, func(t *testing.T) {
+				t.Parallel()
+				record := Record{Type: recordType, ID: id, Status: pointer(status)}
+				if err := record.Validate(); err != nil {
+					t.Fatalf("Validate %s status %q: %v", recordType, status, err)
+				}
+			})
+		}
+	}
+
+	invalid := []struct {
+		recordType RecordType
+		status     string
+	}{
+		{recordType: Proposal, status: "approved"},
+		{recordType: Proposal, status: " accepted "},
+		{recordType: Mission, status: "completed"},
+		{recordType: Mission, status: "definitely-not-a-status"},
+	}
+	for _, test := range invalid {
+		test := test
+		t.Run(string(test.recordType)+"/invalid/"+test.status, func(t *testing.T) {
+			t.Parallel()
+			record := Record{Type: test.recordType, ID: id, Status: pointer(test.status)}
+			if err := record.Validate(); !RefusalHasCode(err, RefusalInvalidKnownField) {
+				t.Fatalf("Validate %s status %q error = %v, want invalid_known_field", test.recordType, test.status, err)
+			}
+		})
+	}
+}
+
+func TestRecordValidateRejectsInvalidProgrammaticReferenceID(t *testing.T) {
+	t.Parallel()
+
+	record := Record{
+		Type: Mission,
+		ID:   mustID(t, missionIDText),
+		Source: &Reference{
+			Type: Proposal,
+			ID:   ID("not-a-uuid"),
+		},
+	}
+	if err := record.Validate(); !RefusalHasCode(err, RefusalInvalidReference) {
+		t.Fatalf("Validate error = %v, want invalid_reference", err)
 	}
 }
 

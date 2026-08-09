@@ -61,6 +61,39 @@ func TestFingerprintChangesWhenSemanticMeaningChanges(t *testing.T) {
 	}
 }
 
+func TestFingerprintPreservesUnknownYAMLTagMeaning(t *testing.T) {
+	t.Parallel()
+
+	binary := "---\n" +
+		"type: Proposal\n" +
+		"id: 018f2d8e-7b12-7cc3-8a45-123456789abc\n" +
+		"opaque: !!binary SGVsbG8=\n" +
+		"---\n"
+	plain := "---\n" +
+		"type: Proposal\n" +
+		"id: 018f2d8e-7b12-7cc3-8a45-123456789abc\n" +
+		"opaque: Hello\n" +
+		"---\n"
+	binaryDocument, err := Parse([]byte(binary))
+	if err != nil {
+		t.Fatal(err)
+	}
+	binaryCanonical, err := Canonical(binaryDocument)
+	if err != nil {
+		t.Fatal(err)
+	}
+	binaryRoundTrip, err := Parse(binaryCanonical)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if opaque := binaryRoundTrip.Unknown["opaque"]; opaque == nil || opaque.ShortTag() != "!!binary" {
+		t.Fatalf("binary tag was not preserved: %#v\n%s", opaque, binaryCanonical)
+	}
+	if binaryFingerprint, plainFingerprint := fingerprintForText(t, binary), fingerprintForText(t, plain); binaryFingerprint == plainFingerprint {
+		t.Fatalf("tag-distinct YAML values collapsed to fingerprint %s", binaryFingerprint)
+	}
+}
+
 func fingerprintForText(t *testing.T, text string) string {
 	t.Helper()
 	document, err := Parse([]byte(text))

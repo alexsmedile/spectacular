@@ -34,7 +34,10 @@ func New(discovered []Entry) (*Index, error) {
 		entries[index] = cloneEntry(entry)
 	}
 	sort.Slice(entries, func(left, right int) bool {
-		return entries[left].Path < entries[right].Path
+		if entries[left].Path != entries[right].Path {
+			return entries[left].Path < entries[right].Path
+		}
+		return recordSortKey(entries[left].Record) < recordSortKey(entries[right].Record)
 	})
 
 	result := &Index{
@@ -52,7 +55,12 @@ func New(discovered []Entry) (*Index, error) {
 			return nil, domain.NewRefusal(
 				domain.RefusalDuplicatePath,
 				"path",
-				fmt.Sprintf("%q appears more than once (identity %s)", existing.Path, existing.Record.ID),
+				fmt.Sprintf(
+					"%q is claimed by identities %s and %s",
+					entry.Path,
+					existing.Record.ID,
+					entry.Record.ID,
+				),
 				nil,
 			)
 		}
@@ -186,4 +194,31 @@ func cloneString(value *string) *string {
 	}
 	cloned := *value
 	return &cloned
+}
+
+func recordSortKey(record domain.Record) string {
+	source := ""
+	if record.Source != nil {
+		source = record.Source.String()
+	}
+	return fmt.Sprintf(
+		"%q|%q|%q|%q|%q|%q|%q|%q|%q|%d",
+		record.ID.String(),
+		record.Type,
+		optionalSortKey(record.Title),
+		optionalSortKey(record.Description),
+		optionalSortKey(record.Status),
+		optionalSortKey(record.CreatedBy),
+		optionalSortKey(record.Created),
+		optionalSortKey(record.Updated),
+		source,
+		len(source),
+	)
+}
+
+func optionalSortKey(value *string) string {
+	if value == nil {
+		return "absent"
+	}
+	return "present:" + *value
 }

@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
-	"go.yaml.in/yaml/v4"
+	"go.yaml.in/yaml/v3"
 )
 
 // Canonical renders normalized semantic content. The result is UTF-8 with LF
@@ -60,16 +61,15 @@ func Canonical(document *Document) ([]byte, error) {
 	}
 	sort.Strings(unknownNames)
 	for _, name := range unknownNames {
-		valueNode := &yaml.Node{}
-		if err := valueNode.Encode(document.Unknown[name]); err != nil {
+		valueNode, err := normalizeYAMLNode(document.Unknown[name], make(map[*yaml.Node]bool))
+		if err != nil {
 			return nil, domain.NewRefusal(
 				domain.RefusalInvalidFrontmatter,
 				name,
-				"encode unknown property",
+				"normalize unknown property",
 				err,
 			)
 		}
-		canonicalizeNode(valueNode)
 		mapping.Content = append(
 			mapping.Content,
 			&yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: name},
@@ -90,6 +90,14 @@ func Canonical(document *Document) ([]byte, error) {
 	result := "---\n" + frontmatterText + "---\n"
 	if body != "" {
 		result += body + "\n"
+	}
+	if !utf8.ValidString(result) {
+		return nil, domain.NewRefusal(
+			domain.RefusalInvalidUTF8,
+			"",
+			"canonical record must be valid UTF-8",
+			nil,
+		)
 	}
 	return []byte(result), nil
 }
@@ -116,35 +124,64 @@ func appendOptionalString(mapping *yaml.Node, name string, value *string) {
 	)
 }
 
-func canonicalizeNode(node *yaml.Node) {
-	node.Style = 0
-	node.HeadComment = ""
-	node.LineComment = ""
-	node.FootComment = ""
-	node.Anchor = ""
-
-	for _, child := range node.Content {
-		canonicalizeNode(child)
+func normalizeYAMLNode(node *yaml.Node, visiting map[*yaml.Node]bool) (*yaml.Node, error) {
+	if node == nil {
+		return nil, fmt.Errorf("nil YAML node")
 	}
-	if node.Kind != yaml.MappingNode || len(node.Content)%2 != 0 {
-		return
+	if visiting[node] {
+		return nil, fmt.Errorf("cyclic YAML alias")
+	}
+	if node.Kind == yaml.AliasNode {
+		if node.Alias == nil {
+			return nil, fmt.Errorf("YAML alias has no target")
+		}
+		visiting[node] = true
+		normalized, err := normalizeYAMLNode(node.Alias, visiting)
+		delete(visiting, node)
+		return normalized, err
+	}
+	if node.Kind == yaml.DocumentNode {
+		return nil, fmt.Errorf("unknown property must be a YAML value, not a document")
+	}
+
+	visiting[node] = true
+	normalized := *node
+	normalized.Style = 0
+	normalized.HeadComment = ""
+	normalized.LineComment = ""
+	normalized.FootComment = ""
+	normalized.Anchor = ""
+	normalized.Alias = nil
+	normalized.Content = nil
+	for _, child := range node.Content {
+		normalizedChild, err := normalizeYAMLNode(child, visiting)
+		if err != nil {
+			delete(visiting, node)
+			return nil, err
+		}
+		normalized.Content = append(normalized.Content, normalizedChild)
+	}
+	delete(visiting, node)
+	if normalized.Kind != yaml.MappingNode || len(normalized.Content)%2 != 0 {
+		return &normalized, nil
 	}
 
 	type pair struct {
 		key   *yaml.Node
 		value *yaml.Node
 	}
-	pairs := make([]pair, 0, len(node.Content)/2)
-	for index := 0; index < len(node.Content); index += 2 {
-		pairs = append(pairs, pair{key: node.Content[index], value: node.Content[index+1]})
+	pairs := make([]pair, 0, len(normalized.Content)/2)
+	for index := 0; index < len(normalized.Content); index += 2 {
+		pairs = append(pairs, pair{key: normalized.Content[index], value: normalized.Content[index+1]})
 	}
 	sort.SliceStable(pairs, func(left, right int) bool {
 		return nodeSortKey(pairs[left].key) < nodeSortKey(pairs[right].key)
 	})
-	node.Content = node.Content[:0]
+	normalized.Content = normalized.Content[:0]
 	for _, item := range pairs {
-		node.Content = append(node.Content, item.key, item.value)
+		normalized.Content = append(normalized.Content, item.key, item.value)
 	}
+	return &normalized, nil
 }
 
 func nodeSortKey(node *yaml.Node) string {

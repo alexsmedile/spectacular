@@ -36,7 +36,6 @@ func (r Record) Validate() error {
 		value *string
 	}{
 		{name: "title", value: r.Title},
-		{name: "status", value: r.Status},
 		{name: "created_by", value: r.CreatedBy},
 	} {
 		if field.value != nil && strings.TrimSpace(*field.value) == "" {
@@ -57,18 +56,55 @@ func (r Record) Validate() error {
 			return NewRefusal(RefusalInvalidKnownField, field.name, "must be RFC3339", err)
 		}
 	}
-	if recordType == Proposal && r.Source != nil {
-		return NewRefusal(RefusalInvalidKnownField, "source", "Proposal grammar has no source relationship", nil)
-	}
-	if recordType == Mission && r.Source != nil && r.Source.Type != Proposal {
+	if r.Status != nil && !validStatus(recordType, *r.Status) {
 		return NewRefusal(
-			RefusalInvalidReference,
-			"source",
-			fmt.Sprintf("Mission source must target Proposal, got %s", r.Source.Type),
+			RefusalInvalidKnownField,
+			"status",
+			fmt.Sprintf("%s status must be one of: %s", recordType, allowedStatuses(recordType)),
 			nil,
 		)
 	}
+	if recordType == Proposal && r.Source != nil {
+		return NewRefusal(RefusalInvalidKnownField, "source", "Proposal grammar has no source relationship", nil)
+	}
+	if recordType == Mission && r.Source != nil {
+		validated, err := ParseReference(r.Source.String())
+		if err != nil {
+			return err
+		}
+		if validated.Type != Proposal {
+			return NewRefusal(
+				RefusalInvalidReference,
+				"source",
+				fmt.Sprintf("Mission source must target Proposal, got %s", validated.Type),
+				nil,
+			)
+		}
+	}
 	return nil
+}
+
+func validStatus(recordType RecordType, status string) bool {
+	switch recordType {
+	case Proposal:
+		switch status {
+		case "draft", "submitted", "accepted", "rejected", "withdrawn":
+			return true
+		}
+	case Mission:
+		switch status {
+		case "defined", "active", "awaiting-assessment", "resolved":
+			return true
+		}
+	}
+	return false
+}
+
+func allowedStatuses(recordType RecordType) string {
+	if recordType == Proposal {
+		return "draft, submitted, accepted, rejected, withdrawn"
+	}
+	return "defined, active, awaiting-assessment, resolved"
 }
 
 // IsReservedField identifies names whose interpretation belongs to an M1

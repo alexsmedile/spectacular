@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: w0-shared-scaffold-accepted
-active_stage: m1-preparation-dispatched
+checkpoint: m1-charter-accepted
+active_stage: m1-implementation-ready
 updated: 2026-08-09
 ---
 
@@ -306,8 +306,12 @@ from the critical path. H25 completed the read-only interactive W0 gate with exp
 dispositions. Central disposition: **W0 accepted**. Its authoritative result is
 [`SHARED-SCAFFOLD-CONTRACT.md`](SHARED-SCAFFOLD-CONTRACT.md); the reviewed return is
 [`evidence/returns/H25-w0-shared-scaffold-design-sufficiency.md`](evidence/returns/H25-w0-shared-scaffold-design-sufficiency.md).
-The sole current program is v1.3: W0 accepted → M1 → M2 → M3 → M4. M1 preparation is dispatched
-through H26 as a read-only interactive owner-decision task; no implementation Mission is active.
+H26 completed M1 preparation with explicit owner dispositions and final charter approval. Central
+disposition: **M1 charter accepted**. The authoritative charter is
+[`M1-SEMANTIC-SUBSTRATE-MISSION-CHARTER.md`](M1-SEMANTIC-SUBSTRATE-MISSION-CHARTER.md); the reviewed
+return is [`evidence/returns/H26-m1-semantic-substrate-preparation.md`](evidence/returns/H26-m1-semantic-substrate-preparation.md).
+The sole current program is v1.4: W0 accepted → M1 prepared → M2 → M3 → M4. M1 implementation
+dispatch is the one safe next action; no implementation Mission is active.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

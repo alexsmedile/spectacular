@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: v1-critical-path-removed
-active_stage: w0-shared-scaffold-dispatched
+checkpoint: w0-shared-scaffold-accepted
+active_stage: m1-preparation-ready
 updated: 2026-08-09
 ---
 
@@ -302,9 +302,12 @@ bounced one evidence-neutral remote-reporting defect. Before repair, the owner e
 all v1 investment. Central recorded
 [`V1-DEPRIORITIZATION-DECISION.md`](V1-DEPRIORITIZATION-DECISION.md), abandoned P0 without merging
 its branch, cancelled its repair and Pageworks gates, and removed generic v1 release/migration work
-from the critical path. The sole current program is v1.2: W0 → M1 → M2 → M3 → M4. W0 is
-dispatched through H25 as a read-only interactive Design Sufficiency gate; no implementation
-Mission is active.
+from the critical path. H25 completed the read-only interactive W0 gate with explicit owner
+dispositions. Central disposition: **W0 accepted**. Its authoritative result is
+[`SHARED-SCAFFOLD-CONTRACT.md`](SHARED-SCAFFOLD-CONTRACT.md); the reviewed return is
+[`evidence/returns/H25-w0-shared-scaffold-design-sufficiency.md`](evidence/returns/H25-w0-shared-scaffold-design-sufficiency.md).
+The sole current program is v1.3: W0 accepted → M1 → M2 → M3 → M4. M1 preparation is the one safe
+next action; no implementation Mission is active.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

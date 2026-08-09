@@ -3,7 +3,7 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: s10-accepted
+checkpoint: w0-shared-scaffold-accepted
 decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-09
@@ -42,7 +42,7 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16
 S11 and S12A are accepted. H21's original S12B Mission boundaries are bounced without reopening
 the foundation. H21-R1 originally made P0 a prerequisite; the owner later deprioritized all v1
 work. P0 is abandoned unmerged, generic migration work leaves the critical path, and W0 is
-next-ready.
+accepted. M1 preparation is next-ready.
 
 ## Decision batches
 
@@ -198,6 +198,7 @@ compatibility behavior.
 ## Current checkpoint
 
 S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16, S10, S11, and
-S12A are accepted. The v2 responsibility surface, retirement boundaries, implementation
-architecture, and five-spec topology are fixed. The current v1.2 executable program is W0 → M1 →
-M2 → M3 → M4. W0 is next-ready; no implementation Mission is active.
+S12A and W0 are accepted. The v2 responsibility surface, retirement boundaries, implementation
+architecture, five-spec topology, and shared scaffold are fixed. The current v1.3 executable
+program is W0 accepted → M1 → M2 → M3 → M4. M1 preparation is next-ready; no implementation
+Mission is active.

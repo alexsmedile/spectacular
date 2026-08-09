@@ -442,17 +442,18 @@ A future agent or session resumes in this order:
 ## Current state
 
 - Branch: `refactor/a-new-beginning`.
-- Current phase: S01, S03A, S02, S03B, S04, S05, S06, S07, S08, and S09 accepted; the compatibility-floor checkpoint is next; later sources may
-  still be ingested without interrupting an active decision unless they contain reversal evidence.
-- Ingested baseline: Sources 001–015, 173 concept cards, 23 GitHub issue cards.
-- Latest synthesis: checkpoint 023.
-- Human dispositions: H02, H06, H07, H08, H09, H10, H11, H12, H13, and H14 owner dispositions reconciled; central accepted foundation contracts: 10 (S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09).
+- Current phase: twelve foundation contracts are accepted through H16. H17/S10 is active; Clusters
+  A and B are filed as an interim owner-decision checkpoint, while Clusters C and D remain open.
+  S10 is not centrally accepted and S11 is not authorized.
+- Ingested baseline: Sources 001–016, 173 concept cards, 23 GitHub issue cards.
+- Latest synthesis: checkpoint 026.
+- Human dispositions: H02 and H06–H16 are reconciled into twelve accepted foundation contracts.
+  H17 Cluster A/B dispositions are durable but interim and do not constitute S10 acceptance.
 - Promoted specifications: 0.
-- Active handoff queue: H01/H03/H04 accepted as evidence/review; H02 revision 2 reconciled; S01
-  accepted and hashed; H06/S03A, H07/S02, H08/S03B, H09/S04, H10/S05, H11/S06, H12/S07, H13/S08, and H14/S09 accepted; the compatibility floor is ready. H05 is an independent
-  research-intake lane for named competing skills; H05 was accepted with bounded ingestion as
-  Source 015 and added PZL-172–173 without changing decision order.
-- Planning baseline: commit `c8ff3fd`; each new handoff must declare and validate a fresh immutable
+- Active handoff queue: H01–H16 are complete and reconciled according to their recorded central
+  dispositions. H17/S10 remains active at Cluster C after filing its Cluster A/B checkpoint.
+- Planning baseline: H17 was issued at commit `6a0c6c3d3b165d4216c209a5fb8052fbdb4604c6`;
+  each new handoff must declare and validate a fresh immutable
   baseline plus content hash. Unrelated
   untracked files remain excluded from this program.
-- Next source ID is `source-016`.
+- Next source ID is `source-017`.

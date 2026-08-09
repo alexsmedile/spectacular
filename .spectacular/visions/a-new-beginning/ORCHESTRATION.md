@@ -283,9 +283,9 @@ explicit owner decisions and central acceptance. The canonical result is
 [`IMPLEMENTATION-ARCHITECTURE-AND-MIGRATION-CONTRACT.md`](IMPLEMENTATION-ARCHITECTURE-AND-MIGRATION-CONTRACT.md);
 the reviewed return is
 [`evidence/returns/H18-s11-implementation-architecture.md`](evidence/returns/H18-s11-implementation-architecture.md).
-H19 is the separately dispatched, read-only S12A owner-decision session. It must establish the
-smallest approved specification topology and return to central accept, bounce, or escalate; S12B
-remains blocked.
+H19 is the separately dispatched, read-only S12A owner-decision session in Codex thread
+`019fe6d0-e75c-7f81-9606-7dbd5a7face6`. It must establish the smallest approved specification
+topology and return to central accept, bounce, or escalate; S12B remains blocked.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

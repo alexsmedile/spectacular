@@ -5,7 +5,7 @@ authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
 checkpoint: s10-accepted
-active_stage: s11-ready
+active_stage: s11-active
 updated: 2026-08-09
 ---
 
@@ -278,8 +278,10 @@ retirement. The canonical result is
 H17 completed S10 and central orchestration accepted it with normalization. The authoritative
 result is [`SUBSYSTEM-SURVIVAL-CONTRACT.md`](SUBSYSTEM-SURVIVAL-CONTRACT.md); the complete reviewed
 return is [`evidence/returns/H17-s10-subsystem-survival.md`](evidence/returns/H17-s10-subsystem-survival.md).
-The earlier A/B and C checkpoint files remain historical progress records. S11 is next-ready but
-has not yet been dispatched.
+The earlier A/B and C checkpoint files remain historical progress records. H18 now runs S11 as a
+read-only, interactive owner-decision session in Codex thread
+`019fe697-77b5-7f63-ab75-702044c02ae1`. It must resolve clusters A–E one at a time and return to
+central accept, bounce, or escalate; S12A remains blocked.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

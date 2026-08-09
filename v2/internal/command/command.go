@@ -19,13 +19,21 @@ type Effect string
 const ReadOnly Effect = "read-only"
 
 type Spec struct {
-	Words      []string
-	Arguments  string
-	JSONSchema string
-	Effect     Effect
-	Operation  Operation
+	Words         []string
+	Arguments     string
+	ArgumentShape ArgumentShape
+	JSONSchema    string
+	Effect        Effect
+	Operation     Operation
 }
 type Operation uint8
+type ArgumentShape uint8
+
+const (
+	argumentsNone ArgumentShape = iota
+	argumentsOne
+	argumentsScope
+)
 
 const (
 	opAnchorShowProject Operation = iota + 1
@@ -41,16 +49,16 @@ const (
 )
 
 var Registry = []Spec{
-	{[]string{"anchor", "show", "project"}, "[--json]", "spectacular.anchor.show.v1", ReadOnly, opAnchorShowProject},
-	{[]string{"mission", "list"}, "[--json]", "spectacular.mission.list.v1", ReadOnly, opMissionList},
-	{[]string{"mission", "show"}, "<ref> [--json]", "spectacular.mission.show.v1", ReadOnly, opMissionShow},
-	{[]string{"gap", "list"}, "--scope <ref> [--json]", "spectacular.gap.list.v1", ReadOnly, opGapList},
-	{[]string{"gap", "show"}, "<ref> [--json]", "spectacular.gap.show.v1", ReadOnly, opGapShow},
-	{[]string{"run", "show"}, "<ref> [--json]", "spectacular.run.show.v1", ReadOnly, opRunShow},
-	{[]string{"checkpoint", "show"}, "<ref> [--json]", "spectacular.checkpoint.show.v1", ReadOnly, opCheckpointShow},
-	{[]string{"evidence", "show"}, "<ref> [--json]", "spectacular.evidence.show.v1", ReadOnly, opEvidenceShow},
-	{[]string{"decision", "show"}, "<ref> [--json]", "spectacular.decision.show.v1", ReadOnly, opDecisionShow},
-	{[]string{"workspace", "validate"}, "<scope> [--json]", "spectacular.workspace.validate.v1", ReadOnly, opWorkspaceValidate},
+	{[]string{"anchor", "show", "project"}, "[--json]", argumentsNone, "spectacular.anchor.show.v1", ReadOnly, opAnchorShowProject},
+	{[]string{"mission", "list"}, "[--json]", argumentsNone, "spectacular.mission.list.v1", ReadOnly, opMissionList},
+	{[]string{"mission", "show"}, "<ref> [--json]", argumentsOne, "spectacular.mission.show.v1", ReadOnly, opMissionShow},
+	{[]string{"gap", "list"}, "--scope <ref> [--json]", argumentsScope, "spectacular.gap.list.v1", ReadOnly, opGapList},
+	{[]string{"gap", "show"}, "<ref> [--json]", argumentsOne, "spectacular.gap.show.v1", ReadOnly, opGapShow},
+	{[]string{"run", "show"}, "<ref> [--json]", argumentsOne, "spectacular.run.show.v1", ReadOnly, opRunShow},
+	{[]string{"checkpoint", "show"}, "<ref> [--json]", argumentsOne, "spectacular.checkpoint.show.v1", ReadOnly, opCheckpointShow},
+	{[]string{"evidence", "show"}, "<ref> [--json]", argumentsOne, "spectacular.evidence.show.v1", ReadOnly, opEvidenceShow},
+	{[]string{"decision", "show"}, "<ref> [--json]", argumentsOne, "spectacular.decision.show.v1", ReadOnly, opDecisionShow},
+	{[]string{"workspace", "validate"}, "<scope> [--json]", argumentsOne, "spectacular.workspace.validate.v1", ReadOnly, opWorkspaceValidate},
 }
 
 type Runner struct {
@@ -73,62 +81,35 @@ func (r Runner) Run(args []string) int {
 	if !ok {
 		return usage("unknown or incomplete command")
 	}
+	if detail := spec.validateArguments(rest); detail != "" {
+		return usage(detail)
+	}
 	workspace, err := discovery.Open(r.Cwd)
 	if err != nil {
 		return refuse(err)
 	}
-	b := projection.Builder{Workspace: workspace, Now: r.Now}
+	b := projection.Builder{Workspace: workspace, Now: r.Now, ShowCommand: registeredShowCommand}
 	var value any
 	switch spec.Operation {
 	case opAnchorShowProject:
-		if len(rest) != 0 {
-			return usage("anchor show project takes no arguments")
-		}
 		value, err = b.Project()
 	case opMissionList:
-		if len(rest) != 0 {
-			return usage("mission list takes no arguments")
-		}
 		value, err = b.MissionList()
 	case opMissionShow:
-		if len(rest) != 1 {
-			return usage("mission show requires exactly one ref")
-		}
 		value, err = b.Mission(rest[0])
 	case opGapList:
-		if len(rest) != 2 || rest[0] != "--scope" {
-			return usage("gap list requires --scope <ref>")
-		}
 		value, err = b.Gaps(rest[1])
 	case opGapShow:
-		if len(rest) != 1 {
-			return usage("gap show requires exactly one ref")
-		}
 		value, err = r.detail(b, rest, domain.Gap)
 	case opRunShow:
-		if len(rest) != 1 {
-			return usage("run show requires exactly one ref")
-		}
 		value, err = r.detail(b, rest, domain.Run)
 	case opCheckpointShow:
-		if len(rest) != 1 {
-			return usage("checkpoint show requires exactly one ref")
-		}
 		value, err = r.detail(b, rest, domain.Checkpoint)
 	case opEvidenceShow:
-		if len(rest) != 1 {
-			return usage("evidence show requires exactly one ref")
-		}
 		value, err = r.detail(b, rest, domain.Evidence)
 	case opDecisionShow:
-		if len(rest) != 1 {
-			return usage("decision show requires exactly one ref")
-		}
 		value, err = r.detail(b, rest, domain.Decision)
 	case opWorkspaceValidate:
-		if len(rest) != 1 {
-			return usage("workspace validate requires exactly one scope")
-		}
 		value, err = b.Validate(rest[0])
 	}
 	if err != nil {
@@ -143,6 +124,41 @@ func (r Runner) Run(args []string) int {
 		renderHuman(r.Stdout, envelope)
 	}
 	return 0
+}
+
+func registeredShowCommand(noun domain.RecordType, ref string) (string, bool) {
+	want := strings.ToLower(string(noun))
+	for _, spec := range Registry {
+		if len(spec.Words) < 2 || spec.Words[0] != want || spec.Words[1] != "show" {
+			continue
+		}
+		command := "spectacular " + strings.Join(spec.Words, " ")
+		if noun != domain.Anchor {
+			command += " " + ref
+		}
+		return command, true
+	}
+	return "", false
+}
+
+func (s Spec) validateArguments(args []string) string {
+	switch s.ArgumentShape {
+	case argumentsNone:
+		if len(args) != 0 {
+			return strings.Join(s.Words, " ") + " takes no arguments"
+		}
+	case argumentsOne:
+		if len(args) != 1 {
+			return strings.Join(s.Words, " ") + " requires exactly one argument"
+		}
+	case argumentsScope:
+		if len(args) != 2 || args[0] != "--scope" {
+			return strings.Join(s.Words, " ") + " requires --scope <ref>"
+		}
+	default:
+		return "command registry has an invalid argument shape"
+	}
+	return ""
 }
 
 func (r Runner) detail(b projection.Builder, args []string, noun domain.RecordType) (any, error) {

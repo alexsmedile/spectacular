@@ -54,8 +54,22 @@ func Open(start string) (*Workspace, error) {
 		abs = filepath.Dir(abs)
 	}
 	for {
-		marker := filepath.Join(abs, ".spectacular", "workspace.yaml")
-		if _, err := os.Lstat(marker); err == nil {
+		meta := filepath.Join(abs, ".spectacular")
+		metaInfo, metaErr := os.Lstat(meta)
+		if metaErr == nil && metaInfo.Mode()&os.ModeSymlink != 0 {
+			return nil, refusal(domain.RefusalPathEscape, meta, ".spectacular metadata directory must not be a symlink", nil)
+		}
+		if metaErr != nil && !os.IsNotExist(metaErr) {
+			return nil, refusal(domain.RefusalInvalidManifest, meta, "inspect workspace metadata directory", metaErr)
+		}
+		marker := filepath.Join(meta, "workspace.yaml")
+		if markerInfo, err := os.Lstat(marker); err == nil {
+			if markerInfo.Mode()&os.ModeSymlink != 0 {
+				return nil, refusal(domain.RefusalPathEscape, marker, "workspace marker must not be a symlink", nil)
+			}
+			if !markerInfo.Mode().IsRegular() {
+				return nil, refusal(domain.RefusalInvalidManifest, marker, "workspace marker must be a regular file", nil)
+			}
 			return load(abs, marker)
 		} else if !os.IsNotExist(err) {
 			return nil, refusal(domain.RefusalInvalidManifest, marker, "inspect marker", err)

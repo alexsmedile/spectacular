@@ -66,6 +66,37 @@ func TestOpenRefusesSymlinkEscape(t *testing.T) {
 	}
 }
 
+func TestOpenRefusesAuthorityMarkerSymlinksBeforeReading(t *testing.T) {
+	t.Run("workspace marker", func(t *testing.T) {
+		root := t.TempDir()
+		meta := filepath.Join(root, ".spectacular")
+		outside := t.TempDir()
+		if err := os.MkdirAll(meta, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		externalMarker := filepath.Join(outside, "workspace.yaml")
+		write(t, externalMarker, "schema_version: spectacular.workspace.v1\nrecord_roots: [records]\nproject_anchor: records/project.md\n")
+		if err := os.Symlink(externalMarker, filepath.Join(meta, "workspace.yaml")); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Open(root); !domain.RefusalHasCode(err, domain.RefusalPathEscape) {
+			t.Fatalf("symlinked marker error=%v", err)
+		}
+	})
+
+	t.Run("metadata directory", func(t *testing.T) {
+		root := t.TempDir()
+		outside := t.TempDir()
+		write(t, filepath.Join(outside, "workspace.yaml"), "schema_version: spectacular.workspace.v1\nrecord_roots: [records]\nproject_anchor: records/project.md\n")
+		if err := os.Symlink(outside, filepath.Join(root, ".spectacular")); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Open(root); !domain.RefusalHasCode(err, domain.RefusalPathEscape) {
+			t.Fatalf("symlinked metadata directory error=%v", err)
+		}
+	})
+}
+
 func write(t *testing.T, path, text string) {
 	t.Helper()
 	if err := os.WriteFile(path, []byte(text), 0o644); err != nil {

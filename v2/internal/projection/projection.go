@@ -19,7 +19,7 @@ type Pointer struct {
 	Ref         string `json:"ref"`
 	Path        string `json:"path"`
 	Fingerprint string `json:"fingerprint"`
-	ShowCommand string `json:"show_command"`
+	ShowCommand string `json:"show_command,omitempty"`
 }
 
 type Source struct {
@@ -52,7 +52,7 @@ type Card struct {
 	Title        string        `json:"title,omitempty"`
 	Freshness    Freshness     `json:"freshness"`
 	Source       Source        `json:"source"`
-	Sources      []Source      `json:"sources"`
+	Sources      []Pointer     `json:"sources"`
 	Pointers     []Pointer     `json:"pointers"`
 	Gaps         []Pointer     `json:"gaps"`
 	Conflicts    []string      `json:"conflicts"`
@@ -99,8 +99,9 @@ type ProjectView struct {
 }
 
 type Builder struct {
-	Workspace *discovery.Workspace
-	Now       func() time.Time
+	Workspace   *discovery.Workspace
+	Now         func() time.Time
+	ShowCommand func(domain.RecordType, string) (string, bool)
 }
 
 func (b Builder) Envelope(schema string, data any) Envelope {
@@ -122,7 +123,7 @@ func (b Builder) Project() (ProjectView, error) {
 	}
 	var anchorGate *OwnerGate
 	if card.Freshness.State != "current" {
-		anchorGate = &OwnerGate{Code: "confirm_freshness", Detail: "project Anchor freshness is unknown", Source: pointer(anchor)}
+		anchorGate = &OwnerGate{Code: "confirm_freshness", Detail: "project Anchor freshness is unknown", Source: b.pointer(anchor)}
 	}
 	truthRefs, err := workspace.Strings(anchor.Document, "current_truth", true)
 	if err != nil {
@@ -140,7 +141,7 @@ func (b Builder) Project() (ProjectView, error) {
 		if err != nil {
 			return ProjectView{}, err
 		}
-		card.Pointers = append(card.Pointers, pointer(target))
+		card.Pointers = append(card.Pointers, b.pointer(target))
 	}
 	if len(card.Pointers) == 1 {
 		mission, missionErr := b.Mission(card.Pointers[0].Ref)
@@ -157,7 +158,7 @@ func (b Builder) Project() (ProjectView, error) {
 		card.OwnerGate = anchorGate
 	}
 	if len(card.Pointers) != 1 {
-		card.OwnerGate = &OwnerGate{Code: "select_mission", Detail: fmt.Sprintf("project has %d Missions; owner must select exactly one", len(card.Pointers)), Source: pointer(anchor)}
+		card.OwnerGate = &OwnerGate{Code: "select_mission", Detail: fmt.Sprintf("project has %d Missions; owner must select exactly one", len(card.Pointers)), Source: b.pointer(anchor)}
 	}
 	direction, err := workspace.String(anchor.Document, "direction", true)
 	if err != nil {
@@ -181,9 +182,9 @@ func (b Builder) Project() (ProjectView, error) {
 		if e != nil {
 			return ProjectView{}, e
 		}
-		truth = append(truth, pointer(target))
+		truth = append(truth, b.pointer(target))
 	}
-	return ProjectView{Source: card.Source, Freshness: card.Freshness, Authoritative: ProjectAuthority{Identity: pointer(anchor), Direction: direction, Boundaries: boundaries, Constraints: constraints, CurrentTruth: truth}, Projection: ProjectProjection{Missions: card.Pointers, Gaps: card.Gaps, Conflicts: card.Conflicts, Omissions: card.Omissions, Continuation: card.Continuation, OwnerGate: card.OwnerGate}}, nil
+	return ProjectView{Source: card.Source, Freshness: card.Freshness, Authoritative: ProjectAuthority{Identity: b.pointer(anchor), Direction: direction, Boundaries: boundaries, Constraints: constraints, CurrentTruth: truth}, Projection: ProjectProjection{Missions: card.Pointers, Gaps: card.Gaps, Conflicts: card.Conflicts, Omissions: card.Omissions, Continuation: card.Continuation, OwnerGate: card.OwnerGate}}, nil
 }
 
 func (b Builder) MissionList() (List, error) {
@@ -213,7 +214,7 @@ func (b Builder) Mission(ref string) (Card, error) {
 		if lookupErr != nil {
 			return Card{}, lookupErr
 		}
-		card.Sources = append(card.Sources, Source{Path: proposal.Path, Fingerprint: proposal.Fingerprint})
+		card.Sources = append(card.Sources, b.pointer(proposal))
 	}
 	runRef, err := workspace.String(mission.Document, "current_run", true)
 	if err != nil {
@@ -223,7 +224,7 @@ func (b Builder) Mission(ref string) (Card, error) {
 	if err != nil {
 		return Card{}, err
 	}
-	card.Pointers = append(card.Pointers, pointer(run))
+	card.Pointers = append(card.Pointers, b.pointer(run))
 	expectedRun, err := fingerprint(mission.Document, "expected_run_fingerprint")
 	if err != nil {
 		return Card{}, err
@@ -244,14 +245,14 @@ func (b Builder) Mission(ref string) (Card, error) {
 			return Card{}, domain.NewRefusal(domain.RefusalNounMismatch, "scope", "Gap scope must be Mission", nil)
 		}
 		if typed.ID == mission.Document.Record.ID {
-			card.Gaps = append(card.Gaps, pointer(gap))
+			card.Gaps = append(card.Gaps, b.pointer(gap))
 		}
 	}
 	if card.Freshness.State == "stale" {
 		return Card{}, domain.NewRefusal(domain.RefusalStaleRequired, "freshness", mission.Path+" is stale", nil)
 	}
 	if card.Freshness.State != "current" {
-		card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: "Mission freshness is unknown", Source: pointer(mission)}
+		card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: "Mission freshness is unknown", Source: b.pointer(mission)}
 		return card, nil
 	}
 	for _, gapPtr := range card.Gaps {
@@ -284,7 +285,7 @@ func (b Builder) Mission(ref string) (Card, error) {
 		return Card{}, domain.NewRefusal(domain.RefusalStaleRequired, "freshness", run.Path+" is stale", nil)
 	}
 	if runFresh.State != "current" {
-		card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: "Run freshness is unknown", Source: pointer(run)}
+		card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: "Run freshness is unknown", Source: b.pointer(run)}
 		return card, nil
 	}
 	missionBack, err := workspace.String(run.Document, "mission", true)
@@ -303,7 +304,7 @@ func (b Builder) Mission(ref string) (Card, error) {
 	if err != nil {
 		return Card{}, err
 	}
-	card.Pointers = append(card.Pointers, pointer(cp))
+	card.Pointers = append(card.Pointers, b.pointer(cp))
 	expectedCP, err := fingerprint(run.Document, "expected_checkpoint_fingerprint")
 	if err != nil {
 		return Card{}, err
@@ -319,7 +320,7 @@ func (b Builder) Mission(ref string) (Card, error) {
 		return Card{}, domain.NewRefusal(domain.RefusalStaleRequired, "freshness", cp.Path+" is stale", nil)
 	}
 	if cpFresh.State != "current" {
-		card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: "Checkpoint freshness is unknown", Source: pointer(cp)}
+		card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: "Checkpoint freshness is unknown", Source: b.pointer(cp)}
 		return card, nil
 	}
 	cpRun, err := workspace.String(cp.Document, "run", true)
@@ -347,7 +348,7 @@ func (b Builder) Mission(ref string) (Card, error) {
 			return Card{}, domain.NewRefusal(domain.RefusalStaleRequired, "freshness", evidence.Path+" is stale", nil)
 		}
 		if evFresh.State != "current" {
-			card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: "Evidence freshness is unknown", Source: pointer(evidence)}
+			card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: "Evidence freshness is unknown", Source: b.pointer(evidence)}
 			return card, nil
 		}
 		checkpointBack, e := workspace.String(evidence.Document, "checkpoint", true)
@@ -358,7 +359,7 @@ func (b Builder) Mission(ref string) (Card, error) {
 		if e != nil || back.Type != domain.Checkpoint || back.ID != cp.Document.Record.ID {
 			return Card{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "checkpoint", "Evidence does not identify selected Checkpoint", e)
 		}
-		card.Pointers = append(card.Pointers, pointer(evidence))
+		card.Pointers = append(card.Pointers, b.pointer(evidence))
 	}
 	decisions := []discovery.Entry{}
 	for _, d := range b.Workspace.OfType(domain.Decision) {
@@ -375,7 +376,7 @@ func (b Builder) Mission(ref string) (Card, error) {
 		}
 	}
 	if len(decisions) == 0 {
-		card.OwnerGate = &OwnerGate{Code: "authorize_continuation", Detail: "no Decision authorizes the selected Mission chain", Source: pointer(mission)}
+		card.OwnerGate = &OwnerGate{Code: "authorize_continuation", Detail: "no Decision authorizes the selected Mission chain", Source: b.pointer(mission)}
 		return card, nil
 	}
 	if len(decisions) > 1 {
@@ -397,7 +398,7 @@ func (b Builder) Mission(ref string) (Card, error) {
 		return Card{}, domain.NewRefusal(domain.RefusalStaleRequired, "freshness", d.Path+" is stale", nil)
 	}
 	if df.State != "current" {
-		card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: "Decision freshness is unknown", Source: pointer(d)}
+		card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: "Decision freshness is unknown", Source: b.pointer(d)}
 		return card, nil
 	}
 	expectedMission, err := fingerprint(d.Document, "expected_mission_fingerprint")
@@ -425,8 +426,8 @@ func (b Builder) Mission(ref string) (Card, error) {
 	if target.Document.Record.ID != run.Document.Record.ID {
 		return Card{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "target", "Decision target is not selected Run", nil)
 	}
-	card.Pointers = append(card.Pointers, pointer(d))
-	card.Continuation = &Continuation{Operation: op, Target: pointer(target), AuthorizedBy: pointer(d)}
+	card.Pointers = append(card.Pointers, b.pointer(d))
+	card.Continuation = &Continuation{Operation: op, Target: b.pointer(target), AuthorizedBy: b.pointer(d)}
 	return card, nil
 }
 
@@ -443,7 +444,7 @@ func (b Builder) Detail(ref string, noun domain.RecordType) (Card, error) {
 		return Card{}, domain.NewRefusal(domain.RefusalStaleRequired, "freshness", entry.Path+" freshness basis is stale", nil)
 	}
 	if card.Freshness.State == "unknown" {
-		card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: string(noun) + " freshness is unknown", Source: pointer(entry)}
+		card.OwnerGate = &OwnerGate{Code: "confirm_freshness", Detail: string(noun) + " freshness is unknown", Source: b.pointer(entry)}
 	}
 	for _, field := range relationshipFields(noun) {
 		value, e := workspace.String(entry.Document, field, false)
@@ -461,7 +462,7 @@ func (b Builder) Detail(ref string, noun domain.RecordType) (Card, error) {
 		if e != nil {
 			return Card{}, e
 		}
-		card.Pointers = append(card.Pointers, pointer(target))
+		card.Pointers = append(card.Pointers, b.pointer(target))
 	}
 	if noun == domain.Checkpoint {
 		refs, e := workspace.Strings(entry.Document, "evidence", false)
@@ -473,7 +474,7 @@ func (b Builder) Detail(ref string, noun domain.RecordType) (Card, error) {
 			if e != nil {
 				return Card{}, e
 			}
-			card.Pointers = append(card.Pointers, pointer(target))
+			card.Pointers = append(card.Pointers, b.pointer(target))
 		}
 	}
 	if noun == domain.Decision {
@@ -577,7 +578,7 @@ func (b Builder) base(entry discovery.Entry) (Card, error) {
 	if entry.Document.Record.Title != nil {
 		title = *entry.Document.Record.Title
 	}
-	return Card{Noun: string(entry.Document.Record.Type), ID: entry.Document.Record.ID.String(), Title: title, Freshness: fresh, Source: Source{Path: entry.Path, Fingerprint: entry.Fingerprint}, Sources: []Source{}, Pointers: []Pointer{}, Gaps: []Pointer{}, Conflicts: []string{}, Omissions: []string{}}, nil
+	return Card{Noun: string(entry.Document.Record.Type), ID: entry.Document.Record.ID.String(), Title: title, Freshness: fresh, Source: Source{Path: entry.Path, Fingerprint: entry.Fingerprint}, Sources: []Pointer{}, Pointers: []Pointer{}, Gaps: []Pointer{}, Conflicts: []string{}, Omissions: []string{}}, nil
 }
 func (b Builder) freshness(doc *workspace.Document) (Freshness, error) {
 	checkedText, err := workspace.String(doc, "freshness_checked_at", true)
@@ -614,7 +615,7 @@ func (b Builder) freshness(doc *workspace.Document) (Freshness, error) {
 	source := Source{Path: entry.Path, Fingerprint: fp}
 	var sourcePointer *Pointer
 	if entry.Document != nil {
-		p := pointer(entry)
+		p := b.pointer(entry)
 		sourcePointer = &p
 	}
 	now := b.Now
@@ -646,12 +647,17 @@ func fingerprint(doc *workspace.Document, field string) (string, error) {
 	}
 	return v, nil
 }
-func pointer(e discovery.Entry) Pointer {
+func (b Builder) pointer(e discovery.Entry) Pointer {
+	ref := string(e.Document.Record.Type) + ":" + e.Document.Record.ID.String()
 	if e.Document.Record.Type == domain.Anchor {
-		return Pointer{Noun: "anchor", Ref: "project", Path: e.Path, Fingerprint: e.Fingerprint, ShowCommand: "spectacular anchor show project"}
+		ref = "project"
 	}
 	noun := strings.ToLower(string(e.Document.Record.Type))
-	return Pointer{Noun: noun, Ref: string(e.Document.Record.Type) + ":" + e.Document.Record.ID.String(), Path: e.Path, Fingerprint: e.Fingerprint, ShowCommand: "spectacular " + noun + " show " + string(e.Document.Record.Type) + ":" + e.Document.Record.ID.String()}
+	p := Pointer{Noun: noun, Ref: ref, Path: e.Path, Fingerprint: e.Fingerprint}
+	if b.ShowCommand != nil {
+		p.ShowCommand, _ = b.ShowCommand(e.Document.Record.Type, ref)
+	}
+	return p
 }
 func relationshipFields(noun domain.RecordType) []string {
 	switch noun {

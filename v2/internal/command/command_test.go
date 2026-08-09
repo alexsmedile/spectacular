@@ -134,6 +134,24 @@ func TestUsageAndRefusalChannelsAndCodes(t *testing.T) {
 	}
 }
 
+func TestKnownCommandArgumentsAreValidatedBeforeWorkspaceDiscovery(t *testing.T) {
+	nonWorkspace := t.TempDir()
+	tests := [][]string{
+		{"mission", "show", "--json"},
+		{"anchor", "show", "project", "extra", "--json"},
+		{"gap", "list", "Mission:" + missionID, "--json"},
+	}
+	for _, args := range tests {
+		t.Run(strings.Join(args, "_"), func(t *testing.T) {
+			var out, errOut bytes.Buffer
+			exit := (Runner{Cwd: nonWorkspace, Stdout: &out, Stderr: &errOut, Now: fixedNow}).Run(args)
+			if exit != 2 || !strings.Contains(out.String(), `"code":"usage"`) || strings.Contains(out.String(), `workspace_not_found`) {
+				t.Fatalf("exit=%d stdout=%s stderr=%s", exit, out.String(), errOut.String())
+			}
+		})
+	}
+}
+
 func TestOwnerGateAndStaleRefusal(t *testing.T) {
 	root := copyFixture(t)
 	decision := filepath.Join(root, ".spectacular", "records", "decision.md")
@@ -195,6 +213,29 @@ func TestProjectAuthorityProjectionAndDecisionAuthorizationAreStrict(t *testing.
 				t.Fatalf("exit=%d refusal=%s", exit, got.String())
 			}
 		})
+	}
+}
+
+func TestProposalCurrentTruthAndMissionSourceHaveHonestDrillDown(t *testing.T) {
+	root := copyFixture(t)
+	project := filepath.Join(root, ".spectacular", "records", "project.md")
+	replaceInFile(t, project, "current_truth:\n  - Mission:"+missionID, "current_truth:\n  - Mission:"+missionID+"\n  - Proposal:0198a1a0-0000-7000-8000-000000000001")
+
+	for _, args := range [][]string{{"anchor", "show", "project", "--json"}, {"mission", "show", missionID, "--json"}} {
+		var out bytes.Buffer
+		exit := (Runner{Cwd: root, Stdout: &out, Stderr: &bytes.Buffer{}, Now: fixedNow}).Run(args)
+		if exit != 0 {
+			t.Fatalf("%v exit=%d output=%s", args, exit, out.String())
+		}
+		text := out.String()
+		if strings.Contains(text, "spectacular proposal show") {
+			t.Fatalf("unsupported Proposal command emitted: %s", text)
+		}
+		for _, required := range []string{`"noun":"proposal"`, `"ref":"Proposal:0198a1a0-0000-7000-8000-000000000001"`, `"path":".spectacular/records/proposal.md"`, `"fingerprint":"`} {
+			if !strings.Contains(text, required) {
+				t.Fatalf("Proposal drill-down missing %s: %s", required, text)
+			}
+		}
 	}
 }
 

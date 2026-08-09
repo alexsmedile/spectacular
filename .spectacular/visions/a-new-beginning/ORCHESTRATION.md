@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: m1-charter-accepted
-active_stage: m1-implementation-ready
+checkpoint: m1-activated
+active_stage: m1-implementation-dispatched
 updated: 2026-08-09
 ---
 
@@ -310,8 +310,9 @@ H26 completed M1 preparation with explicit owner dispositions and final charter 
 disposition: **M1 charter accepted**. The authoritative charter is
 [`M1-SEMANTIC-SUBSTRATE-MISSION-CHARTER.md`](M1-SEMANTIC-SUBSTRATE-MISSION-CHARTER.md); the reviewed
 return is [`evidence/returns/H26-m1-semantic-substrate-preparation.md`](evidence/returns/H26-m1-semantic-substrate-preparation.md).
-The sole current program is v1.4: W0 accepted → M1 prepared → M2 → M3 → M4. M1 implementation
-dispatch is the one safe next action; no implementation Mission is active.
+The owner authorized M1 activation with “go.” The sole current program is v1.5: W0 accepted → M1
+active → M2 → M3 → M4. H27 is the bounded implementation Run; M2 remains blocked until H27 evidence,
+independent review, central assessment, and owner disposition complete.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

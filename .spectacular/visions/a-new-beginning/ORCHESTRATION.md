@@ -5,7 +5,7 @@ authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
 checkpoint: s12b-r1-integration-corrected
-active_stage: p0-v1-safety-preparation-ready
+active_stage: p0-v1-safety-preparation-dispatched
 updated: 2026-08-09
 ---
 
@@ -296,7 +296,9 @@ current program is [`EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md`](EXECUTABLE-REFACT
 the original H21 v1.0 program is preserved in its snapshot tree. The integration review is recorded
 in [`evidence/returns/H21-R1-integration-correction.md`](evidence/returns/H21-R1-integration-correction.md);
 the return is [`evidence/returns/H21-R1-s12b-corrected-refactor-program.md`](evidence/returns/H21-R1-s12b-corrected-refactor-program.md).
-Only P0 preparation is next-ready. W0 remains blocked, and no Mission is active.
+H22 is the separately dispatched, read-only P0 preparation session. It must obtain an explicit
+owner-approved repair and authority charter before central orchestration may activate P0. W0
+remains blocked, and no implementation Mission is active.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

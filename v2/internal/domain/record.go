@@ -56,7 +56,10 @@ func (r Record) Validate() error {
 			return NewRefusal(RefusalInvalidKnownField, field.name, "must be RFC3339", err)
 		}
 	}
-	if r.Status != nil && !validStatus(recordType, *r.Status) {
+	if r.Status != nil && strings.TrimSpace(*r.Status) == "" {
+		return NewRefusal(RefusalInvalidKnownField, "status", "must not be empty", nil)
+	}
+	if r.Status != nil && (recordType == Proposal || recordType == Mission) && !validStatus(recordType, *r.Status) {
 		return NewRefusal(
 			RefusalInvalidKnownField,
 			"status",
@@ -80,6 +83,9 @@ func (r Record) Validate() error {
 				nil,
 			)
 		}
+	}
+	if recordType != Mission && recordType != Proposal && r.Source != nil {
+		return NewRefusal(RefusalInvalidKnownField, "source", "recovery records use explicit typed relationship fields", nil)
 	}
 	return nil
 }

@@ -39,8 +39,8 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16
 [`CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md`](CLEAN-BREAK-CUTOVER-AND-RECOVERY-CONTRACT.md), and
 [`MISSION-PREPARATION-CONTRACT.md`](MISSION-PREPARATION-CONTRACT.md), and
 [`SUBSYSTEM-SURVIVAL-CONTRACT.md`](SUBSYSTEM-SURVIVAL-CONTRACT.md).
-S11 and S12A are accepted. The approved five-spec topology is fixed; S12B is next-ready to
-compile it into the executable refactor program.
+S11, S12A, and S12B are accepted. The approved five-spec topology is compiled into a strictly
+serialized five-Mission program; only W0 shared-scaffold preparation is next-ready.
 
 ## Decision batches
 
@@ -195,6 +195,6 @@ must not prejudge the v2 product surface.
 ## Current checkpoint
 
 S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16, S10, S11, and
-S12A are accepted. The v2 responsibility surface, retirement boundaries, implementation
-architecture, and five-spec topology are fixed. S12B may compile those approved specifications
-into an executable program; it may not restore retired v1 structures for convenience.
+S12A, and S12B are accepted. The v2 responsibility surface, retirement boundaries, implementation
+architecture, five-spec topology, and five-Mission program are fixed. W0 may prepare the shared
+scaffold; no implementation Mission may activate until W0 has passed its proportional gate.

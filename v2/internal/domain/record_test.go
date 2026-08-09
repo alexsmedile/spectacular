@@ -1,6 +1,9 @@
 package domain
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func pointer(value string) *string {
 	return &value
@@ -92,5 +95,27 @@ func TestOnlyTypeAndIDAreUniversalRequirements(t *testing.T) {
 	record := Record{Type: Proposal, ID: mustID(t, proposalIDText)}
 	if err := record.Validate(); err != nil {
 		t.Fatalf("minimal record rejected: %v", err)
+	}
+}
+
+func TestRecordValidationRefusalOrderIsDeterministic(t *testing.T) {
+	t.Parallel()
+
+	record := Record{
+		Type:      Proposal,
+		ID:        mustID(t, proposalIDText),
+		Title:     pointer(""),
+		Status:    pointer(""),
+		CreatedBy: pointer(""),
+	}
+	for attempt := 0; attempt < 100; attempt++ {
+		err := record.Validate()
+		var refusal *Refusal
+		if !errors.As(err, &refusal) {
+			t.Fatalf("Validate error = %v, want refusal", err)
+		}
+		if refusal.Field != "title" {
+			t.Fatalf("Validate refusal field = %q, want title", refusal.Field)
+		}
 	}
 }

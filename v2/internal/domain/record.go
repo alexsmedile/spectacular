@@ -31,24 +31,30 @@ func (r Record) Validate() error {
 	if _, err := ParseID(r.ID.String()); err != nil {
 		return err
 	}
-	for name, value := range map[string]*string{
-		"title":      r.Title,
-		"status":     r.Status,
-		"created_by": r.CreatedBy,
+	for _, field := range []struct {
+		name  string
+		value *string
+	}{
+		{name: "title", value: r.Title},
+		{name: "status", value: r.Status},
+		{name: "created_by", value: r.CreatedBy},
 	} {
-		if value != nil && strings.TrimSpace(*value) == "" {
-			return NewRefusal(RefusalInvalidKnownField, name, "must not be empty", nil)
+		if field.value != nil && strings.TrimSpace(*field.value) == "" {
+			return NewRefusal(RefusalInvalidKnownField, field.name, "must not be empty", nil)
 		}
 	}
-	for name, value := range map[string]*string{
-		"created": r.Created,
-		"updated": r.Updated,
+	for _, field := range []struct {
+		name  string
+		value *string
+	}{
+		{name: "created", value: r.Created},
+		{name: "updated", value: r.Updated},
 	} {
-		if value == nil {
+		if field.value == nil {
 			continue
 		}
-		if _, err := time.Parse(time.RFC3339, *value); err != nil {
-			return NewRefusal(RefusalInvalidKnownField, name, "must be RFC3339", err)
+		if _, err := time.Parse(time.RFC3339, *field.value); err != nil {
+			return NewRefusal(RefusalInvalidKnownField, field.name, "must be RFC3339", err)
 		}
 	}
 	if recordType == Proposal && r.Source != nil {
@@ -63,24 +69,6 @@ func (r Record) Validate() error {
 		)
 	}
 	return nil
-}
-
-// KnownFieldOrder is the canonical top-level ordering for semantic fields.
-func KnownFieldOrder(recordType RecordType) []string {
-	fields := []string{
-		"type",
-		"id",
-		"title",
-		"description",
-		"status",
-		"created_by",
-		"created",
-		"updated",
-	}
-	if recordType == Mission {
-		fields = append(fields, "source")
-	}
-	return fields
 }
 
 // IsReservedField identifies names whose interpretation belongs to an M1

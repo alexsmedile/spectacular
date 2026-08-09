@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: p0-abandoned-by-owner
-active_stage: w0-shared-scaffold-ready
+checkpoint: v1-critical-path-removed
+active_stage: w0-shared-scaffold-dispatched
 updated: 2026-08-09
 ---
 
@@ -303,7 +303,8 @@ all v1 investment. Central recorded
 [`V1-DEPRIORITIZATION-DECISION.md`](V1-DEPRIORITIZATION-DECISION.md), abandoned P0 without merging
 its branch, cancelled its repair and Pageworks gates, and removed generic v1 release/migration work
 from the critical path. The sole current program is v1.2: W0 → M1 → M2 → M3 → M4. W0 is
-next-ready; no implementation Mission is active.
+dispatched through H25 as a read-only interactive Design Sufficiency gate; no implementation
+Mission is active.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

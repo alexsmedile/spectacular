@@ -2,6 +2,10 @@
 
 Generated from `internal/command.Registry`; do not edit by hand.
 
+Release version: `2.0.0`
+
+Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1`, `read-only`)
+
 | Command | Arguments | Schema | Effect |
 |---|---|---|---|
 | `spectacular anchor show project` | `[--json]` | `spectacular.anchor.show.v1` | `read-only` |

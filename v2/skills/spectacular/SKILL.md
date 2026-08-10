@@ -1,5 +1,6 @@
 ---
 name: spectacular
+version: 2.0.0
 description: Guide work in a canonical Spectacular v2 workspace from cold orientation through Proposal, Mission preparation, governed execution, Evidence assessment, reconciliation, and closure. Use for `/spectacular` jobs such as orient, propose, define, decide, start, resume, handoff, assess, reconcile, resolve, or audit; for compiling bounded runtime context or an explicit Autopilot charter; and for safely continuing a Mission after session or runtime replacement.
 ---
 

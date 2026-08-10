@@ -587,6 +587,7 @@ func (r Runner) usage(jsonMode bool, invoked, detail string) int {
 		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v1", invoked, 2, "usage", "", detail, "", "", "none", "correct the command invocation using registry-derived help"})
 	} else {
 		fmt.Fprintln(r.Stderr, "usage:")
+		fmt.Fprintf(r.Stderr, "  %s %s\n", VersionInspection.Command, VersionInspection.Arguments)
 		for _, s := range Registry {
 			fmt.Fprintf(r.Stderr, "  spectacular %s %s\n", strings.Join(s.Words, " "), s.Arguments)
 		}

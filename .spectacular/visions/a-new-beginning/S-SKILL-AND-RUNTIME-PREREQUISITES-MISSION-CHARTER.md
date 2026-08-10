@@ -2,7 +2,7 @@
 type: mission-charter
 mission: skill-and-runtime-prerequisites
 version: 1.0
-status: ready-for-independent-rereview
+status: ready-for-central-acceptance
 prepared_at: 2026-08-10
 prepared_by: mission-owner-gap-audit
 accepted_by: owner
@@ -33,7 +33,11 @@ second_review_disposition: block
 repaired_commit: b815ef4a154c0d682de6f663abbf06fb675f98d5
 repaired_tree: 4e5cbe84f6cd657f139e9aa5e5466566f0540dcd
 repair_evidence: evidence/scenario-s-repair-round-2-evidence.md
-next_action: independent-rereview
+independently_reviewed_commit: 587edf575d86848fdb7584446b8a4b8a7adb87b6
+independently_reviewed_tree: a31f398375467856af207b01d0eda2c0ae3435eb
+independent_review_disposition: accept
+independent_review_evidence: evidence/scenario-s-independent-review.md
+next_action: central-acceptance
 upstream:
   - EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md@1.9
   - RESPONSIBILITY-PLACEMENT-CONTRACT.md@1.0

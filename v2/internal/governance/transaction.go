@@ -40,6 +40,10 @@ func ApplyTransaction(root, key string, changes []FileChange) error {
 }
 
 func applyTransaction(root, key string, changes []FileChange, failAfter int) error {
+	return applyTransactionWithInstallHook(root, key, changes, failAfter, nil)
+}
+
+func applyTransactionWithInstallHook(root, key string, changes []FileChange, failAfter int, beforeInstall func(int)) error {
 	if len(changes) == 0 {
 		return nil
 	}
@@ -49,29 +53,24 @@ func applyTransaction(root, key string, changes []FileChange, failAfter int) err
 	if err := RecoverTransactions(root); err != nil {
 		return err
 	}
+	effects, err := openRootedWorkspace(root)
+	if err != nil {
+		return err
+	}
+	defer effects.Close()
 	digest := sha256.Sum256([]byte(key))
 	txID := hex.EncodeToString(digest[:16])
-	txRoot, err := effectPath(root, filepath.Join(".spectacular", "transactions"), ".spectacular")
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(txRoot, 0o755); err != nil {
+	txRelative := filepath.Join(".spectacular", "transactions")
+	if err := effects.mkdirAll(txRelative, 0o755, ".spectacular"); err != nil {
 		return transactionRefusal("create transaction directory", err)
 	}
-	if _, err := effectPath(root, filepath.Join(".spectacular", "transactions"), ".spectacular"); err != nil {
-		return err
-	}
 	journalRelative := filepath.Join(".spectacular", "transactions", txID+".json")
-	journalPath, err := effectPath(root, journalRelative, filepath.Join(".spectacular", "transactions"))
-	if err != nil {
-		return err
-	}
 	journal := transactionJournal{Schema: "spectacular.transaction.v1", Key: key}
 	seen := map[string]bool{}
 	journalWritten := false
 	defer func() {
 		if !journalWritten {
-			cleanupPrepared(root, journal.Files)
+			cleanupPrepared(effects, journal.Files)
 		}
 	}()
 	for i, change := range changes {
@@ -89,12 +88,10 @@ func applyTransaction(root, key string, changes []FileChange, failAfter int) err
 			Backup:    filepath.ToSlash(filepath.Join(".spectacular", "transactions", fmt.Sprintf("%s-%d.old", txID, i))),
 			Mode:      uint32(change.Mode.Perm()),
 		}
-		temporary, pathErr := transactionArtifact(root, item.Temporary, txID, i, ".new")
-		if pathErr != nil {
+		if _, pathErr := transactionArtifact(root, item.Temporary, txID, i, ".new"); pathErr != nil {
 			return pathErr
 		}
-		backup, pathErr := transactionArtifact(root, item.Backup, txID, i, ".old")
-		if pathErr != nil {
+		if _, pathErr := transactionArtifact(root, item.Backup, txID, i, ".old"); pathErr != nil {
 			return pathErr
 		}
 		if item.Mode == 0 {
@@ -102,18 +99,17 @@ func applyTransaction(root, key string, changes []FileChange, failAfter int) err
 		}
 		journal.Files = append(journal.Files, item)
 		tracked := &journal.Files[len(journal.Files)-1]
-		if info, statErr := os.Stat(target); statErr == nil {
+		if info, statErr := effects.stat(change.Path, ""); statErr == nil {
 			tracked.HadOriginal = true
 			tracked.Mode = uint32(info.Mode().Perm())
-			data, readErr := os.ReadFile(target)
+			data, readErr := effects.readFile(change.Path, "")
 			if readErr != nil {
 				return transactionRefusal("read transaction original", readErr)
 			}
-			backup, pathErr = transactionArtifact(root, item.Backup, txID, i, ".old")
-			if pathErr != nil {
+			if _, pathErr := transactionArtifact(root, item.Backup, txID, i, ".old"); pathErr != nil {
 				return pathErr
 			}
-			if writeErr := writeSynced(backup, data, info.Mode().Perm()); writeErr != nil {
+			if writeErr := effects.writeSynced(item.Backup, data, info.Mode().Perm(), txRelative); writeErr != nil {
 				return transactionRefusal("write transaction backup", writeErr)
 			}
 		} else if !os.IsNotExist(statErr) {
@@ -122,17 +118,16 @@ func applyTransaction(root, key string, changes []FileChange, failAfter int) err
 		if _, err := safeTarget(root, change.Path); err != nil {
 			return err
 		}
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		if err := effects.mkdirAll(filepath.Dir(change.Path), 0o755, ""); err != nil {
 			return transactionRefusal("create transaction target directory", err)
 		}
 		if _, err := safeTarget(root, change.Path); err != nil {
 			return err
 		}
-		temporary, pathErr = transactionArtifact(root, item.Temporary, txID, i, ".new")
-		if pathErr != nil {
+		if _, pathErr := transactionArtifact(root, item.Temporary, txID, i, ".new"); pathErr != nil {
 			return pathErr
 		}
-		if err := writeSynced(temporary, change.Data, os.FileMode(tracked.Mode)); err != nil {
+		if err := effects.writeSynced(item.Temporary, change.Data, os.FileMode(tracked.Mode), txRelative); err != nil {
 			return transactionRefusal("write transaction candidate", err)
 		}
 	}
@@ -141,38 +136,35 @@ func applyTransaction(root, key string, changes []FileChange, failAfter int) err
 		return transactionRefusal("encode transaction journal", err)
 	}
 	journalData = append(journalData, '\n')
-	journalPath, err = effectPath(root, journalRelative, filepath.Join(".spectacular", "transactions"))
-	if err != nil {
-		return err
-	}
-	if err := writeSynced(journalPath, journalData, 0o600); err != nil {
+	if err := effects.writeSynced(journalRelative, journalData, 0o600, txRelative); err != nil {
 		return transactionRefusal("write transaction journal", err)
 	}
 	journalWritten = true
 	installed := 0
 	for i, item := range journal.Files {
 		if failAfter >= 0 && installed == failAfter {
-			if err := rollback(root, journal); err != nil {
+			if err := rollback(effects, journal); err != nil {
 				return err
 			}
-			if err := removeEffect(root, journalRelative, filepath.Join(".spectacular", "transactions")); err != nil {
+			if err := removeEffect(effects, journalRelative, txRelative); err != nil {
 				return err
 			}
 			return transactionRefusal("injected transaction interruption", fmt.Errorf("after %d installs", installed))
 		}
-		temporary, pathErr := transactionArtifact(root, item.Temporary, txID, i, ".new")
-		if pathErr != nil {
+		if _, pathErr := transactionArtifact(root, item.Temporary, txID, i, ".new"); pathErr != nil {
 			return pathErr
 		}
-		target, pathErr := safeTarget(root, item.Target)
-		if pathErr != nil {
+		if _, pathErr := safeTarget(root, item.Target); pathErr != nil {
 			return pathErr
 		}
-		if err := os.Rename(temporary, target); err != nil {
-			if rollbackErr := rollback(root, journal); rollbackErr != nil {
+		if beforeInstall != nil {
+			beforeInstall(i)
+		}
+		if err := effects.rename(item.Temporary, item.Target, txRelative, ""); err != nil {
+			if rollbackErr := rollback(effects, journal); rollbackErr != nil {
 				return rollbackErr
 			}
-			if removeErr := removeEffect(root, journalRelative, filepath.Join(".spectacular", "transactions")); removeErr != nil {
+			if removeErr := removeEffect(effects, journalRelative, txRelative); removeErr != nil {
 				return removeErr
 			}
 			return transactionRefusal("install transaction candidate", err)
@@ -183,17 +175,17 @@ func applyTransaction(root, key string, changes []FileChange, failAfter int) err
 		if _, err := transactionArtifact(root, item.Backup, txID, i, ".old"); err != nil {
 			return err
 		}
-		if err := removeEffect(root, item.Backup, filepath.Join(".spectacular", "transactions")); err != nil {
+		if err := removeEffect(effects, item.Backup, txRelative); err != nil {
 			return err
 		}
 		if _, err := transactionArtifact(root, item.Temporary, txID, i, ".new"); err != nil {
 			return err
 		}
-		if err := removeEffect(root, item.Temporary, filepath.Join(".spectacular", "transactions")); err != nil {
+		if err := removeEffect(effects, item.Temporary, txRelative); err != nil {
 			return err
 		}
 	}
-	if err := removeEffect(root, journalRelative, filepath.Join(".spectacular", "transactions")); err != nil {
+	if err := removeEffect(effects, journalRelative, txRelative); err != nil {
 		return err
 	}
 	return nil
@@ -202,11 +194,13 @@ func applyTransaction(root, key string, changes []FileChange, failAfter int) err
 // RecoverTransactions rolls back every incomplete journal. Recovery is
 // deterministic and happens before any subsequent governed mutation.
 func RecoverTransactions(root string) error {
-	txRoot, pathErr := effectPath(root, filepath.Join(".spectacular", "transactions"), ".spectacular")
-	if pathErr != nil {
-		return pathErr
+	effects, err := openRootedWorkspace(root)
+	if err != nil {
+		return err
 	}
-	entries, err := os.ReadDir(txRoot)
+	defer effects.Close()
+	txRelative := filepath.Join(".spectacular", "transactions")
+	entries, err := effects.readDir(txRelative, ".spectacular")
 	if os.IsNotExist(err) {
 		return nil
 	}
@@ -220,68 +214,63 @@ func RecoverTransactions(root string) error {
 		if entry.Type()&os.ModeSymlink != 0 {
 			return domain.NewRefusal(domain.RefusalPathEscape, entry.Name(), "transaction journal must not be a symlink", nil)
 		}
-		path, effectErr := effectPath(root, filepath.Join(".spectacular", "transactions", entry.Name()), filepath.Join(".spectacular", "transactions"))
-		if effectErr != nil {
-			return effectErr
-		}
-		data, readErr := os.ReadFile(path)
+		journalRelative := filepath.Join(txRelative, entry.Name())
+		data, readErr := effects.readFile(journalRelative, txRelative)
 		if readErr != nil {
 			return transactionRefusal("read recovery journal", readErr)
 		}
 		var journal transactionJournal
 		if jsonErr := json.Unmarshal(data, &journal); jsonErr != nil || journal.Schema != "spectacular.transaction.v1" {
-			return domain.NewRefusal(domain.RefusalTransactionRecovery, path, "transaction journal is invalid", jsonErr)
+			return domain.NewRefusal(domain.RefusalTransactionRecovery, journalRelative, "transaction journal is invalid", jsonErr)
 		}
 		digest := sha256.Sum256([]byte(journal.Key))
 		txID := hex.EncodeToString(digest[:16])
 		if entry.Name() != txID+".json" {
 			return domain.NewRefusal(domain.RefusalPathEscape, entry.Name(), "transaction journal identity does not match its key", nil)
 		}
-		if rollbackErr := rollback(root, journal); rollbackErr != nil {
+		if rollbackErr := rollback(effects, journal); rollbackErr != nil {
 			return rollbackErr
 		}
-		if removeErr := removeEffect(root, filepath.Join(".spectacular", "transactions", entry.Name()), filepath.Join(".spectacular", "transactions")); removeErr != nil {
+		if removeErr := removeEffect(effects, journalRelative, txRelative); removeErr != nil {
 			return removeErr
 		}
 	}
 	return nil
 }
 
-func rollback(root string, journal transactionJournal) error {
+func rollback(effects *rootedWorkspace, journal transactionJournal) error {
 	digest := sha256.Sum256([]byte(journal.Key))
 	txID := hex.EncodeToString(digest[:16])
+	txRelative := filepath.Join(".spectacular", "transactions")
 	for i := len(journal.Files) - 1; i >= 0; i-- {
 		item := journal.Files[i]
-		target, err := safeTarget(root, item.Target)
-		if err != nil {
+		if _, err := safeTarget(effects.path, item.Target); err != nil {
 			return err
 		}
-		backup, err := transactionArtifact(root, item.Backup, txID, i, ".old")
-		if err != nil {
+		if _, err := transactionArtifact(effects.path, item.Backup, txID, i, ".old"); err != nil {
 			return err
 		}
-		if _, err := transactionArtifact(root, item.Temporary, txID, i, ".new"); err != nil {
+		if _, err := transactionArtifact(effects.path, item.Temporary, txID, i, ".new"); err != nil {
 			return err
 		}
 		if item.HadOriginal {
-			data, err := os.ReadFile(backup)
+			data, err := effects.readFile(item.Backup, txRelative)
 			if err != nil {
 				return transactionRefusal("read rollback backup", err)
 			}
-			target, err = safeTarget(root, item.Target)
-			if err != nil {
+			if _, err = safeTarget(effects.path, item.Target); err != nil {
 				return err
 			}
-			if err := writeSynced(target, data, os.FileMode(item.Mode)); err != nil {
+			if err := effects.writeSynced(item.Target, data, os.FileMode(item.Mode), ""); err != nil {
 				return transactionRefusal("restore rollback target", err)
 			}
-		} else if err := removeEffect(root, item.Target, ""); err != nil {
+		} else if err := removeEffect(effects, item.Target, ""); err != nil {
 			return err
 		}
-		if err := removeEffect(root, item.Temporary, filepath.Join(".spectacular", "transactions")); err != nil {
+		if err := removeEffect(effects, item.Temporary, txRelative); err != nil {
 			return err
 		}
-		if err := removeEffect(root, item.Backup, filepath.Join(".spectacular", "transactions")); err != nil {
+		if err := removeEffect(effects, item.Backup, txRelative); err != nil {
 			return err
 		}
 	}
@@ -353,36 +342,101 @@ func transactionArtifact(root, relative, txID string, index int, suffix string) 
 	return effectPath(root, filepath.FromSlash(want), filepath.Join(".spectacular", "transactions"))
 }
 
-func cleanupPrepared(root string, files []transactionFile) {
-	for _, item := range files {
-		for _, path := range []string{item.Temporary, item.Backup} {
-			if absolute, err := effectPath(root, filepath.FromSlash(path), filepath.Join(".spectacular", "transactions")); err == nil {
-				_ = os.Remove(absolute)
-			}
-		}
-	}
+type rootedWorkspace struct {
+	path string
+	root *os.Root
 }
 
-func removeEffect(root, relative, scope string) error {
-	absolute, err := effectPath(root, filepath.FromSlash(relative), scope)
+func openRootedWorkspace(path string) (*rootedWorkspace, error) {
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+	canonical, err := filepath.EvalSymlinks(absolute)
+	if err != nil {
+		return nil, domain.NewRefusal(domain.RefusalPathEscape, path, "resolve canonical workspace root", err)
+	}
+	root, err := os.OpenRoot(canonical)
+	if err != nil {
+		return nil, domain.NewRefusal(domain.RefusalPathEscape, path, "open canonical workspace root", err)
+	}
+	return &rootedWorkspace{path: canonical, root: root}, nil
+}
+
+func (r *rootedWorkspace) Close() {
+	_ = r.root.Close()
+}
+
+func (r *rootedWorkspace) validate(relative, scope string) (string, error) {
+	name := filepath.FromSlash(relative)
+	if name == "." && scope == "" {
+		return name, nil
+	}
+	if _, err := effectPath(r.path, name, scope); err != nil {
+		return "", err
+	}
+	return name, nil
+}
+
+func (r *rootedWorkspace) operationError(relative, scope string, operationErr error) error {
+	if operationErr == nil {
+		return nil
+	}
+	if _, validationErr := r.validate(relative, scope); validationErr != nil {
+		return validationErr
+	}
+	return operationErr
+}
+
+func (r *rootedWorkspace) stat(relative, scope string) (os.FileInfo, error) {
+	name, err := r.validate(relative, scope)
+	if err != nil {
+		return nil, err
+	}
+	info, err := r.root.Stat(name)
+	return info, r.operationError(relative, scope, err)
+}
+
+func (r *rootedWorkspace) readFile(relative, scope string) ([]byte, error) {
+	name, err := r.validate(relative, scope)
+	if err != nil {
+		return nil, err
+	}
+	data, err := r.root.ReadFile(name)
+	return data, r.operationError(relative, scope, err)
+}
+
+func (r *rootedWorkspace) readDir(relative, scope string) ([]os.DirEntry, error) {
+	name, err := r.validate(relative, scope)
+	if err != nil {
+		return nil, err
+	}
+	directory, err := r.root.Open(name)
+	if err != nil {
+		return nil, r.operationError(relative, scope, err)
+	}
+	defer directory.Close()
+	entries, err := directory.ReadDir(-1)
+	return entries, err
+}
+
+func (r *rootedWorkspace) mkdirAll(relative string, mode os.FileMode, scope string) error {
+	name, err := r.validate(relative, scope)
 	if err != nil {
 		return err
 	}
-	if err := os.Remove(absolute); err != nil && !os.IsNotExist(err) {
-		return transactionRefusal("remove contained transaction artifact", err)
-	}
-	return nil
+	err = r.root.MkdirAll(name, mode.Perm())
+	return r.operationError(relative, scope, err)
 }
 
-func pathWithin(root, path string) bool {
-	rel, err := filepath.Rel(root, path)
-	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
-}
-
-func writeSynced(path string, data []byte, mode os.FileMode) error {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
+func (r *rootedWorkspace) writeSynced(relative string, data []byte, mode os.FileMode, scope string) error {
+	name, err := r.validate(relative, scope)
 	if err != nil {
 		return err
+	}
+	file, err := r.root.OpenFile(name, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode.Perm())
+	if err != nil {
+		return r.operationError(relative, scope, err)
 	}
 	if _, err = file.Write(data); err == nil {
 		err = file.Sync()
@@ -392,6 +446,59 @@ func writeSynced(path string, data []byte, mode os.FileMode) error {
 		return err
 	}
 	return closeErr
+}
+
+func (r *rootedWorkspace) rename(oldRelative, newRelative, oldScope, newScope string) error {
+	oldName, err := r.validate(oldRelative, oldScope)
+	if err != nil {
+		return err
+	}
+	newName, err := r.validate(newRelative, newScope)
+	if err != nil {
+		return err
+	}
+	if err := r.root.Rename(oldName, newName); err != nil {
+		if _, validationErr := r.validate(oldRelative, oldScope); validationErr != nil {
+			return validationErr
+		}
+		if _, validationErr := r.validate(newRelative, newScope); validationErr != nil {
+			return validationErr
+		}
+		return err
+	}
+	return nil
+}
+
+func (r *rootedWorkspace) remove(relative, scope string) error {
+	name, err := r.validate(relative, scope)
+	if err != nil {
+		return err
+	}
+	err = r.root.Remove(name)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return r.operationError(relative, scope, err)
+}
+
+func cleanupPrepared(effects *rootedWorkspace, files []transactionFile) {
+	for _, item := range files {
+		for _, path := range []string{item.Temporary, item.Backup} {
+			_ = effects.remove(path, filepath.Join(".spectacular", "transactions"))
+		}
+	}
+}
+
+func removeEffect(effects *rootedWorkspace, relative, scope string) error {
+	if err := effects.remove(relative, scope); err != nil {
+		return transactionRefusal("remove contained transaction artifact", err)
+	}
+	return nil
+}
+
+func pathWithin(root, path string) bool {
+	rel, err := filepath.Rel(root, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 func transactionRefusal(operation string, err error) error {

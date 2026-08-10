@@ -289,6 +289,41 @@ func TestTransactionRejectsSymlinkedParentEscape(t *testing.T) {
 	}
 }
 
+func TestTransactionInstallResistsValidatedParentSwap(t *testing.T) {
+	root := t.TempDir()
+	outside := t.TempDir()
+	parent := filepath.Join(root, "records")
+	displaced := filepath.Join(root, "records-original")
+	must(t, os.Mkdir(parent, 0o755))
+	must(t, os.WriteFile(filepath.Join(parent, "contract.md"), []byte("original"), 0o644))
+
+	err := applyTransactionWithInstallHook(root, "parent-swap", []FileChange{{
+		Path: filepath.Join("records", "contract.md"),
+		Data: []byte("candidate"),
+		Mode: 0o644,
+	}}, -1, func(index int) {
+		if index != 0 {
+			t.Fatalf("unexpected install index %d", index)
+		}
+		must(t, os.Rename(parent, displaced))
+		must(t, os.Symlink(outside, parent))
+	})
+	if err == nil {
+		t.Fatal("parent swap unexpectedly installed outside the rooted workspace")
+	}
+	if refusalCode(err) != domain.RefusalPathEscape {
+		t.Fatalf("parent swap refusal=%v", err)
+	}
+	if _, statErr := os.Stat(filepath.Join(outside, "contract.md")); !os.IsNotExist(statErr) {
+		t.Fatalf("outside target changed: %v", statErr)
+	}
+	data, readErr := os.ReadFile(filepath.Join(displaced, "contract.md"))
+	must(t, readErr)
+	if string(data) != "original" {
+		t.Fatalf("displaced original=%q", data)
+	}
+}
+
 func TestRecoveryRejectsCraftedJournalOutsideWorkspace(t *testing.T) {
 	root := t.TempDir()
 	outside := filepath.Join(t.TempDir(), "victim")

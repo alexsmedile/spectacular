@@ -13,8 +13,13 @@ plugin_root="$(cd "$script_dir/.." && pwd)"
 
 case "$runtime_name" in codex|claude) ;; *) die "runtime must be codex or claude" ;; esac
 [[ -d "$destination_root" ]] || die "destination must be an existing disposable directory"
+destination_root="$(cd "$destination_root" && pwd -P)"
+home_root=""
+if [[ -n "${HOME:-}" && -d "$HOME" ]]; then
+  home_root="$(cd "$HOME" && pwd -P)"
+fi
 [[ "$destination_root" != "/" ]] || die "destination cannot be filesystem root"
-[[ "$destination_root" != "${HOME:-}" ]] || die "destination cannot be the user home"
+[[ -z "$home_root" || "$destination_root" != "$home_root" ]] || die "destination cannot be the user home"
 [[ -z "$(find "$destination_root" -mindepth 1 -maxdepth 1 -print -quit)" ]] || die "destination must be empty"
 
 "$script_dir/preflight.sh" "$runtime_name" "$plugin_root" "$binary_path" >/dev/null

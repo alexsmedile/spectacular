@@ -26,5 +26,8 @@ home_probe="$test_root/home-probe"
 mkdir -p "$home_probe"
 HOME="$home_probe" "$script_dir/stage-local.sh" codex "$home_probe" "$binary_path" >/dev/null 2>&1 && exit 1 || code=$?
 [[ "$code" -eq 3 ]]
+HOME="$home_probe" "$script_dir/stage-local.sh" codex "$home_probe/." "$binary_path" >/dev/null 2>&1 && exit 1 || code=$?
+[[ "$code" -eq 3 ]]
+[[ -z "$(find "$home_probe" -mindepth 1 -maxdepth 1 -print -quit)" ]]
 
 echo "Scenario S disposable Codex/Claude staging: PASS"

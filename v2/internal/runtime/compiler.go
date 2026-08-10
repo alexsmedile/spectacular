@@ -140,7 +140,7 @@ func ValidatePreparationReceipt(receipt PreparationReceipt, now time.Time) error
 	}
 	freshUntil, err := time.Parse(time.RFC3339, receipt.FreshUntil)
 	if err != nil || !freshUntil.After(now) {
-		return invalid("preparation receipt is stale")
+		return domain.NewRefusal(domain.RefusalExpiredAuthority, "preparation", "preparation receipt is stale", err)
 	}
 	return nil
 }
@@ -168,6 +168,22 @@ type AutopilotInput struct {
 	StopConditions          []string      `json:"stop_conditions"`
 	RecoveryPoint           string        `json:"recovery_point"`
 	ReturnDestination       string        `json:"return_destination"`
+}
+
+// AutopilotLimits is derived from the exact bound Mission and owner Decision.
+// It is deliberately separate from AutopilotInput so requested authority can
+// never validate itself.
+type AutopilotLimits struct {
+	Mission          BoundSource
+	Authorization    BoundSource
+	Outcome          string
+	AllowedProviders []string
+	AllowedActions   []string
+	ForbiddenEffects []string
+	BudgetUnits      int
+	RepairBudget     int
+	ExpiresAt        string
+	StopConditions   []string
 }
 
 type HandoffContract struct {
@@ -203,7 +219,7 @@ type AutopilotCharter struct {
 	Handoff                  HandoffContract `json:"handoff"`
 }
 
-func CompileAutopilot(input AutopilotInput, now time.Time) (AutopilotCharter, error) {
+func CompileAutopilot(input AutopilotInput, limits AutopilotLimits, now time.Time) (AutopilotCharter, error) {
 	if !input.Enabled {
 		return AutopilotCharter{}, invalid("Autopilot must be explicitly enabled")
 	}
@@ -215,6 +231,21 @@ func CompileAutopilot(input AutopilotInput, now time.Time) (AutopilotCharter, er
 	}
 	if input.Outcome == "" || len(input.NonGoals) == 0 || len(input.AuthoritativeSources) == 0 || len(input.DelegatedDecisionDomain) == 0 || len(input.AllowedActions) == 0 || input.BudgetUnits < 1 || input.RepairBudget < 0 || len(input.RequiredChecks) == 0 || len(input.StopConditions) == 0 || input.RecoveryPoint == "" || input.ReturnDestination == "" {
 		return AutopilotCharter{}, invalid("Autopilot requires outcome, non-goals, sources, decision domain, actions, budgets, checks, stops, recovery, and return")
+	}
+	if limits.Mission != input.Mission || limits.Authorization != input.Authorization || limits.Outcome == "" || limits.Outcome != input.Outcome {
+		return AutopilotCharter{}, invalid("Autopilot request is not bound to the validated Mission outcome and authorization")
+	}
+	if !allContained(input.AllowedProviders, limits.AllowedProviders) || !allContained(input.AllowedActions, limits.AllowedActions) {
+		return AutopilotCharter{}, invalid("Autopilot providers and actions exceed validated authority")
+	}
+	if !allContained(limits.ForbiddenEffects, input.ForbiddenEffects) || overlaps(input.AllowedActions, input.ForbiddenEffects) {
+		return AutopilotCharter{}, invalid("Autopilot allowed actions conflict with, or omit, Mission forbidden effects")
+	}
+	if input.BudgetUnits > limits.BudgetUnits || input.RepairBudget > limits.RepairBudget {
+		return AutopilotCharter{}, invalid("Autopilot budgets exceed the Mission envelope")
+	}
+	if !allContained(limits.StopConditions, input.StopConditions) {
+		return AutopilotCharter{}, invalid("Autopilot stop conditions omit a Mission stop")
 	}
 	for _, source := range input.AuthoritativeSources {
 		if err := validateAnyBoundSource(source); err != nil {
@@ -229,6 +260,10 @@ func CompileAutopilot(input AutopilotInput, now time.Time) (AutopilotCharter, er
 	expires, err := time.Parse(time.RFC3339, input.ExpiresAt)
 	if err != nil || !expires.After(now) {
 		return AutopilotCharter{}, invalid("expires_at must be a future RFC3339 time")
+	}
+	limitExpiry, err := time.Parse(time.RFC3339, limits.ExpiresAt)
+	if err != nil || expires.After(limitExpiry) {
+		return AutopilotCharter{}, invalid("Autopilot expiry exceeds validated authority")
 	}
 	charter := AutopilotCharter{
 		SchemaVersion: AutopilotSchema, Enabled: true, Mission: input.Mission,
@@ -313,6 +348,24 @@ func oneOf(value string, allowed ...string) bool {
 func contains(values []string, want string) bool {
 	for _, value := range values {
 		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
+func allContained(values, allowed []string) bool {
+	for _, value := range values {
+		if !contains(allowed, value) {
+			return false
+		}
+	}
+	return true
+}
+
+func overlaps(left, right []string) bool {
+	for _, value := range left {
+		if contains(right, value) {
 			return true
 		}
 	}

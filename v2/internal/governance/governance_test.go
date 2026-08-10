@@ -81,6 +81,9 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 		DesignSufficiency: "sufficient", SliceQuality: "coherent", EvidenceClaims: []string{"claim:closure"}, Scope: []string{"v2"}, AllowedActions: []string{"test", "write-v2"}, ForbiddenEffects: []string{"provider-mutation"},
 		Baseline: contract.Fingerprint, BudgetUnits: 2, RepairBudget: 2, ExpiresAt: "2026-08-11T10:00:00Z", Stops: []string{"authority-drift"}, RecoveryPoint: "git-head", ReturnDestination: "central", Authorization: missionDecision, ExpectedProposalFingerprint: proposal.Fingerprint, IdempotencyKey: "mission-create-1",
 	}
+	if _, err := svc.CreateMission(missionInput); refusalCode(err) != domain.RefusalMissingRequiredField {
+		t.Fatalf("Mission without preparation receipt err=%v", err)
+	}
 	preparation, err := spectacularruntime.CompilePreparation(spectacularruntime.PreparationInput{
 		Proposal: spectacularruntime.BoundSource{Ref: proposalRef, Fingerprint: proposal.Fingerprint}, Baseline: contract.Fingerprint,
 		DirectionSources: []spectacularruntime.BoundSource{{Ref: contractRef, Fingerprint: contract.Fingerprint}},

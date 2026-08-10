@@ -3,6 +3,7 @@ package governance
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"sort"
@@ -200,16 +201,31 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 	if _, err := s.CheckProposalBase(input.Proposal); err != nil {
 		return OperationResult{}, err
 	}
-	if input.Title == "" || input.Actor == "" || input.Outcome == "" || len(input.Objectives) == 0 || input.DesignSufficiency != "sufficient" || input.SliceQuality != "coherent" || len(input.EvidenceClaims) == 0 || len(input.Scope) == 0 || input.Baseline == "" || input.BudgetUnits < 1 || input.RepairBudget < 0 || input.RecoveryPoint == "" || input.ReturnDestination == "" || input.Authorization == "" || input.IdempotencyKey == "" {
+	if input.Title == "" || input.Actor == "" || input.Outcome == "" || len(input.Objectives) == 0 || input.DesignSufficiency != "sufficient" || input.SliceQuality != "coherent" || len(input.EvidenceClaims) == 0 || len(input.Scope) == 0 || input.Baseline == "" || input.BudgetUnits < 1 || input.RepairBudget < 0 || input.RecoveryPoint == "" || input.ReturnDestination == "" || input.Authorization == "" || input.IdempotencyKey == "" || input.Preparation == nil {
 		return OperationResult{}, missing("mission", "bounded outcome, Objectives, preparation verdicts, evidence plan, envelope, recovery, authorization, and idempotency are required")
 	}
-	if input.Preparation != nil {
-		if err := spectacularruntime.ValidatePreparationReceipt(*input.Preparation, s.now()); err != nil {
-			return OperationResult{}, err
+	if err := spectacularruntime.ValidatePreparationReceipt(*input.Preparation, s.now()); err != nil {
+		return OperationResult{}, err
+	}
+	selectedOutcome := ""
+	for _, candidate := range input.Preparation.Candidates {
+		if candidate.Name == input.Preparation.Selected {
+			selectedOutcome = candidate.Outcome
 		}
-		if input.Preparation.Proposal.Ref != input.Proposal || input.Preparation.Proposal.Fingerprint != input.ExpectedProposalFingerprint || input.Preparation.Baseline != input.Baseline || input.Preparation.DesignSufficiency != input.DesignSufficiency || input.Preparation.SliceQuality != input.SliceQuality {
-			return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "preparation", "preparation receipt does not bind the Mission input", nil)
-		}
+	}
+	if input.Preparation.Proposal.Ref != input.Proposal || input.Preparation.Proposal.Fingerprint != input.ExpectedProposalFingerprint || input.Preparation.Baseline != input.Baseline || input.Preparation.DesignSufficiency != input.DesignSufficiency || input.Preparation.SliceQuality != input.SliceQuality || selectedOutcome != input.Outcome || !sameStrings(input.Preparation.EvidenceClaims, input.EvidenceClaims) || !sameStrings(input.Preparation.StopConditions, input.Stops) {
+		return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "preparation", "preparation receipt does not bind the Mission input", nil)
+	}
+	preparationBindings := []string{input.Preparation.Proposal.Ref + "@" + input.Preparation.Proposal.Fingerprint}
+	for _, source := range input.Preparation.DirectionSources {
+		preparationBindings = append(preparationBindings, source.Ref+"@"+source.Fingerprint)
+	}
+	if err := s.validateBoundInputs(preparationBindings); err != nil {
+		return OperationResult{}, err
+	}
+	preparationJSON, err := json.Marshal(input.Preparation)
+	if err != nil {
+		return OperationResult{}, err
 	}
 	if _, err := parseFuture(input.ExpiresAt, s.now(), "expires_at"); err != nil {
 		return OperationResult{}, err
@@ -239,16 +255,11 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 	workspace.SetString(mission, "return_destination", input.ReturnDestination)
 	workspace.SetString(mission, "activation_decision", input.Authorization)
 	workspace.SetString(mission, "idempotency_key", input.IdempotencyKey)
-	if input.Preparation != nil {
-		workspace.SetString(mission, "preparation_fingerprint", input.Preparation.Fingerprint)
-		workspace.SetString(mission, "preparation_valid_until", input.Preparation.FreshUntil)
-		workspace.SetString(mission, "preparation_baseline", input.Preparation.Baseline)
-		bindings := []string{input.Preparation.Proposal.Ref + "@" + input.Preparation.Proposal.Fingerprint}
-		for _, source := range input.Preparation.DirectionSources {
-			bindings = append(bindings, source.Ref+"@"+source.Fingerprint)
-		}
-		workspace.SetStrings(mission, "preparation_sources", bindings)
-	}
+	workspace.SetString(mission, "preparation_fingerprint", input.Preparation.Fingerprint)
+	workspace.SetString(mission, "preparation_valid_until", input.Preparation.FreshUntil)
+	workspace.SetString(mission, "preparation_baseline", input.Preparation.Baseline)
+	workspace.SetStrings(mission, "preparation_sources", preparationBindings)
+	workspace.SetString(mission, "preparation_receipt", string(preparationJSON))
 	var documents []*workspace.Document
 	documents = append(documents, mission)
 	objectiveRefs := make([]string, 0, len(input.Objectives))
@@ -281,6 +292,74 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 	return s.createMany("mission.create", mission, documents, input.IdempotencyKey, []string{input.Proposal, input.Authorization})
 }
 
+// CompileAutopilot derives hard limits from the exact current Mission and
+// owner Decision before the runtime compiler can emit a charter.
+func (s Service) CompileAutopilot(input spectacularruntime.AutopilotInput) (spectacularruntime.AutopilotCharter, error) {
+	mission, err := s.Workspace.Lookup(input.Mission.Ref, domain.Mission)
+	if err != nil {
+		return spectacularruntime.AutopilotCharter{}, err
+	}
+	if mission.Fingerprint != input.Mission.Fingerprint {
+		return spectacularruntime.AutopilotCharter{}, stale("mission", input.Mission.Fingerprint, mission.Fingerprint)
+	}
+	if value(mission.Document.Record.Status) != "active" {
+		return spectacularruntime.AutopilotCharter{}, domain.NewRefusal(domain.RefusalInvalidTransition, "mission", "Autopilot requires an active Mission", nil)
+	}
+	decision, err := s.Workspace.Lookup(input.Authorization.Ref, domain.Decision)
+	if err != nil {
+		return spectacularruntime.AutopilotCharter{}, err
+	}
+	if decision.Fingerprint != input.Authorization.Fingerprint {
+		return spectacularruntime.AutopilotCharter{}, stale("authorization", input.Authorization.Fingerprint, decision.Fingerprint)
+	}
+	for _, source := range input.AuthoritativeSources {
+		_, actual, lookupErr := s.Workspace.Source(source.Ref)
+		if lookupErr != nil {
+			return spectacularruntime.AutopilotCharter{}, lookupErr
+		}
+		if actual != source.Fingerprint {
+			return spectacularruntime.AutopilotCharter{}, stale("authoritative_sources", source.Fingerprint, actual)
+		}
+	}
+	envelope, err := parseMissionEnvelope(mission)
+	if err != nil {
+		return spectacularruntime.AutopilotCharter{}, err
+	}
+	missionOutcome, err := workspace.String(mission.Document, "outcome", true)
+	if err != nil {
+		return spectacularruntime.AutopilotCharter{}, err
+	}
+	repairBudget, err := workspace.Int(mission.Document, "repair_budget", true)
+	if err != nil {
+		return spectacularruntime.AutopilotCharter{}, err
+	}
+	requiredEffects := append([]string{"mission.autopilot"}, input.AllowedActions...)
+	for _, provider := range input.AllowedProviders {
+		requiredEffects = append(requiredEffects, "provider:"+provider)
+	}
+	if err := s.authorize(input.Authorization.Ref, "mission.autopilot", input.Mission.Ref, input.Mission.Fingerprint, envelope.Scope, requiredEffects); err != nil {
+		return spectacularruntime.AutopilotCharter{}, err
+	}
+	limitExpiry := envelope.ExpiresAt
+	if decisionExpiry, _ := workspace.String(decision.Document, "expires_at", false); decisionExpiry != "" {
+		missionTime, missionErr := time.Parse(time.RFC3339, limitExpiry)
+		decisionTime, decisionErr := time.Parse(time.RFC3339, decisionExpiry)
+		if missionErr != nil || decisionErr != nil {
+			return spectacularruntime.AutopilotCharter{}, invalid("expires_at", "Mission and Decision expiry must be RFC3339")
+		}
+		if decisionTime.Before(missionTime) {
+			limitExpiry = decisionExpiry
+		}
+	}
+	limits := spectacularruntime.AutopilotLimits{
+		Mission: input.Mission, Authorization: input.Authorization, Outcome: missionOutcome,
+		AllowedProviders: input.AllowedProviders, AllowedActions: envelope.AllowedActions,
+		ForbiddenEffects: envelope.ForbiddenEffects, BudgetUnits: envelope.BudgetUnits,
+		RepairBudget: repairBudget, ExpiresAt: limitExpiry, StopConditions: envelope.Stops,
+	}
+	return spectacularruntime.CompileAutopilot(input, limits, s.now())
+}
+
 func (s Service) document(noun domain.RecordType, id domain.ID, title, actor, status string) *workspace.Document {
 	now := s.now().Format(time.RFC3339)
 	doc := &workspace.Document{Record: domain.Record{Type: noun, ID: id}, Unknown: map[string]*yaml.Node{}, Body: "# " + string(noun) + "\n"}
@@ -311,6 +390,18 @@ func (s Service) addFreshness(doc *workspace.Document, validUntil string) {
 	workspace.SetString(doc, "freshness_valid_until", validUntil)
 	workspace.SetString(doc, "freshness_source", ".spectacular/workspace.yaml")
 	workspace.SetString(doc, "freshness_source_fingerprint", hex.EncodeToString(sum[:]))
+}
+
+func sameStrings(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
 }
 
 func (s Service) createOne(operation string, doc *workspace.Document, key string, sources []string) (OperationResult, error) {

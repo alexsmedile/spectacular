@@ -44,7 +44,12 @@ func TestAutopilotIsExplicitBoundedAndRuntimeNeutral(t *testing.T) {
 		Enabled: true, Mission: BoundSource{Ref: mission, Fingerprint: fp}, Authorization: BoundSource{Ref: decision, Fingerprint: fp}, Outcome: "complete local proof", NonGoals: []string{"release"}, AuthoritativeSources: []BoundSource{{Ref: proposal, Fingerprint: fp}},
 		DelegatedDecisionDomain: []string{"reversible implementation"}, AllowedActions: []string{"edit", "test"}, ForbiddenEffects: CanonicalForbiddenEffects(), BudgetUnits: 8, RepairBudget: 2, RequiredChecks: []string{"go test ./..."}, ExpiresAt: "2026-08-11T10:00:00Z", StopConditions: []string{"authority drift"}, RecoveryPoint: "git:abc", ReturnDestination: "Mission owner",
 	}
-	charter, err := CompileAutopilot(input, fixedNow())
+	limits := AutopilotLimits{
+		Mission: input.Mission, Authorization: input.Authorization, Outcome: input.Outcome,
+		AllowedActions: []string{"edit", "test"}, ForbiddenEffects: CanonicalForbiddenEffects(),
+		BudgetUnits: 8, RepairBudget: 2, ExpiresAt: "2026-08-11T10:00:00Z", StopConditions: []string{"authority drift"},
+	}
+	charter, err := CompileAutopilot(input, limits, fixedNow())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,11 +57,22 @@ func TestAutopilotIsExplicitBoundedAndRuntimeNeutral(t *testing.T) {
 		t.Fatalf("unsafe charter %#v", charter)
 	}
 	input.ForbiddenEffects = input.ForbiddenEffects[1:]
-	if _, err := CompileAutopilot(input, fixedNow()); err == nil {
+	if _, err := CompileAutopilot(input, limits, fixedNow()); err == nil {
 		t.Fatal("accepted charter below the initial effect ceiling")
 	}
+	input.ForbiddenEffects = CanonicalForbiddenEffects()
+	input.AllowedActions = append(input.AllowedActions, "merge")
+	if _, err := CompileAutopilot(input, limits, fixedNow()); err == nil {
+		t.Fatal("accepted action outside Mission authority and inside forbidden effects")
+	}
+	input.AllowedActions = []string{"edit", "test"}
+	input.BudgetUnits = 9
+	if _, err := CompileAutopilot(input, limits, fixedNow()); err == nil {
+		t.Fatal("accepted budget above Mission authority")
+	}
+	input.BudgetUnits = 8
 	input.Enabled = false
-	if _, err := CompileAutopilot(input, fixedNow()); err == nil {
+	if _, err := CompileAutopilot(input, limits, fixedNow()); err == nil {
 		t.Fatal("accepted ambient Autopilot")
 	}
 }

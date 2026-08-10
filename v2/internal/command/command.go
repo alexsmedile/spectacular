@@ -264,10 +264,7 @@ func (r Runner) Run(args []string) int {
 		var input spectacularruntime.AutopilotInput
 		err = readInput(rest[1], &input)
 		if err == nil {
-			err = validateAutopilotSources(workspace, input)
-		}
-		if err == nil {
-			value, err = spectacularruntime.CompileAutopilot(input, currentTime(r.Now))
+			value, err = g.CompileAutopilot(input)
 		}
 	}
 	if err != nil {
@@ -365,15 +362,6 @@ func validatePreparationSources(workspace *discovery.Workspace, input spectacula
 		return err
 	}
 	for _, source := range input.DirectionSources {
-		if err := validateBoundSource(workspace, source); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func validateAutopilotSources(workspace *discovery.Workspace, input spectacularruntime.AutopilotInput) error {
-	for _, source := range append([]spectacularruntime.BoundSource{input.Mission, input.Authorization}, input.AuthoritativeSources...) {
 		if err := validateBoundSource(workspace, source); err != nil {
 			return err
 		}

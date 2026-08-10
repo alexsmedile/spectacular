@@ -23,8 +23,8 @@ implementation_tree: 26f7009e5232522637c932d1e1b896a0c3670811
 implementation_evidence: evidence/b-c-primary-implementation-evidence.md
 repair_rounds_used: 2
 repair_budget_exhausted: true
-repaired_commit: ed189d3c63333baa95528c1eadcaeb646a453e16
-repaired_tree: 14eac1472490fdfd53efeb9ba4321249ec25c808
+repaired_commit: 9333cb4a3045a5da915c21417b1c0dae421c6004
+repaired_tree: f10c986d3c1977e0f9d6c94a2be3c0189e954640
 repair_evidence: evidence/b-c-repair-round-2-evidence.md
 next_action: central-dispatch-fresh-read-only-independent-reviewer
 upstream:
@@ -269,8 +269,9 @@ syntax, version guard, full v1 suite, exact scope diff, and one fresh independen
 Central orchestration bounced implementation head `7ff40764b7f45db97c29550074ff2e64a724011f`
 and authorized one final integrated repair round. The round's controlling hypothesis was that
 semantic invariants were represented but not revalidated at every filesystem, authority, Evidence,
-replay, and closure boundary. Commit `ed189d3c63333baa95528c1eadcaeb646a453e16`
-implements the boundary hardening and committed adversarial regressions. Detailed before/after
+replay, and closure boundary. Commits `ed189d3c63333baa95528c1eadcaeb646a453e16`
+and `9333cb4a3045a5da915c21417b1c0dae421c6004`
+implement the boundary hardening and committed adversarial regressions. Detailed before/after
 Evidence, affected claims, checks, budget consumption, and recovery point are recorded in
 `evidence/b-c-repair-round-2-evidence.md`.
 

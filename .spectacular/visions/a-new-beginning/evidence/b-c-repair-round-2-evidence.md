@@ -7,8 +7,8 @@ recorded_at: 2026-08-10
 recorded_by: primary-implementation-owner
 reviewed_head: 7ff40764b7f45db97c29550074ff2e64a724011f
 reviewed_tree: 3ad0a405dfb14191239334e8335ca37a62e7b6a2
-repair_commit: ed189d3c63333baa95528c1eadcaeb646a453e16
-repair_tree: 14eac1472490fdfd53efeb9ba4321249ec25c808
+repair_commit: 9333cb4a3045a5da915c21417b1c0dae421c6004
+repair_tree: f10c986d3c1977e0f9d6c94a2be3c0189e954640
 branch: codex/feat/v2-b-c-governed-loop
 repair_round: 2
 repair_budget: 2
@@ -73,7 +73,9 @@ Skill Mission, or v1 effect and does not claim central acceptance.
 
 ## Checks and result
 
-All checks exited successfully after repair commit `ed189d3c63333baa95528c1eadcaeb646a453e16`:
+All v2 and compatibility checks exited successfully after final repair commit
+`9333cb4a3045a5da915c21417b1c0dae421c6004`, except for the disclosed frozen-v1 baseline failure
+below:
 
 ```text
 cd v2
@@ -93,19 +95,28 @@ git diff --check
 
 Focused tests cover the independent counterexamples, provider-neutral B+C cold resume, Scenario A
 golden/nonmutation compatibility, transaction interruption/rollback, public atomic reconciliation,
-and exact refusal classes. Full v2, race, build, and all 31 frozen-v1 test files pass. The version
-guard reports 1.37.3 consistently.
+and exact refusal classes. Full v2, race, and build checks pass. The version guard reports 1.37.3
+consistently. The frozen-v1 suite reports 30 test files passing and one pre-existing assertion
+failure in `tests/cli/wayfinding-sequencer.test.sh`: `spike outranks research at equal priority`.
+The unchanged v1 discovery writer stores `kind:` while the sequencer reads `type:`, so both nodes
+receive the fallback rank and research wins by iteration order. The required baseline and current
+`cli/spectacular` bytes have the same SHA-256
+`468e3702fd8a1eca48c166c959277201e0ab88429ab96a871ab76b329b8ea8dc`; the B+C scope changes
+neither v1 code nor this test. Repair is prohibited by this Mission and remains a disclosed
+out-of-scope baseline gap.
 
 ## Repair accounting and recovery
 
 This round consumed repair budget unit 2 of 2. The hypothesis changed from treating stored semantic
 fields as sufficient to requiring typed revalidation at every consequential consumer. Before
 Evidence is the reproduced counterexample suite at reviewed head `7ff4076`; after Evidence is the
-same committed suite passing at `ed189d3`. The non-destructive recovery point is the reviewed head;
+same committed suite passing at `9333cb4`. The non-destructive recovery point is the reviewed head;
 prior Contract versions and originals remain preserved by the repaired transaction protocol.
 
-No known in-charter implementation gap remains. The repair budget is exhausted, so any new finding
-belongs to central disposition rather than another self-directed repair.
+No known in-charter implementation gap remains. The frozen-v1 sequencer mismatch above is an
+unresolved required-check exception whose repair would violate the explicit no-v1 boundary. The
+repair budget is exhausted, so that exception and any new finding belong to central disposition
+rather than another self-directed repair.
 
 ## Owner gate
 

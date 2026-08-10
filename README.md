@@ -1,7 +1,7 @@
 # Spectacular v2
 
 Spectacular is a canonical, pointer-first workspace for governed work.
-`2.0.0-rc.1` is locally release-ready and unpublished.
+`2.0.0-rc.1` is the first externally testable v2 release candidate.
 
 ## Install a verified local release
 

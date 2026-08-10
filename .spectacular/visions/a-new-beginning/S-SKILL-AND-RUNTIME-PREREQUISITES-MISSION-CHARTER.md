@@ -2,7 +2,7 @@
 type: mission-charter
 mission: skill-and-runtime-prerequisites
 version: 1.0
-status: ready-for-independent-review
+status: ready-for-independent-rereview
 prepared_at: 2026-08-10
 prepared_by: mission-owner-gap-audit
 accepted_by: owner
@@ -15,12 +15,18 @@ source_thread: 019feb82-33b4-7961-aebc-5d9471939a5a
 design_sufficiency: sufficient
 slice_quality: coherent
 repair_budget: 2
-repair_rounds_used: 0
+repair_rounds_used: 1
 implementation_completed_at: 2026-08-10
 implementation_commit: e64f488bcf4f3279947d8d3fe9660b939f1be956
 implementation_tree: ba69f34e858807c3e49d6e7b035614f52b3236aa
 implementation_evidence: evidence/scenario-s-primary-implementation-evidence.md
-next_action: independent-review
+first_reviewed_commit: 568ae88c5ea40938384656907094e9bf6bc3b5d6
+first_reviewed_tree: 67ac6416dea58b71b3dec2bfc597034a3f00f2fb
+first_review_disposition: block
+repaired_commit: 7bede74ea4de75e1d6f887bc44d41c5a932e95cc
+repaired_tree: 2f02997cc6b69978382ebe079c594d312d1a81ce
+repair_evidence: evidence/scenario-s-repair-round-1-evidence.md
+next_action: independent-rereview
 upstream:
   - EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md@1.9
   - RESPONSIBILITY-PLACEMENT-CONTRACT.md@1.0

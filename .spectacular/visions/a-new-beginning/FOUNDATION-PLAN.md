@@ -3,7 +3,7 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: scenario-s-accepted-integrated
+checkpoint: scenario-r-accepted-integrated
 decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-10
@@ -205,6 +205,7 @@ compatibility behavior.
 S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16, S10, S11, and
 S12A, W0, and the M1 charter are accepted. The v2 responsibility surface, retirement boundaries,
 implementation architecture, five-spec topology, shared scaffold, and first Mission envelope are
-fixed. The current v2.0 executable program has W0, M1, Scenario A, B+C, and the complete
-Skill/runtime-prerequisites Mission accepted and integrated. Release/distribution is the sole
-next-ready preparation step. No successor Mission is active.
+fixed. The current v2.1 executable program has W0, M1, Scenario A, B+C, Skill/runtime prerequisites,
+and release/distribution accepted and integrated. The v2 root cutover is the sole next-ready
+preparation step. Publication and provider effects remain separately gated; no successor Mission is
+active.

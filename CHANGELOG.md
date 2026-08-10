@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0-rc.1 — unpublished
+## 2.0.0-rc.1 — 2026-08-10
 
 First externally consumable Spectacular v2 release candidate.
 
@@ -12,4 +12,4 @@ First externally consumable Spectacular v2 release candidate.
 
 Known limitations: v1 workspaces are unsupported; there is no migration or
 compatibility reader; discovery is pointer-driven rather than broad search;
-and publication remains outside the local CLI and requires separate authority.
+and release publication remains outside the local CLI.

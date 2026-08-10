@@ -51,6 +51,9 @@ func TestPublicRegistryAndCommands(t *testing.T) {
 	if len(seen) != int(opMissionAutopilot) {
 		t.Fatalf("registry dispatch parity: %d bound operations, want %d", len(seen), opMissionAutopilot)
 	}
+	if VersionInspection.Command != "spectacular --version" || VersionInspection.Schema != "spectacular.build-info.v1" || VersionInspection.Effect != ReadOnly {
+		t.Fatalf("release inspection metadata drifted: %#v", VersionInspection)
+	}
 	tests := []struct {
 		args     []string
 		schema   string
@@ -85,14 +88,19 @@ func TestPublicRegistryAndCommands(t *testing.T) {
 }
 
 func TestGeneratedCatalogMatchesRegistryAndKeepsJudgmentOut(t *testing.T) {
+	versionBytes, err := os.ReadFile(filepath.Join("..", "..", "VERSION"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	version := strings.TrimSpace(string(versionBytes))
 	var jsonOut, markdown bytes.Buffer
-	if err := WriteCatalogJSON(&jsonOut); err != nil {
+	if err := WriteCatalogJSONVersion(&jsonOut, version); err != nil {
 		t.Fatal(err)
 	}
-	if err := WriteCatalogMarkdown(&markdown); err != nil {
+	if err := WriteCatalogMarkdownVersion(&markdown, version); err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"spectacular workspace context", "spectacular mission prepare", "spectacular mission autopilot"} {
+	for _, want := range []string{"spectacular --version", "spectacular workspace context", "spectacular mission prepare", "spectacular mission autopilot"} {
 		if !strings.Contains(jsonOut.String(), want) || !strings.Contains(markdown.String(), want) {
 			t.Fatalf("generated catalogs omit %s", want)
 		}

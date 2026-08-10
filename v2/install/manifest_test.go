@@ -1,6 +1,7 @@
 package install
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -21,6 +22,11 @@ func TestRuntimeManifestsPackageOnlyTheCanonicalV2Skill(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	versionBytes, err := os.ReadFile(filepath.Join(root, "VERSION"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	version := string(bytes.TrimSpace(versionBytes))
 	for _, path := range []string{".codex-plugin/plugin.json", ".claude-plugin/plugin.json"} {
 		data, err := os.ReadFile(filepath.Join(root, path))
 		if err != nil {
@@ -30,7 +36,7 @@ func TestRuntimeManifestsPackageOnlyTheCanonicalV2Skill(t *testing.T) {
 		if err := json.Unmarshal(data, &got); err != nil {
 			t.Fatalf("%s: %v", path, err)
 		}
-		if got.Name != "spectacular" || got.Version != "2.0.0-dev" || got.Description == "" || got.Hooks != nil {
+		if got.Name != "spectacular" || got.Version != version || got.Description == "" || got.Hooks != nil {
 			t.Fatalf("unsafe or incomplete %s: %#v", path, got)
 		}
 		if path == ".codex-plugin/plugin.json" && (got.Skills != "./skills/" || got.Interface["displayName"] != "Spectacular") {

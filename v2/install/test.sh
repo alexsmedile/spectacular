@@ -6,9 +6,12 @@ v2_root="$(cd "$script_dir/.." && pwd)"
 test_root="$(mktemp -d)"
 binary_path="$test_root/spectacular"
 go_cache="$test_root/go-cache"
+release_version="$(sed -n '1p' "$v2_root/VERSION")"
 
 mkdir -p "$go_cache"
-(cd "$v2_root" && GOCACHE="$go_cache" GOFLAGS=-mod=readonly go build -o "$binary_path" ./cmd/spectacular)
+(cd "$v2_root" && GOCACHE="$go_cache" GOFLAGS=-mod=readonly go build -trimpath -buildvcs=false \
+  -ldflags "-s -w -X github.com/alexsmedile/spectacular/v2/internal/buildinfo.Version=$release_version -X github.com/alexsmedile/spectacular/v2/internal/buildinfo.Commit=local-stage" \
+  -o "$binary_path" ./cmd/spectacular)
 
 for runtime_name in codex claude; do
   destination="$test_root/$runtime_name"

@@ -14,6 +14,10 @@ type CatalogEntry struct {
 	Effect    Effect `json:"effect"`
 }
 
+var VersionInspection = CatalogEntry{
+	Command: "spectacular --version", Arguments: "[--json]", Schema: "spectacular.build-info.v1", Effect: ReadOnly,
+}
+
 func Catalog() []CatalogEntry {
 	out := make([]CatalogEntry, 0, len(Registry))
 	for _, spec := range Registry {
@@ -22,18 +26,20 @@ func Catalog() []CatalogEntry {
 	return out
 }
 
-func WriteCatalogJSON(w io.Writer) error {
+func WriteCatalogJSONVersion(w io.Writer, version string) error {
 	encoder := json.NewEncoder(w)
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(struct {
-		SchemaVersion string         `json:"schema_version"`
-		Commands      []CatalogEntry `json:"commands"`
-	}{SchemaVersion: "spectacular.command-catalog.v1", Commands: Catalog()})
+		SchemaVersion     string         `json:"schema_version"`
+		ReleaseVersion    string         `json:"release_version"`
+		ReleaseInspection CatalogEntry   `json:"release_inspection"`
+		Commands          []CatalogEntry `json:"commands"`
+	}{SchemaVersion: "spectacular.command-catalog.v1", ReleaseVersion: version, ReleaseInspection: VersionInspection, Commands: Catalog()})
 }
 
-func WriteCatalogMarkdown(w io.Writer) error {
-	if _, err := fmt.Fprintln(w, "# Mechanical interface\n\nGenerated from `internal/command.Registry`; do not edit by hand.\n\n| Command | Arguments | Schema | Effect |\n|---|---|---|---|"); err != nil {
+func WriteCatalogMarkdownVersion(w io.Writer, version string) error {
+	if _, err := fmt.Fprintf(w, "# Mechanical interface\n\nGenerated from `internal/command.Registry`; do not edit by hand.\n\nRelease version: `%s`\n\nRelease inspection: `%s %s` (`%s`, `%s`)\n\n| Command | Arguments | Schema | Effect |\n|---|---|---|---|\n", version, VersionInspection.Command, VersionInspection.Arguments, VersionInspection.Schema, VersionInspection.Effect); err != nil {
 		return err
 	}
 	for _, entry := range Catalog() {

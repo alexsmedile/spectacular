@@ -1,5 +1,12 @@
 {
   "schema_version": "spectacular.command-catalog.v1",
+  "release_version": "2.0.0",
+  "release_inspection": {
+    "command": "spectacular --version",
+    "arguments": "[--json]",
+    "schema": "spectacular.build-info.v1",
+    "effect": "read-only"
+  },
   "commands": [
     {
       "command": "spectacular anchor show project",

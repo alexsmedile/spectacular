@@ -2,7 +2,7 @@
 type: mission-charter
 mission: skill-and-runtime-prerequisites
 version: 1.0
-status: active
+status: ready-for-independent-review
 prepared_at: 2026-08-10
 prepared_by: mission-owner-gap-audit
 accepted_by: owner
@@ -16,7 +16,11 @@ design_sufficiency: sufficient
 slice_quality: coherent
 repair_budget: 2
 repair_rounds_used: 0
-next_action: implement-scenario-s
+implementation_completed_at: 2026-08-10
+implementation_commit: e64f488bcf4f3279947d8d3fe9660b939f1be956
+implementation_tree: ba69f34e858807c3e49d6e7b035614f52b3236aa
+implementation_evidence: evidence/scenario-s-primary-implementation-evidence.md
+next_action: independent-review
 upstream:
   - EXECUTABLE-REFACTOR-PROGRAM-CONTRACT.md@1.9
   - RESPONSIBILITY-PLACEMENT-CONTRACT.md@1.0

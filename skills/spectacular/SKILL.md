@@ -57,6 +57,32 @@ verb.
 
 ---
 
+## Context-boundary routing — current session, subagent, or persistent thread
+
+**Stay in the current session by default. Context boundaries are costs, not evidence of rigor.**
+Choose the smallest runtime boundary that preserves the work:
+
+| Boundary | Use when | Do not use merely because |
+|---|---|---|
+| Current session | Work is sequential, tightly coupled, depends on context already loaded, or includes planning, owner decisions, repair, reconciliation, or lifecycle mutation | The work has several steps or roles |
+| Subagent | The brief is closed, no owner conversation is needed, the output is independently checkable, and the worker may disappear after returning | A role name exists or a handoff can be written |
+| Existing persistent thread | The same objective, authority, and canonical artifact need multi-turn owner conversation or later resumption | A new phase or repair round began |
+| New persistent thread | A durable conversational job has a materially different purpose/authority, or separation protects a long-lived domain from context contamination | A new task, agent, checkpoint, or branch exists |
+| Fresh reviewer | Independence is required for a consequential claim and the review binds one exact commit/tree | Another agent already reviewed prose |
+| Cold verifier | Recovery without chat history is itself the claim under test | Ordinary correctness needs checking |
+
+Before creating a thread or agent, state the earned benefit: `durable owner conversation`,
+`independent evidence`, `cold-context proof`, `parallel disjoint work`, or `context-window
+protection with a designed join`. If none applies, continue here.
+
+Reuse a persistent thread while objective, authority, and owned artifact remain stable. Send a
+delta continuation—accepted checkpoint, new evidence, scope/authority delta, requested result—not
+the full project history. A subagent receives a closed “do it” brief and returns findings/artifacts;
+it does not become a durable status surface. Normally use at most one control thread, one active
+Mission thread, and risk-triggered ephemeral reviewers/verifiers.
+
+---
+
 ## Trigger detection
 
 ### Workspace lifecycle

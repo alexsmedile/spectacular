@@ -109,6 +109,10 @@ func applyTransaction(root, key string, changes []FileChange, failAfter int) err
 			if readErr != nil {
 				return transactionRefusal("read transaction original", readErr)
 			}
+			backup, pathErr = transactionArtifact(root, item.Backup, txID, i, ".old")
+			if pathErr != nil {
+				return pathErr
+			}
 			if writeErr := writeSynced(backup, data, info.Mode().Perm()); writeErr != nil {
 				return transactionRefusal("write transaction backup", writeErr)
 			}
@@ -124,6 +128,10 @@ func applyTransaction(root, key string, changes []FileChange, failAfter int) err
 		if _, err := safeTarget(root, change.Path); err != nil {
 			return err
 		}
+		temporary, pathErr = transactionArtifact(root, item.Temporary, txID, i, ".new")
+		if pathErr != nil {
+			return pathErr
+		}
 		if err := writeSynced(temporary, change.Data, os.FileMode(tracked.Mode)); err != nil {
 			return transactionRefusal("write transaction candidate", err)
 		}
@@ -133,6 +141,10 @@ func applyTransaction(root, key string, changes []FileChange, failAfter int) err
 		return transactionRefusal("encode transaction journal", err)
 	}
 	journalData = append(journalData, '\n')
+	journalPath, err = effectPath(root, journalRelative, filepath.Join(".spectacular", "transactions"))
+	if err != nil {
+		return err
+	}
 	if err := writeSynced(journalPath, journalData, 0o600); err != nil {
 		return transactionRefusal("write transaction journal", err)
 	}

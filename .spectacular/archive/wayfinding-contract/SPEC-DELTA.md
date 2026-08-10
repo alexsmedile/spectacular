@@ -1,1 +1,0 @@
-NONE — `specs/index.md`, `SPC-001-wayfinding.md`, and `ARCHITECTURE.md` were synchronized during implementation after snapshotting; legacy records remain readable and migration is explicit, dry-run-first, and archive-backed.

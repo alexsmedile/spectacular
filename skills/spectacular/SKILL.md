@@ -1,335 +1,63 @@
 ---
 name: spectacular
-description: |
-  AI-native operational workspace for software projects. Operates a .spectacular/ workspace:
-  retrieves state, scaffolds and advances requests, runs lifecycle gates, captures durable records,
-  and grills/refines/reviews canonical documents. Use only for durable workspace work—requests,
-  specs, decisions, ideas, lifecycle, or canonical docs—not merely because a repo has
-  .spectacular/. A bounded code/docs/configuration change that can ship as one PR without durable
-  planning is a direct change. For natural-language work requests, route intent before drafting an
-  SPC or request. Triggers: /spectacular; spectacular status|new|archive|advance|next|init|snapshot|
-  remember|decide|policy; spectacular <doc> [grill|refine|review]; spectacular pack [new|grill|
-  refine|review].
-when_to_use: |
-  Invoke when the user explicitly requests a Spectacular operation, or when the task needs durable
-  workspace context, planning, lifecycle, or canonical documentation. First distinguish a direct
-  PR-shaped change from workspace work; then determine whether the workspace work needs a new SPC.
-  Routes to reference docs based on the command — never loads full context, always loads minimally
-  and progressively. The generalized doc verbs (grill/refine/review) apply to any doc type listed
-  in doc-index.md.
-version: 1.37.3
-category: devtools
-status: published
-tags: [workspace, project-management, context, agents, lifecycle, doc-writing]
+version: 2.0.0-rc.1
+description: Guide work in a canonical Spectacular v2 workspace from cold orientation through Proposal, Mission preparation, governed execution, Evidence assessment, reconciliation, and closure. Use for `/spectacular` jobs such as orient, propose, define, decide, start, resume, handoff, assess, reconcile, resolve, or audit; for compiling bounded runtime context or an explicit Autopilot charter; and for safely continuing a Mission after session or runtime replacement.
 ---
 
-# Spectacular Skill
+# Spectacular
 
-AI-native operational workspace for software projects. Lean orchestrator — read this file to understand triggers and routing, then load the relevant reference doc for the actual work.
+Operate one bounded Mission from accepted project truth. Keep judgment here, deterministic
+validation in the `spectacular` binary, execution in the host runtime, and provider effects in
+their native providers.
 
----
+## Start every workflow
 
-## First decision — does this need Spectacular?
+1. Discover the explicit v2 workspace; never fall back to a v1 directory or implicit convention.
+2. Compile only the entered scope:
+   `spectacular workspace context <project|Mission-ref> --event <@Event> --json`.
+3. Treat the compiled bundle as a projection. Follow its source pointers for authority and use its
+   single continuation or owner gate; never repair canonical truth by editing the bundle.
+4. Load exactly one workflow reference below. Load the generated mechanical catalog only when
+   constructing or checking a CLI invocation.
+5. Revalidate baseline, source fingerprints, authority, expiry, budgets, and stops before every
+   consequential transition or resumed effect.
 
-Before interpreting an ordinary user request as workspace work, run the short
-route in [[intent-routing]]. **A `.spectacular/` directory is context, not an
-automatic trigger.** Choose the smallest fitting route:
+## Route the guided job
 
-| User need | Smallest owner / artifact | Does it create durable workspace state? |
+| Guided job | Load | Guardrails event |
 |---|---|---|
-| Read the codebase or inspect current workspace status | Read code directly; use `spectacular summary`, `status`, or `request <slug>` only when the user asks for workspace state | No |
-| Bounded code, docs, or configuration change with clear outcome, likely files, and check | Direct PR-shaped change plus an in-chat Codex plan if it has several steps | No |
-| Work already owned by a live request | Resume that request; its PLAN/TASKS remain authoritative | No new record |
-| New behavior, contract, product/architecture decision, or multi-session/dependent implementation boundary | New SPC candidate, then a request only after SPC approval | Yes, after explicit confirmation |
-| Missing fact, feasibility result, business choice, or future commitment | `RES`, `SPK`, `QUE`, or `IDEA` | Yes, only when that open loop needs to survive the chat |
-
-`PLAN.md` and `TASKS.md` are durable request artifacts: PLAN owns cross-session
-scope; TASKS owns milestone progress. A Codex/harness plan is an ephemeral
-in-chat execution checklist, and subagent briefs are narrower still. Neither
-creates nor requires a Spectacular request. “Implement this plan” means execute
-the plan already present in chat or named by the user; ask which plan only when
-its scope is unavailable or materially ambiguous.
-
-An explicit terminal `spectacular spec new <slug> --summary <text>` is a
-user-directed mechanical write; it does not infer intent. For a natural-language
-“draft a spec” request, the intent receipt is mandatory before invoking that CLI
-verb.
-
----
-
-## Context-boundary routing — current session, subagent, or persistent thread
-
-**Stay in the current session by default. Context boundaries are costs, not evidence of rigor.**
-Choose the smallest runtime boundary that preserves the work:
-
-| Boundary | Use when | Do not use merely because |
-|---|---|---|
-| Current session | Work is sequential, tightly coupled, depends on context already loaded, or includes planning, owner decisions, repair, reconciliation, or lifecycle mutation | The work has several steps or roles |
-| Subagent | The brief is closed, no owner conversation is needed, the output is independently checkable, and the worker may disappear after returning | A role name exists or a handoff can be written |
-| Existing persistent thread | The same objective, authority, and canonical artifact need multi-turn owner conversation or later resumption | A new phase or repair round began |
-| New persistent thread | A durable conversational job has a materially different purpose/authority, or separation protects a long-lived domain from context contamination | A new task, agent, checkpoint, or branch exists |
-| Fresh reviewer | Independence is required for a consequential claim and the review binds one exact commit/tree | Another agent already reviewed prose |
-| Cold verifier | Recovery without chat history is itself the claim under test | Ordinary correctness needs checking |
-
-Before creating a thread or agent, state the earned benefit: `durable owner conversation`,
-`independent evidence`, `cold-context proof`, `parallel disjoint work`, or `context-window
-protection with a designed join`. If none applies, continue here.
-
-Reuse a persistent thread while objective, authority, and owned artifact remain stable. Send a
-delta continuation—accepted checkpoint, new evidence, scope/authority delta, requested result—not
-the full project history. A subagent receives a closed “do it” brief and returns findings/artifacts;
-it does not become a durable status surface. Normally use at most one control thread, one active
-Mission thread, and risk-triggered ephemeral reviewers/verifiers.
-
----
-
-## Trigger detection
-
-### Workspace lifecycle
-
-**Mutation principle (v0.7.0+):** lifecycle mutations go through CLI verbs — never free-form file edits (manual edits only for edge cases the verbs don't cover). See [[lifecycle]].
-
-| User says / context | Route to |
-|---|---|
-| An ordinary change/build/plan request that does not explicitly name a Spectacular operation | → [[intent-routing]] first: decide read-only orientation vs direct PR-shaped change vs existing request vs new SPC vs an open-loop record. |
-| `/spectacular` with no args | → `references/status.md` (empty workspace → `references/guided-first-run.md`) |
-| `spectacular status` | → `references/status.md` |
-| `spectacular request new [<slug>] --from <SPC>` | → CLI verb; approved-spec PLAN/TASKS scaffold; see [[request-workflow]] and [[new-request]] (`spectacular new` remains the free-form compatibility alias) |
-| `spectacular request new <slug> --from-issue <ref> --summary <outcome> --sensitivity <class>` / `--from-goal <ref>` | → CLI verb; lean durable coordination for an already-defined destination, without manufacturing an SPC; see [[github-work-bridge]] and [[request-workflow]] |
-| `/spectacular act <SPC>` / `/spectacular <SPC>` / compatibility `/spectacular spec act <SPC>` | → [[request-workflow]] approved-spec handoff: resolve one request, run gates, activate with provenance, compile `--brief`, initialize native planning, implement |
-| `spectacular archive <slug>` | → CLI verb; see [[archive]] (its spec-sync step may dispatch `spec-reviewer` — [[spec-sync]]) |
-| `spectacular remember this` | → `references/memory.md` (legacy free-text capture) |
-| `spectacular remember "<text>"` | → CLI verb; see [[memory-rules]] for entry shape |
-| `spectacular decide "<decision>" [--context\|--consequences]` | → CLI verb; see [[decisions-rules]] |
-| "record a decision" / "record an ADR" / "architecture decision" | → `spectacular decide`; ADRs live in decisions/index.md, see [[decisions-rules]] (store-worthy? table) |
-| `spectacular session start\|end` | → CLI verb; see [[sessions-rules]] |
-| `spectacular idea new <slug>` | → CLI verb; see [[idea-rules]] for entry shape |
-| `spectacular idea list` | → CLI verb |
-| `spectacular idea promote <slug> --to request\|roadmap\|shared` | → CLI verb; explicit local handoff. `shared` requires an existing reference and never creates a remote record; see [[idea-rules]]. |
-| `spectacular question new\|list\|resolve` / `question <id>` | → CLI verb; select an active human blocker, then read its bounded detail or `--full`; see [[question-rules]] and [[canonical-ids]] |
-| `spectacular research new\|list\|resolve` / `research <id>` | → CLI verb; select evidence work, then read its bounded detail or `--full`; see [[research-rules]] |
-| `spectacular spike new\|list\|resolve` / `spike <id>` | → CLI verb; select human-authorized feasibility work, then read its bounded detail or `--full`; see [[spike-rules]] |
-| Choosing research vs spike vs Vision prototype vs tracer bullet, or routing an “experiment” | → `references/discovery-protocol.md`; route by the uncertainty and avoid redundant nodes |
-| Deciding what must stay current, may remain stale, should archive, or may be deleted | → `references/artifact-retention.md`; derive live/stale-safe/temporary/throwaway from entity, status, and path |
-| “Draft/create a new spec” / `/spectacular spec draft` | → [[intent-routing]] intent receipt, then `spectacular spec new`; see [[spec-lifecycle]]. Never infer a new SPC from nearby docs impact or repository context. |
-| `spectacular spec new\|list\|approve\|act\|implement\|deprecate\|archive` | → CLI verbs; `spec new` is mechanical only and assumes the user already chose the route and confirmed the summary. Evidence-gated lifecycle follows; `confirm` remains an alias for `approve`; see [[spec-lifecycle]], [[lifecycle-contract]], and [[canonical-ids]] |
-| `spectacular wayfind status\|next\|order\|resolve\|defer\|resume\|path\|route` | → CLI verb; strict dependency-first fog/frontier sequencing and durable open-loop control; see [[wayfinding-sequencer]] |
-| “Park this idea” | → `spectacular wayfind route "park this idea" <slug>`; creates an `IDEA-NNN` record and does not alter active milestone scope |
-| “Put it on ice” / “Icebox” | → `spectacular wayfind route icebox <id> --reason <why>`; durable `status: deferred` |
-| “Find your way to <destination>” | → `spectacular wayfind path <id>` first; then resolve its dependency-ready discovery path without bypassing gates |
-| “Act on goal <target>” | → resolve the approved SPC, then run `/spectacular act <SPC>` per [[request-workflow]] |
-| `spectacular afk run\|status\|configure\|propose\|preflight\|start\|cleanup\|pr` | → CLI verbs; durable goal authorization plus opt-in, dry-run-first Git isolation and verified PR handoff; see [[afk-git-hygiene]] and [[lifecycle-contract]] |
-| `spectacular workspace preflight\|plan\|preserve\|cleanup` | → CLI verbs; inspect Git/request evidence before branch, publish, or cleanup mutation. Use named, path-scoped preservation commits instead of stash; provider facts remain unknown when no adapter can prove them. |
-| `spectacular github triage <issue>` | → [[github-work-bridge]] agentic readiness card and `direct | request | spec-first` route; assignment/labels are evidence, not authorization |
-| `spectacular github pr open\|ready` / `github reconcile` | → CLI verbs; draft PR integration manifest, current-head ready gate, and read-only discrepancy report; see [[github-work-bridge]] |
-| `spectacular traffic preflight <request>` | → CLI verb; read-only, local-first `parallel | conditional | serialized | unknown` assessment from durable request declarations. Record confirmed relationships in PLAN frontmatter and rerun; never schedules or mutates requests. |
-| User authorizes AFK work | → inspect `spectacular afk status`; branch mutation still requires enabled project config plus explicit apply; merge/remote deletion remain HITL |
-| A built-in `/goal` begins in a Spectacular workspace | → create/resume a durable goal-scoped AFK run for that goal; keep it active until completion/cancellation or a declared/unexpected HITL gate |
-| A user refers to `D1`, `Q1`, `R1`, `SPK1`, `S1`, or another entity alias | → normalize via `spectacular id resolve`; persist the canonical ID; see [[canonical-ids]] |
-| A bug/quirk/regression is reported (any "why does X do Y", "this is broken") | → **`references/bug-workflow.md`** — load before diagnosing; routes the debug fleet + the ceremony/fan-out gates. (Rationale: `bug-workflow-doctrine.md`, only if a routing call is uncertain.) |
-| `spectacular audit new\|list\|resolve` / `audit <id>` | → CLI verb; bug investigation before a fix. Named detail exposes diagnosis; `resolve --into-fix` graduates to a fix. See [[audit-rules]], [[bug-workflow]] |
-| `spectacular fix new\|list` / `fix <id>` | → CLI verb; retrieve or log a **verified, signed** fix. See [[fixes-rules]], [[bug-workflow]] |
-| "record a fix" / "log this fix" / "the bug is fixed and verified" | → `spectacular fix new` once resolved+verified, **with `--signature`**; see [[fixes-rules]] |
-| "investigate this bug" / "audit this quirk" before planning | → `spectacular audit new`; see [[audit-rules]] |
-| "have we seen this bug before?" / starting to diagnose | → **[[bug-workflow]] Step 0** — grep `.spectacular/fixes/` signatures first (self-learning loop) |
-| `spectacular request advance <slug>` | → CLI verb; lifecycle move-forward (`advance` remains an alias); review→verified is evidence-gated; see [[request-workflow]] and [[lifecycle]] |
-| `spectacular snapshot <file>` | → CLI verb (no skill flow); see [[versioning]] for snapshot rules. Requires a literal path relative to working directory (canonical docs only). |
-| `spectacular policy [@hook\|<id>\|--principle N\|--json]` | → CLI verb; read the merged policy contract. See [[policy-injection]] for the runtime loop, [[policies-contract]] for the schema |
-| Entering any work phase (init/planning/implementation/verification/archive/remember/snapshot/session-end) | → the phase ref doc's **@\<hook\> policy gate** runs `spectacular policy @<hook>` first; see [[policy-injection]] |
-| `spectacular touch <file>` | → CLI verb; trivial — just bumps `updated:`. Requires a literal path relative to working directory, not a slug. |
-| First invocation on existing `.spectacular/` project *with prior work* | → `references/onboarding.md` |
-| First invocation on a *fresh/empty* `.spectacular/` (init ran, no requests) | → `references/guided-first-run.md` |
-| `spectacular init` (CLI context) | → `references/init-workflow.md` |
-| `spectacular doctor` / `spectacular doctor <area>` | → `references/doctor.md` (lean entry) |
-| `/spectacular doctor --fix` (judgment walk) | → `references/doctor-repair.md` |
-| Explain a finding or area check | → `references/doctor-areas.md` |
-| Skill operation hits substrate failure (rules file won't parse, kit malformed, etc.) | → `references/doctor-substrate.md` |
-| `spectacular migrate [--dry-run\|--list]` | → CLI verb. Mechanical apply of pending schema migrations. |
-| `/spectacular migrate` (walk judgment migrations) | → `references/migrate.md` |
-| Explain a migration spec or contract | → `references/migrations-contract.md` |
-| Actively working on, resuming, or retrieving context for a request | → `references/request-workflow.md`, then `references/active-request.md` only for session-state details |
-| Implementing a milestone — decide build-inline vs dispatch a `spec-builder` | → **`references/build-workflow.md`** — the closed-brief chain, the inline-vs-dispatch gate, the build fleet. (Rationale: `build-workflow-doctrine.md`, only if a routing call is uncertain.) |
-
-### Read verbs (v1.8.0+) — read-only, no skill flow
-
-Always prefer these over walking the filesystem or hand-reading multiple PLAN/TASKS files.
-
-| User says / context | Route to |
-|---|---|
-| `spectacular requests [--active\|--status\|--since\|--json]` | → CLI verb. Lists requests with frontmatter view. |
-| `spectacular request <slug>` | → CLI verb. Cheap overview. `--brief [-mN]` compiles active implementation context; `--full` emits the ordered request-owned Markdown bundle. See [[request-workflow]]. |
-| `spectacular spec <id> [--json]` | → CLI verb. Compact SPC state, intent, linked request, and safe next action; use `spec list` only to discover IDs. |
-| `spectacular decisions [--tag\|--since\|--json]` | → CLI verb. Lists decisions. |
-| `spectacular decision <slug>` | → CLI verb. Entity detail: decision, context, consequences; `--full` is literal evidence. |
-| `spectacular memories [--tag\|--since\|--json]` | → CLI verb. Lists memory entries. |
-| `spectacular memory <slug>` | → CLI verb. Entity detail: active/retracted status, lesson, tags; `--full` is literal evidence. |
-| `spectacular sessions [--status\|--since\|--json]` | → CLI verb. Lists sessions (read-only — distinct from `session start\|end` mutators). |
-| `spectacular sessions show <slug>` | → CLI verb. Skim view of one session. |
-| `spectacular show <doctype>` | → CLI verb. Dumps a canonical doc (prd/spec/principles/...). `--section <name>` filters to one H2. |
-| `spectacular summary` | → CLI verb. One-page workspace overview (counts + active requests). Cheap cold-start. |
-| `spectacular status --brief [--json]` | → CLI verb. Bounded orientation: blockers, request-health signals, fleet, and one safe next action. `--json` uses `spectacular.status.v2`; bare `status --json` remains the fleet-array contract. |
-| `spectacular progress <slug>` | → CLI verb. Milestone tick rate parsed from TASKS.md. |
-| `spectacular paths` | → CLI verb. JSON map of conventional paths. Use when locating files programmatically. |
-
-**Universal flags:** `--status <s>`, `--since <Nd\|Nh\|Nw>`, `--limit N` (default 20), `--all`, `--json`. Detail verbs add `--full` to bypass skim mode.
-
-**Cold-start pattern:** prefer `spectacular status --brief --json` → follow its named `request <slug>` (or `--brief` for active implementation). After selecting a collection record, use its named detail, then literal `--full` only when needed. Direct named-file access remains valid after selection and for repair/debugging. Use `summary` for a human-facing dashboard, not task selection.
-
-### Doc-writing (generalized — works for any registered doc)
-
-The conversational canonical grammar is verb-first: `/spectacular grill|refine|review <doc> [target]`. Document-first forms remain compatibility aliases. The verb defaults from the document's mode + state only when the user supplies the document without a verb. Each doc's rules file declares dispatch and gate checks.
-
-| User says | Route to |
-|---|---|
-| `/spectacular grill <doc> [target]` | → resolve and print the target, then `references/grill.md` with `<doc-id>-rules.md` |
-| `/spectacular refine <doc> [target]` | → resolve and print the target, then `references/refine.md` with `<doc-id>-rules.md` |
-| `/spectacular review <doc> [target]` | → resolve and print the target, then `references/review.md` with `<doc-id>-rules.md` |
-| `spectacular <doc>` (no verb) | → load `references/<doc-id>-rules.md`, resolve mode, dispatch |
-| `spectacular <doc> grill` | → `references/grill.md` (with `<doc-id>-rules.md` context) |
-| `spectacular <doc> refine` | → `references/refine.md` (with `<doc-id>-rules.md` context) |
-| `spectacular <doc> review` | → `references/review.md` (with `<doc-id>-rules.md` context) |
-
-**Registered docs:** the live registry is the set of `references/<doc-id>-rules.md` files; the catalog is `references/doc-index.md`. No hardcoded id list here — it drifts. (`spectacular prd …` is just this handler with `<doc> = prd`; bare `prd` → grill if empty, else review.)
-
-### Where does this belong? — soft-DB routing
-
-Deciding *which store* a piece of knowledge goes in (fact? decision? question? research? spike? fix? idea?) → **`references/soft-db-index.md`**, the canonical collection index. Load it whenever the routing isn't obvious.
-
-Adding, revising, splitting, or deciding whether to add a Spectacular-specific glossary term → **`references/glossary.md`**.
-
-### Feedback-loop mode (v1.6.0+)
-
-`feedback-loop` is a distinct mode for learning from built or prototyped behavior. **Not** pre-spec Vision approval, a benchmark, or verification pass. The word `experiment` routes through [[discovery-protocol]] instead of aliasing here.
-
-| User says / context | Route to |
-|---|---|
-| `spectacular feedback-loop` (no args) | → `references/feedback-loop.md` — list open entries, offer to start one |
-| `spectacular feedback-loop <target>` | → `references/feedback-loop.md` — run the 5-step loop |
-| `spectacular feedback-loop new <target>` | → CLI verb (scaffold one entry, status `open`); see [[feedback-rules]] |
-| `spectacular feedback-loop list` | → CLI verb |
-| `spectacular feedback-loop resolve <slug>` | → CLI verb (close entry, optional auto-promote to memory) |
-| `spectacular feedback-loop archive <slug>` | → CLI verb |
-| `spectacular feedback grill\|refine\|review` | → generic engine via [[feedback-rules]] (works like any registered doc) |
-
-Proactive-surfacing rules (three checkpoints only, never mid-flow) and the memory auto-promotion contract live in [[feedback-loop]] — loaded whenever the mode runs.
-
-### Imagine + Vision (v1.38.0+) — pre-request direction
-
-`imagine` is the **generative operation**; Vision is the durable result. The loop is Understand → Imagine → Probe → React → Confirm → Derive. It is opt-in, pre-request, and derives an approved Vision into a draft SPC—not PLAN. Full engine: [[imagine]]. Contract: [[vision-rules]].
-
-| User says / context | Route to |
-|---|---|
-| `spectacular imagine <slug>` (bare, in agent) | → [[imagine]] — ground, generate proportional fragments, gather reaction, confirm Vision |
-| `spectacular imagine <slug>` (CLI, with slug) | → scaffold `.spectacular/visions/<slug>/` without a request/SPC/PLAN precondition |
-| `spectacular vision list\|show\|add\|react\|propose\|approve\|reject` | → CLI mechanical Vision lifecycle; see [[vision-rules]] |
-| `spectacular vision derive <slug>` | → [[imagine]] Derive; require approved Vision and produce a draft SPC from approved fragments only |
-| `spectacular vision grill\|refine\|review` | → generic engine via [[vision-rules]] (manual spine authoring — rare) |
-| `spectacular doctor vision` | → `references/doctor.md` (vision area) |
-
-### Pack-specific verbs (`pack` is the canonical doc-id since v1.19.0)
-
-Packs add a `new <name>` verb (user-scope, identified by name):
-
-| User says | Route to |
-|---|---|
-| `spectacular pack new <name>` | → `references/grill.md` + `pack-rules.md` — pre-flight resolves target `~/.spectacular/packs/<name>/` |
-| `spectacular pack new <name> --from <p1>,<p2>` | same + source-ingestion mode active |
-| `spectacular pack new <name> --scope project` | same + target `<project>/.spectacular/packs/<name>/` |
-| `spectacular pack grill <name>` | → `grill.md` + `pack-rules.md` — resume grill on an existing pack |
-| `spectacular pack refine <name>` | → `refine.md` + `pack-rules.md` |
-| `spectacular pack review <name>` | → `review.md` + `pack-rules.md` |
-
-### Public-facing docs — owned by pageworks
-
-"Write docs / add a page / add a tutorial" → `references/pageworks-handoff.md` (surface its install hint — never auto-install). Spectacular keeps discovery-only awareness of `docs/`.
-
-### Verification routing (when writing PLAN.md or moving requests to review)
-
-| Decision point | Route to |
-|---|---|
-| Scaffolding a new request (`spectacular new`) | → **[[plan-rules]] § 2-of-6 rule** (compact table; canonical: [[verify-authoring]]). Default: no VERIFY.md — `### Verification` group in TASKS.md or PLAN § Validation instead. |
-| Grilling/refining a PLAN.md | → **[[plan-rules]] § 2-of-6 rule** — confirm result; ask user if VERIFY.md needed |
-| Moving request `active → review` | → `lifecycle.md` § Verification artifact detection — pick artifact (VERIFY.md > TASKS Verification > PLAN Validation) |
-| Moving request `review → verified` | → **`verify.md`** — the interactive validation walk (walk-only since b30), record to VERIFY-LOG, gate the transition. **Never skip.** |
-| `spectacular verify <slug>` | → **`verify.md`** — the validation walk (skill-only; CLI redirects). |
-| `spectacular sweep [<slug>]` / "audit the fleet" | → **`review-sweep.md`** — read-only request-auditor fan-out (review + ticked-active deep; planned batched overlap check). Never promotes — feeds the walk. |
-| Automating a shipped scenario | → `verify-authoring.md` § Promoting checks to scripts — when to author `tests/verify/<slug>.test.sh`. |
-
-Verification always runs against *some* artifact — "VERIFY.md is opt-in" means the *file*, never the act; the full doctrine lives in `verify-authoring.md` § "Verification always happens".
-
----
-
-## State awareness
-
-Load **only** what the task needs (principle 6 — progressive disclosure). Two authorities, no third list:
-
-- **What to load per task type** — `.spectacular/AGENTS.md`'s context-loading table is authoritative; follow it over guessing or re-deriving a read list.
-- **How to read state** — prefer the read verbs (§ Cold-start pattern above: `status --brief --json` → named `request` view) over walking the filesystem; the flow docs (`status.md`, `active-request.md`) own their own read steps.
-
-Never read `archive/` during normal operation.
-
----
-
-## Canonical rules (always apply)
-
-- **Never overwrite canonical documents in place** — snapshot first (`PRD@v1.0.md`). See `references/versioning.md`.
-- **Lifecycle state** lives in `PLAN.md` frontmatter (`status: planned | active | review | verified`). TASKS.md mirrors it for skim tooling; PLAN is authoritative — `doctor` repairs drift.
-- **Entity lifecycles** are defined only by [[lifecycle-contract]]. Specs are historical execution context; code is authoritative, and only `approved` specs may seed requests.
-- **Slugs** are kebab-case, skill-derived, user-overridable, uniqueness enforced.
-- **Memory** (`spectacular remember this`) writes to `.spectacular/memories/` — git-committed, team-visible. Never to `.claude/` memory.
-- Be proactive: surface stale state, propose lifecycle transitions, flag blocked requests.
-- **Execution boundary:** when implementation reveals an unexpected requirement, tangent, or optimization, park it as an idea (or future target) instead of adding it to the active request's PLAN/TASKS. See [[wayfinding-sequencer]].
-- **GitHub/Spectacular boundary:** GitHub owns capture, discussion, ownership, PRs, checks, merge, collaboration, and notifications. Spectacular owns reasoning, durable local context, decisions, plans, validation, and coordination. An Issue is a collaborative job card, not automatically a spec or request: use the smallest sufficient `direct | request | spec-first` path and link rather than mirror. See [[github-work-bridge]].
-- **Know when to write to a collection, not just how** — the "When to act" trigger table in [[soft-db-index]]. Cheap/reversible writes on their natural trigger; permanent/team-visible writes (memory, decisions, archive) are proposed → human confirms → written, never autonomous.
-- **Completion language closes verified work** — when the user says “finish,” “conclude,” “wrap up,” or equivalent after a request is verified, treat it as archive authorization. Run the normal archive closure gate (spec delta, verification evidence, policy) and archive; ask only if a gate reveals a real blocker or a required archival choice.
-
-### Task tracking — two layers
-
-On-disk `requests/<slug>/TASKS.md` owns milestones (persistent, team-visible); the runtime's native plan/task tool owns ephemeral session micro-steps (for example Codex `update_plan` or Claude `TaskCreate`/`TaskUpdate`; finer-grained — never a one-for-one copy of TASKS.md lines). Full convention: `.spectacular/AGENTS.md` § Task tracking.
-
----
-
-## Operating modes and continuation
-
-Choose behavior from the work state, not from the presence of a checklist:
-
-| Mode | Agent behavior | When to ask or stop |
-|---|---|---|
-| **Explore / grill / refine / review** | Investigate, compare options, expose ambiguity, and draft or critique artifacts. Do not silently turn an unresolved choice into implementation. | Ask for the missing fact, preference, or acceptance that determines the direction. |
-| **Plan** | Turn an accepted direction into a bounded request, PLAN, and TASKS chain; make validation and scope explicit. | Stop at the approval boundary for a new durable behavior, contract, or scope that the user has not approved. |
-| **Execute** | Once a request is approved and active, compile the turn's completion contract, create a native session plan, and complete its ordered, in-scope tasks autonomously. Tick/check/report normal checkpoints, then continue. | Stop only for a real decision, a declared HITL gate, exhausted approved scope, separate authority, or a failed required check that remains unresolved after in-scope diagnosis and repair. |
-| **Close** | Collect evidence, move lifecycle only through its defined gates, and prepare the handoff/archive path. | Stop where the lifecycle requires evidence or explicit human confirmation; do not mistake completion reporting for permission to archive or make irreversible writes. |
-
-**Checkpoint rule:** a task, sub-step, milestone, native-plan update, or soft reminder is visibility—not a consent boundary. It never by itself ends an approved execution turn.
-
-### Execution-turn state machine
-
-Before implementation, compile a **completion contract** from the user's requested terminal condition,
-the request's open tasks, PLAN Validation, Deliverables, and declared HITL/authority gates. Track the
-concrete edits and checks in the runtime's native session plan with exactly one item in progress.
-
-- **RUNNING** — any completion-contract condition or native plan item remains. A terminal/final
-  response is forbidden. Send progress only through the runtime's intermediate/progress channel
-  when it has one, then immediately perform the next tool call or edit.
-- **BLOCKED** — progress requires a real user decision, declared HITL gate, separate authority, or
-  an unresolved failure after the approved in-scope diagnosis/repair path has been exhausted. Name
-  the evidence, what was attempted, and the exact input required.
-- **COMPLETE** — every completion-contract condition is satisfied and its verification evidence is
-  available. Only COMPLETE or BLOCKED permits a terminal/final response.
-
-A red check is work to diagnose and repair, not automatically a blocker. Never end a turn with
-future-tense continuation such as “I'm continuing”, “I'll continue”, or “next I will”. Perform that
-action instead. Before emitting a terminal response, inspect the native plan: if any item is pending
-or in progress, remain RUNNING and take the next action.
-
----
-
-## Output format
-
-Conversational briefing with a minimal embedded table. Never a raw dump. During approved, unblocked implementation, treat normal task and milestone checkpoints as non-terminal progress updates and continue to the next planned action; do not end the turn or ask for confirmation at those checkpoints. Use an intermediate/progress channel when the runtime provides one. A terminal/final response is valid only in COMPLETE or BLOCKED state—never as a promise to continue later. Ask what the user wants to do only when work is complete, a real blocker or declared HITL gate needs their decision, or the next action would exceed the approved request.
-
----
-
-## References & templates index
-
-No hand-list here — it drifts. Reference docs: `references/*.md`, cataloged in `references/doc-index.md`. Templates: the `templates/` tree; frontmatter stubs in `references/scaffold-reference.md`. Projects may override any template at `.spectacular/templates/<doc>/...` (same filenames, project-local wins).
+| `orient` | [orient.md](references/orient.md) | `@Orient` |
+| `propose`, `define` | [prepare.md](references/prepare.md) | `@Prepare` |
+| `decide`, `start`, `resume` | [execute.md](references/execute.md) | `@Start` or `@Resume` |
+| `handoff`, Autopilot | [runtime.md](references/runtime.md) | `@Run` |
+| `assess`, `reconcile`, `resolve` | [close.md](references/close.md) | `@Assess`, `@Reconcile`, or `@Resolve` |
+| `audit` | [audit.md](references/audit.md) | phase being audited |
+
+`message` is canonical vocabulary but has no executable Link/Message substrate in this MVP. Return
+an explicit capability Gap; do not substitute Handoff, invent persistence, or mutate another
+Mission.
+
+## Authority rules
+
+- Ask the owner only when a product, Mission-boundary, authority, risk, irreversible-effect, or
+  current-Contract decision is genuinely unresolved. Reversible implementation choices remain in
+  the approved envelope.
+- A guided workflow may draft inputs. Persist them only after confirmation and through the
+  registry-owned noun-first command in [mechanical-interface.md](generated/mechanical-interface.md).
+- Never claim that a green check, record, Handoff, assessment, archive, or generated view proves
+  acceptance. Keep Evidence, assessment, owner disposition, reconciliation, resolution, and
+  archival distinct.
+- Never infer provider permission or effects. Record only attributable native-provider receipts.
+- Mission accountability stays with the primary owner across every Handoff. A host task or thread
+  identifier is only a non-authoritative destination pointer.
+
+## Execution behavior
+
+After owner activation, compile a completion contract and use the host runtime's native plan for
+session-sized steps. Continue while any approved condition remains. A failed check begins bounded
+diagnosis and repair; it is not automatically a user gate. Stop only for an actual charter stop,
+new Type-1 decision, separate authority, irreversible/provider effect, or exhausted repair budget.
+
+Return pointer-first continuity: Mission, current Objective and Run boundary, baseline, authority,
+Evidence/review and freshness, remaining Gaps, repair use, recovery point, and exactly one safe
+continuation or owner gate.

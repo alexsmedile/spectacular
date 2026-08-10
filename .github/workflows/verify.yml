@@ -1,0 +1,23 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  v2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+      - run: gofmt -d $(find cmd internal -name '*.go') | (! grep .)
+      - run: go mod verify
+      - run: go vet ./...
+      - run: go test ./...
+      - run: go test -race ./...
+      - run: go run ./cmd/generate-interface --json skills/spectacular/generated/mechanical-interface.json --markdown skills/spectacular/generated/mechanical-interface.md --version "$(tr -d '\n' < VERSION)" && git diff --exit-code
+      - run: bash install/test.sh
+      - run: bash release/test.sh
+      - run: '! rg -n "spectacular (status|inspect|new|advance|record|search)|github.com/alexsmedile/spectacular(\"|$)" --glob "!RECOVERY.md" --glob "!go.mod" .'

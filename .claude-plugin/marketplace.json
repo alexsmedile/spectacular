@@ -1,0 +1,33 @@
+{
+  "name": "spectacular",
+  "owner": {
+    "name": "Alessandro Smedile"
+  },
+  "metadata": {
+    "description": "Guide governed Spectacular Missions from orientation through verified closure.",
+    "version": "2.0.0-rc.2"
+  },
+  "plugins": [
+    {
+      "name": "spectacular",
+      "source": "./",
+      "description": "Guide governed Spectacular Missions from orientation through verified closure.",
+      "version": "2.0.0-rc.2",
+      "author": {
+        "name": "Alessandro Smedile"
+      },
+      "license": "MIT",
+      "homepage": "https://github.com/alexsmedile/spectacular",
+      "repository": "https://github.com/alexsmedile/spectacular",
+      "keywords": [
+        "spectacular",
+        "missions",
+        "governance",
+        "context",
+        "evidence",
+        "claude-code"
+      ],
+      "category": "productivity"
+    }
+  ]
+}

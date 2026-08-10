@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: scenario-a-accepted-and-integrated
-active_stage: b-c-preparation-next-ready
+checkpoint: b-c-charter-prepared
+active_stage: b-c-implementation-next-ready
 updated: 2026-08-10
 ---
 

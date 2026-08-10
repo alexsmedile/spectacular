@@ -3,7 +3,7 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: scenario-a-accepted-and-integrated
+checkpoint: b-c-charter-prepared
 decision_sessions: 14
 foundational_priorities: 20
 updated: 2026-08-10
@@ -206,5 +206,5 @@ S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16
 S12A, W0, and the M1 charter are accepted. The v2 responsibility surface, retirement boundaries,
 implementation architecture, five-spec topology, shared scaffold, and first Mission envelope are
 fixed. The current v1.8 executable program has W0, M1, and Scenario A accepted/integrated. One BC
-Mission with serial Objectives B and C is next-ready for preparation, followed by a separate
+Mission with serial Objectives B and C is prepared and next-ready for implementation, followed by a separate
 Skill/runtime-prerequisites Mission and then release/distribution. No successor Mission is active.

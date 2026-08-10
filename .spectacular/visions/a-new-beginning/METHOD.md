@@ -3,7 +3,7 @@ type: refactor-method-record
 status: active
 owner: alex
 vision: a-new-beginning
-current_phase: scenario-a-accepted-b-c-next
+current_phase: b-c-charter-ready
 next_source: none
 updated: 2026-08-10
 ---
@@ -461,14 +461,14 @@ A future agent or session resumes in this order:
 - Branch: `refactor/a-new-beginning`.
 - Current phase: the foundation, architecture, specification topology, W0, M1, and Scenario A are
   accepted and integrated. The B+C behavioral contract is accepted and joined to Scenario A's
-  interface. One BC Mission is next-ready for preparation.
+  interface. The BC charter is sufficient/coherent and next-ready for implementation dispatch.
 - Ingested baseline: Sources 001–016, 173 concept cards, 23 GitHub issue cards.
 - Latest synthesis: checkpoint 027.
 - Human dispositions: foundation sessions through S12, W0, M1, Scenario A, B+C semantics, the
   minimal-agent default, and separate Skill/Release Missions are reconciled into accepted contracts.
 - Promoted implementation: M1 plus Scenario A cold recovery, with Scenario A integrated by
   `55b679c…` after independent review and bounded repair.
-- Active handoff queue: no successor is active. BC preparation is the one safe next action.
+- Active handoff queue: no successor is active. BC implementation dispatch is the one safe next action.
 - Planning baseline: each new handoff must declare and validate a fresh immutable commit/tree plus
   content hashes. Unrelated untracked files remain excluded from this program.
 - New source ingestion is closed unless reversal-grade evidence appears.

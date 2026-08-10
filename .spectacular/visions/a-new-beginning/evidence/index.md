@@ -27,6 +27,8 @@ updated: 2026-08-10
   central test rerun, merge, and B+C interface compatibility
 - [Governed work and closure contract](../GOVERNED-WORK-AND-CLOSURE-CONTRACT.md) — accepted B+C
   behavioral semantics joined to Scenario A's mechanical envelope
+- [BC Mission charter](../BC-GOVERNED-LOOP-MISSION-CHARTER.md) — sufficient/coherent executable
+  boundary with serial Objectives B and C and minimal-agent topology
 
 ## Sources
 

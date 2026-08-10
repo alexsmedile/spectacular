@@ -67,6 +67,7 @@ const (
 	opAssessmentRecord
 	opContractShow
 	opContractReconcile
+	opContractReconcileSet
 	opMissionArchive
 )
 
@@ -85,7 +86,7 @@ var Registry = []Spec{
 	{[]string{"proposal", "check-base"}, "<ref> [--json]", argumentsOne, "spectacular.proposal.check-base.v1", ReadOnly, opProposalCheckBase},
 	{[]string{"proposal", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.proposal.create.v1", Mutating, opProposalCreate},
 	{[]string{"mission", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.mission.create.v1", Mutating, opMissionCreate},
-	{[]string{"mission", "transition"}, "<ref> --to <state> --authorization <decision-ref> --expected-fingerprint <sha> --idempotency-key <key> [--assessment <ref>] [--reconciliation <ref>] [--disposition <value>] [--terminal-next-action <text>] [--json]", argumentsTransition, "spectacular.mission.transition.v1", Mutating, opMissionTransition},
+	{[]string{"mission", "transition"}, "<ref> --to <state> --authorization <decision-ref> --expected-fingerprint <sha> --idempotency-key <key> [--assessment <ref>] [--reconciliation <ref>] [--disposition <value>] [--terminal-next-action <text>] [--satisfied-objectives <ref,ref>] [--json]", argumentsTransition, "spectacular.mission.transition.v1", Mutating, opMissionTransition},
 	{[]string{"handoff", "show"}, "<ref> [--json]", argumentsOne, "spectacular.handoff.show.v1", ReadOnly, opHandoffShow},
 	{[]string{"handoff", "validate"}, "<ref> [--json]", argumentsOne, "spectacular.handoff.validate.v1", ReadOnly, opHandoffValidate},
 	{[]string{"handoff", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.handoff.create.v1", Mutating, opHandoffCreate},
@@ -95,6 +96,7 @@ var Registry = []Spec{
 	{[]string{"assessment", "record"}, "--input <json-file> [--json]", argumentsInput, "spectacular.assessment.record.v1", Mutating, opAssessmentRecord},
 	{[]string{"contract", "show"}, "<ref> [--json]", argumentsOne, "spectacular.contract.show.v1", ReadOnly, opContractShow},
 	{[]string{"contract", "reconcile"}, "<ref> --proposal <ref> --authorization <decision-ref> --expected-fingerprint <sha|absent> --idempotency-key <key> [--json]", argumentsReconcile, "spectacular.contract.reconcile.v1", Mutating, opContractReconcile},
+	{[]string{"contract", "reconcile-set"}, "--input <json-file> [--json]", argumentsInput, "spectacular.contract.reconcile-set.v1", Mutating, opContractReconcileSet},
 	{[]string{"mission", "archive"}, "<ref> --authorization <decision-ref> --expected-fingerprint <sha> --idempotency-key <key> --terminal-packet <mission-ref> [--json]", argumentsArchive, "spectacular.mission.archive.v1", Mutating, opMissionArchive},
 }
 
@@ -221,6 +223,12 @@ func (r Runner) Run(args []string) int {
 		input, err = reconcileInput(rest)
 		if err == nil {
 			value, err = g.Reconcile(input)
+		}
+	case opContractReconcileSet:
+		var input governance.ReconcileSetInput
+		err = readInput(rest[1], &input)
+		if err == nil {
+			value, err = g.ReconcileMany(input.Items)
 		}
 	case opMissionArchive:
 		var input governance.ArchiveInput
@@ -365,10 +373,14 @@ func transitionInput(args []string) (governance.TransitionInput, error) {
 	if err := requireOptions(values, "--to", "--authorization", "--expected-fingerprint", "--idempotency-key"); err != nil {
 		return governance.TransitionInput{}, err
 	}
-	if err := rejectUnknownOptions(values, "--to", "--authorization", "--expected-fingerprint", "--idempotency-key", "--disposition", "--assessment", "--reconciliation", "--terminal-next-action"); err != nil {
+	if err := rejectUnknownOptions(values, "--to", "--authorization", "--expected-fingerprint", "--idempotency-key", "--disposition", "--assessment", "--reconciliation", "--terminal-next-action", "--satisfied-objectives"); err != nil {
 		return governance.TransitionInput{}, err
 	}
-	return governance.TransitionInput{Mission: ref, To: values["--to"], Authorization: values["--authorization"], ExpectedFingerprint: values["--expected-fingerprint"], IdempotencyKey: values["--idempotency-key"], Disposition: values["--disposition"], Assessment: values["--assessment"], Reconciliation: values["--reconciliation"], TerminalNextAction: values["--terminal-next-action"]}, nil
+	var objectives []string
+	if raw := values["--satisfied-objectives"]; raw != "" {
+		objectives = strings.Split(raw, ",")
+	}
+	return governance.TransitionInput{Mission: ref, To: values["--to"], Authorization: values["--authorization"], ExpectedFingerprint: values["--expected-fingerprint"], IdempotencyKey: values["--idempotency-key"], Disposition: values["--disposition"], Assessment: values["--assessment"], Reconciliation: values["--reconciliation"], TerminalNextAction: values["--terminal-next-action"], SatisfiedObjectives: objectives}, nil
 }
 
 func reconcileInput(args []string) (governance.ReconcileInput, error) {

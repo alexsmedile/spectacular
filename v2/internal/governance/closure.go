@@ -2,6 +2,7 @@ package governance
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -28,6 +29,10 @@ func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
 	if mission.Fingerprint != input.ExpectedMissionFingerprint {
 		return OperationResult{}, stale("expected_mission_fingerprint", input.ExpectedMissionFingerprint, mission.Fingerprint)
 	}
+	missionAuthority, err := parseMissionEnvelope(mission)
+	if err != nil {
+		return OperationResult{}, err
+	}
 	objective, err := s.Workspace.Lookup(input.Objective, domain.Objective)
 	if err != nil {
 		return OperationResult{}, err
@@ -36,26 +41,48 @@ func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
 	if err != nil {
 		return OperationResult{}, err
 	}
-	if mustString(objective.Document, "mission") != input.Mission || mustString(run.Document, "mission") != input.Mission {
+	objectiveMission, err := workspace.String(objective.Document, "mission", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	runMission, err := workspace.String(run.Document, "mission", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	if objectiveMission != input.Mission || runMission != input.Mission {
 		return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "mission", "Handoff Objective and Run must belong to the same Mission", nil)
 	}
-	if input.Sender == "" || input.Actor == "" || input.Destination == "" || len(input.Scope) == 0 || len(input.EvidenceClaims) == 0 || input.Budget == "" || input.RecoveryPoint == "" || input.ReturnDestination == "" || input.Authorization == "" || input.IdempotencyKey == "" {
+	if input.Sender == "" || input.Actor == "" || input.Destination == "" || len(input.Scope) == 0 || len(input.EvidenceClaims) == 0 || input.BudgetUnits < 1 || input.RecoveryPoint == "" || input.ReturnDestination == "" || input.Authorization == "" || input.IdempotencyKey == "" {
 		return OperationResult{}, missing("handoff", "actor, destination, scope, authority, evidence, budget, recovery, return, and idempotency are required")
+	}
+	if _, err := parseFuture(missionAuthority.ExpiresAt, s.now(), "mission.expires_at"); err != nil {
+		return OperationResult{}, err
 	}
 	if _, err := parseFuture(input.ExpiresAt, s.now(), "expires_at"); err != nil {
 		return OperationResult{}, err
 	}
-	if !subset(input.Scope, mustStrings(mission.Document, "scope")) || !subset(input.AllowedActions, mustStrings(mission.Document, "allowed_actions")) || !subset(mustStrings(mission.Document, "forbidden_effects"), input.ForbiddenEffects) {
+	if input.BudgetUnits > missionAuthority.BudgetUnits || !subset(input.Scope, missionAuthority.Scope) || !subset(input.AllowedActions, missionAuthority.AllowedActions) || !subset(input.EvidenceClaims, missionAuthority.EvidenceClaims) || !subset(input.Stops, missionAuthority.Stops) || !subset(missionAuthority.ForbiddenEffects, input.ForbiddenEffects) {
 		return OperationResult{}, domain.NewRefusal(domain.RefusalUnauthorized, "envelope", "Handoff must be a subset of Mission scope/actions and preserve every forbidden effect", nil)
 	}
+	if err := s.validateBoundInputs(input.Inputs); err != nil {
+		return OperationResult{}, err
+	}
 	ref := string(domain.Handoff) + ":" + id.String()
-	if err := s.authorize(input.Authorization, "handoff.create", ref, "absent"); err != nil {
+	if err := s.authorize(input.Authorization, "handoff.create", ref, "absent", input.Scope, []string{"handoff.create"}); err != nil {
 		return OperationResult{}, err
 	}
 	if input.Supersedes != "" {
 		old, lookupErr := s.Workspace.Lookup(input.Supersedes, domain.Handoff)
-		if lookupErr != nil || mustString(old.Document, "kind") != "dispatch" || mustString(old.Document, "mission") != input.Mission {
+		if lookupErr != nil {
 			return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "supersedes", "superseded Handoff must be an existing dispatch in the same Mission", lookupErr)
+		}
+		oldKind, parseErr := workspace.String(old.Document, "kind", true)
+		if parseErr != nil {
+			return OperationResult{}, parseErr
+		}
+		oldMission, parseErr := workspace.String(old.Document, "mission", true)
+		if parseErr != nil || oldKind != "dispatch" || oldMission != input.Mission {
+			return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "supersedes", "superseded Handoff must be an existing dispatch in the same Mission", parseErr)
 		}
 	}
 	doc := s.document(domain.Handoff, id, input.Title, input.Sender, "")
@@ -72,14 +99,16 @@ func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
 	workspace.SetStrings(doc, "allowed_actions", input.AllowedActions)
 	workspace.SetStrings(doc, "forbidden_effects", input.ForbiddenEffects)
 	workspace.SetStrings(doc, "evidence_claims", input.EvidenceClaims)
-	workspace.SetString(doc, "budget", input.Budget)
+	workspace.SetInt(doc, "budget_units", input.BudgetUnits)
 	workspace.SetString(doc, "expires_at", input.ExpiresAt)
 	workspace.SetStrings(doc, "stops", input.Stops)
 	workspace.SetString(doc, "recovery_point", input.RecoveryPoint)
 	workspace.SetString(doc, "return_destination", input.ReturnDestination)
 	workspace.SetString(doc, "authorization", input.Authorization)
 	workspace.SetString(doc, "expected_mission_fingerprint", input.ExpectedMissionFingerprint)
-	workspace.SetString(doc, "supersedes", input.Supersedes)
+	if input.Supersedes != "" {
+		workspace.SetString(doc, "supersedes", input.Supersedes)
+	}
 	workspace.SetString(doc, "idempotency_key", input.IdempotencyKey)
 	return s.createOne("handoff.create", doc, input.IdempotencyKey, []string{input.Mission, input.Objective, input.Run, input.Authorization})
 }
@@ -89,40 +118,70 @@ func (s Service) ValidateHandoff(ref string) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	if mustString(handoff.Document, "kind") != "dispatch" {
+	kind, err := workspace.String(handoff.Document, "kind", true)
+	if err != nil {
+		return nil, err
+	}
+	if kind != "dispatch" {
 		return nil, invalid("kind", "handoff validate requires a dispatch")
 	}
 	for _, candidate := range s.Workspace.OfType(domain.Handoff) {
-		if mustString(candidate.Document, "supersedes") == refOf(handoff) {
+		supersedes, parseErr := workspace.String(candidate.Document, "supersedes", false)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		if supersedes == refOf(handoff) {
 			return nil, domain.NewRefusal(domain.RefusalConflictingAuthority, "supersedes", "Handoff was superseded by "+refOf(candidate), nil)
 		}
 	}
-	missionRef := mustString(handoff.Document, "mission")
+	handoffAuthority, err := parseHandoffEnvelope(handoff)
+	if err != nil {
+		return nil, err
+	}
+	missionRef := handoffAuthority.Mission
 	mission, err := s.Workspace.Lookup(missionRef, domain.Mission)
 	if err != nil {
 		return nil, err
 	}
-	objective, err := s.Workspace.Lookup(mustString(handoff.Document, "objective"), domain.Objective)
+	missionAuthority, err := parseMissionEnvelope(mission)
 	if err != nil {
 		return nil, err
 	}
-	run, err := s.Workspace.Lookup(mustString(handoff.Document, "run"), domain.Run)
+	objective, err := s.Workspace.Lookup(handoffAuthority.Objective, domain.Objective)
 	if err != nil {
 		return nil, err
 	}
-	if mustString(objective.Document, "mission") != missionRef || mustString(run.Document, "mission") != missionRef {
+	run, err := s.Workspace.Lookup(handoffAuthority.Run, domain.Run)
+	if err != nil {
+		return nil, err
+	}
+	objectiveMission, err := workspace.String(objective.Document, "mission", true)
+	if err != nil {
+		return nil, err
+	}
+	runMission, err := workspace.String(run.Document, "mission", true)
+	if err != nil {
+		return nil, err
+	}
+	if objectiveMission != missionRef || runMission != missionRef {
 		return nil, domain.NewRefusal(domain.RefusalConflictingAuthority, "mission", "Handoff containment no longer holds", nil)
 	}
-	if mustString(handoff.Document, "expected_mission_fingerprint") != mission.Fingerprint {
-		return nil, stale("expected_mission_fingerprint", mustString(handoff.Document, "expected_mission_fingerprint"), mission.Fingerprint)
-	}
-	if !subset(mustStrings(handoff.Document, "scope"), mustStrings(mission.Document, "scope")) || !subset(mustStrings(handoff.Document, "allowed_actions"), mustStrings(mission.Document, "allowed_actions")) || !subset(mustStrings(mission.Document, "forbidden_effects"), mustStrings(handoff.Document, "forbidden_effects")) {
-		return nil, domain.NewRefusal(domain.RefusalUnauthorized, "envelope", "Handoff no longer fits current Mission envelope", nil)
-	}
-	if _, err := parseFuture(mustString(handoff.Document, "expires_at"), s.now(), "expires_at"); err != nil {
+	if _, err := parseFuture(missionAuthority.ExpiresAt, s.now(), "mission.expires_at"); err != nil {
 		return nil, err
 	}
-	if err := s.authorize(mustString(handoff.Document, "authorization"), "handoff.create", refOf(handoff), "absent"); err != nil {
+	if handoffAuthority.ExpectedMissionFingerprint != mission.Fingerprint {
+		return nil, stale("expected_mission_fingerprint", handoffAuthority.ExpectedMissionFingerprint, mission.Fingerprint)
+	}
+	if handoffAuthority.BudgetUnits > missionAuthority.BudgetUnits || !subset(handoffAuthority.Scope, missionAuthority.Scope) || !subset(handoffAuthority.AllowedActions, missionAuthority.AllowedActions) || !subset(handoffAuthority.EvidenceClaims, missionAuthority.EvidenceClaims) || !subset(handoffAuthority.Stops, missionAuthority.Stops) || !subset(missionAuthority.ForbiddenEffects, handoffAuthority.ForbiddenEffects) {
+		return nil, domain.NewRefusal(domain.RefusalUnauthorized, "envelope", "Handoff no longer fits current Mission envelope", nil)
+	}
+	if err := s.validateBoundInputs(handoffAuthority.Inputs); err != nil {
+		return nil, err
+	}
+	if _, err := parseFuture(handoffAuthority.ExpiresAt, s.now(), "expires_at"); err != nil {
+		return nil, err
+	}
+	if err := s.authorize(handoffAuthority.Authorization, "handoff.create", refOf(handoff), "absent", handoffAuthority.Scope, []string{"handoff.create"}); err != nil {
 		return nil, err
 	}
 	return map[string]any{"ref": refOf(handoff), "fingerprint": handoff.Fingerprint, "valid": true, "proves": []string{"structure", "same_mission_containment", "envelope_subset", "current_authority", "current_baseline", "expiry", "return_shape"}, "does_not_prove": []string{"actor_identity", "actor_competence", "provider_permissions_or_effects", "evidence_truth_or_sufficiency", "mission_success"}}, nil
@@ -143,18 +202,28 @@ func (s Service) ReturnHandoff(input HandoffReturnInput) (OperationResult, error
 	if dispatch.Fingerprint != input.ExpectedDispatchFingerprint {
 		return OperationResult{}, stale("expected_dispatch_fingerprint", input.ExpectedDispatchFingerprint, dispatch.Fingerprint)
 	}
+	dispatchAuthority, err := parseHandoffEnvelope(dispatch)
+	if err != nil {
+		return OperationResult{}, err
+	}
 	if input.Status != "succeeded" && input.Status != "blocked" && input.Status != "failed" {
 		return OperationResult{}, invalid("status", "return status must be succeeded, blocked, or failed")
 	}
-	if input.Actor == "" || input.FinalBaseline == "" || input.Result == "" || input.BudgetUsed == "" || input.RecoveryPoint == "" || input.IdempotencyKey == "" || (input.NextAction == "") == (input.OwnerGate == "") {
+	if input.Actor == "" || input.FinalBaseline == "" || input.Result == "" || input.BudgetUsed < 0 || input.RecoveryPoint == "" || input.IdempotencyKey == "" || (input.NextAction == "") == (input.OwnerGate == "") {
 		return OperationResult{}, missing("return", "actor, result, baseline, budget, recovery, idempotency, and exactly one next_action or owner_gate are required")
+	}
+	if !subset(input.Actions, dispatchAuthority.AllowedActions) {
+		return OperationResult{}, domain.NewRefusal(domain.RefusalUnauthorized, "actions", "Handoff return actions exceed dispatch authority", nil)
+	}
+	if input.BudgetUsed > dispatchAuthority.BudgetUnits {
+		return OperationResult{}, domain.NewRefusal(domain.RefusalUnauthorized, "budget_used", "Handoff return exceeded dispatch budget", nil)
 	}
 	doc := s.document(domain.Handoff, id, input.Title, input.Actor, "")
 	workspace.SetString(doc, "kind", "return")
 	workspace.SetString(doc, "dispatch", input.Dispatch)
-	workspace.SetString(doc, "mission", mustString(dispatch.Document, "mission"))
-	workspace.SetString(doc, "objective", mustString(dispatch.Document, "objective"))
-	workspace.SetString(doc, "run", mustString(dispatch.Document, "run"))
+	workspace.SetString(doc, "mission", dispatchAuthority.Mission)
+	workspace.SetString(doc, "objective", dispatchAuthority.Objective)
+	workspace.SetString(doc, "run", dispatchAuthority.Run)
 	workspace.SetString(doc, "return_status", input.Status)
 	workspace.SetString(doc, "actor", input.Actor)
 	workspace.SetString(doc, "final_baseline", input.FinalBaseline)
@@ -163,7 +232,7 @@ func (s Service) ReturnHandoff(input HandoffReturnInput) (OperationResult, error
 	workspace.SetStrings(doc, "provider_receipts", input.ProviderReceipts)
 	workspace.SetStrings(doc, "evidence", input.Evidence)
 	workspace.SetStrings(doc, "remaining_gaps", input.RemainingGaps)
-	workspace.SetString(doc, "budget_used", input.BudgetUsed)
+	workspace.SetInt(doc, "budget_used", input.BudgetUsed)
 	workspace.SetString(doc, "recovery_point", input.RecoveryPoint)
 	workspace.SetString(doc, "next_action", input.NextAction)
 	workspace.SetString(doc, "owner_gate", input.OwnerGate)
@@ -183,7 +252,8 @@ func (s Service) CreateEvidence(input EvidenceInput) (OperationResult, error) {
 	if input.Title == "" || input.Mission == "" || input.Claim == "" || len(input.Scope) == 0 || input.Method == "" || input.Actor == "" || input.Target == "" || input.ObservedAt == "" || input.FreshnessValidUntil == "" || input.ReviewState == "" || input.Authorization == "" || input.IdempotencyKey == "" {
 		return OperationResult{}, missing("evidence", "claim attribution, scope, method, target, freshness, review, authorization, and idempotency are required")
 	}
-	if _, err := s.Workspace.Lookup(input.Mission, domain.Mission); err != nil {
+	mission, err := s.Workspace.Lookup(input.Mission, domain.Mission)
+	if err != nil {
 		return OperationResult{}, err
 	}
 	if _, err := time.Parse(time.RFC3339, input.ObservedAt); err != nil {
@@ -193,7 +263,18 @@ func (s Service) CreateEvidence(input EvidenceInput) (OperationResult, error) {
 		return OperationResult{}, err
 	}
 	ref := string(domain.Evidence) + ":" + id.String()
-	if err := s.authorize(input.Authorization, "evidence.create", ref, "absent"); err != nil {
+	missionScope, err := workspace.Strings(mission.Document, "scope", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	missionExpiry, err := workspace.String(mission.Document, "expires_at", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	if _, err := parseFuture(missionExpiry, s.now(), "mission.expires_at"); err != nil {
+		return OperationResult{}, err
+	}
+	if err := s.authorize(input.Authorization, "evidence.create", ref, "absent", missionScope, []string{"evidence.create"}); err != nil {
 		return OperationResult{}, err
 	}
 	doc := s.document(domain.Evidence, id, input.Title, input.Actor, "")
@@ -232,6 +313,13 @@ func (s Service) RecordAssessment(input AssessmentInput) (OperationResult, error
 	if err != nil {
 		return OperationResult{}, err
 	}
+	missionExpiry, err := workspace.String(mission.Document, "expires_at", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	if _, err := parseFuture(missionExpiry, s.now(), "mission.expires_at"); err != nil {
+		return OperationResult{}, err
+	}
 	if input.Actor == "" || len(input.Claims) == 0 || len(input.Evidence) == 0 || input.RecoveryPoint == "" || input.Authorization == "" || input.IdempotencyKey == "" {
 		return OperationResult{}, missing("assessment", "actor, claims, Evidence, recovery, authorization, and idempotency are required")
 	}
@@ -239,7 +327,10 @@ func (s Service) RecordAssessment(input AssessmentInput) (OperationResult, error
 		if len(input.BlockingFindings) > 0 {
 			return OperationResult{}, domain.NewRefusal(domain.RefusalInsufficientEvidence, "blocking_findings", "owner-ready assessment cannot retain blocking findings", nil)
 		}
-		declared := mustStrings(mission.Document, "evidence_claims")
+		declared, err := workspace.Strings(mission.Document, "evidence_claims", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
 		for _, claim := range declared {
 			if !contains(input.Claims, claim) {
 				return OperationResult{}, domain.NewRefusal(domain.RefusalInsufficientEvidence, "claims", "material claim is not assessed: "+claim, nil)
@@ -250,7 +341,14 @@ func (s Service) RecordAssessment(input AssessmentInput) (OperationResult, error
 		}
 	}
 	ref := string(domain.Assessment) + ":" + id.String()
-	if err := s.authorize(input.Authorization, "assessment.record", ref, "absent"); err != nil {
+	if err := s.validateRepairAttempts(mission, input.RepairAttempts, ""); err != nil {
+		return OperationResult{}, err
+	}
+	missionScope, err := workspace.Strings(mission.Document, "scope", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	if err := s.authorize(input.Authorization, "assessment.record", ref, "absent", missionScope, []string{"assessment.record"}); err != nil {
 		return OperationResult{}, err
 	}
 	doc := s.document(domain.Assessment, id, input.Title, input.Actor, "")
@@ -261,7 +359,11 @@ func (s Service) RecordAssessment(input AssessmentInput) (OperationResult, error
 	workspace.SetStrings(doc, "evidence", input.Evidence)
 	workspace.SetStrings(doc, "blocking_findings", input.BlockingFindings)
 	workspace.SetStrings(doc, "limitations", input.Limitations)
-	workspace.SetStrings(doc, "repair_attempts", input.RepairAttempts)
+	repairs, err := json.Marshal(input.RepairAttempts)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	workspace.SetString(doc, "repair_attempts_json", string(repairs))
 	workspace.SetString(doc, "recovery_point", input.RecoveryPoint)
 	workspace.SetString(doc, "authorization", input.Authorization)
 	workspace.SetString(doc, "idempotency_key", input.IdempotencyKey)
@@ -270,21 +372,42 @@ func (s Service) RecordAssessment(input AssessmentInput) (OperationResult, error
 
 func (s Service) sufficientClaim(missionRef, claim string, refs []string) error {
 	var supporting bool
+	referenced := map[string]bool{}
 	for _, ref := range refs {
-		entry, err := s.Workspace.Lookup(ref, domain.Evidence)
+		referenced[ref] = true
+	}
+	for _, entry := range s.Workspace.OfType(domain.Evidence) {
+		kind, err := workspace.String(entry.Document, "kind", false)
 		if err != nil {
 			return err
 		}
-		if mustString(entry.Document, "mission") != missionRef || mustString(entry.Document, "claim") != claim {
+		if kind == "reconciliation-receipt" {
 			continue
 		}
-		classification := mustString(entry.Document, "classification")
-		if classification == "unknown" || len(mustStrings(entry.Document, "contrary_evidence")) > 0 {
+		entryMission, err := workspace.String(entry.Document, "mission", true)
+		if err != nil {
+			return err
+		}
+		entryClaim, err := workspace.String(entry.Document, "claim", true)
+		if err != nil {
+			return err
+		}
+		if entryMission != missionRef || entryClaim != claim {
+			continue
+		}
+		parsed, err := parseEvidence(entry)
+		if err != nil {
+			return err
+		}
+		if err := s.validateFresh(entry, "evidence"); err != nil {
+			return domain.NewRefusal(domain.RefusalInsufficientEvidence, "evidence", "claim has stale canonical Evidence: "+claim, err)
+		}
+		if parsed.Classification == "unknown" || len(parsed.Contrary) > 0 {
 			return domain.NewRefusal(domain.RefusalInsufficientEvidence, "evidence", "claim has unknown or conflicting evidence: "+claim, nil)
 		}
-		checks := mustStrings(entry.Document, "required_checks")
-		results := mustStrings(entry.Document, "check_results")
-		if len(checks) != len(results) {
+		checks := parsed.RequiredChecks
+		results := parsed.CheckResults
+		if len(checks) == 0 || len(checks) != len(results) {
 			return domain.NewRefusal(domain.RefusalInsufficientEvidence, "check_results", "required checks are incomplete for claim: "+claim, nil)
 		}
 		for _, result := range results {
@@ -292,11 +415,12 @@ func (s Service) sufficientClaim(missionRef, claim string, refs []string) error 
 				return domain.NewRefusal(domain.RefusalInsufficientEvidence, "check_results", "required check did not pass for claim: "+claim, nil)
 			}
 		}
-		executorAuthored, _ := workspace.Bool(entry.Document, "executor_authored", false)
-		if executorAuthored && mustString(entry.Document, "review_state") != "independent-accepted" {
+		if parsed.ExecutorAuthored && parsed.ReviewState != "independent-accepted" {
 			return domain.NewRefusal(domain.RefusalInsufficientEvidence, "review_state", "executor-authored evidence requires independent acceptance for claim: "+claim, nil)
 		}
-		supporting = true
+		if referenced[refOf(entry)] {
+			supporting = true
+		}
 	}
 	if !supporting {
 		return domain.NewRefusal(domain.RefusalInsufficientEvidence, "evidence", "no attributable evidence maps to claim: "+claim, nil)
@@ -310,7 +434,11 @@ func (s Service) TransitionMission(input TransitionInput) (OperationResult, erro
 		return OperationResult{}, err
 	}
 	current := value(mission.Document.Record.Status)
-	if current == input.To && mustString(mission.Document, "last_idempotency_key") == input.IdempotencyKey {
+	lastKey, err := workspace.String(mission.Document, "last_idempotency_key", false)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	if current == input.To && lastKey == input.IdempotencyKey {
 		return result("mission.transition", mission, true, []string{input.Authorization}), nil
 	}
 	if mission.Fingerprint != input.ExpectedFingerprint {
@@ -319,33 +447,103 @@ func (s Service) TransitionMission(input TransitionInput) (OperationResult, erro
 	if !legalTransition(current, input.To) {
 		return OperationResult{}, domain.NewRefusal(domain.RefusalInvalidTransition, "status", current+" cannot transition to "+input.To, nil)
 	}
-	if err := s.authorize(input.Authorization, "mission.transition."+input.To, input.Mission, input.ExpectedFingerprint); err != nil {
+	missionExpiry, err := workspace.String(mission.Document, "expires_at", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	if _, err := parseFuture(missionExpiry, s.now(), "mission.expires_at"); err != nil {
+		return OperationResult{}, err
+	}
+	missionScope, err := workspace.Strings(mission.Document, "scope", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	operation := "mission.transition." + input.To
+	if err := s.authorize(input.Authorization, operation, input.Mission, input.ExpectedFingerprint, missionScope, []string{operation}); err != nil {
+		return OperationResult{}, err
+	}
+	decision, err := s.Workspace.Lookup(input.Authorization, domain.Decision)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	authority, err := s.authority(decision)
+	if err != nil {
 		return OperationResult{}, err
 	}
 	if input.To == "awaiting-assessment" {
-		if !s.hasReturnAndEvidence(input.Mission) {
+		hasProof, proofErr := s.hasReturnAndEvidence(input.Mission)
+		if proofErr != nil {
+			return OperationResult{}, proofErr
+		}
+		if !hasProof {
 			return OperationResult{}, domain.NewRefusal(domain.RefusalInsufficientEvidence, "mission", "awaiting-assessment requires an immutable Handoff return and returned Evidence", nil)
 		}
 	}
+	var objectiveChanges []FileChange
 	if input.To == "resolved" {
 		assessment, lookupErr := s.Workspace.Lookup(input.Assessment, domain.Assessment)
-		if lookupErr != nil || mustString(assessment.Document, "mission") != input.Mission || mustString(assessment.Document, "verdict") != "ready-for-owner" {
+		if lookupErr != nil {
 			return OperationResult{}, domain.NewRefusal(domain.RefusalInsufficientEvidence, "assessment", "resolution requires a ready-for-owner Assessment for this Mission", lookupErr)
+		}
+		if err := s.validateReadyAssessment(assessment, mission); err != nil {
+			return OperationResult{}, err
 		}
 		if !contains([]string{"completed", "abandoned", "superseded"}, input.Disposition) {
 			return OperationResult{}, invalid("disposition", "resolved disposition must be completed, abandoned, or superseded")
 		}
-		decision, _ := s.Workspace.Lookup(input.Authorization, domain.Decision)
-		decisionDisposition := mustString(decision.Document, "disposition")
-		if input.Reconciliation == "" && decisionDisposition != "no-contract-delta" && decisionDisposition != "reconciliation-not-required" {
+		if authority.Disposition != input.Disposition {
+			return OperationResult{}, domain.NewRefusal(domain.RefusalUnauthorized, "disposition", "resolution disposition must exactly match the owner Decision", nil)
+		}
+		if !contains(authority.AuthorizedEffects, "terminal-next-action:"+input.TerminalNextAction) {
+			return OperationResult{}, domain.NewRefusal(domain.RefusalUnauthorized, "terminal_next_action", "terminal continuation is not mechanically authorized by the resolution Decision", nil)
+		}
+		if input.Reconciliation == "" && !contains(authority.AuthorizedEffects, "reconciliation.not-required") {
 			return OperationResult{}, domain.NewRefusal(domain.RefusalUnsettledReconcile, "reconciliation", "resolution requires reconciliation or explicit zero-delta disposition", nil)
+		}
+		if input.Reconciliation != "" {
+			if err := s.validateReconciliationReceipt(input.Reconciliation, mission, decision); err != nil {
+				return OperationResult{}, err
+			}
 		}
 		if input.TerminalNextAction == "" {
 			return OperationResult{}, missing("terminal_next_action", "resolution requires exactly one terminal continuation or owner gate")
 		}
+		objectives, err := workspace.Strings(mission.Document, "objectives", false)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		if !subset(input.SatisfiedObjectives, objectives) {
+			return OperationResult{}, domain.NewRefusal(domain.RefusalUnauthorized, "satisfied_objectives", "resolution names an Objective outside the Mission", nil)
+		}
+		for _, ref := range objectives {
+			objective, lookupErr := s.Workspace.Lookup(ref, domain.Objective)
+			if lookupErr != nil {
+				return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "objectives", "Mission Objective containment is invalid", lookupErr)
+			}
+			objectiveMission, parseErr := workspace.String(objective.Document, "mission", true)
+			if parseErr != nil || objectiveMission != input.Mission {
+				return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "objectives", "Mission Objective containment is invalid", parseErr)
+			}
+			status := value(objective.Document.Record.Status)
+			if input.Disposition == "completed" && status != "satisfied" {
+				if !contains(input.SatisfiedObjectives, ref) || !contains(authority.AuthorizedEffects, "objective.satisfy:"+ref) {
+					return OperationResult{}, domain.NewRefusal(domain.RefusalInvalidTransition, "objectives", "completed resolution requires every Objective satisfied by explicit owner authority", nil)
+				}
+				objective.Document.Record.Status = stringPtr("satisfied")
+				objective.Document.Record.Updated = stringPtr(s.now().Format(time.RFC3339))
+				workspace.SetString(objective.Document, "satisfaction_decision", input.Authorization)
+				data, canonicalErr := workspace.Canonical(objective.Document)
+				if canonicalErr != nil {
+					return OperationResult{}, canonicalErr
+				}
+				objectiveChanges = append(objectiveChanges, FileChange{Path: objective.Path, Data: data, Mode: 0o644})
+			}
+		}
 		workspace.SetString(mission.Document, "assessment", input.Assessment)
 		workspace.SetString(mission.Document, "disposition", input.Disposition)
-		workspace.SetString(mission.Document, "reconciliation", input.Reconciliation)
+		if input.Reconciliation != "" {
+			workspace.SetString(mission.Document, "reconciliation", input.Reconciliation)
+		}
 		workspace.SetString(mission.Document, "terminal_next_action", input.TerminalNextAction)
 	}
 	mission.Document.Record.Status = stringPtr(input.To)
@@ -357,26 +555,46 @@ func (s Service) TransitionMission(input TransitionInput) (OperationResult, erro
 	if err != nil {
 		return OperationResult{}, err
 	}
-	if err := ApplyTransaction(s.Workspace.Root, input.IdempotencyKey, []FileChange{{Path: mission.Path, Data: canonical, Mode: 0o644}}); err != nil {
+	changes := append([]FileChange{{Path: mission.Path, Data: canonical, Mode: 0o644}}, objectiveChanges...)
+	if err := ApplyTransaction(s.Workspace.Root, input.IdempotencyKey, changes); err != nil {
 		return OperationResult{}, err
 	}
 	fp, _ := workspace.Fingerprint(mission.Document)
 	return OperationResult{Operation: "mission.transition", Ref: input.Mission, Path: mission.Path, Fingerprint: fp, Sources: []string{input.Authorization}}, nil
 }
 
-func (s Service) hasReturnAndEvidence(mission string) bool {
+func (s Service) hasReturnAndEvidence(mission string) (bool, error) {
 	var returned, evidenced bool
 	for _, handoff := range s.Workspace.OfType(domain.Handoff) {
-		if mustString(handoff.Document, "mission") == mission && mustString(handoff.Document, "kind") == "return" {
+		handoffMission, err := workspace.String(handoff.Document, "mission", true)
+		if err != nil {
+			return false, err
+		}
+		kind, err := workspace.String(handoff.Document, "kind", true)
+		if err != nil {
+			return false, err
+		}
+		if handoffMission == mission && kind == "return" {
 			returned = true
 		}
 	}
 	for _, evidence := range s.Workspace.OfType(domain.Evidence) {
-		if mustString(evidence.Document, "mission") == mission {
+		kind, err := workspace.String(evidence.Document, "kind", false)
+		if err != nil {
+			return false, err
+		}
+		if kind == "reconciliation-receipt" {
+			continue
+		}
+		evidenceMission, err := workspace.String(evidence.Document, "mission", true)
+		if err != nil {
+			return false, err
+		}
+		if evidenceMission == mission {
 			evidenced = true
 		}
 	}
-	return returned && evidenced
+	return returned && evidenced, nil
 }
 
 func (s Service) Reconcile(input ReconcileInput) (OperationResult, error) {
@@ -391,19 +609,36 @@ func (s Service) ReconcileMany(inputs []ReconcileInput) ([]OperationResult, erro
 	if len(inputs) == 0 {
 		return nil, missing("reconciliation", "at least one Contract is required")
 	}
+	canonicalInputs, operationDigest, err := canonicalReconcileInputs(inputs)
+	if err != nil {
+		return nil, err
+	}
+	inputs = canonicalInputs
 	var changes []FileChange
 	results := make([]OperationResult, 0, len(inputs))
 	transactionKey := inputs[0].IdempotencyKey
 	receiptID := receiptID(transactionKey)
 	receiptRef := string(domain.Evidence) + ":" + receiptID.String()
 	if receipt, found := s.entryByID(receiptID); found {
-		if receipt.Document.Record.Type != domain.Evidence || mustString(receipt.Document, "kind") != "reconciliation-receipt" || mustString(receipt.Document, "idempotency_key") != transactionKey {
+		parsedReceipt, parseErr := parseReconciliationReceipt(receipt)
+		storedKey, keyErr := workspace.String(receipt.Document, "idempotency_key", true)
+		if receipt.Document.Record.Type != domain.Evidence || parseErr != nil || keyErr != nil || parsedReceipt.Kind != "reconciliation-receipt" || storedKey != transactionKey {
 			return nil, domain.NewRefusal(domain.RefusalIdempotencyConflict, "idempotency_key", "transaction receipt identity has different content", nil)
+		}
+		if parsedReceipt.OperationDigest != operationDigest {
+			return nil, domain.NewRefusal(domain.RefusalIdempotencyConflict, "idempotency_key", "reconciliation replay changed the canonical Contract set or authority inputs", nil)
+		}
+		if err := s.validateFresh(receipt, "reconciliation_receipt"); err != nil {
+			return nil, err
 		}
 		for _, input := range inputs {
 			contract, err := s.Workspace.Lookup(input.Contract, domain.Contract)
-			if err != nil || mustString(contract.Document, "reconciliation_idempotency_key") != transactionKey {
+			if err != nil {
 				return nil, domain.NewRefusal(domain.RefusalIdempotencyConflict, "idempotency_key", "reconciliation replay does not match current Contract set", err)
+			}
+			storedKey, parseErr := workspace.String(contract.Document, "reconciliation_idempotency_key", true)
+			if parseErr != nil || storedKey != transactionKey {
+				return nil, domain.NewRefusal(domain.RefusalIdempotencyConflict, "idempotency_key", "reconciliation replay does not match current Contract set", parseErr)
 			}
 			result := result("contract.reconcile", contract, true, []string{input.Proposal, input.Authorization})
 			result.Receipt = receiptRef
@@ -412,15 +647,24 @@ func (s Service) ReconcileMany(inputs []ReconcileInput) ([]OperationResult, erro
 		return results, nil
 	}
 	var receiptSources []string
+	var receiptContracts, receiptProposals, receiptDecisions, receiptExpected, receiptMissions []string
 	for _, input := range inputs {
 		if input.IdempotencyKey == "" || input.IdempotencyKey != transactionKey {
 			return nil, invalid("idempotency_key", "all Contract items must share one transaction key")
+		}
+		contractRef, parseErr := domain.ParseReference(input.Contract)
+		if parseErr != nil || contractRef.Type != domain.Contract {
+			return nil, domain.NewRefusal(domain.RefusalInvalidReference, "contract", "reconciliation requires an exact Contract reference", parseErr)
 		}
 		proposal, err := s.Workspace.Lookup(input.Proposal, domain.Proposal)
 		if err != nil {
 			return nil, err
 		}
-		if value(proposal.Document.Record.Status) != "accepted" || mustString(proposal.Document, "target_contract") != input.Contract {
+		targetContract, err := workspace.String(proposal.Document, "target_contract", true)
+		if err != nil {
+			return nil, err
+		}
+		if value(proposal.Document.Record.Status) != "accepted" || targetContract != input.Contract {
 			return nil, domain.NewRefusal(domain.RefusalUnauthorized, "proposal", "accepted Proposal must target the exact Contract", nil)
 		}
 		newCapability, err := workspace.Bool(proposal.Document, "new_capability", true)
@@ -434,33 +678,49 @@ func (s Service) ReconcileMany(inputs []ReconcileInput) ([]OperationResult, erro
 			}
 			if _, lookupErr := s.Workspace.Lookup(input.Contract, domain.Contract); lookupErr == nil {
 				return nil, domain.NewRefusal(domain.RefusalCollision, "contract", "new capability target exists", nil)
+			} else if !domain.RefusalHasCode(lookupErr, domain.RefusalRecordNotFound) {
+				return nil, lookupErr
 			}
 		} else {
 			existing, err = s.Workspace.Lookup(input.Contract, domain.Contract)
 			if err != nil {
 				return nil, err
 			}
-			if existing.Fingerprint != input.ExpectedFingerprint || mustString(proposal.Document, "base_fingerprint") != input.ExpectedFingerprint {
+			baseFingerprint, parseErr := workspace.String(proposal.Document, "base_fingerprint", true)
+			if parseErr != nil {
+				return nil, parseErr
+			}
+			if existing.Fingerprint != input.ExpectedFingerprint || baseFingerprint != input.ExpectedFingerprint {
 				return nil, stale("expected_fingerprint", input.ExpectedFingerprint, existing.Fingerprint)
 			}
 		}
-		if err := s.authorize(input.Authorization, "contract.reconcile", input.Contract, input.ExpectedFingerprint); err != nil {
+		proposalScope, scopeErr := workspace.Strings(proposal.Document, "scope", true)
+		if scopeErr != nil {
+			return nil, scopeErr
+		}
+		if err := s.authorize(input.Authorization, "contract.reconcile", input.Contract, input.ExpectedFingerprint, proposalScope, []string{"contract.reconcile"}); err != nil {
 			return nil, err
 		}
-		if err := s.requireReadyAssessment(input.Authorization, input.Proposal); err != nil {
+		missionRef, err := s.requireReadyAssessment(input.Authorization, input.Proposal)
+		if err != nil {
 			return nil, err
 		}
 		candidate, err := s.candidate(proposal)
 		if err != nil {
 			return nil, err
 		}
-		contractRef, _ := domain.ParseReference(input.Contract)
 		version := "1"
+		priorVersion := ""
 		if !newCapability {
-			current, parseErr := strconv.Atoi(mustString(existing.Document, "contract_version"))
+			currentText, valueErr := workspace.String(existing.Document, "contract_version", true)
+			if valueErr != nil {
+				return nil, valueErr
+			}
+			current, parseErr := strconv.Atoi(currentText)
 			if parseErr != nil || current < 1 {
 				return nil, invalid("contract_version", "must be a positive integer")
 			}
+			priorVersion = currentText
 			version = strconv.Itoa(current + 1)
 		}
 		contract := s.document(domain.Contract, contractRef.ID, "Capability Contract", "owner", "current")
@@ -475,20 +735,38 @@ func (s Service) ReconcileMany(inputs []ReconcileInput) ([]OperationResult, erro
 		path := recordPath(domain.Contract, contractRef.ID)
 		if !newCapability {
 			path = existing.Path
-			old, _ := workspace.Canonical(existing.Document)
-			history := filepath.ToSlash(filepath.Join(".spectacular", "history", "contracts", contractRef.ID.String()+"@"+mustString(existing.Document, "contract_version")+".md"))
+			old, canonicalErr := workspace.Canonical(existing.Document)
+			if canonicalErr != nil {
+				return nil, canonicalErr
+			}
+			history := filepath.ToSlash(filepath.Join(".spectacular", "history", "contracts", contractRef.ID.String()+"@"+priorVersion+".md"))
 			changes = append(changes, FileChange{Path: history, Data: old, Mode: 0o644})
 		}
 		changes = append(changes, FileChange{Path: path, Data: canonical, Mode: 0o644})
-		fp, _ := workspace.Fingerprint(contract)
+		fp, fingerprintErr := workspace.Fingerprint(contract)
+		if fingerprintErr != nil {
+			return nil, fingerprintErr
+		}
 		results = append(results, OperationResult{Operation: "contract.reconcile", Ref: input.Contract, Path: path, Fingerprint: fp, Sources: []string{input.Proposal, input.Authorization}})
 		receiptSources = append(receiptSources, input.Contract, input.Proposal, input.Authorization)
+		receiptContracts = append(receiptContracts, input.Contract)
+		receiptProposals = append(receiptProposals, input.Proposal)
+		receiptDecisions = append(receiptDecisions, input.Authorization)
+		receiptExpected = append(receiptExpected, input.ExpectedFingerprint)
+		receiptMissions = append(receiptMissions, missionRef)
 	}
 	receipt := s.document(domain.Evidence, receiptID, "Atomic Contract reconciliation receipt", "spectacular-cli", "recorded")
 	workspace.SetString(receipt, "kind", "reconciliation-receipt")
 	workspace.SetString(receipt, "classification", "observation")
 	workspace.SetString(receipt, "claim", "authorized Contract set was reconciled atomically")
+	workspace.SetString(receipt, "operation", "contract.reconcile-set")
 	workspace.SetStrings(receipt, "sources", receiptSources)
+	workspace.SetStrings(receipt, "contracts", receiptContracts)
+	workspace.SetStrings(receipt, "proposals", receiptProposals)
+	workspace.SetStrings(receipt, "decisions", receiptDecisions)
+	workspace.SetStrings(receipt, "expected_fingerprints", receiptExpected)
+	workspace.SetStrings(receipt, "missions", sortedUnique(receiptMissions))
+	workspace.SetString(receipt, "operation_digest", operationDigest)
 	workspace.SetString(receipt, "transaction_key", transactionKey)
 	workspace.SetString(receipt, "idempotency_key", transactionKey)
 	receiptCanonical, err := workspace.Canonical(receipt)
@@ -505,14 +783,14 @@ func (s Service) ReconcileMany(inputs []ReconcileInput) ([]OperationResult, erro
 	return results, nil
 }
 
-func (s Service) requireReadyAssessment(decisionRef, proposalRef string) error {
+func (s Service) requireReadyAssessment(decisionRef, proposalRef string) (string, error) {
 	decision, err := s.Workspace.Lookup(decisionRef, domain.Decision)
 	if err != nil {
-		return err
+		return "", err
 	}
 	evidence, err := workspace.Strings(decision.Document, "evidence", true)
 	if err != nil {
-		return err
+		return "", err
 	}
 	for _, ref := range evidence {
 		typed, parseErr := domain.ParseReference(ref)
@@ -520,15 +798,36 @@ func (s Service) requireReadyAssessment(decisionRef, proposalRef string) error {
 			continue
 		}
 		assessment, lookupErr := s.Workspace.Lookup(ref, domain.Assessment)
-		if lookupErr != nil || mustString(assessment.Document, "verdict") != "ready-for-owner" {
+		if lookupErr != nil {
 			continue
 		}
-		mission, lookupErr := s.Workspace.Lookup(mustString(assessment.Document, "mission"), domain.Mission)
+		verdict, parseErr := workspace.String(assessment.Document, "verdict", true)
+		if parseErr != nil {
+			return "", parseErr
+		}
+		if verdict != "ready-for-owner" {
+			continue
+		}
+		assessmentMission, parseErr := workspace.String(assessment.Document, "mission", true)
+		if parseErr != nil {
+			return "", parseErr
+		}
+		mission, lookupErr := s.Workspace.Lookup(assessmentMission, domain.Mission)
 		if lookupErr == nil && mission.Document.Record.Source != nil && mission.Document.Record.Source.String() == proposalRef {
-			return nil
+			missionExpiry, parseErr := workspace.String(mission.Document, "expires_at", true)
+			if parseErr != nil {
+				return "", parseErr
+			}
+			if _, parseErr := parseFuture(missionExpiry, s.now(), "mission.expires_at"); parseErr != nil {
+				return "", parseErr
+			}
+			if validationErr := s.validateReadyAssessment(assessment, mission); validationErr != nil {
+				return "", validationErr
+			}
+			return refOf(mission), nil
 		}
 	}
-	return domain.NewRefusal(domain.RefusalInsufficientEvidence, "decision.evidence", "reconciliation Decision must cite a ready-for-owner Assessment for the Proposal Mission", nil)
+	return "", domain.NewRefusal(domain.RefusalInsufficientEvidence, "decision.evidence", "reconciliation Decision must cite a ready-for-owner Assessment for the Proposal Mission", nil)
 }
 
 func receiptID(key string) domain.ID {
@@ -553,8 +852,15 @@ func (s Service) ArchiveMission(input ArchiveInput) (OperationResult, error) {
 	if err != nil {
 		return OperationResult{}, err
 	}
-	archived, _ := workspace.Bool(mission.Document, "archived", false)
-	if archived && mustString(mission.Document, "last_idempotency_key") == input.IdempotencyKey {
+	archived, err := workspace.Bool(mission.Document, "archived", false)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	lastKey, err := workspace.String(mission.Document, "last_idempotency_key", false)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	if archived && lastKey == input.IdempotencyKey {
 		return result("mission.archive", mission, true, []string{input.Authorization, input.TerminalPacket}), nil
 	}
 	if mission.Fingerprint != input.ExpectedFingerprint {
@@ -563,16 +869,56 @@ func (s Service) ArchiveMission(input ArchiveInput) (OperationResult, error) {
 	if value(mission.Document.Record.Status) != "resolved" {
 		return OperationResult{}, domain.NewRefusal(domain.RefusalInvalidTransition, "status", "only a resolved Mission may be archived", nil)
 	}
-	if input.TerminalPacket != input.Mission || mustString(mission.Document, "terminal_next_action") == "" || mustString(mission.Document, "assessment") == "" {
+	if input.TerminalPacket != input.Mission {
 		return OperationResult{}, missing("terminal_packet", "resolved Mission must itself contain the terminal continuity packet")
 	}
-	if mustString(mission.Document, "reconciliation") == "" {
-		decision, lookupErr := s.Workspace.Lookup(input.Authorization, domain.Decision)
-		if lookupErr != nil || !contains([]string{"no-contract-delta", "reconciliation-not-required"}, mustString(decision.Document, "disposition")) {
-			return OperationResult{}, domain.NewRefusal(domain.RefusalUnsettledReconcile, "reconciliation", "archive requires settled reconciliation", lookupErr)
+	packet, err := parseTerminalPacket(mission)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	missionExpiry, err := workspace.String(mission.Document, "expires_at", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	if _, err := parseFuture(missionExpiry, s.now(), "mission.expires_at"); err != nil {
+		return OperationResult{}, err
+	}
+	assessment, err := s.Workspace.Lookup(packet.Assessment, domain.Assessment)
+	if err != nil {
+		return OperationResult{}, domain.NewRefusal(domain.RefusalInsufficientEvidence, "assessment", "archive requires a still-sufficient ready Assessment", err)
+	}
+	if err := s.validateReadyAssessment(assessment, mission); err != nil {
+		return OperationResult{}, err
+	}
+	resolutionDecision, err := s.Workspace.Lookup(packet.ResolutionDecision, domain.Decision)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	resolutionAuthority, err := s.authority(resolutionDecision)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	terminal := packet.TerminalNextAction
+	if !contains(resolutionAuthority.AuthorizedEffects, "terminal-next-action:"+terminal) || resolutionAuthority.Disposition != packet.Disposition {
+		return OperationResult{}, domain.NewRefusal(domain.RefusalUnauthorized, "terminal_packet", "terminal packet is not derived from the resolution Decision", nil)
+	}
+	reconciliation := packet.Reconciliation
+	if reconciliation == "" {
+		if !contains(resolutionAuthority.AuthorizedEffects, "reconciliation.not-required") {
+			return OperationResult{}, domain.NewRefusal(domain.RefusalUnsettledReconcile, "reconciliation", "archive requires settled reconciliation", nil)
+		}
+	} else if err := s.validateReconciliationReceipt(reconciliation, mission, resolutionDecision); err != nil {
+		return OperationResult{}, err
+	}
+	if packet.Disposition == "completed" {
+		for _, ref := range packet.Objectives {
+			objective, lookupErr := s.Workspace.Lookup(ref, domain.Objective)
+			if lookupErr != nil || value(objective.Document.Record.Status) != "satisfied" {
+				return OperationResult{}, domain.NewRefusal(domain.RefusalInvalidTransition, "objectives", "completed Mission cannot archive with pending Objectives", lookupErr)
+			}
 		}
 	}
-	if err := s.authorize(input.Authorization, "mission.archive", input.Mission, input.ExpectedFingerprint); err != nil {
+	if err := s.authorize(input.Authorization, "mission.archive", input.Mission, input.ExpectedFingerprint, packet.Scope, []string{"mission.archive"}); err != nil {
 		return OperationResult{}, err
 	}
 	workspace.SetBool(mission.Document, "archived", true)
@@ -586,7 +932,10 @@ func (s Service) ArchiveMission(input ArchiveInput) (OperationResult, error) {
 		return OperationResult{}, err
 	}
 	anchor := s.Workspace.ProjectAnchor()
-	truth := mustStrings(anchor.Document, "current_truth")
+	truth, err := workspace.Strings(anchor.Document, "current_truth", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
 	filtered := make([]string, 0, len(truth)+1)
 	for _, ref := range truth {
 		if ref != input.Mission {
@@ -601,7 +950,10 @@ func (s Service) ArchiveMission(input ArchiveInput) (OperationResult, error) {
 	if err != nil {
 		return OperationResult{}, err
 	}
-	contractRef := mustString(proposal.Document, "target_contract")
+	contractRef, err := workspace.String(proposal.Document, "target_contract", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
 	if contractRef != "" && !contains(filtered, contractRef) {
 		filtered = append(filtered, contractRef)
 	}

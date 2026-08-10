@@ -250,7 +250,7 @@ func (b Builder) Mission(ref string) (Card, error) {
 			card.Pointers = append(card.Pointers, b.pointer(target))
 		}
 		if archived {
-			authorizationRef, _ := workspace.String(mission.Document, "archive_authorization", false)
+			authorizationRef, _ := workspace.String(mission.Document, "last_authorization", false)
 			if authorizationRef != "" {
 				authorization, lookupErr := b.Workspace.Lookup(authorizationRef, domain.Decision)
 				if lookupErr != nil {

@@ -12,6 +12,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/alexsmedile/spectacular/v2/internal/domain"
+	"github.com/alexsmedile/spectacular/v2/internal/governance"
+	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
 
 const (
@@ -34,8 +38,8 @@ func fixture(t *testing.T) string {
 func fixedNow() time.Time { return time.Date(2026, 8, 10, 10, 0, 0, 0, time.UTC) }
 
 func TestPublicRegistryAndCommands(t *testing.T) {
-	if len(Registry) != 25 {
-		t.Fatalf("registry has %d commands, want 25", len(Registry))
+	if len(Registry) != 26 {
+		t.Fatalf("registry has %d commands, want 26", len(Registry))
 	}
 	seen := map[Operation]bool{}
 	for _, spec := range Registry {
@@ -429,6 +433,150 @@ func TestGovernedCreateUsesStrictInputAndRegisteredReadback(t *testing.T) {
 		t.Fatalf("unknown input exit=%d output=%s", exit, out.String())
 	}
 }
+
+func TestPublicReconcileSetAppliesTwoContractsAtomically(t *testing.T) {
+	root := t.TempDir()
+	meta := filepath.Join(root, ".spectacular")
+	records := filepath.Join(meta, "records")
+	if err := os.MkdirAll(records, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := []byte("schema_version: spectacular.workspace.v1\nrecord_roots:\n  - records\nproject_anchor: records/project.md\n")
+	if err := os.WriteFile(filepath.Join(meta, "workspace.yaml"), manifest, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	markerHash := sha256.Sum256(manifest)
+	markerFP := hex.EncodeToString(markerHash[:])
+	anchor := testDocument(t, domain.Anchor, "0199c000-0000-7000-8000-000000000001", "Atomic set", "current")
+	setTestFreshness(anchor, markerFP)
+	workspace.SetString(anchor, "direction", "Apply an explicit atomic Contract set.")
+	workspace.SetStrings(anchor, "boundaries", []string{"No provider effects."})
+	workspace.SetStrings(anchor, "constraints", []string{"Owner Decision required."})
+	workspace.SetStrings(anchor, "current_truth", []string{})
+	writeTestDocument(t, filepath.Join(records, "project.md"), anchor)
+
+	type item struct {
+		contractID, proposalID, missionID, assessmentID, decisionID, addition string
+	}
+	items := []item{
+		{"0199c000-0000-7000-8000-000000000010", "0199c000-0000-7000-8000-000000000011", "0199c000-0000-7000-8000-000000000012", "0199c000-0000-7000-8000-000000000013", "0199c000-0000-7000-8000-000000000014", "Atomic clause one."},
+		{"0199c000-0000-7000-8000-000000000020", "0199c000-0000-7000-8000-000000000021", "0199c000-0000-7000-8000-000000000022", "0199c000-0000-7000-8000-000000000023", "0199c000-0000-7000-8000-000000000024", "Atomic clause two."},
+	}
+	var inputs []governance.ReconcileInput
+	for _, item := range items {
+		contractRef := "Contract:" + item.contractID
+		proposalRef := "Proposal:" + item.proposalID
+		missionRef := "Mission:" + item.missionID
+		assessmentRef := "Assessment:" + item.assessmentID
+		decisionRef := "Decision:" + item.decisionID
+		contract := testDocument(t, domain.Contract, item.contractID, "Capability Contract", "current")
+		setTestFreshness(contract, markerFP)
+		workspace.SetString(contract, "contract_version", "1")
+		workspace.SetString(contract, "purpose", "Atomic public reconciliation.")
+		workspace.SetString(contract, "outcome", "Current truth remains complete.")
+		workspace.SetStrings(contract, "applies_when", []string{"Governed delta."})
+		workspace.SetStrings(contract, "does_not_apply_when", []string{"Read only."})
+		workspace.SetStrings(contract, "does_not_provide", []string{"Provider authority."})
+		workspace.SetStrings(contract, "required_behavior", []string{"Preserve truth."})
+		workspace.SetStrings(contract, "operating_cases", []string{"Atomic set."})
+		workspace.SetStrings(contract, "persistent_information", []string{"Provenance."})
+		workspace.SetStrings(contract, "conformance_checks", []string{"Cold recovery."})
+		workspace.SetString(contract, "authority_freshness", "Exact Decision.")
+		workspace.SetStrings(contract, "related_material", []string{"B+C."})
+		writeTestDocument(t, filepath.Join(records, "contract-"+item.contractID+".md"), contract)
+		contractFP, err := workspace.Fingerprint(contract)
+		if err != nil {
+			t.Fatal(err)
+		}
+		proposal := testDocument(t, domain.Proposal, item.proposalID, "Accepted delta", "accepted")
+		setTestFreshness(proposal, markerFP)
+		workspace.SetString(proposal, "target_contract", contractRef)
+		workspace.SetString(proposal, "base_version", "1")
+		workspace.SetString(proposal, "base_fingerprint", contractFP)
+		workspace.SetBool(proposal, "new_capability", false)
+		workspace.SetStrings(proposal, "additions", []string{item.addition})
+		workspace.SetStrings(proposal, "modification_from", []string{})
+		workspace.SetStrings(proposal, "modification_to", []string{})
+		workspace.SetStrings(proposal, "removals", []string{})
+		workspace.SetStrings(proposal, "scope", []string{"v2"})
+		writeTestDocument(t, filepath.Join(records, "proposal-"+item.proposalID+".md"), proposal)
+		mission := testDocument(t, domain.Mission, item.missionID, "Assessed Mission", "awaiting-assessment")
+		setTestFreshness(mission, markerFP)
+		proposalTyped, _ := domain.ParseReference(proposalRef)
+		mission.Record.Source = &proposalTyped
+		workspace.SetStrings(mission, "evidence_claims", []string{})
+		workspace.SetString(mission, "expires_at", "2026-08-11T10:00:00Z")
+		writeTestDocument(t, filepath.Join(records, "mission-"+item.missionID+".md"), mission)
+		assessment := testDocument(t, domain.Assessment, item.assessmentID, "Ready Assessment", "recorded")
+		setTestFreshness(assessment, markerFP)
+		workspace.SetString(assessment, "mission", missionRef)
+		workspace.SetString(assessment, "verdict", "ready-for-owner")
+		workspace.SetStrings(assessment, "claims", []string{})
+		workspace.SetStrings(assessment, "evidence", []string{})
+		writeTestDocument(t, filepath.Join(records, "assessment-"+item.assessmentID+".md"), assessment)
+		decision := testDocument(t, domain.Decision, item.decisionID, "Reconcile", "recorded")
+		setTestFreshness(decision, markerFP)
+		workspace.SetString(decision, "actor_role", "owner")
+		workspace.SetString(decision, "operation", "contract.reconcile")
+		workspace.SetString(decision, "disposition", "accept")
+		workspace.SetStrings(decision, "scope", []string{"v2"})
+		workspace.SetStrings(decision, "authorized_effects", []string{"contract.reconcile"})
+		workspace.SetStrings(decision, "conditions", []string{"no-provider-effects"})
+		workspace.SetStrings(decision, "targets", []string{contractRef})
+		workspace.SetStrings(decision, "expected_fingerprints", []string{contractFP})
+		workspace.SetStrings(decision, "evidence", []string{assessmentRef})
+		workspace.SetString(decision, "expires_at", "2026-08-11T10:00:00Z")
+		writeTestDocument(t, filepath.Join(records, "decision-"+item.decisionID+".md"), decision)
+		inputs = append(inputs, governance.ReconcileInput{Contract: contractRef, Proposal: proposalRef, Authorization: decisionRef, ExpectedFingerprint: contractFP, IdempotencyKey: "public-atomic-set"})
+	}
+	payload, err := json.Marshal(governance.ReconcileSetInput{Items: inputs})
+	if err != nil {
+		t.Fatal(err)
+	}
+	inputPath := filepath.Join(t.TempDir(), "set.json")
+	if err := os.WriteFile(inputPath, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var out bytes.Buffer
+	exit := (Runner{Cwd: root, Stdout: &out, Stderr: &bytes.Buffer{}, Now: fixedNow}).Run([]string{"contract", "reconcile-set", "--input", inputPath, "--json"})
+	if exit != 0 || !strings.Contains(out.String(), `"schema_version":"spectacular.contract.reconcile-set.v1"`) || strings.Count(out.String(), `"operation":"contract.reconcile"`) != 2 {
+		t.Fatalf("public reconcile-set exit=%d output=%s", exit, out.String())
+	}
+}
+
+func testDocument(t *testing.T, noun domain.RecordType, rawID, title, status string) *workspace.Document {
+	t.Helper()
+	id, err := domain.ParseID(rawID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc := &workspace.Document{Record: domain.Record{Type: noun, ID: id}, Body: "# " + string(noun) + "\n"}
+	doc.Record.Title = testString(title)
+	doc.Record.Status = testString(status)
+	doc.Record.Created = testString("2026-08-10T10:00:00Z")
+	doc.Record.Updated = testString("2026-08-10T10:00:00Z")
+	return doc
+}
+
+func setTestFreshness(doc *workspace.Document, markerFP string) {
+	workspace.SetString(doc, "freshness_checked_at", "2026-08-10T10:00:00Z")
+	workspace.SetString(doc, "freshness_valid_until", "2026-08-11T10:00:00Z")
+	workspace.SetString(doc, "freshness_source", ".spectacular/workspace.yaml")
+	workspace.SetString(doc, "freshness_source_fingerprint", markerFP)
+}
+
+func writeTestDocument(t *testing.T, path string, doc *workspace.Document) {
+	t.Helper()
+	data, err := workspace.Canonical(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func testString(value string) *string { return &value }
 
 func replaceInFile(t *testing.T, path, old, replacement string) {
 	t.Helper()

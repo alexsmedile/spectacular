@@ -3,6 +3,7 @@ package governance
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -77,7 +78,7 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 		ID: strings.TrimPrefix(missionRef, "Mission:"), Title: "Govern closure", Actor: "owner", Proposal: proposalRef, Outcome: "Reconcile and recover.",
 		Objectives: []ObjectiveInput{{ID: strings.TrimPrefix(objectiveRef, "Objective:"), Outcome: "Prove the loop", ExpectedProof: []string{"claim:closure"}}}, InitialRunID: strings.TrimPrefix(runRef, "Run:"),
 		DesignSufficiency: "sufficient", SliceQuality: "coherent", EvidenceClaims: []string{"claim:closure"}, Scope: []string{"v2"}, AllowedActions: []string{"test", "write-v2"}, ForbiddenEffects: []string{"provider-mutation"},
-		Baseline: contract.Fingerprint, Budget: "two repairs", ExpiresAt: "2026-08-11T10:00:00Z", Stops: []string{"authority-drift"}, RecoveryPoint: "git-head", ReturnDestination: "central", Authorization: missionDecision, ExpectedProposalFingerprint: proposal.Fingerprint, IdempotencyKey: "mission-create-1",
+		Baseline: contract.Fingerprint, BudgetUnits: 2, RepairBudget: 2, ExpiresAt: "2026-08-11T10:00:00Z", Stops: []string{"authority-drift"}, RecoveryPoint: "git-head", ReturnDestination: "central", Authorization: missionDecision, ExpectedProposalFingerprint: proposal.Fingerprint, IdempotencyKey: "mission-create-1",
 	}
 	_, err = svc.CreateMission(missionInput)
 	must(t, err)
@@ -95,12 +96,32 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	svc = openService(t, root)
 	handoffInput := HandoffInput{
 		ID: strings.TrimPrefix(handoffRef, "Handoff:"), Title: "Bounded fake-provider work", Mission: missionRef, Objective: objectiveRef, Run: runRef, Sender: "owner", Actor: "executor", Destination: "replacement-runtime", HostPointer: "host-task:disposable",
-		Scope: []string{"v2"}, AllowedActions: []string{"test"}, ForbiddenEffects: []string{"provider-mutation"}, EvidenceClaims: []string{"claim:closure"}, Budget: "one attempt", ExpiresAt: "2026-08-11T10:00:00Z", Stops: []string{"authority-drift"}, RecoveryPoint: "git-head", ReturnDestination: "central", Authorization: handoffDecision, ExpectedMissionFingerprint: active.Fingerprint, IdempotencyKey: "handoff-create-1",
+		Scope: []string{"v2"}, Inputs: []string{contractRef + "@" + contract.Fingerprint}, AllowedActions: []string{"test"}, ForbiddenEffects: []string{"provider-mutation"}, EvidenceClaims: []string{"claim:closure"}, BudgetUnits: 1, ExpiresAt: "2026-08-11T10:00:00Z", Stops: []string{"authority-drift"}, RecoveryPoint: "git-head", ReturnDestination: "central", Authorization: handoffDecision, ExpectedMissionFingerprint: active.Fingerprint, IdempotencyKey: "handoff-create-1",
 	}
 	outOfScope := handoffInput
 	outOfScope.Scope = []string{"v1"}
 	if _, err := svc.CreateHandoff(outOfScope); refusalCode(err) != domain.RefusalUnauthorized {
 		t.Fatalf("out-of-envelope Handoff err=%v", err)
+	}
+	outOfClaims := handoffInput
+	outOfClaims.EvidenceClaims = []string{"claim:undeclared"}
+	if _, err := svc.CreateHandoff(outOfClaims); refusalCode(err) != domain.RefusalUnauthorized {
+		t.Fatalf("out-of-envelope Handoff claims err=%v", err)
+	}
+	outOfStops := handoffInput
+	outOfStops.Stops = []string{"undeclared-stop"}
+	if _, err := svc.CreateHandoff(outOfStops); refusalCode(err) != domain.RefusalUnauthorized {
+		t.Fatalf("out-of-envelope Handoff stops err=%v", err)
+	}
+	overBudgetHandoff := handoffInput
+	overBudgetHandoff.BudgetUnits = 3
+	if _, err := svc.CreateHandoff(overBudgetHandoff); refusalCode(err) != domain.RefusalUnauthorized {
+		t.Fatalf("out-of-envelope Handoff budget err=%v", err)
+	}
+	staleInput := handoffInput
+	staleInput.Inputs = []string{contractRef + "@" + strings.Repeat("0", 64)}
+	if _, err := svc.CreateHandoff(staleInput); refusalCode(err) != domain.RefusalStaleFingerprint {
+		t.Fatalf("stale authoritative Handoff input err=%v", err)
 	}
 	handoff, err := svc.CreateHandoff(handoffInput)
 	must(t, err)
@@ -110,8 +131,17 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	if validated["valid"] != true || len(validated["does_not_prove"].([]string)) == 0 {
 		t.Fatalf("handoff validation overclaims: %#v", validated)
 	}
+	lateValidation := svc
+	lateValidation.Now = func() time.Time { return testNow.Add(48 * time.Hour) }
+	if _, err := lateValidation.ValidateHandoff(handoffRef); refusalCode(err) != domain.RefusalExpiredAuthority {
+		t.Fatalf("expired Mission/Handoff envelope err=%v", err)
+	}
+	invalidReturn := HandoffReturnInput{ID: strings.TrimPrefix(returnRef, "Handoff:"), Title: "Over-broad return", Dispatch: handoffRef, Status: "succeeded", Actor: "replacement-runtime", FinalBaseline: contract.Fingerprint, Result: "over-broad", Actions: []string{"write-v2"}, BudgetUsed: 1, RecoveryPoint: "git-head", NextAction: "record evidence", ExpectedDispatchFingerprint: handoff.Fingerprint, IdempotencyKey: "handoff-return-1"}
+	if _, err := svc.ReturnHandoff(invalidReturn); refusalCode(err) != domain.RefusalUnauthorized {
+		t.Fatalf("over-broad Handoff return actions err=%v", err)
+	}
 	_, err = svc.ReturnHandoff(HandoffReturnInput{
-		ID: strings.TrimPrefix(returnRef, "Handoff:"), Title: "Returned bounded work", Dispatch: handoffRef, Status: "succeeded", Actor: "replacement-runtime", FinalBaseline: contract.Fingerprint, Result: "fake receipt only", Actions: []string{"test"}, ProviderReceipts: []string{"fake-provider:ok"}, Evidence: []string{evidenceRef}, BudgetUsed: "one attempt", RecoveryPoint: "git-head", NextAction: "record evidence", ExpectedDispatchFingerprint: handoff.Fingerprint, IdempotencyKey: "handoff-return-1",
+		ID: strings.TrimPrefix(returnRef, "Handoff:"), Title: "Returned bounded work", Dispatch: handoffRef, Status: "succeeded", Actor: "replacement-runtime", FinalBaseline: contract.Fingerprint, Result: "fake receipt only", Actions: []string{"test"}, ProviderReceipts: []string{"fake-provider:ok"}, Evidence: []string{evidenceRef}, BudgetUsed: 1, RecoveryPoint: "git-head", NextAction: "record evidence", ExpectedDispatchFingerprint: handoff.Fingerprint, IdempotencyKey: "handoff-return-1",
 	})
 	must(t, err)
 	supersedingRef := "Handoff:0199b000-0000-7000-8000-000000000030"
@@ -137,7 +167,7 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	badEvidenceRef := "Evidence:0199b000-0000-7000-8000-000000000032"
 	badEvidenceDecision := createDecision(t, root, "0199b000-0000-7000-8000-000000000033", "evidence.create", badEvidenceRef, "absent", nil, "record")
 	svc = openService(t, root)
-	_, err = svc.CreateEvidence(EvidenceInput{ID: strings.TrimPrefix(badEvidenceRef, "Evidence:"), Title: "Unreviewed executor observation", Mission: missionRef, Objective: objectiveRef, Claim: "claim:closure", Classification: "observation", Scope: []string{"v2"}, Method: "executor report", Actor: "executor", Target: proposalRef, Environment: "disposable", ObservedAt: "2026-08-10T10:00:00Z", FreshnessValidUntil: "2026-08-11T10:00:00Z", RequiredChecks: []string{"go-test"}, CheckResults: []string{"pass:go-test"}, ReviewState: "unreviewed", ExecutorAuthored: true, Authorization: badEvidenceDecision, IdempotencyKey: "evidence-bad-1"})
+	_, err = svc.CreateEvidence(EvidenceInput{ID: strings.TrimPrefix(badEvidenceRef, "Evidence:"), Title: "Unreviewed executor observation", Mission: missionRef, Objective: objectiveRef, Claim: "claim:other", Classification: "observation", Scope: []string{"v2"}, Method: "executor report", Actor: "executor", Target: proposalRef, Environment: "disposable", ObservedAt: "2026-08-10T10:00:00Z", FreshnessValidUntil: "2026-08-11T10:00:00Z", RequiredChecks: []string{"go-test"}, CheckResults: []string{"pass:go-test"}, ReviewState: "unreviewed", ExecutorAuthored: true, Authorization: badEvidenceDecision, IdempotencyKey: "evidence-bad-1"})
 	must(t, err)
 
 	mission = lookup(t, openService(t, root), missionRef, domain.Mission)
@@ -177,10 +207,24 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	if replay, err := svc.Reconcile(ReconcileInput{Contract: contractRef, Proposal: proposalRef, Authorization: reconcileDecision, ExpectedFingerprint: contract.Fingerprint, IdempotencyKey: "reconcile-1"}); err != nil || !replay.IdempotentReplay {
 		t.Fatalf("reconcile replay=%#v err=%v", replay, err)
 	}
-
-	resolveDecision := createDecision(t, root, "0199b000-0000-7000-8000-000000000019", "mission.transition.resolved", missionRef, awaiting.Fingerprint, []string{assessmentRef, reconciled.Receipt}, "completed")
+	for name, changedReplay := range map[string]ReconcileInput{
+		"nonexistent Proposal":  {Contract: contractRef, Proposal: "Proposal:0199b000-0000-7000-8000-000000000099", Authorization: reconcileDecision, ExpectedFingerprint: contract.Fingerprint, IdempotencyKey: "reconcile-1"},
+		"nonexistent Decision":  {Contract: contractRef, Proposal: proposalRef, Authorization: "Decision:0199b000-0000-7000-8000-000000000099", ExpectedFingerprint: contract.Fingerprint, IdempotencyKey: "reconcile-1"},
+		"unrelated fingerprint": {Contract: contractRef, Proposal: proposalRef, Authorization: reconcileDecision, ExpectedFingerprint: strings.Repeat("f", 64), IdempotencyKey: "reconcile-1"},
+	} {
+		if _, err := svc.Reconcile(changedReplay); refusalCode(err) != domain.RefusalIdempotencyConflict {
+			t.Fatalf("%s reconciliation replay err=%v", name, err)
+		}
+	}
+	unboundResolution := createDecision(t, root, "0199b000-0000-7000-8000-000000000035", "mission.transition.resolved", missionRef, awaiting.Fingerprint, []string{assessmentRef}, "completed", "objective.satisfy:"+objectiveRef, "terminal-next-action:review next governed request")
 	svc = openService(t, root)
-	resolved, err := svc.TransitionMission(TransitionInput{Mission: missionRef, To: "resolved", Authorization: resolveDecision, ExpectedFingerprint: awaiting.Fingerprint, IdempotencyKey: "mission-resolve-1", Disposition: "completed", Assessment: assessmentRef, Reconciliation: reconciled.Receipt, TerminalNextAction: "review next governed request"})
+	if _, err := svc.TransitionMission(TransitionInput{Mission: missionRef, To: "resolved", Authorization: unboundResolution, ExpectedFingerprint: awaiting.Fingerprint, IdempotencyKey: "unbound-resolution", Disposition: "completed", Assessment: assessmentRef, Reconciliation: reconciled.Receipt, TerminalNextAction: "review next governed request", SatisfiedObjectives: []string{objectiveRef}}); refusalCode(err) != domain.RefusalUnauthorized {
+		t.Fatalf("resolution Decision omitted exact receipt but succeeded: %v", err)
+	}
+
+	resolveDecision := createDecision(t, root, "0199b000-0000-7000-8000-000000000019", "mission.transition.resolved", missionRef, awaiting.Fingerprint, []string{assessmentRef, reconciled.Receipt}, "completed", "objective.satisfy:"+objectiveRef, "terminal-next-action:review next governed request")
+	svc = openService(t, root)
+	resolved, err := svc.TransitionMission(TransitionInput{Mission: missionRef, To: "resolved", Authorization: resolveDecision, ExpectedFingerprint: awaiting.Fingerprint, IdempotencyKey: "mission-resolve-1", Disposition: "completed", Assessment: assessmentRef, Reconciliation: reconciled.Receipt, TerminalNextAction: "review next governed request", SatisfiedObjectives: []string{objectiveRef}})
 	must(t, err)
 
 	archiveDecision := createDecision(t, root, "0199b000-0000-7000-8000-000000000020", "mission.archive", missionRef, resolved.Fingerprint, []string{assessmentRef, reconciled.Receipt}, "archive")
@@ -202,6 +246,9 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	}
 	if len(project.Projection.Missions) != 1 || project.Projection.Continuation == nil || project.Projection.Continuation.Operation != "review next governed request" {
 		t.Fatalf("cold terminal continuity = %#v", project.Projection)
+	}
+	if project.Projection.Continuation.AuthorizedBy.Ref != resolveDecision {
+		t.Fatalf("archive Decision incorrectly authorized terminal continuation: %#v", project.Projection.Continuation)
 	}
 	card, err := builder.Mission(missionRef)
 	must(t, err)
@@ -226,6 +273,67 @@ func TestTransactionInterruptionRollsBackEveryTarget(t *testing.T) {
 		if string(got) != want {
 			t.Fatalf("rollback %s = %q, want %q", path, got, want)
 		}
+	}
+}
+
+func TestTransactionRejectsSymlinkedParentEscape(t *testing.T) {
+	root := t.TempDir()
+	outside := t.TempDir()
+	must(t, os.Symlink(outside, filepath.Join(root, "linked")))
+	err := ApplyTransaction(root, "symlink-parent", []FileChange{{Path: filepath.Join("linked", "escaped"), Data: []byte("escaped"), Mode: 0o644}})
+	if refusalCode(err) != domain.RefusalPathEscape {
+		t.Fatalf("symlink parent err=%v", err)
+	}
+	if _, statErr := os.Stat(filepath.Join(outside, "escaped")); !os.IsNotExist(statErr) {
+		t.Fatalf("transaction wrote through symlinked parent: %v", statErr)
+	}
+}
+
+func TestRecoveryRejectsCraftedJournalOutsideWorkspace(t *testing.T) {
+	root := t.TempDir()
+	outside := filepath.Join(t.TempDir(), "victim")
+	must(t, os.WriteFile(outside, []byte("original"), 0o644))
+	txRoot := filepath.Join(root, ".spectacular", "transactions")
+	must(t, os.MkdirAll(txRoot, 0o755))
+	backup := filepath.Join(txRoot, "crafted.old")
+	temporary := filepath.Join(txRoot, "crafted.new")
+	must(t, os.WriteFile(backup, []byte("attacker"), 0o600))
+	must(t, os.WriteFile(temporary, []byte("attacker"), 0o600))
+	journal := transactionJournal{Schema: "spectacular.transaction.v1", Key: "crafted", Files: []transactionFile{{Target: outside, Temporary: temporary, Backup: backup, HadOriginal: true, Mode: 0o644}}}
+	data, err := json.Marshal(journal)
+	must(t, err)
+	journalHash := sha256.Sum256([]byte("crafted"))
+	must(t, os.WriteFile(filepath.Join(txRoot, hex.EncodeToString(journalHash[:16])+".json"), data, 0o600))
+	if err := RecoverTransactions(root); refusalCode(err) != domain.RefusalPathEscape {
+		t.Fatalf("crafted journal err=%v", err)
+	}
+	got, err := os.ReadFile(outside)
+	must(t, err)
+	if string(got) != "original" {
+		t.Fatalf("crafted journal overwrote outside target: %q", got)
+	}
+}
+
+func TestTransactionPreparationFailureCleansArtifacts(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "original")
+	must(t, os.WriteFile(target, []byte("original"), 0o644))
+	err := ApplyTransaction(root, "prepare-cleanup", []FileChange{
+		{Path: "original", Data: []byte("changed"), Mode: 0o644},
+		{Path: filepath.Join("..", "escape"), Data: []byte("escape"), Mode: 0o644},
+	})
+	if refusalCode(err) != domain.RefusalInvalidWorkspacePath {
+		t.Fatalf("preparation err=%v", err)
+	}
+	got, err := os.ReadFile(target)
+	must(t, err)
+	if string(got) != "original" {
+		t.Fatalf("preparation changed original: %q", got)
+	}
+	entries, err := os.ReadDir(filepath.Join(root, ".spectacular", "transactions"))
+	must(t, err)
+	if len(entries) != 0 {
+		t.Fatalf("pre-journal artifacts remain: %v", entries)
 	}
 }
 
@@ -268,14 +376,19 @@ func TestMultiContractReconciliationRefusesBeforeAnyPartialWrite(t *testing.T) {
 		workspace.SetStrings(proposal, "modification_from", nil)
 		workspace.SetStrings(proposal, "modification_to", nil)
 		workspace.SetStrings(proposal, "removals", nil)
+		workspace.SetStrings(proposal, "scope", []string{"v2"})
 		missionID, _ := domain.ParseID(strings.TrimPrefix(item.mission, "Mission:"))
 		mission := svc.document(domain.Mission, missionID, "Atomic Mission", "owner", "awaiting-assessment")
 		proposalTyped, _ := domain.ParseReference(item.proposal)
 		mission.Record.Source = &proposalTyped
+		workspace.SetStrings(mission, "evidence_claims", []string{})
+		workspace.SetString(mission, "expires_at", "2026-08-11T10:00:00Z")
 		assessmentID, _ := domain.ParseID(strings.TrimPrefix(item.assessment, "Assessment:"))
 		assessment := svc.document(domain.Assessment, assessmentID, "Ready assessment", "reviewer", "recorded")
 		workspace.SetString(assessment, "mission", item.mission)
 		workspace.SetString(assessment, "verdict", "ready-for-owner")
+		workspace.SetStrings(assessment, "claims", []string{})
+		workspace.SetStrings(assessment, "evidence", []string{})
 		for _, doc := range []*workspace.Document{proposal, mission, assessment} {
 			data, canonicalErr := workspace.Canonical(doc)
 			must(t, canonicalErr)
@@ -331,10 +444,15 @@ func TestZeroDeltaAbandonedAndSupersededMissionsResolveThenArchive(t *testing.T)
 			mission := svc.document(domain.Mission, missionID, "Terminal Mission", "owner", "awaiting-assessment")
 			proposalTyped, _ := domain.ParseReference(proposalRef)
 			mission.Record.Source = &proposalTyped
+			workspace.SetStrings(mission, "scope", []string{"v2"})
+			workspace.SetStrings(mission, "evidence_claims", []string{})
+			workspace.SetString(mission, "expires_at", "2026-08-11T10:00:00Z")
 			assessmentID, _ := domain.ParseID(strings.TrimPrefix(assessmentRef, "Assessment:"))
 			assessment := svc.document(domain.Assessment, assessmentID, "Ready assessment", "reviewer", "recorded")
 			workspace.SetString(assessment, "mission", missionRef)
 			workspace.SetString(assessment, "verdict", "ready-for-owner")
+			workspace.SetStrings(assessment, "claims", []string{})
+			workspace.SetStrings(assessment, "evidence", []string{})
 			var seed []FileChange
 			for _, doc := range []*workspace.Document{proposal, mission, assessment} {
 				data, err := workspace.Canonical(doc)
@@ -343,7 +461,7 @@ func TestZeroDeltaAbandonedAndSupersededMissionsResolveThenArchive(t *testing.T)
 			}
 			must(t, ApplyTransaction(root, "seed-zero-delta-"+disposition, seed))
 			missionEntry := lookup(t, openService(t, root), missionRef, domain.Mission)
-			resolveDecision := createDecision(t, root, "0199b000-0000-7000-8000-0000000000"+string(rune('0'+(suffix+3)/10))+string(rune('0'+(suffix+3)%10)), "mission.transition.resolved", missionRef, missionEntry.Fingerprint, []string{assessmentRef}, "no-contract-delta")
+			resolveDecision := createDecision(t, root, "0199b000-0000-7000-8000-0000000000"+string(rune('0'+(suffix+3)/10))+string(rune('0'+(suffix+3)%10)), "mission.transition.resolved", missionRef, missionEntry.Fingerprint, []string{assessmentRef}, disposition, "reconciliation.not-required", "terminal-next-action:owner selects next Mission")
 			svc = openService(t, root)
 			resolved, err := svc.TransitionMission(TransitionInput{Mission: missionRef, To: "resolved", Authorization: resolveDecision, ExpectedFingerprint: missionEntry.Fingerprint, IdempotencyKey: "resolve-zero-" + disposition, Disposition: disposition, Assessment: assessmentRef, TerminalNextAction: "owner selects next Mission"})
 			must(t, err)
@@ -356,6 +474,222 @@ func TestZeroDeltaAbandonedAndSupersededMissionsResolveThenArchive(t *testing.T)
 				t.Fatalf("disposition=%s", mustString(archived.Document, "disposition"))
 			}
 		})
+	}
+}
+
+func TestCompletedResolutionRejectsPendingObjectiveAndFakeReceipt(t *testing.T) {
+	root := governedFixture(t)
+	svc := openService(t, root)
+	proposalRef := "Proposal:0199b000-0000-7000-8000-000000000070"
+	missionRef := "Mission:0199b000-0000-7000-8000-000000000071"
+	objectiveRef := "Objective:0199b000-0000-7000-8000-000000000072"
+	assessmentRef := "Assessment:0199b000-0000-7000-8000-000000000073"
+	proposalID, _ := domain.ParseID(strings.TrimPrefix(proposalRef, "Proposal:"))
+	proposal := svc.document(domain.Proposal, proposalID, "Accepted delta", "owner", "accepted")
+	workspace.SetString(proposal, "target_contract", contractRef)
+	missionID, _ := domain.ParseID(strings.TrimPrefix(missionRef, "Mission:"))
+	mission := svc.document(domain.Mission, missionID, "Pending Objective Mission", "owner", "awaiting-assessment")
+	proposalTyped, _ := domain.ParseReference(proposalRef)
+	mission.Record.Source = &proposalTyped
+	workspace.SetStrings(mission, "objectives", []string{objectiveRef})
+	workspace.SetStrings(mission, "scope", []string{"v2"})
+	workspace.SetStrings(mission, "evidence_claims", []string{})
+	workspace.SetString(mission, "expires_at", "2026-08-11T10:00:00Z")
+	objectiveID, _ := domain.ParseID(strings.TrimPrefix(objectiveRef, "Objective:"))
+	objective := svc.document(domain.Objective, objectiveID, "Still pending", "owner", "pending")
+	workspace.SetString(objective, "mission", missionRef)
+	assessmentID, _ := domain.ParseID(strings.TrimPrefix(assessmentRef, "Assessment:"))
+	assessment := svc.document(domain.Assessment, assessmentID, "Ready assessment", "reviewer", "recorded")
+	workspace.SetString(assessment, "mission", missionRef)
+	workspace.SetString(assessment, "verdict", "ready-for-owner")
+	workspace.SetStrings(assessment, "claims", []string{})
+	workspace.SetStrings(assessment, "evidence", []string{})
+	var changes []FileChange
+	for _, doc := range []*workspace.Document{proposal, mission, objective, assessment} {
+		data, err := workspace.Canonical(doc)
+		must(t, err)
+		changes = append(changes, FileChange{Path: recordPath(doc.Record.Type, doc.Record.ID), Data: data, Mode: 0o644})
+	}
+	must(t, ApplyTransaction(root, "seed-pending-objective", changes))
+	missionEntry := lookup(t, openService(t, root), missionRef, domain.Mission)
+	decisionRef := createDecision(t, root, "0199b000-0000-7000-8000-000000000074", "mission.transition.resolved", missionRef, missionEntry.Fingerprint, []string{assessmentRef}, "completed", "terminal-next-action:arbitrary executor text", "objective.satisfy:"+objectiveRef)
+	svc = openService(t, root)
+	_, err := svc.TransitionMission(TransitionInput{Mission: missionRef, To: "resolved", Authorization: decisionRef, ExpectedFingerprint: missionEntry.Fingerprint, IdempotencyKey: "fake-receipt", Disposition: "completed", Assessment: assessmentRef, Reconciliation: "Evidence:0199b000-0000-7000-8000-000000000075", TerminalNextAction: "arbitrary executor text"})
+	if refusalCode(err) != domain.RefusalUnsettledReconcile {
+		t.Fatalf("pending Objective/fake receipt err=%v", err)
+	}
+	mission.Record.Status = stringPtr("resolved")
+	workspace.SetString(mission, "assessment", assessmentRef)
+	workspace.SetString(mission, "disposition", "completed")
+	workspace.SetString(mission, "reconciliation", "Evidence:0199b000-0000-7000-8000-000000000075")
+	workspace.SetString(mission, "terminal_next_action", "archive-chosen text")
+	workspace.SetString(mission, "last_authorization", decisionRef)
+	forged, err := workspace.Canonical(mission)
+	must(t, err)
+	must(t, ApplyTransaction(root, "forge-resolved-counterexample", []FileChange{{Path: recordPath(domain.Mission, missionID), Data: forged, Mode: 0o644}}))
+	forgedEntry := lookup(t, openService(t, root), missionRef, domain.Mission)
+	archiveDecision := createDecision(t, root, "0199b000-0000-7000-8000-000000000076", "mission.archive", missionRef, forgedEntry.Fingerprint, []string{assessmentRef}, "archive")
+	_, err = openService(t, root).ArchiveMission(ArchiveInput{Mission: missionRef, Authorization: archiveDecision, ExpectedFingerprint: forgedEntry.Fingerprint, IdempotencyKey: "archive-forged", TerminalPacket: missionRef})
+	if refusalCode(err) != domain.RefusalUnauthorized {
+		t.Fatalf("archive authority supplied arbitrary terminal continuation: %v", err)
+	}
+	workspace.SetString(mission, "terminal_next_action", "arbitrary executor text")
+	forged, err = workspace.Canonical(mission)
+	must(t, err)
+	must(t, ApplyTransaction(root, "forge-receipt-counterexample", []FileChange{{Path: recordPath(domain.Mission, missionID), Data: forged, Mode: 0o644}}))
+	forgedEntry = lookup(t, openService(t, root), missionRef, domain.Mission)
+	archiveDecision = createDecision(t, root, "0199b000-0000-7000-8000-000000000077", "mission.archive", missionRef, forgedEntry.Fingerprint, []string{assessmentRef}, "archive")
+	_, err = openService(t, root).ArchiveMission(ArchiveInput{Mission: missionRef, Authorization: archiveDecision, ExpectedFingerprint: forgedEntry.Fingerprint, IdempotencyKey: "archive-fake-receipt", TerminalPacket: missionRef})
+	if refusalCode(err) != domain.RefusalUnsettledReconcile {
+		t.Fatalf("forged resolved Mission archived with fake receipt/pending Objective: %v", err)
+	}
+}
+
+func TestAssessmentRejectsStaleSupportAndOmittedContraryEvidence(t *testing.T) {
+	root := governedFixture(t)
+	svc := openService(t, root)
+	missionRef := "Mission:0199b000-0000-7000-8000-000000000080"
+	missionID, _ := domain.ParseID(strings.TrimPrefix(missionRef, "Mission:"))
+	mission := svc.document(domain.Mission, missionID, "Evidence Mission", "owner", "awaiting-assessment")
+	workspace.SetStrings(mission, "evidence_claims", []string{"claim:material"})
+	workspace.SetStrings(mission, "scope", []string{"v2"})
+	workspace.SetString(mission, "expires_at", "2026-08-11T10:00:00Z")
+	var changes []FileChange
+	missionBytes, err := workspace.Canonical(mission)
+	must(t, err)
+	changes = append(changes, FileChange{Path: recordPath(domain.Mission, missionID), Data: missionBytes, Mode: 0o644})
+	for number, contrary := range map[int]bool{81: false, 82: true} {
+		idText := "0199b000-0000-7000-8000-0000000000" + string(rune('0'+number/10)) + string(rune('0'+number%10))
+		id, _ := domain.ParseID(idText)
+		evidence := svc.document(domain.Evidence, id, "Claim evidence", "executor", "recorded")
+		workspace.SetString(evidence, "mission", missionRef)
+		workspace.SetString(evidence, "claim", "claim:material")
+		workspace.SetString(evidence, "classification", "direct")
+		workspace.SetStrings(evidence, "required_checks", []string{"check"})
+		workspace.SetStrings(evidence, "check_results", []string{"pass:check"})
+		workspace.SetString(evidence, "review_state", "independent-accepted")
+		workspace.SetBool(evidence, "executor_authored", false)
+		if contrary {
+			workspace.SetStrings(evidence, "contrary_evidence", []string{"contradicts support"})
+		} else {
+			workspace.SetString(evidence, "freshness_valid_until", "2026-08-10T09:00:00Z")
+		}
+		data, canonicalErr := workspace.Canonical(evidence)
+		must(t, canonicalErr)
+		changes = append(changes, FileChange{Path: recordPath(domain.Evidence, id), Data: data, Mode: 0o644})
+	}
+	must(t, ApplyTransaction(root, "seed-conflicting-evidence", changes))
+	assessmentRef := "Assessment:0199b000-0000-7000-8000-000000000083"
+	decisionRef := createDecision(t, root, "0199b000-0000-7000-8000-000000000084", "assessment.record", assessmentRef, "absent", nil, "record")
+	svc = openService(t, root)
+	_, err = svc.RecordAssessment(AssessmentInput{ID: strings.TrimPrefix(assessmentRef, "Assessment:"), Title: "Omitting contrary evidence", Mission: missionRef, Verdict: "ready-for-owner", Actor: "reviewer", Claims: []string{"claim:material"}, Evidence: []string{"Evidence:0199b000-0000-7000-8000-000000000081"}, RecoveryPoint: "git-head", Authorization: decisionRef, IdempotencyKey: "assessment-omission"})
+	if refusalCode(err) != domain.RefusalInsufficientEvidence {
+		t.Fatalf("stale/omitted contrary Evidence err=%v", err)
+	}
+}
+
+func TestAuthorityEffectsConditionsAndMissionExpiryAreEnforced(t *testing.T) {
+	root := governedFixture(t)
+	svc := openService(t, root)
+	contract := lookup(t, svc, contractRef, domain.Contract)
+	proposalRef := "Proposal:0199b000-0000-7000-8000-000000000085"
+	decisionRef := "Decision:0199b000-0000-7000-8000-000000000086"
+	_, err := svc.CreateDecision(DecisionInput{ID: strings.TrimPrefix(decisionRef, "Decision:"), Title: "Wrong effect", Actor: "Alex", ActorRole: "owner", AuthorityBasis: "test", Question: "create", Scope: []string{"v2"}, Disposition: "approve", Rationale: "test", Targets: []string{proposalRef}, ExpectedFingerprints: []string{"absent"}, Operation: "proposal.create", AuthorizedEffects: []string{"mission.create"}, Conditions: []string{"unknown-human-condition"}, ExpiresAt: "2026-08-11T10:00:00Z", IdempotencyKey: "wrong-effect"})
+	must(t, err)
+	svc = openService(t, root)
+	_, err = svc.CreateProposal(ProposalInput{ID: strings.TrimPrefix(proposalRef, "Proposal:"), Title: "Unauthorized delta", Actor: "owner", Status: "accepted", TargetContract: contractRef, BaseVersion: "1", BaseFingerprint: contract.Fingerprint, Additions: []string{"unauthorized"}, Rationale: "test", Scope: []string{"v2"}, Authorization: decisionRef, IdempotencyKey: "unauthorized-proposal"})
+	if refusalCode(err) != domain.RefusalUnauthorized {
+		t.Fatalf("wrong Decision effect/condition err=%v", err)
+	}
+	conditionProposal := "Proposal:0199b000-0000-7000-8000-000000000096"
+	conditionDecision := "Decision:0199b000-0000-7000-8000-000000000097"
+	_, err = openService(t, root).CreateDecision(DecisionInput{ID: strings.TrimPrefix(conditionDecision, "Decision:"), Title: "Unknown condition", Actor: "Alex", ActorRole: "owner", AuthorityBasis: "test", Question: "create", Scope: []string{"v2"}, Disposition: "approve", Rationale: "test", Targets: []string{conditionProposal}, ExpectedFingerprints: []string{"absent"}, Operation: "proposal.create", AuthorizedEffects: []string{"proposal.create"}, Conditions: []string{"unknown-human-condition"}, ExpiresAt: "2026-08-11T10:00:00Z", IdempotencyKey: "unknown-condition"})
+	must(t, err)
+	conditionInput := ProposalInput{ID: strings.TrimPrefix(conditionProposal, "Proposal:"), Title: "Condition delta", Actor: "owner", Status: "accepted", TargetContract: contractRef, BaseVersion: "1", BaseFingerprint: contract.Fingerprint, Additions: []string{"condition"}, Rationale: "test", Scope: []string{"v2"}, Authorization: conditionDecision, IdempotencyKey: "condition-proposal"}
+	if _, err := openService(t, root).CreateProposal(conditionInput); refusalCode(err) != domain.RefusalUnauthorized {
+		t.Fatalf("unevaluated Decision condition err=%v", err)
+	}
+	scopeProposal := "Proposal:0199b000-0000-7000-8000-000000000098"
+	scopeDecision := "Decision:0199b000-0000-7000-8000-000000000099"
+	_, err = openService(t, root).CreateDecision(DecisionInput{ID: strings.TrimPrefix(scopeDecision, "Decision:"), Title: "Narrow scope", Actor: "Alex", ActorRole: "owner", AuthorityBasis: "test", Question: "create", Scope: []string{"v1"}, Disposition: "approve", Rationale: "test", Targets: []string{scopeProposal}, ExpectedFingerprints: []string{"absent"}, Operation: "proposal.create", AuthorizedEffects: []string{"proposal.create"}, ExpiresAt: "2026-08-11T10:00:00Z", IdempotencyKey: "narrow-scope"})
+	must(t, err)
+	scopeInput := conditionInput
+	scopeInput.ID = strings.TrimPrefix(scopeProposal, "Proposal:")
+	scopeInput.Authorization = scopeDecision
+	scopeInput.IdempotencyKey = "scope-proposal"
+	if _, err := openService(t, root).CreateProposal(scopeInput); refusalCode(err) != domain.RefusalUnauthorized {
+		t.Fatalf("out-of-scope Decision err=%v", err)
+	}
+
+	missionRef := "Mission:0199b000-0000-7000-8000-000000000087"
+	missionID, _ := domain.ParseID(strings.TrimPrefix(missionRef, "Mission:"))
+	mission := svc.document(domain.Mission, missionID, "Expired Mission", "owner", "defined")
+	workspace.SetStrings(mission, "scope", []string{"v2"})
+	workspace.SetString(mission, "expires_at", "2026-08-10T09:00:00Z")
+	data, err := workspace.Canonical(mission)
+	must(t, err)
+	must(t, ApplyTransaction(root, "seed-expired-mission", []FileChange{{Path: recordPath(domain.Mission, missionID), Data: data, Mode: 0o644}}))
+	missionEntry := lookup(t, openService(t, root), missionRef, domain.Mission)
+	activate := createDecision(t, root, "0199b000-0000-7000-8000-000000000088", "mission.transition.active", missionRef, missionEntry.Fingerprint, nil, "activate")
+	_, err = openService(t, root).TransitionMission(TransitionInput{Mission: missionRef, To: "active", Authorization: activate, ExpectedFingerprint: missionEntry.Fingerprint, IdempotencyKey: "expired-activate"})
+	if refusalCode(err) != domain.RefusalExpiredAuthority {
+		t.Fatalf("expired Mission envelope err=%v", err)
+	}
+}
+
+func TestTypedRepairAttemptsMustChangeAndStayWithinBudget(t *testing.T) {
+	root := governedFixture(t)
+	svc := openService(t, root)
+	missionRef := "Mission:0199b000-0000-7000-8000-000000000089"
+	beforeRef := "Evidence:0199b000-0000-7000-8000-000000000090"
+	afterRef := "Evidence:0199b000-0000-7000-8000-000000000091"
+	missionID, _ := domain.ParseID(strings.TrimPrefix(missionRef, "Mission:"))
+	mission := svc.document(domain.Mission, missionID, "Repair Mission", "owner", "awaiting-assessment")
+	workspace.SetStrings(mission, "scope", []string{"v2"})
+	workspace.SetStrings(mission, "evidence_claims", []string{"claim:repair"})
+	workspace.SetInt(mission, "repair_budget", 1)
+	workspace.SetString(mission, "expires_at", "2026-08-11T10:00:00Z")
+	var changes []FileChange
+	for _, ref := range []string{beforeRef, afterRef} {
+		id, _ := domain.ParseID(strings.TrimPrefix(ref, "Evidence:"))
+		evidence := svc.document(domain.Evidence, id, "Repair Evidence", "executor", "recorded")
+		workspace.SetString(evidence, "mission", missionRef)
+		workspace.SetString(evidence, "claim", "claim:repair")
+		data, err := workspace.Canonical(evidence)
+		must(t, err)
+		changes = append(changes, FileChange{Path: recordPath(domain.Evidence, id), Data: data, Mode: 0o644})
+	}
+	missionData, err := workspace.Canonical(mission)
+	must(t, err)
+	changes = append(changes, FileChange{Path: recordPath(domain.Mission, missionID), Data: missionData, Mode: 0o644})
+	must(t, ApplyTransaction(root, "seed-repair", changes))
+	assessmentRef := "Assessment:0199b000-0000-7000-8000-000000000092"
+	decisionRef := createDecision(t, root, "0199b000-0000-7000-8000-000000000093", "assessment.record", assessmentRef, "absent", nil, "repair-required")
+	base := AssessmentInput{ID: strings.TrimPrefix(assessmentRef, "Assessment:"), Title: "Repair assessment", Mission: missionRef, Verdict: "repair-required", Actor: "reviewer", Claims: []string{"claim:repair"}, Evidence: []string{afterRef}, RecoveryPoint: "git-head", Authorization: decisionRef, IdempotencyKey: "repair-assessment"}
+	unchanged := RepairAttempt{AffectedClaims: []string{"claim:repair"}, PreviousHypothesis: "same", NewHypothesis: "same", Actor: "executor", BeforeEvidence: []string{beforeRef}, AfterEvidence: []string{afterRef}, Checks: []string{"test"}, Result: "failed", BudgetConsumed: 1, RecoveryPoint: "git-head"}
+	base.RepairAttempts = []RepairAttempt{unchanged}
+	if _, err := openService(t, root).RecordAssessment(base); refusalCode(err) != domain.RefusalInvalidKnownField {
+		t.Fatalf("unchanged repair attempt err=%v", err)
+	}
+	overBudget := unchanged
+	overBudget.NewHypothesis = "changed"
+	overBudget.BudgetConsumed = 2
+	base.RepairAttempts = []RepairAttempt{overBudget}
+	if _, err := openService(t, root).RecordAssessment(base); refusalCode(err) != domain.RefusalUnauthorized {
+		t.Fatalf("over-budget repair attempt err=%v", err)
+	}
+	valid := overBudget
+	valid.BudgetConsumed = 1
+	base.RepairAttempts = []RepairAttempt{valid}
+	_, err = openService(t, root).RecordAssessment(base)
+	must(t, err)
+	secondAssessment := "Assessment:0199b000-0000-7000-8000-000000000094"
+	secondDecision := createDecision(t, root, "0199b000-0000-7000-8000-000000000095", "assessment.record", secondAssessment, "absent", nil, "repair-required")
+	base.ID = strings.TrimPrefix(secondAssessment, "Assessment:")
+	base.Authorization = secondDecision
+	base.IdempotencyKey = "repair-assessment-second"
+	if _, err := openService(t, root).RecordAssessment(base); refusalCode(err) != domain.RefusalUnauthorized {
+		t.Fatalf("cumulative repair budget bypass err=%v", err)
 	}
 }
 
@@ -396,11 +730,12 @@ func lookup(t *testing.T, svc Service, ref string, noun domain.RecordType) disco
 	return entry
 }
 
-func createDecision(t *testing.T, root, id, operation, target, expected string, evidence []string, disposition string) string {
+func createDecision(t *testing.T, root, id, operation, target, expected string, evidence []string, disposition string, extraEffects ...string) string {
 	t.Helper()
 	svc := openService(t, root)
 	ref := "Decision:" + id
-	_, err := svc.CreateDecision(DecisionInput{ID: id, Title: operation, Actor: "Alex", ActorRole: "owner", AuthorityBasis: "accepted B+C contract", Question: operation, Scope: []string{"v2"}, Disposition: disposition, Rationale: "Explicit owner authorization.", Targets: []string{target}, ExpectedFingerprints: []string{expected}, Operation: operation, AuthorizedEffects: []string{operation}, ExpiresAt: "2026-08-11T10:00:00Z", Evidence: evidence, IdempotencyKey: "decision-" + id})
+	effects := append([]string{operation}, extraEffects...)
+	_, err := svc.CreateDecision(DecisionInput{ID: id, Title: operation, Actor: "Alex", ActorRole: "owner", AuthorityBasis: "accepted B+C contract", Question: operation, Scope: []string{"v2"}, Disposition: disposition, Rationale: "Explicit owner authorization.", Targets: []string{target}, ExpectedFingerprints: []string{expected}, Operation: operation, AuthorizedEffects: effects, ExpiresAt: "2026-08-11T10:00:00Z", Evidence: evidence, IdempotencyKey: "decision-" + id})
 	must(t, err)
 	return ref
 }

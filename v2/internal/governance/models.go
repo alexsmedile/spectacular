@@ -67,7 +67,8 @@ type MissionInput struct {
 	AllowedActions              []string         `json:"allowed_actions"`
 	ForbiddenEffects            []string         `json:"forbidden_effects"`
 	Baseline                    string           `json:"baseline"`
-	Budget                      string           `json:"budget"`
+	BudgetUnits                 int              `json:"budget_units"`
+	RepairBudget                int              `json:"repair_budget"`
 	ExpiresAt                   string           `json:"expires_at"`
 	Stops                       []string         `json:"stops"`
 	RecoveryPoint               string           `json:"recovery_point"`
@@ -92,7 +93,7 @@ type HandoffInput struct {
 	AllowedActions             []string `json:"allowed_actions"`
 	ForbiddenEffects           []string `json:"forbidden_effects"`
 	EvidenceClaims             []string `json:"evidence_claims"`
-	Budget                     string   `json:"budget"`
+	BudgetUnits                int      `json:"budget_units"`
 	ExpiresAt                  string   `json:"expires_at"`
 	Stops                      []string `json:"stops"`
 	RecoveryPoint              string   `json:"recovery_point"`
@@ -115,7 +116,7 @@ type HandoffReturnInput struct {
 	ProviderReceipts            []string `json:"provider_receipts"`
 	Evidence                    []string `json:"evidence"`
 	RemainingGaps               []string `json:"remaining_gaps"`
-	BudgetUsed                  string   `json:"budget_used"`
+	BudgetUsed                  int      `json:"budget_used"`
 	RecoveryPoint               string   `json:"recovery_point"`
 	NextAction                  string   `json:"next_action"`
 	OwnerGate                   string   `json:"owner_gate"`
@@ -170,20 +171,35 @@ type DecisionInput struct {
 	IdempotencyKey       string   `json:"idempotency_key"`
 }
 
+type RepairAttempt struct {
+	AffectedClaims     []string `json:"affected_claims"`
+	PreviousHypothesis string   `json:"previous_hypothesis"`
+	NewHypothesis      string   `json:"new_hypothesis"`
+	NewEvidence        []string `json:"new_evidence"`
+	NarrowerAction     string   `json:"narrower_action"`
+	Actor              string   `json:"actor"`
+	BeforeEvidence     []string `json:"before_evidence"`
+	AfterEvidence      []string `json:"after_evidence"`
+	Checks             []string `json:"checks"`
+	Result             string   `json:"result"`
+	BudgetConsumed     int      `json:"budget_consumed"`
+	RecoveryPoint      string   `json:"recovery_point"`
+}
+
 type AssessmentInput struct {
-	ID               string   `json:"id"`
-	Title            string   `json:"title"`
-	Mission          string   `json:"mission"`
-	Verdict          string   `json:"verdict"`
-	Actor            string   `json:"actor"`
-	Claims           []string `json:"claims"`
-	Evidence         []string `json:"evidence"`
-	BlockingFindings []string `json:"blocking_findings"`
-	Limitations      []string `json:"limitations"`
-	RepairAttempts   []string `json:"repair_attempts"`
-	RecoveryPoint    string   `json:"recovery_point"`
-	Authorization    string   `json:"authorization"`
-	IdempotencyKey   string   `json:"idempotency_key"`
+	ID               string          `json:"id"`
+	Title            string          `json:"title"`
+	Mission          string          `json:"mission"`
+	Verdict          string          `json:"verdict"`
+	Actor            string          `json:"actor"`
+	Claims           []string        `json:"claims"`
+	Evidence         []string        `json:"evidence"`
+	BlockingFindings []string        `json:"blocking_findings"`
+	Limitations      []string        `json:"limitations"`
+	RepairAttempts   []RepairAttempt `json:"repair_attempts"`
+	RecoveryPoint    string          `json:"recovery_point"`
+	Authorization    string          `json:"authorization"`
+	IdempotencyKey   string          `json:"idempotency_key"`
 }
 
 type TransitionInput struct {
@@ -196,14 +212,19 @@ type TransitionInput struct {
 	Assessment          string
 	Reconciliation      string
 	TerminalNextAction  string
+	SatisfiedObjectives []string
 }
 
 type ReconcileInput struct {
-	Contract            string
-	Proposal            string
-	Authorization       string
-	ExpectedFingerprint string
-	IdempotencyKey      string
+	Contract            string `json:"contract"`
+	Proposal            string `json:"proposal"`
+	Authorization       string `json:"authorization"`
+	ExpectedFingerprint string `json:"expected_fingerprint"`
+	IdempotencyKey      string `json:"idempotency_key"`
+}
+
+type ReconcileSetInput struct {
+	Items []ReconcileInput `json:"items"`
 }
 
 type ArchiveInput struct {

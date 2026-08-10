@@ -32,7 +32,7 @@ func (s Service) CreateDecision(input DecisionInput) (OperationResult, error) {
 	if err != nil {
 		return OperationResult{}, err
 	}
-	if input.Actor == "" || input.ActorRole != "owner" || input.AuthorityBasis == "" || input.Question == "" || input.Disposition == "" || input.Rationale == "" || input.Operation == "" || input.IdempotencyKey == "" {
+	if input.Actor == "" || input.ActorRole != "owner" || input.AuthorityBasis == "" || input.Question == "" || input.Disposition == "" || input.Rationale == "" || input.Operation == "" || len(input.Scope) == 0 || len(input.AuthorizedEffects) == 0 || input.IdempotencyKey == "" {
 		return OperationResult{}, missing("decision", "actor, owner actor_role, authority_basis, question, disposition, rationale, operation, and idempotency_key are required")
 	}
 	if len(input.Targets) == 0 || len(input.ExpectedFingerprints) != len(input.Targets) {
@@ -106,7 +106,7 @@ func (s Service) CreateProposal(input ProposalInput) (OperationResult, error) {
 		}
 	}
 	ref := string(domain.Proposal) + ":" + id.String()
-	if err := s.authorize(input.Authorization, "proposal.create", ref, "absent"); err != nil {
+	if err := s.authorize(input.Authorization, "proposal.create", ref, "absent", input.Scope, []string{"proposal.create"}); err != nil {
 		return OperationResult{}, err
 	}
 	doc := s.document(domain.Proposal, id, input.Title, input.Actor, input.Status)
@@ -125,6 +125,7 @@ func (s Service) CreateProposal(input ProposalInput) (OperationResult, error) {
 	workspace.SetStrings(doc, "gaps", input.Gaps)
 	workspace.SetString(doc, "authorization", input.Authorization)
 	workspace.SetString(doc, "idempotency_key", input.IdempotencyKey)
+	s.addFreshness(doc, input.FreshnessValidUntil)
 	return s.createOne("proposal.create", doc, input.IdempotencyKey, []string{input.Authorization, input.TargetContract})
 }
 
@@ -198,14 +199,14 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 	if _, err := s.CheckProposalBase(input.Proposal); err != nil {
 		return OperationResult{}, err
 	}
-	if input.Title == "" || input.Actor == "" || input.Outcome == "" || len(input.Objectives) == 0 || input.DesignSufficiency != "sufficient" || input.SliceQuality != "coherent" || len(input.EvidenceClaims) == 0 || len(input.Scope) == 0 || input.Baseline == "" || input.Budget == "" || input.RecoveryPoint == "" || input.ReturnDestination == "" || input.Authorization == "" || input.IdempotencyKey == "" {
+	if input.Title == "" || input.Actor == "" || input.Outcome == "" || len(input.Objectives) == 0 || input.DesignSufficiency != "sufficient" || input.SliceQuality != "coherent" || len(input.EvidenceClaims) == 0 || len(input.Scope) == 0 || input.Baseline == "" || input.BudgetUnits < 1 || input.RepairBudget < 0 || input.RecoveryPoint == "" || input.ReturnDestination == "" || input.Authorization == "" || input.IdempotencyKey == "" {
 		return OperationResult{}, missing("mission", "bounded outcome, Objectives, preparation verdicts, evidence plan, envelope, recovery, authorization, and idempotency are required")
 	}
 	if _, err := parseFuture(input.ExpiresAt, s.now(), "expires_at"); err != nil {
 		return OperationResult{}, err
 	}
 	missionRef := string(domain.Mission) + ":" + id.String()
-	if err := s.authorize(input.Authorization, "mission.create", missionRef, "absent"); err != nil {
+	if err := s.authorize(input.Authorization, "mission.create", missionRef, "absent", input.Scope, []string{"mission.create"}); err != nil {
 		return OperationResult{}, err
 	}
 	mission := s.document(domain.Mission, id, input.Title, input.Actor, "defined")
@@ -221,7 +222,8 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 	workspace.SetStrings(mission, "allowed_actions", input.AllowedActions)
 	workspace.SetStrings(mission, "forbidden_effects", input.ForbiddenEffects)
 	workspace.SetString(mission, "baseline", input.Baseline)
-	workspace.SetString(mission, "budget", input.Budget)
+	workspace.SetInt(mission, "budget_units", input.BudgetUnits)
+	workspace.SetInt(mission, "repair_budget", input.RepairBudget)
 	workspace.SetString(mission, "expires_at", input.ExpiresAt)
 	workspace.SetStrings(mission, "stops", input.Stops)
 	workspace.SetString(mission, "recovery_point", input.RecoveryPoint)
@@ -355,7 +357,7 @@ func (s Service) createMany(operation string, primary *workspace.Document, docs 
 	return OperationResult{Operation: operation, Ref: string(primary.Record.Type) + ":" + primary.Record.ID.String(), Path: filepath.ToSlash(path), Fingerprint: fp, Sources: sources}, nil
 }
 
-func (s Service) authorize(ref, operation, target, expected string) error {
+func (s Service) authorize(ref, operation, target, expected string, requiredScope, requiredEffects []string) error {
 	decision, err := s.Workspace.Lookup(ref, domain.Decision)
 	if err != nil {
 		return err
@@ -364,9 +366,18 @@ func (s Service) authorize(ref, operation, target, expected string) error {
 	if err != nil || role != "owner" {
 		return domain.NewRefusal(domain.RefusalUnauthorized, "actor_role", "owner Decision required", err)
 	}
-	op, err := workspace.String(decision.Document, "operation", true)
-	if err != nil || op != operation {
+	authority, err := s.authority(decision)
+	if err != nil || authority.Operation != operation {
 		return domain.NewRefusal(domain.RefusalUnauthorized, "operation", "Decision does not authorize "+operation, err)
+	}
+	if !containsAll(authority.Scope, requiredScope) {
+		return domain.NewRefusal(domain.RefusalUnauthorized, "scope", "Decision scope does not contain the requested operation scope", nil)
+	}
+	if !containsAll(authority.AuthorizedEffects, requiredEffects) {
+		return domain.NewRefusal(domain.RefusalUnauthorized, "authorized_effects", "Decision does not authorize every requested effect", nil)
+	}
+	if err := s.evaluateConditions(authority, expected); err != nil {
+		return err
 	}
 	if expiry, _ := workspace.String(decision.Document, "expires_at", false); expiry != "" {
 		when, parseErr := time.Parse(time.RFC3339, expiry)
@@ -374,14 +385,11 @@ func (s Service) authorize(ref, operation, target, expected string) error {
 			return domain.NewRefusal(domain.RefusalExpiredAuthority, "expires_at", "Decision authority expired", parseErr)
 		}
 	}
-	targets, err := workspace.Strings(decision.Document, "targets", true)
-	if err != nil || !contains(targets, target) {
+	targets := authority.Targets
+	if !contains(targets, target) {
 		return domain.NewRefusal(domain.RefusalUnauthorized, "targets", "Decision does not name target "+target, err)
 	}
-	fingerprints, err := workspace.Strings(decision.Document, "expected_fingerprints", true)
-	if err != nil || len(fingerprints) != len(targets) {
-		return domain.NewRefusal(domain.RefusalUnauthorized, "expected_fingerprints", "Decision target/fingerprint cardinality mismatch", err)
-	}
+	fingerprints := authority.ExpectedFingerprints
 	for i := range targets {
 		if targets[i] == target && fingerprints[i] != expected {
 			return stale("authorization.expected_fingerprint", fingerprints[i], expected)

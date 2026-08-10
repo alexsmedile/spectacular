@@ -14,11 +14,15 @@ const (
 	Checkpoint RecordType = "Checkpoint"
 	Evidence   RecordType = "Evidence"
 	Decision   RecordType = "Decision"
+	Contract   RecordType = "Contract"
+	Objective  RecordType = "Objective"
+	Handoff    RecordType = "Handoff"
+	Assessment RecordType = "Assessment"
 )
 
 func ParseRecordType(raw string) (RecordType, error) {
 	switch RecordType(raw) {
-	case Proposal, Mission, Anchor, Gap, Run, Checkpoint, Evidence, Decision:
+	case Proposal, Mission, Anchor, Gap, Run, Checkpoint, Evidence, Decision, Contract, Objective, Handoff, Assessment:
 		return RecordType(raw), nil
 	default:
 		return "", NewRefusal(RefusalInvalidType, "type", "unknown record noun", nil)

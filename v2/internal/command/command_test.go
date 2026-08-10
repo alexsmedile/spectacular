@@ -34,8 +34,8 @@ func fixture(t *testing.T) string {
 func fixedNow() time.Time { return time.Date(2026, 8, 10, 10, 0, 0, 0, time.UTC) }
 
 func TestPublicRegistryAndCommands(t *testing.T) {
-	if len(Registry) != 10 {
-		t.Fatalf("registry has %d commands, want 10", len(Registry))
+	if len(Registry) != 25 {
+		t.Fatalf("registry has %d commands, want 25", len(Registry))
 	}
 	seen := map[Operation]bool{}
 	for _, spec := range Registry {
@@ -44,8 +44,8 @@ func TestPublicRegistryAndCommands(t *testing.T) {
 		}
 		seen[spec.Operation] = true
 	}
-	if len(seen) != int(opWorkspaceValidate) {
-		t.Fatalf("registry dispatch parity: %d bound operations, want %d", len(seen), opWorkspaceValidate)
+	if len(seen) != int(opMissionArchive) {
+		t.Fatalf("registry dispatch parity: %d bound operations, want %d", len(seen), opMissionArchive)
 	}
 	tests := []struct {
 		args     []string
@@ -228,10 +228,7 @@ func TestProposalCurrentTruthAndMissionSourceHaveHonestDrillDown(t *testing.T) {
 			t.Fatalf("%v exit=%d output=%s", args, exit, out.String())
 		}
 		text := out.String()
-		if strings.Contains(text, "spectacular proposal show") {
-			t.Fatalf("unsupported Proposal command emitted: %s", text)
-		}
-		for _, required := range []string{`"noun":"proposal"`, `"ref":"Proposal:0198a1a0-0000-7000-8000-000000000001"`, `"path":".spectacular/records/proposal.md"`, `"fingerprint":"`} {
+		for _, required := range []string{`"noun":"proposal"`, `"ref":"Proposal:0198a1a0-0000-7000-8000-000000000001"`, `"path":".spectacular/records/proposal.md"`, `"fingerprint":"`, `"show_command":"spectacular proposal show Proposal:`} {
 			if !strings.Contains(text, required) {
 				t.Fatalf("Proposal drill-down missing %s: %s", required, text)
 			}
@@ -382,6 +379,57 @@ func TestAnchorJSONGoldenDigest(t *testing.T) {
 	}
 }
 
+func TestGovernedCreateUsesStrictInputAndRegisteredReadback(t *testing.T) {
+	root := copyTree(t, filepath.Join("..", "..", "testdata", "scenario-b-c"))
+	input := map[string]any{
+		"id":                    "0199b000-0000-7000-8000-000000000090",
+		"title":                 "Authorize bounded operation",
+		"actor":                 "Alex",
+		"actor_role":            "owner",
+		"authority_basis":       "accepted B+C contract",
+		"question":              "May the bounded operation proceed?",
+		"scope":                 []string{"v2"},
+		"disposition":           "approve",
+		"rationale":             "Owner explicitly authorized it.",
+		"alternatives":          []string{"defer"},
+		"targets":               []string{"Proposal:0199b000-0000-7000-8000-000000000091"},
+		"expected_fingerprints": []string{"absent"},
+		"operation":             "proposal.create",
+		"authorized_effects":    []string{"create Proposal"},
+		"conditions":            []string{"no provider effects"},
+		"expires_at":            "2026-08-11T10:00:00Z",
+		"evidence":              []string{},
+		"supersedes":            "",
+		"idempotency_key":       "cli-decision-create-1",
+	}
+	data, err := json.Marshal(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "decision.json")
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var out bytes.Buffer
+	runner := Runner{Cwd: root, Stdout: &out, Stderr: &bytes.Buffer{}, Now: fixedNow}
+	if exit := runner.Run([]string{"decision", "create", "--input", path, "--json"}); exit != 0 || !strings.Contains(out.String(), `"operation":"decision.create"`) {
+		t.Fatalf("create exit=%d output=%s", exit, out.String())
+	}
+	out.Reset()
+	if exit := runner.Run([]string{"decision", "show", "Decision:0199b000-0000-7000-8000-000000000090", "--json"}); exit != 0 || !strings.Contains(out.String(), `"noun":"Decision"`) {
+		t.Fatalf("show exit=%d output=%s", exit, out.String())
+	}
+	input["unexpected_authority"] = true
+	data, _ = json.Marshal(input)
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out.Reset()
+	if exit := runner.Run([]string{"decision", "create", "--input", path, "--json"}); exit != 3 || !strings.Contains(out.String(), `"code":"invalid_known_field"`) {
+		t.Fatalf("unknown input exit=%d output=%s", exit, out.String())
+	}
+}
+
 func replaceInFile(t *testing.T, path, old, replacement string) {
 	t.Helper()
 	data, err := os.ReadFile(path)
@@ -433,7 +481,11 @@ func snapshot(t *testing.T, root string) map[string]fileState {
 }
 func copyFixture(t *testing.T) string {
 	t.Helper()
-	source := fixture(t)
+	return copyTree(t, fixture(t))
+}
+
+func copyTree(t *testing.T, source string) string {
+	t.Helper()
 	target := t.TempDir()
 	err := filepath.WalkDir(source, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {

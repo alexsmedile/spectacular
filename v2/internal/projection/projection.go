@@ -143,6 +143,19 @@ func (b Builder) Project() (ProjectView, error) {
 		}
 		card.Pointers = append(card.Pointers, b.pointer(target))
 	}
+	if len(card.Pointers) == 0 {
+		lastClosed, valueErr := workspace.String(anchor.Document, "last_closed_mission", false)
+		if valueErr != nil {
+			return ProjectView{}, valueErr
+		}
+		if lastClosed != "" {
+			target, lookupErr := b.Workspace.Lookup(lastClosed, domain.Mission)
+			if lookupErr != nil {
+				return ProjectView{}, lookupErr
+			}
+			card.Pointers = append(card.Pointers, b.pointer(target))
+		}
+	}
 	if len(card.Pointers) == 1 {
 		mission, missionErr := b.Mission(card.Pointers[0].Ref)
 		if missionErr != nil {
@@ -191,6 +204,10 @@ func (b Builder) MissionList() (List, error) {
 	entries := b.Workspace.OfType(domain.Mission)
 	list := List{Items: make([]Card, 0, len(entries))}
 	for _, entry := range entries {
+		archived, _ := workspace.Bool(entry.Document, "archived", false)
+		if archived {
+			continue
+		}
 		card, err := b.Mission(entry.Document.Record.ID.String())
 		if err != nil {
 			return List{}, err
@@ -215,6 +232,35 @@ func (b Builder) Mission(ref string) (Card, error) {
 			return Card{}, lookupErr
 		}
 		card.Sources = append(card.Sources, b.pointer(proposal))
+	}
+	archived, _ := workspace.Bool(mission.Document, "archived", false)
+	if mission.Document.Record.Status != nil && *mission.Document.Record.Status == "resolved" {
+		for _, field := range []struct {
+			name string
+			noun domain.RecordType
+		}{{"assessment", domain.Assessment}, {"reconciliation", domain.Evidence}, {"last_authorization", domain.Decision}, {"archive_authorization", domain.Decision}} {
+			ref, _ := workspace.String(mission.Document, field.name, false)
+			if ref == "" {
+				continue
+			}
+			target, lookupErr := b.Workspace.Lookup(ref, field.noun)
+			if lookupErr != nil {
+				return Card{}, lookupErr
+			}
+			card.Pointers = append(card.Pointers, b.pointer(target))
+		}
+		if archived {
+			authorizationRef, _ := workspace.String(mission.Document, "archive_authorization", false)
+			if authorizationRef != "" {
+				authorization, lookupErr := b.Workspace.Lookup(authorizationRef, domain.Decision)
+				if lookupErr != nil {
+					return Card{}, lookupErr
+				}
+				next, _ := workspace.String(mission.Document, "terminal_next_action", false)
+				card.Continuation = &Continuation{Operation: next, Target: b.pointer(mission), AuthorizedBy: b.pointer(authorization)}
+			}
+		}
+		return card, nil
 	}
 	runRef, err := workspace.String(mission.Document, "current_run", true)
 	if err != nil {
@@ -363,9 +409,15 @@ func (b Builder) Mission(ref string) (Card, error) {
 	}
 	decisions := []discovery.Entry{}
 	for _, d := range b.Workspace.OfType(domain.Decision) {
-		mref, e := workspace.String(d.Document, "mission", true)
+		mref, e := workspace.String(d.Document, "mission", false)
 		if e != nil {
 			return Card{}, e
+		}
+		// Governance Decisions target records through their targets list. Only
+		// legacy Scenario A continuation Decisions carry a direct mission field;
+		// once selected, their operation is still validated strictly below.
+		if mref == "" {
+			continue
 		}
 		typed, e := domain.ParseReference(mref)
 		if e != nil {
@@ -478,30 +530,39 @@ func (b Builder) Detail(ref string, noun domain.RecordType) (Card, error) {
 		}
 	}
 	if noun == domain.Decision {
-		if _, e := workspace.String(entry.Document, "decided_by", true); e != nil {
-			return Card{}, e
-		}
 		op, e := workspace.String(entry.Document, "operation", true)
 		if e != nil {
 			return Card{}, e
 		}
-		if op != "resume" {
-			return Card{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "operation", "Decision operation must be exactly resume", nil)
-		}
-		expected, e := fingerprint(entry.Document, "expected_mission_fingerprint")
-		if e != nil {
-			return Card{}, e
-		}
-		missionRef, e := workspace.String(entry.Document, "mission", true)
-		if e != nil {
-			return Card{}, e
-		}
-		mission, e := b.Workspace.Lookup(missionRef, domain.Mission)
-		if e != nil {
-			return Card{}, e
-		}
-		if expected != mission.Fingerprint {
-			return Card{}, domain.NewRefusal(domain.RefusalInvalidFingerprint, "expected_mission_fingerprint", "Decision fingerprint does not match current Mission", nil)
+		if op == "resume" {
+			if _, e := workspace.String(entry.Document, "decided_by", true); e != nil {
+				return Card{}, e
+			}
+			expected, e := fingerprint(entry.Document, "expected_mission_fingerprint")
+			if e != nil {
+				return Card{}, e
+			}
+			missionRef, e := workspace.String(entry.Document, "mission", true)
+			if e != nil {
+				return Card{}, e
+			}
+			mission, e := b.Workspace.Lookup(missionRef, domain.Mission)
+			if e != nil {
+				return Card{}, e
+			}
+			if expected != mission.Fingerprint {
+				return Card{}, domain.NewRefusal(domain.RefusalInvalidFingerprint, "expected_mission_fingerprint", "Decision fingerprint does not match current Mission", nil)
+			}
+		} else {
+			if role, e := workspace.String(entry.Document, "actor_role", true); e != nil || role != "owner" {
+				return Card{}, domain.NewRefusal(domain.RefusalUnauthorized, "actor_role", "governance Decision must identify owner authority", e)
+			}
+			if _, e := workspace.Strings(entry.Document, "targets", true); e != nil {
+				return Card{}, e
+			}
+			if _, e := workspace.Strings(entry.Document, "expected_fingerprints", true); e != nil {
+				return Card{}, e
+			}
 		}
 	}
 	return card, nil
@@ -671,6 +732,12 @@ func relationshipFields(noun domain.RecordType) []string {
 		return []string{"checkpoint"}
 	case domain.Decision:
 		return []string{"mission", "target"}
+	case domain.Objective:
+		return []string{"mission"}
+	case domain.Handoff:
+		return []string{"mission", "objective", "run", "dispatch", "authorization", "supersedes"}
+	case domain.Assessment:
+		return []string{"mission", "authorization"}
 	}
 	return nil
 }

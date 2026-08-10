@@ -6,17 +6,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
+	"github.com/alexsmedile/spectacular/v2/internal/governance"
 	"github.com/alexsmedile/spectacular/v2/internal/projection"
 )
 
 type Effect string
 
 const ReadOnly Effect = "read-only"
+const Mutating Effect = "mutating"
 
 type Spec struct {
 	Words         []string
@@ -33,6 +36,10 @@ const (
 	argumentsNone ArgumentShape = iota
 	argumentsOne
 	argumentsScope
+	argumentsInput
+	argumentsTransition
+	argumentsReconcile
+	argumentsArchive
 )
 
 const (
@@ -46,6 +53,21 @@ const (
 	opEvidenceShow
 	opDecisionShow
 	opWorkspaceValidate
+	opProposalShow
+	opProposalCheckBase
+	opProposalCreate
+	opMissionCreate
+	opMissionTransition
+	opHandoffShow
+	opHandoffValidate
+	opHandoffCreate
+	opHandoffReturn
+	opEvidenceCreate
+	opDecisionCreate
+	opAssessmentRecord
+	opContractShow
+	opContractReconcile
+	opMissionArchive
 )
 
 var Registry = []Spec{
@@ -59,6 +81,21 @@ var Registry = []Spec{
 	{[]string{"evidence", "show"}, "<ref> [--json]", argumentsOne, "spectacular.evidence.show.v1", ReadOnly, opEvidenceShow},
 	{[]string{"decision", "show"}, "<ref> [--json]", argumentsOne, "spectacular.decision.show.v1", ReadOnly, opDecisionShow},
 	{[]string{"workspace", "validate"}, "<scope> [--json]", argumentsOne, "spectacular.workspace.validate.v1", ReadOnly, opWorkspaceValidate},
+	{[]string{"proposal", "show"}, "<ref> [--json]", argumentsOne, "spectacular.proposal.show.v1", ReadOnly, opProposalShow},
+	{[]string{"proposal", "check-base"}, "<ref> [--json]", argumentsOne, "spectacular.proposal.check-base.v1", ReadOnly, opProposalCheckBase},
+	{[]string{"proposal", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.proposal.create.v1", Mutating, opProposalCreate},
+	{[]string{"mission", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.mission.create.v1", Mutating, opMissionCreate},
+	{[]string{"mission", "transition"}, "<ref> --to <state> --authorization <decision-ref> --expected-fingerprint <sha> --idempotency-key <key> [--assessment <ref>] [--reconciliation <ref>] [--disposition <value>] [--terminal-next-action <text>] [--json]", argumentsTransition, "spectacular.mission.transition.v1", Mutating, opMissionTransition},
+	{[]string{"handoff", "show"}, "<ref> [--json]", argumentsOne, "spectacular.handoff.show.v1", ReadOnly, opHandoffShow},
+	{[]string{"handoff", "validate"}, "<ref> [--json]", argumentsOne, "spectacular.handoff.validate.v1", ReadOnly, opHandoffValidate},
+	{[]string{"handoff", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.handoff.create.v1", Mutating, opHandoffCreate},
+	{[]string{"handoff", "return"}, "--input <json-file> [--json]", argumentsInput, "spectacular.handoff.return.v1", Mutating, opHandoffReturn},
+	{[]string{"evidence", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.evidence.create.v1", Mutating, opEvidenceCreate},
+	{[]string{"decision", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.decision.create.v1", Mutating, opDecisionCreate},
+	{[]string{"assessment", "record"}, "--input <json-file> [--json]", argumentsInput, "spectacular.assessment.record.v1", Mutating, opAssessmentRecord},
+	{[]string{"contract", "show"}, "<ref> [--json]", argumentsOne, "spectacular.contract.show.v1", ReadOnly, opContractShow},
+	{[]string{"contract", "reconcile"}, "<ref> --proposal <ref> --authorization <decision-ref> --expected-fingerprint <sha|absent> --idempotency-key <key> [--json]", argumentsReconcile, "spectacular.contract.reconcile.v1", Mutating, opContractReconcile},
+	{[]string{"mission", "archive"}, "<ref> --authorization <decision-ref> --expected-fingerprint <sha> --idempotency-key <key> --terminal-packet <mission-ref> [--json]", argumentsArchive, "spectacular.mission.archive.v1", Mutating, opMissionArchive},
 }
 
 type Runner struct {
@@ -88,7 +125,17 @@ func (r Runner) Run(args []string) int {
 	if err != nil {
 		return refuse(err)
 	}
+	if spec.Effect == Mutating {
+		if err := governance.RecoverTransactions(workspace.Root); err != nil {
+			return refuse(err)
+		}
+		workspace, err = discovery.Open(r.Cwd)
+		if err != nil {
+			return refuse(err)
+		}
+	}
 	b := projection.Builder{Workspace: workspace, Now: r.Now, ShowCommand: registeredShowCommand}
+	g := governance.Service{Workspace: workspace, Now: r.Now}
 	var value any
 	switch spec.Operation {
 	case opAnchorShowProject:
@@ -111,6 +158,76 @@ func (r Runner) Run(args []string) int {
 		value, err = r.detail(b, rest, domain.Decision)
 	case opWorkspaceValidate:
 		value, err = b.Validate(rest[0])
+	case opProposalShow:
+		value, err = g.ProposalView(rest[0])
+	case opProposalCheckBase:
+		value, err = g.CheckProposalBase(rest[0])
+	case opProposalCreate:
+		var input governance.ProposalInput
+		err = readInput(rest[1], &input)
+		if err == nil {
+			value, err = g.CreateProposal(input)
+		}
+	case opMissionCreate:
+		var input governance.MissionInput
+		err = readInput(rest[1], &input)
+		if err == nil {
+			value, err = g.CreateMission(input)
+		}
+	case opMissionTransition:
+		var input governance.TransitionInput
+		input, err = transitionInput(rest)
+		if err == nil {
+			value, err = g.TransitionMission(input)
+		}
+	case opHandoffShow:
+		value, err = b.Detail(rest[0], domain.Handoff)
+	case opHandoffValidate:
+		value, err = g.ValidateHandoff(rest[0])
+	case opHandoffCreate:
+		var input governance.HandoffInput
+		err = readInput(rest[1], &input)
+		if err == nil {
+			value, err = g.CreateHandoff(input)
+		}
+	case opHandoffReturn:
+		var input governance.HandoffReturnInput
+		err = readInput(rest[1], &input)
+		if err == nil {
+			value, err = g.ReturnHandoff(input)
+		}
+	case opEvidenceCreate:
+		var input governance.EvidenceInput
+		err = readInput(rest[1], &input)
+		if err == nil {
+			value, err = g.CreateEvidence(input)
+		}
+	case opDecisionCreate:
+		var input governance.DecisionInput
+		err = readInput(rest[1], &input)
+		if err == nil {
+			value, err = g.CreateDecision(input)
+		}
+	case opAssessmentRecord:
+		var input governance.AssessmentInput
+		err = readInput(rest[1], &input)
+		if err == nil {
+			value, err = g.RecordAssessment(input)
+		}
+	case opContractShow:
+		value, err = g.ContractView(rest[0])
+	case opContractReconcile:
+		var input governance.ReconcileInput
+		input, err = reconcileInput(rest)
+		if err == nil {
+			value, err = g.Reconcile(input)
+		}
+	case opMissionArchive:
+		var input governance.ArchiveInput
+		input, err = archiveInput(rest)
+		if err == nil {
+			value, err = g.ArchiveMission(input)
+		}
 	}
 	if err != nil {
 		return refuse(err)
@@ -155,10 +272,131 @@ func (s Spec) validateArguments(args []string) string {
 		if len(args) != 2 || args[0] != "--scope" {
 			return strings.Join(s.Words, " ") + " requires --scope <ref>"
 		}
+	case argumentsInput:
+		if len(args) != 2 || args[0] != "--input" || args[1] == "" {
+			return strings.Join(s.Words, " ") + " requires --input <json-file>"
+		}
+	case argumentsTransition:
+		if _, err := transitionInput(args); err != nil {
+			return err.Error()
+		}
+	case argumentsReconcile:
+		if _, err := reconcileInput(args); err != nil {
+			return err.Error()
+		}
+	case argumentsArchive:
+		if _, err := archiveInput(args); err != nil {
+			return err.Error()
+		}
 	default:
 		return "command registry has an invalid argument shape"
 	}
 	return ""
+}
+
+func readInput(path string, target any) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return domain.NewRefusal(domain.RefusalRecordNotFound, "input", "read confirmed input", err)
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		return domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "decode confirmed JSON input", err)
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "input must contain exactly one JSON value", err)
+	}
+	return nil
+}
+
+func optionMap(args []string, firstRef bool) (string, map[string]string, error) {
+	ref := ""
+	if firstRef {
+		if len(args) == 0 || strings.HasPrefix(args[0], "--") {
+			return "", nil, fmt.Errorf("requires a record reference")
+		}
+		ref, args = args[0], args[1:]
+	}
+	if len(args)%2 != 0 {
+		return "", nil, fmt.Errorf("options require values")
+	}
+	values := map[string]string{}
+	for i := 0; i < len(args); i += 2 {
+		if !strings.HasPrefix(args[i], "--") || args[i+1] == "" {
+			return "", nil, fmt.Errorf("invalid option pair")
+		}
+		if _, exists := values[args[i]]; exists {
+			return "", nil, fmt.Errorf("%s may be supplied at most once", args[i])
+		}
+		values[args[i]] = args[i+1]
+	}
+	return ref, values, nil
+}
+
+func requireOptions(values map[string]string, names ...string) error {
+	for _, name := range names {
+		if values[name] == "" {
+			return fmt.Errorf("requires %s", name)
+		}
+	}
+	return nil
+}
+
+func rejectUnknownOptions(values map[string]string, allowed ...string) error {
+	known := map[string]bool{}
+	for _, name := range allowed {
+		known[name] = true
+	}
+	for name := range values {
+		if !known[name] {
+			return fmt.Errorf("unknown option %s", name)
+		}
+	}
+	return nil
+}
+
+func transitionInput(args []string) (governance.TransitionInput, error) {
+	ref, values, err := optionMap(args, true)
+	if err != nil {
+		return governance.TransitionInput{}, err
+	}
+	if err := requireOptions(values, "--to", "--authorization", "--expected-fingerprint", "--idempotency-key"); err != nil {
+		return governance.TransitionInput{}, err
+	}
+	if err := rejectUnknownOptions(values, "--to", "--authorization", "--expected-fingerprint", "--idempotency-key", "--disposition", "--assessment", "--reconciliation", "--terminal-next-action"); err != nil {
+		return governance.TransitionInput{}, err
+	}
+	return governance.TransitionInput{Mission: ref, To: values["--to"], Authorization: values["--authorization"], ExpectedFingerprint: values["--expected-fingerprint"], IdempotencyKey: values["--idempotency-key"], Disposition: values["--disposition"], Assessment: values["--assessment"], Reconciliation: values["--reconciliation"], TerminalNextAction: values["--terminal-next-action"]}, nil
+}
+
+func reconcileInput(args []string) (governance.ReconcileInput, error) {
+	ref, values, err := optionMap(args, true)
+	if err != nil {
+		return governance.ReconcileInput{}, err
+	}
+	if err := requireOptions(values, "--proposal", "--authorization", "--expected-fingerprint", "--idempotency-key"); err != nil {
+		return governance.ReconcileInput{}, err
+	}
+	if err := rejectUnknownOptions(values, "--proposal", "--authorization", "--expected-fingerprint", "--idempotency-key"); err != nil {
+		return governance.ReconcileInput{}, err
+	}
+	return governance.ReconcileInput{Contract: ref, Proposal: values["--proposal"], Authorization: values["--authorization"], ExpectedFingerprint: values["--expected-fingerprint"], IdempotencyKey: values["--idempotency-key"]}, nil
+}
+
+func archiveInput(args []string) (governance.ArchiveInput, error) {
+	ref, values, err := optionMap(args, true)
+	if err != nil {
+		return governance.ArchiveInput{}, err
+	}
+	if err := requireOptions(values, "--authorization", "--expected-fingerprint", "--idempotency-key", "--terminal-packet"); err != nil {
+		return governance.ArchiveInput{}, err
+	}
+	if err := rejectUnknownOptions(values, "--authorization", "--expected-fingerprint", "--idempotency-key", "--terminal-packet"); err != nil {
+		return governance.ArchiveInput{}, err
+	}
+	return governance.ArchiveInput{Mission: ref, Authorization: values["--authorization"], ExpectedFingerprint: values["--expected-fingerprint"], IdempotencyKey: values["--idempotency-key"], TerminalPacket: values["--terminal-packet"]}, nil
 }
 
 func (r Runner) detail(b projection.Builder, args []string, noun domain.RecordType) (any, error) {
@@ -211,20 +449,32 @@ type refusalEnvelope struct {
 	Code           string `json:"code"`
 	Field          string `json:"field,omitempty"`
 	Detail         string `json:"detail"`
+	Expected       string `json:"expected,omitempty"`
+	Actual         string `json:"actual,omitempty"`
+	Mutation       string `json:"mutation"`
+	Recovery       string `json:"recovery"`
 }
 
 func (r Runner) refuse(jsonMode bool, invoked string, err error) int {
 	code := "internal_error"
 	field := ""
 	detail := err.Error()
+	expected := ""
+	actual := ""
+	recovery := "correct the refused field or obtain explicit owner authorization, then retry"
 	var refusal *domain.Refusal
 	if errors.As(err, &refusal) {
 		code = string(refusal.Code)
 		field = refusal.Field
 		detail = refusal.Detail
+		expected = refusal.Expected
+		actual = refusal.Actual
+		if refusal.Recovery != "" {
+			recovery = refusal.Recovery
+		}
 	}
 	if jsonMode {
-		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v1", invoked, 3, code, field, detail})
+		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v1", invoked, 3, code, field, detail, expected, actual, "none", recovery})
 	} else {
 		fmt.Fprintf(r.Stderr, "refused %s", code)
 		if field != "" {
@@ -240,7 +490,7 @@ func (r Runner) refuse(jsonMode bool, invoked string, err error) int {
 }
 func (r Runner) usage(jsonMode bool, invoked, detail string) int {
 	if jsonMode {
-		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v1", invoked, 2, "usage", "", detail})
+		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v1", invoked, 2, "usage", "", detail, "", "", "none", "correct the command invocation using registry-derived help"})
 	} else {
 		fmt.Fprintln(r.Stderr, "usage:")
 		for _, s := range Registry {

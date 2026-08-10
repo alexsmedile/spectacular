@@ -55,3 +55,41 @@ func Strings(document *Document, name string, required bool) ([]string, error) {
 	}
 	return values, nil
 }
+
+// SetString and SetStrings construct canonical unknown-field values for
+// governed operations. Unknown fields remain type-specific data rather than
+// gaining universal Record authority.
+func SetString(document *Document, name, value string) {
+	ensureUnknown(document)
+	document.Unknown[name] = &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: value}
+}
+
+func SetBool(document *Document, name string, value bool) {
+	ensureUnknown(document)
+	text := "false"
+	if value {
+		text = "true"
+	}
+	document.Unknown[name] = &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!bool", Value: text}
+}
+
+func SetStrings(document *Document, name string, values []string) {
+	ensureUnknown(document)
+	node := &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq"}
+	for _, value := range values {
+		node.Content = append(node.Content, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: value})
+	}
+	document.Unknown[name] = node
+}
+
+func Delete(document *Document, name string) {
+	if document != nil && document.Unknown != nil {
+		delete(document.Unknown, name)
+	}
+}
+
+func ensureUnknown(document *Document) {
+	if document.Unknown == nil {
+		document.Unknown = map[string]*yaml.Node{}
+	}
+}

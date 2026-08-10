@@ -1,7 +1,0 @@
-{
-  "skill_check": "all",
-  "cli_version": {
-    "file": "cli/spectacular",
-    "variable": "SPECTACULAR_VERSION"
-  }
-}

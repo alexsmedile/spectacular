@@ -1,1 +1,0 @@
-../../agents/debug-fixer.md

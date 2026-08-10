@@ -1,7 +1,7 @@
 {
   "name": "spectacular",
-  "version": "1.37.3",
-  "description": "AI-native operational workspace for software projects. Stop losing context. Start shipping.",
+  "version": "2.0.0-rc.1",
+  "description": "Guide governed Spectacular Missions from orientation through verified closure.",
   "author": {
     "name": "Alessandro Smedile"
   },
@@ -10,13 +10,10 @@
   "license": "MIT",
   "keywords": [
     "spectacular",
-    "workspace",
-    "project-management",
+    "missions",
+    "governance",
     "context",
-    "agents",
-    "lifecycle",
-    "spec-driven",
-    "claude-code",
-    "skills"
+    "evidence",
+    "claude-code"
   ]
 }

@@ -4,9 +4,9 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: m1-accepted-and-integrated
-active_stage: scenario-a-preparation-next-ready
-updated: 2026-08-09
+checkpoint: scenario-a-accepted-and-integrated
+active_stage: b-c-preparation-next-ready
+updated: 2026-08-10
 ---
 
 # Refactor orchestration and checkpoint contract
@@ -97,6 +97,20 @@ This task must:
 This task should not perform a delegable deep audit or implementation merely because it can. It may
 make small orchestration-document edits and integration corrections needed to keep the program
 coherent.
+
+## Minimal-agent default
+
+One primary agent owns a Mission end to end by default. Context boundaries are costs, not proof of
+rigor. An Investigator or Builder is dispatched only for demonstrably independent, loosely coupled
+work with a named context or latency benefit and a designed join. A cold verifier is justified only
+when chat-independent recovery is the claim. A fresh reviewer is justified by the accepted risk
+triggers and reviews one exact commit/tree.
+
+Before dispatch, record why another context is cheaper or more independent than direct work. Do not
+spawn agents to restate contracts, relay packets, mirror status, or review another agent's prose.
+The primary agent and reviewer may resolve ordinary in-envelope findings directly. The owner and
+central orchestration see only real decision gates, boundary conflicts, exhausted repair, and the
+final reviewed return.
 
 ## Side-session responsibilities
 
@@ -317,8 +331,9 @@ ultimately simplified canonical frontmatter to tree-shaped YAML with determinist
 anchors, aliases, shared graphs, and cycles. H28 accepted exact head `a488b2e…`; the owner accepted
 M1 and the scenario-first amendment with “OK CONTINUE”; central integrated the branch at
 `7759461a…` and reran the complete readonly Go matrix successfully. The sole current program is
-v1.7: W0/M1 accepted → Scenario A cold recovery → B governed work → C closure/fresh resume → R
-release hardening. Scenario A preparation is next-ready; no successor Mission is active.
+v1.8: W0/M1/Scenario A accepted and integrated → one BC governed-loop Mission → separate
+Skill/runtime-prerequisites Mission → release/distribution. BC preparation is next-ready; no
+successor Mission is active.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).
 

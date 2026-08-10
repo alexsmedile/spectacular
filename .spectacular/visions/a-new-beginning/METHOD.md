@@ -3,9 +3,9 @@ type: refactor-method-record
 status: active
 owner: alex
 vision: a-new-beginning
-current_phase: h16-accepted-s10-ready
-next_source: source-017
-updated: 2026-08-09
+current_phase: scenario-a-accepted-b-c-next
+next_source: none
+updated: 2026-08-10
 ---
 
 # Refactor method — a new beginning
@@ -50,6 +50,10 @@ side sessions, agents, and implementation Missions without turning summaries int
     the accepted clean-break cutover and recovery contract.
 17. Handoffs and returns bind to immutable inputs, accepted-contract versions, reviewer/read set, and
     reviewed tree; baseline drift is rejected or explicitly revalidated.
+18. Questions require a decision delta: do not restate accepted choices or ask the owner to select a
+    reversible implementation default unless new evidence makes the prior contract inadequate.
+19. One primary agent owns tightly coupled work end to end. Every additional context boundary must
+    earn its cost through real independence, parallelism, or a distinct proof method.
 
 ## End-to-end lifecycle
 
@@ -400,6 +404,11 @@ For each implementation batch:
 11. stop adversarial expansion when it exceeds product value: clarify the smallest supported
     contract and prefer deterministic refusal over implementing a general engine the product does
     not need.
+12. prefer one primary agent plus one risk-triggered final reviewer. Use a cold verifier only for a
+    cold-recovery claim, and use Investigator/Builder agents only for independent disjoint work with
+    an explicit join benefit;
+13. compile accepted decisions into a bounded execution brief. Ask the owner only when a surviving
+    Type-1 Gap changes behavior, authority, safety, or an irreversible boundary.
 
 ## Phase 9 — Refactor retrospective and method recovery
 
@@ -450,17 +459,16 @@ A future agent or session resumes in this order:
 ## Current state
 
 - Branch: `refactor/a-new-beginning`.
-- Current phase: the foundation, implementation architecture, specification topology, W0 scaffold,
-  M1 charter, M1 implementation, and scenario-first program amendment are accepted. M1 is integrated
-  and independently reverified. Scenario A cold-recovery preparation is the sole next-ready action.
+- Current phase: the foundation, architecture, specification topology, W0, M1, and Scenario A are
+  accepted and integrated. The B+C behavioral contract is accepted and joined to Scenario A's
+  interface. One BC Mission is next-ready for preparation.
 - Ingested baseline: Sources 001–016, 173 concept cards, 23 GitHub issue cards.
 - Latest synthesis: checkpoint 027.
-- Human dispositions: foundation sessions through S12, W0, M1, and the Scenario A→B→C→R amendment
-  are reconciled into accepted contracts and decisions.
-- Promoted implementation: M1 semantic substrate at reviewed head `a488b2e…`, integrated by
-  `7759461a…`.
-- Active handoff queue: prior handoffs through H28 are complete and reconciled. Scenario A Mission
-  preparation is next-ready; no successor implementation Mission is active.
+- Human dispositions: foundation sessions through S12, W0, M1, Scenario A, B+C semantics, the
+  minimal-agent default, and separate Skill/Release Missions are reconciled into accepted contracts.
+- Promoted implementation: M1 plus Scenario A cold recovery, with Scenario A integrated by
+  `55b679c…` after independent review and bounded repair.
+- Active handoff queue: no successor is active. BC preparation is the one safe next action.
 - Planning baseline: each new handoff must declare and validate a fresh immutable commit/tree plus
   content hashes. Unrelated untracked files remain excluded from this program.
-- Next source ID is `source-017`.
+- New source ingestion is closed unless reversal-grade evidence appears.

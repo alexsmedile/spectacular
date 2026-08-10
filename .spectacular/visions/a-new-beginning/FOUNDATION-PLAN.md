@@ -3,10 +3,10 @@ type: refactor-foundation-plan
 status: active
 authority: recovery-capsule
 vision: a-new-beginning
-checkpoint: m1-accepted-and-integrated
+checkpoint: scenario-a-accepted-and-integrated
 decision_sessions: 14
 foundational_priorities: 20
-updated: 2026-08-09
+updated: 2026-08-10
 ---
 
 # Foundation Plan — Spectacular refactor
@@ -44,8 +44,10 @@ the foundation. H21-R1 originally made P0 a prerequisite; the owner later deprio
 work. P0 is abandoned unmerged, generic migration work leaves the critical path, W0 is accepted,
 and the M1 charter was owner-approved. H27 implementation passed a multi-generation independent H28
 review and bounded repair loop. The owner accepted exact head `a488b2e…`; central integrated and
-reverified it. The accepted scenario-first amendment now sequences A cold recovery → B governed
-work → C closure/fresh resume → R release hardening.
+reverified it. Scenario A then passed cold recovery, a bounded bounce repair, fresh independent
+review, and central integration. The accepted executable program now sequences one BC governed-loop
+Mission → Skill/runtime prerequisites → release/distribution. BC uses serial Objectives B and C with
+one final owner boundary; the minimal-agent default is one primary agent plus risk-triggered review.
 
 ## Decision batches
 
@@ -203,7 +205,6 @@ compatibility behavior.
 S01, S03A, S02, S03B, S04, S05, S06, S07, S08, S09, the compatibility floor, H16, S10, S11, and
 S12A, W0, and the M1 charter are accepted. The v2 responsibility surface, retirement boundaries,
 implementation architecture, five-spec topology, shared scaffold, and first Mission envelope are
-fixed. The current v1.7 executable program is W0 and M1 accepted/integrated → Scenario A cold
-recovery → Scenario B bounded governed work → Scenario C closure/fresh resume → Scenario R release
-hardening. Scenario A preparation is the sole next-ready action; no implementation successor is
-active.
+fixed. The current v1.8 executable program has W0, M1, and Scenario A accepted/integrated. One BC
+Mission with serial Objectives B and C is next-ready for preparation, followed by a separate
+Skill/runtime-prerequisites Mission and then release/distribution. No successor Mission is active.

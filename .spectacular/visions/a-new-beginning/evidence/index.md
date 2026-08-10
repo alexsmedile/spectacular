@@ -1,6 +1,6 @@
 ---
 type: refactor-intake-index
-updated: 2026-08-09
+updated: 2026-08-10
 ---
 
 # Refactor intake index
@@ -23,6 +23,10 @@ updated: 2026-08-09
 
 - [H28 M1 independent review and repair](returns/H28-m1-independent-review-and-repair.md) — exact-head
   adversarial review, bounded builder/reviewer convergence, final acceptance, and integration evidence
+- [Scenario A central acceptance](scenario-a-central-acceptance.md) — exact-head repair review,
+  central test rerun, merge, and B+C interface compatibility
+- [Governed work and closure contract](../GOVERNED-WORK-AND-CLOSURE-CONTRACT.md) — accepted B+C
+  behavioral semantics joined to Scenario A's mechanical envelope
 
 ## Sources
 

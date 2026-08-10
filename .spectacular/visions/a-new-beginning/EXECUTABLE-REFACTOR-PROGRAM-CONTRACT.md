@@ -1,14 +1,14 @@
 ---
 type: refactor-program-contract
 contract: executable-refactor-program
-version: 1.7
+version: 1.8
 status: accepted
-decision_session: m1-acceptance-and-scenario-sequencing
-source_handoff: H28-final-closure
+decision_session: scenario-a-acceptance-and-b-c-join
+source_handoff: scenario-a-implementation-return
 accepted_by: owner
-accepted_at: 2026-08-09
+accepted_at: 2026-08-10
 central_disposition: accept
-supersedes: _snapshots/EXECUTABLE-REFACTOR-PROGRAM-CONTRACT/@v1.6.md
+supersedes: _snapshots/EXECUTABLE-REFACTOR-PROGRAM-CONTRACT/@v1.7.md
 upstream:
   - MVP-SCENARIO-CLI-SEQUENCING-DECISION.md@1.0
   - M1-SEMANTIC-SUBSTRATE-MISSION-CHARTER.md@1.2
@@ -17,18 +17,20 @@ upstream:
   - PUBLIC-LANGUAGE-AND-INTERFACE-CONTRACT.md@1.0
   - EXECUTION-AUTHORITY-CONTRACT.md@1.0
   - EVIDENCE-CLOSURE-CONTINUITY-CONTRACT.md@1.0
-next_action: prepare-scenario-a-cold-recovery-mission
+  - SCENARIO-A-COLD-RECOVERY-MISSION-CHARTER.md@1.0
+  - GOVERNED-WORK-AND-CLOSURE-CONTRACT.md@1.0
+next_action: prepare-b-c-governed-loop-mission
 ---
 
 # Executable Refactor Program Contract
 
 ## Purpose
 
-This v1.7 program records M1 acceptance and integration, then drives the MVP through the three
-constitutional scenarios before release hardening. No later Mission is activated by this record.
-Scenario A preparation is the sole next-ready action.
+This v1.8 program accepts Scenario A, joins its mechanical interface with the owner-approved B+C
+behavioral contract, adopts a minimal-agent execution default, and separates Skill/runtime
+prerequisites from release/distribution. No successor Mission is activated by this record.
 
-## Accepted implementation baseline
+## Accepted implementation baselines
 
 M1 was independently accepted and integrated without squash:
 
@@ -45,21 +47,33 @@ UUIDv7 identity, typed references, fingerprints, deterministic indexing, and ref
 It contains no CLI, registry, workspace discovery, lifecycle engine, reconciliation, or provider
 behavior.
 
+Scenario A was accepted after bounded repair and integrated without squash:
+
+- final feature head: `3b25f1777c40809be815b3172edebaf588936e99`;
+- final feature tree: `25b5a7458a0a5d7020f2ffeeb8179c9508734bdb`;
+- independently reviewed product head: `c9efd998e768ac2ba0cdf871acc5368fb35dae05`;
+- independently reviewed product tree: `4a99dbb1ecb0a6363d3cf8744c18d0142920b4d8`.
+
+Central verified all Scenario A sidecars, scope, v2 format/module/vet/test/race/build checks, and the
+complete 31-file v1 suite before merge. The acceptance receipt is
+[`evidence/scenario-a-central-acceptance.md`](evidence/scenario-a-central-acceptance.md).
+
 ## Current program
 
 ```text
 W0 shared-scaffold gate — accepted
-  → M1 semantic records + canonical workspace substrate — accepted and integrated
-  → A cold recovery
-  → B fuzzy intent to bounded governed work
-  → C evidence, disposition, reconciliation, and cold resume
-  → R release and distribution hardening
+  → M1 semantic records + canonical workspace substrate — accepted
+  → A cold recovery — accepted
+  → BC governed work through closure — next-ready for preparation
+  → S Skill and runtime prerequisites
+  → R release and distribution
 ```
 
-Scenario C is mandatory for MVP. Real project migrations and cutovers remain later
+The BC Mission contains serial Objectives B then C and one final acceptance boundary. Scenario C
+remains mandatory for MVP. Real project migrations and cutovers remain later
 project-specific Missions. V2 core contains no v1 compatibility behavior.
 
-## Scenario A — cold recovery
+## Scenario A — cold recovery (accepted)
 
 Outcome: a cold person or agent can orient to a project, discover current Missions, resume one
 Mission safely, inspect every consequential pointer, and reach one mechanically justified
@@ -78,30 +92,39 @@ Required drill-down uses noun-first `gap`, `run`, `checkpoint`, `evidence`, and 
 Anchors, generated projection, Gaps/conflicts, continuation or owner gate, sources, freshness, and
 generation basis. It never infers safety from a stored label alone.
 
-## Scenario B — bounded governed work
+## BC Mission — bounded governed work through closure
 
-Outcome: fuzzy intent becomes an owner-accepted Proposal, bounded Mission, explicit authority
-envelope, expected evidence, and validated Handoff. Guided `/spectacular propose` and
+Objective B outcome: fuzzy intent becomes an owner-accepted Proposal, bounded Mission, explicit
+authority envelope, expected evidence, and validated Handoff. Guided `/spectacular propose` and
 `/spectacular define` own interpretation; noun-first CLI `create` persists only confirmed records.
 
 Proposal base checks, Handoff validation, and Mission transitions are mechanical. Every transition
 requires an authorization Decision reference and expected fingerprint.
 
-## Scenario C — closure and fresh resume
-
-Outcome: Evidence returns through assessment, owner disposition, authorized Contract
+Objective C outcome: Evidence returns through assessment, owner disposition, authorized Contract
 reconciliation, Mission resolution, archival, and a second cold recovery.
 
 Guided Skill operations retain assessment and reconciliation judgment. Mechanical Evidence and
 Decision creation, Contract reconciliation, Mission transition, and archival apply only explicit
-authority with matching base identity/fingerprint. Archival never proves closure.
+authority with matching base identity/fingerprint. Archival never proves closure. The accepted
+semantic contract is [`GOVERNED-WORK-AND-CLOSURE-CONTRACT.md`](GOVERNED-WORK-AND-CLOSURE-CONTRACT.md).
 
-## Scenario R — release hardening
+Objective B is an evidence checkpoint, not a separate owner or central handoff. If its deterministic
+checks pass without a contract/authority conflict, the same primary agent continues into C.
 
-After A–C pass end to end, complete generated registry/help, Skill packaging, macOS/Linux native
-distribution, install/checksum flow, integration/race/recovery proof, self-hosting, and v1-runtime
-exclusion. Windows, generic migration, provider integrations, persistent caches, and broad visual
-polish remain deferred until earned.
+## Scenario S — Skill and runtime prerequisites
+
+Build the guided Skill workflows, progressive context compiler, Mission preparation and Autopilot
+charter compilation, runtime-neutral Handoff behavior, manifests, and Codex/Claude installation
+prerequisites. Validate them through an isolated clean-v2 Spectacular dogfood workspace. This is
+project self-dogfooding, not model/server hosting or migration of the live v1 workspace.
+
+## Scenario R — release and distribution
+
+After BC and S pass end to end, complete macOS/Linux native distribution, installer/update and
+checksum verification, version alignment, fresh-install/recovery proof, and v1-runtime exclusion.
+Windows, generic migration, provider integrations, persistent caches, and broad visual polish remain
+deferred until earned.
 
 ## Execution controls
 
@@ -110,9 +133,17 @@ commit/tree, owned paths, prohibited effects, changed invariants, dependency dif
 review trigger, recovery point, and one terminal next action. Commits remain coherent review units,
 not success metrics.
 
-Builder and independent reviewer may exchange bounded repair/re-review messages directly while the
-Mission envelope remains unchanged. Central orchestration intervenes on scope, product, authority,
-provider, irreversible-effect, or exhausted-boundary conflicts—not on ordinary corrections.
+One primary agent owns decisions, implementation, tests, repairs, commits, evidence, and return by
+default. A fresh reviewer is used when consequence requires independence; a cold verifier is used
+only when recovery without chat is itself the claim. Additional agents require demonstrably
+parallel, loosely coupled work and an explicit context/join benefit. They are never spawned merely
+because a role exists. Central orchestration intervenes on scope, product, authority, provider,
+irreversible-effect, or exhausted-boundary conflicts—not ordinary corrections.
+
+Before asking the owner, a decision-delta test must show that no accepted contract answers the
+question, the answer materially changes behavior/authority/safety/irreversibility, a reversible
+Type-2 default is insufficient, and new evidence makes the question live. Otherwise inherit the
+accepted decision and continue.
 
 The live control surface is this program plus the current Mission charter. Immutable constitutional
 contracts remain authoritative linked inputs and are not restated as mutable progress systems.
@@ -126,6 +157,6 @@ correction remains owned by the responsible operation.
 
 ## Next gate
 
-Prepare Scenario A only. Its charter must define its smallest vertical slice, exact files and
-interfaces, read-only guarantees, JSON schema, source drill-down, cold-actor test, self-hosted test,
-authority/refusal rules, and integration boundary with the accepted M1 substrate.
+Prepare one BC Mission with serial Objectives B and C. Use a short gap audit instead of a new owner
+interview. Ask only if a genuine unresolved Type-1 conflict survives the accepted B+C contract and
+Scenario A interface join. Do not activate BC merely by updating this program.

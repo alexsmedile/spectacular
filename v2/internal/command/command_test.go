@@ -38,8 +38,8 @@ func fixture(t *testing.T) string {
 func fixedNow() time.Time { return time.Date(2026, 8, 10, 10, 0, 0, 0, time.UTC) }
 
 func TestPublicRegistryAndCommands(t *testing.T) {
-	if len(Registry) != 26 {
-		t.Fatalf("registry has %d commands, want 26", len(Registry))
+	if len(Registry) != 29 {
+		t.Fatalf("registry has %d commands, want 29", len(Registry))
 	}
 	seen := map[Operation]bool{}
 	for _, spec := range Registry {
@@ -48,8 +48,8 @@ func TestPublicRegistryAndCommands(t *testing.T) {
 		}
 		seen[spec.Operation] = true
 	}
-	if len(seen) != int(opMissionArchive) {
-		t.Fatalf("registry dispatch parity: %d bound operations, want %d", len(seen), opMissionArchive)
+	if len(seen) != int(opMissionAutopilot) {
+		t.Fatalf("registry dispatch parity: %d bound operations, want %d", len(seen), opMissionAutopilot)
 	}
 	tests := []struct {
 		args     []string
@@ -81,6 +81,38 @@ func TestPublicRegistryAndCommands(t *testing.T) {
 				t.Fatalf("stderr=%s", errOut.String())
 			}
 		})
+	}
+}
+
+func TestGeneratedCatalogMatchesRegistryAndKeepsJudgmentOut(t *testing.T) {
+	var jsonOut, markdown bytes.Buffer
+	if err := WriteCatalogJSON(&jsonOut); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteCatalogMarkdown(&markdown); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"spectacular workspace context", "spectacular mission prepare", "spectacular mission autopilot"} {
+		if !strings.Contains(jsonOut.String(), want) || !strings.Contains(markdown.String(), want) {
+			t.Fatalf("generated catalogs omit %s", want)
+		}
+	}
+	for _, forbidden := range []string{"spectacular status", "spectacular inspect", "spectacular record", "spectacular decide", "spectacular resolve"} {
+		if strings.Contains(jsonOut.String(), `"command": "`+forbidden+`"`) {
+			t.Fatalf("generated catalog contains forbidden generic command %s", forbidden)
+		}
+	}
+	for path, generated := range map[string]string{
+		filepath.Join("..", "..", "skills", "spectacular", "generated", "mechanical-interface.json"): jsonOut.String(),
+		filepath.Join("..", "..", "skills", "spectacular", "generated", "mechanical-interface.md"):   markdown.String(),
+	} {
+		checkedIn, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(checkedIn) != generated {
+			t.Fatalf("generated interface is stale: %s", path)
+		}
 	}
 }
 

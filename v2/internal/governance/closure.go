@@ -2,6 +2,7 @@ package governance
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -11,8 +12,19 @@ import (
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
+	spectacularruntime "github.com/alexsmedile/spectacular/v2/internal/runtime"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
+
+func validateSHA256(value, field string) error {
+	if len(value) != 64 || strings.ToLower(value) != value {
+		return domain.NewRefusal(domain.RefusalInvalidFingerprint, field, "expected lowercase SHA-256 hex", nil)
+	}
+	if _, err := hex.DecodeString(value); err != nil {
+		return domain.NewRefusal(domain.RefusalInvalidFingerprint, field, "expected lowercase SHA-256 hex", err)
+	}
+	return nil
+}
 
 func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
 	id, err := domain.ParseID(input.ID)
@@ -453,6 +465,88 @@ func (s Service) TransitionMission(input TransitionInput) (OperationResult, erro
 	}
 	if _, err := parseFuture(missionExpiry, s.now(), "mission.expires_at"); err != nil {
 		return OperationResult{}, err
+	}
+	if input.To == "active" {
+		preparationFingerprint, err := workspace.String(mission.Document, "preparation_fingerprint", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		if err := validateSHA256(preparationFingerprint, "preparation_fingerprint"); err != nil {
+			return OperationResult{}, err
+		}
+		receiptText, err := workspace.String(mission.Document, "preparation_receipt", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		var receipt spectacularruntime.PreparationReceipt
+		if err := json.Unmarshal([]byte(receiptText), &receipt); err != nil {
+			return OperationResult{}, domain.NewRefusal(domain.RefusalInvalidKnownField, "preparation_receipt", "stored preparation receipt is invalid", err)
+		}
+		if err := spectacularruntime.ValidatePreparationReceipt(receipt, s.now()); err != nil {
+			return OperationResult{}, err
+		}
+		if receipt.Fingerprint != preparationFingerprint {
+			return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "preparation_fingerprint", "stored preparation receipt fingerprint does not match the Mission binding", nil)
+		}
+		preparationBaseline, err := workspace.String(mission.Document, "preparation_baseline", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		missionBaseline, err := workspace.String(mission.Document, "baseline", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		missionOutcome, err := workspace.String(mission.Document, "outcome", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		missionDesign, err := workspace.String(mission.Document, "design_sufficiency", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		missionSlice, err := workspace.String(mission.Document, "slice_quality", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		selectedOutcome := ""
+		for _, candidate := range receipt.Candidates {
+			if candidate.Name == receipt.Selected {
+				selectedOutcome = candidate.Outcome
+			}
+		}
+		missionClaims, err := workspace.Strings(mission.Document, "evidence_claims", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		missionStops, err := workspace.Strings(mission.Document, "stops", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		preparationValidUntil, err := workspace.String(mission.Document, "preparation_valid_until", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		missionSource := ""
+		if mission.Document.Record.Source != nil {
+			missionSource = mission.Document.Record.Source.String()
+		}
+		if receipt.Proposal.Ref != missionSource || receipt.Baseline != preparationBaseline || preparationBaseline != missionBaseline || receipt.FreshUntil != preparationValidUntil || receipt.DesignSufficiency != missionDesign || receipt.SliceQuality != missionSlice || selectedOutcome != missionOutcome || !sameStrings(receipt.EvidenceClaims, missionClaims) || !sameStrings(receipt.StopConditions, missionStops) {
+			return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "preparation", "stored preparation no longer binds the Mission", nil)
+		}
+		preparationSources, err := workspace.Strings(mission.Document, "preparation_sources", true)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		expectedPreparationSources := []string{receipt.Proposal.Ref + "@" + receipt.Proposal.Fingerprint}
+		for _, source := range receipt.DirectionSources {
+			expectedPreparationSources = append(expectedPreparationSources, source.Ref+"@"+source.Fingerprint)
+		}
+		if !sameStrings(preparationSources, expectedPreparationSources) {
+			return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "preparation_sources", "stored preparation sources do not match the receipt", nil)
+		}
+		if err := s.validateBoundInputs(preparationSources); err != nil {
+			return OperationResult{}, err
+		}
 	}
 	missionScope, err := workspace.Strings(mission.Document, "scope", true)
 	if err != nil {

@@ -14,6 +14,7 @@ import (
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/projection"
+	spectacularruntime "github.com/alexsmedile/spectacular/v2/internal/runtime"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
 
@@ -80,12 +81,36 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 		DesignSufficiency: "sufficient", SliceQuality: "coherent", EvidenceClaims: []string{"claim:closure"}, Scope: []string{"v2"}, AllowedActions: []string{"test", "write-v2"}, ForbiddenEffects: []string{"provider-mutation"},
 		Baseline: contract.Fingerprint, BudgetUnits: 2, RepairBudget: 2, ExpiresAt: "2026-08-11T10:00:00Z", Stops: []string{"authority-drift"}, RecoveryPoint: "git-head", ReturnDestination: "central", Authorization: missionDecision, ExpectedProposalFingerprint: proposal.Fingerprint, IdempotencyKey: "mission-create-1",
 	}
+	if _, err := svc.CreateMission(missionInput); refusalCode(err) != domain.RefusalMissingRequiredField {
+		t.Fatalf("Mission without preparation receipt err=%v", err)
+	}
+	preparation, err := spectacularruntime.CompilePreparation(spectacularruntime.PreparationInput{
+		Proposal: spectacularruntime.BoundSource{Ref: proposalRef, Fingerprint: proposal.Fingerprint}, Baseline: contract.Fingerprint,
+		DirectionSources: []spectacularruntime.BoundSource{{Ref: contractRef, Fingerprint: contract.Fingerprint}},
+		Candidates:       []spectacularruntime.CandidateSlice{{Name: "governed-loop", Outcome: "Reconcile and recover.", Evidence: []string{"claim:closure"}, CancellationState: "Proposal remains inspectable", Reversibility: "local fixture", StandaloneCoherence: "complete B+C loop", IntegrationPath: "governance service", LearningValue: "cold recovery proof"}},
+		Selected:         "governed-loop", DesignSufficiency: "sufficient", DesignRationale: "accepted authority and closure contracts", SliceQuality: "coherent", SliceRationale: "serial governed loop",
+		CompletionBoundary: []string{"claim:closure"}, StopConditions: []string{"authority-drift"}, EvidenceClaims: []string{"claim:closure"}, FreshUntil: "2026-08-10T11:00:00Z",
+	}, testNow)
+	must(t, err)
+	missionInput.Preparation = &preparation
+	tampered := preparation
+	tampered.Selected = "tampered"
+	missionInput.Preparation = &tampered
+	if _, err := svc.CreateMission(missionInput); refusalCode(err) != domain.RefusalInvalidKnownField {
+		t.Fatalf("tampered preparation receipt err=%v", err)
+	}
+	missionInput.Preparation = &preparation
 	_, err = svc.CreateMission(missionInput)
 	must(t, err)
 
 	mission := lookup(t, openService(t, root), missionRef, domain.Mission)
 	activateDecision := createDecision(t, root, "0199b000-0000-7000-8000-000000000013", "mission.transition.active", missionRef, mission.Fingerprint, nil, "activate")
 	svc = openService(t, root)
+	stalePreparationService := svc
+	stalePreparationService.Now = func() time.Time { return testNow.Add(2 * time.Hour) }
+	if _, err := stalePreparationService.TransitionMission(TransitionInput{Mission: missionRef, To: "active", Authorization: activateDecision, ExpectedFingerprint: mission.Fingerprint, IdempotencyKey: "mission-active-stale"}); refusalCode(err) != domain.RefusalExpiredAuthority {
+		t.Fatalf("stale preparation did not block activation: %v", err)
+	}
 	active, err := svc.TransitionMission(TransitionInput{Mission: missionRef, To: "active", Authorization: activateDecision, ExpectedFingerprint: mission.Fingerprint, IdempotencyKey: "mission-active-1"})
 	must(t, err)
 	if replay, err := openService(t, root).TransitionMission(TransitionInput{Mission: missionRef, To: "active", Authorization: activateDecision, ExpectedFingerprint: mission.Fingerprint, IdempotencyKey: "mission-active-1"}); err != nil || !replay.IdempotentReplay {

@@ -1,4 +1,4 @@
-// Package command owns the complete public Scenario A command registry.
+// Package command owns the complete public v2 mechanical command registry.
 package command
 
 import (
@@ -10,10 +10,12 @@ import (
 	"strings"
 	"time"
 
+	contextcompiler "github.com/alexsmedile/spectacular/v2/internal/context"
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/governance"
 	"github.com/alexsmedile/spectacular/v2/internal/projection"
+	spectacularruntime "github.com/alexsmedile/spectacular/v2/internal/runtime"
 )
 
 type Effect string
@@ -40,6 +42,7 @@ const (
 	argumentsTransition
 	argumentsReconcile
 	argumentsArchive
+	argumentsContext
 )
 
 const (
@@ -69,6 +72,9 @@ const (
 	opContractReconcile
 	opContractReconcileSet
 	opMissionArchive
+	opWorkspaceContext
+	opMissionPrepare
+	opMissionAutopilot
 )
 
 var Registry = []Spec{
@@ -82,11 +88,14 @@ var Registry = []Spec{
 	{[]string{"evidence", "show"}, "<ref> [--json]", argumentsOne, "spectacular.evidence.show.v1", ReadOnly, opEvidenceShow},
 	{[]string{"decision", "show"}, "<ref> [--json]", argumentsOne, "spectacular.decision.show.v1", ReadOnly, opDecisionShow},
 	{[]string{"workspace", "validate"}, "<scope> [--json]", argumentsOne, "spectacular.workspace.validate.v1", ReadOnly, opWorkspaceValidate},
+	{[]string{"workspace", "context"}, "<project|mission-ref> --event <@Event> [--selector <$domain.verb>] [--json]", argumentsContext, "spectacular.workspace.context.v1", ReadOnly, opWorkspaceContext},
 	{[]string{"proposal", "show"}, "<ref> [--json]", argumentsOne, "spectacular.proposal.show.v1", ReadOnly, opProposalShow},
 	{[]string{"proposal", "check-base"}, "<ref> [--json]", argumentsOne, "spectacular.proposal.check-base.v1", ReadOnly, opProposalCheckBase},
 	{[]string{"proposal", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.proposal.create.v1", Mutating, opProposalCreate},
+	{[]string{"mission", "prepare"}, "--input <json-file> [--json]", argumentsInput, "spectacular.mission.prepare.v1", ReadOnly, opMissionPrepare},
 	{[]string{"mission", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.mission.create.v1", Mutating, opMissionCreate},
 	{[]string{"mission", "transition"}, "<ref> --to <state> --authorization <decision-ref> --expected-fingerprint <sha> --idempotency-key <key> [--assessment <ref>] [--reconciliation <ref>] [--disposition <value>] [--terminal-next-action <text>] [--satisfied-objectives <ref,ref>] [--json]", argumentsTransition, "spectacular.mission.transition.v1", Mutating, opMissionTransition},
+	{[]string{"mission", "autopilot"}, "--input <json-file> [--json]", argumentsInput, "spectacular.mission.autopilot.v1", ReadOnly, opMissionAutopilot},
 	{[]string{"handoff", "show"}, "<ref> [--json]", argumentsOne, "spectacular.handoff.show.v1", ReadOnly, opHandoffShow},
 	{[]string{"handoff", "validate"}, "<ref> [--json]", argumentsOne, "spectacular.handoff.validate.v1", ReadOnly, opHandoffValidate},
 	{[]string{"handoff", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.handoff.create.v1", Mutating, opHandoffCreate},
@@ -236,6 +245,27 @@ func (r Runner) Run(args []string) int {
 		if err == nil {
 			value, err = g.ArchiveMission(input)
 		}
+	case opWorkspaceContext:
+		var config contextcompiler.Config
+		config, err = contextInput(rest)
+		if err == nil {
+			value, err = (contextcompiler.Compiler{Workspace: workspace, Now: r.Now}).Compile(config)
+		}
+	case opMissionPrepare:
+		var input spectacularruntime.PreparationInput
+		err = readInput(rest[1], &input)
+		if err == nil {
+			err = validatePreparationSources(workspace, input)
+		}
+		if err == nil {
+			value, err = spectacularruntime.CompilePreparation(input, currentTime(r.Now))
+		}
+	case opMissionAutopilot:
+		var input spectacularruntime.AutopilotInput
+		err = readInput(rest[1], &input)
+		if err == nil {
+			value, err = g.CompileAutopilot(input)
+		}
 	}
 	if err != nil {
 		return refuse(err)
@@ -296,10 +326,62 @@ func (s Spec) validateArguments(args []string) string {
 		if _, err := archiveInput(args); err != nil {
 			return err.Error()
 		}
+	case argumentsContext:
+		if _, err := contextInput(args); err != nil {
+			return err.Error()
+		}
 	default:
 		return "command registry has an invalid argument shape"
 	}
 	return ""
+}
+
+func contextInput(args []string) (contextcompiler.Config, error) {
+	scope, values, err := optionMap(args, true)
+	if err != nil {
+		return contextcompiler.Config{}, err
+	}
+	if err := requireOptions(values, "--event"); err != nil {
+		return contextcompiler.Config{}, err
+	}
+	if err := rejectUnknownOptions(values, "--event", "--selector"); err != nil {
+		return contextcompiler.Config{}, err
+	}
+	return contextcompiler.Config{Scope: scope, Event: values["--event"], Selector: values["--selector"]}, nil
+}
+
+func currentTime(now func() time.Time) time.Time {
+	if now == nil {
+		return time.Now().UTC()
+	}
+	return now().UTC()
+}
+
+func validatePreparationSources(workspace *discovery.Workspace, input spectacularruntime.PreparationInput) error {
+	if err := validateBoundSource(workspace, input.Proposal); err != nil {
+		return err
+	}
+	for _, source := range input.DirectionSources {
+		if err := validateBoundSource(workspace, source); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateBoundSource(workspace *discovery.Workspace, source spectacularruntime.BoundSource) error {
+	ref, err := domain.ParseReference(source.Ref)
+	if err != nil {
+		return err
+	}
+	entry, err := workspace.Lookup(source.Ref, ref.Type)
+	if err != nil {
+		return err
+	}
+	if entry.Fingerprint != source.Fingerprint {
+		return domain.NewRefusal(domain.RefusalStaleFingerprint, "source", "bound source fingerprint is stale", nil)
+	}
+	return nil
 }
 
 func readInput(path string, target any) error {

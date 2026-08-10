@@ -1,5 +1,7 @@
 package governance
 
+import spectacularruntime "github.com/alexsmedile/spectacular/v2/internal/runtime"
+
 // Mutation inputs are explicit, already-confirmed mechanical requests. The
 // guided Skill owns authoring and judgment before these structures reach the
 // CLI.
@@ -51,31 +53,32 @@ type ObjectiveInput struct {
 }
 
 type MissionInput struct {
-	ID                          string           `json:"id"`
-	Title                       string           `json:"title"`
-	Actor                       string           `json:"actor"`
-	Proposal                    string           `json:"proposal"`
-	Outcome                     string           `json:"outcome"`
-	Objectives                  []ObjectiveInput `json:"objectives"`
-	InitialRunID                string           `json:"initial_run_id"`
-	DesignSufficiency           string           `json:"design_sufficiency"`
-	SliceQuality                string           `json:"slice_quality"`
-	Dependencies                []string         `json:"dependencies"`
-	Gaps                        []string         `json:"gaps"`
-	EvidenceClaims              []string         `json:"evidence_claims"`
-	Scope                       []string         `json:"scope"`
-	AllowedActions              []string         `json:"allowed_actions"`
-	ForbiddenEffects            []string         `json:"forbidden_effects"`
-	Baseline                    string           `json:"baseline"`
-	BudgetUnits                 int              `json:"budget_units"`
-	RepairBudget                int              `json:"repair_budget"`
-	ExpiresAt                   string           `json:"expires_at"`
-	Stops                       []string         `json:"stops"`
-	RecoveryPoint               string           `json:"recovery_point"`
-	ReturnDestination           string           `json:"return_destination"`
-	Authorization               string           `json:"authorization"`
-	ExpectedProposalFingerprint string           `json:"expected_proposal_fingerprint"`
-	IdempotencyKey              string           `json:"idempotency_key"`
+	ID                          string                                 `json:"id"`
+	Title                       string                                 `json:"title"`
+	Actor                       string                                 `json:"actor"`
+	Proposal                    string                                 `json:"proposal"`
+	Outcome                     string                                 `json:"outcome"`
+	Objectives                  []ObjectiveInput                       `json:"objectives"`
+	InitialRunID                string                                 `json:"initial_run_id"`
+	DesignSufficiency           string                                 `json:"design_sufficiency"`
+	SliceQuality                string                                 `json:"slice_quality"`
+	Dependencies                []string                               `json:"dependencies"`
+	Gaps                        []string                               `json:"gaps"`
+	EvidenceClaims              []string                               `json:"evidence_claims"`
+	Scope                       []string                               `json:"scope"`
+	AllowedActions              []string                               `json:"allowed_actions"`
+	ForbiddenEffects            []string                               `json:"forbidden_effects"`
+	Baseline                    string                                 `json:"baseline"`
+	BudgetUnits                 int                                    `json:"budget_units"`
+	RepairBudget                int                                    `json:"repair_budget"`
+	ExpiresAt                   string                                 `json:"expires_at"`
+	Stops                       []string                               `json:"stops"`
+	RecoveryPoint               string                                 `json:"recovery_point"`
+	ReturnDestination           string                                 `json:"return_destination"`
+	Authorization               string                                 `json:"authorization"`
+	ExpectedProposalFingerprint string                                 `json:"expected_proposal_fingerprint"`
+	IdempotencyKey              string                                 `json:"idempotency_key"`
+	Preparation                 *spectacularruntime.PreparationReceipt `json:"preparation,omitempty"`
 }
 
 type HandoffInput struct {

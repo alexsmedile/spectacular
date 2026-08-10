@@ -302,6 +302,9 @@ func (s Service) CompileAutopilot(input spectacularruntime.AutopilotInput) (spec
 	if mission.Fingerprint != input.Mission.Fingerprint {
 		return spectacularruntime.AutopilotCharter{}, stale("mission", input.Mission.Fingerprint, mission.Fingerprint)
 	}
+	if err := s.validateFresh(mission, "mission"); err != nil {
+		return spectacularruntime.AutopilotCharter{}, err
+	}
 	if value(mission.Document.Record.Status) != "active" {
 		return spectacularruntime.AutopilotCharter{}, domain.NewRefusal(domain.RefusalInvalidTransition, "mission", "Autopilot requires an active Mission", nil)
 	}
@@ -311,6 +314,9 @@ func (s Service) CompileAutopilot(input spectacularruntime.AutopilotInput) (spec
 	}
 	if decision.Fingerprint != input.Authorization.Fingerprint {
 		return spectacularruntime.AutopilotCharter{}, stale("authorization", input.Authorization.Fingerprint, decision.Fingerprint)
+	}
+	if err := s.validateFresh(decision, "authorization"); err != nil {
+		return spectacularruntime.AutopilotCharter{}, err
 	}
 	for _, source := range input.AuthoritativeSources {
 		_, actual, lookupErr := s.Workspace.Source(source.Ref)

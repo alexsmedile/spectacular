@@ -92,6 +92,57 @@ func TestScenarioSCleanV2DogfoodSurvivesRuntimeReplacement(t *testing.T) {
 	}
 }
 
+func TestAutopilotRefusesStaleCanonicalMissionAndDecisionAuthority(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		path string
+	}{
+		{name: "Mission freshness source", path: ".spectacular/records/evidence.md"},
+		{name: "Decision freshness source", path: ".spectacular/workspace.yaml"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := copyFixture(t)
+			seedScenarioSAuthority(t, root)
+			opened, err := discovery.Open(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			proposal, err := opened.Lookup("Proposal:"+missionSourceID, domain.Proposal)
+			if err != nil {
+				t.Fatal(err)
+			}
+			mission, err := opened.Lookup("Mission:"+missionID, domain.Mission)
+			if err != nil {
+				t.Fatal(err)
+			}
+			decision, err := opened.Lookup("Decision:"+autopilotDecisionID, domain.Decision)
+			if err != nil {
+				t.Fatal(err)
+			}
+			input := spectacularruntime.AutopilotInput{
+				Enabled: true, Mission: spectacularruntime.BoundSource{Ref: "Mission:" + missionID, Fingerprint: mission.Fingerprint}, Authorization: spectacularruntime.BoundSource{Ref: "Decision:" + autopilotDecisionID, Fingerprint: decision.Fingerprint},
+				Outcome: "reproduce cold v2 orientation", NonGoals: []string{"provider effects"}, AuthoritativeSources: []spectacularruntime.BoundSource{{Ref: "Proposal:" + missionSourceID, Fingerprint: proposal.Fingerprint}},
+				DelegatedDecisionDomain: []string{"reversible local verification"}, AllowedActions: []string{"inspect", "test"}, ForbiddenEffects: spectacularruntime.CanonicalForbiddenEffects(),
+				BudgetUnits: 2, RepairBudget: 1, RequiredChecks: []string{"compare generation basis"}, ExpiresAt: "2026-08-11T10:00:00Z", StopConditions: []string{"authority drift"}, RecoveryPoint: "git:clean-v2-dogfood", ReturnDestination: "Mission owner",
+			}
+			path := filepath.Join(root, filepath.FromSlash(test.path))
+			data, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, append(data, []byte("\n# freshness drift\n")...), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			inputPath := writeJSONInput(t, input)
+			var stdout, stderr bytes.Buffer
+			exit := (Runner{Cwd: root, Stdout: &stdout, Stderr: &stderr, Now: fixedNow}).Run([]string{"mission", "autopilot", "--input", inputPath, "--json"})
+			if exit != 3 || !strings.Contains(stdout.String(), `"code":"insufficient_evidence"`) {
+				t.Fatalf("stale canonical authority exit=%d stdout=%s stderr=%s", exit, stdout.String(), stderr.String())
+			}
+		})
+	}
+}
+
 func seedScenarioSAuthority(t *testing.T, root string) {
 	t.Helper()
 	opened, err := discovery.Open(root)

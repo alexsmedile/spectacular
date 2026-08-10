@@ -24,6 +24,16 @@ const (
 	RefusalUnsupportedYAMLGraph RefusalCode = "unsupported_yaml_graph"
 	RefusalInvalidUTF8          RefusalCode = "invalid_utf8"
 	RefusalPersistence          RefusalCode = "persistence_failed"
+	RefusalWorkspaceNotFound    RefusalCode = "workspace_not_found"
+	RefusalInvalidManifest      RefusalCode = "invalid_manifest"
+	RefusalPathEscape           RefusalCode = "path_escape"
+	RefusalRecordNotFound       RefusalCode = "record_not_found"
+	RefusalNounMismatch         RefusalCode = "noun_mismatch"
+	RefusalAmbiguousReference   RefusalCode = "ambiguous_reference"
+	RefusalInvalidScope         RefusalCode = "invalid_scope"
+	RefusalStaleRequired        RefusalCode = "stale_required_source"
+	RefusalConflictingAuthority RefusalCode = "conflicting_authority"
+	RefusalInvalidFingerprint   RefusalCode = "invalid_continuation_fingerprint"
 )
 
 // Refusal describes a deterministic rejection without granting the caller an

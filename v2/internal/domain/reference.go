@@ -6,16 +6,22 @@ import "strings"
 type RecordType string
 
 const (
-	Proposal RecordType = "Proposal"
-	Mission  RecordType = "Mission"
+	Proposal   RecordType = "Proposal"
+	Mission    RecordType = "Mission"
+	Anchor     RecordType = "Anchor"
+	Gap        RecordType = "Gap"
+	Run        RecordType = "Run"
+	Checkpoint RecordType = "Checkpoint"
+	Evidence   RecordType = "Evidence"
+	Decision   RecordType = "Decision"
 )
 
 func ParseRecordType(raw string) (RecordType, error) {
 	switch RecordType(raw) {
-	case Proposal, Mission:
+	case Proposal, Mission, Anchor, Gap, Run, Checkpoint, Evidence, Decision:
 		return RecordType(raw), nil
 	default:
-		return "", NewRefusal(RefusalInvalidType, "type", "expected Proposal or Mission", nil)
+		return "", NewRefusal(RefusalInvalidType, "type", "unknown record noun", nil)
 	}
 }
 

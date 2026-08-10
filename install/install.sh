@@ -108,7 +108,18 @@ resolve_artifact() {
 verify_inventory() {
   inventory="$(tar -tzf "$artifact_path")" || die "release archive is unreadable"
   [[ -n "$inventory" ]] || die "release archive is empty"
+  detailed_inventory="$(tar -tvzf "$artifact_path")" || die "release archive metadata is unreadable"
+  # Installation copies and executes the payload.  Treat every archive entry
+  # as hostile until tar has shown it to be an ordinary file.  In particular,
+  # names alone cannot distinguish a regular binary from a symlink to an
+  # attacker-controlled executable outside the extraction root.
+  while IFS= read -r detail; do
+    [[ "${detail:0:1}" == "-" ]] || die "release archive contains a non-regular entry"
+  done <<< "$detailed_inventory"
+  duplicates="$(printf '%s\n' "$inventory" | LC_ALL=C sort | uniq -d)"
+  [[ -z "$duplicates" ]] || die "release archive contains duplicate entry names"
   while IFS= read -r entry; do
+    [[ "$entry" != /* && "$entry" != *'//'* && "$entry" != *'/./'* && "$entry" != *$'\n'* && "$entry" != *$'\r'* ]] || die "unsafe release entry: $entry"
     case "$entry" in
       spectacular/RELEASE.json|spectacular/VERSION|spectacular/bin/spectacular) ;;
       spectacular/plugins/spectacular/.codex-plugin/plugin.json) ;;

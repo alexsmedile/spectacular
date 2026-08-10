@@ -1,15 +1,15 @@
 ---
 type: Checkpoint
-id: 0198a1a0-0000-7000-8000-000000000006
-title: Implementation ready
-freshness_checked_at: "2026-08-01T00:00:00Z"
-freshness_valid_until: "2026-12-31T23:59:59Z"
-freshness_source: Evidence:0198a1a0-0000-7000-8000-000000000007
-freshness_source_fingerprint: "5147c4d257df409a8b6b759ae7b856dfd65e34f74608ec3bdbc3d824a6911d38"
-run: Run:0198a1a0-0000-7000-8000-000000000005
+id: 019fe381-5d61-7223-b362-03a5f99a7b06
+title: RC cutover evidence is ready for owner review
 evidence:
-  - Evidence:0198a1a0-0000-7000-8000-000000000007
+    - Evidence:019fe381-5d61-7223-b362-03a5f99a7b07
+freshness_checked_at: "2026-08-10T00:00:00Z"
+freshness_source: .spectacular/workspace.yaml
+freshness_source_fingerprint: 5b9af18ac4b8e0f891306a59e3d6e4d81c8b0669ab220847a22b3267d778d1f0
+freshness_valid_until: "2027-08-10T00:00:00Z"
+run: Run:019fe381-5d61-7223-b362-03a5f99a7b05
 ---
-# Checkpoint
+# RC cutover checkpoint
 
-The next bounded operation is authorized after direct evidence inspection.
+The local release-readiness proof is complete. Publishing remains an owner and provider gate.

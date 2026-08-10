@@ -1,19 +1,23 @@
 ---
 type: Anchor
-id: 0198a1a0-0000-7000-8000-000000000013
+id: 019fe381-5d61-7223-b362-03a5f99a7b13
 title: Spectacular v2
-freshness_checked_at: "2026-08-01T00:00:00Z"
-freshness_valid_until: "2026-12-31T23:59:59Z"
-freshness_source: Evidence:0198a1a0-0000-7000-8000-000000000007
-freshness_source_fingerprint: "5147c4d257df409a8b6b759ae7b856dfd65e34f74608ec3bdbc3d824a6911d38"
-direction: Recover and resume safely from canonical v2 records.
 boundaries:
-  - Read-only Scenario A commands only.
+    - v2 is the sole live root product surface.
+    - No v1 compatibility, migration, or provider effect is implicit.
 constraints:
-  - Continue only with exact current authority.
+    - Current Contracts and exact source fingerprints govern consequential changes.
+    - Tags, pushes, releases, and uploads require separate owner and provider authority.
 current_truth:
-  - Mission:0198a1a0-0000-7000-8000-000000000002
+    - Contract:019fe381-5d61-7223-b362-03a5f99a7b10
+    - Evidence:019fe381-5d61-7223-b362-03a5f99a7b07
+    - Mission:019fe381-5d61-7223-b362-03a5f99a7b02
+direction: Operate one canonical, pointer-first v2 workspace for governed work and release it only through explicit owner and provider authority.
+freshness_checked_at: "2026-08-10T00:00:00Z"
+freshness_source: .spectacular/workspace.yaml
+freshness_source_fingerprint: 5b9af18ac4b8e0f891306a59e3d6e4d81c8b0669ab220847a22b3267d778d1f0
+freshness_valid_until: "2027-08-10T00:00:00Z"
 ---
-# Project anchor
+# Spectacular v2 project anchor
 
-This workspace self-hosts Spectacular v2 Scenario A cold recovery.
+This is the live self-hosted project workspace. Its current release state is v2.0.0-rc.1: locally verified, release-ready, and unpublished.

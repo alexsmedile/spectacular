@@ -1,13 +1,13 @@
 ---
 type: Proposal
-id: 0198a1a0-0000-7000-8000-000000000001
-title: Prove cold recovery
-description: Define the accepted source for the bounded recovery Mission.
+id: 019fe381-5d61-7223-b362-03a5f99a7b01
+title: Promote Spectacular v2 to the root public surface
+description: Replace the v1 product surface with the accepted pointer-first v2 release candidate.
 status: accepted
 created_by: owner
-created: "2026-08-01T00:00:00Z"
-updated: "2026-08-01T00:00:00Z"
+created: "2026-08-10T00:00:00Z"
+updated: "2026-08-10T00:00:00Z"
 ---
-# Proposal
+# Accepted root cutover proposal
 
-Prove that a cold agent can orient and resume from canonical workspace evidence.
+The accepted cutover establishes v2.0.0-rc.1 as the sole live product surface. Historical v1 and refactor records remain recoverable through the pointers in RECOVERY.md.

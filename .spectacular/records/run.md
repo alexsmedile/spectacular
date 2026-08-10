@@ -1,15 +1,15 @@
 ---
 type: Run
-id: 0198a1a0-0000-7000-8000-000000000005
-title: Primary recovery run
-freshness_checked_at: "2026-08-01T00:00:00Z"
-freshness_valid_until: "2026-12-31T23:59:59Z"
-freshness_source: Evidence:0198a1a0-0000-7000-8000-000000000007
-freshness_source_fingerprint: "5147c4d257df409a8b6b759ae7b856dfd65e34f74608ec3bdbc3d824a6911d38"
-mission: Mission:0198a1a0-0000-7000-8000-000000000002
-latest_checkpoint: Checkpoint:0198a1a0-0000-7000-8000-000000000006
-expected_checkpoint_fingerprint: "fcd90511171de8a168d9763331dbba0f59888546f97ed9c2b103cbbb05da5065"
+id: 019fe381-5d61-7223-b362-03a5f99a7b05
+title: RC release-readiness run
+expected_checkpoint_fingerprint: d2e1bb65f96322361bac4b239314c5431d11b0db0e3aacd3f4c133aa4015b3bb
+freshness_checked_at: "2026-08-10T00:00:00Z"
+freshness_source: .spectacular/workspace.yaml
+freshness_source_fingerprint: 5b9af18ac4b8e0f891306a59e3d6e4d81c8b0669ab220847a22b3267d778d1f0
+freshness_valid_until: "2027-08-10T00:00:00Z"
+latest_checkpoint: Checkpoint:019fe381-5d61-7223-b362-03a5f99a7b06
+mission: Mission:019fe381-5d61-7223-b362-03a5f99a7b02
 ---
-# Run
+# Release-readiness run
 
-The active attempt is resumable from its latest checkpoint.
+Local assembly and lifecycle verification are complete; no provider effect has been attempted.

@@ -38,6 +38,31 @@ func fixture(t *testing.T) string {
 }
 func fixedNow() time.Time { return time.Date(2026, 8, 10, 10, 0, 0, 0, time.UTC) }
 
+func TestSelfHostedWorkspaceStatesRCGate(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := treeDigest(t, filepath.Join(root, ".spectacular"))
+	text := runJSON(t, root, []string{"workspace", "context", "project", "--event", "@Orient", "--json"})
+	for _, required := range []string{
+		`"ref":"Contract:019fe381-5d61-7223-b362-03a5f99a7b10"`,
+		`"ref":"Evidence:019fe381-5d61-7223-b362-03a5f99a7b07"`,
+		`"code":"resolve_blocking_gap"`,
+		`"detail":"blocking Gap prevents continuation"`,
+	} {
+		if !strings.Contains(text, required) {
+			t.Fatalf("self-hosted RC workspace missing %s: %s", required, text)
+		}
+	}
+	if strings.Contains(text, "Scenario A") {
+		t.Fatalf("self-hosted workspace still exposes fixture state: %s", text)
+	}
+	if after := treeDigest(t, filepath.Join(root, ".spectacular")); after != before {
+		t.Fatal("self-hosted workspace read mutated canonical state")
+	}
+}
+
 func TestPublicRegistryAndCommands(t *testing.T) {
 	if len(Registry) != 31 {
 		t.Fatalf("registry has %d commands, want 31", len(Registry))

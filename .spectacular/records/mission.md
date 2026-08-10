@@ -1,20 +1,20 @@
 ---
 type: Mission
-id: 0198a1a0-0000-7000-8000-000000000002
-title: Implement Scenario A cold recovery
-description: Deliver the bounded read-only recovery slice.
+id: 019fe381-5d61-7223-b362-03a5f99a7b02
+title: Complete Spectacular v2.0.0-rc.1 cutover
+description: Preserve the verified root cutover and await the exact owner/provider release gate.
 status: active
 created_by: owner
-created: "2026-08-10T08:05:00Z"
-updated: "2026-08-10T08:05:00Z"
-source: Proposal:0198a1a0-0000-7000-8000-000000000001
-current_run: Run:0198a1a0-0000-7000-8000-000000000005
-expected_run_fingerprint: "ae550bf0a244bd9c8d8e527019eb9ef36a672233ac9fd9fa3b025e12080421aa"
-freshness_checked_at: "2026-08-01T00:00:00Z"
-freshness_valid_until: "2026-12-31T23:59:59Z"
-freshness_source: Evidence:0198a1a0-0000-7000-8000-000000000007
-freshness_source_fingerprint: "5147c4d257df409a8b6b759ae7b856dfd65e34f74608ec3bdbc3d824a6911d38"
+created: "2026-08-10T00:00:00Z"
+updated: "2026-08-10T00:00:00Z"
+source: Proposal:019fe381-5d61-7223-b362-03a5f99a7b01
+current_run: Run:019fe381-5d61-7223-b362-03a5f99a7b05
+expected_run_fingerprint: c48fbc3fbeb359c422af09dd627e0dc6e29585501dca69c74f99f0e0d6c34950
+freshness_checked_at: "2026-08-10T00:00:00Z"
+freshness_source: .spectacular/workspace.yaml
+freshness_source_fingerprint: 5b9af18ac4b8e0f891306a59e3d6e4d81c8b0669ab220847a22b3267d778d1f0
+freshness_valid_until: "2027-08-10T00:00:00Z"
 ---
-# Mission
+# RC cutover mission
 
-Recover the current run and continue only when exact authority matches.
+The v2 root cutover is locally verified. The only continuation is resolution of the explicit publication gate by the owner through the relevant provider.

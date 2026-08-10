@@ -1,14 +1,14 @@
 ---
 type: Gap
-id: 0198a1a0-0000-7000-8000-000000000004
-title: Optional documentation follow-up
-freshness_checked_at: "2026-08-01T00:00:00Z"
-freshness_valid_until: "2026-12-31T23:59:59Z"
-freshness_source: Evidence:0198a1a0-0000-7000-8000-000000000007
-freshness_source_fingerprint: "5147c4d257df409a8b6b759ae7b856dfd65e34f74608ec3bdbc3d824a6911d38"
-scope: Mission:0198a1a0-0000-7000-8000-000000000002
-blocking: false
+id: 019fe381-5d61-7223-b362-03a5f99a7b04
+title: Owner authorization and provider publication gate
+blocking: true
+freshness_checked_at: "2026-08-10T00:00:00Z"
+freshness_source: .spectacular/workspace.yaml
+freshness_source_fingerprint: 5b9af18ac4b8e0f891306a59e3d6e4d81c8b0669ab220847a22b3267d778d1f0
+freshness_valid_until: "2027-08-10T00:00:00Z"
+scope: Mission:019fe381-5d61-7223-b362-03a5f99a7b02
 ---
-# Gap
+# Publication gate
 
-This non-blocking Gap demonstrates visible Fog without preventing continuation.
+The owner must explicitly authorize any v1 freeze tag, branch push, and v2.0.0-rc.1 provider publication. This local workspace has no provider authority.

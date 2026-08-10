@@ -83,6 +83,34 @@ fi
 [[ "$before" == "$(shasum -a 256 "$safe_prefix/sentinel")" ]]
 [[ -z "$(find "$safe_prefix" -mindepth 1 ! -name sentinel -print -quit)" ]]
 
+# A correctly checksummed archive is still untrusted.  This fixture keeps the
+# allowlisted name inventory but substitutes the executable with an absolute
+# symlink; installation must reject it before it writes anything below prefix.
+hostile_source="$test_root/hostile-source"
+cp -R "$first" "$hostile_source"
+hostile_stage="$test_root/hostile-stage"
+mkdir -p "$hostile_stage/spectacular/bin"
+tar -xzf "$first/$corrupt_artifact" -C "$hostile_stage"
+rm "$hostile_stage/spectacular/bin/spectacular"
+ln -s "$test_root/outside-binary" "$hostile_stage/spectacular/bin/spectacular"
+hostile_entries=()
+while IFS= read -r entry; do
+  hostile_entries+=("$entry")
+done < <(tar -tzf "$first/$corrupt_artifact")
+tar -czf "$hostile_source/$corrupt_artifact" -C "$hostile_stage" "${hostile_entries[@]}"
+hostile_digest="$(shasum -a 256 "$hostile_source/$corrupt_artifact" | awk '{print $1}')"
+awk -v name="$corrupt_artifact" -v digest="$hostile_digest" '$2 == name {$1 = digest} {print $1 "  " $2}' "$hostile_source/SHA256SUMS" > "$hostile_source/SHA256SUMS.new"
+mv "$hostile_source/SHA256SUMS.new" "$hostile_source/SHA256SUMS"
+hostile_prefix="$test_root/hostile-refusal"
+mkdir -p "$hostile_prefix"
+printf 'preserve\n' > "$hostile_prefix/sentinel"
+if "$release_root/install/install.sh" install --prefix "$hostile_prefix" --source "$hostile_source" --runtime codex >/dev/null 2>&1; then
+  echo "symlink archive unexpectedly installed" >&2
+  exit 1
+fi
+[[ -f "$hostile_prefix/sentinel" ]]
+[[ -z "$(find "$hostile_prefix" -mindepth 1 ! -name sentinel -print -quit)" ]]
+
 unsupported_prefix="$test_root/unsupported-refusal"
 mkdir -p "$unsupported_prefix"
 printf 'preserve\n' > "$unsupported_prefix/sentinel"

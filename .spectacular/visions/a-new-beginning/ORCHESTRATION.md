@@ -4,8 +4,8 @@ status: active
 authority: owner-directed-method
 vision: a-new-beginning
 program_branch: refactor/a-new-beginning
-checkpoint: b-c-charter-prepared
-active_stage: b-c-implementation-next-ready
+checkpoint: b-c-accepted-integrated
+active_stage: skill-runtime-prerequisites-preparation-next-ready
 updated: 2026-08-10
 ---
 
@@ -331,8 +331,8 @@ ultimately simplified canonical frontmatter to tree-shaped YAML with determinist
 anchors, aliases, shared graphs, and cycles. H28 accepted exact head `a488b2e…`; the owner accepted
 M1 and the scenario-first amendment with “OK CONTINUE”; central integrated the branch at
 `7759461a…` and reran the complete readonly Go matrix successfully. The sole current program is
-v1.8: W0/M1/Scenario A accepted and integrated → one BC governed-loop Mission → separate
-Skill/runtime-prerequisites Mission → release/distribution. BC preparation is next-ready; no
+v1.9: W0/M1/Scenario A/B+C accepted and integrated → separate Skill/runtime-prerequisites
+Mission → release/distribution. Skill/runtime-prerequisites preparation is next-ready; no
 successor Mission is active.
 
 Copy-ready prompts live in [`handoffs/`](handoffs/).

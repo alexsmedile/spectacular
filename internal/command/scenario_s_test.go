@@ -10,6 +10,7 @@ import (
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
+	"github.com/alexsmedile/spectacular/v2/internal/humanlayout"
 	spectacularruntime "github.com/alexsmedile/spectacular/v2/internal/runtime"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
@@ -97,7 +98,7 @@ func TestAutopilotRefusesStaleCanonicalMissionAndDecisionAuthority(t *testing.T)
 		name string
 		path string
 	}{
-		{name: "Mission freshness source", path: ".spectacular/records/evidence.md"},
+		{name: "Mission freshness source", path: fixtureEvidencePath},
 		{name: "Decision freshness source", path: ".spectacular/workspace.yaml"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -196,7 +197,11 @@ func seedScenarioSAuthority(t *testing.T, root string) {
 	workspace.SetStrings(autopilotDecision, "expected_fingerprints", []string{mission.Fingerprint})
 	workspace.SetStrings(autopilotDecision, "authorized_effects", []string{"mission.autopilot", "inspect", "test"})
 	workspace.SetString(autopilotDecision, "expires_at", "2026-08-11T10:00:00Z")
-	writeTestDocument(t, filepath.Join(root, ".spectacular", "records", "autopilot-decision.md"), autopilotDecision)
+	paths, err := humanlayout.Plan(opened.Entries, []*workspace.Document{autopilotDecision})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeTestDocument(t, filepath.Join(root, filepath.FromSlash(paths[autopilotDecision.Record.ID])), autopilotDecision)
 }
 
 func writeCanonicalEntry(t *testing.T, entry discovery.Entry) {

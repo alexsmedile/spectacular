@@ -47,6 +47,9 @@ const (
 
 const (
 	opAnchorShowProject Operation = iota + 1
+	opAnchorShowProduct
+	opAnchorShowArchitecture
+	opAnchorShowStack
 	opMissionList
 	opMissionShow
 	opGapList
@@ -81,6 +84,9 @@ const (
 
 var Registry = []Spec{
 	{[]string{"anchor", "show", "project"}, "[--json]", argumentsNone, "spectacular.anchor.show.v1", ReadOnly, opAnchorShowProject},
+	{[]string{"anchor", "show", "product"}, "[--json]", argumentsNone, "spectacular.anchor.show.v1", ReadOnly, opAnchorShowProduct},
+	{[]string{"anchor", "show", "architecture"}, "[--json]", argumentsNone, "spectacular.anchor.show.v1", ReadOnly, opAnchorShowArchitecture},
+	{[]string{"anchor", "show", "stack"}, "[--json]", argumentsNone, "spectacular.anchor.show.v1", ReadOnly, opAnchorShowStack},
 	{[]string{"mission", "list"}, "[--json]", argumentsNone, "spectacular.mission.list.v1", ReadOnly, opMissionList},
 	{[]string{"mission", "show"}, "<ref> [--json]", argumentsOne, "spectacular.mission.show.v1", ReadOnly, opMissionShow},
 	{[]string{"gap", "list"}, "--scope <ref> [--json]", argumentsScope, "spectacular.gap.list.v1", ReadOnly, opGapList},
@@ -155,6 +161,12 @@ func (r Runner) Run(args []string) int {
 	switch spec.Operation {
 	case opAnchorShowProject:
 		value, err = b.Project()
+	case opAnchorShowProduct:
+		value, err = b.Detail("PRODUCT", domain.Anchor)
+	case opAnchorShowArchitecture:
+		value, err = b.Detail("ARCHITECTURE", domain.Anchor)
+	case opAnchorShowStack:
+		value, err = b.Detail("STACK", domain.Anchor)
 	case opMissionList:
 		value, err = b.MissionList()
 	case opMissionShow:
@@ -290,15 +302,22 @@ func (r Runner) Run(args []string) int {
 }
 
 func registeredShowCommand(noun domain.RecordType, ref string) (string, bool) {
+	if noun == domain.Anchor {
+		want := strings.ToLower(ref)
+		for _, spec := range Registry {
+			if len(spec.Words) == 3 && spec.Words[0] == "anchor" && spec.Words[1] == "show" && spec.Words[2] == want {
+				return "spectacular " + strings.Join(spec.Words, " "), true
+			}
+		}
+		return "", false
+	}
 	want := strings.ToLower(string(noun))
 	for _, spec := range Registry {
 		if len(spec.Words) < 2 || spec.Words[0] != want || spec.Words[1] != "show" {
 			continue
 		}
 		command := "spectacular " + strings.Join(spec.Words, " ")
-		if noun != domain.Anchor {
-			command += " " + ref
-		}
+		command += " " + ref
 		return command, true
 	}
 	return "", false
@@ -610,31 +629,31 @@ func writeJSON(w io.Writer, v any) error {
 	return encoder.Encode(v)
 }
 func renderHuman(w io.Writer, envelope projection.Envelope) {
-	fmt.Fprintf(w, "%s\nGenerated: %s\nBasis: %s\n", envelope.SchemaVersion, envelope.GeneratedAt, envelope.GenerationBasis)
 	switch v := envelope.Data.(type) {
 	case projection.ProjectView:
-		fmt.Fprintf(w, "Project: %s\nSource: %s %s\nFreshness: %s (%s → %s; %s)\nAuthoritative direction: %s\n", v.Authoritative.Identity.Path, v.Source.Path, v.Source.Fingerprint, v.Freshness.State, v.Freshness.CheckedAt, v.Freshness.ValidUntil, v.Freshness.Source.Path, v.Authoritative.Direction)
+		fmt.Fprintf(w, "Spectacular project orientation\n\n%s\n", v.Authoritative.Direction)
 		for _, item := range v.Authoritative.Boundaries {
-			fmt.Fprintf(w, "Authoritative boundary: %s\n", item)
+			fmt.Fprintf(w, "Boundary: %s\n", item)
 		}
 		for _, item := range v.Authoritative.Constraints {
-			fmt.Fprintf(w, "Authoritative constraint: %s\n", item)
+			fmt.Fprintf(w, "Constraint: %s\n", item)
 		}
 		for _, p := range v.Authoritative.CurrentTruth {
-			fmt.Fprintf(w, "Authoritative current truth: %s [%s]\n", p.Ref, p.ShowCommand)
+			fmt.Fprintf(w, "Current truth: %-14s %s\n", displayRef(p), p.ShowCommand)
 		}
 		for _, p := range v.Projection.Missions {
-			fmt.Fprintf(w, "Projected Mission: %s [%s]\n", p.Ref, p.ShowCommand)
+			fmt.Fprintf(w, "Mission:       %-14s %s\n", displayRef(p), p.ShowCommand)
 		}
 		for _, p := range v.Projection.Gaps {
-			fmt.Fprintf(w, "Projected Gap: %s [%s]\n", p.Ref, p.ShowCommand)
+			fmt.Fprintf(w, "Blocking Gap:  %-14s %s\n", displayRef(p), p.ShowCommand)
 		}
 		if v.Projection.Continuation != nil {
-			fmt.Fprintf(w, "Projected continuation: %s %s (authorized by %s)\n", v.Projection.Continuation.Operation, v.Projection.Continuation.Target.Ref, v.Projection.Continuation.AuthorizedBy.Ref)
+			fmt.Fprintf(w, "\nNext: %s %s\nAuthorized by: %s\n", v.Projection.Continuation.Operation, displayRef(v.Projection.Continuation.Target), displayRef(v.Projection.Continuation.AuthorizedBy))
 		}
 		if v.Projection.OwnerGate != nil {
-			fmt.Fprintf(w, "Projected owner gate: %s — %s [%s]\n", v.Projection.OwnerGate.Code, v.Projection.OwnerGate.Detail, v.Projection.OwnerGate.Source.ShowCommand)
+			fmt.Fprintf(w, "\nOwner gate: %s — %s\nInspect: %s\n", v.Projection.OwnerGate.Code, v.Projection.OwnerGate.Detail, v.Projection.OwnerGate.Source.ShowCommand)
 		}
+		fmt.Fprintf(w, "\nSource: %s\nFreshness: %s\n", v.Source.Path, v.Freshness.State)
 	case projection.Card:
 		renderCard(w, v)
 	case projection.List:
@@ -643,20 +662,54 @@ func renderHuman(w io.Writer, envelope projection.Envelope) {
 		}
 	case projection.Validation:
 		fmt.Fprintf(w, "Scope: %s\nValid: %t\nRecords: %d\n", v.Scope, v.Valid, v.Records)
+	default:
+		data, _ := json.MarshalIndent(v, "", "  ")
+		fmt.Fprintln(w, string(data))
 	}
+	fmt.Fprintf(w, "\nGenerated: %s\nBasis: %s\n", envelope.GeneratedAt, envelope.GenerationBasis)
 }
 func renderCard(w io.Writer, c projection.Card) {
-	fmt.Fprintf(w, "%s %s\nTitle: %s\nFreshness: %s (%s → %s)\nSource: %s %s\n", c.Noun, c.ID, c.Title, c.Freshness.State, c.Freshness.CheckedAt, c.Freshness.ValidUntil, c.Source.Path, c.Source.Fingerprint)
+	ref := c.Ref
+	if ref == "" {
+		ref = c.ID
+	}
+	fmt.Fprintf(w, "%s %s — %s\n", c.Noun, ref, c.Title)
+	if c.Outcome != "" {
+		fmt.Fprintf(w, "Outcome: %s\n", c.Outcome)
+	}
+	if c.State != "" {
+		fmt.Fprintf(w, "State: %s\n", c.State)
+	}
+	if c.CurrentObjective != nil {
+		fmt.Fprintf(w, "Objective: %s  %s\n", displayRef(*c.CurrentObjective), c.CurrentObjective.ShowCommand)
+	}
+	if c.CurrentRun != nil {
+		fmt.Fprintf(w, "Run: %s  %s\n", displayRef(*c.CurrentRun), c.CurrentRun.ShowCommand)
+	}
+	if c.LatestCheckpoint != nil {
+		fmt.Fprintf(w, "Checkpoint: %s  %s\n", displayRef(*c.LatestCheckpoint), c.LatestCheckpoint.ShowCommand)
+	}
 	for _, p := range c.Pointers {
-		fmt.Fprintf(w, "Pointer: %s %s %s %s [%s]\n", p.Noun, p.Ref, p.Path, p.Fingerprint, p.ShowCommand)
+		if (c.CurrentObjective != nil && p.Ref == c.CurrentObjective.Ref) || (c.CurrentRun != nil && p.Ref == c.CurrentRun.Ref) || (c.LatestCheckpoint != nil && p.Ref == c.LatestCheckpoint.Ref) {
+			continue
+		}
+		fmt.Fprintf(w, "Related: %s %-14s %s\n", p.Noun, displayRef(p), p.ShowCommand)
 	}
 	for _, p := range c.Gaps {
-		fmt.Fprintf(w, "Gap: %s %s [%s]\n", p.Ref, p.Path, p.ShowCommand)
+		fmt.Fprintf(w, "Gap: %s  %s\n", displayRef(p), p.ShowCommand)
 	}
 	if c.Continuation != nil {
-		fmt.Fprintf(w, "Continuation: %s %s (authorized by %s)\n", c.Continuation.Operation, c.Continuation.Target.Ref, c.Continuation.AuthorizedBy.Ref)
+		fmt.Fprintf(w, "Continuation: %s %s (authorized by %s)\n", c.Continuation.Operation, displayRef(c.Continuation.Target), displayRef(c.Continuation.AuthorizedBy))
 	}
 	if c.OwnerGate != nil {
-		fmt.Fprintf(w, "Owner gate: %s — %s [%s]\n", c.OwnerGate.Code, c.OwnerGate.Detail, c.OwnerGate.Source.ShowCommand)
+		fmt.Fprintf(w, "Owner gate: %s — %s\nInspect: %s\n", c.OwnerGate.Code, c.OwnerGate.Detail, c.OwnerGate.Source.ShowCommand)
 	}
+	fmt.Fprintf(w, "Source: %s\nFreshness: %s\n", c.Source.Path, c.Freshness.State)
+}
+
+func displayRef(pointer projection.Pointer) string {
+	if pointer.HumanRef != "" {
+		return pointer.HumanRef
+	}
+	return pointer.Ref
 }

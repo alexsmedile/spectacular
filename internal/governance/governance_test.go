@@ -13,10 +13,17 @@ import (
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
+	"github.com/alexsmedile/spectacular/v2/internal/humanlayout"
 	"github.com/alexsmedile/spectacular/v2/internal/projection"
 	spectacularruntime "github.com/alexsmedile/spectacular/v2/internal/runtime"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
+
+// recordPath is intentionally test-fixture-only. Production persistence uses
+// humanlayout.Plan; historical flat fixtures remain useful adversarial input.
+func recordPath(noun domain.RecordType, id domain.ID) string {
+	return filepath.ToSlash(filepath.Join(".spectacular", "records", strings.ToLower(string(noun))+"-"+id.String()+".md"))
+}
 
 const (
 	contractRef   = "Contract:0199b000-0000-7000-8000-000000000001"
@@ -397,6 +404,27 @@ func TestTransactionPreparationFailureCleansArtifacts(t *testing.T) {
 	}
 }
 
+func TestTransactionDeletionRollsBackAsOneLogicalChange(t *testing.T) {
+	root := t.TempDir()
+	first := filepath.Join(root, "first")
+	second := filepath.Join(root, "second")
+	must(t, os.WriteFile(first, []byte("keep-me"), 0o644))
+	must(t, os.WriteFile(second, []byte("old"), 0o644))
+	err := applyTransaction(root, "delete-rollback", []FileChange{
+		{Path: "first", Delete: true},
+		{Path: "second", Data: []byte("new"), Mode: 0o644},
+	}, 1)
+	if err == nil {
+		t.Fatal("injected interruption unexpectedly succeeded")
+	}
+	if got, readErr := os.ReadFile(first); readErr != nil || string(got) != "keep-me" {
+		t.Fatalf("deleted original was not restored: %q err=%v", got, readErr)
+	}
+	if got, readErr := os.ReadFile(second); readErr != nil || string(got) != "old" {
+		t.Fatalf("second original changed: %q err=%v", got, readErr)
+	}
+}
+
 func TestMultiContractReconciliationRefusesBeforeAnyPartialWrite(t *testing.T) {
 	root := governedFixture(t)
 	svc := openService(t, root)
@@ -418,6 +446,8 @@ func TestMultiContractReconciliationRefusesBeforeAnyPartialWrite(t *testing.T) {
 	assessmentTwo := "Assessment:0199b000-0000-7000-8000-000000000046"
 	svc = openService(t, root)
 	secondEntry := lookup(t, svc, secondRef, domain.Contract)
+	firstPath := first.Absolute
+	secondPath := secondEntry.Absolute
 	seed := []struct {
 		proposal, mission, assessment, target, fp, addition string
 	}{
@@ -459,8 +489,8 @@ func TestMultiContractReconciliationRefusesBeforeAnyPartialWrite(t *testing.T) {
 
 	decisionOne := createDecision(t, root, "0199b000-0000-7000-8000-000000000047", "contract.reconcile", contractRef, first.Fingerprint, []string{assessmentOne}, "accept")
 	decisionTwo := createDecision(t, root, "0199b000-0000-7000-8000-000000000048", "contract.reconcile", secondRef, secondEntry.Fingerprint, []string{assessmentTwo}, "accept")
-	beforeFirst := fileDigest(t, filepath.Join(root, ".spectacular", "records", "contract-0199b000-0000-7000-8000-000000000001.md"))
-	beforeSecond := fileDigest(t, filepath.Join(root, ".spectacular", "records", "contract-0199b000-0000-7000-8000-000000000040.md"))
+	beforeFirst := fileDigest(t, firstPath)
+	beforeSecond := fileDigest(t, secondPath)
 	svc = openService(t, root)
 	bad := []ReconcileInput{
 		{Contract: contractRef, Proposal: proposalOne, Authorization: decisionOne, ExpectedFingerprint: first.Fingerprint, IdempotencyKey: "atomic-two"},
@@ -469,7 +499,7 @@ func TestMultiContractReconciliationRefusesBeforeAnyPartialWrite(t *testing.T) {
 	if _, err := svc.ReconcileMany(bad); refusalCode(err) != domain.RefusalStaleFingerprint {
 		t.Fatalf("stale multi-Contract set err=%v", err)
 	}
-	if fileDigest(t, filepath.Join(root, ".spectacular", "records", "contract-0199b000-0000-7000-8000-000000000001.md")) != beforeFirst || fileDigest(t, filepath.Join(root, ".spectacular", "records", "contract-0199b000-0000-7000-8000-000000000040.md")) != beforeSecond {
+	if fileDigest(t, firstPath) != beforeFirst || fileDigest(t, secondPath) != beforeSecond {
 		t.Fatal("multi-Contract validation partially mutated current truth")
 	}
 	svc = openService(t, root)
@@ -513,11 +543,14 @@ func TestZeroDeltaAbandonedAndSupersededMissionsResolveThenArchive(t *testing.T)
 			workspace.SetString(assessment, "verdict", "ready-for-owner")
 			workspace.SetStrings(assessment, "claims", []string{})
 			workspace.SetStrings(assessment, "evidence", []string{})
+			docs := []*workspace.Document{proposal, mission, assessment}
+			paths, planErr := humanlayout.Plan(svc.Workspace.Entries, docs)
+			must(t, planErr)
 			var seed []FileChange
-			for _, doc := range []*workspace.Document{proposal, mission, assessment} {
+			for _, doc := range docs {
 				data, err := workspace.Canonical(doc)
 				must(t, err)
-				seed = append(seed, FileChange{Path: recordPath(doc.Record.Type, doc.Record.ID), Data: data, Mode: 0o644})
+				seed = append(seed, FileChange{Path: paths[doc.Record.ID], Data: data, Mode: 0o644})
 			}
 			must(t, ApplyTransaction(root, "seed-zero-delta-"+disposition, seed))
 			missionEntry := lookup(t, openService(t, root), missionRef, domain.Mission)
@@ -532,6 +565,9 @@ func TestZeroDeltaAbandonedAndSupersededMissionsResolveThenArchive(t *testing.T)
 			archived := lookup(t, openService(t, root), missionRef, domain.Mission)
 			if mustString(archived.Document, "disposition") != disposition {
 				t.Fatalf("disposition=%s", mustString(archived.Document, "disposition"))
+			}
+			if !strings.HasPrefix(archived.Path, ".spectacular/archive/missions/") || filepath.Base(archived.Path) != "MISSION.md" {
+				t.Fatalf("Mission bundle was not archived atomically: %s", archived.Path)
 			}
 		})
 	}

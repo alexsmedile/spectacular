@@ -1,6 +1,6 @@
 ---
 name: spectacular
-version: 2.0.0-rc.1
+version: 2.0.0-rc.2
 description: Guide work in a canonical Spectacular v2 workspace from cold orientation through Proposal, Mission preparation, governed execution, Evidence assessment, reconciliation, and closure. Use for `/spectacular` jobs such as orient, propose, define, decide, start, resume, handoff, assess, reconcile, resolve, or audit; for compiling bounded runtime context or an explicit Autopilot charter; and for safely continuing a Mission after session or runtime replacement.
 ---
 
@@ -13,6 +13,8 @@ their native providers.
 ## Start every workflow
 
 1. Discover the explicit v2 workspace; never fall back to a v1 directory or implicit convention.
+   Read `PROJECT.md` and the named project Anchors first. Treat readable Mission paths and scoped
+   references as navigation; retain UUIDv7 and fingerprints when binding authority or mutation.
 2. Compile only the entered scope:
    `spectacular workspace context <project|Mission-ref> --event <@Event> --json`.
 3. Treat the compiled bundle as a projection. Follow its source pointers for authority and use its
@@ -44,6 +46,9 @@ Mission.
   the approved envelope.
 - A guided workflow may draft inputs. Persist them only after confirmation and through the
   registry-owned noun-first command in [mechanical-interface.md](generated/mechanical-interface.md).
+- Do not hand-author ordinary canonical records. Direct Markdown editing is limited to explicit
+  bootstrap or bounded repair; normal creation uses the CLI so identity, layout, indexes,
+  authorization, and idempotency stay coherent.
 - Never claim that a green check, record, Handoff, assessment, archive, or generated view proves
   acceptance. Keep Evidence, assessment, owner disposition, reconciliation, resolution, and
   archival distinct.

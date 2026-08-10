@@ -17,16 +17,25 @@ import (
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/governance"
+	"github.com/alexsmedile/spectacular/v2/internal/humanlayout"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
 
 const (
-	missionID    = "0198a1a0-0000-7000-8000-000000000002"
-	gapID        = "0198a1a0-0000-7000-8000-000000000004"
-	runID        = "0198a1a0-0000-7000-8000-000000000005"
-	checkpointID = "0198a1a0-0000-7000-8000-000000000006"
-	evidenceID   = "0198a1a0-0000-7000-8000-000000000007"
-	decisionID   = "0198a1a0-0000-7000-8000-000000000008"
+	missionID             = "0198a1a0-0000-7000-8000-000000000002"
+	gapID                 = "0198a1a0-0000-7000-8000-000000000004"
+	runID                 = "0198a1a0-0000-7000-8000-000000000005"
+	checkpointID          = "0198a1a0-0000-7000-8000-000000000006"
+	evidenceID            = "0198a1a0-0000-7000-8000-000000000007"
+	decisionID            = "0198a1a0-0000-7000-8000-000000000008"
+	fixtureProjectPath    = ".spectacular/PROJECT.md"
+	fixtureProposalPath   = ".spectacular/proposals/P1-prove-cold-recovery.md"
+	fixtureMissionPath    = ".spectacular/missions/M1-scenario-a-cold-recovery/MISSION.md"
+	fixtureRunPath        = ".spectacular/missions/M1-scenario-a-cold-recovery/runs/R1-primary-recovery-run/RUN.md"
+	fixtureCheckpointPath = ".spectacular/missions/M1-scenario-a-cold-recovery/runs/R1-primary-recovery-run/checkpoints/C1-implementation-ready.md"
+	fixtureEvidencePath   = ".spectacular/missions/M1-scenario-a-cold-recovery/evidence/E1-6r35pl.md"
+	fixtureDecisionPath   = ".spectacular/missions/M1-scenario-a-cold-recovery/decisions/D1-t77vmk.md"
+	fixtureGapPath        = ".spectacular/missions/M1-scenario-a-cold-recovery/gaps/G1-uiaahv.md"
 )
 
 func fixture(t *testing.T) string {
@@ -39,7 +48,7 @@ func fixture(t *testing.T) string {
 }
 func fixedNow() time.Time { return time.Date(2026, 8, 10, 10, 0, 0, 0, time.UTC) }
 
-func TestSelfHostedWorkspaceStatesRCGate(t *testing.T) {
+func TestSelfHostedWorkspaceIsHumanOperable(t *testing.T) {
 	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatal(err)
@@ -48,9 +57,12 @@ func TestSelfHostedWorkspaceStatesRCGate(t *testing.T) {
 	text := runJSON(t, root, []string{"workspace", "context", "project", "--event", "@Orient", "--json"})
 	for _, required := range []string{
 		`"ref":"Contract:019fe381-5d61-7223-b362-03a5f99a7b10"`,
-		`"ref":"Evidence:019fe381-5d61-7223-b362-03a5f99a7b07"`,
+		`"path":".spectacular/PRODUCT.md"`,
+		`"path":".spectacular/ARCHITECTURE.md"`,
+		`"path":".spectacular/STACK.md"`,
+		`"path":".spectacular/missions/M1-human-operability/MISSION.md"`,
+		`"kind":"owner-gate"`,
 		`"code":"resolve_blocking_gap"`,
-		`"detail":"blocking Gap prevents continuation"`,
 	} {
 		if !strings.Contains(text, required) {
 			t.Fatalf("self-hosted RC workspace missing %s: %s", required, text)
@@ -70,28 +82,84 @@ func TestSelfHostedWorkspaceStatesRCGate(t *testing.T) {
 	if mission.Document.Record.Status == nil || *mission.Document.Record.Status != "awaiting-assessment" {
 		t.Fatalf("self-hosted Mission is not awaiting assessment: %#v", mission.Document.Record.Status)
 	}
-	evidence, err := opened.Lookup("Evidence:019fe381-5d61-7223-b362-03a5f99a7b07", domain.Evidence)
+	byHuman, err := opened.Lookup("M1/R1/C1", domain.Checkpoint)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(evidence.Document.Body, "9c5f076ff786474f2ee2a362580a81334fb53444") {
-		t.Fatalf("self-hosted Evidence does not bind the repaired head: %s", evidence.Document.Body)
+	if byHuman.Path != ".spectacular/missions/M1-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-in-progress.md" {
+		t.Fatalf("human reference resolved %s", byHuman.Path)
 	}
 	gap, err := opened.Lookup("Gap:019fe381-5d61-7223-b362-03a5f99a7b04", domain.Gap)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if gap.Document.Record.Title == nil || *gap.Document.Record.Title != "Owner disposition on repaired RC candidate" {
-		t.Fatalf("self-hosted continuation is not the owner assessment gate: %#v", gap.Document.Record.Title)
+	if gap.Document.Record.Title == nil || *gap.Document.Record.Title != "Owner disposition on the human-operable RC.2 candidate" {
+		t.Fatalf("self-hosted Gap is not the review boundary: %#v", gap.Document.Record.Title)
 	}
 	if after := treeDigest(t, filepath.Join(root, ".spectacular")); after != before {
 		t.Fatal("self-hosted workspace read mutated canonical state")
 	}
 }
 
+func TestSelfHostedIndexesAreDeterministicProjections(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	opened, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated, err := humanlayout.Indexes(opened.Entries, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for path, expected := range generated {
+		actual, readErr := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+		if readErr != nil {
+			t.Fatalf("read generated index %s: %v", path, readErr)
+		}
+		if !bytes.Equal(actual, expected) {
+			t.Fatalf("generated index drifted: %s\n--- actual ---\n%s\n--- expected ---\n%s", path, actual, expected)
+		}
+	}
+}
+
+func TestSelfHostedHumanPointersExecuteWithoutMutation(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := treeDigest(t, filepath.Join(root, ".spectacular"))
+	commands := map[string]bool{}
+	for _, seed := range [][]string{{"anchor", "show", "project", "--json"}, {"mission", "show", "M1", "--json"}} {
+		var out bytes.Buffer
+		exit := (Runner{Cwd: root, Stdout: &out, Stderr: &bytes.Buffer{}, Now: fixedNow}).Run(seed)
+		if exit != 0 {
+			t.Fatalf("seed %v exit=%d output=%s", seed, exit, out.String())
+		}
+		var payload any
+		if err := json.Unmarshal(out.Bytes(), &payload); err != nil {
+			t.Fatal(err)
+		}
+		collectShowCommands(payload, commands)
+	}
+	for commandLine := range commands {
+		args := strings.Fields(strings.TrimPrefix(commandLine, "spectacular "))
+		args = append(args, "--json")
+		var out bytes.Buffer
+		if exit := (Runner{Cwd: root, Stdout: &out, Stderr: &bytes.Buffer{}, Now: fixedNow}).Run(args); exit != 0 {
+			t.Fatalf("emitted pointer failed: %s exit=%d output=%s", commandLine, exit, out.String())
+		}
+	}
+	if after := treeDigest(t, filepath.Join(root, ".spectacular")); after != before {
+		t.Fatal("human pointer traversal mutated canonical state")
+	}
+}
+
 func TestPublicRegistryAndCommands(t *testing.T) {
-	if len(Registry) != 31 {
-		t.Fatalf("registry has %d commands, want 31", len(Registry))
+	if len(Registry) != 34 {
+		t.Fatalf("registry has %d commands, want 34", len(Registry))
 	}
 	seen := map[Operation]bool{}
 	for _, spec := range Registry {
@@ -113,10 +181,10 @@ func TestPublicRegistryAndCommands(t *testing.T) {
 	}{
 		{[]string{"anchor", "show", "project", "--json"}, "spectacular.anchor.show.v1", `"authoritative":{"identity":{"noun":"anchor","ref":"project"`},
 		{[]string{"mission", "list", "--json"}, "spectacular.mission.list.v1", `"items":[`},
-		{[]string{"mission", "show", "Mission:" + missionID, "--json"}, "spectacular.mission.show.v1", `"path":".spectacular/records/proposal.md"`},
+		{[]string{"mission", "show", "Mission:" + missionID, "--json"}, "spectacular.mission.show.v1", `"path":".spectacular/proposals/P1-prove-cold-recovery.md"`},
 		{[]string{"gap", "list", "--scope", missionID, "--json"}, "spectacular.gap.list.v1", `"noun":"Gap"`},
 		{[]string{"gap", "show", "Gap:" + gapID, "--json"}, "spectacular.gap.show.v1", `"show_command":"spectacular mission show`},
-		{[]string{"run", "show", ".spectacular/records/run.md", "--json"}, "spectacular.run.show.v1", `"show_command":"spectacular checkpoint show`},
+		{[]string{"run", "show", fixtureRunPath, "--json"}, "spectacular.run.show.v1", `"show_command":"spectacular checkpoint show`},
 		{[]string{"checkpoint", "show", checkpointID, "--json"}, "spectacular.checkpoint.show.v1", `"show_command":"spectacular evidence show`},
 		{[]string{"evidence", "show", "Evidence:" + evidenceID, "--json"}, "spectacular.evidence.show.v1", `"show_command":"spectacular checkpoint show`},
 		{[]string{"decision", "show", decisionID, "--json"}, "spectacular.decision.show.v1", `"show_command":"spectacular run show`},
@@ -276,7 +344,7 @@ func TestGeneratedCatalogMatchesRegistryAndKeepsJudgmentOut(t *testing.T) {
 }
 
 func TestJSONIsDeterministicAndExactLookupFormsAgree(t *testing.T) {
-	forms := []string{missionID, "Mission:" + missionID, ".spectacular/records/mission.md"}
+	forms := []string{"M1", missionID, "Mission:" + missionID, fixtureMissionPath}
 	var canonical map[string]any
 	for _, ref := range forms {
 		var out bytes.Buffer
@@ -349,7 +417,7 @@ func TestKnownCommandArgumentsAreValidatedBeforeWorkspaceDiscovery(t *testing.T)
 
 func TestOwnerGateAndStaleRefusal(t *testing.T) {
 	root := copyFixture(t)
-	decision := filepath.Join(root, ".spectacular", "records", "decision.md")
+	decision := filepath.Join(root, filepath.FromSlash(fixtureDecisionPath))
 	if err := os.Remove(decision); err != nil {
 		t.Fatal(err)
 	}
@@ -361,7 +429,7 @@ func TestOwnerGateAndStaleRefusal(t *testing.T) {
 		t.Fatalf("missing exact gate: %s", out.String())
 	}
 	root = copyFixture(t)
-	evidence := filepath.Join(root, ".spectacular", "records", "evidence.md")
+	evidence := filepath.Join(root, filepath.FromSlash(fixtureEvidencePath))
 	data, err := os.ReadFile(evidence)
 	if err != nil {
 		t.Fatal(err)
@@ -393,7 +461,7 @@ func TestProjectAuthorityProjectionAndDecisionAuthorizationAreStrict(t *testing.
 	for _, mutation := range []struct{ name, old, new, code string }{{"missing decided_by", "decided_by: owner\n", "", "missing_required_field"}, {"wrong operation", "operation: resume", "operation: advance", "conflicting_authority"}} {
 		t.Run(mutation.name, func(t *testing.T) {
 			root := copyFixture(t)
-			path := filepath.Join(root, ".spectacular", "records", "decision.md")
+			path := filepath.Join(root, filepath.FromSlash(fixtureDecisionPath))
 			data, err := os.ReadFile(path)
 			if err != nil {
 				t.Fatal(err)
@@ -413,7 +481,7 @@ func TestProjectAuthorityProjectionAndDecisionAuthorizationAreStrict(t *testing.
 
 func TestProposalCurrentTruthAndMissionSourceHaveHonestDrillDown(t *testing.T) {
 	root := copyFixture(t)
-	project := filepath.Join(root, ".spectacular", "records", "project.md")
+	project := filepath.Join(root, filepath.FromSlash(fixtureProjectPath))
 	replaceInFile(t, project, "current_truth:\n  - Mission:"+missionID, "current_truth:\n  - Mission:"+missionID+"\n  - Proposal:0198a1a0-0000-7000-8000-000000000001")
 
 	for _, args := range [][]string{{"anchor", "show", "project", "--json"}, {"mission", "show", missionID, "--json"}} {
@@ -423,7 +491,7 @@ func TestProposalCurrentTruthAndMissionSourceHaveHonestDrillDown(t *testing.T) {
 			t.Fatalf("%v exit=%d output=%s", args, exit, out.String())
 		}
 		text := out.String()
-		for _, required := range []string{`"noun":"proposal"`, `"ref":"Proposal:0198a1a0-0000-7000-8000-000000000001"`, `"path":".spectacular/records/proposal.md"`, `"fingerprint":"`, `"show_command":"spectacular proposal show Proposal:`} {
+		for _, required := range []string{`"noun":"proposal"`, `"ref":"Proposal:0198a1a0-0000-7000-8000-000000000001"`, `"human_ref":"P1"`, `"path":".spectacular/proposals/P1-prove-cold-recovery.md"`, `"fingerprint":"`, `"show_command":"spectacular proposal show P1"`} {
 			if !strings.Contains(text, required) {
 				t.Fatalf("Proposal drill-down missing %s: %s", required, text)
 			}
@@ -454,11 +522,11 @@ func TestAdversarialWorkspaceRefusalsAreDeterministic(t *testing.T) {
 		{
 			name: "duplicate identity is ambiguous",
 			mutate: func(t *testing.T, root string) {
-				data, err := os.ReadFile(filepath.Join(root, ".spectacular", "records", "gap.md"))
+				data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(fixtureGapPath)))
 				if err != nil {
 					t.Fatal(err)
 				}
-				if err := os.WriteFile(filepath.Join(root, ".spectacular", "records", "duplicate-gap.md"), data, 0o644); err != nil {
+				if err := os.WriteFile(filepath.Join(root, ".spectacular", "missions", "M1-scenario-a-cold-recovery", "gaps", "G2-duplicate.md"), data, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -468,13 +536,14 @@ func TestAdversarialWorkspaceRefusalsAreDeterministic(t *testing.T) {
 		{
 			name: "multiple decisions conflict",
 			mutate: func(t *testing.T, root string) {
-				path := filepath.Join(root, ".spectacular", "records", "decision.md")
+				path := filepath.Join(root, filepath.FromSlash(fixtureDecisionPath))
 				data, err := os.ReadFile(path)
 				if err != nil {
 					t.Fatal(err)
 				}
 				data = bytes.Replace(data, []byte(decisionID), []byte("0198a1a0-0000-7000-8000-000000000009"), 1)
-				if err := os.WriteFile(filepath.Join(root, ".spectacular", "records", "decision-2.md"), data, 0o644); err != nil {
+				data = bytes.Replace(data, []byte("human_ref: M1/D1-t77vmk"), []byte("human_ref: M1/D2-c3xuq5"), 1)
+				if err := os.WriteFile(filepath.Join(root, ".spectacular", "missions", "M1-scenario-a-cold-recovery", "decisions", "D2-conflict.md"), data, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -484,7 +553,7 @@ func TestAdversarialWorkspaceRefusalsAreDeterministic(t *testing.T) {
 		{
 			name: "missing freshness source",
 			mutate: func(t *testing.T, root string) {
-				replaceInFile(t, filepath.Join(root, ".spectacular", "records", "evidence.md"), ".spectacular/workspace.yaml", ".spectacular/missing.yaml")
+				replaceInFile(t, filepath.Join(root, filepath.FromSlash(fixtureEvidencePath)), ".spectacular/workspace.yaml", ".spectacular/missing.yaml")
 			},
 			args: []string{"evidence", "show", evidenceID, "--json"},
 			code: "record_not_found",
@@ -492,7 +561,7 @@ func TestAdversarialWorkspaceRefusalsAreDeterministic(t *testing.T) {
 		{
 			name: "malformed freshness fingerprint",
 			mutate: func(t *testing.T, root string) {
-				path := filepath.Join(root, ".spectacular", "records", "evidence.md")
+				path := filepath.Join(root, filepath.FromSlash(fixtureEvidencePath))
 				data, err := os.ReadFile(path)
 				if err != nil {
 					t.Fatal(err)
@@ -546,7 +615,7 @@ func TestAdversarialWorkspaceRefusalsAreDeterministic(t *testing.T) {
 
 func TestOwnerGatePathIsByteNonmutating(t *testing.T) {
 	root := copyFixture(t)
-	if err := os.Remove(filepath.Join(root, ".spectacular", "records", "decision.md")); err != nil {
+	if err := os.Remove(filepath.Join(root, filepath.FromSlash(fixtureDecisionPath))); err != nil {
 		t.Fatal(err)
 	}
 	before := snapshot(t, root)
@@ -568,7 +637,7 @@ func TestAnchorJSONGoldenDigest(t *testing.T) {
 	}
 	digest := sha256.Sum256(out.Bytes())
 	got := hex.EncodeToString(digest[:])
-	const want = "9c2d6d213bd8e66c98643a0a0ea1009b93ecfa9dc1ef269445399284396da937"
+	const want = "0415f253aa46babd1bc382eedccdeeffd002a4a43ee938798a434027103f9c54"
 	if got != want {
 		t.Fatalf("anchor JSON golden digest=%s want=%s\n%s", got, want, out.String())
 	}
@@ -607,8 +676,12 @@ func TestGovernedCreateUsesStrictInputAndRegisteredReadback(t *testing.T) {
 	}
 	var out bytes.Buffer
 	runner := Runner{Cwd: root, Stdout: &out, Stderr: &bytes.Buffer{}, Now: fixedNow}
-	if exit := runner.Run([]string{"decision", "create", "--input", path, "--json"}); exit != 0 || !strings.Contains(out.String(), `"operation":"decision.create"`) {
+	if exit := runner.Run([]string{"decision", "create", "--input", path, "--json"}); exit != 0 || !strings.Contains(out.String(), `"operation":"decision.create"`) || !strings.Contains(out.String(), `"path":".spectacular/decisions/D1-`) {
 		t.Fatalf("create exit=%d output=%s", exit, out.String())
+	}
+	indexBytes, err := os.ReadFile(filepath.Join(root, ".spectacular", "index.md"))
+	if err != nil || !strings.Contains(string(indexBytes), "Authorize bounded operation") || !strings.Contains(string(indexBytes), "non-authoritative") {
+		t.Fatalf("generated human index missing created Decision: %s err=%v", indexBytes, err)
 	}
 	out.Reset()
 	if exit := runner.Run([]string{"decision", "show", "Decision:0199b000-0000-7000-8000-000000000090", "--json"}); exit != 0 || !strings.Contains(out.String(), `"noun":"Decision"`) {

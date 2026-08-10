@@ -17,6 +17,7 @@ import (
 type Pointer struct {
 	Noun        string `json:"noun"`
 	Ref         string `json:"ref"`
+	HumanRef    string `json:"human_ref,omitempty"`
 	Path        string `json:"path"`
 	Fingerprint string `json:"fingerprint"`
 	ShowCommand string `json:"show_command,omitempty"`
@@ -47,18 +48,24 @@ type Continuation struct {
 	AuthorizedBy Pointer `json:"authorized_by"`
 }
 type Card struct {
-	Noun         string        `json:"noun"`
-	ID           string        `json:"id"`
-	Title        string        `json:"title,omitempty"`
-	Freshness    Freshness     `json:"freshness"`
-	Source       Source        `json:"source"`
-	Sources      []Pointer     `json:"sources"`
-	Pointers     []Pointer     `json:"pointers"`
-	Gaps         []Pointer     `json:"gaps"`
-	Conflicts    []string      `json:"conflicts"`
-	Omissions    []string      `json:"omissions"`
-	Continuation *Continuation `json:"continuation,omitempty"`
-	OwnerGate    *OwnerGate    `json:"owner_gate,omitempty"`
+	Noun             string        `json:"noun"`
+	Ref              string        `json:"ref"`
+	ID               string        `json:"id"`
+	Title            string        `json:"title,omitempty"`
+	Outcome          string        `json:"outcome,omitempty"`
+	State            string        `json:"state,omitempty"`
+	Freshness        Freshness     `json:"freshness"`
+	Source           Source        `json:"source"`
+	Sources          []Pointer     `json:"sources"`
+	Pointers         []Pointer     `json:"pointers"`
+	Gaps             []Pointer     `json:"gaps"`
+	Conflicts        []string      `json:"conflicts"`
+	Omissions        []string      `json:"omissions"`
+	Continuation     *Continuation `json:"continuation,omitempty"`
+	OwnerGate        *OwnerGate    `json:"owner_gate,omitempty"`
+	CurrentObjective *Pointer      `json:"current_objective,omitempty"`
+	CurrentRun       *Pointer      `json:"current_run,omitempty"`
+	LatestCheckpoint *Pointer      `json:"latest_checkpoint,omitempty"`
 }
 type List struct {
 	Items []Card `json:"items"`
@@ -226,12 +233,44 @@ func (b Builder) Mission(ref string) (Card, error) {
 	if err != nil {
 		return Card{}, err
 	}
+	card.Outcome, _ = workspace.String(mission.Document, "outcome", false)
+	if objectiveRefs, objectiveErr := workspace.Strings(mission.Document, "objectives", false); objectiveErr == nil {
+		for _, objectiveRef := range objectiveRefs {
+			objective, lookupErr := b.Workspace.Lookup(objectiveRef, domain.Objective)
+			if lookupErr != nil {
+				return Card{}, lookupErr
+			}
+			pointer := b.pointer(objective)
+			if card.CurrentObjective == nil || value(objective.Document.Record.Status) != "satisfied" {
+				card.CurrentObjective = &pointer
+			}
+			if value(objective.Document.Record.Status) != "satisfied" {
+				break
+			}
+		}
+	}
 	if mission.Document.Record.Source != nil {
 		proposal, lookupErr := b.Workspace.Lookup(mission.Document.Record.Source.String(), domain.Proposal)
 		if lookupErr != nil {
 			return Card{}, lookupErr
 		}
 		card.Sources = append(card.Sources, b.pointer(proposal))
+	}
+	if assessmentRef, _ := workspace.String(mission.Document, "assessment", false); assessmentRef != "" {
+		assessment, lookupErr := b.Workspace.Lookup(assessmentRef, domain.Assessment)
+		if lookupErr != nil {
+			return Card{}, lookupErr
+		}
+		appendPointer(&card.Pointers, b.pointer(assessment))
+		if evidenceRefs, parseErr := workspace.Strings(assessment.Document, "evidence", false); parseErr == nil {
+			for _, evidenceRef := range evidenceRefs {
+				evidence, evidenceErr := b.Workspace.Lookup(evidenceRef, domain.Evidence)
+				if evidenceErr != nil {
+					return Card{}, evidenceErr
+				}
+				appendPointer(&card.Pointers, b.pointer(evidence))
+			}
+		}
 	}
 	archived, _ := workspace.Bool(mission.Document, "archived", false)
 	if mission.Document.Record.Status != nil && *mission.Document.Record.Status == "resolved" {
@@ -271,6 +310,16 @@ func (b Builder) Mission(ref string) (Card, error) {
 		return Card{}, err
 	}
 	card.Pointers = append(card.Pointers, b.pointer(run))
+	runPointer := b.pointer(run)
+	card.CurrentRun = &runPointer
+	if checkpointRef, checkpointErr := workspace.String(run.Document, "latest_checkpoint", false); checkpointErr == nil && checkpointRef != "" {
+		checkpoint, lookupErr := b.Workspace.Lookup(checkpointRef, domain.Checkpoint)
+		if lookupErr != nil {
+			return Card{}, lookupErr
+		}
+		checkpointPointer := b.pointer(checkpoint)
+		card.LatestCheckpoint = &checkpointPointer
+	}
 	expectedRun, err := fingerprint(mission.Document, "expected_run_fingerprint")
 	if err != nil {
 		return Card{}, err
@@ -351,6 +400,8 @@ func (b Builder) Mission(ref string) (Card, error) {
 		return Card{}, err
 	}
 	card.Pointers = append(card.Pointers, b.pointer(cp))
+	cpPointer := b.pointer(cp)
+	card.LatestCheckpoint = &cpPointer
 	expectedCP, err := fingerprint(run.Document, "expected_checkpoint_fingerprint")
 	if err != nil {
 		return Card{}, err
@@ -405,10 +456,13 @@ func (b Builder) Mission(ref string) (Card, error) {
 		if e != nil || back.Type != domain.Checkpoint || back.ID != cp.Document.Record.ID {
 			return Card{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "checkpoint", "Evidence does not identify selected Checkpoint", e)
 		}
-		card.Pointers = append(card.Pointers, b.pointer(evidence))
+		appendPointer(&card.Pointers, b.pointer(evidence))
 	}
 	decisions := []discovery.Entry{}
 	for _, d := range b.Workspace.OfType(domain.Decision) {
+		if state := value(d.Document.Record.Status); state == "superseded" || state == "rejected" {
+			continue
+		}
 		mref, e := workspace.String(d.Document, "mission", false)
 		if e != nil {
 			return Card{}, e
@@ -639,7 +693,15 @@ func (b Builder) base(entry discovery.Entry) (Card, error) {
 	if entry.Document.Record.Title != nil {
 		title = *entry.Document.Record.Title
 	}
-	return Card{Noun: string(entry.Document.Record.Type), ID: entry.Document.Record.ID.String(), Title: title, Freshness: fresh, Source: Source{Path: entry.Path, Fingerprint: entry.Fingerprint}, Sources: []Pointer{}, Pointers: []Pointer{}, Gaps: []Pointer{}, Conflicts: []string{}, Omissions: []string{}}, nil
+	ref := humanRef(entry)
+	if ref == "" {
+		ref = string(entry.Document.Record.Type) + ":" + entry.Document.Record.ID.String()
+	}
+	state := ""
+	if entry.Document.Record.Status != nil {
+		state = *entry.Document.Record.Status
+	}
+	return Card{Noun: string(entry.Document.Record.Type), Ref: ref, ID: entry.Document.Record.ID.String(), Title: title, State: state, Freshness: fresh, Source: Source{Path: entry.Path, Fingerprint: entry.Fingerprint}, Sources: []Pointer{}, Pointers: []Pointer{}, Gaps: []Pointer{}, Conflicts: []string{}, Omissions: []string{}}, nil
 }
 func (b Builder) freshness(doc *workspace.Document) (Freshness, error) {
 	checkedText, err := workspace.String(doc, "freshness_checked_at", true)
@@ -710,15 +772,46 @@ func fingerprint(doc *workspace.Document, field string) (string, error) {
 }
 func (b Builder) pointer(e discovery.Entry) Pointer {
 	ref := string(e.Document.Record.Type) + ":" + e.Document.Record.ID.String()
+	human := humanRef(e)
 	if e.Document.Record.Type == domain.Anchor {
-		ref = "project"
+		if human == "" || human == "PROJECT" {
+			ref = "project"
+			human = ""
+		}
 	}
 	noun := strings.ToLower(string(e.Document.Record.Type))
-	p := Pointer{Noun: noun, Ref: ref, Path: e.Path, Fingerprint: e.Fingerprint}
+	p := Pointer{Noun: noun, Ref: ref, HumanRef: human, Path: e.Path, Fingerprint: e.Fingerprint}
 	if b.ShowCommand != nil {
-		p.ShowCommand, _ = b.ShowCommand(e.Document.Record.Type, ref)
+		showRef := ref
+		if human != "" {
+			showRef = human
+		}
+		p.ShowCommand, _ = b.ShowCommand(e.Document.Record.Type, showRef)
 	}
 	return p
+}
+
+func humanRef(e discovery.Entry) string {
+	if ref, err := workspace.String(e.Document, "human_ref", false); err == nil && ref != "" {
+		return ref
+	}
+	return ""
+}
+
+func appendPointer(pointers *[]Pointer, candidate Pointer) {
+	for _, existing := range *pointers {
+		if existing.Ref == candidate.Ref {
+			return
+		}
+	}
+	*pointers = append(*pointers, candidate)
+}
+
+func value(text *string) string {
+	if text == nil {
+		return ""
+	}
+	return *text
 }
 func relationshipFields(noun domain.RecordType) []string {
 	switch noun {

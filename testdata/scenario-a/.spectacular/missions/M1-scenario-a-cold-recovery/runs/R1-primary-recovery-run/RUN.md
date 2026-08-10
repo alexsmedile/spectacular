@@ -1,0 +1,16 @@
+---
+type: Run
+id: 0198a1a0-0000-7000-8000-000000000005
+human_ref: M1/R1
+title: Primary recovery run
+freshness_checked_at: "2026-08-01T00:00:00Z"
+freshness_valid_until: "2026-12-31T23:59:59Z"
+freshness_source: Evidence:0198a1a0-0000-7000-8000-000000000007
+freshness_source_fingerprint: "9d6170aed3a3e4e0765a1df748ed2b6a888a9cc58b240e9f8bba0511132bd267"
+mission: Mission:0198a1a0-0000-7000-8000-000000000002
+latest_checkpoint: Checkpoint:0198a1a0-0000-7000-8000-000000000006
+expected_checkpoint_fingerprint: "a5ebef8d72a4829c6fbc76d072d3133eead6dbe5780a37164f8ac72b9ded226e"
+---
+# Run
+
+The active attempt is resumable from its latest checkpoint.

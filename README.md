@@ -32,4 +32,16 @@ spectacular mission show M1
 The generated [mechanical command catalog](skills/spectacular/generated/mechanical-interface.md)
 is the authoritative command reference; do not maintain a duplicate.
 
+## Verify the implementation
+
+Run the complete invariant, real-binary acceptance, installation, and release
+matrix with:
+
+```sh
+bash test/verify.sh all
+```
+
+The test boundaries and shorter development modes are defined in
+[TESTING.md](TESTING.md).
+
 For recovery pointers and the v1 freeze, see [RECOVERY.md](RECOVERY.md).

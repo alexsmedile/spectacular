@@ -446,6 +446,8 @@ func TestMultiContractReconciliationRefusesBeforeAnyPartialWrite(t *testing.T) {
 	assessmentTwo := "Assessment:0199b000-0000-7000-8000-000000000046"
 	svc = openService(t, root)
 	secondEntry := lookup(t, svc, secondRef, domain.Contract)
+	firstPath := first.Absolute
+	secondPath := secondEntry.Absolute
 	seed := []struct {
 		proposal, mission, assessment, target, fp, addition string
 	}{
@@ -487,8 +489,8 @@ func TestMultiContractReconciliationRefusesBeforeAnyPartialWrite(t *testing.T) {
 
 	decisionOne := createDecision(t, root, "0199b000-0000-7000-8000-000000000047", "contract.reconcile", contractRef, first.Fingerprint, []string{assessmentOne}, "accept")
 	decisionTwo := createDecision(t, root, "0199b000-0000-7000-8000-000000000048", "contract.reconcile", secondRef, secondEntry.Fingerprint, []string{assessmentTwo}, "accept")
-	beforeFirst := fileDigest(t, filepath.Join(root, ".spectacular", "records", "contract-0199b000-0000-7000-8000-000000000001.md"))
-	beforeSecond := fileDigest(t, filepath.Join(root, ".spectacular", "records", "contract-0199b000-0000-7000-8000-000000000040.md"))
+	beforeFirst := fileDigest(t, firstPath)
+	beforeSecond := fileDigest(t, secondPath)
 	svc = openService(t, root)
 	bad := []ReconcileInput{
 		{Contract: contractRef, Proposal: proposalOne, Authorization: decisionOne, ExpectedFingerprint: first.Fingerprint, IdempotencyKey: "atomic-two"},
@@ -497,7 +499,7 @@ func TestMultiContractReconciliationRefusesBeforeAnyPartialWrite(t *testing.T) {
 	if _, err := svc.ReconcileMany(bad); refusalCode(err) != domain.RefusalStaleFingerprint {
 		t.Fatalf("stale multi-Contract set err=%v", err)
 	}
-	if fileDigest(t, filepath.Join(root, ".spectacular", "records", "contract-0199b000-0000-7000-8000-000000000001.md")) != beforeFirst || fileDigest(t, filepath.Join(root, ".spectacular", "records", "contract-0199b000-0000-7000-8000-000000000040.md")) != beforeSecond {
+	if fileDigest(t, firstPath) != beforeFirst || fileDigest(t, secondPath) != beforeSecond {
 		t.Fatal("multi-Contract validation partially mutated current truth")
 	}
 	svc = openService(t, root)

@@ -22,12 +22,16 @@ type indexRow struct {
 // the root, affected collections, and affected Mission bundles.
 func Indexes(existing []discovery.Entry, pending []*workspace.Document, paths map[domain.ID]string) (map[string][]byte, error) {
 	pendingIDs := map[domain.ID]bool{}
+	touchedCollections := map[string]bool{}
 	rows := make([]indexRow, 0, len(existing)+len(pending))
 	for _, doc := range pending {
 		pendingIDs[doc.Record.ID] = true
 	}
 	for _, entry := range existing {
 		if pendingIDs[entry.Document.Record.ID] {
+			if index := collectionIndex(entry.Path); index != "" {
+				touchedCollections[index] = true
+			}
 			continue
 		}
 		rows = append(rows, row(entry.Document, entry.Path))
@@ -47,6 +51,9 @@ func Indexes(existing []discovery.Entry, pending []*workspace.Document, paths ma
 	})
 
 	groups := map[string][]indexRow{".spectacular/index.md": rows}
+	for path := range touchedCollections {
+		groups[path] = []indexRow{}
+	}
 	for _, item := range rows {
 		parts := strings.Split(filepath.ToSlash(item.Path), "/")
 		if len(parts) < 3 || parts[0] != ".spectacular" {
@@ -83,6 +90,19 @@ func Indexes(existing []discovery.Entry, pending []*workspace.Document, paths ma
 		out[path] = []byte(text.String())
 	}
 	return out, nil
+}
+
+func collectionIndex(path string) string {
+	parts := strings.Split(filepath.ToSlash(path), "/")
+	if len(parts) < 3 || parts[0] != ".spectacular" {
+		return ""
+	}
+	switch parts[1] {
+	case "PROJECT.md", "PRODUCT.md", "ARCHITECTURE.md", "STACK.md":
+		return ""
+	default:
+		return filepath.ToSlash(filepath.Join(".spectacular", parts[1], "index.md"))
+	}
 }
 
 func row(doc *workspace.Document, path string) indexRow {

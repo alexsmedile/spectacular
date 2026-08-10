@@ -294,15 +294,21 @@ func (s Service) CreateEvidence(input EvidenceInput) (OperationResult, error) {
 	}
 	doc := s.document(domain.Evidence, id, input.Title, input.Actor, "")
 	workspace.SetString(doc, "mission", input.Mission)
-	workspace.SetString(doc, "objective", input.Objective)
-	workspace.SetString(doc, "checkpoint", input.Checkpoint)
+	if input.Objective != "" {
+		workspace.SetString(doc, "objective", input.Objective)
+	}
+	if input.Checkpoint != "" {
+		workspace.SetString(doc, "checkpoint", input.Checkpoint)
+	}
 	workspace.SetString(doc, "claim", input.Claim)
 	workspace.SetString(doc, "classification", input.Classification)
 	workspace.SetStrings(doc, "scope", input.Scope)
 	workspace.SetString(doc, "method", input.Method)
 	workspace.SetString(doc, "actor", input.Actor)
 	workspace.SetString(doc, "target", input.Target)
-	workspace.SetString(doc, "environment", input.Environment)
+	if input.Environment != "" {
+		workspace.SetString(doc, "environment", input.Environment)
+	}
 	workspace.SetString(doc, "observed_at", input.ObservedAt)
 	workspace.SetStrings(doc, "limitations", input.Limitations)
 	workspace.SetStrings(doc, "contrary_evidence", input.ContraryEvidence)
@@ -658,6 +664,27 @@ func (s Service) TransitionMission(input TransitionInput) (OperationResult, erro
 	}
 	fp, _ := workspace.Fingerprint(mission.Document)
 	return OperationResult{Operation: "mission.transition", Ref: input.Mission, Path: mission.Path, Fingerprint: fp, Sources: []string{input.Authorization}}, nil
+}
+
+// pruneEmptyMissionBundle removes only empty presentation directories left
+// after the canonical records have moved. It never follows symlinks, removes
+// files, or affects the archive transaction's authority state.
+func pruneEmptyMissionBundle(root, relative string) {
+	absolute := filepath.Join(root, filepath.FromSlash(relative))
+	var directories []string
+	_ = filepath.WalkDir(absolute, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if entry.IsDir() {
+			directories = append(directories, path)
+		}
+		return nil
+	})
+	sort.Slice(directories, func(i, j int) bool { return len(directories[i]) > len(directories[j]) })
+	for _, directory := range directories {
+		_ = os.Remove(directory)
+	}
 }
 
 func (s Service) hasReturnAndEvidence(mission string) (bool, error) {
@@ -1139,6 +1166,7 @@ func (s Service) ArchiveMission(input ArchiveInput) (OperationResult, error) {
 	if err := ApplyTransaction(s.Workspace.Root, input.IdempotencyKey, changes); err != nil {
 		return OperationResult{}, err
 	}
+	pruneEmptyMissionBundle(s.Workspace.Root, bundleRoot)
 	fp, _ := workspace.Fingerprint(mission.Document)
 	return OperationResult{Operation: "mission.archive", Ref: input.Mission, Path: filepath.ToSlash(filepath.Join(archiveRoot, "MISSION.md")), Fingerprint: fp, Sources: []string{input.Authorization, input.TerminalPacket}}, nil
 }

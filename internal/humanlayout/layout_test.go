@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
@@ -54,6 +55,29 @@ func TestPlanBuildsReadableScopedMissionBundle(t *testing.T) {
 	}
 }
 
+func TestIndexesClearAnEmptiedActiveCollection(t *testing.T) {
+	mission := document(t, domain.Mission, "019fe381-5d61-7223-b362-03a5f99a7b02", "Archived Mission")
+	workspace.SetString(mission, "human_ref", "M1")
+	existing := []discovery.Entry{{
+		Document: mission,
+		Path:     ".spectacular/missions/M1-archived-mission/MISSION.md",
+	}}
+	archived := map[domain.ID]string{
+		mission.Record.ID: ".spectacular/archive/missions/M1-archived-mission/MISSION.md",
+	}
+	indexes, err := Indexes(existing, []*workspace.Document{mission}, archived)
+	if err != nil {
+		t.Fatal(err)
+	}
+	active := string(indexes[".spectacular/missions/index.md"])
+	if !strings.Contains(active, "non-authoritative") || strings.Contains(active, "`M1`") {
+		t.Fatalf("active Mission index was not cleared:\n%s", active)
+	}
+	if archivedIndex := string(indexes[".spectacular/archive/missions/M1-archived-mission/index.md"]); !strings.Contains(archivedIndex, "`M1`") {
+		t.Fatalf("archive index omits moved Mission:\n%s", archivedIndex)
+	}
+}
+
 func TestShortKeyIsStableIdentityNotContent(t *testing.T) {
 	id, err := domain.ParseID("019fe381-5d61-7223-b362-03a5f99a7b07")
 	if err != nil {
@@ -61,6 +85,24 @@ func TestShortKeyIsStableIdentityNotContent(t *testing.T) {
 	}
 	if got := ShortKey(id); got != "t2lylz" {
 		t.Fatalf("short key=%q", got)
+	}
+}
+
+func TestPlanKeepsExistingBundleDirectoriesStable(t *testing.T) {
+	mission := document(t, domain.Mission, "019fe381-5d61-7223-b362-03a5f99a7b02", "Renamed Mission title")
+	workspace.SetString(mission, "human_ref", "M1")
+	existing := []discovery.Entry{{
+		Document: mission,
+		Path:     ".spectacular/missions/M1-original-bundle-name/MISSION.md",
+	}}
+	evidence := document(t, domain.Evidence, "019fe381-5d61-7223-b362-03a5f99a7b07", "Fresh proof")
+	workspace.SetString(evidence, "mission", "Mission:"+mission.Record.ID.String())
+	paths, err := Plan(existing, []*workspace.Document{evidence})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := paths[evidence.Record.ID]; got != ".spectacular/missions/M1-original-bundle-name/evidence/E1-t2lylz.md" {
+		t.Fatalf("new child escaped stable Mission bundle: %s", got)
 	}
 }
 

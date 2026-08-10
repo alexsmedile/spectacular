@@ -51,12 +51,16 @@ func HumanRef(doc *workspace.Document) string {
 func Plan(existing []discovery.Entry, docs []*workspace.Document) (map[domain.ID]string, error) {
 	all := map[domain.ID]*workspace.Document{}
 	priorByID := map[domain.ID]*workspace.Document{}
+	stableDirectories := map[string]string{}
 	used := map[string]bool{}
 	for _, entry := range existing {
 		all[entry.Document.Record.ID] = entry.Document
 		priorByID[entry.Document.Record.ID] = entry.Document
 		if ref := HumanRef(entry.Document); ref != "" {
 			used[ref] = true
+			if rootFile := bundleRootFile(entry.Document.Record.Type); rootFile != "" && filepath.Base(entry.Path) == rootFile {
+				stableDirectories[ref] = filepath.ToSlash(filepath.Dir(strings.TrimPrefix(entry.Path, ".spectacular/")))
+			}
 		}
 	}
 	for _, doc := range docs {
@@ -87,13 +91,24 @@ func Plan(existing []discovery.Entry, docs []*workspace.Document) (map[domain.ID
 
 	paths := map[domain.ID]string{}
 	for _, doc := range docs {
-		path, err := Path(doc, all)
+		path, err := pathFor(doc, all, stableDirectories)
 		if err != nil {
 			return nil, err
 		}
 		paths[doc.Record.ID] = path
 	}
 	return paths, nil
+}
+
+func bundleRootFile(noun domain.RecordType) string {
+	switch noun {
+	case domain.Mission:
+		return "MISSION.md"
+	case domain.Run:
+		return "RUN.md"
+	default:
+		return ""
+	}
 }
 
 func rank(t domain.RecordType) int {
@@ -205,6 +220,10 @@ func parentRef(doc *workspace.Document, all map[domain.ID]*workspace.Document) (
 }
 
 func Path(doc *workspace.Document, all map[domain.ID]*workspace.Document) (string, error) {
+	return pathFor(doc, all, nil)
+}
+
+func pathFor(doc *workspace.Document, all map[domain.ID]*workspace.Document, stableDirectories map[string]string) (string, error) {
 	ref := HumanRef(doc)
 	if ref == "" {
 		return "", fmt.Errorf("record %s lacks human_ref", doc.Record.ID)
@@ -223,14 +242,18 @@ func Path(doc *workspace.Document, all map[domain.ID]*workspace.Document) (strin
 		return filepath.ToSlash(filepath.Join(".spectacular", "missions", ref+"-"+title, "MISSION.md")), nil
 	case domain.Objective:
 		mission := strings.Split(ref, "/")[0]
-		return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(mission, all), "objectives", leaf+"-"+title+".md")), nil
+		return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(mission, all, stableDirectories), "objectives", leaf+"-"+title+".md")), nil
 	case domain.Run:
 		mission := strings.Split(ref, "/")[0]
-		return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(mission, all), "runs", leaf+"-"+title, "RUN.md")), nil
+		return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(mission, all, stableDirectories), "runs", leaf+"-"+title, "RUN.md")), nil
 	case domain.Checkpoint:
 		parts := strings.Split(ref, "/")
 		mission, run := parts[0], parts[1]
-		return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(mission, all), "runs", run+"-"+parentSlug(run, all), "checkpoints", leaf+"-"+title+".md")), nil
+		runDirectory := stableDirectories[mission+"/"+run]
+		if runDirectory == "" {
+			runDirectory = filepath.Join(missionDirectory(mission, all, stableDirectories), "runs", run+"-"+parentSlug(run, all))
+		}
+		return filepath.ToSlash(filepath.Join(".spectacular", runDirectory, "checkpoints", leaf+"-"+title+".md")), nil
 	case domain.Contract:
 		return filepath.ToSlash(filepath.Join(".spectacular", "contracts", ref+"-"+title+".md")), nil
 	case domain.Proposal:
@@ -242,14 +265,17 @@ func Path(doc *workspace.Document, all map[domain.ID]*workspace.Document) (strin
 		}
 		parts := strings.Split(ref, "/")
 		if len(parts) > 1 && strings.HasPrefix(parts[0], "M") {
-			return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(parts[0], all), folder, filename)), nil
+			return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(parts[0], all, stableDirectories), folder, filename)), nil
 		}
 		return filepath.ToSlash(filepath.Join(".spectacular", folder, filename)), nil
 	}
 	return "", fmt.Errorf("no canonical human path for %s", doc.Record.Type)
 }
 
-func missionDirectory(ref string, all map[domain.ID]*workspace.Document) string {
+func missionDirectory(ref string, all map[domain.ID]*workspace.Document, stableDirectories map[string]string) string {
+	if existing := stableDirectories[ref]; existing != "" {
+		return existing
+	}
 	for _, doc := range all {
 		if doc.Record.Type == domain.Mission && HumanRef(doc) == ref {
 			title := "mission"

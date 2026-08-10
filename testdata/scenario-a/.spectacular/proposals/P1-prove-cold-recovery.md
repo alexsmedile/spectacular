@@ -1,6 +1,7 @@
 ---
 type: Proposal
 id: 0198a1a0-0000-7000-8000-000000000001
+human_ref: P1
 title: Prove cold recovery
 description: Define the accepted source for the bounded recovery Mission.
 status: accepted

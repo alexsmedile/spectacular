@@ -10,4 +10,4 @@ freshness_valid_until: "2027-08-10T00:00:00Z"
 ---
 # Release-readiness evidence
 
-Commit 1812a2578d2cf2a873d80e235734e38e56fd091e assembled deterministic four-platform archives and passed format, module verification, vet, unit and race tests, installer lifecycle, release smoke, pointer traversal, and v1-exclusion checks. It is locally release-ready and unpublished.
+Exact independently re-reviewed product head `9c5f076ff786474f2ee2a362580a81334fb53444` assembled deterministic four-platform archives and passed formatting, offline module verification, vet, unit and race tests, build, installer lifecycle, release smoke, pointer traversal, hostile archive refusal, dangling-link exclusion, and v1-exclusion checks. It is locally release-ready, awaiting owner assessment, and unpublished.

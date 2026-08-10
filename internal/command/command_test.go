@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/governance"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
@@ -57,6 +58,31 @@ func TestSelfHostedWorkspaceStatesRCGate(t *testing.T) {
 	}
 	if strings.Contains(text, "Scenario A") {
 		t.Fatalf("self-hosted workspace still exposes fixture state: %s", text)
+	}
+	opened, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mission, err := opened.Lookup("Mission:019fe381-5d61-7223-b362-03a5f99a7b02", domain.Mission)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mission.Document.Record.Status == nil || *mission.Document.Record.Status != "awaiting-assessment" {
+		t.Fatalf("self-hosted Mission is not awaiting assessment: %#v", mission.Document.Record.Status)
+	}
+	evidence, err := opened.Lookup("Evidence:019fe381-5d61-7223-b362-03a5f99a7b07", domain.Evidence)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(evidence.Document.Body, "9c5f076ff786474f2ee2a362580a81334fb53444") {
+		t.Fatalf("self-hosted Evidence does not bind the repaired head: %s", evidence.Document.Body)
+	}
+	gap, err := opened.Lookup("Gap:019fe381-5d61-7223-b362-03a5f99a7b04", domain.Gap)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gap.Document.Record.Title == nil || *gap.Document.Record.Title != "Owner disposition on repaired RC candidate" {
+		t.Fatalf("self-hosted continuation is not the owner assessment gate: %#v", gap.Document.Record.Title)
 	}
 	if after := treeDigest(t, filepath.Join(root, ".spectacular")); after != before {
 		t.Fatal("self-hosted workspace read mutated canonical state")

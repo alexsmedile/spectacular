@@ -30,10 +30,10 @@ persistent_information:
 purpose: Govern the Spectacular v2 public product surface.
 related_material:
     - RECOVERY.md
-    - commit:1812a2578d2cf2a873d80e235734e38e56fd091e
+    - commit:9c5f076ff786474f2ee2a362580a81334fb53444
 required_behavior:
     - Preserve root-only v2 identity and explicit provider boundaries.
 ---
 # Spectacular v2 public product contract
 
-This Contract captures the accepted root cutover and the RC release boundary.
+This Contract captures the accepted root cutover and the repaired RC release boundary at the exact independently re-reviewed product head.

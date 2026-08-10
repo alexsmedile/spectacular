@@ -1,6 +1,6 @@
 {
   "schema_version": "spectacular.command-catalog.v1",
-  "release_version": "2.0.0-rc.1",
+  "release_version": "2.0.0-rc.2",
   "release_inspection": {
     "command": "spectacular --version",
     "arguments": "[--json]",
@@ -10,6 +10,24 @@
   "commands": [
     {
       "command": "spectacular anchor show project",
+      "arguments": "[--json]",
+      "schema": "spectacular.anchor.show.v1",
+      "effect": "read-only"
+    },
+    {
+      "command": "spectacular anchor show product",
+      "arguments": "[--json]",
+      "schema": "spectacular.anchor.show.v1",
+      "effect": "read-only"
+    },
+    {
+      "command": "spectacular anchor show architecture",
+      "arguments": "[--json]",
+      "schema": "spectacular.anchor.show.v1",
+      "effect": "read-only"
+    },
+    {
+      "command": "spectacular anchor show stack",
       "arguments": "[--json]",
       "schema": "spectacular.anchor.show.v1",
       "effect": "read-only"

@@ -40,6 +40,7 @@ type Workspace struct {
 	Entries     []Entry
 	byID        map[domain.ID]Entry
 	byPath      map[string]Entry
+	byHuman     map[string]Entry
 }
 
 func Open(start string) (*Workspace, error) {
@@ -110,7 +111,25 @@ func load(root, marker string) (*Workspace, error) {
 	var paths []string
 	seenRoots := map[string]bool{}
 	for _, declared := range manifest.RecordRoots {
-		if !canonicalRelative(declared) || seenRoots[declared] {
+		if seenRoots[declared] {
+			return nil, refusal(domain.RefusalInvalidManifest, "record_roots", "roots must be unique canonical relative paths", nil)
+		}
+		seenRoots[declared] = true
+	}
+	seenRoots = map[string]bool{}
+	scanRoots := append([]string(nil), manifest.RecordRoots...)
+	// Human-layout collections are canonical v2 roots. Discover any that
+	// exist even when an older v2 fixture names only its seed root; mutations
+	// never need to rewrite workspace.yaml merely to add an earned collection.
+	if !containsRoot(manifest.RecordRoots, ".") {
+		for _, standard := range []string{"contracts", "proposals", "missions", "evidence", "decisions", "gaps", "handoffs", "assessments", "archive/missions"} {
+			if _, statErr := os.Stat(filepath.Join(meta, filepath.FromSlash(standard))); statErr == nil && !containsRoot(scanRoots, standard) {
+				scanRoots = append(scanRoots, standard)
+			}
+		}
+	}
+	for _, declared := range scanRoots {
+		if (declared != "." && !canonicalRelative(declared)) || seenRoots[declared] {
 			return nil, refusal(domain.RefusalInvalidManifest, "record_roots", "roots must be unique canonical relative paths", nil)
 		}
 		seenRoots[declared] = true
@@ -138,7 +157,12 @@ func load(root, marker string) (*Workspace, error) {
 					return filepath.SkipDir
 				}
 			}
-			if !d.IsDir() && strings.HasSuffix(d.Name(), ".md") {
+			if d.IsDir() && (d.Name() == "history" || d.Name() == "transactions") {
+				return filepath.SkipDir
+			}
+			// Generated indexes are committed navigation aids, never canonical
+			// records. They must be rebuildable and must not enter authority.
+			if !d.IsDir() && d.Name() != "index.md" && d.Name() != "GUARDRAILS.md" && strings.HasSuffix(d.Name(), ".md") {
 				paths = append(paths, path)
 			}
 			return nil
@@ -152,7 +176,7 @@ func load(root, marker string) (*Workspace, error) {
 		}
 	}
 	sort.Strings(paths)
-	w := &Workspace{Root: root, MetadataDir: meta, Manifest: manifest, byID: map[domain.ID]Entry{}, byPath: map[string]Entry{}}
+	w := &Workspace{Root: root, MetadataDir: meta, Manifest: manifest, byID: map[domain.ID]Entry{}, byPath: map[string]Entry{}, byHuman: map[string]Entry{}}
 	for _, absolute := range paths {
 		real, err := filepath.EvalSymlinks(absolute)
 		if err != nil || !within(metaReal, real) {
@@ -177,6 +201,14 @@ func load(root, marker string) (*Workspace, error) {
 		}
 		w.byPath[public] = entry
 		w.byID[doc.Record.ID] = entry
+		if human, humanErr := workspace.String(doc, "human_ref", false); humanErr != nil {
+			return nil, humanErr
+		} else if human != "" {
+			if previous, exists := w.byHuman[human]; exists {
+				return nil, refusal(domain.RefusalDuplicateID, human, "claimed by "+previous.Path+" and "+public, nil)
+			}
+			w.byHuman[human] = entry
+		}
 		w.Entries = append(w.Entries, entry)
 	}
 	anchorPath := ".spectacular/" + manifest.ProjectAnchor
@@ -188,6 +220,15 @@ func load(root, marker string) (*Workspace, error) {
 		return nil, refusal(domain.RefusalNounMismatch, anchorPath, "project_anchor must be Anchor", nil)
 	}
 	return w, nil
+}
+
+func containsRoot(roots []string, want string) bool {
+	for _, root := range roots {
+		if root == want {
+			return true
+		}
+	}
+	return false
 }
 
 func (w *Workspace) ProjectAnchor() Entry { return w.byPath[".spectacular/"+w.Manifest.ProjectAnchor] }
@@ -208,8 +249,10 @@ func (w *Workspace) Lookup(ref string, want domain.RecordType) (Entry, error) {
 		entry, ok = w.byID[id]
 	} else if strings.HasPrefix(ref, ".spectacular/") && canonicalRelative(ref) {
 		entry, ok = w.byPath[ref]
+	} else if human, found := w.byHuman[ref]; found {
+		entry, ok = human, true
 	} else {
-		return Entry{}, refusal(domain.RefusalInvalidReference, ref, "expected canonical UUIDv7, typed reference, or full .spectacular/ path", nil)
+		return Entry{}, refusal(domain.RefusalInvalidReference, ref, "expected human reference, canonical UUIDv7, typed reference, or full .spectacular/ path", nil)
 	}
 	if !ok {
 		return Entry{}, refusal(domain.RefusalRecordNotFound, ref, "record does not exist", nil)

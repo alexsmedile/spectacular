@@ -5,13 +5,16 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
+	"github.com/alexsmedile/spectacular/v2/internal/humanlayout"
 	spectacularruntime "github.com/alexsmedile/spectacular/v2/internal/runtime"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
@@ -709,6 +712,8 @@ func (s Service) ReconcileMany(inputs []ReconcileInput) ([]OperationResult, erro
 	}
 	inputs = canonicalInputs
 	var changes []FileChange
+	var indexDocs []*workspace.Document
+	indexRecordPaths := map[domain.ID]string{}
 	results := make([]OperationResult, 0, len(inputs))
 	transactionKey := inputs[0].IdempotencyKey
 	receiptID := receiptID(transactionKey)
@@ -818,15 +823,22 @@ func (s Service) ReconcileMany(inputs []ReconcileInput) ([]OperationResult, erro
 			version = strconv.Itoa(current + 1)
 		}
 		contract := s.document(domain.Contract, contractRef.ID, "Capability Contract", "owner", "current")
+		if !newCapability {
+			workspace.SetString(contract, "human_ref", humanlayout.HumanRef(existing.Document))
+		}
 		setContract(contract, candidate, version)
 		workspace.SetString(contract, "accepted_proposal", input.Proposal)
 		workspace.SetString(contract, "authorization", input.Authorization)
 		workspace.SetString(contract, "reconciliation_idempotency_key", input.IdempotencyKey)
+		paths, err := humanlayout.Plan(s.Workspace.Entries, []*workspace.Document{contract})
+		if err != nil {
+			return nil, err
+		}
 		canonical, err := workspace.Canonical(contract)
 		if err != nil {
 			return nil, err
 		}
-		path := recordPath(domain.Contract, contractRef.ID)
+		path := paths[contractRef.ID]
 		if !newCapability {
 			path = existing.Path
 			old, canonicalErr := workspace.Canonical(existing.Document)
@@ -837,6 +849,8 @@ func (s Service) ReconcileMany(inputs []ReconcileInput) ([]OperationResult, erro
 			changes = append(changes, FileChange{Path: history, Data: old, Mode: 0o644})
 		}
 		changes = append(changes, FileChange{Path: path, Data: canonical, Mode: 0o644})
+		indexDocs = append(indexDocs, contract)
+		indexRecordPaths[contract.Record.ID] = path
 		fp, fingerprintErr := workspace.Fingerprint(contract)
 		if fingerprintErr != nil {
 			return nil, fingerprintErr
@@ -860,14 +874,35 @@ func (s Service) ReconcileMany(inputs []ReconcileInput) ([]OperationResult, erro
 	workspace.SetStrings(receipt, "decisions", receiptDecisions)
 	workspace.SetStrings(receipt, "expected_fingerprints", receiptExpected)
 	workspace.SetStrings(receipt, "missions", sortedUnique(receiptMissions))
+	if missions := sortedUnique(receiptMissions); len(missions) == 1 {
+		workspace.SetString(receipt, "mission", missions[0])
+	}
 	workspace.SetString(receipt, "operation_digest", operationDigest)
 	workspace.SetString(receipt, "transaction_key", transactionKey)
 	workspace.SetString(receipt, "idempotency_key", transactionKey)
+	receiptPaths, err := humanlayout.Plan(s.Workspace.Entries, []*workspace.Document{receipt})
+	if err != nil {
+		return nil, err
+	}
 	receiptCanonical, err := workspace.Canonical(receipt)
 	if err != nil {
 		return nil, err
 	}
-	changes = append(changes, FileChange{Path: recordPath(domain.Evidence, receiptID), Data: receiptCanonical, Mode: 0o644})
+	changes = append(changes, FileChange{Path: receiptPaths[receiptID], Data: receiptCanonical, Mode: 0o644})
+	indexDocs = append(indexDocs, receipt)
+	indexRecordPaths[receiptID] = receiptPaths[receiptID]
+	indexes, err := humanlayout.Indexes(s.Workspace.Entries, indexDocs, indexRecordPaths)
+	if err != nil {
+		return nil, err
+	}
+	indexNames := make([]string, 0, len(indexes))
+	for name := range indexes {
+		indexNames = append(indexNames, name)
+	}
+	sort.Strings(indexNames)
+	for _, name := range indexNames {
+		changes = append(changes, FileChange{Path: name, Data: indexes[name], Mode: 0o644})
+	}
 	if err := ApplyTransaction(s.Workspace.Root, transactionKey, changes); err != nil {
 		return nil, err
 	}
@@ -1058,12 +1093,54 @@ func (s Service) ArchiveMission(input ArchiveInput) (OperationResult, error) {
 	if err != nil {
 		return OperationResult{}, err
 	}
-	changes := []FileChange{{Path: mission.Path, Data: canonical, Mode: 0o644}, {Path: anchor.Path, Data: anchorCanonical, Mode: 0o644}}
+	bundleRoot := filepath.ToSlash(filepath.Dir(mission.Path))
+	if filepath.Base(mission.Path) != "MISSION.md" || !strings.HasPrefix(bundleRoot, ".spectacular/missions/") {
+		return OperationResult{}, domain.NewRefusal(domain.RefusalInvalidWorkspacePath, mission.Path, "Mission archive requires a canonical human Mission bundle", nil)
+	}
+	archiveRoot := filepath.ToSlash(filepath.Join(".spectacular", "archive", "missions", filepath.Base(bundleRoot)))
+	changes := []FileChange{{Path: anchor.Path, Data: anchorCanonical, Mode: 0o644}}
+	var bundleDocs []*workspace.Document
+	archivedPaths := map[domain.ID]string{}
+	for _, entry := range s.Workspace.Entries {
+		if entry.Path != mission.Path && !strings.HasPrefix(entry.Path, bundleRoot+"/") {
+			continue
+		}
+		doc := entry.Document
+		data, canonicalErr := workspace.Canonical(doc)
+		if canonicalErr != nil {
+			return OperationResult{}, canonicalErr
+		}
+		if entry.Document.Record.ID == mission.Document.Record.ID {
+			doc = mission.Document
+			data = canonical
+		}
+		destination := archiveRoot + strings.TrimPrefix(entry.Path, bundleRoot)
+		changes = append(changes, FileChange{Path: destination, Data: data, Mode: 0o644})
+		changes = append(changes, FileChange{Path: entry.Path, Delete: true})
+		bundleDocs = append(bundleDocs, doc)
+		archivedPaths[doc.Record.ID] = destination
+	}
+	activeIndex := filepath.Join(s.Workspace.Root, filepath.FromSlash(bundleRoot), "index.md")
+	if _, statErr := os.Stat(activeIndex); statErr == nil {
+		changes = append(changes, FileChange{Path: filepath.ToSlash(filepath.Join(bundleRoot, "index.md")), Delete: true})
+	}
+	indexes, err := humanlayout.Indexes(s.Workspace.Entries, bundleDocs, archivedPaths)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	indexNames := make([]string, 0, len(indexes))
+	for name := range indexes {
+		indexNames = append(indexNames, name)
+	}
+	sort.Strings(indexNames)
+	for _, name := range indexNames {
+		changes = append(changes, FileChange{Path: name, Data: indexes[name], Mode: 0o644})
+	}
 	if err := ApplyTransaction(s.Workspace.Root, input.IdempotencyKey, changes); err != nil {
 		return OperationResult{}, err
 	}
 	fp, _ := workspace.Fingerprint(mission.Document)
-	return OperationResult{Operation: "mission.archive", Ref: input.Mission, Path: mission.Path, Fingerprint: fp, Sources: []string{input.Authorization, input.TerminalPacket}}, nil
+	return OperationResult{Operation: "mission.archive", Ref: input.Mission, Path: filepath.ToSlash(filepath.Join(archiveRoot, "MISSION.md")), Fingerprint: fp, Sources: []string{input.Authorization, input.TerminalPacket}}, nil
 }
 
 func legalTransition(from, to string) bool {

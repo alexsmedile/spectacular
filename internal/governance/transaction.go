@@ -13,9 +13,10 @@ import (
 )
 
 type FileChange struct {
-	Path string
-	Data []byte
-	Mode os.FileMode
+	Path   string
+	Data   []byte
+	Mode   os.FileMode
+	Delete bool
 }
 
 type transactionFile struct {
@@ -24,6 +25,7 @@ type transactionFile struct {
 	Backup      string `json:"backup"`
 	HadOriginal bool   `json:"had_original"`
 	Mode        uint32 `json:"mode"`
+	Delete      bool   `json:"delete,omitempty"`
 }
 
 type transactionJournal struct {
@@ -87,6 +89,7 @@ func applyTransactionWithInstallHook(root, key string, changes []FileChange, fai
 			Temporary: filepath.ToSlash(filepath.Join(".spectacular", "transactions", fmt.Sprintf("%s-%d.new", txID, i))),
 			Backup:    filepath.ToSlash(filepath.Join(".spectacular", "transactions", fmt.Sprintf("%s-%d.old", txID, i))),
 			Mode:      uint32(change.Mode.Perm()),
+			Delete:    change.Delete,
 		}
 		if _, pathErr := transactionArtifact(root, item.Temporary, txID, i, ".new"); pathErr != nil {
 			return pathErr
@@ -114,6 +117,9 @@ func applyTransactionWithInstallHook(root, key string, changes []FileChange, fai
 			}
 		} else if !os.IsNotExist(statErr) {
 			return transactionRefusal("inspect transaction target", statErr)
+		}
+		if change.Delete {
+			continue
 		}
 		if _, err := safeTarget(root, change.Path); err != nil {
 			return err
@@ -159,6 +165,16 @@ func applyTransactionWithInstallHook(root, key string, changes []FileChange, fai
 		}
 		if beforeInstall != nil {
 			beforeInstall(i)
+		}
+		if item.Delete {
+			if err := removeEffect(effects, item.Target, ""); err != nil {
+				if rollbackErr := rollback(effects, journal); rollbackErr != nil {
+					return rollbackErr
+				}
+				return transactionRefusal("delete transaction target", err)
+			}
+			installed++
+			continue
 		}
 		if err := effects.rename(item.Temporary, item.Target, txRelative, ""); err != nil {
 			if rollbackErr := rollback(effects, journal); rollbackErr != nil {

@@ -15,5 +15,10 @@ bash release/test.sh
 interface. Regenerate it when changing the registry; do not hand-maintain a
 command inventory.
 
+Follow [HUMAN-WORKSPACE-CONTRACT.md](HUMAN-WORKSPACE-CONTRACT.md). Canonical
+records keep UUIDv7 identity but persist under readable project Anchors and
+Mission bundles; generated `index.md` files are committed projections and
+never authority.
+
 Use conventional commit messages. Do not reintroduce v1 compatibility,
 migrations, generic record/search verbs, or a second package root.

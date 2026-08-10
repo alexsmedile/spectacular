@@ -17,6 +17,7 @@ import (
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/governance"
+	"github.com/alexsmedile/spectacular/v2/internal/humanlayout"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
 
@@ -39,7 +40,7 @@ func fixture(t *testing.T) string {
 }
 func fixedNow() time.Time { return time.Date(2026, 8, 10, 10, 0, 0, 0, time.UTC) }
 
-func TestSelfHostedWorkspaceStatesRCGate(t *testing.T) {
+func TestSelfHostedWorkspaceIsHumanOperable(t *testing.T) {
 	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatal(err)
@@ -48,9 +49,12 @@ func TestSelfHostedWorkspaceStatesRCGate(t *testing.T) {
 	text := runJSON(t, root, []string{"workspace", "context", "project", "--event", "@Orient", "--json"})
 	for _, required := range []string{
 		`"ref":"Contract:019fe381-5d61-7223-b362-03a5f99a7b10"`,
-		`"ref":"Evidence:019fe381-5d61-7223-b362-03a5f99a7b07"`,
+		`"path":".spectacular/PRODUCT.md"`,
+		`"path":".spectacular/ARCHITECTURE.md"`,
+		`"path":".spectacular/STACK.md"`,
+		`"path":".spectacular/missions/M1-human-operability/MISSION.md"`,
+		`"kind":"owner-gate"`,
 		`"code":"resolve_blocking_gap"`,
-		`"detail":"blocking Gap prevents continuation"`,
 	} {
 		if !strings.Contains(text, required) {
 			t.Fatalf("self-hosted RC workspace missing %s: %s", required, text)
@@ -70,28 +74,84 @@ func TestSelfHostedWorkspaceStatesRCGate(t *testing.T) {
 	if mission.Document.Record.Status == nil || *mission.Document.Record.Status != "awaiting-assessment" {
 		t.Fatalf("self-hosted Mission is not awaiting assessment: %#v", mission.Document.Record.Status)
 	}
-	evidence, err := opened.Lookup("Evidence:019fe381-5d61-7223-b362-03a5f99a7b07", domain.Evidence)
+	byHuman, err := opened.Lookup("M1/R1/C1", domain.Checkpoint)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(evidence.Document.Body, "9c5f076ff786474f2ee2a362580a81334fb53444") {
-		t.Fatalf("self-hosted Evidence does not bind the repaired head: %s", evidence.Document.Body)
+	if byHuman.Path != ".spectacular/missions/M1-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-in-progress.md" {
+		t.Fatalf("human reference resolved %s", byHuman.Path)
 	}
 	gap, err := opened.Lookup("Gap:019fe381-5d61-7223-b362-03a5f99a7b04", domain.Gap)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if gap.Document.Record.Title == nil || *gap.Document.Record.Title != "Owner disposition on repaired RC candidate" {
-		t.Fatalf("self-hosted continuation is not the owner assessment gate: %#v", gap.Document.Record.Title)
+	if gap.Document.Record.Title == nil || *gap.Document.Record.Title != "Owner disposition on the human-operable RC.2 candidate" {
+		t.Fatalf("self-hosted Gap is not the review boundary: %#v", gap.Document.Record.Title)
 	}
 	if after := treeDigest(t, filepath.Join(root, ".spectacular")); after != before {
 		t.Fatal("self-hosted workspace read mutated canonical state")
 	}
 }
 
+func TestSelfHostedIndexesAreDeterministicProjections(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	opened, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated, err := humanlayout.Indexes(opened.Entries, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for path, expected := range generated {
+		actual, readErr := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+		if readErr != nil {
+			t.Fatalf("read generated index %s: %v", path, readErr)
+		}
+		if !bytes.Equal(actual, expected) {
+			t.Fatalf("generated index drifted: %s\n--- actual ---\n%s\n--- expected ---\n%s", path, actual, expected)
+		}
+	}
+}
+
+func TestSelfHostedHumanPointersExecuteWithoutMutation(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := treeDigest(t, filepath.Join(root, ".spectacular"))
+	commands := map[string]bool{}
+	for _, seed := range [][]string{{"anchor", "show", "project", "--json"}, {"mission", "show", "M1", "--json"}} {
+		var out bytes.Buffer
+		exit := (Runner{Cwd: root, Stdout: &out, Stderr: &bytes.Buffer{}, Now: fixedNow}).Run(seed)
+		if exit != 0 {
+			t.Fatalf("seed %v exit=%d output=%s", seed, exit, out.String())
+		}
+		var payload any
+		if err := json.Unmarshal(out.Bytes(), &payload); err != nil {
+			t.Fatal(err)
+		}
+		collectShowCommands(payload, commands)
+	}
+	for commandLine := range commands {
+		args := strings.Fields(strings.TrimPrefix(commandLine, "spectacular "))
+		args = append(args, "--json")
+		var out bytes.Buffer
+		if exit := (Runner{Cwd: root, Stdout: &out, Stderr: &bytes.Buffer{}, Now: fixedNow}).Run(args); exit != 0 {
+			t.Fatalf("emitted pointer failed: %s exit=%d output=%s", commandLine, exit, out.String())
+		}
+	}
+	if after := treeDigest(t, filepath.Join(root, ".spectacular")); after != before {
+		t.Fatal("human pointer traversal mutated canonical state")
+	}
+}
+
 func TestPublicRegistryAndCommands(t *testing.T) {
-	if len(Registry) != 31 {
-		t.Fatalf("registry has %d commands, want 31", len(Registry))
+	if len(Registry) != 34 {
+		t.Fatalf("registry has %d commands, want 34", len(Registry))
 	}
 	seen := map[Operation]bool{}
 	for _, spec := range Registry {
@@ -607,8 +667,12 @@ func TestGovernedCreateUsesStrictInputAndRegisteredReadback(t *testing.T) {
 	}
 	var out bytes.Buffer
 	runner := Runner{Cwd: root, Stdout: &out, Stderr: &bytes.Buffer{}, Now: fixedNow}
-	if exit := runner.Run([]string{"decision", "create", "--input", path, "--json"}); exit != 0 || !strings.Contains(out.String(), `"operation":"decision.create"`) {
+	if exit := runner.Run([]string{"decision", "create", "--input", path, "--json"}); exit != 0 || !strings.Contains(out.String(), `"operation":"decision.create"`) || !strings.Contains(out.String(), `"path":".spectacular/decisions/D1-`) {
 		t.Fatalf("create exit=%d output=%s", exit, out.String())
+	}
+	indexBytes, err := os.ReadFile(filepath.Join(root, ".spectacular", "index.md"))
+	if err != nil || !strings.Contains(string(indexBytes), "Authorize bounded operation") || !strings.Contains(string(indexBytes), "non-authoritative") {
+		t.Fatalf("generated human index missing created Decision: %s err=%v", indexBytes, err)
 	}
 	out.Reset()
 	if exit := runner.Run([]string{"decision", "show", "Decision:0199b000-0000-7000-8000-000000000090", "--json"}); exit != 0 || !strings.Contains(out.String(), `"noun":"Decision"`) {

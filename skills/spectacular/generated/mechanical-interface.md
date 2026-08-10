@@ -2,13 +2,16 @@
 
 Generated from `internal/command.Registry`; do not edit by hand.
 
-Release version: `2.0.0-rc.1`
+Release version: `2.0.0-rc.2`
 
 Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1`, `read-only`)
 
 | Command | Arguments | Schema | Effect |
 |---|---|---|---|
 | `spectacular anchor show project` | `[--json]` | `spectacular.anchor.show.v1` | `read-only` |
+| `spectacular anchor show product` | `[--json]` | `spectacular.anchor.show.v1` | `read-only` |
+| `spectacular anchor show architecture` | `[--json]` | `spectacular.anchor.show.v1` | `read-only` |
+| `spectacular anchor show stack` | `[--json]` | `spectacular.anchor.show.v1` | `read-only` |
 | `spectacular mission list` | `[--json]` | `spectacular.mission.list.v1` | `read-only` |
 | `spectacular mission show` | `<ref> [--json]` | `spectacular.mission.show.v1` | `read-only` |
 | `spectacular gap list` | `--scope <ref> [--json]` | `spectacular.gap.list.v1` | `read-only` |

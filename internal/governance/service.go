@@ -7,11 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
+	"github.com/alexsmedile/spectacular/v2/internal/humanlayout"
 	spectacularruntime "github.com/alexsmedile/spectacular/v2/internal/runtime"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 	"go.yaml.in/yaml/v3"
@@ -447,6 +447,10 @@ func (s Service) createMany(operation string, primary *workspace.Document, docs 
 	if key == "" {
 		return OperationResult{}, missing("idempotency_key", "required")
 	}
+	paths, err := humanlayout.Plan(s.Workspace.Entries, docs)
+	if err != nil {
+		return OperationResult{}, err
+	}
 	allReplay := true
 	changes := make([]FileChange, 0, len(docs))
 	for _, doc := range docs {
@@ -477,7 +481,7 @@ func (s Service) createMany(operation string, primary *workspace.Document, docs 
 			}
 			continue
 		}
-		path := filepath.ToSlash(recordPath(doc.Record.Type, doc.Record.ID))
+		path := filepath.ToSlash(paths[doc.Record.ID])
 		if occupied, pathFound := s.entryByPath(path); pathFound {
 			return OperationResult{}, domain.NewRefusal(domain.RefusalCollision, path, "record path is occupied by "+refOf(occupied), nil)
 		}
@@ -491,10 +495,22 @@ func (s Service) createMany(operation string, primary *workspace.Document, docs 
 	if len(changes) != len(docs) {
 		return OperationResult{}, domain.NewRefusal(domain.RefusalIdempotencyConflict, "idempotency_key", "partial replay would create an incomplete record set", nil)
 	}
+	indexes, err := humanlayout.Indexes(s.Workspace.Entries, docs, paths)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	indexPaths := make([]string, 0, len(indexes))
+	for path := range indexes {
+		indexPaths = append(indexPaths, path)
+	}
+	sort.Strings(indexPaths)
+	for _, path := range indexPaths {
+		changes = append(changes, FileChange{Path: path, Data: indexes[path], Mode: 0o644})
+	}
 	if err := ApplyTransaction(s.Workspace.Root, key, changes); err != nil {
 		return OperationResult{}, err
 	}
-	path := recordPath(primary.Record.Type, primary.Record.ID)
+	path := paths[primary.Record.ID]
 	fp, err := workspace.Fingerprint(primary)
 	if err != nil {
 		return OperationResult{}, err
@@ -665,10 +681,6 @@ func setContract(doc *workspace.Document, candidate ContractCandidate, version s
 	workspace.SetStrings(doc, "conformance_checks", candidate.ConformanceChecks)
 	workspace.SetString(doc, "authority_freshness", candidate.AuthorityFreshness)
 	workspace.SetStrings(doc, "related_material", candidate.RelatedMaterial)
-}
-
-func recordPath(noun domain.RecordType, id domain.ID) string {
-	return filepath.ToSlash(filepath.Join(".spectacular", "records", strings.ToLower(string(noun))+"-"+id.String()+".md"))
 }
 
 func result(operation string, entry discovery.Entry, replay bool, sources []string) OperationResult {

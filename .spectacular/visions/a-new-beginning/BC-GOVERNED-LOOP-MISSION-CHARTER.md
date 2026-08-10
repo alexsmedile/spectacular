@@ -1,7 +1,7 @@
 ---
 type: mission-charter
 mission: b-c-governed-loop
-version: 1.0
+version: 1.1
 status: ready
 activation_state: not-activated
 prepared_at: 2026-08-10
@@ -42,6 +42,22 @@ runtime replacement, noun-first grammar, and the Scenario A mechanical envelope.
 types, field encoding, transaction journal shape, and package placement are reversible Type-2
 implementation choices and must preserve the invariants below.
 
+## Decision provenance — do not re-ask
+
+The interactive B+C owner-decision session disposed clusters 1A through 7A. Its normalized result
+is accepted in `GOVERNED-WORK-AND-CLOSURE-CONTRACT.md@1.0` and joined to Scenario A. In particular:
+
+- Proposal and Capability Contract are separate authorities. A submitted Proposal is a rigorous,
+  base-bound Contract delta; it never becomes current Contract truth by promotion.
+- Owner authority, lifecycle boundaries, Handoff accountability, claim-scoped Evidence,
+  assessment, all-or-nothing reconciliation, closure order, and the common mechanical envelope are
+  settled.
+- Exact additive record encoding, Go package placement, transaction-journal representation, and
+  extended exit-code allocation remain reversible implementation choices.
+
+The implementation task must not reopen these questions. It stops only if direct implementation
+evidence reveals a conflict with an accepted contract or a genuinely new Type-1 decision.
+
 ## Objective B — governed work formation
 
 Implement mechanically validated operations for:
@@ -59,9 +75,13 @@ spectacular handoff create ... [--json]
 
 `create` persists only already-confirmed records. Interpretation, Contract-delta authoring, Mission
 slicing, and authority selection remain guided Skill responsibilities. Proposal submission binds
-target Contract, base version/fingerprint, exact additions/modifications/removals, rationale, scope,
-and Gaps. A generated candidate Contract is disposable. New capability creation binds an explicit
-absence base and one complete MCC-conformant candidate.
+target Contract, base version/fingerprint, actor, exact additions/modifications/removals, rationale,
+scope, and Gaps/assumptions. A generated candidate Contract is disposable. New capability creation
+binds an explicit absence base and one complete MCC-conformant candidate.
+
+Mission creation requires an accepted Proposal, matching base, bounded outcome, Objectives,
+preparation verdicts, dependencies/Gaps, claim-mapped evidence plan, authority envelope, recovery
+point, and activation Decision.
 
 Creation is atomic and identity-idempotent. Exact replay returns the existing result; stale base,
 identity/content/path collision, insufficient authority, or non-identical replay refuses with zero
@@ -72,6 +92,11 @@ Handoffs are immutable intra-Mission dispatches. Validation proves structure, re
 same-Mission containment, envelope subset, current authority/baseline, expiry, stops, and required
 return shape. It never claims actor competence, provider permission/effects, evidence truth or
 sufficiency, or Mission success. Mission accountability never transfers.
+
+The immutable return records `succeeded | blocked | failed`, actor, final baseline/result, actions
+and provider receipts, Evidence, remaining Gaps, budget use, recovery point, and exactly one next
+action or owner gate. Supersession creates a new linked Handoff. A host task/thread identifier is a
+non-authoritative destination pointer.
 
 ## Objective C — evidence-backed closure
 
@@ -90,23 +115,35 @@ spectacular mission archive <ref> --authorization <decision-ref> --expected-fing
 
 Evidence maps material claims to attributable `direct | observation | proxy | judgment | unknown`
 support with scope, method, actor, revision/Contract target, environment, freshness basis, limits,
-contrary evidence, checks, and review state. Assessment remains guided judgment and yields
+time, contrary evidence, required checks, and review state. Assessment remains guided judgment and yields
 `ready-for-owner | repair-required | escalated`; the CLI records or applies only explicit results.
+
+Each repair attempt records affected claims, its new hypothesis/evidence/materially narrower
+action, budget use, before/after Evidence, checks, result, and recovery point.
 
 Reconciliation consumes the exact current Contract set, accepted Proposal delta, owner Decision,
 and expected fingerprints as one logical all-or-nothing transaction. Conflict or interruption leaves
 current Contract pointers unchanged or restores them before another reconciliation. Previous
 Contracts, Proposal, Decision, Evidence, and receipt remain inspectable.
 
+A Decision records actor and authority basis, question, scope, disposition, rationale, material
+alternatives, targets and expected fingerprints, authorized effects, conditions/expiry, Evidence
+pointers, and supersession.
+
 `assessed`, `resolved`, `reconciled`, and `archived` remain distinct. Archival requires resolution,
 completed reconciliation or an explicit `no-contract-delta | reconciliation-not-required`
 Decision, and a terminal continuity packet. Archival proves nothing.
 
+Closure refuses on insufficient or stale Evidence, unresolved conflict, incomplete required
+checks/review, stale authority or baseline, unknown required provider attestation, unsettled
+reconciliation, exhausted repair, or a missing terminal continuity packet.
+
 ## State and authority invariants
 
-- The owner controls Proposal disposition, Mission activation/resolution, and current Contract
-  reconciliation. An approved envelope may pre-authorize declared Objective/readiness transitions
-  without interrupting the owner after every Objective.
+- The owner controls Proposal disposition, Mission activation/resolution, Objective satisfaction,
+  and current Contract reconciliation. An approved envelope may carry that authority across
+  explicitly predeclared Objective/readiness transitions without a fresh interruption; it never
+  creates ambient executor authority.
 - Run-local progress and bounded reversible repairs may be delegated; retry/resume never broadens
   authority.
 - Ordinary refusals do not create canonical receipts. A failed-attempt receipt is earned only by an
@@ -116,6 +153,14 @@ Decision, and a terminal continuity packet. Archival proves nothing.
   receipts only and performs no real provider mutation.
 - Scenario A read operations and envelopes remain backward compatible; B+C adds fields/operations
   without changing their semantics.
+
+## Common mechanical envelope
+
+Every operation returns a versioned result or structured refusal with stable references and
+source/fingerprint basis. Warnings remain separate from data. A refusal identifies its category,
+affected reference, expected/actual fingerprints, zero-mutation result, and exact recovery action or
+owner gate. Scenario A exit classes `0/2/3` remain fixed; additional exit allocation is Type-2.
+Dispatch, arguments, help, effects, and machine schemas continue to derive from one registry.
 
 ## Owned paths
 

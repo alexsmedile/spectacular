@@ -2,6 +2,7 @@ package governance
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -13,6 +14,16 @@ import (
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
+
+func validateSHA256(value, field string) error {
+	if len(value) != 64 || strings.ToLower(value) != value {
+		return domain.NewRefusal(domain.RefusalInvalidFingerprint, field, "expected lowercase SHA-256 hex", nil)
+	}
+	if _, err := hex.DecodeString(value); err != nil {
+		return domain.NewRefusal(domain.RefusalInvalidFingerprint, field, "expected lowercase SHA-256 hex", err)
+	}
+	return nil
+}
 
 func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
 	id, err := domain.ParseID(input.ID)
@@ -453,6 +464,42 @@ func (s Service) TransitionMission(input TransitionInput) (OperationResult, erro
 	}
 	if _, err := parseFuture(missionExpiry, s.now(), "mission.expires_at"); err != nil {
 		return OperationResult{}, err
+	}
+	if input.To == "active" {
+		preparationFingerprint, err := workspace.String(mission.Document, "preparation_fingerprint", false)
+		if err != nil {
+			return OperationResult{}, err
+		}
+		if preparationFingerprint != "" {
+			if err := validateSHA256(preparationFingerprint, "preparation_fingerprint"); err != nil {
+				return OperationResult{}, err
+			}
+			validUntil, err := workspace.String(mission.Document, "preparation_valid_until", true)
+			if err != nil {
+				return OperationResult{}, err
+			}
+			if _, err := parseFuture(validUntil, s.now(), "preparation_valid_until"); err != nil {
+				return OperationResult{}, err
+			}
+			preparationBaseline, err := workspace.String(mission.Document, "preparation_baseline", true)
+			if err != nil {
+				return OperationResult{}, err
+			}
+			missionBaseline, err := workspace.String(mission.Document, "baseline", true)
+			if err != nil {
+				return OperationResult{}, err
+			}
+			if preparationBaseline != missionBaseline {
+				return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "preparation_baseline", "preparation baseline no longer matches the Mission", nil)
+			}
+			preparationSources, err := workspace.Strings(mission.Document, "preparation_sources", true)
+			if err != nil {
+				return OperationResult{}, err
+			}
+			if err := s.validateBoundInputs(preparationSources); err != nil {
+				return OperationResult{}, err
+			}
+		}
 	}
 	missionScope, err := workspace.Strings(mission.Document, "scope", true)
 	if err != nil {

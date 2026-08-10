@@ -11,6 +11,7 @@ import (
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
+	spectacularruntime "github.com/alexsmedile/spectacular/v2/internal/runtime"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 	"go.yaml.in/yaml/v3"
 )
@@ -202,6 +203,14 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 	if input.Title == "" || input.Actor == "" || input.Outcome == "" || len(input.Objectives) == 0 || input.DesignSufficiency != "sufficient" || input.SliceQuality != "coherent" || len(input.EvidenceClaims) == 0 || len(input.Scope) == 0 || input.Baseline == "" || input.BudgetUnits < 1 || input.RepairBudget < 0 || input.RecoveryPoint == "" || input.ReturnDestination == "" || input.Authorization == "" || input.IdempotencyKey == "" {
 		return OperationResult{}, missing("mission", "bounded outcome, Objectives, preparation verdicts, evidence plan, envelope, recovery, authorization, and idempotency are required")
 	}
+	if input.Preparation != nil {
+		if err := spectacularruntime.ValidatePreparationReceipt(*input.Preparation, s.now()); err != nil {
+			return OperationResult{}, err
+		}
+		if input.Preparation.Proposal.Ref != input.Proposal || input.Preparation.Proposal.Fingerprint != input.ExpectedProposalFingerprint || input.Preparation.Baseline != input.Baseline || input.Preparation.DesignSufficiency != input.DesignSufficiency || input.Preparation.SliceQuality != input.SliceQuality {
+			return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "preparation", "preparation receipt does not bind the Mission input", nil)
+		}
+	}
 	if _, err := parseFuture(input.ExpiresAt, s.now(), "expires_at"); err != nil {
 		return OperationResult{}, err
 	}
@@ -230,6 +239,16 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 	workspace.SetString(mission, "return_destination", input.ReturnDestination)
 	workspace.SetString(mission, "activation_decision", input.Authorization)
 	workspace.SetString(mission, "idempotency_key", input.IdempotencyKey)
+	if input.Preparation != nil {
+		workspace.SetString(mission, "preparation_fingerprint", input.Preparation.Fingerprint)
+		workspace.SetString(mission, "preparation_valid_until", input.Preparation.FreshUntil)
+		workspace.SetString(mission, "preparation_baseline", input.Preparation.Baseline)
+		bindings := []string{input.Preparation.Proposal.Ref + "@" + input.Preparation.Proposal.Fingerprint}
+		for _, source := range input.Preparation.DirectionSources {
+			bindings = append(bindings, source.Ref+"@"+source.Fingerprint)
+		}
+		workspace.SetStrings(mission, "preparation_sources", bindings)
+	}
 	var documents []*workspace.Document
 	documents = append(documents, mission)
 	objectiveRefs := make([]string, 0, len(input.Objectives))

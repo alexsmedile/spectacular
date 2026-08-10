@@ -23,6 +23,7 @@ type Manifest struct {
 	SchemaVersion string   `yaml:"schema_version"`
 	RecordRoots   []string `yaml:"record_roots"`
 	ProjectAnchor string   `yaml:"project_anchor"`
+	Guardrails    string   `yaml:"guardrails,omitempty"`
 }
 
 type Entry struct {
@@ -227,6 +228,40 @@ func (w *Workspace) OfType(t domain.RecordType) []Entry {
 		}
 	}
 	return out
+}
+
+// ReadMetadataFile reads an optional manifest-declared support file without
+// allowing it to escape the canonical .spectacular directory. Support files
+// guide workflows; they are never indexed as canonical records.
+func (w *Workspace) ReadMetadataFile(relative string) ([]byte, string, error) {
+	if relative == "" || !canonicalRelative(relative) {
+		return nil, "", refusal(domain.RefusalInvalidManifest, relative, "metadata file must be a canonical relative path", nil)
+	}
+	absolute := filepath.Join(w.MetadataDir, filepath.FromSlash(relative))
+	metadataRoot, err := filepath.EvalSymlinks(w.MetadataDir)
+	if err != nil {
+		return nil, "", refusal(domain.RefusalPathEscape, relative, "resolve workspace metadata directory", err)
+	}
+	real, err := filepath.EvalSymlinks(absolute)
+	if err != nil {
+		return nil, "", refusal(domain.RefusalRecordNotFound, relative, "declared metadata file does not exist", err)
+	}
+	if !within(metadataRoot, real) {
+		return nil, "", refusal(domain.RefusalPathEscape, relative, "declared metadata file escapes .spectacular", nil)
+	}
+	info, err := os.Stat(real)
+	if err != nil || !info.Mode().IsRegular() {
+		return nil, "", refusal(domain.RefusalInvalidManifest, relative, "declared metadata file must be regular", err)
+	}
+	data, err := os.ReadFile(real)
+	if err != nil {
+		return nil, "", refusal(domain.RefusalInvalidManifest, relative, "read declared metadata file", err)
+	}
+	if !utf8.Valid(data) {
+		return nil, "", refusal(domain.RefusalInvalidManifest, relative, "declared metadata file must be valid UTF-8", nil)
+	}
+	sum := sha256.Sum256(data)
+	return data, hex.EncodeToString(sum[:]), nil
 }
 
 // Source resolves a freshness basis to either an exact typed record or a

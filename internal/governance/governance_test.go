@@ -96,7 +96,7 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 		DirectionSources: []spectacularruntime.BoundSource{{Ref: contractRef, Fingerprint: contract.Fingerprint}},
 		Candidates:       []spectacularruntime.CandidateSlice{{Name: "governed-loop", Outcome: "Reconcile and recover.", Evidence: []string{"claim:closure"}, CancellationState: "Proposal remains inspectable", Reversibility: "local fixture", StandaloneCoherence: "complete B+C loop", IntegrationPath: "governance service", LearningValue: "cold recovery proof"}},
 		Selected:         "governed-loop", DesignSufficiency: "sufficient", DesignRationale: "accepted authority and closure contracts", SliceQuality: "coherent", SliceRationale: "serial governed loop",
-		CompletionBoundary: []string{"claim:closure"}, StopConditions: []string{"authority-drift"}, EvidenceClaims: []string{"claim:closure"}, FreshUntil: "2026-08-10T11:00:00Z",
+		CompletionCriteria: []spectacularruntime.CompletionCriterion{{Claim: "claim:closure", PassBoundary: "closure checks pass", ProofRequirement: "recorded Evidence", ReviewLevel: spectacularruntime.ReviewIndependent}}, StopConditions: []string{"authority-drift"}, EvidenceClaims: []string{"claim:closure"}, FreshUntil: "2026-08-10T11:00:00Z",
 	}, testNow)
 	must(t, err)
 	missionInput.Preparation = &preparation
@@ -111,6 +111,17 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	must(t, err)
 
 	mission := lookup(t, openService(t, root), missionRef, domain.Mission)
+	var storedCriteria []spectacularruntime.CompletionCriterion
+	if err := workspace.DecodeValue(mission.Document, "completion_contract", &storedCriteria); err != nil {
+		t.Fatal(err)
+	}
+	if len(storedCriteria) != 1 || storedCriteria[0].Claim != "claim:closure" || mustString(mission.Document, "completion_contract_fingerprint") != spectacularruntime.CompletionFingerprint(storedCriteria) {
+		t.Fatalf("Mission completion contract was not frozen: %#v", storedCriteria)
+	}
+	run := lookup(t, openService(t, root), runRef, domain.Run)
+	if got := mustString(mission.Document, "expected_run_fingerprint"); got != run.Fingerprint {
+		t.Fatalf("expected Run fingerprint = %q, want %q", got, run.Fingerprint)
+	}
 	activateDecision := createDecision(t, root, "0199b000-0000-7000-8000-000000000013", "mission.transition.active", missionRef, mission.Fingerprint, nil, "activate")
 	svc = openService(t, root)
 	stalePreparationService := svc
@@ -120,6 +131,12 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	}
 	active, err := svc.TransitionMission(TransitionInput{Mission: missionRef, To: "active", Authorization: activateDecision, ExpectedFingerprint: mission.Fingerprint, IdempotencyKey: "mission-active-1"})
 	must(t, err)
+	activeWorkspace := openService(t, root).Workspace
+	activeCard, err := (projection.Builder{Workspace: activeWorkspace, Now: func() time.Time { return testNow }}).Mission(missionRef)
+	must(t, err)
+	if activeCard.Continuation == nil || activeCard.Continuation.Operation != "continue-run" || activeCard.Continuation.Target.Ref != runRef {
+		t.Fatalf("active Mission is not cold-resumable: %#v", activeCard.Continuation)
+	}
 	if replay, err := openService(t, root).TransitionMission(TransitionInput{Mission: missionRef, To: "active", Authorization: activateDecision, ExpectedFingerprint: mission.Fingerprint, IdempotencyKey: "mission-active-1"}); err != nil || !replay.IdempotentReplay {
 		t.Fatalf("transition replay=%#v err=%v", replay, err)
 	}
@@ -128,7 +145,7 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	svc = openService(t, root)
 	handoffInput := HandoffInput{
 		ID: strings.TrimPrefix(handoffRef, "Handoff:"), Title: "Bounded fake-provider work", Mission: missionRef, Objective: objectiveRef, Run: runRef, Sender: "owner", Actor: "executor", Destination: "replacement-runtime", HostPointer: "host-task:disposable",
-		Scope: []string{"v2"}, Inputs: []string{contractRef + "@" + contract.Fingerprint}, AllowedActions: []string{"test"}, ForbiddenEffects: []string{"provider-mutation"}, EvidenceClaims: []string{"claim:closure"}, BudgetUnits: 1, ExpiresAt: "2026-08-11T10:00:00Z", Stops: []string{"authority-drift"}, RecoveryPoint: "git-head", ReturnDestination: "central", Authorization: handoffDecision, ExpectedMissionFingerprint: active.Fingerprint, IdempotencyKey: "handoff-create-1",
+		Scope: []string{"v2"}, Inputs: []string{contractRef + "@" + contract.Fingerprint}, AllowedActions: []string{"test"}, ForbiddenEffects: []string{"provider-mutation"}, EvidenceClaims: []string{"claim:closure"}, BudgetUnits: 1, ExpiresAt: "2026-08-11T10:00:00Z", Stops: []string{"authority-drift"}, RecoveryPoint: "git-head", ReturnDestination: "central", ReturnContract: []string{"result", "evidence", "recovery point", "one next action or owner gate"}, Authorization: handoffDecision, ExpectedMissionFingerprint: active.Fingerprint, IdempotencyKey: "handoff-create-1",
 	}
 	outOfScope := handoffInput
 	outOfScope.Scope = []string{"v1"}
@@ -157,6 +174,15 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	}
 	handoff, err := svc.CreateHandoff(handoffInput)
 	must(t, err)
+	overlapRef := "Handoff:0199b000-0000-7000-8000-000000000036"
+	overlapDecision := createDecision(t, root, "0199b000-0000-7000-8000-000000000037", "handoff.create", overlapRef, "absent", nil, "dispatch")
+	overlap := handoffInput
+	overlap.ID = strings.TrimPrefix(overlapRef, "Handoff:")
+	overlap.Authorization = overlapDecision
+	overlap.IdempotencyKey = "handoff-overlap"
+	if _, err := openService(t, root).CreateHandoff(overlap); refusalCode(err) != domain.RefusalConflictingAuthority {
+		t.Fatalf("overlapping live Handoff claims err=%v", err)
+	}
 	svc = openService(t, root)
 	validated, err := svc.ValidateHandoff(handoffRef)
 	must(t, err)
@@ -286,6 +312,114 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	must(t, err)
 	if len(card.Pointers) < 4 { // Assessment, reconciliation receipt, resolution Decision, archive Decision.
 		t.Fatalf("historical closure provenance missing: %#v", card.Pointers)
+	}
+}
+
+func TestReviewStrengthFollowsFrozenCriterion(t *testing.T) {
+	tests := []struct {
+		state    string
+		required string
+		want     bool
+	}{
+		{"automatic-accepted", spectacularruntime.ReviewAutomatic, true},
+		{"clustered-accepted", spectacularruntime.ReviewAutomatic, true},
+		{"automatic-accepted", spectacularruntime.ReviewClustered, false},
+		{"clustered-accepted", spectacularruntime.ReviewClustered, true},
+		{"clustered-accepted", spectacularruntime.ReviewIndependent, false},
+		{"independent-accepted", spectacularruntime.ReviewIndependent, true},
+		{"unreviewed", spectacularruntime.ReviewAutomatic, false},
+		{"rejected", spectacularruntime.ReviewAutomatic, false},
+	}
+	for _, test := range tests {
+		if got := reviewSatisfies(test.state, test.required); got != test.want {
+			t.Errorf("reviewSatisfies(%q, %q) = %v, want %v", test.state, test.required, got, test.want)
+		}
+	}
+}
+
+func TestObjectiveDependenciesFormADAG(t *testing.T) {
+	one := "0199b000-0000-7000-8000-000000000092"
+	two := "0199b000-0000-7000-8000-000000000093"
+	oneRef, twoRef := "Objective:"+one, "Objective:"+two
+	valid := []ObjectiveInput{{ID: one, Outcome: "one"}, {ID: two, Outcome: "two", Dependencies: []string{oneRef}}}
+	if err := validateObjectiveGraph(valid); err != nil {
+		t.Fatal(err)
+	}
+	for name, objectives := range map[string][]ObjectiveInput{
+		"outside":   {{ID: one, Dependencies: []string{"Objective:0199b000-0000-7000-8000-000000000099"}}},
+		"self":      {{ID: one, Dependencies: []string{oneRef}}},
+		"duplicate": {{ID: one}, {ID: two, Dependencies: []string{oneRef, oneRef}}},
+		"cycle":     {{ID: one, Dependencies: []string{twoRef}}, {ID: two, Dependencies: []string{oneRef}}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if err := validateObjectiveGraph(objectives); refusalCode(err) != domain.RefusalInvalidKnownField {
+				t.Fatalf("invalid graph err=%v", err)
+			}
+		})
+	}
+}
+
+func TestSufficientClaimEnforcesAutomaticClusteredAndIndependentReview(t *testing.T) {
+	tests := []struct {
+		name     string
+		required string
+		state    string
+		wantOK   bool
+	}{
+		{"automatic accepts deterministic review", spectacularruntime.ReviewAutomatic, "automatic-accepted", true},
+		{"automatic accepts stronger review", spectacularruntime.ReviewAutomatic, "independent-accepted", true},
+		{"clustered rejects automatic review", spectacularruntime.ReviewClustered, "automatic-accepted", false},
+		{"clustered accepts clustered review", spectacularruntime.ReviewClustered, "clustered-accepted", true},
+		{"independent rejects clustered review", spectacularruntime.ReviewIndependent, "clustered-accepted", false},
+		{"independent accepts independent review", spectacularruntime.ReviewIndependent, "independent-accepted", true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := governedFixture(t)
+			svc := openService(t, root)
+			missionID, _ := domain.ParseID("0199b000-0000-7000-8000-000000000090")
+			evidenceID, _ := domain.ParseID("0199b000-0000-7000-8000-000000000091")
+			uncitedID, _ := domain.ParseID("0199b000-0000-7000-8000-000000000094")
+			missionRef := "Mission:" + missionID.String()
+			evidenceRef := "Evidence:" + evidenceID.String()
+			claim := "claim:review-policy"
+			mission := svc.document(domain.Mission, missionID, "Review policy Mission", "owner", "awaiting-assessment")
+			criteria := []spectacularruntime.CompletionCriterion{{Claim: claim, PassBoundary: "check passes", ProofRequirement: "recorded Evidence", ReviewLevel: test.required}}
+			must(t, workspace.SetValue(mission, "completion_contract", criteria))
+			workspace.SetString(mission, "completion_contract_fingerprint", spectacularruntime.CompletionFingerprint(criteria))
+			evidence := svc.document(domain.Evidence, evidenceID, "Review policy Evidence", "executor", "recorded")
+			workspace.SetString(evidence, "mission", missionRef)
+			workspace.SetString(evidence, "claim", claim)
+			workspace.SetString(evidence, "classification", "direct")
+			workspace.SetStrings(evidence, "contrary_evidence", nil)
+			workspace.SetStrings(evidence, "required_checks", []string{"check"})
+			workspace.SetStrings(evidence, "check_results", []string{"pass:check"})
+			workspace.SetString(evidence, "review_state", test.state)
+			workspace.SetBool(evidence, "executor_authored", true)
+			uncited := svc.document(domain.Evidence, uncitedID, "Earlier unreviewed Evidence", "executor", "recorded")
+			workspace.SetString(uncited, "mission", missionRef)
+			workspace.SetString(uncited, "claim", claim)
+			workspace.SetString(uncited, "classification", "direct")
+			workspace.SetStrings(uncited, "contrary_evidence", nil)
+			workspace.SetStrings(uncited, "required_checks", []string{"check"})
+			workspace.SetStrings(uncited, "check_results", []string{"pass:check"})
+			workspace.SetString(uncited, "review_state", "unreviewed")
+			workspace.SetBool(uncited, "executor_authored", true)
+			var changes []FileChange
+			for _, doc := range []*workspace.Document{mission, evidence, uncited} {
+				data, err := workspace.Canonical(doc)
+				must(t, err)
+				changes = append(changes, FileChange{Path: recordPath(doc.Record.Type, doc.Record.ID), Data: data, Mode: 0o644})
+			}
+			must(t, ApplyTransaction(root, "seed-review-policy", changes))
+			err := openService(t, root).sufficientClaim(missionRef, claim, []string{evidenceRef})
+			if test.wantOK && err != nil {
+				t.Fatal(err)
+			}
+			if !test.wantOK && refusalCode(err) != domain.RefusalInsufficientEvidence {
+				t.Fatalf("review downgrade err=%v", err)
+			}
+		})
 	}
 }
 
@@ -648,6 +782,9 @@ func TestAssessmentRejectsStaleSupportAndOmittedContraryEvidence(t *testing.T) {
 	missionID, _ := domain.ParseID(strings.TrimPrefix(missionRef, "Mission:"))
 	mission := svc.document(domain.Mission, missionID, "Evidence Mission", "owner", "awaiting-assessment")
 	workspace.SetStrings(mission, "evidence_claims", []string{"claim:material"})
+	criteria := []spectacularruntime.CompletionCriterion{{Claim: "claim:material", PassBoundary: "material check passes", ProofRequirement: "recorded direct Evidence", ReviewLevel: spectacularruntime.ReviewIndependent}}
+	must(t, workspace.SetValue(mission, "completion_contract", criteria))
+	workspace.SetString(mission, "completion_contract_fingerprint", spectacularruntime.CompletionFingerprint(criteria))
 	workspace.SetStrings(mission, "scope", []string{"v2"})
 	workspace.SetString(mission, "expires_at", "2026-08-11T10:00:00Z")
 	var changes []FileChange

@@ -93,6 +93,7 @@ type HandoffInput struct {
 	HostPointer                string   `json:"host_pointer"`
 	Scope                      []string `json:"scope"`
 	Inputs                     []string `json:"inputs"`
+	Dependencies               []string `json:"dependencies"`
 	AllowedActions             []string `json:"allowed_actions"`
 	ForbiddenEffects           []string `json:"forbidden_effects"`
 	EvidenceClaims             []string `json:"evidence_claims"`
@@ -101,6 +102,7 @@ type HandoffInput struct {
 	Stops                      []string `json:"stops"`
 	RecoveryPoint              string   `json:"recovery_point"`
 	ReturnDestination          string   `json:"return_destination"`
+	ReturnContract             []string `json:"return_contract"`
 	Authorization              string   `json:"authorization"`
 	ExpectedMissionFingerprint string   `json:"expected_mission_fingerprint"`
 	IdempotencyKey             string   `json:"idempotency_key"`

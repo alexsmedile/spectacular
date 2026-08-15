@@ -5,6 +5,8 @@
 |---|---|---|---|
 | `ARCHITECTURE` | Anchor | Architecture | `.spectacular/ARCHITECTURE.md` |
 | `CC-v2prod` | Contract | Spectacular v2 product contract | `.spectacular/contracts/CC-v2prod-spectacular-v2-product.md` |
+| `D1-rnkfzw` | Decision | Authorize the v2.1 governed-autonomy Proposal | `.spectacular/decisions/D1-rnkfzw.md` |
+| `D2-435ztz` | Decision | Authorize the v2.1 governed-autonomy Mission | `.spectacular/decisions/D2-435ztz.md` |
 | `M1` | Mission | Restore human-operable workspace | `.spectacular/archive/missions/M1-human-operability/MISSION.md` |
 | `M1/A1-nolpc6` | Assessment | RC.2 human-operability assessment | `.spectacular/archive/missions/M1-human-operability/assessments/A1-nolpc6.md` |
 | `M1/D1-t5to5d` | Decision | Continue the bounded human-operability repair | `.spectacular/archive/missions/M1-human-operability/decisions/D1-t5to5d.md` |
@@ -15,7 +17,15 @@
 | `M1/O1` | Objective | Implement readable workspace and interface | `.spectacular/archive/missions/M1-human-operability/objectives/O1-implement-readable-workspace.md` |
 | `M1/R1` | Run | Implement human workspace layout | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/RUN.md` |
 | `M1/R1/C1` | Checkpoint | Human-operability candidate ready for owner review | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-in-progress.md` |
+| `M2` | Mission | Implement answer-key governed autonomy | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/MISSION.md` |
+| `M2/D1-znlkfe` | Decision | Activate the v2.1 governed-autonomy Mission | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/decisions/D1-znlkfe.md` |
+| `M2/O1` | Objective | Preparation compiles and freezes minimal completion criteria with explicit readiness diagnostics. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O1-preparation-compiles-and-freezes-minimal-completion-criteria-with-explicit-readiness-diagnostics.md` |
+| `M2/O2` | Objective | Evidence closure applies automatic, clustered, or independent review according to each frozen criterion. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O2-evidence-closure-applies-automatic-clustered-or-independent-review-according-to-each-frozen-criterion.md` |
+| `M2/O3` | Objective | Objective dependencies and Handoffs support cohesive, disjoint runner claim scopes and explicit returns. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O3-objective-dependencies-and-handoffs-support-cohesive-disjoint-runner-claim-scopes-and-explicit-returns.md` |
+| `M2/O4` | Objective | Autopilot resource limits disclose hard, observed, or unsupported enforcement and reject false hard guarantees. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O4-autopilot-resource-limits-disclose-hard-observed-or-unsupported-enforcement-and-reject-false-hard-guarantees.md` |
+| `M2/R1` | Run | Initial governed Run | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/runs/R1-initial-governed-run/RUN.md` |
 | `P1` | Proposal | Repair v2 human operability | `.spectacular/proposals/P1-human-operability.md` |
+| `P2` | Proposal | Add answer-key governed autonomy | `.spectacular/proposals/P2-add-answer-key-governed-autonomy.md` |
 | `PRODUCT` | Anchor | Product direction | `.spectacular/PRODUCT.md` |
 | `PROJECT` | Anchor | Spectacular v2 | `.spectacular/PROJECT.md` |
 | `STACK` | Anchor | Stack | `.spectacular/STACK.md` |

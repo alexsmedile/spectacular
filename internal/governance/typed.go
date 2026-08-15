@@ -96,6 +96,7 @@ type handoffEnvelope struct {
 	Run                        string
 	Scope                      []string
 	Inputs                     []string
+	Dependencies               []string
 	AllowedActions             []string
 	ForbiddenEffects           []string
 	EvidenceClaims             []string
@@ -104,6 +105,7 @@ type handoffEnvelope struct {
 	ExpiresAt                  string
 	Authorization              string
 	ExpectedMissionFingerprint string
+	ReturnContract             []string
 }
 
 type terminalPacket struct {
@@ -169,6 +171,10 @@ func parseHandoffEnvelope(entry discovery.Entry) (handoffEnvelope, error) {
 	if err != nil {
 		return handoffEnvelope{}, err
 	}
+	dependencies, err := workspace.Strings(entry.Document, "dependencies", false)
+	if err != nil {
+		return handoffEnvelope{}, err
+	}
 	allowed, err := workspace.Strings(entry.Document, "allowed_actions", true)
 	if err != nil {
 		return handoffEnvelope{}, err
@@ -201,7 +207,11 @@ func parseHandoffEnvelope(entry discovery.Entry) (handoffEnvelope, error) {
 	if err != nil {
 		return handoffEnvelope{}, err
 	}
-	return handoffEnvelope{Mission: mission, Objective: objective, Run: run, Scope: scope, Inputs: inputs, AllowedActions: allowed, ForbiddenEffects: forbidden, EvidenceClaims: claims, Stops: stops, BudgetUnits: budget, ExpiresAt: expires, Authorization: authorization, ExpectedMissionFingerprint: expected}, nil
+	returnContract, err := workspace.Strings(entry.Document, "return_contract", true)
+	if err != nil {
+		return handoffEnvelope{}, err
+	}
+	return handoffEnvelope{Mission: mission, Objective: objective, Run: run, Scope: scope, Inputs: inputs, Dependencies: dependencies, AllowedActions: allowed, ForbiddenEffects: forbidden, EvidenceClaims: claims, Stops: stops, BudgetUnits: budget, ExpiresAt: expires, Authorization: authorization, ExpectedMissionFingerprint: expected, ReturnContract: returnContract}, nil
 }
 
 func parseReconciliationReceipt(entry discovery.Entry) (reconciliationReceipt, error) {

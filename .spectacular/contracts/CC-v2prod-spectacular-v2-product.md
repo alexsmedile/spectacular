@@ -8,7 +8,7 @@ created_by: owner
 created: "2026-08-10T00:00:00Z"
 updated: "2026-08-10T00:00:00Z"
 accepted_proposal: Proposal:019fe381-5d61-7223-b362-03a5f99a7b01
-contract_version: 1
+contract_version: "1"
 purpose: Govern the Spectacular v2 public product surface.
 outcome: A human and a cold agent can recover exact current work without hidden chat context.
 applies_when:

@@ -46,7 +46,7 @@ func TestScenarioSCleanV2DogfoodSurvivesRuntimeReplacement(t *testing.T) {
 		DirectionSources: []spectacularruntime.BoundSource{{Ref: "Proposal:" + missionSourceID, Fingerprint: proposal.Fingerprint}},
 		Candidates:       []spectacularruntime.CandidateSlice{{Name: "guided-vertical", Outcome: "compile safe runtime context", Evidence: []string{"cold-runtime comparison"}, CancellationState: "usable context compiler", Reversibility: "local fixture only", StandaloneCoherence: "complete guided slice", IntegrationPath: "registry to Skill", LearningValue: "runtime-neutral proof"}},
 		Selected:         "guided-vertical", DesignSufficiency: "sufficient", DesignRationale: "accepted contracts and executable core fix the boundary", SliceQuality: "coherent", SliceRationale: "one integrated Skill/runtime seam",
-		CompletionBoundary: []string{"cold replacement emits the same source basis"}, StopConditions: []string{"authority drift"}, EvidenceClaims: []string{"claim:runtime-neutral-recovery"}, FreshUntil: "2026-08-11T10:00:00Z",
+		CompletionCriteria: []spectacularruntime.CompletionCriterion{{Claim: "claim:runtime-neutral-recovery", PassBoundary: "cold replacement emits the same source basis", ProofRequirement: "real-process scenario", ReviewLevel: spectacularruntime.ReviewIndependent}}, StopConditions: []string{"authority drift"}, EvidenceClaims: []string{"claim:runtime-neutral-recovery"}, FreshUntil: "2026-08-11T10:00:00Z",
 	}
 	preparationPath := writeJSONInput(t, preparation)
 	prepared := runJSON(t, root, []string{"mission", "prepare", "--input", preparationPath, "--json"})

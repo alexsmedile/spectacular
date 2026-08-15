@@ -391,9 +391,12 @@ func (b Builder) Mission(ref string) (Card, error) {
 	if err != nil || mt.Type != domain.Mission || mt.ID != mission.Document.Record.ID {
 		return Card{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "mission", "Run does not identify selected Mission", err)
 	}
-	cpRef, err := workspace.String(run.Document, "latest_checkpoint", true)
+	cpRef, err := workspace.String(run.Document, "latest_checkpoint", false)
 	if err != nil {
 		return Card{}, err
+	}
+	if cpRef == "" {
+		return b.governedRunContinuation(card, mission, run)
 	}
 	cp, err := b.Workspace.Lookup(cpRef, domain.Checkpoint)
 	if err != nil {
@@ -457,6 +460,9 @@ func (b Builder) Mission(ref string) (Card, error) {
 			return Card{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "checkpoint", "Evidence does not identify selected Checkpoint", e)
 		}
 		appendPointer(&card.Pointers, b.pointer(evidence))
+	}
+	if governed, ok, governedErr := b.tryGovernedRunContinuation(card, mission, run); ok || governedErr != nil {
+		return governed, governedErr
 	}
 	decisions := []discovery.Entry{}
 	for _, d := range b.Workspace.OfType(domain.Decision) {
@@ -535,6 +541,52 @@ func (b Builder) Mission(ref string) (Card, error) {
 	card.Pointers = append(card.Pointers, b.pointer(d))
 	card.Continuation = &Continuation{Operation: op, Target: b.pointer(target), AuthorizedBy: b.pointer(d)}
 	return card, nil
+}
+
+func (b Builder) governedRunContinuation(card Card, mission, run discovery.Entry) (Card, error) {
+	governed, ok, err := b.tryGovernedRunContinuation(card, mission, run)
+	if err != nil || ok {
+		return governed, err
+	}
+	card.OwnerGate = &OwnerGate{Code: "authorize_continuation", Detail: "active Mission has no owner authorization for its current Run", Source: b.pointer(mission)}
+	return card, nil
+}
+
+func (b Builder) tryGovernedRunContinuation(card Card, mission, run discovery.Entry) (Card, bool, error) {
+	authorizationRef, err := workspace.String(mission.Document, "last_authorization", false)
+	if err != nil || authorizationRef == "" {
+		return card, false, err
+	}
+	authorization, err := b.Workspace.Lookup(authorizationRef, domain.Decision)
+	if err != nil {
+		return Card{}, true, err
+	}
+	role, err := workspace.String(authorization.Document, "actor_role", true)
+	if err != nil || role != "owner" {
+		return Card{}, true, domain.NewRefusal(domain.RefusalUnauthorized, "actor_role", "current Run requires an owner Decision", err)
+	}
+	operation, err := workspace.String(authorization.Document, "operation", true)
+	if err != nil || operation != "mission.transition.active" {
+		return card, false, nil
+	}
+	targets, err := workspace.Strings(authorization.Document, "targets", true)
+	if err != nil {
+		return Card{}, true, err
+	}
+	missionRef := string(domain.Mission) + ":" + mission.Document.Record.ID.String()
+	if !stringSliceContains(targets, missionRef) {
+		return Card{}, true, domain.NewRefusal(domain.RefusalUnauthorized, "targets", "activation Decision does not target the selected Mission", nil)
+	}
+	freshness, err := b.freshness(authorization.Document)
+	if err != nil {
+		return Card{}, true, err
+	}
+	if freshness.State != "current" {
+		return Card{}, true, domain.NewRefusal(domain.RefusalStaleRequired, "freshness", authorization.Path+" is not current", nil)
+	}
+	card.Pointers = append(card.Pointers, b.pointer(authorization))
+	card.Continuation = &Continuation{Operation: "continue-run", Target: b.pointer(run), AuthorizedBy: b.pointer(authorization)}
+	return card, true, nil
 }
 
 func (b Builder) Detail(ref string, noun domain.RecordType) (Card, error) {
@@ -813,6 +865,15 @@ func value(text *string) string {
 		return ""
 	}
 	return *text
+}
+
+func stringSliceContains(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }
 func relationshipFields(noun domain.RecordType) []string {
 	switch noun {

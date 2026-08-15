@@ -24,6 +24,13 @@ fingerprints and baseline still match, and freshness has not expired. Material d
 the affected path here and produces a new receipt; it does not create a Design lifecycle state or
 mandatory design document.
 
-Present the complete Mission envelope once: outcome, Objectives, completion boundary, scope,
+Freeze one minimal completion criterion per evidence claim before Mission creation: exact claim,
+pass boundary, proof requirement, and `automatic | clustered | independent` review level. The
+receipt reports `unmet_requirements` and selects `adaptive-grill` only while a verdict, blocking
+Gap, coherent slice, or criterion remains unresolved. Ask plain, decision-sized questions about
+only those failures; make silent product assumptions explicit Decisions or Gaps. A receipt with no
+unmet requirements goes directly to owner activation without a mandatory interview.
+
+Present the complete Mission envelope once: outcome, Objectives, frozen completion contract, scope,
 authority/effects, evidence claims, dependencies/Gaps, checks, budgets, expiry, stops, recovery,
 return, and preparation receipt. Only owner approval permits `mission create` and activation.

@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -69,7 +70,7 @@ func main() {
 
 func (r *runner) run() error {
 	version, err := exec.Command(r.binary, "--version").CombinedOutput()
-	if err != nil || !strings.HasPrefix(string(version), "spectacular 2.0.0") {
+	if err != nil || !validV2Version(strings.TrimSpace(string(version))) {
 		return fmt.Errorf("runtime version inspection failed: %w: %s", err, version)
 	}
 	if _, err := r.command("workspace", "context", "project", "--event", "@Orient", "--json"); err != nil {
@@ -107,7 +108,7 @@ func (r *runner) run() error {
 		}},
 		"selected": "release-smoke", "design_sufficiency": "sufficient", "design_rationale": "Accepted v2 contracts fix the loop.",
 		"slice_quality": "coherent", "slice_rationale": "One installed-runtime acceptance slice.",
-		"completion_boundary": []string{"claim:release-smoke"}, "stop_conditions": []string{"authority-drift"},
+		"completion_criteria": []map[string]string{{"claim": "claim:release-smoke", "pass_boundary": "release smoke passes", "proof_requirement": "real-process smoke", "review_level": "automatic"}}, "stop_conditions": []string{"authority-drift"},
 		"evidence_claims": []string{"claim:release-smoke"}, "fresh_until": r.future(),
 	}, "mission", "prepare", "--input", "@input", "--json")
 	if err != nil {
@@ -153,7 +154,7 @@ func (r *runner) run() error {
 		"host_pointer": "local:disposable", "scope": []string{"v2"}, "inputs": []string{contractRef + "@" + contractFP},
 		"allowed_actions": []string{"test"}, "forbidden_effects": []string{"provider-mutation"}, "evidence_claims": []string{"claim:release-smoke"},
 		"budget_units": 1, "expires_at": r.future(), "stops": []string{"authority-drift"}, "recovery_point": "local-release-artifact",
-		"return_destination": "Mission owner", "authorization": handoffDecision, "expected_mission_fingerprint": activeFP,
+		"return_destination": "Mission owner", "return_contract": []string{"result", "evidence", "recovery point", "one next action or owner gate"}, "authorization": handoffDecision, "expected_mission_fingerprint": activeFP,
 		"idempotency_key": "scenario-r-handoff",
 	}, "handoff", "create", "--input", "@input", "--json")
 	if err != nil {
@@ -249,6 +250,12 @@ func (r *runner) run() error {
 	}
 	_, err = r.command("workspace", "context", "project", "--event", "@Orient", "--json")
 	return err
+}
+
+var v2Version = regexp.MustCompile(`^spectacular 2\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$`)
+
+func validV2Version(value string) bool {
+	return v2Version.MatchString(value)
 }
 
 func (r *runner) future() string { return time.Now().UTC().Add(24 * time.Hour).Format(time.RFC3339) }

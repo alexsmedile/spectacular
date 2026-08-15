@@ -67,7 +67,21 @@ func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
 	if objectiveMission != input.Mission || runMission != input.Mission {
 		return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "mission", "Handoff Objective and Run must belong to the same Mission", nil)
 	}
-	if input.Sender == "" || input.Actor == "" || input.Destination == "" || len(input.Scope) == 0 || len(input.EvidenceClaims) == 0 || input.BudgetUnits < 1 || input.RecoveryPoint == "" || input.ReturnDestination == "" || input.Authorization == "" || input.IdempotencyKey == "" {
+	objectiveDependencies, err := workspace.Strings(objective.Document, "dependencies", false)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	objectiveClaims, err := workspace.Strings(objective.Document, "expected_proof", true)
+	if err != nil {
+		return OperationResult{}, err
+	}
+	if !sameStringSet(input.Dependencies, objectiveDependencies) {
+		return OperationResult{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "dependencies", "Handoff must name the Objective's exact declared dependencies", nil)
+	}
+	if !subset(input.EvidenceClaims, objectiveClaims) {
+		return OperationResult{}, domain.NewRefusal(domain.RefusalUnauthorized, "evidence_claims", "Handoff claims must belong to its Objective", nil)
+	}
+	if input.Sender == "" || input.Actor == "" || input.Destination == "" || len(input.Scope) == 0 || len(input.EvidenceClaims) == 0 || input.BudgetUnits < 1 || input.RecoveryPoint == "" || input.ReturnDestination == "" || len(input.ReturnContract) == 0 || input.Authorization == "" || input.IdempotencyKey == "" {
 		return OperationResult{}, missing("handoff", "actor, destination, scope, authority, evidence, budget, recovery, return, and idempotency are required")
 	}
 	if _, err := parseFuture(missionAuthority.ExpiresAt, s.now(), "mission.expires_at"); err != nil {
@@ -80,6 +94,9 @@ func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
 		return OperationResult{}, domain.NewRefusal(domain.RefusalUnauthorized, "envelope", "Handoff must be a subset of Mission scope/actions and preserve every forbidden effect", nil)
 	}
 	if err := s.validateBoundInputs(input.Inputs); err != nil {
+		return OperationResult{}, err
+	}
+	if err := s.rejectOverlappingLiveClaims(input.Mission, input.Run, input.EvidenceClaims, input.Supersedes); err != nil {
 		return OperationResult{}, err
 	}
 	ref := string(domain.Handoff) + ":" + id.String()
@@ -111,6 +128,7 @@ func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
 	workspace.SetString(doc, "host_pointer", input.HostPointer)
 	workspace.SetStrings(doc, "scope", input.Scope)
 	workspace.SetStrings(doc, "inputs", input.Inputs)
+	workspace.SetStrings(doc, "dependencies", input.Dependencies)
 	workspace.SetStrings(doc, "allowed_actions", input.AllowedActions)
 	workspace.SetStrings(doc, "forbidden_effects", input.ForbiddenEffects)
 	workspace.SetStrings(doc, "evidence_claims", input.EvidenceClaims)
@@ -119,6 +137,7 @@ func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
 	workspace.SetStrings(doc, "stops", input.Stops)
 	workspace.SetString(doc, "recovery_point", input.RecoveryPoint)
 	workspace.SetString(doc, "return_destination", input.ReturnDestination)
+	workspace.SetStrings(doc, "return_contract", input.ReturnContract)
 	workspace.SetString(doc, "authorization", input.Authorization)
 	workspace.SetString(doc, "expected_mission_fingerprint", input.ExpectedMissionFingerprint)
 	if input.Supersedes != "" {
@@ -126,6 +145,49 @@ func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
 	}
 	workspace.SetString(doc, "idempotency_key", input.IdempotencyKey)
 	return s.createOne("handoff.create", doc, input.IdempotencyKey, []string{input.Mission, input.Objective, input.Run, input.Authorization})
+}
+
+func (s Service) rejectOverlappingLiveClaims(mission, run string, claims []string, supersedes string) error {
+	returned, replaced := map[string]bool{}, map[string]bool{}
+	for _, handoff := range s.Workspace.OfType(domain.Handoff) {
+		kind, err := workspace.String(handoff.Document, "kind", true)
+		if err != nil {
+			return err
+		}
+		if kind == "return" {
+			dispatch, parseErr := workspace.String(handoff.Document, "dispatch", true)
+			if parseErr != nil {
+				return parseErr
+			}
+			returned[dispatch] = true
+		}
+		if prior, _ := workspace.String(handoff.Document, "supersedes", false); prior != "" {
+			replaced[prior] = true
+		}
+	}
+	for _, handoff := range s.Workspace.OfType(domain.Handoff) {
+		ref := refOf(handoff)
+		kind, err := workspace.String(handoff.Document, "kind", true)
+		if err != nil {
+			return err
+		}
+		if kind != "dispatch" || returned[ref] || replaced[ref] || ref == supersedes {
+			continue
+		}
+		handoffMission, _ := workspace.String(handoff.Document, "mission", false)
+		handoffRun, _ := workspace.String(handoff.Document, "run", false)
+		if handoffMission != mission || handoffRun != run {
+			continue
+		}
+		handoffClaims, parseErr := workspace.Strings(handoff.Document, "evidence_claims", true)
+		if parseErr != nil {
+			return parseErr
+		}
+		if overlapsStrings(claims, handoffClaims) {
+			return domain.NewRefusal(domain.RefusalConflictingAuthority, "evidence_claims", "live Handoffs in the same Run must have disjoint claim scopes; overlaps "+ref, nil)
+		}
+	}
+	return nil
 }
 
 func (s Service) ValidateHandoff(ref string) (map[string]any, error) {
@@ -181,6 +243,17 @@ func (s Service) ValidateHandoff(ref string) (map[string]any, error) {
 	if objectiveMission != missionRef || runMission != missionRef {
 		return nil, domain.NewRefusal(domain.RefusalConflictingAuthority, "mission", "Handoff containment no longer holds", nil)
 	}
+	objectiveDependencies, err := workspace.Strings(objective.Document, "dependencies", false)
+	if err != nil {
+		return nil, err
+	}
+	objectiveClaims, err := workspace.Strings(objective.Document, "expected_proof", true)
+	if err != nil {
+		return nil, err
+	}
+	if !sameStringSet(handoffAuthority.Dependencies, objectiveDependencies) || !subset(handoffAuthority.EvidenceClaims, objectiveClaims) || len(handoffAuthority.ReturnContract) == 0 {
+		return nil, domain.NewRefusal(domain.RefusalConflictingAuthority, "handoff", "Handoff no longer matches its Objective dependencies, claims, and return contract", nil)
+	}
 	if _, err := parseFuture(missionAuthority.ExpiresAt, s.now(), "mission.expires_at"); err != nil {
 		return nil, err
 	}
@@ -191,6 +264,9 @@ func (s Service) ValidateHandoff(ref string) (map[string]any, error) {
 		return nil, domain.NewRefusal(domain.RefusalUnauthorized, "envelope", "Handoff no longer fits current Mission envelope", nil)
 	}
 	if err := s.validateBoundInputs(handoffAuthority.Inputs); err != nil {
+		return nil, err
+	}
+	if err := s.rejectOverlappingLiveClaims(missionRef, handoffAuthority.Run, handoffAuthority.EvidenceClaims, refOf(handoff)); err != nil {
 		return nil, err
 	}
 	if _, err := parseFuture(handoffAuthority.ExpiresAt, s.now(), "expires_at"); err != nil {
@@ -263,6 +339,9 @@ func (s Service) CreateEvidence(input EvidenceInput) (OperationResult, error) {
 	}
 	if !contains([]string{"direct", "observation", "proxy", "judgment", "unknown"}, input.Classification) {
 		return OperationResult{}, invalid("classification", "must be direct, observation, proxy, judgment, or unknown")
+	}
+	if !contains([]string{"unreviewed", "automatic-accepted", "clustered-accepted", "independent-accepted", "rejected"}, input.ReviewState) {
+		return OperationResult{}, invalid("review_state", "must be unreviewed, automatic-accepted, clustered-accepted, independent-accepted, or rejected")
 	}
 	if input.Title == "" || input.Mission == "" || input.Claim == "" || len(input.Scope) == 0 || input.Method == "" || input.Actor == "" || input.Target == "" || input.ObservedAt == "" || input.FreshnessValidUntil == "" || input.ReviewState == "" || input.Authorization == "" || input.IdempotencyKey == "" {
 		return OperationResult{}, missing("evidence", "claim attribution, scope, method, target, freshness, review, authorization, and idempotency are required")
@@ -392,6 +471,14 @@ func (s Service) RecordAssessment(input AssessmentInput) (OperationResult, error
 }
 
 func (s Service) sufficientClaim(missionRef, claim string, refs []string) error {
+	mission, err := s.Workspace.Lookup(missionRef, domain.Mission)
+	if err != nil {
+		return err
+	}
+	criterion, err := completionCriterion(mission, claim)
+	if err != nil {
+		return err
+	}
 	var supporting bool
 	referenced := map[string]bool{}
 	for _, ref := range refs {
@@ -420,11 +507,14 @@ func (s Service) sufficientClaim(missionRef, claim string, refs []string) error 
 		if err != nil {
 			return err
 		}
-		if err := s.validateFresh(entry, "evidence"); err != nil {
-			return domain.NewRefusal(domain.RefusalInsufficientEvidence, "evidence", "claim has stale canonical Evidence: "+claim, err)
-		}
 		if parsed.Classification == "unknown" || len(parsed.Contrary) > 0 {
 			return domain.NewRefusal(domain.RefusalInsufficientEvidence, "evidence", "claim has unknown or conflicting evidence: "+claim, nil)
+		}
+		if !referenced[refOf(entry)] {
+			continue
+		}
+		if err := s.validateFresh(entry, "evidence"); err != nil {
+			return domain.NewRefusal(domain.RefusalInsufficientEvidence, "evidence", "claim has stale cited Evidence: "+claim, err)
 		}
 		checks := parsed.RequiredChecks
 		results := parsed.CheckResults
@@ -436,17 +526,49 @@ func (s Service) sufficientClaim(missionRef, claim string, refs []string) error 
 				return domain.NewRefusal(domain.RefusalInsufficientEvidence, "check_results", "required check did not pass for claim: "+claim, nil)
 			}
 		}
-		if parsed.ExecutorAuthored && parsed.ReviewState != "independent-accepted" {
-			return domain.NewRefusal(domain.RefusalInsufficientEvidence, "review_state", "executor-authored evidence requires independent acceptance for claim: "+claim, nil)
+		if !reviewSatisfies(parsed.ReviewState, criterion.ReviewLevel) {
+			return domain.NewRefusal(domain.RefusalInsufficientEvidence, "review_state", "claim "+claim+" requires "+criterion.ReviewLevel+" review; evidence is "+parsed.ReviewState, nil)
 		}
-		if referenced[refOf(entry)] {
-			supporting = true
-		}
+		supporting = true
 	}
 	if !supporting {
 		return domain.NewRefusal(domain.RefusalInsufficientEvidence, "evidence", "no attributable evidence maps to claim: "+claim, nil)
 	}
 	return nil
+}
+
+func completionCriterion(mission discovery.Entry, claim string) (spectacularruntime.CompletionCriterion, error) {
+	var criteria []spectacularruntime.CompletionCriterion
+	if err := workspace.DecodeValue(mission.Document, "completion_contract", &criteria); err != nil {
+		return spectacularruntime.CompletionCriterion{}, err
+	}
+	expected, err := workspace.String(mission.Document, "completion_contract_fingerprint", true)
+	if err != nil {
+		return spectacularruntime.CompletionCriterion{}, err
+	}
+	if actual := spectacularruntime.CompletionFingerprint(criteria); actual != expected {
+		return spectacularruntime.CompletionCriterion{}, domain.NewRefusal(domain.RefusalInvalidFingerprint, "completion_contract_fingerprint", "Mission completion contract has changed", nil)
+	}
+	for _, criterion := range criteria {
+		if criterion.Claim == claim {
+			return criterion, nil
+		}
+	}
+	return spectacularruntime.CompletionCriterion{}, domain.NewRefusal(domain.RefusalInsufficientEvidence, "completion_contract", "claim has no frozen completion criterion: "+claim, nil)
+}
+
+func reviewSatisfies(state, required string) bool {
+	rank := map[string]int{
+		"automatic-accepted":   1,
+		"clustered-accepted":   2,
+		"independent-accepted": 3,
+	}
+	requiredRank := map[string]int{
+		spectacularruntime.ReviewAutomatic:   1,
+		spectacularruntime.ReviewClustered:   2,
+		spectacularruntime.ReviewIndependent: 3,
+	}
+	return requiredRank[required] > 0 && rank[state] >= requiredRank[required]
 }
 
 func (s Service) TransitionMission(input TransitionInput) (OperationResult, error) {
@@ -1182,4 +1304,30 @@ func subset(values, allowed []string) bool {
 		}
 	}
 	return true
+}
+
+func sameStringSet(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	left = sortedUnique(left)
+	right = sortedUnique(right)
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
+}
+
+func overlapsStrings(left, right []string) bool {
+	for _, value := range left {
+		if contains(right, value) {
+			return true
+		}
+	}
+	return false
 }

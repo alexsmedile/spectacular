@@ -233,6 +233,9 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 	if input.Title == "" || input.Actor == "" || input.Outcome == "" || len(input.Objectives) == 0 || input.DesignSufficiency != "sufficient" || input.SliceQuality != "coherent" || len(input.EvidenceClaims) == 0 || len(input.Scope) == 0 || input.Baseline == "" || input.BudgetUnits < 1 || input.RepairBudget < 0 || input.RecoveryPoint == "" || input.ReturnDestination == "" || input.Authorization == "" || input.IdempotencyKey == "" || input.Preparation == nil {
 		return OperationResult{}, missing("mission", "bounded outcome, Objectives, preparation verdicts, evidence plan, envelope, recovery, authorization, and idempotency are required")
 	}
+	if err := validateObjectiveGraph(input.Objectives); err != nil {
+		return OperationResult{}, err
+	}
 	if err := spectacularruntime.ValidatePreparationReceipt(*input.Preparation, s.now()); err != nil {
 		return OperationResult{}, err
 	}
@@ -289,6 +292,10 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 	workspace.SetString(mission, "preparation_baseline", input.Preparation.Baseline)
 	workspace.SetStrings(mission, "preparation_sources", preparationBindings)
 	workspace.SetString(mission, "preparation_receipt", string(preparationJSON))
+	if err := workspace.SetValue(mission, "completion_contract", input.Preparation.CompletionCriteria); err != nil {
+		return OperationResult{}, err
+	}
+	workspace.SetString(mission, "completion_contract_fingerprint", spectacularruntime.CompletionFingerprint(input.Preparation.CompletionCriteria))
 	var documents []*workspace.Document
 	documents = append(documents, mission)
 	objectiveRefs := make([]string, 0, len(input.Objectives))
@@ -319,6 +326,65 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 		workspace.SetString(mission, "current_run", string(domain.Run)+":"+runID.String())
 	}
 	return s.createMany("mission.create", mission, documents, input.IdempotencyKey, []string{input.Proposal, input.Authorization})
+}
+
+func validateObjectiveGraph(objectives []ObjectiveInput) error {
+	byRef := map[string]ObjectiveInput{}
+	refs := make([]string, 0, len(objectives))
+	for _, objective := range objectives {
+		id, err := domain.ParseID(objective.ID)
+		if err != nil {
+			return err
+		}
+		ref := string(domain.Objective) + ":" + id.String()
+		if _, exists := byRef[ref]; exists {
+			return invalid("objectives", "Objective identities must be unique")
+		}
+		byRef[ref] = objective
+		refs = append(refs, ref)
+	}
+	sort.Strings(refs)
+	for _, ref := range refs {
+		objective := byRef[ref]
+		seen := map[string]bool{}
+		for _, dependency := range objective.Dependencies {
+			if dependency == ref {
+				return invalid("objectives.dependencies", "Objective cannot depend on itself: "+ref)
+			}
+			if seen[dependency] {
+				return invalid("objectives.dependencies", "Objective dependency is duplicated: "+dependency)
+			}
+			if _, exists := byRef[dependency]; !exists {
+				return invalid("objectives.dependencies", "Objective dependency is outside the Mission: "+dependency)
+			}
+			seen[dependency] = true
+		}
+	}
+	visiting, visited := map[string]bool{}, map[string]bool{}
+	var visit func(string) error
+	visit = func(ref string) error {
+		if visiting[ref] {
+			return invalid("objectives.dependencies", "Objective dependency graph contains a cycle at "+ref)
+		}
+		if visited[ref] {
+			return nil
+		}
+		visiting[ref] = true
+		for _, dependency := range byRef[ref].Dependencies {
+			if err := visit(dependency); err != nil {
+				return err
+			}
+		}
+		delete(visiting, ref)
+		visited[ref] = true
+		return nil
+	}
+	for _, ref := range refs {
+		if err := visit(ref); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // CompileAutopilot derives hard limits from the exact current Mission and
@@ -450,6 +516,20 @@ func (s Service) createMany(operation string, primary *workspace.Document, docs 
 	paths, err := humanlayout.Plan(s.Workspace.Entries, docs)
 	if err != nil {
 		return OperationResult{}, err
+	}
+	// Human layout assigns human_ref values, so bind the Run only after layout
+	// planning has finalized the Run's canonical semantic content.
+	if primary.Record.Type == domain.Mission {
+		currentRun, _ := workspace.String(primary, "current_run", false)
+		for _, doc := range docs {
+			if currentRun == string(doc.Record.Type)+":"+doc.Record.ID.String() && doc.Record.Type == domain.Run {
+				runFingerprint, fingerprintErr := workspace.Fingerprint(doc)
+				if fingerprintErr != nil {
+					return OperationResult{}, fingerprintErr
+				}
+				workspace.SetString(primary, "expected_run_fingerprint", runFingerprint)
+			}
+		}
 	}
 	allReplay := true
 	changes := make([]FileChange, 0, len(docs))

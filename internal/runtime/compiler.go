@@ -16,8 +16,20 @@ import (
 )
 
 const (
-	PreparationSchema = "spectacular.mission-preparation.v1"
+	PreparationSchema = "spectacular.mission-preparation.v2"
 	AutopilotSchema   = "spectacular.autopilot-charter.v1"
+)
+
+const (
+	ReviewAutomatic   = "automatic"
+	ReviewClustered   = "clustered"
+	ReviewIndependent = "independent"
+)
+
+const (
+	EnforcementHard        = "hard"
+	EnforcementObserved    = "observed"
+	EnforcementUnsupported = "unsupported"
 )
 
 type BoundSource struct {
@@ -37,49 +49,69 @@ type CandidateSlice struct {
 	LearningValue       string   `json:"learning_value"`
 }
 
+// CompletionCriterion is the frozen, minimal answer key for one Mission claim.
+// Changing any field changes the preparation fingerprint and therefore needs a
+// new owner-authorized Mission boundary.
+type CompletionCriterion struct {
+	Claim            string `json:"claim"`
+	PassBoundary     string `json:"pass_boundary"`
+	ProofRequirement string `json:"proof_requirement"`
+	ReviewLevel      string `json:"review_level"`
+}
+
+// ReadinessIssue identifies exactly what preparation still needs to resolve.
+// Guided workflows use these issues to grill adaptively instead of imposing a
+// mandatory interview on already-sufficient work.
+type ReadinessIssue struct {
+	Code   string `json:"code"`
+	Claim  string `json:"claim,omitempty"`
+	Detail string `json:"detail"`
+}
+
 type PreparationInput struct {
-	Proposal           BoundSource      `json:"proposal"`
-	Baseline           string           `json:"baseline"`
-	DirectionSources   []BoundSource    `json:"direction_sources"`
-	Candidates         []CandidateSlice `json:"candidates"`
-	Selected           string           `json:"selected"`
-	DesignSufficiency  string           `json:"design_sufficiency"`
-	DesignRationale    string           `json:"design_rationale"`
-	SliceQuality       string           `json:"slice_quality"`
-	SliceRationale     string           `json:"slice_rationale"`
-	BlockingGaps       []string         `json:"blocking_gaps"`
-	CompletionBoundary []string         `json:"completion_boundary"`
-	StopConditions     []string         `json:"stop_conditions"`
-	EvidenceClaims     []string         `json:"evidence_claims"`
-	FreshUntil         string           `json:"fresh_until"`
+	Proposal           BoundSource           `json:"proposal"`
+	Baseline           string                `json:"baseline"`
+	DirectionSources   []BoundSource         `json:"direction_sources"`
+	Candidates         []CandidateSlice      `json:"candidates"`
+	Selected           string                `json:"selected"`
+	DesignSufficiency  string                `json:"design_sufficiency"`
+	DesignRationale    string                `json:"design_rationale"`
+	SliceQuality       string                `json:"slice_quality"`
+	SliceRationale     string                `json:"slice_rationale"`
+	BlockingGaps       []string              `json:"blocking_gaps"`
+	CompletionCriteria []CompletionCriterion `json:"completion_criteria"`
+	StopConditions     []string              `json:"stop_conditions"`
+	EvidenceClaims     []string              `json:"evidence_claims"`
+	FreshUntil         string                `json:"fresh_until"`
 }
 
 type PreparationReceipt struct {
-	SchemaVersion      string           `json:"schema_version"`
-	Fingerprint        string           `json:"fingerprint"`
-	Proposal           BoundSource      `json:"proposal"`
-	Baseline           string           `json:"baseline"`
-	DirectionSources   []BoundSource    `json:"direction_sources"`
-	Candidates         []CandidateSlice `json:"candidates"`
-	Selected           string           `json:"selected"`
-	DesignSufficiency  string           `json:"design_sufficiency"`
-	DesignRationale    string           `json:"design_rationale"`
-	SliceQuality       string           `json:"slice_quality"`
-	SliceRationale     string           `json:"slice_rationale"`
-	BlockingGaps       []string         `json:"blocking_gaps"`
-	CompletionBoundary []string         `json:"completion_boundary"`
-	StopConditions     []string         `json:"stop_conditions"`
-	EvidenceClaims     []string         `json:"evidence_claims"`
-	FreshUntil         string           `json:"fresh_until"`
-	Ready              bool             `json:"ready"`
-	Next               string           `json:"next"`
+	SchemaVersion      string                `json:"schema_version"`
+	Fingerprint        string                `json:"fingerprint"`
+	Proposal           BoundSource           `json:"proposal"`
+	Baseline           string                `json:"baseline"`
+	DirectionSources   []BoundSource         `json:"direction_sources"`
+	Candidates         []CandidateSlice      `json:"candidates"`
+	Selected           string                `json:"selected"`
+	DesignSufficiency  string                `json:"design_sufficiency"`
+	DesignRationale    string                `json:"design_rationale"`
+	SliceQuality       string                `json:"slice_quality"`
+	SliceRationale     string                `json:"slice_rationale"`
+	BlockingGaps       []string              `json:"blocking_gaps"`
+	CompletionCriteria []CompletionCriterion `json:"completion_criteria"`
+	StopConditions     []string              `json:"stop_conditions"`
+	EvidenceClaims     []string              `json:"evidence_claims"`
+	FreshUntil         string                `json:"fresh_until"`
+	Ready              bool                  `json:"ready"`
+	UnmetRequirements  []ReadinessIssue      `json:"unmet_requirements"`
+	Next               string                `json:"next"`
 }
 
 func CompilePreparation(input PreparationInput, now time.Time) (PreparationReceipt, error) {
 	if err := validateBoundSource(input.Proposal, domain.Proposal); err != nil {
 		return PreparationReceipt{}, err
 	}
-	if input.Baseline == "" || len(input.DirectionSources) == 0 || len(input.Candidates) < 1 || len(input.Candidates) > 3 || input.Selected == "" || input.DesignRationale == "" || input.SliceRationale == "" || len(input.CompletionBoundary) == 0 || len(input.StopConditions) == 0 || len(input.EvidenceClaims) == 0 {
+	if input.Baseline == "" || len(input.DirectionSources) == 0 || len(input.Candidates) < 1 || len(input.Candidates) > 3 || input.Selected == "" || input.DesignRationale == "" || input.SliceRationale == "" || len(input.StopConditions) == 0 || len(input.EvidenceClaims) == 0 {
 		return PreparationReceipt{}, invalid("preparation requires baseline, sources, one to three slices, rationales, completion, stops, and evidence")
 	}
 	for _, source := range input.DirectionSources {
@@ -109,18 +141,22 @@ func CompilePreparation(input PreparationInput, now time.Time) (PreparationRecei
 	if err != nil || !freshUntil.After(now) {
 		return PreparationReceipt{}, invalid("fresh_until must be a future RFC3339 time")
 	}
-	ready := input.DesignSufficiency == "sufficient" && input.SliceQuality == "coherent" && len(input.BlockingGaps) == 0
+	criteria := append([]CompletionCriterion(nil), input.CompletionCriteria...)
+	sort.Slice(criteria, func(i, j int) bool { return criteria[i].Claim < criteria[j].Claim })
+	issues := readinessIssues(input, criteria)
+	ready := len(issues) == 0
 	next := "owner-activation"
 	if !ready {
-		next = "resume-preparation"
+		next = "adaptive-grill"
 	}
 	receipt := PreparationReceipt{
 		SchemaVersion: PreparationSchema, Proposal: input.Proposal, Baseline: input.Baseline,
 		DirectionSources: input.DirectionSources, Candidates: input.Candidates, Selected: input.Selected,
 		DesignSufficiency: input.DesignSufficiency, DesignRationale: input.DesignRationale,
 		SliceQuality: input.SliceQuality, SliceRationale: input.SliceRationale, BlockingGaps: input.BlockingGaps,
-		CompletionBoundary: input.CompletionBoundary, StopConditions: input.StopConditions,
-		EvidenceClaims: input.EvidenceClaims, FreshUntil: freshUntil.UTC().Format(time.RFC3339), Ready: ready, Next: next,
+		CompletionCriteria: criteria, StopConditions: input.StopConditions,
+		EvidenceClaims: input.EvidenceClaims, FreshUntil: freshUntil.UTC().Format(time.RFC3339), Ready: ready,
+		UnmetRequirements: issues, Next: next,
 	}
 	receipt.Fingerprint = fingerprint(receipt)
 	return receipt, nil
@@ -135,8 +171,11 @@ func ValidatePreparationReceipt(receipt PreparationReceipt, now time.Time) error
 	if fingerprint(receipt) != stored {
 		return invalid("preparation receipt fingerprint does not match its content")
 	}
-	if !receipt.Ready || receipt.DesignSufficiency != "sufficient" || receipt.SliceQuality != "coherent" || len(receipt.BlockingGaps) != 0 || receipt.Next != "owner-activation" {
+	if !receipt.Ready || receipt.DesignSufficiency != "sufficient" || receipt.SliceQuality != "coherent" || len(receipt.BlockingGaps) != 0 || len(receipt.UnmetRequirements) != 0 || receipt.Next != "owner-activation" {
 		return invalid("preparation receipt does not permit owner activation")
+	}
+	if issues := readinessIssues(PreparationInput{DesignSufficiency: receipt.DesignSufficiency, SliceQuality: receipt.SliceQuality, BlockingGaps: receipt.BlockingGaps, EvidenceClaims: receipt.EvidenceClaims}, receipt.CompletionCriteria); len(issues) != 0 {
+		return invalid("preparation receipt completion criteria are incomplete")
 	}
 	freshUntil, err := time.Parse(time.RFC3339, receipt.FreshUntil)
 	if err != nil || !freshUntil.After(now) {
@@ -145,29 +184,95 @@ func ValidatePreparationReceipt(receipt PreparationReceipt, now time.Time) error
 	return nil
 }
 
+func readinessIssues(input PreparationInput, criteria []CompletionCriterion) []ReadinessIssue {
+	issues := []ReadinessIssue{}
+	if input.DesignSufficiency == "needs-evidence" {
+		issues = append(issues, ReadinessIssue{Code: "needs-evidence", Detail: input.DesignRationale})
+	}
+	if input.DesignSufficiency == "needs-decision" {
+		issues = append(issues, ReadinessIssue{Code: "needs-decision", Detail: input.DesignRationale})
+	}
+	if input.SliceQuality != "coherent" {
+		issues = append(issues, ReadinessIssue{Code: "slice-not-coherent", Detail: input.SliceRationale})
+	}
+	for _, gap := range input.BlockingGaps {
+		issues = append(issues, ReadinessIssue{Code: "blocking-gap", Detail: gap})
+	}
+	declared := map[string]bool{}
+	for _, claim := range input.EvidenceClaims {
+		if declared[claim] {
+			issues = append(issues, ReadinessIssue{Code: "evidence-claim-duplicate", Claim: claim, Detail: "evidence claim is declared more than once"})
+		}
+		declared[claim] = true
+	}
+	seen := map[string]bool{}
+	for _, criterion := range criteria {
+		switch {
+		case criterion.Claim == "":
+			issues = append(issues, ReadinessIssue{Code: "criterion-missing-claim", Detail: "completion criterion has no claim"})
+		case seen[criterion.Claim]:
+			issues = append(issues, ReadinessIssue{Code: "criterion-duplicate-claim", Claim: criterion.Claim, Detail: "claim has more than one completion criterion"})
+		case !declared[criterion.Claim]:
+			issues = append(issues, ReadinessIssue{Code: "criterion-undeclared-claim", Claim: criterion.Claim, Detail: "criterion claim is not in evidence_claims"})
+		}
+		seen[criterion.Claim] = true
+		if criterion.PassBoundary == "" {
+			issues = append(issues, ReadinessIssue{Code: "criterion-missing-pass-boundary", Claim: criterion.Claim, Detail: "pass boundary is required"})
+		}
+		if criterion.ProofRequirement == "" {
+			issues = append(issues, ReadinessIssue{Code: "criterion-missing-proof", Claim: criterion.Claim, Detail: "proof requirement is required"})
+		}
+		if !oneOf(criterion.ReviewLevel, ReviewAutomatic, ReviewClustered, ReviewIndependent) {
+			issues = append(issues, ReadinessIssue{Code: "criterion-invalid-review-level", Claim: criterion.Claim, Detail: "review level must be automatic, clustered, or independent"})
+		}
+	}
+	for _, claim := range input.EvidenceClaims {
+		if !seen[claim] {
+			issues = append(issues, ReadinessIssue{Code: "criterion-missing", Claim: claim, Detail: "claim needs a completion criterion"})
+		}
+	}
+	sort.SliceStable(issues, func(i, j int) bool {
+		left, right := issues[i].Code+"\x00"+issues[i].Claim+"\x00"+issues[i].Detail, issues[j].Code+"\x00"+issues[j].Claim+"\x00"+issues[j].Detail
+		return left < right
+	})
+	return issues
+}
+
 var requiredForbidden = []string{
 	"merge", "production-release", "production-configuration", "secret-change",
 	"remote-deletion", "destructive-data", "security-privacy-rights-sensitive",
 }
 
 type AutopilotInput struct {
-	Enabled                 bool          `json:"enabled"`
-	Mission                 BoundSource   `json:"mission"`
-	Authorization           BoundSource   `json:"authorization"`
-	Outcome                 string        `json:"outcome"`
-	NonGoals                []string      `json:"non_goals"`
-	AuthoritativeSources    []BoundSource `json:"authoritative_sources"`
-	DelegatedDecisionDomain []string      `json:"delegated_decision_domain"`
-	AllowedProviders        []string      `json:"allowed_providers"`
-	AllowedActions          []string      `json:"allowed_actions"`
-	ForbiddenEffects        []string      `json:"forbidden_effects"`
-	BudgetUnits             int           `json:"budget_units"`
-	RepairBudget            int           `json:"repair_budget"`
-	RequiredChecks          []string      `json:"required_checks"`
-	ExpiresAt               string        `json:"expires_at"`
-	StopConditions          []string      `json:"stop_conditions"`
-	RecoveryPoint           string        `json:"recovery_point"`
-	ReturnDestination       string        `json:"return_destination"`
+	Enabled                 bool            `json:"enabled"`
+	Mission                 BoundSource     `json:"mission"`
+	Authorization           BoundSource     `json:"authorization"`
+	Outcome                 string          `json:"outcome"`
+	NonGoals                []string        `json:"non_goals"`
+	AuthoritativeSources    []BoundSource   `json:"authoritative_sources"`
+	DelegatedDecisionDomain []string        `json:"delegated_decision_domain"`
+	AllowedProviders        []string        `json:"allowed_providers"`
+	AllowedActions          []string        `json:"allowed_actions"`
+	ForbiddenEffects        []string        `json:"forbidden_effects"`
+	BudgetUnits             int             `json:"budget_units"`
+	RepairBudget            int             `json:"repair_budget"`
+	ResourceLimits          []ResourceLimit `json:"resource_limits"`
+	RequiredChecks          []string        `json:"required_checks"`
+	ExpiresAt               string          `json:"expires_at"`
+	StopConditions          []string        `json:"stop_conditions"`
+	RecoveryPoint           string          `json:"recovery_point"`
+	ReturnDestination       string          `json:"return_destination"`
+}
+
+// ResourceLimit states both the requested cap and what the selected host can
+// truthfully do about it. Hard means measure and cancel; observed means measure
+// only; unsupported promises neither.
+type ResourceLimit struct {
+	Resource          string `json:"resource"`
+	Maximum           int    `json:"maximum"`
+	Enforcement       string `json:"enforcement"`
+	MeasureCapability string `json:"measure_capability,omitempty"`
+	CancelCapability  string `json:"cancel_capability,omitempty"`
 }
 
 // AutopilotLimits is derived from the exact bound Mission and owner Decision.
@@ -182,6 +287,7 @@ type AutopilotLimits struct {
 	ForbiddenEffects []string
 	BudgetUnits      int
 	RepairBudget     int
+	HostCapabilities []string
 	ExpiresAt        string
 	StopConditions   []string
 }
@@ -209,6 +315,8 @@ type AutopilotCharter struct {
 	ForbiddenEffects         []string        `json:"forbidden_effects"`
 	BudgetUnits              int             `json:"budget_units"`
 	RepairBudget             int             `json:"repair_budget"`
+	ResourceLimits           []ResourceLimit `json:"resource_limits"`
+	HostCapabilities         []string        `json:"host_capabilities"`
 	RequiredChecks           []string        `json:"required_checks"`
 	ExpiresAt                string          `json:"expires_at"`
 	StopConditions           []string        `json:"stop_conditions"`
@@ -244,6 +352,10 @@ func CompileAutopilot(input AutopilotInput, limits AutopilotLimits, now time.Tim
 	if input.BudgetUnits > limits.BudgetUnits || input.RepairBudget > limits.RepairBudget {
 		return AutopilotCharter{}, invalid("Autopilot budgets exceed the Mission envelope")
 	}
+	resourceLimits, hostCapabilities, err := validateResourceLimits(input.ResourceLimits, limits.HostCapabilities, input.RepairBudget)
+	if err != nil {
+		return AutopilotCharter{}, err
+	}
 	if !allContained(limits.StopConditions, input.StopConditions) {
 		return AutopilotCharter{}, invalid("Autopilot stop conditions omit a Mission stop")
 	}
@@ -271,6 +383,7 @@ func CompileAutopilot(input AutopilotInput, limits AutopilotLimits, now time.Tim
 		AuthoritativeSources: input.AuthoritativeSources, DelegatedDecisionDomain: input.DelegatedDecisionDomain,
 		AllowedProviders: input.AllowedProviders, AllowedActions: input.AllowedActions,
 		ForbiddenEffects: input.ForbiddenEffects, BudgetUnits: input.BudgetUnits, RepairBudget: input.RepairBudget,
+		ResourceLimits: resourceLimits, HostCapabilities: hostCapabilities,
 		RequiredChecks: input.RequiredChecks, ExpiresAt: expires.UTC().Format(time.RFC3339),
 		StopConditions: input.StopConditions, RecoveryPoint: input.RecoveryPoint,
 		ReturnDestination: input.ReturnDestination, RuntimeNeutral: true, AutomaticProviderEffects: false,
@@ -304,7 +417,61 @@ func ValidateAutopilotCharter(charter AutopilotCharter, now time.Time) error {
 			return invalid("Autopilot charter is below the initial effect ceiling")
 		}
 	}
+	if _, _, err := validateResourceLimits(charter.ResourceLimits, charter.HostCapabilities, charter.RepairBudget); err != nil {
+		return err
+	}
 	return nil
+}
+
+func validateResourceLimits(limits []ResourceLimit, capabilities []string, repairBudget int) ([]ResourceLimit, []string, error) {
+	canonicalLimits := append([]ResourceLimit(nil), limits...)
+	sort.Slice(canonicalLimits, func(i, j int) bool { return canonicalLimits[i].Resource < canonicalLimits[j].Resource })
+	canonicalCapabilities := sortedUniqueStrings(capabilities)
+	seen := map[string]bool{}
+	for _, limit := range canonicalLimits {
+		if !oneOf(limit.Resource, "wall-time-seconds", "tokens", "spend-cents", "parallel-workers", "repair-rounds") {
+			return nil, nil, invalid("resource limit must target wall-time-seconds, tokens, spend-cents, parallel-workers, or repair-rounds")
+		}
+		if seen[limit.Resource] {
+			return nil, nil, invalid("resource limits may name each resource only once")
+		}
+		seen[limit.Resource] = true
+		if limit.Maximum < 1 {
+			return nil, nil, invalid("resource limit maximum must be positive")
+		}
+		if limit.Resource == "repair-rounds" && limit.Maximum > repairBudget {
+			return nil, nil, invalid("repair-rounds limit exceeds the Autopilot repair budget")
+		}
+		switch limit.Enforcement {
+		case EnforcementHard:
+			if limit.MeasureCapability == "" || limit.CancelCapability == "" || !contains(canonicalCapabilities, limit.MeasureCapability) || !contains(canonicalCapabilities, limit.CancelCapability) {
+				return nil, nil, invalid("hard resource limit requires declared host measurement and cancellation capabilities")
+			}
+		case EnforcementObserved:
+			if limit.MeasureCapability == "" || !contains(canonicalCapabilities, limit.MeasureCapability) || limit.CancelCapability != "" {
+				return nil, nil, invalid("observed resource limit requires declared measurement capability and no cancellation claim")
+			}
+		case EnforcementUnsupported:
+			if limit.MeasureCapability != "" || limit.CancelCapability != "" {
+				return nil, nil, invalid("unsupported resource limit cannot claim measurement or cancellation capabilities")
+			}
+		default:
+			return nil, nil, invalid("resource limit enforcement must be hard, observed, or unsupported")
+		}
+	}
+	return canonicalLimits, canonicalCapabilities, nil
+}
+
+func sortedUniqueStrings(values []string) []string {
+	result := append([]string(nil), values...)
+	sort.Strings(result)
+	out := result[:0]
+	for _, value := range result {
+		if value != "" && (len(out) == 0 || out[len(out)-1] != value) {
+			out = append(out, value)
+		}
+	}
+	return out
 }
 
 func validateBoundSource(source BoundSource, want domain.RecordType) error {
@@ -376,6 +543,14 @@ func fingerprint(value any) string {
 	data, _ := json.Marshal(value)
 	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:])
+}
+
+// CompletionFingerprint identifies only the frozen answer key, allowing
+// execution records to change without obscuring a semantic criteria change.
+func CompletionFingerprint(criteria []CompletionCriterion) string {
+	canonical := append([]CompletionCriterion(nil), criteria...)
+	sort.Slice(canonical, func(i, j int) bool { return canonical[i].Claim < canonical[j].Claim })
+	return fingerprint(canonical)
 }
 
 // CanonicalForbiddenEffects returns a copy so guided workflows can render the

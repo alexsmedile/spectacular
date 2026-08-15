@@ -1,6 +1,6 @@
 ---
 name: spectacular
-version: 2.0.0-rc.2
+version: 2.1.0
 description: Guide work in a canonical Spectacular v2 workspace from cold orientation through Proposal, Mission preparation, governed execution, Evidence assessment, reconciliation, and closure. Use for `/spectacular` jobs such as orient, propose, define, decide, start, resume, handoff, assess, reconcile, resolve, or audit; for compiling bounded runtime context or an explicit Autopilot charter; and for safely continuing a Mission after session or runtime replacement.
 ---
 
@@ -58,10 +58,15 @@ Mission.
 
 ## Execution behavior
 
-After owner activation, compile a completion contract and use the host runtime's native plan for
+After owner activation, execute the frozen Mission completion contract and use the host runtime's native plan for
 session-sized steps. Continue while any approved condition remains. A failed check begins bounded
 diagnosis and repair; it is not automatically a user gate. Stop only for an actual charter stop,
 new Type-1 decision, separate authority, irreversible/provider effect, or exhausted repair budget.
+
+The Mission owner alone changes semantic success criteria. The operator may change reversible
+attempts, tools, and validation mechanics inside the envelope, but any change to observable
+behavior, pass thresholds, failure cases, evidence strength, or review independence returns to the
+owner. Apply the criterion's frozen review level instead of prompting a generic harsh critic.
 
 Return pointer-first continuity: Mission, current Objective and Run boundary, baseline, authority,
 Evidence/review and freshness, remaining Gaps, repair use, recovery point, and exactly one safe

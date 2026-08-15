@@ -604,7 +604,8 @@ func (b Builder) Detail(ref string, noun domain.RecordType) (Card, error) {
 			if e != nil {
 				return Card{}, e
 			}
-			if expected != mission.Fingerprint {
+			state := value(entry.Document.Record.Status)
+			if state != "superseded" && state != "rejected" && expected != mission.Fingerprint {
 				return Card{}, domain.NewRefusal(domain.RefusalInvalidFingerprint, "expected_mission_fingerprint", "Decision fingerprint does not match current Mission", nil)
 			}
 		} else {

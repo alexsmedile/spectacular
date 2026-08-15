@@ -3,8 +3,6 @@
 
 | Ref | Type | Title | Source |
 |---|---|---|---|
-| `ARCHITECTURE` | Anchor | Architecture | `.spectacular/ARCHITECTURE.md` |
-| `CC-v2prod` | Contract | Spectacular v2 product contract | `.spectacular/contracts/CC-v2prod-spectacular-v2-product.md` |
 | `M1` | Mission | Restore human-operable workspace | `.spectacular/archive/missions/M1-human-operability/MISSION.md` |
 | `M1/A1-nolpc6` | Assessment | RC.2 human-operability assessment | `.spectacular/archive/missions/M1-human-operability/assessments/A1-nolpc6.md` |
 | `M1/D1-t5to5d` | Decision | Continue the bounded human-operability repair | `.spectacular/archive/missions/M1-human-operability/decisions/D1-t5to5d.md` |
@@ -15,7 +13,3 @@
 | `M1/O1` | Objective | Implement readable workspace and interface | `.spectacular/archive/missions/M1-human-operability/objectives/O1-implement-readable-workspace.md` |
 | `M1/R1` | Run | Implement human workspace layout | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/RUN.md` |
 | `M1/R1/C1` | Checkpoint | Human-operability candidate ready for owner review | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-in-progress.md` |
-| `P1` | Proposal | Repair v2 human operability | `.spectacular/proposals/P1-human-operability.md` |
-| `PRODUCT` | Anchor | Product direction | `.spectacular/PRODUCT.md` |
-| `PROJECT` | Anchor | Spectacular v2 | `.spectacular/PROJECT.md` |
-| `STACK` | Anchor | Stack | `.spectacular/STACK.md` |

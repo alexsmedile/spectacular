@@ -76,14 +76,15 @@ func TestHumanWorkspaceColdRecoveryUsesRealProcesses(t *testing.T) {
 		"Current truth: ARCHITECTURE",
 		"Current truth: STACK",
 		"Mission:       M1",
-		"Owner gate:",
+		"Next: publish v2.0.0-rc.2, then begin the v2.1.0 governed-autonomy Mission M1",
+		"Authorized by: M1/D2-",
 	} {
 		if !strings.Contains(project.stdout, required) {
 			t.Fatalf("project orientation omits %q:\n%s", required, project.stdout)
 		}
 	}
 	mission := command(t, workspace, 0, "mission", "show", "M1")
-	for _, required := range []string{"Objective: M1/O1", "Run: M1/R1", "Checkpoint: M1/R1/C1", "Gap: M1/G1-"} {
+	for _, required := range []string{"State: resolved", "Objective: M1/O1", "Related: evidence M1/E1-", "Related: decision M1/D2-", "Continuation: publish v2.0.0-rc.2"} {
 		if !strings.Contains(mission.stdout, required) {
 			t.Fatalf("Mission card omits %q:\n%s", required, mission.stdout)
 		}

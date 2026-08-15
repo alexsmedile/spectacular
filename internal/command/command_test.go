@@ -60,9 +60,9 @@ func TestSelfHostedWorkspaceIsHumanOperable(t *testing.T) {
 		`"path":".spectacular/PRODUCT.md"`,
 		`"path":".spectacular/ARCHITECTURE.md"`,
 		`"path":".spectacular/STACK.md"`,
-		`"path":".spectacular/missions/M1-human-operability/MISSION.md"`,
-		`"kind":"owner-gate"`,
-		`"code":"resolve_blocking_gap"`,
+		`"path":".spectacular/archive/missions/M1-human-operability/MISSION.md"`,
+		`"kind":"continuation"`,
+		`"operation":"publish v2.0.0-rc.2, then begin the v2.1.0 governed-autonomy Mission"`,
 	} {
 		if !strings.Contains(text, required) {
 			t.Fatalf("self-hosted RC workspace missing %s: %s", required, text)
@@ -79,14 +79,18 @@ func TestSelfHostedWorkspaceIsHumanOperable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if mission.Document.Record.Status == nil || *mission.Document.Record.Status != "awaiting-assessment" {
-		t.Fatalf("self-hosted Mission is not awaiting assessment: %#v", mission.Document.Record.Status)
+	if mission.Document.Record.Status == nil || *mission.Document.Record.Status != "resolved" {
+		t.Fatalf("self-hosted Mission is not resolved: %#v", mission.Document.Record.Status)
+	}
+	archived, err := workspace.Bool(mission.Document, "archived", true)
+	if err != nil || !archived {
+		t.Fatalf("self-hosted Mission is not archived: archived=%v err=%v", archived, err)
 	}
 	byHuman, err := opened.Lookup("M1/R1/C1", domain.Checkpoint)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if byHuman.Path != ".spectacular/missions/M1-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-in-progress.md" {
+	if byHuman.Path != ".spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-in-progress.md" {
 		t.Fatalf("human reference resolved %s", byHuman.Path)
 	}
 	gap, err := opened.Lookup("Gap:019fe381-5d61-7223-b362-03a5f99a7b04", domain.Gap)
@@ -95,6 +99,9 @@ func TestSelfHostedWorkspaceIsHumanOperable(t *testing.T) {
 	}
 	if gap.Document.Record.Title == nil || *gap.Document.Record.Title != "Owner disposition on the human-operable RC.2 candidate" {
 		t.Fatalf("self-hosted Gap is not the review boundary: %#v", gap.Document.Record.Title)
+	}
+	if strings.Contains(text, `"kind":"owner-gate"`) {
+		t.Fatalf("resolved self-hosted Mission still exposes an owner gate: %s", text)
 	}
 	if after := treeDigest(t, filepath.Join(root, ".spectacular")); after != before {
 		t.Fatal("self-hosted workspace read mutated canonical state")
@@ -476,6 +483,38 @@ func TestProjectAuthorityProjectionAndDecisionAuthorizationAreStrict(t *testing.
 				t.Fatalf("exit=%d refusal=%s", exit, got.String())
 			}
 		})
+	}
+}
+
+func TestSupersededResumeDecisionKeepsHistoricalMissionFingerprint(t *testing.T) {
+	root := copyFixture(t)
+	opened, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decision, err := opened.Lookup("Decision:"+decisionID, domain.Decision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	status := "superseded"
+	decision.Document.Record.Status = &status
+	writeCanonicalEntry(t, decision)
+
+	opened, err = discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mission, err := opened.Lookup("Mission:"+missionID, domain.Mission)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workspace.SetString(mission.Document, "outcome", "A later terminal Mission revision preserves historical authority.")
+	writeCanonicalEntry(t, mission)
+
+	var out bytes.Buffer
+	exit := (Runner{Cwd: root, Stdout: &out, Stderr: &bytes.Buffer{}, Now: fixedNow}).Run([]string{"decision", "show", decisionID, "--json"})
+	if exit != 0 || !strings.Contains(out.String(), `"state":"superseded"`) {
+		t.Fatalf("exit=%d output=%s", exit, out.String())
 	}
 }
 

@@ -99,6 +99,13 @@ func row(doc *workspace.Document, path string) indexRow {
 	ref := HumanRef(doc)
 	if ref == "" {
 		ref = string(doc.Record.Type) + ":" + doc.Record.ID.String()
+	} else if !strings.Contains(ref, "/") {
+		switch doc.Record.Type {
+		case domain.Objective, domain.Run, domain.Review:
+			if mission, _ := workspace.String(doc, "mission", false); strings.HasPrefix(mission, "M") && !strings.Contains(mission, ":") {
+				ref = mission + "/" + ref
+			}
+		}
 	}
 	title := ""
 	if doc.Record.Title != nil {

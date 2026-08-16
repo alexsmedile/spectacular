@@ -14,8 +14,12 @@ reviewed:
 
 reviewer:
   actor: Codex independent reviewer
+  operator: Codex primary session
   relation_to_operator: independent
   implemented_reviewed_scope: false
+  independence_basis: A separate reviewer used an isolated clean clone of the exact reviewed commit and made no edits.
+  evidence:
+    - task:/root/m5_independent_review
 
 claims:
   - claim: skill-model

@@ -6,7 +6,7 @@ title: Implement the compact Mission CLI
 status: active
 owner: Alex
 created: "2026-08-16T10:31:30Z"
-updated: "2026-08-16T10:53:23Z"
+updated: "2026-08-16T11:13:08Z"
 
 contract:
   ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -37,12 +37,12 @@ objectives:
   - ref: O1
     id: 01a00a20-63dd-7033-832a-a1e6de4388dd
     outcome: Build the shared typed Mission-bundle decoder, resolver, canonical writer, and schema registry.
-    status: pending
+    status: implemented
     claims: [typed-bundle, schema-validation]
   - ref: O2
     id: 01a00a20-63dd-79dc-87ea-157563ccf6d6
     outcome: Implement the minimal read, start, progress, expansion, review, and completion command surface.
-    status: pending
+    status: active
     after: [O1]
     claims: [typed-commands]
   - ref: O3
@@ -58,7 +58,7 @@ run:
   status: active
   operator: Codex primary session
   started_at: "2026-08-16T10:53:23Z"
-  current_objective: O1
+  current_objective: O2
   repairs: 0
 
 activation:

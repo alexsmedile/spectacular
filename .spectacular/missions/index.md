@@ -28,4 +28,5 @@
 | `M4/O3` | Objective | Decision validation and compact Mission progress are immediate and atomic. | `.spectacular/missions/M4-make-spectacular-control-operations-lean/objectives/O3-decision-validation-and-compact-mission-progress-are-immediate-and-atomic.md` |
 | `M4/R1` | Run | Initial governed Run | `.spectacular/missions/M4-make-spectacular-control-operations-lean/runs/R1-initial-governed-run/RUN.md` |
 | `M5` | Mission | Align the Spectacular Skill with compact Missions | `.spectacular/missions/M5-implement-compact-expandable-missions/MISSION.md` |
+| `M5/RV1` | Review | M5 independent completion review | `.spectacular/missions/M5-implement-compact-expandable-missions/reviews/RV1-independent-review.md` |
 | `M6` | Mission | Implement the compact Mission CLI | `.spectacular/missions/M6-implement-compact-mission-cli/MISSION.md` |

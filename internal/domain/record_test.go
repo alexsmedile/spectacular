@@ -50,7 +50,7 @@ func TestRecordValidateExactStatusVocabulary(t *testing.T) {
 	id := mustID(t, proposalIDText)
 	allowed := map[RecordType][]string{
 		Proposal: {"draft", "submitted", "accepted", "rejected", "withdrawn"},
-		Mission:  {"defined", "active", "awaiting-assessment", "resolved"},
+		Mission:  {"defined", "active", "awaiting-assessment", "resolved", "completed"},
 	}
 	for recordType, statuses := range allowed {
 		recordType := recordType
@@ -72,7 +72,6 @@ func TestRecordValidateExactStatusVocabulary(t *testing.T) {
 	}{
 		{recordType: Proposal, status: "approved"},
 		{recordType: Proposal, status: " accepted "},
-		{recordType: Mission, status: "completed"},
 		{recordType: Mission, status: "definitely-not-a-status"},
 	}
 	for _, test := range invalid {

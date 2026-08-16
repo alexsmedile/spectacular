@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -194,4 +195,129 @@ func treeDigest(t *testing.T, root string) string {
 		t.Fatal(err)
 	}
 	return hex.EncodeToString(hash.Sum(nil))
+}
+
+// decodeObjectiveGraph turns fuzz bytes into a small Objective graph. Each input
+// byte is one edge: the high nibble selects the dependent Objective and the low
+// nibble the dependency, both modulo the node count. Unmapped low nibbles become
+// dangling references so the corpus reaches unknown-dependency refusals too.
+func decodeObjectiveGraph(data []byte) []Objective {
+	if len(data) == 0 {
+		return nil
+	}
+	nodes := int(data[0]%8) + 1
+	objectives := make([]Objective, nodes)
+	for i := range objectives {
+		objectives[i] = Objective{Ref: fmt.Sprintf("O%d", i+1)}
+	}
+	for _, edge := range data[1:] {
+		from := int(edge>>4) % nodes
+		target := int(edge & 0x0f)
+		dependency := fmt.Sprintf("O%d", target+1)
+		objectives[from].After = append(objectives[from].After, dependency)
+	}
+	return objectives
+}
+
+// acyclicByKahn is an independent oracle. validateDAG walks the graph with a
+// recursive colour marking; this settles the same question by iteratively
+// peeling zero-indegree nodes, so a bug in one is not reproduced by the other.
+func acyclicByKahn(objectives []Objective) bool {
+	known := map[string]bool{}
+	for _, objective := range objectives {
+		known[objective.Ref] = true
+	}
+	indegree := map[string]int{}
+	dependents := map[string][]string{}
+	for _, objective := range objectives {
+		for _, dependency := range objective.After {
+			if !known[dependency] {
+				continue
+			}
+			indegree[objective.Ref]++
+			dependents[dependency] = append(dependents[dependency], objective.Ref)
+		}
+	}
+	queue := []string{}
+	for ref := range known {
+		if indegree[ref] == 0 {
+			queue = append(queue, ref)
+		}
+	}
+	settled := 0
+	for len(queue) > 0 {
+		ref := queue[0]
+		queue = queue[1:]
+		settled++
+		for _, dependent := range dependents[ref] {
+			indegree[dependent]--
+			if indegree[dependent] == 0 {
+				queue = append(queue, dependent)
+			}
+		}
+	}
+	return settled == len(known)
+}
+
+// FuzzObjectiveDependencyGraph searches generated dependency graphs for any case
+// where validateDAG disagrees with an independent topological sort, refuses with
+// the wrong code or field, or panics. Hand-written cases cover only a self-cycle
+// and one unresolved dependency; generated graphs reach multi-node cycles,
+// diamonds, and repeated edges that nobody thought to write down.
+func FuzzObjectiveDependencyGraph(f *testing.F) {
+	f.Add([]byte{0})                   // single Objective, no edges
+	f.Add([]byte{2, 0x10})             // O2 depends on O1: acyclic
+	f.Add([]byte{0, 0x00})             // O1 depends on itself: self-cycle
+	f.Add([]byte{2, 0x10, 0x01})       // O1 <-> O2: two-node cycle
+	f.Add([]byte{3, 0x10, 0x21, 0x02}) // O1 -> O2 -> O3 -> O1: three-node cycle
+	f.Add([]byte{3, 0x10, 0x20, 0x21}) // diamond
+	f.Add([]byte{1, 0x0f})             // dangling dependency on a missing Objective
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		objectives := decodeObjectiveGraph(data)
+		if len(objectives) == 0 {
+			return
+		}
+		bundle := &Bundle{Objectives: objectives}
+
+		err := validateDAG(nil, bundle)
+
+		known := map[string]bool{}
+		for _, objective := range objectives {
+			known[objective.Ref] = true
+		}
+		selfOrUnknown := false
+		for _, objective := range objectives {
+			for _, dependency := range objective.After {
+				if !known[dependency] || dependency == objective.Ref {
+					selfOrUnknown = true
+				}
+			}
+		}
+		acyclic := acyclicByKahn(objectives)
+
+		switch {
+		case selfOrUnknown || !acyclic:
+			if err == nil {
+				t.Fatalf("accepted an invalid dependency graph: %#v", objectives)
+			}
+			if !domain.RefusalHasCode(err, domain.RefusalInvalidKnownField) {
+				t.Fatalf("refusal code=%v for %#v", err, objectives)
+			}
+			var refusal *domain.Refusal
+			if !errors.As(err, &refusal) {
+				t.Fatalf("refusal was not typed: %v", err)
+			}
+			if refusal.Field != "objectives.after" {
+				t.Fatalf("refusal field=%q, want objectives.after", refusal.Field)
+			}
+			if refusal.Detail == "" || refusal.Recovery == "" {
+				t.Fatalf("refusal lacked problem or correction: %+v", refusal)
+			}
+		default:
+			if err != nil {
+				t.Fatalf("refused a valid acyclic graph %#v: %v", objectives, err)
+			}
+		}
+	})
 }

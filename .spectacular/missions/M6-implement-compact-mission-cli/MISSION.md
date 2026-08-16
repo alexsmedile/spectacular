@@ -164,8 +164,9 @@ attributable owner confirmation.
   files after every refusal.
 - Inject failure after every write boundary in start, promote, Run start,
   review record, and complete.
-- Fuzz YAML trees, UUID/ref collisions, dependency DAGs, paths, retry/concurrent
-  operations, and preservation round trips.
+- Fuzz dependency DAGs against an independent topological oracle, and cover
+  YAML trees, UUID/ref collisions, paths, retry/concurrent operations, and
+  preservation round trips with exact table-driven cases.
 - Prove inline/promoted representation equivalence and cold recovery.
 - Run focused package tests by cluster, then one compact full verification and
   distribution gate before independent review.

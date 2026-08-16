@@ -5,6 +5,10 @@ Load this only when the Mission declares `manual-bootstrap` as its validation mo
 In that mode the CLI cannot mutate or validate the Mission. Treat it as out of
 service. Edit the canonical Markdown directly and verify the result yourself.
 
+The file you are editing is `.spectacular/missions/<slug>/MISSION.md`. For the
+field shape it must keep, see [mission-anatomy.md](mission-anatomy.md); for a live
+one, read any existing `.spectacular/missions/*/MISSION.md`.
+
 ## Verify by hand
 
 Work down the list. Each item is a separate check.

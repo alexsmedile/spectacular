@@ -76,6 +76,35 @@ Then recheck:
 A material semantic change goes back to the owner. Reversible implementation
 changes stay with the operator.
 
+## Choose the branch before you edit
+
+A Mission's work belongs on the branch its `baseline:` names. Before starting a
+side task — a doc pass, a rename, a cleanup — check whether an active branch
+already modifies those files:
+
+```bash
+git status --short <paths>                       # is this work already in flight here?
+git branch --format='%(refname:short)' | while read -r b; do
+  git diff --stat main "$b" -- <paths>           # does another branch already touch them?
+done
+```
+
+If an active branch already edits those files, **work on that branch.** Splitting
+the same files across two branches guarantees a manual conflict resolution later,
+and the resolution is where work gets silently reverted.
+
+Start a separate branch only when the file sets are genuinely disjoint. Isolation
+buys a clean review only when nothing else is editing the same lines.
+
+Two related traps:
+
+- A worktree holds its branch. While `main` is checked out in one, no other tree
+  can check it out. Remove a worktree the moment it has served its purpose:
+  `git worktree remove <path>`.
+- If both branches have already diverged on the same file, reconcile on the
+  feature branch — `git merge main` there, resolve, verify — and only then move it
+  onto `main`. Never resolve a content conflict directly on `main`.
+
 ## Work in outcome-sized clusters
 
 ```

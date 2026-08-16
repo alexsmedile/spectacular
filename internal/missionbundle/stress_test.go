@@ -1,0 +1,516 @@
+package missionbundle
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"io/fs"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/alexsmedile/spectacular/v2/internal/discovery"
+	"github.com/alexsmedile/spectacular/v2/internal/domain"
+	"github.com/alexsmedile/spectacular/v2/internal/governance"
+)
+
+// This cluster exercises the public mutation service at its highest-value
+// boundaries. The transaction engine's lower-level interruption matrix lives
+// in internal/governance; these checks prove the Mission service reaches that
+// boundary without changing canonical files first.
+func TestMissionServiceRetryAndRefusalBoundaries(t *testing.T) {
+	root := missionServiceFixture(t)
+	plan, raw := stressPlan()
+	svc := openMissionService(t, root)
+
+	started, err := svc.Start(plan, raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if started.Ref == "" || started.Path == "" {
+		t.Fatalf("incomplete start receipt: %+v", started)
+	}
+
+	// A retry in a fresh command context resolves the persisted start_key and
+	// returns the original Mission instead of allocating another identity.
+	svc = openMissionService(t, root)
+	retried, err := svc.Start(plan, raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if retried.Ref != started.Ref || retried.Path != started.Path {
+		t.Fatalf("retry drifted: first=%+v retry=%+v", started, retried)
+	}
+	if got := countMissionStarts(t, svc.Workspace, raw); got != 1 {
+		t.Fatalf("logical start count=%d, want 1", got)
+	}
+
+	t.Run("dependency refusal writes nothing", func(t *testing.T) {
+		before := canonicalTreeDigest(t, root)
+		_, err := svc.FinishObjective(started.Ref + "/O2")
+		assertRefusal(t, err, domain.RefusalInvalidKnownField, "objectives.after")
+		if after := canonicalTreeDigest(t, root); after != before {
+			t.Fatal("dependency refusal changed canonical files")
+		}
+	})
+
+	t.Run("concurrent writer refusal writes nothing", func(t *testing.T) {
+		unlock, err := acquireMutationLock(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer unlock()
+		before := canonicalTreeDigest(t, root)
+		_, err = svc.FinishObjective(started.Ref + "/O1")
+		assertRefusal(t, err, domain.RefusalCollision, "transactions")
+		if after := canonicalTreeDigest(t, root); after != before {
+			t.Fatal("concurrency refusal changed canonical files")
+		}
+	})
+
+	t.Run("stale source refusal preserves external winner", func(t *testing.T) {
+		missionPath := filepath.Join(root, filepath.FromSlash(started.Path))
+		file, err := os.OpenFile(missionPath, os.O_APPEND|os.O_WRONLY, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := file.WriteString("\nExternal body edit.\n"); err != nil {
+			file.Close()
+			t.Fatal(err)
+		}
+		if err := file.Close(); err != nil {
+			t.Fatal(err)
+		}
+		before := canonicalTreeDigest(t, root)
+		// Exercise the post-validation optimistic check directly: public
+		// mutations first reopen under the lock, while apply still refuses a
+		// source changed between that read and the transaction boundary.
+		_, err = svc.finishObjective(started.Ref + "/O1")
+		assertRefusal(t, err, domain.RefusalStaleFingerprint, started.Path)
+		if after := canonicalTreeDigest(t, root); after != before {
+			t.Fatal("stale refusal did not preserve the external winner")
+		}
+	})
+
+	// Reloading accepts the external body-only edit, and repeating an already
+	// completed transition is a stable no-op.
+	svc = openMissionService(t, root)
+	if _, err := svc.FinishObjective(started.Ref + "/O1"); err != nil {
+		t.Fatal(err)
+	}
+	svc = openMissionService(t, root)
+	before := canonicalTreeDigest(t, root)
+	result, err := svc.FinishObjective(started.Ref + "/O1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Changed) != 0 {
+		t.Fatalf("idempotent finish reported changes: %v", result.Changed)
+	}
+	if after := canonicalTreeDigest(t, root); after != before {
+		t.Fatal("idempotent finish rewrote canonical files")
+	}
+}
+
+func TestMissionStartRejectsSymlinkedTargetWithoutPartialWrite(t *testing.T) {
+	root := missionServiceFixture(t)
+	svc := openMissionService(t, root)
+	missionRoot := filepath.Join(root, ".spectacular", "missions")
+	heldRoot := filepath.Join(root, ".spectacular", "missions-held")
+	outside := t.TempDir()
+	if err := os.Rename(missionRoot, heldRoot); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, missionRoot); err != nil {
+		t.Fatal(err)
+	}
+	before := canonicalTreeDigest(t, root)
+	plan, raw := stressPlan()
+	_, err := svc.Start(plan, append(raw, []byte("-symlink")...))
+	if !domain.RefusalHasCode(err, domain.RefusalPathEscape) {
+		t.Fatalf("symlinked target error=%v, want path_escape", err)
+	}
+	if after := canonicalTreeDigest(t, root); after != before {
+		t.Fatal("failed preparation changed canonical files")
+	}
+	entries, err := os.ReadDir(outside)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("transaction escaped Mission root: %v", entries)
+	}
+}
+
+func TestReviewRetryConvergesOnOneIdentity(t *testing.T) {
+	root := missionServiceFixture(t)
+	plan, raw := stressPlan()
+	svc := openMissionService(t, root)
+	started, err := svc.Start(plan, append(raw, []byte("-review")...))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc = openMissionService(t, root)
+	bundle, err := svc.Show(started.Ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit := gitOutput(t, root, "rev-parse", "HEAD")
+	tree := gitOutput(t, root, "rev-parse", "HEAD^{tree}")
+	review := []byte(fmt.Sprintf(`---
+type: ReviewDraft
+title: Atomic review
+status: passed
+reviewed:
+  commit: %s
+  tree: %s
+  activation_fingerprint: %s
+claims:
+  - claim: atomic
+    verdict: pass
+---
+# Review
+`, commit, tree, bundle.Activation.Fingerprint))
+	first, err := svc.RecordReview(started.Ref, "-", review)
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc = openMissionService(t, root)
+	before := canonicalTreeDigest(t, root)
+	retry, err := svc.RecordReview(started.Ref, "-", review)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if retry.Ref != first.Ref || retry.Path != first.Path || len(retry.Changed) != 0 {
+		t.Fatalf("review retry drifted: first=%+v retry=%+v", first, retry)
+	}
+	if after := canonicalTreeDigest(t, root); after != before {
+		t.Fatal("review retry rewrote canonical files")
+	}
+	bundle, err = openMissionService(t, root).Show(started.Ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(bundle.Reviews) != 1 || bundle.Reviews[0].Ref != strings.TrimPrefix(first.Ref, started.Ref+"/") {
+		t.Fatalf("review pointers=%+v, want one %s", bundle.Reviews, first.Ref)
+	}
+}
+
+func TestPromoteRefusesUndiscoveredDerivedTargetCollision(t *testing.T) {
+	root := missionServiceFixture(t)
+	plan, raw := stressPlan()
+	svc := openMissionService(t, root)
+	started, err := svc.Start(plan, append(raw, []byte("-collision")...))
+	if err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(root, filepath.FromSlash(filepath.Join(filepath.Dir(started.Path), "objectives", "O1-first-dependency.md")))
+	if err := os.MkdirAll(target, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	svc = openMissionService(t, root)
+	before := canonicalTreeDigest(t, root)
+	_, err = svc.PromoteObjective(started.Ref + "/O1")
+	assertRefusal(t, err, domain.RefusalCollision, filepath.ToSlash(strings.TrimPrefix(target, root+string(filepath.Separator))))
+	if after := canonicalTreeDigest(t, root); after != before {
+		t.Fatal("target collision changed canonical files")
+	}
+	if info, statErr := os.Stat(target); statErr != nil || !info.IsDir() {
+		t.Fatalf("colliding target was replaced: info=%v err=%v", info, statErr)
+	}
+}
+
+func TestMutationCommandsRollbackAtEveryInstallBoundary(t *testing.T) {
+	type prepared struct {
+		root   string
+		serve  Service
+		invoke func(Service) error
+	}
+	prepareStarted := func(t *testing.T, suffix string) (string, Service, Result) {
+		root := missionServiceFixture(t)
+		plan, raw := stressPlan()
+		svc := openMissionService(t, root)
+		started, err := svc.Start(plan, append(raw, []byte(suffix)...))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return root, openMissionService(t, root), started
+	}
+	cases := map[string]func(*testing.T) prepared{
+		"start": func(t *testing.T) prepared {
+			root := missionServiceFixture(t)
+			plan, raw := stressPlan()
+			return prepared{root: root, serve: openMissionService(t, root), invoke: func(s Service) error {
+				_, err := s.Start(plan, append(raw, []byte("-fault")...))
+				return err
+			}}
+		},
+		"promote": func(t *testing.T) prepared {
+			root, svc, started := prepareStarted(t, "-promote-fault")
+			return prepared{root: root, serve: svc, invoke: func(s Service) error {
+				_, err := s.PromoteObjective(started.Ref + "/O1")
+				return err
+			}}
+		},
+		"run": func(t *testing.T) prepared {
+			root, svc, started := prepareStarted(t, "-run-fault")
+			return prepared{root: root, serve: svc, invoke: func(s Service) error {
+				_, err := s.StartRun(started.Ref, "Second run")
+				return err
+			}}
+		},
+		"review": func(t *testing.T) prepared {
+			root, svc, started := prepareStarted(t, "-review-fault")
+			review := reviewDraft(t, root, svc, started.Ref)
+			return prepared{root: root, serve: svc, invoke: func(s Service) error {
+				_, err := s.RecordReview(started.Ref, "-", review)
+				return err
+			}}
+		},
+		"complete": func(t *testing.T) prepared {
+			root, svc, started := prepareStarted(t, "-complete-fault")
+			if _, err := svc.FinishObjective(started.Ref + "/O1"); err != nil {
+				t.Fatal(err)
+			}
+			svc = openMissionService(t, root)
+			if _, err := svc.FinishObjective(started.Ref + "/O2"); err != nil {
+				t.Fatal(err)
+			}
+			return prepared{root: root, serve: openMissionService(t, root), invoke: func(s Service) error {
+				_, err := s.Complete(started.Ref, planOwner())
+				return err
+			}}
+		},
+	}
+
+	for name, makePrepared := range cases {
+		t.Run(name, func(t *testing.T) {
+			probe := makePrepared(t)
+			count := 0
+			probeError := errors.New("capture transaction width")
+			probe.serve.ApplyTransaction = func(_ string, _ string, changes []governance.FileChange) error {
+				count = len(changes)
+				return probeError
+			}
+			if err := probe.invoke(probe.serve); !errors.Is(err, probeError) || count == 0 {
+				t.Fatalf("transaction probe err=%v width=%d", err, count)
+			}
+
+			for failAfter := 0; failAfter < count; failAfter++ {
+				t.Run(fmt.Sprintf("after-%d-of-%d", failAfter, count), func(t *testing.T) {
+					fixture := makePrepared(t)
+					before := canonicalTreeDigest(t, fixture.root)
+					fixture.serve.ApplyTransaction = func(root, key string, changes []governance.FileChange) error {
+						return governance.ApplyTransactionWithFailure(root, key, changes, failAfter)
+					}
+					if err := fixture.invoke(fixture.serve); err == nil {
+						t.Fatal("injected transaction failure unexpectedly succeeded")
+					}
+					if after := canonicalTreeDigest(t, fixture.root); after != before {
+						t.Fatal("injected failure changed canonical files")
+					}
+					if _, err := discovery.Open(fixture.root); err != nil {
+						t.Fatalf("rollback left workspace unreadable: %v", err)
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestContainedBundlePathRefusalCluster(t *testing.T) {
+	base := t.TempDir()
+	for _, path := range []string{"", "../escape.md", "a/../../escape.md", filepath.Join(base, "absolute.md"), "a/../b.md"} {
+		t.Run(strings.ReplaceAll(path, "/", "_"), func(t *testing.T) {
+			_, err := containedFile(base, path)
+			if !domain.RefusalHasCode(err, domain.RefusalPathEscape) {
+				t.Fatalf("path %q error=%v, want path_escape", path, err)
+			}
+		})
+	}
+	if got, err := containedFile(base, "objectives/O1.md"); err != nil || got != filepath.Join(base, "objectives", "O1.md") {
+		t.Fatalf("canonical path=%q err=%v", got, err)
+	}
+}
+
+func stressPlan() (Plan, []byte) {
+	return Plan{
+		Type:     "MissionPlan",
+		Title:    "Atomic stress fixture",
+		Owner:    "Test owner",
+		Contract: Binding{Ref: "Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a"},
+		Outcome:  "Exercise typed mutation boundaries.",
+		Review:   "automatic",
+		Completion: []Criterion{{
+			Claim: "atomic", PassBoundary: "Transitions are safe.", ProofRequirement: "Focused service tests pass.",
+		}},
+		Objectives: []Objective{
+			{Outcome: "First dependency", Status: "active", Claims: []string{"atomic"}},
+			{Outcome: "Dependent work", Status: "pending", After: []string{"O1"}, Claims: []string{"atomic"}},
+		},
+		Authority: Authority{
+			Operator:      []string{"inspect", "edit-in-scope", "run-checks"},
+			RequiresOwner: []string{"activate-mission", "change-outcome-or-completion"},
+		},
+		Scope: Scope{
+			Mechanical: []string{"internal/missionbundle/"},
+			Semantic:   []string{"Mutation safety."},
+		},
+		RepairBudget: 1,
+		Dependencies: []string{},
+		Gaps:         []string{},
+		Stops:        []string{"A transition can partially write."},
+		Body:         "# Atomic stress fixture\n",
+	}, []byte("stable logical Mission plan")
+}
+
+func planOwner() string { return "Test owner" }
+
+func reviewDraft(t *testing.T, root string, svc Service, missionRef string) []byte {
+	t.Helper()
+	bundle, err := svc.Show(missionRef)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return []byte(fmt.Sprintf(`---
+type: ReviewDraft
+title: Atomic review
+status: passed
+reviewed:
+  commit: %s
+  tree: %s
+  activation_fingerprint: %s
+claims:
+  - claim: atomic
+    verdict: pass
+---
+# Review
+`, gitOutput(t, root, "rev-parse", "HEAD"), gitOutput(t, root, "rev-parse", "HEAD^{tree}"), bundle.Activation.Fingerprint))
+}
+
+func missionServiceFixture(t *testing.T) string {
+	t.Helper()
+	source, err := filepath.Abs(filepath.Join("..", "..", ".spectacular"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	copyTree(t, source, filepath.Join(root, ".spectacular"))
+	git(t, root, "init", "-q")
+	git(t, root, "config", "user.email", "tests@spectacular.invalid")
+	git(t, root, "config", "user.name", "Spectacular Tests")
+	git(t, root, "add", ".spectacular")
+	git(t, root, "commit", "-qm", "fixture")
+	return root
+}
+
+func openMissionService(t *testing.T, root string) Service {
+	t.Helper()
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return Service{Workspace: ws, Now: func() time.Time {
+		return time.Date(2026, 8, 16, 12, 0, 0, 0, time.UTC)
+	}}
+}
+
+func countMissionStarts(t *testing.T, ws *discovery.Workspace, raw []byte) int {
+	t.Helper()
+	digest := sha256.Sum256(raw)
+	want := "sha256:" + hex.EncodeToString(digest[:])
+	count := 0
+	for _, entry := range ws.OfType(domain.Mission) {
+		if node := entry.Document.Unknown["start_key"]; node != nil && node.Value == want {
+			count++
+		}
+	}
+	return count
+}
+
+func assertRefusal(t *testing.T, err error, code domain.RefusalCode, field string) {
+	t.Helper()
+	var refusal *domain.Refusal
+	if !errors.As(err, &refusal) || refusal.Code != code || refusal.Field != field || refusal.Detail == "" || refusal.Recovery == "" {
+		t.Fatalf("refusal=%+v err=%v, want code=%s field=%s with problem and correction", refusal, err, code, field)
+	}
+}
+
+func canonicalTreeDigest(t *testing.T, root string) string {
+	t.Helper()
+	hash := sha256.New()
+	metadata := filepath.Join(root, ".spectacular")
+	if err := filepath.WalkDir(metadata, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() && entry.Name() == "transactions" {
+			return filepath.SkipDir
+		}
+		if entry.IsDir() || entry.Type()&os.ModeSymlink != 0 {
+			return nil
+		}
+		rel, err := filepath.Rel(metadata, path)
+		if err != nil {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		hash.Write([]byte(filepath.ToSlash(rel)))
+		hash.Write(data)
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	return hex.EncodeToString(hash.Sum(nil))
+}
+
+func copyTree(t *testing.T, source, target string) {
+	t.Helper()
+	if err := filepath.WalkDir(source, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(source, path)
+		if err != nil {
+			return err
+		}
+		destination := filepath.Join(target, rel)
+		if entry.IsDir() {
+			return os.MkdirAll(destination, 0o755)
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(destination, data, 0o644)
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func git(t *testing.T, root string, args ...string) {
+	t.Helper()
+	command := exec.Command("git", args...)
+	command.Dir = root
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("git %v: %v\n%s", args, err, output)
+	}
+}
+
+func gitOutput(t *testing.T, root string, args ...string) string {
+	t.Helper()
+	command := exec.Command("git", args...)
+	command.Dir = root
+	output, err := command.Output()
+	if err != nil {
+		t.Fatalf("git %v: %v", args, err)
+	}
+	return strings.TrimSpace(string(output))
+}

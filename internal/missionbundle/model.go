@@ -28,16 +28,21 @@ type Criterion struct {
 type Objective struct {
 	Ref     string   `yaml:"ref" json:"ref"`
 	ID      string   `yaml:"id" json:"id"`
+	Source  string   `yaml:"-" json:"source,omitempty"`
 	Outcome string   `yaml:"outcome,omitempty" json:"outcome,omitempty"`
 	Status  string   `yaml:"status,omitempty" json:"status,omitempty"`
 	After   []string `yaml:"after,omitempty" json:"after,omitempty"`
 	Claims  []string `yaml:"claims,omitempty" json:"claims,omitempty"`
 	File    string   `yaml:"file,omitempty" json:"file,omitempty"`
+	Body    string   `yaml:"-" json:"-"`
+
+	document *workspace.Document
 }
 
 type Run struct {
 	Ref              string `yaml:"ref" json:"ref"`
 	ID               string `yaml:"id" json:"id"`
+	Source           string `yaml:"-" json:"source,omitempty"`
 	Title            string `yaml:"title,omitempty" json:"title,omitempty"`
 	Status           string `yaml:"status" json:"status"`
 	Operator         string `yaml:"operator" json:"operator"`
@@ -45,6 +50,9 @@ type Run struct {
 	CurrentObjective string `yaml:"current_objective" json:"current_objective"`
 	Repairs          int    `yaml:"repairs" json:"repairs"`
 	File             string `yaml:"file,omitempty" json:"file,omitempty"`
+	Body             string `yaml:"-" json:"-"`
+
+	document *workspace.Document
 }
 
 type Activation struct {
@@ -69,10 +77,44 @@ type Scope struct {
 }
 
 type ReviewPointer struct {
-	Ref     string `yaml:"ref" json:"ref"`
-	ID      string `yaml:"id" json:"id"`
-	File    string `yaml:"file" json:"file"`
+	Ref      string  `yaml:"ref" json:"ref"`
+	ID       string  `yaml:"id" json:"id"`
+	File     string  `yaml:"file" json:"file"`
+	Verdict  string  `yaml:"verdict" json:"verdict"`
+	Document *Review `yaml:"-" json:"document,omitempty"`
+}
+
+type Reviewed struct {
+	Commit                string `yaml:"commit" json:"commit"`
+	Tree                  string `yaml:"tree" json:"tree"`
+	ActivationFingerprint string `yaml:"activation_fingerprint" json:"activation_fingerprint"`
+}
+
+type ClaimVerdict struct {
+	Claim   string `yaml:"claim" json:"claim"`
 	Verdict string `yaml:"verdict" json:"verdict"`
+}
+
+// Review is the typed view of a Review record resolved from a Mission pointer.
+// Its source Document stays attached so canonical rewrites preserve opaque YAML
+// fields and the Markdown body without expanding the Mission's pointer.
+type Review struct {
+	ID          string         `json:"id"`
+	Ref         string         `json:"ref"`
+	Title       string         `json:"title"`
+	Status      string         `json:"status"`
+	Source      string         `json:"source,omitempty"`
+	Mission     string         `json:"mission"`
+	Created     string         `json:"created,omitempty"`
+	Reviewed    Reviewed       `json:"reviewed"`
+	Reviewer    Reviewer       `json:"reviewer"`
+	Claims      []ClaimVerdict `json:"claims"`
+	Findings    []string       `json:"findings,omitempty"`
+	Limitations []string       `json:"limitations,omitempty"`
+	Path        string         `json:"path"`
+	Body        string         `json:"-"`
+
+	document *workspace.Document
 }
 
 type CompletionRecord struct {
@@ -98,6 +140,7 @@ type Bundle struct {
 	Ref              string            `json:"ref"`
 	Title            string            `json:"title"`
 	Status           string            `json:"status"`
+	Source           string            `json:"source,omitempty"`
 	Owner            string            `json:"owner,omitempty"`
 	Created          string            `json:"created,omitempty"`
 	Updated          string            `json:"updated,omitempty"`

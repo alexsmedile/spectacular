@@ -41,6 +41,14 @@ func ApplyTransaction(root, key string, changes []FileChange) error {
 	return applyTransaction(root, key, changes, -1)
 }
 
+// ApplyTransactionWithFailure is the deterministic verification seam for
+// proving rollback after a specific number of installed files. Product code
+// uses ApplyTransaction; stress tests use this function to exercise every
+// write boundary through the same transaction engine.
+func ApplyTransactionWithFailure(root, key string, changes []FileChange, failAfter int) error {
+	return applyTransaction(root, key, changes, failAfter)
+}
+
 func applyTransaction(root, key string, changes []FileChange, failAfter int) error {
 	return applyTransactionWithInstallHook(root, key, changes, failAfter, nil)
 }

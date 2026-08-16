@@ -32,6 +32,7 @@ func decode(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, error) {
 		Ref:      ref,
 		Title:    value(doc.Record.Title),
 		Status:   value(doc.Record.Status),
+		Source:   sourceValue(doc),
 		Created:  value(doc.Record.Created),
 		Updated:  value(doc.Record.Updated),
 		Path:     entry.Path,
@@ -102,6 +103,9 @@ func decode(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, error) {
 	if err := resolveRuns(ws, b); err != nil {
 		return nil, err
 	}
+	if err := resolveReviews(ws, b); err != nil {
+		return nil, err
+	}
 	return b, nil
 }
 
@@ -119,6 +123,7 @@ func decodeLegacy(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, erro
 		Ref:      ref,
 		Title:    value(doc.Record.Title),
 		Status:   value(doc.Record.Status),
+		Source:   sourceValue(doc),
 		Created:  value(doc.Record.Created),
 		Updated:  value(doc.Record.Updated),
 		Path:     entry.Path,
@@ -147,6 +152,61 @@ func decodeLegacy(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, erro
 	return b, nil
 }
 
+func resolveReviews(ws *discovery.Workspace, b *Bundle) error {
+	_ = ws
+	base := filepath.Dir(b.entry.Absolute)
+	for i := range b.Reviews {
+		pointer := &b.Reviews[i]
+		path, err := containedFile(base, pointer.File)
+		if err != nil {
+			return err
+		}
+		doc, err := workspace.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if doc.Record.Type != domain.Review || doc.Record.ID.String() != pointer.ID {
+			return domain.NewRefusal(domain.RefusalTargetTypeMismatch, "reviews.file", "Review identity or type does not match its pointer", nil)
+		}
+		resolved := &Review{
+			ID:       doc.Record.ID.String(),
+			Title:    value(doc.Record.Title),
+			Status:   value(doc.Record.Status),
+			Source:   sourceValue(doc),
+			Created:  value(doc.Record.Created),
+			Path:     pointer.File,
+			Body:     doc.Body,
+			document: doc,
+		}
+		if resolved.Ref, err = workspace.String(doc, "ref", true); err != nil {
+			return err
+		}
+		if resolved.Mission, err = workspace.String(doc, "mission", true); err != nil {
+			return err
+		}
+		if err = workspace.DecodeValue(doc, "reviewed", &resolved.Reviewed); err != nil {
+			return err
+		}
+		if err = workspace.DecodeValue(doc, "reviewer", &resolved.Reviewer); err != nil {
+			return err
+		}
+		if err = workspace.DecodeValue(doc, "claims", &resolved.Claims); err != nil {
+			return err
+		}
+		if resolved.Findings, err = workspace.Strings(doc, "findings", true); err != nil {
+			return err
+		}
+		if resolved.Limitations, err = workspace.Strings(doc, "limitations", true); err != nil {
+			return err
+		}
+		if resolved.Ref != pointer.Ref {
+			return domain.NewRefusal(domain.RefusalInvalidReference, "reviews.file", "Review ref does not match its pointer", nil)
+		}
+		pointer.Document = resolved
+	}
+	return nil
+}
+
 func resolveObjectives(ws *discovery.Workspace, b *Bundle) error {
 	_ = ws
 	base := filepath.Dir(b.entry.Absolute)
@@ -171,6 +231,9 @@ func resolveObjectives(ws *discovery.Workspace, b *Bundle) error {
 			return err
 		}
 		resolved.File = item.File
+		resolved.Source = sourceValue(doc)
+		resolved.Body = doc.Body
+		resolved.document = doc
 		if resolved.Ref != item.Ref || resolved.ID != item.ID {
 			return domain.NewRefusal(domain.RefusalInvalidReference, "objectives.file", "promoted Objective ref or identity does not match its pointer", nil)
 		}
@@ -211,6 +274,10 @@ func resolveRunFile(b *Bundle, item *Run) error {
 		return err
 	}
 	resolved.File = item.File
+	resolved.Title = value(doc.Record.Title)
+	resolved.Source = sourceValue(doc)
+	resolved.Body = doc.Body
+	resolved.document = doc
 	if resolved.Ref != item.Ref || resolved.ID != item.ID {
 		return domain.NewRefusal(domain.RefusalInvalidReference, "runs.file", "promoted Run ref or identity does not match its pointer", nil)
 	}
@@ -268,6 +335,13 @@ func value(input *string) string {
 		return ""
 	}
 	return *input
+}
+
+func sourceValue(doc *workspace.Document) string {
+	if doc == nil || doc.Record.Source == nil {
+		return ""
+	}
+	return doc.Record.Source.String()
 }
 
 func scopedRef(raw string) (string, string, error) {

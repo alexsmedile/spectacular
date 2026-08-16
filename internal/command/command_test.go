@@ -246,6 +246,9 @@ func digestTree(t *testing.T, root string) string {
 			return nil
 		}
 		rel, _ := filepath.Rel(root, path)
+		if rel == filepath.Join("transactions", ".lock") {
+			return nil
+		}
 		data, _ := os.ReadFile(path)
 		hash.Write([]byte(rel))
 		hash.Write(data)

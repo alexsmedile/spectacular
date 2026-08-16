@@ -95,7 +95,7 @@ func validateSchema(_ *discovery.Workspace, b *Bundle) error {
 
 func validateIdentity(_ *discovery.Workspace, b *Bundle) error {
 	if _, err := domain.ParseID(b.ID); err != nil {
-		return err
+		return invalidCause("id", "must be canonical UUIDv7", err)
 	}
 	if !missionRefPattern.MatchString(b.Ref) {
 		return invalid("ref", "Mission ref must match M<number>")
@@ -322,7 +322,7 @@ func validateRun(_ *discovery.Workspace, b *Bundle) error {
 	return nil
 }
 
-func validateReviews(_ *discovery.Workspace, b *Bundle) error {
+func validateReviews(ws *discovery.Workspace, b *Bundle) error {
 	if b.Status != "completed" || b.Review == "automatic" {
 		return nil
 	}
@@ -365,6 +365,9 @@ func validateReviews(_ *discovery.Workspace, b *Bundle) error {
 		}
 		if !commitPattern.MatchString(reviewed.Commit) || !commitPattern.MatchString(reviewed.Tree) || reviewed.ActivationFingerprint != b.Activation.Fingerprint {
 			return invalid("reviews.reviewed", "review must bind an exact commit, tree, and current activation fingerprint")
+		}
+		if err := verifyReviewedGit(ws.Root, reviewed.Commit, reviewed.Tree); err != nil {
+			return err
 		}
 		var claims []struct {
 			Claim   string `yaml:"claim"`

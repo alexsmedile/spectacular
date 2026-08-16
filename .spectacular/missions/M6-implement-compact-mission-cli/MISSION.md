@@ -6,7 +6,7 @@ title: Implement the compact Mission CLI
 status: active
 owner: Alex
 created: "2026-08-16T10:31:30Z"
-updated: "2026-08-16T11:19:33Z"
+updated: "2026-08-16T11:34:10Z"
 
 contract:
   ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -59,7 +59,7 @@ run:
   operator: Codex primary session
   started_at: "2026-08-16T10:53:23Z"
   current_objective: O3
-  repairs: 0
+  repairs: 1
 
 activation:
   by: Alex
@@ -98,9 +98,9 @@ stops:
 
 M6 activated after M5 received independent review and owner completion. Its
 exact Git baseline, owner/time, frozen semantic-envelope fingerprint, and inline
-R1 are recorded above. Validation remains `manual-bootstrap` until the
-replacement CLI can check this Mission and the completed M5 without rewriting
-either file.
+R1 are recorded above. Validation moved from `manual-bootstrap` to `cli` once
+the replacement CLI could check this Mission and the completed M5 without
+rewriting either file.
 
 ## Why mechanics earn tooling
 
@@ -169,3 +169,12 @@ attributable owner confirmation.
 - Prove inline/promoted representation equivalence and cold recovery.
 - Run focused package tests by cluster, then one compact full verification and
   distribution gate before independent review.
+
+## Repair 1 — Independent-review findings
+
+The first exact-tree review found that green integration checks did not yet
+prove the full frozen boundary. The bounded repair resolves Review records into
+the typed bundle, verifies real Git commit-to-tree provenance, serializes fresh
+allocation under the mutation lock, makes retry identities converge, refuses
+occupied derived targets, revalidates the completed candidate, and exercises
+all five mutating commands at every transaction install boundary.

@@ -54,6 +54,7 @@
 | `M6` | Mission | Implement the compact Mission CLI | `.spectacular/missions/M6-implement-compact-mission-cli/MISSION.md` |
 | `M6/RV1` | Review | M6 independent completion review | `.spectacular/missions/M6-implement-compact-mission-cli/reviews/RV1-m6-independent-completion-review.md` |
 | `M7` | Mission | Render derived state and validate the Proposal record | `.spectacular/missions/M7-render-derived-state-and-validate-the-proposal-record/MISSION.md` |
+| `M7/RV1` | Review | Clustered review of M7 derived state, drift, authority, equivalence, and Proposal schema | `.spectacular/missions/M7-render-derived-state-and-validate-the-proposal-record/reviews/RV1-clustered-review-of-m7-derived-state-drift-authority-equivalence-and-proposal-schema.md` |
 | `P1` | Proposal | Repair v2 human operability | `.spectacular/proposals/P1-human-operability.md` |
 | `P2` | Proposal | Add answer-key governed autonomy | `.spectacular/proposals/P2-add-answer-key-governed-autonomy.md` |
 | `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |

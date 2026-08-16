@@ -75,6 +75,18 @@ func Strings(document *Document, name string, required bool) ([]string, error) {
 	return values, nil
 }
 
+// DecodeValue decodes a structured canonical YAML value into a typed output.
+func DecodeValue(document *Document, name string, output any) error {
+	node := document.Unknown[name]
+	if node == nil {
+		return domain.NewRefusal(domain.RefusalMissingRequiredField, name, "required property is absent", nil)
+	}
+	if err := node.Decode(output); err != nil {
+		return domain.NewRefusal(domain.RefusalInvalidKnownField, name, "cannot decode structured value", err)
+	}
+	return nil
+}
+
 // SetString and SetStrings construct canonical unknown-field values for
 // governed operations. Unknown fields remain type-specific data rather than
 // gaining universal Record authority.
@@ -104,6 +116,21 @@ func SetStrings(document *Document, name string, values []string) {
 		node.Content = append(node.Content, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: value})
 	}
 	document.Unknown[name] = node
+}
+
+// SetValue stores a small typed contract as directly readable canonical YAML.
+func SetValue(document *Document, name string, value any) error {
+	ensureUnknown(document)
+	var node yaml.Node
+	if err := node.Encode(value); err != nil {
+		return fmt.Errorf("encode %s: %w", name, err)
+	}
+	if node.Kind == yaml.DocumentNode && len(node.Content) == 1 {
+		document.Unknown[name] = node.Content[0]
+		return nil
+	}
+	document.Unknown[name] = &node
+	return nil
 }
 
 func Delete(document *Document, name string) {

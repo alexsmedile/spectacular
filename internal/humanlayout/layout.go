@@ -41,6 +41,9 @@ func Slug(text string) string {
 }
 
 func HumanRef(doc *workspace.Document) string {
+	if value, _ := workspace.String(doc, "ref", false); value != "" {
+		return value
+	}
 	value, _ := workspace.String(doc, "human_ref", false)
 	return value
 }

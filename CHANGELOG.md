@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1.0 — 2026-08-16
+
+Governed-autonomy controls for preparation, delegation, review, and runtime limits.
+
+- Adds adaptive preparation diagnostics and a frozen four-field completion criterion for every Mission claim.
+- Adds criterion-driven automatic, clustered, and independent review without recursive critic loops.
+- Validates Objective dependency DAGs and requires dependency-bound, disjoint Handoff claim scopes with explicit return contracts.
+- Adds truthful hard, observed, and unsupported Autopilot caps for wall time, tokens, spend, parallel workers, and repair rounds.
+- Fixes cold recovery for newly activated Missions before their first Checkpoint.
+
 ## 2.0.0-rc.2 — 2026-08-10
 
 Human-operability correction for the v2 release candidate.

@@ -3,3 +3,31 @@
 
 | Ref | Type | Title | Source |
 |---|---|---|---|
+| `M2` | Mission | Implement answer-key governed autonomy | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/MISSION.md` |
+| `M2/D1-znlkfe` | Decision | Activate the v2.1 governed-autonomy Mission | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/decisions/D1-znlkfe.md` |
+| `M2/O1` | Objective | Preparation compiles and freezes minimal completion criteria with explicit readiness diagnostics. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O1-preparation-compiles-and-freezes-minimal-completion-criteria-with-explicit-readiness-diagnostics.md` |
+| `M2/O2` | Objective | Evidence closure applies automatic, clustered, or independent review according to each frozen criterion. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O2-evidence-closure-applies-automatic-clustered-or-independent-review-according-to-each-frozen-criterion.md` |
+| `M2/O3` | Objective | Objective dependencies and Handoffs support cohesive, disjoint runner claim scopes and explicit returns. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O3-objective-dependencies-and-handoffs-support-cohesive-disjoint-runner-claim-scopes-and-explicit-returns.md` |
+| `M2/O4` | Objective | Autopilot resource limits disclose hard, observed, or unsupported enforcement and reject false hard guarantees. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O4-autopilot-resource-limits-disclose-hard-observed-or-unsupported-enforcement-and-reject-false-hard-guarantees.md` |
+| `M2/R1` | Run | Initial governed Run | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/runs/R1-initial-governed-run/RUN.md` |
+| `M3` | Mission | Make Spectacular launch and execution lean | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/MISSION.md` |
+| `M3/D1-deldrh` | Decision | Activate the Spectacular efficiency Mission | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/decisions/D1-deldrh.md` |
+| `M3/E1-npnuyp` | Evidence | Lean launch and question contract proof | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E1-npnuyp.md` |
+| `M3/E2-7nclqi` | Evidence | Progressive context proof | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E2-7nclqi.md` |
+| `M3/E3-ravzes` | Evidence | Reconstructible CLI recovery proof | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E3-ravzes.md` |
+| `M3/E4-6oodeg` | Evidence | Lean execution and FROST proof | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E4-6oodeg.md` |
+| `M3/O1` | Objective | Launch guidance performs the approved preflight and asks dual-layer decision questions. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O1-launch-guidance-performs-the-approved-preflight-and-asks-dual-layer-decision-questions.md` |
+| `M3/O2` | Objective | Context supports compact cards with progressive authoritative drill-down. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O2-context-supports-compact-cards-with-progressive-authoritative-drill-down.md` |
+| `M3/O3` | Objective | Common CLI mistakes have intuitive aliases or runnable corrective refusals. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O3-common-cli-mistakes-have-intuitive-aliases-or-runnable-corrective-refusals.md` |
+| `M3/O4` | Objective | Lean cluster, local commit, schema continuity, and FROST review guidance is explicit. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O4-lean-cluster-local-commit-schema-continuity-and-frost-review-guidance-is-explicit.md` |
+| `M3/R1` | Run | Initial governed Run | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/runs/R1-initial-governed-run/RUN.md` |
+| `M4` | Mission | Make Spectacular control operations lean | `.spectacular/missions/M4-make-spectacular-control-operations-lean/MISSION.md` |
+| `M4/D1-mfcxne` | Decision | Activate the lean control-plane Mission | `.spectacular/missions/M4-make-spectacular-control-operations-lean/decisions/D1-mfcxne.md` |
+| `M4/O1` | Objective | Compact-first policy and minimal verification are canonical. | `.spectacular/missions/M4-make-spectacular-control-operations-lean/objectives/O1-compact-first-policy-and-minimal-verification-are-canonical.md` |
+| `M4/O2` | Objective | Creation commands support stdin, automatic IDs, and atomic batches. | `.spectacular/missions/M4-make-spectacular-control-operations-lean/objectives/O2-creation-commands-support-stdin-automatic-ids-and-atomic-batches.md` |
+| `M4/O3` | Objective | Decision validation and compact Mission progress are immediate and atomic. | `.spectacular/missions/M4-make-spectacular-control-operations-lean/objectives/O3-decision-validation-and-compact-mission-progress-are-immediate-and-atomic.md` |
+| `M4/R1` | Run | Initial governed Run | `.spectacular/missions/M4-make-spectacular-control-operations-lean/runs/R1-initial-governed-run/RUN.md` |
+| `M5` | Mission | Align the Spectacular Skill with compact Missions | `.spectacular/missions/M5-implement-compact-expandable-missions/MISSION.md` |
+| `M5/RV1` | Review | M5 independent completion review | `.spectacular/missions/M5-implement-compact-expandable-missions/reviews/RV1-independent-review.md` |
+| `M6` | Mission | Implement the compact Mission CLI | `.spectacular/missions/M6-implement-compact-mission-cli/MISSION.md` |
+| `M6/RV1` | Review | M6 independent completion review | `.spectacular/missions/M6-implement-compact-mission-cli/reviews/RV1-m6-independent-completion-review.md` |

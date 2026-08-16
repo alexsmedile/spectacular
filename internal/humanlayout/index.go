@@ -19,7 +19,8 @@ type indexRow struct {
 }
 
 // Indexes returns deterministic non-authoritative Markdown projections for
-// the root, affected collections, and affected Mission bundles.
+// the root and affected collections. MISSION.md is the Mission-bundle index;
+// generating another index inside every Mission would duplicate it.
 func Indexes(existing []discovery.Entry, pending []*workspace.Document, paths map[domain.ID]string) (map[string][]byte, error) {
 	pendingIDs := map[domain.ID]bool{}
 	touchedCollections := map[string]bool{}
@@ -64,17 +65,6 @@ func Indexes(existing []discovery.Entry, pending []*workspace.Document, paths ma
 			continue
 		}
 		groups[filepath.ToSlash(filepath.Join(".spectacular", top, "index.md"))] = append(groups[filepath.ToSlash(filepath.Join(".spectacular", top, "index.md"))], item)
-		if (top == "missions" || top == "archive") && len(parts) >= 4 {
-			bundleIndex := ""
-			if top == "missions" {
-				bundleIndex = filepath.ToSlash(filepath.Join(".spectacular", "missions", parts[2], "index.md"))
-			} else if len(parts) >= 5 && parts[2] == "missions" {
-				bundleIndex = filepath.ToSlash(filepath.Join(".spectacular", "archive", "missions", parts[3], "index.md"))
-			}
-			if bundleIndex != "" {
-				groups[bundleIndex] = append(groups[bundleIndex], item)
-			}
-		}
 	}
 
 	out := map[string][]byte{}
@@ -109,6 +99,13 @@ func row(doc *workspace.Document, path string) indexRow {
 	ref := HumanRef(doc)
 	if ref == "" {
 		ref = string(doc.Record.Type) + ":" + doc.Record.ID.String()
+	} else if !strings.Contains(ref, "/") {
+		switch doc.Record.Type {
+		case domain.Objective, domain.Run, domain.Review:
+			if mission, _ := workspace.String(doc, "mission", false); strings.HasPrefix(mission, "M") && !strings.Contains(mission, ":") {
+				ref = mission + "/" + ref
+			}
+		}
 	}
 	title := ""
 	if doc.Record.Title != nil {

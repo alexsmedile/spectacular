@@ -5,10 +5,39 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
 mode="${1:-all}"
 go_cache="${GOCACHE:-$(mktemp -d)}"
+log_file="$(mktemp)"
+
+cleanup() {
+  rm -f "$log_file"
+}
+trap cleanup EXIT
 
 export GOCACHE="$go_cache"
 export GOPROXY=off
 export GOFLAGS=-mod=readonly
+
+check() {
+  label="$1"
+  shift
+  if ! (cd "$repo_root" && "$@") >>"$log_file" 2>&1; then
+    echo "Spectacular verification: FAIL check=$label" >&2
+    cat "$log_file" >&2
+    exit 1
+  fi
+}
+
+tree_basis() {
+  (
+    cd "$repo_root"
+    git ls-files -co --exclude-standard -- VERSION cmd internal skills install .spectacular test acceptance release \
+      | LC_ALL=C sort -u \
+      | while IFS= read -r path; do
+          [[ -f "$path" ]] || continue
+          printf '%s %s\n' "$(git hash-object "$path")" "$path"
+        done \
+      | git hash-object --stdin
+  )
+}
 
 static_checks() {
   formatting="$(cd "$repo_root" && gofmt -l cmd internal acceptance)"
@@ -17,23 +46,23 @@ static_checks() {
     echo "$formatting" >&2
     exit 1
   fi
-  (cd "$repo_root" && go mod verify)
-  (cd "$repo_root" && go vet ./...)
-  (cd "$repo_root" && git diff --check)
+  check go-mod-verify go mod verify
+  check go-vet go vet ./...
+  check diff-check git diff --check
 }
 
 quick_checks() {
   static_checks
-  (cd "$repo_root" && go test ./cmd/... ./install/... ./internal/...)
+  check focused-go-test go test ./cmd/... ./install/... ./internal/...
 }
 
 acceptance_checks() {
-  (cd "$repo_root" && go test -count=1 ./acceptance)
+  check acceptance go test -count=1 ./acceptance
 }
 
 release_checks() {
-  (cd "$repo_root" && bash install/test.sh)
-  (cd "$repo_root" && bash release/test.sh)
+  check install-distribution bash install/test.sh
+  check release-distribution bash release/test.sh
 }
 
 case "$mode" in
@@ -51,8 +80,8 @@ case "$mode" in
   all)
     quick_checks
     acceptance_checks
-    (cd "$repo_root" && go test -race ./...)
-    (cd "$repo_root" && go build ./...)
+    check race go test -race ./...
+    check build go build ./...
     release_checks
     ;;
   *)
@@ -61,4 +90,4 @@ case "$mode" in
     ;;
 esac
 
-echo "Spectacular $mode verification: PASS"
+echo "Spectacular verification: PASS mode=$mode basis=$(tree_basis) logs=compact"

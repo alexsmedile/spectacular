@@ -53,7 +53,7 @@ for runtime_name in codex claude; do
   else
     [[ ! -e "$prefix/plugins/spectacular/.codex-plugin" ]]
   fi
-  (cd "$release_root/testdata/scenario-a" && "$prefix/bin/spectacular" workspace context project --event @Orient --json) | grep -q 'spectacular.context.v1'
+  (cd "$release_root/testdata/scenario-a" && "$prefix/bin/spectacular" mission show M1 --json) | grep -q 'spectacular.mission.show.v2'
   "$release_root/install/install.sh" update --prefix "$prefix" --source "$first" --runtime "$runtime_name" | grep -q 'result=installed-v2-only'
   "$release_root/install/install.sh" rollback --prefix "$prefix" | grep -q 'result=rolled-back'
   "$prefix/bin/spectacular" --version >/dev/null
@@ -65,7 +65,7 @@ for runtime_name in codex claude; do
   mkdir -p "$smoke_workspace"
   (cd "$release_root" && GOPROXY=off GOCACHE="$go_cache" GOFLAGS=-mod=readonly go run ./cmd/release-smoke \
     --binary "$prefix/bin/spectacular" --fixture testdata/scenario-b-c --workspace "$smoke_workspace") | \
-    grep -q 'result=installed-binary-governed-closure-and-cold-resume-pass'
+    grep -q 'result=installed-binary-compact-mission-pass'
 done
 
 corrupt_source="$test_root/corrupt-source"

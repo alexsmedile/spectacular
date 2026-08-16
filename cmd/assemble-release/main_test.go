@@ -5,9 +5,74 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
+
+func TestCanonicalSkillDefinesLeanLaunchAndQuestionContract(t *testing.T) {
+	root := filepath.Join("..", "..", "skills", "spectacular")
+	parts := []string{"SKILL.md", filepath.Join("references", "prepare.md")}
+	var content strings.Builder
+	for _, part := range parts {
+		data, err := os.ReadFile(filepath.Join(root, part))
+		if err != nil {
+			t.Fatal(err)
+		}
+		content.Write(data)
+	}
+	for _, required := range []string{
+		"Read `.spectacular/PROJECT.md` first",
+		"read-only launch preflight",
+		"plain outcome; technical basis",
+		"action -> consequence",
+		"recommended default",
+	} {
+		if !strings.Contains(content.String(), required) {
+			t.Fatalf("canonical Skill omits %q", required)
+		}
+	}
+}
+
+func TestCanonicalSkillDefinesLeanExecutionAndFROST(t *testing.T) {
+	root := filepath.Join("..", "..", "skills", "spectacular")
+	core, err := os.ReadFile(filepath.Join(root, "SKILL.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	execute, err := os.ReadFile(filepath.Join(root, "references", "execute.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	audit, err := os.ReadFile(filepath.Join(root, "references", "audit.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(core) + string(execute) + string(audit)
+	for _, required := range []string{
+		"Mission card -> current Objective -> exact sources",
+		"The plan supplies meaning",
+		"Mechanical tooling supplies repeatability",
+		"manual-bootstrap",
+		"focused checks",
+		"Frozen fit",
+		"Truth of proof",
+		"active Mission retains the schema",
+		"A Decision is not activation authority",
+	} {
+		if !strings.Contains(content, required) {
+			t.Fatalf("canonical Skill omits %q", required)
+		}
+	}
+	if strings.Contains(string(core), "Frozen fit**") {
+		t.Fatal("core Skill embeds detailed FROST policy instead of routing to audit.md")
+	}
+	if strings.Contains(string(core), "--event <@Event> --json") {
+		t.Fatal("core Skill still forces full JSON context")
+	}
+}
 
 func TestArchiveMetadataIsCanonicalAndReproducible(t *testing.T) {
 	entries := []archiveEntry{{name: "spectacular/VERSION", mode: 0o644, data: []byte("2.0.0\n")}}

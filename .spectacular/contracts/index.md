@@ -3,4 +3,5 @@
 
 | Ref | Type | Title | Source |
 |---|---|---|---|
+| `CC-missioncli` | Contract | Spectacular mechanical Mission CLI | `.spectacular/contracts/CC-missioncli-spectacular-mechanical-cli.md` |
 | `CC-v2prod` | Contract | Spectacular v2 product contract | `.spectacular/contracts/CC-v2prod-spectacular-v2-product.md` |

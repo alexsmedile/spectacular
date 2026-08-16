@@ -93,6 +93,7 @@ type HandoffInput struct {
 	HostPointer                string   `json:"host_pointer"`
 	Scope                      []string `json:"scope"`
 	Inputs                     []string `json:"inputs"`
+	Dependencies               []string `json:"dependencies"`
 	AllowedActions             []string `json:"allowed_actions"`
 	ForbiddenEffects           []string `json:"forbidden_effects"`
 	EvidenceClaims             []string `json:"evidence_claims"`
@@ -101,6 +102,7 @@ type HandoffInput struct {
 	Stops                      []string `json:"stops"`
 	RecoveryPoint              string   `json:"recovery_point"`
 	ReturnDestination          string   `json:"return_destination"`
+	ReturnContract             []string `json:"return_contract"`
 	Authorization              string   `json:"authorization"`
 	ExpectedMissionFingerprint string   `json:"expected_mission_fingerprint"`
 	IdempotencyKey             string   `json:"idempotency_key"`
@@ -150,6 +152,11 @@ type EvidenceInput struct {
 	ExecutorAuthored    bool     `json:"executor_authored"`
 	Authorization       string   `json:"authorization"`
 	IdempotencyKey      string   `json:"idempotency_key"`
+}
+
+type EvidenceSetInput struct {
+	Items          []EvidenceInput `json:"items"`
+	IdempotencyKey string          `json:"idempotency_key"`
 }
 
 type DecisionInput struct {
@@ -216,6 +223,16 @@ type TransitionInput struct {
 	Reconciliation      string
 	TerminalNextAction  string
 	SatisfiedObjectives []string
+}
+
+type MissionProgressInput struct {
+	Mission                      string
+	Objective                    string
+	To                           string
+	Actor                        string
+	ExpectedMissionFingerprint   string
+	ExpectedObjectiveFingerprint string
+	IdempotencyKey               string
 }
 
 type ReconcileInput struct {

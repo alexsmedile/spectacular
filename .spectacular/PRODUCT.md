@@ -3,10 +3,12 @@ type: Anchor
 id: 019fe381-5d61-7223-b362-03a5f99a7b14
 human_ref: PRODUCT
 title: Product direction
-direction: Spectacular turns fuzzy intent into bounded Missions with explicit authority, evidence, reconciliation, and cold recovery.
+updated: "2026-08-16T09:55:54Z"
+direction: Spectacular turns fuzzy intent into bounded Missions with explicit authority, proportional evidence, and cold recovery.
 boundaries:
   - Capability Contracts own current accepted observable behavior.
-  - Proposals own candidate deltas; Missions own accountable delivery.
+  - Proposals support optional exploration; Missions freeze accountable execution.
+  - Product specifications change as ordinary Mission work and close with the Mission.
 constraints:
   - Human comprehension is a release requirement, not optional presentation.
 freshness_checked_at: "2026-08-10T00:00:00Z"

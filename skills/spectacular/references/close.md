@@ -1,19 +1,28 @@
-# Assess, reconcile, and resolve
+# Review and complete
 
-Assess each material claim against attributable, fresh, claim-appropriate Evidence and contrary
-evidence. Return `ready-for-owner | repair-required | escalated`. The assessment is judgment; the
-CLI only validates and records the explicit result.
+Assess each completion claim against its frozen pass boundary, proof requirement, attributable
+Evidence, contrary evidence, freshness, and required review. Use the narrowest repair justified by
+a new hypothesis, new Evidence, or materially smaller action; consume the repair budget.
 
-For repair, require a new hypothesis, new Evidence, or materially narrower action. Rerun the
-narrowest relevant check before broad verification and consume the declared budget.
+Persist Evidence when a material claim enters assessment, depends on external/provider observation,
+is disputed, or must survive closure. Routine local progress does not require an Evidence file for
+every passing check.
 
-Close in this order:
+Create an earned review record only when the Mission requires clustered or independent review. It
+records reviewed tree/fingerprint, reviewer identity, relation to the operator, claim-by-claim
+verdicts, findings, limitations, and time. Independent review requires a fresh reviewer who did not
+implement the reviewed scope; freshness alone is not independence.
 
-1. owner disposition;
-2. authorized all-or-nothing Contract reconciliation, or explicit no-delta Decision;
-3. Mission resolution with satisfied Objectives and terminal continuity;
-4. archival.
+Complete in one flow:
 
-Refuse closure on stale/missing/conflicting Evidence, incomplete review/checks, authority or
-baseline drift, unknown provider attestation, unsettled reconciliation, exhausted repair, or a
-missing terminal packet. Archival preserves history and proves nothing.
+1. run focused checks and one full tree-bound gate;
+2. verify every frozen claim and required Evidence/review;
+3. confirm applicable product/specification edits are in the same worktree;
+4. present one owner gate;
+5. after attributable owner confirmation, mark Objectives/Run/Mission terminal and preserve
+   continuity.
+
+Do not require a separate Contract reconciliation command. Refuse completion on changed frozen
+criteria, stale/missing/conflicting proof, incomplete independent review, blocking dependencies or
+Gaps, exhausted repair, baseline drift, or missing owner confirmation. Completion and archival are
+distinct; archival proves nothing.

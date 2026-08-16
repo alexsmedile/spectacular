@@ -1,4 +1,4 @@
 interface:
   display_name: "Spectacular"
-  short_description: "Guide governed Missions through verified closure"
-  default_prompt: "Use $spectacular to orient to this project and continue the safe Mission workflow."
+  short_description: "Guide compact governed Missions through completion"
+  default_prompt: "Use $spectacular to orient to this project and continue its compact Mission workflow."

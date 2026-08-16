@@ -201,9 +201,13 @@ func load(root, marker string) (*Workspace, error) {
 		}
 		w.byPath[public] = entry
 		w.byID[doc.Record.ID] = entry
-		if human, humanErr := workspace.String(doc, "human_ref", false); humanErr != nil {
+		human, humanErr := workspace.String(doc, "ref", false)
+		if humanErr == nil && human == "" {
+			human, humanErr = workspace.String(doc, "human_ref", false)
+		}
+		if humanErr != nil {
 			return nil, humanErr
-		} else if human != "" {
+		} else if human != "" && (doc.Record.Type == domain.Mission || doc.Record.Type == domain.Contract || doc.Record.Type == domain.Proposal || doc.Record.Type == domain.Anchor) {
 			if previous, exists := w.byHuman[human]; exists {
 				return nil, refusal(domain.RefusalDuplicateID, human, "claimed by "+previous.Path+" and "+public, nil)
 			}

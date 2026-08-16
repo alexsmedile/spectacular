@@ -99,7 +99,7 @@ func validStatus(recordType RecordType, status string) bool {
 		}
 	case Mission:
 		switch status {
-		case "defined", "active", "awaiting-assessment", "resolved":
+		case "defined", "active", "awaiting-assessment", "resolved", "completed":
 			return true
 		}
 	}
@@ -110,7 +110,7 @@ func allowedStatuses(recordType RecordType) string {
 	if recordType == Proposal {
 		return "draft, submitted, accepted, rejected, withdrawn"
 	}
-	return "defined, active, awaiting-assessment, resolved"
+	return "defined, active, awaiting-assessment, resolved, completed"
 }
 
 // IsReservedField identifies names whose interpretation belongs to an M1

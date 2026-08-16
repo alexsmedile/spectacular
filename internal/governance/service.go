@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
@@ -30,7 +31,7 @@ func (s Service) now() time.Time {
 }
 
 func (s Service) CreateDecision(input DecisionInput) (OperationResult, error) {
-	id, err := domain.ParseID(input.ID)
+	id, err := s.resolveCreateID(domain.Decision, input.ID, input.IdempotencyKey)
 	if err != nil {
 		return OperationResult{}, err
 	}
@@ -39,6 +40,9 @@ func (s Service) CreateDecision(input DecisionInput) (OperationResult, error) {
 	}
 	if len(input.Targets) == 0 || len(input.ExpectedFingerprints) != len(input.Targets) {
 		return OperationResult{}, invalid("expected_fingerprints", "one expected fingerprint is required per target")
+	}
+	if err := s.validateDecisionConditions(input.Conditions, input.ExpectedFingerprints); err != nil {
+		return OperationResult{}, err
 	}
 	if input.ExpiresAt != "" {
 		if _, err := parseFuture(input.ExpiresAt, s.now(), "expires_at"); err != nil {
@@ -66,8 +70,44 @@ func (s Service) CreateDecision(input DecisionInput) (OperationResult, error) {
 	return s.createOne("decision.create", doc, input.IdempotencyKey, []string{"owner-direct:" + input.AuthorityBasis})
 }
 
+func (s Service) validateDecisionConditions(conditions, expectedFingerprints []string) error {
+	for _, condition := range conditions {
+		switch {
+		case condition == "no-provider-effects" || condition == "no provider effects":
+		case condition == "target-absent":
+			for _, expected := range expectedFingerprints {
+				if expected != "absent" {
+					return invalid("conditions", "target-absent requires every expected fingerprint to be absent")
+				}
+			}
+		case condition == "target-current":
+			for _, expected := range expectedFingerprints {
+				if expected == "absent" {
+					return invalid("conditions", "target-current requires concrete expected fingerprints")
+				}
+			}
+		case strings.HasPrefix(condition, "not-before:"):
+			if _, err := time.Parse(time.RFC3339, strings.TrimPrefix(condition, "not-before:")); err != nil {
+				return invalid("conditions", "not-before requires an RFC3339 timestamp")
+			}
+		case strings.HasPrefix(condition, "requires-evidence:"):
+			ref := strings.TrimPrefix(condition, "requires-evidence:")
+			typed, err := domain.ParseReference(ref)
+			if err != nil || typed.Type != domain.Evidence {
+				return invalid("conditions", "requires-evidence requires an exact Evidence reference")
+			}
+			if _, err := s.Workspace.Lookup(ref, domain.Evidence); err != nil {
+				return domain.NewRefusal(domain.RefusalInvalidKnownField, "conditions", "requires-evidence target does not exist", err)
+			}
+		default:
+			return invalid("conditions", "unsupported Decision condition: "+condition)
+		}
+	}
+	return nil
+}
+
 func (s Service) CreateProposal(input ProposalInput) (OperationResult, error) {
-	id, err := domain.ParseID(input.ID)
+	id, err := s.resolveCreateID(domain.Proposal, input.ID, input.IdempotencyKey)
 	if err != nil {
 		return OperationResult{}, err
 	}
@@ -108,7 +148,7 @@ func (s Service) CreateProposal(input ProposalInput) (OperationResult, error) {
 		}
 	}
 	ref := string(domain.Proposal) + ":" + id.String()
-	if err := s.authorize(input.Authorization, "proposal.create", ref, "absent", input.Scope, []string{"proposal.create"}); err != nil {
+	if err := s.authorize(input.Authorization, "proposal.create", ref, "absent", input.Scope, []string{"proposal.create"}, creationAuthorityTarget(domain.Proposal, input.IdempotencyKey)); err != nil {
 		return OperationResult{}, err
 	}
 	doc := s.document(domain.Proposal, id, input.Title, input.Actor, input.Status)
@@ -213,7 +253,7 @@ func (s Service) ProposalView(ref string) (map[string]any, error) {
 }
 
 func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
-	id, err := domain.ParseID(input.ID)
+	id, err := s.resolveCreateID(domain.Mission, input.ID, input.IdempotencyKey)
 	if err != nil {
 		return OperationResult{}, err
 	}
@@ -232,6 +272,9 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 	}
 	if input.Title == "" || input.Actor == "" || input.Outcome == "" || len(input.Objectives) == 0 || input.DesignSufficiency != "sufficient" || input.SliceQuality != "coherent" || len(input.EvidenceClaims) == 0 || len(input.Scope) == 0 || input.Baseline == "" || input.BudgetUnits < 1 || input.RepairBudget < 0 || input.RecoveryPoint == "" || input.ReturnDestination == "" || input.Authorization == "" || input.IdempotencyKey == "" || input.Preparation == nil {
 		return OperationResult{}, missing("mission", "bounded outcome, Objectives, preparation verdicts, evidence plan, envelope, recovery, authorization, and idempotency are required")
+	}
+	if err := validateObjectiveGraph(input.Objectives); err != nil {
+		return OperationResult{}, err
 	}
 	if err := spectacularruntime.ValidatePreparationReceipt(*input.Preparation, s.now()); err != nil {
 		return OperationResult{}, err
@@ -260,7 +303,7 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 		return OperationResult{}, err
 	}
 	missionRef := string(domain.Mission) + ":" + id.String()
-	if err := s.authorize(input.Authorization, "mission.create", missionRef, "absent", input.Scope, []string{"mission.create"}); err != nil {
+	if err := s.authorize(input.Authorization, "mission.create", missionRef, "absent", input.Scope, []string{"mission.create"}, creationAuthorityTarget(domain.Mission, input.IdempotencyKey)); err != nil {
 		return OperationResult{}, err
 	}
 	mission := s.document(domain.Mission, id, input.Title, input.Actor, "defined")
@@ -289,6 +332,10 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 	workspace.SetString(mission, "preparation_baseline", input.Preparation.Baseline)
 	workspace.SetStrings(mission, "preparation_sources", preparationBindings)
 	workspace.SetString(mission, "preparation_receipt", string(preparationJSON))
+	if err := workspace.SetValue(mission, "completion_contract", input.Preparation.CompletionCriteria); err != nil {
+		return OperationResult{}, err
+	}
+	workspace.SetString(mission, "completion_contract_fingerprint", spectacularruntime.CompletionFingerprint(input.Preparation.CompletionCriteria))
 	var documents []*workspace.Document
 	documents = append(documents, mission)
 	objectiveRefs := make([]string, 0, len(input.Objectives))
@@ -319,6 +366,65 @@ func (s Service) CreateMission(input MissionInput) (OperationResult, error) {
 		workspace.SetString(mission, "current_run", string(domain.Run)+":"+runID.String())
 	}
 	return s.createMany("mission.create", mission, documents, input.IdempotencyKey, []string{input.Proposal, input.Authorization})
+}
+
+func validateObjectiveGraph(objectives []ObjectiveInput) error {
+	byRef := map[string]ObjectiveInput{}
+	refs := make([]string, 0, len(objectives))
+	for _, objective := range objectives {
+		id, err := domain.ParseID(objective.ID)
+		if err != nil {
+			return err
+		}
+		ref := string(domain.Objective) + ":" + id.String()
+		if _, exists := byRef[ref]; exists {
+			return invalid("objectives", "Objective identities must be unique")
+		}
+		byRef[ref] = objective
+		refs = append(refs, ref)
+	}
+	sort.Strings(refs)
+	for _, ref := range refs {
+		objective := byRef[ref]
+		seen := map[string]bool{}
+		for _, dependency := range objective.Dependencies {
+			if dependency == ref {
+				return invalid("objectives.dependencies", "Objective cannot depend on itself: "+ref)
+			}
+			if seen[dependency] {
+				return invalid("objectives.dependencies", "Objective dependency is duplicated: "+dependency)
+			}
+			if _, exists := byRef[dependency]; !exists {
+				return invalid("objectives.dependencies", "Objective dependency is outside the Mission: "+dependency)
+			}
+			seen[dependency] = true
+		}
+	}
+	visiting, visited := map[string]bool{}, map[string]bool{}
+	var visit func(string) error
+	visit = func(ref string) error {
+		if visiting[ref] {
+			return invalid("objectives.dependencies", "Objective dependency graph contains a cycle at "+ref)
+		}
+		if visited[ref] {
+			return nil
+		}
+		visiting[ref] = true
+		for _, dependency := range byRef[ref].Dependencies {
+			if err := visit(dependency); err != nil {
+				return err
+			}
+		}
+		delete(visiting, ref)
+		visited[ref] = true
+		return nil
+	}
+	for _, ref := range refs {
+		if err := visit(ref); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // CompileAutopilot derives hard limits from the exact current Mission and
@@ -443,6 +549,33 @@ func (s Service) createOne(operation string, doc *workspace.Document, key string
 	return s.createMany(operation, doc, []*workspace.Document{doc}, key, sources)
 }
 
+func (s Service) resolveCreateID(noun domain.RecordType, raw, key string) (domain.ID, error) {
+	if raw != "" {
+		return domain.ParseID(raw)
+	}
+	if key == "" {
+		return "", missing("idempotency_key", "required when id is omitted")
+	}
+	var found domain.ID
+	for _, entry := range s.Workspace.OfType(noun) {
+		stored, err := workspace.String(entry.Document, "idempotency_key", false)
+		if err != nil {
+			return "", err
+		}
+		if stored != key {
+			continue
+		}
+		if found != "" && found != entry.Document.Record.ID {
+			return "", domain.NewRefusal(domain.RefusalIdempotencyConflict, "idempotency_key", "multiple records use the same creation key", nil)
+		}
+		found = entry.Document.Record.ID
+	}
+	if found != "" {
+		return found, nil
+	}
+	return domain.NewID()
+}
+
 func (s Service) createMany(operation string, primary *workspace.Document, docs []*workspace.Document, key string, sources []string) (OperationResult, error) {
 	if key == "" {
 		return OperationResult{}, missing("idempotency_key", "required")
@@ -450,6 +583,20 @@ func (s Service) createMany(operation string, primary *workspace.Document, docs 
 	paths, err := humanlayout.Plan(s.Workspace.Entries, docs)
 	if err != nil {
 		return OperationResult{}, err
+	}
+	// Human layout assigns human_ref values, so bind the Run only after layout
+	// planning has finalized the Run's canonical semantic content.
+	if primary.Record.Type == domain.Mission {
+		currentRun, _ := workspace.String(primary, "current_run", false)
+		for _, doc := range docs {
+			if currentRun == string(doc.Record.Type)+":"+doc.Record.ID.String() && doc.Record.Type == domain.Run {
+				runFingerprint, fingerprintErr := workspace.Fingerprint(doc)
+				if fingerprintErr != nil {
+					return OperationResult{}, fingerprintErr
+				}
+				workspace.SetString(primary, "expected_run_fingerprint", runFingerprint)
+			}
+		}
 	}
 	allReplay := true
 	changes := make([]FileChange, 0, len(docs))
@@ -518,7 +665,7 @@ func (s Service) createMany(operation string, primary *workspace.Document, docs 
 	return OperationResult{Operation: operation, Ref: string(primary.Record.Type) + ":" + primary.Record.ID.String(), Path: filepath.ToSlash(path), Fingerprint: fp, Sources: sources}, nil
 }
 
-func (s Service) authorize(ref, operation, target, expected string, requiredScope, requiredEffects []string) error {
+func (s Service) authorize(ref, operation, target, expected string, requiredScope, requiredEffects []string, targetAliases ...string) error {
 	decision, err := s.Workspace.Lookup(ref, domain.Decision)
 	if err != nil {
 		return err
@@ -547,12 +694,22 @@ func (s Service) authorize(ref, operation, target, expected string, requiredScop
 		}
 	}
 	targets := authority.Targets
-	if !contains(targets, target) {
+	matchedTarget := target
+	if !contains(targets, matchedTarget) {
+		matchedTarget = ""
+		for _, alias := range targetAliases {
+			if contains(targets, alias) {
+				matchedTarget = alias
+				break
+			}
+		}
+	}
+	if matchedTarget == "" {
 		return domain.NewRefusal(domain.RefusalUnauthorized, "targets", "Decision does not name target "+target, err)
 	}
 	fingerprints := authority.ExpectedFingerprints
 	for i := range targets {
-		if targets[i] == target && fingerprints[i] != expected {
+		if targets[i] == matchedTarget && fingerprints[i] != expected {
 			return stale("authorization.expected_fingerprint", fingerprints[i], expected)
 		}
 	}
@@ -563,6 +720,10 @@ func (s Service) authorize(ref, operation, target, expected string, requiredScop
 		}
 	}
 	return nil
+}
+
+func creationAuthorityTarget(noun domain.RecordType, key string) string {
+	return "new:" + string(noun) + ":" + key
 }
 
 func (s Service) entryByID(id domain.ID) (discovery.Entry, bool) {

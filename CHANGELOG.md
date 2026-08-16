@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.1.1 — 2026-08-17
+
+Test performance optimizations and contributor verification guidance.
+
+- Optimizes `internal/missionbundle` test fixtures by caching template git repositories and parallelizing rollback subtests.
+- Parallelizes 4-platform release archive compilation in `cmd/assemble-release`.
+- Retains persistent Go test cache across verification runs and downstream installer/release test scripts.
+- Codifies tiered verification guidance (`quick`, `acceptance`, `release`, `all`) in `AGENTS.md`.
+
 ## 2.1.0 — 2026-08-16
 
 Governed-autonomy controls for preparation, delegation, review, and runtime limits.

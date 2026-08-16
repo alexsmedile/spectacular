@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -225,95 +226,126 @@ func TestPromoteRefusesUndiscoveredDerivedTargetCollision(t *testing.T) {
 }
 
 func TestMutationCommandsRollbackAtEveryInstallBoundary(t *testing.T) {
-	type prepared struct {
-		root   string
-		serve  Service
-		invoke func(Service) error
+	type caseDef struct {
+		prepare func(t *testing.T) (string, func(Service) error)
 	}
-	prepareStarted := func(t *testing.T, suffix string) (string, Service, Result) {
-		root := missionServiceFixture(t)
-		plan, raw := stressPlan()
-		svc := openMissionService(t, root)
-		started, err := svc.Start(plan, append(raw, []byte(suffix)...))
-		if err != nil {
-			t.Fatal(err)
-		}
-		return root, openMissionService(t, root), started
-	}
-	cases := map[string]func(*testing.T) prepared{
-		"start": func(t *testing.T) prepared {
-			root := missionServiceFixture(t)
-			plan, raw := stressPlan()
-			return prepared{root: root, serve: openMissionService(t, root), invoke: func(s Service) error {
-				_, err := s.Start(plan, append(raw, []byte("-fault")...))
-				return err
-			}}
+	cases := map[string]caseDef{
+		"start": {
+			prepare: func(t *testing.T) (string, func(Service) error) {
+				root := missionServiceFixture(t)
+				plan, raw := stressPlan()
+				return root, func(s Service) error {
+					_, err := s.Start(plan, append(raw, []byte("-fault")...))
+					return err
+				}
+			},
 		},
-		"promote": func(t *testing.T) prepared {
-			root, svc, started := prepareStarted(t, "-promote-fault")
-			return prepared{root: root, serve: svc, invoke: func(s Service) error {
-				_, err := s.PromoteObjective(started.Ref + "/O1")
-				return err
-			}}
+		"promote": {
+			prepare: func(t *testing.T) (string, func(Service) error) {
+				root := missionServiceFixture(t)
+				plan, raw := stressPlan()
+				svc := openMissionService(t, root)
+				started, err := svc.Start(plan, append(raw, []byte("-promote-fault")...))
+				if err != nil {
+					t.Fatal(err)
+				}
+				return root, func(s Service) error {
+					_, err := s.PromoteObjective(started.Ref + "/O1")
+					return err
+				}
+			},
 		},
-		"run": func(t *testing.T) prepared {
-			root, svc, started := prepareStarted(t, "-run-fault")
-			return prepared{root: root, serve: svc, invoke: func(s Service) error {
-				_, err := s.StartRun(started.Ref, "Second run")
-				return err
-			}}
+		"run": {
+			prepare: func(t *testing.T) (string, func(Service) error) {
+				root := missionServiceFixture(t)
+				plan, raw := stressPlan()
+				svc := openMissionService(t, root)
+				started, err := svc.Start(plan, append(raw, []byte("-run-fault")...))
+				if err != nil {
+					t.Fatal(err)
+				}
+				return root, func(s Service) error {
+					_, err := s.StartRun(started.Ref, "Second run")
+					return err
+				}
+			},
 		},
-		"review": func(t *testing.T) prepared {
-			root, svc, started := prepareStarted(t, "-review-fault")
-			review := reviewDraft(t, root, svc, started.Ref)
-			return prepared{root: root, serve: svc, invoke: func(s Service) error {
-				_, err := s.RecordReview(started.Ref, "-", review)
-				return err
-			}}
+		"review": {
+			prepare: func(t *testing.T) (string, func(Service) error) {
+				root := missionServiceFixture(t)
+				plan, raw := stressPlan()
+				svc := openMissionService(t, root)
+				started, err := svc.Start(plan, append(raw, []byte("-review-fault")...))
+				if err != nil {
+					t.Fatal(err)
+				}
+				svc = openMissionService(t, root)
+				review := reviewDraft(t, root, svc, started.Ref)
+				return root, func(s Service) error {
+					_, err := s.RecordReview(started.Ref, "-", review)
+					return err
+				}
+			},
 		},
-		"complete": func(t *testing.T) prepared {
-			root, svc, started := prepareStarted(t, "-complete-fault")
-			if _, err := svc.FinishObjective(started.Ref + "/O1"); err != nil {
-				t.Fatal(err)
-			}
-			svc = openMissionService(t, root)
-			if _, err := svc.FinishObjective(started.Ref + "/O2"); err != nil {
-				t.Fatal(err)
-			}
-			return prepared{root: root, serve: openMissionService(t, root), invoke: func(s Service) error {
-				_, err := s.Complete(started.Ref, planOwner())
-				return err
-			}}
+		"complete": {
+			prepare: func(t *testing.T) (string, func(Service) error) {
+				root := missionServiceFixture(t)
+				plan, raw := stressPlan()
+				svc := openMissionService(t, root)
+				started, err := svc.Start(plan, append(raw, []byte("-complete-fault")...))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if _, err := svc.FinishObjective(started.Ref + "/O1"); err != nil {
+					t.Fatal(err)
+				}
+				svc = openMissionService(t, root)
+				if _, err := svc.FinishObjective(started.Ref + "/O2"); err != nil {
+					t.Fatal(err)
+				}
+				return root, func(s Service) error {
+					_, err := s.Complete(started.Ref, planOwner())
+					return err
+				}
+			},
 		},
 	}
 
-	for name, makePrepared := range cases {
+	for name, def := range cases {
 		t.Run(name, func(t *testing.T) {
-			probe := makePrepared(t)
+			baseRoot, invoke := def.prepare(t)
+			clone := func(t *testing.T) (string, Service) {
+				root := t.TempDir()
+				copyTree(t, baseRoot, root)
+				return root, openMissionService(t, root)
+			}
+			probeRoot, probeServe := clone(t)
 			count := 0
 			probeError := errors.New("capture transaction width")
-			probe.serve.ApplyTransaction = func(_ string, _ string, changes []governance.FileChange) error {
+			probeServe.ApplyTransaction = func(_ string, _ string, changes []governance.FileChange) error {
 				count = len(changes)
 				return probeError
 			}
-			if err := probe.invoke(probe.serve); !errors.Is(err, probeError) || count == 0 {
-				t.Fatalf("transaction probe err=%v width=%d", err, count)
+			if err := invoke(probeServe); !errors.Is(err, probeError) || count == 0 {
+				t.Fatalf("transaction probe err=%v width=%d (root=%s)", err, count, probeRoot)
 			}
 
 			for failAfter := 0; failAfter < count; failAfter++ {
+				failAfter := failAfter
 				t.Run(fmt.Sprintf("after-%d-of-%d", failAfter, count), func(t *testing.T) {
-					fixture := makePrepared(t)
-					before := canonicalTreeDigest(t, fixture.root)
-					fixture.serve.ApplyTransaction = func(root, key string, changes []governance.FileChange) error {
+					t.Parallel()
+					subRoot, subServe := clone(t)
+					before := canonicalTreeDigest(t, subRoot)
+					subServe.ApplyTransaction = func(root, key string, changes []governance.FileChange) error {
 						return governance.ApplyTransactionWithFailure(root, key, changes, failAfter)
 					}
-					if err := fixture.invoke(fixture.serve); err == nil {
+					if err := invoke(subServe); err == nil {
 						t.Fatal("injected transaction failure unexpectedly succeeded")
 					}
-					if after := canonicalTreeDigest(t, fixture.root); after != before {
+					if after := canonicalTreeDigest(t, subRoot); after != before {
 						t.Fatal("injected failure changed canonical files")
 					}
-					if _, err := discovery.Open(fixture.root); err != nil {
+					if _, err := discovery.Open(subRoot); err != nil {
 						t.Fatalf("rollback left workspace unreadable: %v", err)
 					}
 				})
@@ -392,19 +424,60 @@ claims:
 `, gitOutput(t, root, "rev-parse", "HEAD"), gitOutput(t, root, "rev-parse", "HEAD^{tree}"), bundle.Activation.Fingerprint))
 }
 
+var (
+	fixtureTemplateDir  string
+	fixtureTemplateOnce sync.Once
+	fixtureTemplateErr  error
+)
+
+func initFixtureTemplate() (string, error) {
+	fixtureTemplateOnce.Do(func() {
+		source, err := filepath.Abs(filepath.Join("..", "..", ".spectacular"))
+		if err != nil {
+			fixtureTemplateErr = err
+			return
+		}
+		dir, err := os.MkdirTemp("", "spectacular-fixture-template-*")
+		if err != nil {
+			fixtureTemplateErr = err
+			return
+		}
+		if err := copyTreeDirect(source, filepath.Join(dir, ".spectacular")); err != nil {
+			fixtureTemplateErr = err
+			return
+		}
+		command := exec.Command("git", "init", "-q")
+		command.Dir = dir
+		if output, err := command.CombinedOutput(); err != nil {
+			fixtureTemplateErr = fmt.Errorf("git init: %w: %s", err, output)
+			return
+		}
+		for _, args := range [][]string{
+			{"config", "user.email", "tests@spectacular.invalid"},
+			{"config", "user.name", "Spectacular Tests"},
+			{"add", ".spectacular"},
+			{"commit", "-qm", "fixture"},
+		} {
+			cmd := exec.Command("git", args...)
+			cmd.Dir = dir
+			if output, err := cmd.CombinedOutput(); err != nil {
+				fixtureTemplateErr = fmt.Errorf("git %v: %w: %s", args, err, output)
+				return
+			}
+		}
+		fixtureTemplateDir = dir
+	})
+	return fixtureTemplateDir, fixtureTemplateErr
+}
+
 func missionServiceFixture(t *testing.T) string {
 	t.Helper()
-	source, err := filepath.Abs(filepath.Join("..", "..", ".spectacular"))
+	template, err := initFixtureTemplate()
 	if err != nil {
 		t.Fatal(err)
 	}
 	root := t.TempDir()
-	copyTree(t, source, filepath.Join(root, ".spectacular"))
-	git(t, root, "init", "-q")
-	git(t, root, "config", "user.email", "tests@spectacular.invalid")
-	git(t, root, "config", "user.name", "Spectacular Tests")
-	git(t, root, "add", ".spectacular")
-	git(t, root, "commit", "-qm", "fixture")
+	copyTree(t, template, root)
 	return root
 }
 
@@ -473,7 +546,13 @@ func canonicalTreeDigest(t *testing.T, root string) string {
 
 func copyTree(t *testing.T, source, target string) {
 	t.Helper()
-	if err := filepath.WalkDir(source, func(path string, entry fs.DirEntry, err error) error {
+	if err := copyTreeDirect(source, target); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func copyTreeDirect(source, target string) error {
+	return filepath.WalkDir(source, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -490,9 +569,7 @@ func copyTree(t *testing.T, source, target string) {
 			return err
 		}
 		return os.WriteFile(destination, data, 0o644)
-	}); err != nil {
-		t.Fatal(err)
-	}
+	})
 }
 
 func git(t *testing.T, root string, args ...string) {

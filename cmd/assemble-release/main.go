@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/alexsmedile/spectacular/v2/internal/command"
@@ -74,18 +75,42 @@ func main() {
 		fatal(err)
 	}
 	targets := []target{{"darwin", "amd64"}, {"darwin", "arm64"}, {"linux", "amd64"}, {"linux", "arm64"}}
-	checksums := make([]string, 0, len(targets))
-	for _, platform := range targets {
-		name := fmt.Sprintf("spectacular-v%s-%s-%s.tar.gz", version, platform.os, platform.arch)
-		data, err := buildArchive(root, version, *commit, platform)
-		if err != nil {
-			fatal(fmt.Errorf("%s/%s: %w", platform.os, platform.arch, err))
+	type buildResult struct {
+		name     string
+		data     []byte
+		checksum string
+		err      error
+	}
+	results := make([]buildResult, len(targets))
+	var wg sync.WaitGroup
+	for i, platform := range targets {
+		wg.Add(1)
+		go func(i int, platform target) {
+			defer wg.Done()
+			name := fmt.Sprintf("spectacular-v%s-%s-%s.tar.gz", version, platform.os, platform.arch)
+			data, err := buildArchive(root, version, *commit, platform)
+			if err != nil {
+				results[i] = buildResult{err: fmt.Errorf("%s/%s: %w", platform.os, platform.arch, err)}
+				return
+			}
+			digest := sha256.Sum256(data)
+			results[i] = buildResult{
+				name:     name,
+				data:     data,
+				checksum: hex.EncodeToString(digest[:]) + "  " + name,
+			}
+		}(i, platform)
+	}
+	wg.Wait()
+	checksums := make([]string, 0, len(results))
+	for _, res := range results {
+		if res.err != nil {
+			fatal(res.err)
 		}
-		if err := writeAtomic(filepath.Join(*output, name), data, 0o644); err != nil {
+		if err := writeAtomic(filepath.Join(*output, res.name), res.data, 0o644); err != nil {
 			fatal(err)
 		}
-		digest := sha256.Sum256(data)
-		checksums = append(checksums, hex.EncodeToString(digest[:])+"  "+name)
+		checksums = append(checksums, res.checksum)
 	}
 	sort.Strings(checksums)
 	if err := writeAtomic(filepath.Join(*output, "SHA256SUMS"), []byte(strings.Join(checksums, "\n")+"\n"), 0o644); err != nil {

@@ -6,7 +6,14 @@ This is Spectacular v2. The root Go module, `cmd/spectacular`, `skills/`,
 `CLAUDE.md` is a compatibility symlink to this file. `AGENTS.md` is
 authoritative; edit it rather than the symlink.
 
-Run `bash test/verify.sh all` before release changes. Do not reintroduce v1 commands,
+Run `bash test/verify.sh all` before release changes or Mission completion.
+Use tiered verification during development:
+- `bash test/verify.sh quick`: static checks + unit tests in `cmd/`, `internal/`, `install/` (fastest inner loop).
+- `bash test/verify.sh acceptance`: static checks + end-to-end acceptance fixtures.
+- `bash test/verify.sh release`: 4-platform compilation, checksums, installer/rollback/recovery, and plugin manifests.
+- `bash test/verify.sh all`: full race-detector test suite and release distribution gate.
+
+Do not reintroduce v1 commands,
 compatibility readers, migrations, generic record/search verbs, or a second
 package root. Keep release version values aligned through `VERSION` and the
 generated mechanical interface.

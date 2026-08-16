@@ -4,7 +4,7 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
 mode="${1:-all}"
-go_cache="${GOCACHE:-$(mktemp -d)}"
+go_cache="${GOCACHE:-${TMPDIR:-/tmp}/spectacular-test-gocache}"
 log_file="$(mktemp)"
 
 cleanup() {
@@ -12,6 +12,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
+mkdir -p "$go_cache"
 export GOCACHE="$go_cache"
 export GOPROXY=off
 export GOFLAGS=-mod=readonly
@@ -78,10 +79,8 @@ case "$mode" in
     release_checks
     ;;
   all)
-    quick_checks
-    acceptance_checks
-    check race go test -race ./...
-    check build go build ./...
+    static_checks
+    check race go test -race -count=1 ./...
     release_checks
     ;;
   *)

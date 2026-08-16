@@ -98,9 +98,20 @@ Implement the accepted plan.
 	if matches, _ := filepath.Glob(filepath.Join(root, ".spectacular", "missions", "M*-*")); len(matches) != 1 {
 		t.Fatalf("retry created %d Missions", len(matches))
 	}
+	inline := run(t, root, nil, 0, "objective", "show", "M1/O1", "--json")
 	run(t, root, nil, 0, "objective", "promote", "M1/O1", "--json")
+	promoted := run(t, root, nil, 0, "objective", "show", "M1/O1", "--json")
+	for _, name := range []string{"id", "ref", "outcome", "status"} {
+		if field(t, inline, name) != field(t, promoted, name) {
+			t.Fatalf("promotion changed %s", name)
+		}
+	}
 	run(t, root, nil, 0, "objective", "finish", "M1/O1", "--json")
 	run(t, root, nil, 0, "run", "start", "M1", "--title", "Second execution boundary", "--json")
+	run(t, root, nil, 0, "run", "start", "M1", "--title", "Third execution boundary", "--json")
+	if third := run(t, root, nil, 0, "run", "show", "M1/R3", "--json"); !strings.Contains(third, `"status":"active"`) {
+		t.Fatalf("third Run=%s", third)
+	}
 	activation := field(t, run(t, root, nil, 0, "mission", "check", "M1", "--json"), "fingerprint")
 	commit := git(t, root, "rev-parse", "HEAD")
 	tree := git(t, root, "rev-parse", "HEAD^{tree}")
@@ -138,6 +149,11 @@ The claim passes.
 	shown := run(t, root, nil, 0, "mission", "show", "M1", "--json")
 	if !strings.Contains(shown, `"status":"completed"`) || !strings.Contains(shown, `"file":"objectives/O1-implement-the-loop.md"`) {
 		t.Fatalf("completed show=%s", shown)
+	}
+	missions, _ := filepath.Glob(filepath.Join(root, ".spectacular", "missions", "M1-*", "MISSION.md"))
+	data, err := os.ReadFile(missions[0])
+	if err != nil || !strings.Contains(string(data), "Implement the accepted plan.") || !strings.Contains(string(data), "start_key: sha256:") {
+		t.Fatalf("round trip lost Markdown or unknown fields: %v\n%s", err, data)
 	}
 }
 

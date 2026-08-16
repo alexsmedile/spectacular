@@ -99,6 +99,22 @@ func FuzzMissionPlanInputNeverPanics(f *testing.F) {
 	})
 }
 
+func TestMutationLockRefusesConcurrentWriter(t *testing.T) {
+	root := t.TempDir()
+	unlock, err := acquireMutationLock(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unlock()
+	second, err := acquireMutationLock(root)
+	if second != nil {
+		second()
+	}
+	if !domain.RefusalHasCode(err, domain.RefusalCollision) {
+		t.Fatalf("concurrent lock error=%v", err)
+	}
+}
+
 func cloneBundle(t *testing.T, source *Bundle) *Bundle {
 	t.Helper()
 	data, err := json.Marshal(source)

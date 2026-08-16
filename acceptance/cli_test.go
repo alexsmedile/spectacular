@@ -60,6 +60,10 @@ func TestSelfHostedMissionsValidateWithInstalledBinary(t *testing.T) {
 			t.Fatalf("check %s: %v %s", ref, err, result)
 		}
 	}
+	plain := command(t, repoRoot, 0, "mission", "show", "M6")
+	if !strings.Contains(plain, "M6 — Implement the compact Mission CLI") || strings.Contains(plain, `"schema_version"`) {
+		t.Fatalf("default output is not compact human text: %s", plain)
+	}
 }
 
 func TestInstalledBinaryCompletesCompactLifecycle(t *testing.T) {

@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
@@ -339,6 +340,19 @@ func (s Service) StartRun(missionRef, title string) (Result, error) {
 			docs = append(docs, doc)
 			paths[doc.Record.ID] = path
 			run = Run{Ref: run.Ref, ID: run.ID, File: strings.TrimPrefix(path, filepath.ToSlash(filepath.Dir(bundle.Path))+"/")}
+		} else {
+			absolute, pathErr := containedFile(filepath.Dir(bundle.entry.Absolute), run.File)
+			if pathErr != nil {
+				return Result{}, pathErr
+			}
+			doc, readErr := workspace.ReadFile(absolute)
+			if readErr != nil {
+				return Result{}, readErr
+			}
+			doc.Record.Status = stringPtr("completed")
+			docs = append(docs, doc)
+			paths[doc.Record.ID] = filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), run.File))
+			run = Run{Ref: run.Ref, ID: run.ID, File: run.File}
 		}
 		pointers = append(pointers, run)
 	}
@@ -502,6 +516,30 @@ func (s Service) Complete(missionRef, owner string) (Result, error) {
 }
 
 func (s Service) apply(key string, docs []*workspace.Document, paths map[domain.ID]string, operation, ref, primaryPath string) (Result, error) {
+	unlock, err := acquireMutationLock(s.Workspace.Root)
+	if err != nil {
+		return Result{}, err
+	}
+	defer unlock()
+	for _, doc := range docs {
+		for _, entry := range s.Workspace.Entries {
+			if entry.Document.Record.ID != doc.Record.ID {
+				continue
+			}
+			current, readErr := workspace.ReadFile(entry.Absolute)
+			if readErr != nil {
+				return Result{}, readErr
+			}
+			fingerprint, fingerprintErr := workspace.Fingerprint(current)
+			if fingerprintErr != nil {
+				return Result{}, fingerprintErr
+			}
+			if fingerprint != entry.Fingerprint {
+				return Result{}, domain.NewStateRefusal(domain.RefusalStaleFingerprint, entry.Path, "canonical source changed after command validation", entry.Fingerprint, fingerprint, "reload the Mission and retry the typed command", nil)
+			}
+			break
+		}
+	}
 	changes := make([]governance.FileChange, 0, len(docs)+4)
 	for _, doc := range docs {
 		data, err := workspace.Canonical(doc)
@@ -530,6 +568,25 @@ func (s Service) apply(key string, docs []*workspace.Document, paths map[domain.
 		changed = append(changed, filepath.ToSlash(change.Path))
 	}
 	return Result{Operation: operation, Ref: ref, Path: primaryPath, Changed: changed}, nil
+}
+
+func acquireMutationLock(root string) (func(), error) {
+	directory := filepath.Join(root, ".spectacular", "transactions")
+	if err := os.MkdirAll(directory, 0o755); err != nil {
+		return nil, invalidCause("transactions", "create mutation lock directory", err)
+	}
+	file, err := os.OpenFile(filepath.Join(directory, ".lock"), os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		return nil, invalidCause("transactions", "open mutation lock", err)
+	}
+	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+		file.Close()
+		return nil, domain.NewStateRefusal(domain.RefusalCollision, "transactions", "another Mission mutation is in progress", "exclusive mutation lock", "busy", "wait for the active command to finish, reload the Mission, and retry", err)
+	}
+	return func() {
+		_ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+		_ = file.Close()
+	}, nil
 }
 
 func validatePlan(plan Plan) error {

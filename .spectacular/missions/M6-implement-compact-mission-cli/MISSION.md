@@ -6,7 +6,7 @@ title: Implement the compact Mission CLI
 status: active
 owner: Alex
 created: "2026-08-16T10:31:30Z"
-updated: "2026-08-16T11:14:15Z"
+updated: "2026-08-16T11:19:33Z"
 
 contract:
   ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -48,14 +48,14 @@ objectives:
   - ref: O3
     id: 01a00a20-63dd-72df-b24e-4f1044c47e61
     outcome: Prove atomicity, safe refusals, representation equivalence, legacy readability, and compact distribution behavior.
-    status: active
+    status: implemented
     after: [O2]
     claims: [atomic-stress]
 
 run:
   ref: R1
   id: 01a00a34-6ce4-73fd-b7d3-5cdad9302124
-  status: active
+  status: awaiting-review
   operator: Codex primary session
   started_at: "2026-08-16T10:53:23Z"
   current_objective: O3
@@ -68,7 +68,7 @@ activation:
 
 validation:
   schema: mission.v2
-  mode: manual-bootstrap
+  mode: cli
 
 authority:
   operator: [inspect, edit-in-scope, choose-reversible-implementation, run-checks, generate-derived-files, bounded-repair, commit-local]

@@ -92,11 +92,7 @@ stops: [scope-drift]
 
 Exercise the installed binary.
 `
-	planPath := filepath.Join(r.inputs, "mission.md")
-	if err := os.WriteFile(planPath, []byte(plan), 0o644); err != nil {
-		return err
-	}
-	started, err := r.command("mission", "start", planPath, "--json")
+	started, err := r.commandInput(plan, "mission", "start", "-", "--json")
 	if err != nil {
 		return err
 	}
@@ -169,8 +165,15 @@ The installed command loop passes.
 }
 
 func (r runner) command(args ...string) (envelope, error) {
+	return r.commandInput("", args...)
+}
+
+func (r runner) commandInput(input string, args ...string) (envelope, error) {
 	cmd := exec.Command(r.binary, args...)
 	cmd.Dir = r.workspace
+	if input != "" {
+		cmd.Stdin = strings.NewReader(input)
+	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return envelope{}, fmt.Errorf("spectacular %s: %w\n%s", strings.Join(args, " "), err, output)

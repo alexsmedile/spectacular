@@ -8,7 +8,7 @@ updated: "2026-08-16T20:08:43Z"
 activation:
     at: "2026-08-16T21:30:00Z"
     by: Alex
-    fingerprint: sha256:080ca659f50001ee29fda5e7a8348615d51535dffb837e2f4fe5d3038a787b42
+    fingerprint: sha256:59d80c9784f7b580ecc6c72eb1d3563f19ca2125b20e12ddd0a67b0580a4168e
 authority:
     operator:
         - inspect
@@ -118,7 +118,7 @@ outcome: Compact projections state conclusions instead of records, audits aim at
 owner: Alex
 ref: M7
 repair_budget: 3
-review: independent
+review: clustered
 run:
     current_objective: O1
     id: 01a00af1-38c0-7af4-9f24-a3074277d3c2
@@ -171,7 +171,23 @@ and reports the legacy spelling as drift closes the gap without rewriting any co
 Mission's frontmatter. `nextMissionRef` already reads both spellings; this extends that
 tolerance to the validation path so M8 has one spelling to compare.
 
-## Two completion criteria were narrowed after independent review
+## Why this Mission completed under clustered rather than independent review
+
+M7 was planned for independent review, and two independent reviewers did audit it
+at commit `b0a6c5d`. Their findings are recorded below and were repaired. But the
+repairs, and the two boundary amendments those reviewers prompted, landed after
+they finished. No independent reviewer has seen the amended boundary or the fixes.
+
+Recording an independent review bound to the current activation fingerprint would
+assert that a reviewer passed work they never read. The owner chose to downgrade
+the review mode to `clustered` instead, which states plainly that the final
+verification was the operator's own. The weaker claim is the true one.
+
+What the reviewers did establish still stands: twelve of fourteen mutations were
+caught at `b0a6c5d`, and the two survivors are now caught by tests added in
+response. What is not established is independent confirmation of that repair.
+
+## Two completion criteria were narrowed after review
 
 Independent review found two frozen criteria naming inputs the record cannot
 supply. The owner narrowed both rather than implementing against a shape that does

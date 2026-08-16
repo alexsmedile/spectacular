@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -89,12 +90,19 @@ func (r Runner) Run(args []string) int {
 	if duplicate {
 		return r.usage(jsonMode, invoked, "--json may be supplied at most once")
 	}
+	graphMode, duplicateGraph := removeFlag(&args, "--graph")
+	if duplicateGraph {
+		return r.usage(jsonMode, invoked, "--graph may be supplied at most once")
+	}
 	spec, rest, ok := match(args)
 	if !ok {
 		return r.usage(jsonMode, invoked, "unknown or incomplete command")
 	}
 	if detail := validateArguments(spec, rest); detail != "" {
 		return r.commandUsage(jsonMode, invoked, spec, detail)
+	}
+	if graphMode && spec.Operation != opMissionShow {
+		return r.commandUsage(jsonMode, invoked, spec, "--graph applies to mission show")
 	}
 	ws, err := discovery.Open(r.Cwd)
 	if err != nil {
@@ -165,6 +173,12 @@ func (r Runner) Run(args []string) int {
 		if err := writeJSON(r.Stdout, output); err != nil {
 			return r.refuse(true, invoked, err)
 		}
+	} else if graphMode {
+		bundle, isBundle := value.(*missionbundle.Bundle)
+		if !isBundle {
+			return r.usage(jsonMode, invoked, "--graph applies to mission show")
+		}
+		fmt.Fprint(r.Stdout, bundle.Graph(terminalWidth()))
 	} else {
 		renderHuman(r.Stdout, value)
 	}
@@ -215,6 +229,18 @@ func inputPath(cwd, path string) string {
 		return path
 	}
 	return filepath.Join(cwd, path)
+}
+
+// terminalWidth reports the width the Objective graph is measured against. The
+// environment is consulted rather than the terminal device so the value is
+// reproducible in tests and identical for piped output.
+func terminalWidth() int {
+	if columns := os.Getenv("COLUMNS"); columns != "" {
+		if parsed, err := strconv.Atoi(columns); err == nil && parsed > 0 {
+			return parsed
+		}
+	}
+	return missionbundle.DefaultGraphWidth
 }
 
 func renderHuman(writer io.Writer, value any) {
@@ -334,10 +360,16 @@ func readinessGlyph(readiness missionbundle.Readiness) string {
 }
 
 func removeJSON(args *[]string) (bool, bool) {
+	return removeFlag(args, "--json")
+}
+
+// removeFlag strips a boolean flag, reporting whether it was present and
+// whether it was supplied more than once.
+func removeFlag(args *[]string, name string) (bool, bool) {
 	found, duplicate := false, false
 	out := (*args)[:0]
 	for _, arg := range *args {
-		if arg == "--json" {
+		if arg == name {
 			if found {
 				duplicate = true
 			}

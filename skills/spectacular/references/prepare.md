@@ -1,45 +1,33 @@
-# Propose and define
+# Explore and plan
 
-## Propose
+## Explore
 
-Interpret fuzzy intent against current Capability Contract truth. Draft a base-bound Contract
-delta with target identity/version/fingerprint, exact additions/modifications/removals, rationale,
-scope, assumptions, and Gaps. Show it to the owner. Only after confirmation invoke `proposal
-create`; acceptance remains an owner Decision and never promotes the Proposal into current truth.
+Use a Proposal only when exploration benefits from a durable place for the problem, alternatives,
+questions, research, or draft specifications. It may instead remain in an issue or the current
+conversation. A Proposal is mutable, optional, and neither authority nor current product truth.
 
-## Define
+Read current Contracts/specifications before proposing observable behavior. Edit those files as
+ordinary Mission work after a direction is frozen; do not require a separate reconciliation
+lifecycle.
 
-Compare one to three proportional candidate slices. For each, cover observable outcome,
-independent proof, coherence, dependency burden, reversibility, learning value, integration path,
-and the state left if later work is cancelled.
+## Plan
 
-Record two separate verdicts:
+Compare only genuinely different, outcome-sized approaches. Consider observable result, proof,
+coherence, dependencies, reversibility, learning value, integration path, and cancellation state.
+Record `sufficient | needs-evidence | needs-decision` and grill only unresolved criteria, scope,
+dependencies, risks, or blocking Gaps.
 
-- Design Sufficiency: `sufficient | needs-evidence | needs-decision`
-- Slice Quality: `coherent | too-broad | fragmented | dependency-bound`
+Freeze a compact Mission preview:
 
-Compile the candidate with `mission prepare --input <json-file> --json`. A receipt is ready only
-when the verdicts are `sufficient` and `coherent`, no blocking Gap remains, its exact source
-fingerprints and baseline still match, and freshness has not expired. Material discovery returns
-the affected path here and produces a new receipt; it does not create a Design lifecycle state or
-mandatory design document.
+- title, owner, outcome, applicable Contract, Git baseline;
+- one completion claim per verifiable domain with pass boundary and proof requirement;
+- `automatic | clustered | independent` review, defaulted once when shared;
+- Objectives with dependencies and claim coverage;
+- initial Run/operator, authority, mechanical and semantic scope;
+- budgets, dependencies, Gaps, stops, and recovery;
+- Markdown origin, rationale, detailed execution plan, and conditional bootstrap/review notes.
 
-Freeze one minimal completion criterion per evidence claim before Mission creation: exact claim,
-pass boundary, proof requirement, and `automatic | clustered | independent` review level. The
-receipt reports `unmet_requirements` and selects `adaptive-grill` only while a verdict, blocking
-Gap, coherent slice, or criterion remains unresolved. Ask plain, decision-sized questions about
-only those failures; make silent product assumptions explicit Decisions or Gaps. A receipt with no
-unmet requirements goes directly to owner activation without a mandatory interview.
-
-For each unresolved fork, ask in this compact grammar:
-
-`plain outcome -> technical basis -> {action -> consequence} -> recommended default`.
-
-Use concrete verbs such as `publish RC.2`, `revise the criterion`, or `leave the Mission defined`;
-do not substitute internal labels such as `accept`, `bounce`, or `escalate` unless the same line
-defines the exact state change. Once the owner accepts a recurring pattern, carry it as a default
-and ask only for remaining variables.
-
-Present the complete Mission envelope once: outcome, Objectives, frozen completion contract, scope,
-authority/effects, evidence claims, dependencies/Gaps, checks, budgets, expiry, stops, recovery,
-return, and preparation receipt. Only owner approval permits `mission create` and activation.
+Present that preview once. Owner confirmation freezes the semantic envelope. During a declared
+manual bootstrap, hand-author `MISSION.md`, generate valid identities, and verify its structure
+directly. With supported tooling, let `mission start` generate identities, bindings, activation,
+and the canonical path atomically from the approved plan.

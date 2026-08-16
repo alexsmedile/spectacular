@@ -52,14 +52,15 @@ func TestCanonicalSkillDefinesLeanExecutionAndFROST(t *testing.T) {
 	}
 	content := string(core) + string(execute) + string(audit)
 	for _, required := range []string{
-		"card -> claim packet -> exact sources -> full bundle",
-		"disjoint claims + dependencies",
+		"Mission card -> current Objective -> exact sources",
+		"The plan supplies meaning",
+		"Mechanical tooling supplies repeatability",
+		"manual-bootstrap",
 		"focused checks",
-		"local green commit",
-		"one push boundary",
 		"Frozen fit",
 		"Truth of proof",
-		"active Mission remains governed by the preparation schema",
+		"active Mission retains the schema",
+		"A Decision is not activation authority",
 	} {
 		if !strings.Contains(content, required) {
 			t.Fatalf("canonical Skill omits %q", required)

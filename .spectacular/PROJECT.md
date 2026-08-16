@@ -2,7 +2,7 @@
 type: Anchor
 id: 019fe381-5d61-7223-b362-03a5f99a7b13
 title: Spectacular v2
-updated: "2026-08-15T23:17:14Z"
+updated: "2026-08-16T10:31:30Z"
 boundaries:
     - v2 is the sole live product surface.
     - Canonical Markdown remains directly understandable without a database or generated view.
@@ -15,6 +15,7 @@ current_truth:
     - Anchor:019fe381-5d61-7223-b362-03a5f99a7b15
     - Anchor:019fe381-5d61-7223-b362-03a5f99a7b16
     - Contract:019fe381-5d61-7223-b362-03a5f99a7b10
+    - Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
 direction: Make governed agentic software work legible, recoverable, and safe for humans and machines.
 freshness_checked_at: "2026-08-10T00:00:00Z"
 freshness_source: .spectacular/workspace.yaml

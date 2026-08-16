@@ -2,158 +2,158 @@
 type: Mission
 id: 01a009ff-ce94-724e-a6f8-66783f1a4003
 ref: M5
-title: Implement compact expandable Missions
+title: Align the Spectacular Skill with compact Missions
 status: active
 owner: Alex
 created: "2026-08-16T09:55:54Z"
-updated: "2026-08-16T10:15:36Z"
+updated: "2026-08-16T10:37:53Z"
 
 contract:
   ref: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
   fingerprint: sha256:aa2f59e740e9526bacef1dd9999127861836460e5f2f96b5fe05bc86a458ee1a
 
 baseline:
-  commit: ddcd153622e5f5bd036ff090fff992f2d0885c64
+  commit: 67315afc50a197d245f14c90da7b45dad1506973
   branch: codex/lean-launch-context
 
-outcome: Spectacular starts, runs, expands, and completes a Mission through one compact MISSION.md while restoring deterministic CLI support for the new model.
+outcome: The Spectacular Skill operates the compact Mission model immediately, assigns meaning to LLM judgment and repeatable invariants to mechanics, and leaves a frozen Contract and separate Mission plan for the CLI implementation.
 review: independent
 
 completion:
-  - claim: mission-model
-    pass_boundary: Proposal is optional exploration, Mission is the frozen execution plan, specifications are ordinary Mission work, and Decision is an ADR-like record rather than lifecycle approval.
-    proof_requirement: Domain, workspace, Skill, and command tests exercise the same vocabulary and refuse contradictory lifecycle authority.
-  - claim: atomic-start
-    pass_boundary: One mission start command validates an approved plan, generates stable UUIDv7 identities, creates only MISSION.md with inline Objectives and R1, records activation, and either commits the whole creation or writes nothing.
-    proof_requirement: Focused real-process tests cover success, invalid input, retry safety, rollback, compact output, and cold recovery from MISSION.md.
-  - claim: selective-expansion
-    pass_boundary: Objective promotion and additional Run creation produce dedicated files only when requested, preserve identity, replace inline detail with pointers, and require no Mission index.
-    proof_requirement: Tests cover inline state, promotion, second-Run expansion, stable references, and reconstruction through mission show.
-  - claim: single-closure
-    pass_boundary: One mission complete flow checks frozen criteria, includes required specification edits in ordinary work, and presents one owner gate without a separate Contract reconciliation command.
-    proof_requirement: Closure tests cover satisfied, incomplete, stale, and owner-gated outcomes, followed by one compact full verification run.
+  - claim: skill-model
+    pass_boundary: The core Skill and routed references consistently teach optional Proposal exploration, compact MISSION.md execution, earned expansion, ADR-like Decisions, ordinary specification edits, and one completion gate.
+    proof_requirement: Focused content checks find the new vocabulary in its owning references and find no mandatory preparation receipt, lifecycle Decision, Mission index, or reconciliation path in active guidance.
+  - claim: judgment-mechanics-boundary
+    pass_boundary: Guidance assigns contextual meaning, prose, decomposition, and problem-solving to the LLM while reserving schema invariants, exact bindings, atomic transitions, and refusals for supported mechanics.
+    proof_requirement: The core Skill gives concrete routing rules for supported tooling and manual-bootstrap work without claiming that either surface replaces owner judgment.
+  - claim: progressive-context
+    pass_boundary: Routine orientation and execution load MISSION.md, the current Objective, and exact sources before optional detail; obsolete CLI catalogs and unchanged project history are not routine context.
+    proof_requirement: Skill structure and reference checks confirm one routed file per job, compact continuity, earned file promotion, and no duplicate policy blocks.
+  - claim: cli-work-defined
+    pass_boundary: A focused mechanical CLI Contract and planned M6 freeze the accepted decoder, command, validation, review, refusal, atomicity, and stress-test properties without starting CLI implementation inside M5.
+    proof_requirement: The Contract and M6 are readable from the filesystem, bind exact identity, cover every accepted property, and keep M6 inactive until M5 completion.
 
 objectives:
   - ref: O1
     id: 01a009ff-ce94-7249-accc-9c2a089d3080
-    outcome: Replace the old noun responsibilities and Mission schema with the compact freeze-and-expand model.
-    status: pending
-    claims: [mission-model]
+    outcome: Rewrite the core Skill around the compact Mission schema and the judgment/mechanics boundary.
+    status: implemented
+    claims: [skill-model, judgment-mechanics-boundary]
   - ref: O2
     id: 01a009ff-ce94-7585-ae70-34adfff1c44b
-    outcome: Implement atomic Mission start, Objective promotion, and additional Run creation.
-    status: pending
+    outcome: Rewrite routed preparation, execution, runtime, review, completion, and audit guidance with progressive disclosure.
+    status: implemented
     after: [O1]
-    claims: [atomic-start, selective-expansion]
+    claims: [progressive-context]
   - ref: O3
     id: 01a009ff-ce94-7c74-a7d8-0f384b429fbc
-    outcome: Implement single Mission completion and restore proportionate mechanical validation for the new model.
-    status: pending
+    outcome: Freeze the mechanical CLI Contract and a separate planned Mission with adversarial validation properties.
+    status: implemented
     after: [O2]
-    claims: [single-closure]
+    claims: [cli-work-defined]
 
 run:
   ref: R1
   id: 01a009ff-ce94-7323-a942-754ef422e264
-  status: active
+  status: awaiting-review
   operator: Codex primary session
-  started_at: "2026-08-16T09:55:54Z"
-  current_objective: O1
+  started_at: "2026-08-16T10:31:30Z"
+  current_objective: O3
   repairs: 0
 
 activation:
   by: Alex
-  at: "2026-08-16T09:55:54Z"
+  at: "2026-08-16T10:31:30Z"
+  fingerprint: sha256:d9446e3fcb01c67f4d7d464ce721289f28a24734d8857a2297131e4ba7464717
 
-validation: manual-bootstrap
-mechanical_checks: [yaml-schema, uuidv7-identity, reference-integrity, contract-binding, baseline-binding, completion-claim-coverage, objective-dependency-dag, run-state, authority-vocabulary, file-layout]
+validation:
+  schema: mission.v2
+  mode: manual-bootstrap
 
 authority:
   operator: [inspect, edit-in-scope, choose-reversible-implementation, run-checks, generate-derived-files, bounded-repair, commit-local]
   requires_owner: [change-outcome-or-completion, expand-scope, push, merge, release, irreversible-change, destructive-data, secret-change]
 
 scope:
-  mechanical: [cmd/spectacular/, internal/, skills/spectacular/, install/, .spectacular/]
+  mechanical: [skills/spectacular/, cmd/assemble-release/main_test.go, .spectacular/PROJECT.md, .spectacular/contracts/, .spectacular/missions/M5-implement-compact-expandable-missions/, .spectacular/missions/M6-implement-compact-mission-cli/]
   semantic:
-    - Spectacular v2 Mission preparation, execution, expansion, validation, and closure.
-    - Proposal, Mission, Contract, Decision, Objective, Run, Evidence, and owner/operator responsibilities.
-    - Existing v2 Missions remain readable without migration or a compatibility reader.
+    - Spectacular Skill behavior for compact Mission preparation, execution, review, completion, and recovery.
+    - Division of work between LLM judgment and deterministic mechanics.
+    - Mechanical CLI requirements and stress properties, but not CLI implementation.
 
-repair_budget: 3
+repair_budget: 2
 dependencies: []
 gaps: []
 
 stops:
-  - Changing the approved outcome, completion criteria, or observable Mission lifecycle.
-  - Weakening atomic creation, stable identity, cold recovery, or owner authority.
-  - Requiring migration, a compatibility reader, generic record mutation, or restored ceremony.
+  - Expanding M5 into CLI implementation instead of leaving that work to M6.
+  - Moving contextual product judgment into rigid mechanics or exact repeatable invariants into prose alone.
+  - Reintroducing mandatory Proposal, preparation receipt, lifecycle Decision, Mission index, or reconciliation ceremony.
 ---
 # Mission
 
-## Origin and product impact
+## Origin and amendment
 
-This Mission comes from the owner-confirmed 2026-08-16 design session; no
-persistent Proposal file was needed. It implements Spectacular product Contract
-version 2. Product specifications are working files in the same change as code,
-tests, Skill guidance, and CLI behavior, with no later reconciliation step.
+The owner split the work after the compact schema checkpoint: update the Skill
+first, then implement the mechanical CLI in a separate Mission. This
+owner-confirmed amendment replaces M5's original CLI implementation scope while
+preserving its identities and compact file structure.
+
+## LLM and mechanical work
+
+Use the LLM directly for fuzzy intent, adaptive questions, criteria wording,
+semantic scope, coherent Objectives, prose, contextual problem-solving, and
+drafting canonical Markdown. These jobs benefit from broad understanding and
+usually cost less than encoding every edit through a rigid command payload.
+
+Use scripts or CLI for YAML/schema validity, UUIDv7 and reference integrity,
+fingerprints, baseline checks, dependency graphs, authority vocabulary, safe
+paths, atomic multi-file transitions, retries/concurrency, state transitions,
+compact projections, and exact refusals. These jobs are repeated, objectively
+checkable, and expensive to perform inconsistently.
+
+The plan supplies meaning; supported mechanics supply invariants. Neither
+surface decides owner intent or claims that structural validity proves quality.
 
 ## Execution plan
 
-### O1 — Canonical model
+### O1 — Core Skill
 
-- Make Proposal an optional, mutable exploration artifact that may live in a
-  Spectacular file, an issue, or the preparation conversation.
-- Freeze the selected outcome, completion criteria, boundaries, inline
-  Objectives, and initial Run in `MISSION.md` at start.
-- Record activation directly in the Mission; reserve Decision for durable
-  ADR-like choices.
-- Remove mandatory preparation receipts, lifecycle Decisions, Mission-local
-  indexes, and separate Contract reconciliation from the new path.
-- Keep existing v2 Missions readable without rewriting them; one current reader
-  must understand compact inline records and expanded referenced records.
+- Replace the old Proposal/receipt/Decision/reconciliation lifecycle with the
+  approved working model and compact Mission schema.
+- Teach one preflight, progressive context, earned expansion, owner/operator
+  authority, and the manual-bootstrap fallback.
+- State the LLM/mechanics decision rule in concrete terms.
 
-### O2 — Start and expand
+### O2 — Routed guidance
 
-- Add `spectacular mission start` as the atomic typed entry point. A persisted
-  Proposal may be supplied, but it is not required and is never created by the
-  command.
-- Generate UUIDv7 identities, retry identity, baseline, activation, O1…On, and
-  R1 mechanically without exposing those details in routine input.
-- Initially create only `<mission>/MISSION.md`.
-- Add `spectacular objective promote M5/O1`; preserve the Objective UUID and
-  replace its inline detail with a file pointer.
-- Add `spectacular run start M5 --title <title>`; when R2 is needed, create
-  `runs/R1-*.md` and `runs/R2-*.md`, preserve R1 identity, and point the Mission
-  at the active Run.
+- Make Proposal optional exploration and adaptive grilling conditional.
+- Freeze Mission activation directly with an owner-attributed boundary
+  fingerprint.
+- Promote Objectives for delegation and Runs for real execution boundaries.
+- Record earned Evidence/review only when completion requires it.
+- Close through one Mission owner gate with product specifications in the same
+  worktree.
 
-### O3 — Complete and restore validation
+### O3 — CLI Contract and next Mission
 
-- Add `spectacular mission complete M5` as the single closure entry point.
-- Check frozen completion criteria, required Evidence, independent review,
-  relevant code and specification edits, and freshness before presenting one
-  owner gate.
-- Replace the old mandatory create/transition/reconcile path rather than
-  retaining it as a second public workflow.
-- Update the Skill, generated interface, fixtures, and focused tests.
-- Run changed-scope tests during each cluster and `bash test/verify.sh all` once
-  after integration, with detailed logs only on failure.
-- Confirm that the restored CLI can inspect and validate this hand-authored M5
-  without modifying it.
+- Write one focused Contract for the typed Mission-bundle decoder, minimal
+  command surface, schema-owned validation, independent-review record, precise
+  refusals, atomic transitions, and stress properties.
+- Create M6 as a planned, inactive Mission bound to that Contract and dependent
+  on M5 completion.
+- Keep current CLI mutation and validation out of service for compact Missions.
 
 ## Bootstrap conditions
 
-The current CLI implements the previous Mission model. Until O3 restores the
-mechanical checks named in frontmatter, M5 is maintained directly as canonical
-Markdown and current CLI validation or mutation output is not completion proof.
-
-During the bootstrap, manual checks own YAML syntax, identity uniqueness,
-references, Contract and baseline bindings, completion claim coverage,
-Objective dependencies, Run state, authority vocabulary, and file placement.
-The bootstrap ends only when the restored CLI validates M5 without rewriting it.
+Current CLI behavior implements the superseded lifecycle and is not proof for
+M5. Manual checks own YAML syntax, UUIDv7 uniqueness, Contract/baseline and
+activation fingerprints, completion coverage, Objective dependency order,
+current Run, authority/scope, and one-file placement.
 
 ## Independent review
 
-After implementation and the single full verification gate, a fresh reviewer
-assesses all four completion claims against their frozen pass boundaries and
-proof requirements. The reviewer reports claim results and concrete defects;
-it does not redefine success criteria or repeat implementation work.
+After O3, create one earned review file under `reviews/`. A fresh reviewer checks
+all four claims against this exact tree, reports claim verdicts, findings, and
+limitations, and does not rewrite criteria or repeat implementation work. M5
+then returns one owner completion gate; M6 remains planned until that gate closes.

@@ -1,96 +1,110 @@
 ---
 name: spectacular
 version: 2.1.0
-description: Guide work in a canonical Spectacular v2 workspace from cold orientation through Proposal, Mission preparation, governed execution, Evidence assessment, reconciliation, and closure. Use for `/spectacular` jobs such as orient, propose, define, decide, start, resume, handoff, assess, reconcile, resolve, or audit; for compiling bounded runtime context or an explicit Autopilot charter; and for safely continuing a Mission after session or runtime replacement.
+description: Guide work in a canonical Spectacular v2 workspace through optional Proposal exploration, compact Mission preparation and activation, governed execution, earned Objective/Run expansion, Evidence and review, owner completion, audit, and cold recovery. Use for `/spectacular` jobs such as orient, explore, propose, plan, start, resume, handoff, review, complete, or audit; for compiling bounded runtime context or an Autopilot charter; and for safely continuing after session or runtime replacement.
 ---
 
 # Spectacular
 
-Operate one bounded Mission from accepted project truth. Keep judgment here, deterministic
-validation in the `spectacular` binary, execution in the host runtime, and provider effects in
-their native providers.
+Operate one bounded Mission from accepted project truth. Keep semantic judgment in the Skill and
+host session, deterministic invariants in supported mechanical tooling, execution in the host
+runtime, and provider effects in their native providers.
+
+## Working model
+
+| Surface | Responsibility |
+|---|---|
+| Proposal | Optional, mutable exploration in chat, an issue, or a Spectacular file |
+| Mission | Frozen execution plan and primary entry point in `MISSION.md` |
+| Contract/specification | Accepted product behavior; edit as ordinary Mission work |
+| Decision | ADR-like durable choice and rationale, never routine lifecycle approval |
+| Objective / Run | Inline while simple; promoted to a file only when independently useful |
+| Evidence / review | Earned proof and assessment; neither silently changes success criteria |
 
 ## Start every workflow
 
-1. Discover the explicit v2 workspace; never fall back to a v1 directory or implicit convention.
-   Read `.spectacular/PROJECT.md` first, or root `PROJECT.md` when the nested file is absent, then
-   read its named project Anchors. If both Project files exist, the nested Anchor wins and the root
-   file is supplementary. Treat readable Mission paths and scoped
-   references as navigation; retain UUIDv7 and fingerprints when binding authority or mutation.
-2. Run a read-only launch preflight before interviewing or mutating: workspace location; Git branch,
-   cleanliness, upstream and default-branch freshness; declared version and published release state;
-   active Mission/Run, authority, expiry and blocking Gaps; host cache/permission boundaries; and
-   generated drift. Report a plain outcome, one technical evidence line, and one clean next action.
-3. Compile only the entered scope:
-   `spectacular workspace context <project|Mission-ref> --event <@Event>`. Add `--json` only when
-   an exact source, mismatch, mutation input, or audit requires the full bundle.
-4. Treat the compiled bundle as a projection. Follow its source pointers for authority and use its
-   single continuation or owner gate; never repair canonical truth by editing the bundle.
-5. Load exactly one workflow reference below. Load the generated mechanical catalog only when
-   constructing or checking a CLI invocation.
-6. Revalidate baseline, source fingerprints, authority, expiry, budgets, and stops before every
-   consequential transition or resumed effect.
+1. Discover the explicit v2 workspace. Read `.spectacular/PROJECT.md` first, or root `PROJECT.md`
+   only when the nested file is absent, then read the named Anchors and relevant Contracts.
+2. Run one read-only launch preflight: workspace; Git branch, cleanliness, upstream/default-branch
+   freshness and release state; selected Mission; Contract/baseline bindings; owner and activation
+   fingerprint; validation mode; current Objective/Run; blocking dependencies, Gaps, and stops.
+   Report a plain outcome, one technical evidence line, and one clean next action.
+3. Enter one Mission through its `MISSION.md`. Read its compact frontmatter control card and body;
+   follow promoted Objective, Run, Evidence, or review pointers only when the current work needs
+   them. Do not preload project history, every record, or generated catalogs.
+4. If the Mission declares supported mechanical validation, use the typed `show`/`check` command.
+   If it declares `manual-bootstrap`, treat incompatible CLI mutation and validation as out of
+   service: edit canonical Markdown directly and check YAML, UUIDv7 identity, refs, fingerprints,
+   claim coverage, dependency DAG, Run state, authority, scope, and file layout without citing the
+   old CLI as proof.
+5. Load exactly one routed workflow reference below. Revalidate exact bindings, authority, budgets,
+   and stops before consequential effects or resumed work.
+
+## Divide meaning from mechanics
+
+The plan supplies meaning: outcome, completion criteria, decomposition, semantic scope, authority,
+dependencies, Gaps, stops, rationale, and prose. The LLM may draft or directly edit these canonical
+files when that is the fastest clear path, especially during exploration or a declared bootstrap.
+
+Mechanical tooling supplies repeatability: schema and vocabulary validation, UUIDv7/ref allocation,
+fingerprints, baseline checks, dependency integrity, safe paths, atomic multi-file transitions,
+concurrency/retry behavior, compact projections, and exact refusals. A Mission never chooses which
+mandatory validators apply; the active schema registry owns them.
+
+Use scripts or CLI when failure is expensive, the rule is exact and repeated, or a transition must
+be atomic. Use LLM judgment when meaning is contextual, prose carries the value, several solutions
+are valid, or encoding the work mechanically would cost more than checking the result.
+
+## Mission structure
+
+A simple active Mission begins with only `<mission>/MISSION.md`. Frontmatter holds identity, `ref`,
+status, owner, exact Contract/baseline bindings, outcome, review level, frozen completion claims,
+inline Objectives and current Run, activation fingerprint, validation mode, authority, mechanical
+and semantic scope, budgets, dependencies, Gaps, and stops. Markdown holds origin, rationale,
+detailed Objective plans, bootstrap conditions, examples, and review instructions.
+
+Create `objectives/` when detail, delegation, concurrent ownership, or independent review earns a
+separate Objective file. Create `runs/` when a distinct execution job, operator, baseline, or
+recovery boundary earns another Run. Preserve UUID/ref identity and replace inline detail with one
+pointer. `MISSION.md` remains the index; do not require a Mission-local `index.md`.
 
 ## Ask owner questions
 
-Ask only when a semantic, authority, risk, irreversible-effect, or current-Contract fork remains.
-Use four short parts: plain outcome; technical basis; concrete `action -> consequence` options; and
-the recommended default with its reason. Avoid unexplained workflow labels. Pair every simplified
-paragraph with one technical line and every technical paragraph with one plain summary.
+Ask only when a semantic, Mission-boundary, authority, risk, irreversible-effect, or current
+Contract fork remains. Use four short parts: plain outcome; technical basis; concrete
+`action -> consequence` options; and the recommended default with its reason. Do not impose an
+interview when the Mission is already sufficient. Make silent product assumptions explicit choices
+or Gaps, and carry previously accepted defaults forward.
 
 ## Route the guided job
 
-| Guided job | Load | Guardrails event |
-|---|---|---|
-| `orient` | [orient.md](references/orient.md) | `@Orient` |
-| `propose`, `define` | [prepare.md](references/prepare.md) | `@Prepare` |
-| `decide`, `start`, `resume` | [execute.md](references/execute.md) | `@Start` or `@Resume` |
-| `handoff`, Autopilot | [runtime.md](references/runtime.md) | `@Run` |
-| `assess`, `reconcile`, `resolve` | [close.md](references/close.md) | `@Assess`, `@Reconcile`, or `@Resolve` |
-| `audit` | [audit.md](references/audit.md) | phase being audited |
+| Guided job | Load |
+|---|---|
+| `orient` | [orient.md](references/orient.md) |
+| `explore`, `propose`, `plan` | [prepare.md](references/prepare.md) |
+| `start`, `resume` | [execute.md](references/execute.md) |
+| `handoff`, Autopilot | [runtime.md](references/runtime.md) |
+| `review`, `complete` | [close.md](references/close.md) |
+| `audit` | [audit.md](references/audit.md) |
 
-`message` is canonical vocabulary but has no executable Link/Message substrate in this MVP. Return
-an explicit capability Gap; do not substitute Handoff, invent persistence, or mutate another
-Mission.
+## Authority and execution
 
-## Authority rules
+- The Mission owner alone changes outcome, completion criteria, semantic scope, review independence,
+  or the forbidden-effect ceiling. Record the owner and activation time plus a fingerprint over the
+  frozen semantic envelope. Mutable Objective/Run progress is outside that fingerprint.
+- The operator may choose reversible implementation attempts, tools, checks, and bounded repairs
+  inside the Mission. Return scope expansion, irreversible/provider effects, exhausted repair, or a
+  stop condition to the owner.
+- Execute compactly: `Mission card -> current Objective -> exact sources -> work -> focused checks`.
+  Batch cohesive work, then run one full tree-bound gate before independent review or completion.
+- Fan out only outcome-sized, disjoint claim scopes with exact inputs, dependencies, authority,
+  stops, and return contracts. Avoid recursive critic loops and tiny sessions.
+- Keep Evidence, deterministic checks, independent review, owner acceptance, and completion
+  distinct. A green check proves only its stated observation.
 
-- Ask the owner only when a product, Mission-boundary, authority, risk, irreversible-effect, or
-  current-Contract decision is genuinely unresolved. Reversible implementation choices remain in
-  the approved envelope.
-- A guided workflow may draft inputs. Persist them only after confirmation and through the
-  registry-owned noun-first command in [mechanical-interface.md](generated/mechanical-interface.md).
-- Do not hand-author ordinary canonical records. Direct Markdown editing is limited to explicit
-  bootstrap or bounded repair; normal creation uses the CLI so identity, layout, indexes,
-  authorization, and idempotency stay coherent.
-- Never claim that a green check, record, Handoff, assessment, archive, or generated view proves
-  acceptance. Keep Evidence, assessment, owner disposition, reconciliation, resolution, and
-  archival distinct.
-- Never infer provider permission or effects. Record only attributable native-provider receipts.
-- Mission accountability stays with the primary owner across every Handoff. A host task or thread
-  identifier is only a non-authoritative destination pointer.
+## Continuity
 
-## Execution behavior
-
-After owner activation, execute the frozen Mission completion contract and use the host runtime's
-native plan for session-sized steps. Continue while approved work remains. A failed check begins
-bounded diagnosis and repair; it is not automatically a user gate. Stop only for an actual charter
-stop, new Type-1 decision, separate authority, irreversible/provider effect, or exhausted repair
-budget.
-
-The Mission owner alone changes semantic success criteria. The operator may change reversible
-attempts, tools, and validation mechanics inside the envelope, but any change to observable
-behavior, pass thresholds, failure cases, evidence strength, or review independence returns to the
-owner. Apply the criterion's frozen review level instead of prompting a generic harsh critic.
-
-Execute compactly: `card -> claim packet -> exact sources`; then
-`claims + dependencies -> work -> focused checks -> one full gate -> owner gate`. Load detailed
-execution, delegation, review, and Evidence rules only from the routed workflow reference.
-
-When Spectacular develops itself, an active Mission remains governed by the preparation schema and
-completion contract active at its creation. Product changes apply to the next Mission; never
-silently migrate the active self-hosting Mission to make it pass its own new rules.
-
-Return pointer-first continuity: Mission, current Objective and Run boundary, baseline, authority,
-Evidence/review and freshness, remaining Gaps, repair use, recovery point, and exactly one safe
-continuation or owner gate.
+Return Mission, owner, current Objective/Run, Contract and Git baseline, validation mode, review and
+Evidence state, remaining dependencies/Gaps, repair use, recovery point, and exactly one safe next
+action or owner gate. When Spectacular develops itself, the active Mission retains the schema and
+completion boundary frozen at activation; later product changes apply to later Missions.

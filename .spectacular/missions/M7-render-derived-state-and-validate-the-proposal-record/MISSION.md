@@ -2,9 +2,9 @@
 type: Mission
 id: 01a00af1-38c0-7268-9529-5856afc7b2f2
 title: Render derived state and validate the Proposal record
-status: active
+status: completed
 created: "2026-08-16T14:19:42Z"
-updated: "2026-08-16T20:42:56Z"
+updated: "2026-08-16T20:46:01Z"
 activation:
     at: "2026-08-16T21:30:00Z"
     by: Alex
@@ -47,6 +47,12 @@ completion:
     - claim: proposal-schema
       pass_boundary: A Proposal validates against the compact authored shape of type, id, ref, title, status, created_by, created, updated, and target_contract, with ref required on new records, legacy human_ref decoded and reported as drift rather than refused, and no creation command provided.
       proof_requirement: Every Proposal in the repository validates with legacy fields preserved and human_ref reported as drift; negative tests assert refusal on missing required fields and assert no proposal creation command is accepted.
+completion_record:
+    at: "2026-08-16T20:46:01Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 80f69e4e0b481566d52b0e9f8b113e3fc041c604
 contract:
     fingerprint: sha256:1ffd39b498b44dce4e77cdf902f5f827bdf40eb2b317573c38a405f9b9ae9a0b
     ref: Contract:01a00aae-8921-7b27-96a9-1a4c175e7dc6
@@ -131,7 +137,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-16T14:19:42Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - cmd/spectacular/

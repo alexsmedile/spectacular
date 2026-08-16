@@ -3,14 +3,18 @@ type: Mission
 id: 01a00a20-63dd-7bc6-b0a2-cb443fd6d194
 ref: M6
 title: Implement the compact Mission CLI
-status: defined
+status: active
 owner: Alex
 created: "2026-08-16T10:31:30Z"
-updated: "2026-08-16T10:38:58Z"
+updated: "2026-08-16T10:53:23Z"
 
 contract:
   ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
   fingerprint: sha256:80336b159e296ba63b5d85c80a48f8e540ae07d9aac52cdcdba4730059378a48
+
+baseline:
+  commit: e0e2fdcc6874adb0750b9e07cae43d6f09febc6d
+  branch: codex/lean-launch-context
 
 outcome: Spectacular provides a small typed CLI that validates compact Mission bundles and performs only the repeated or atomic mechanics that are safer and cheaper than LLM-only execution.
 review: independent
@@ -48,9 +52,23 @@ objectives:
     after: [O2]
     claims: [atomic-stress]
 
+run:
+  ref: R1
+  id: 01a00a34-6ce4-73fd-b7d3-5cdad9302124
+  status: active
+  operator: Codex primary session
+  started_at: "2026-08-16T10:53:23Z"
+  current_objective: O1
+  repairs: 0
+
+activation:
+  by: Alex
+  at: "2026-08-16T10:53:23Z"
+  fingerprint: sha256:2bb4d9ff6f84db040db5eb7ecdbeb392f93aac0c242cca7bce1cfe04679ff7c5
+
 validation:
   schema: mission.v2
-  mode: planned
+  mode: manual-bootstrap
 
 authority:
   operator: [inspect, edit-in-scope, choose-reversible-implementation, run-checks, generate-derived-files, bounded-repair, commit-local]
@@ -78,10 +96,11 @@ stops:
 
 ## Activation boundary
 
-M6 is planned but inactive. Activate it only after M5's Skill changes receive
-independent review and owner completion. At activation, record the exact Git
-baseline, owner/time, and fingerprint of the frozen semantic envelope, then add
-inline R1. Until then, no CLI implementation belongs to M6.
+M6 activated after M5 received independent review and owner completion. Its
+exact Git baseline, owner/time, frozen semantic-envelope fingerprint, and inline
+R1 are recorded above. Validation remains `manual-bootstrap` until the
+replacement CLI can check this Mission and the completed M5 without rewriting
+either file.
 
 ## Why mechanics earn tooling
 

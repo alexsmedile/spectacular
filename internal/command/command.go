@@ -220,12 +220,17 @@ func inputPath(cwd, path string) string {
 func renderHuman(writer io.Writer, value any) {
 	switch item := value.(type) {
 	case *missionbundle.Bundle:
-		fmt.Fprintf(writer, "%s — %s\nState: %s\nOutcome: %s\nPath: %s\n", item.Ref, item.Title, item.Status, item.Outcome, item.Path)
-		if item.Run != nil {
-			fmt.Fprintf(writer, "Run: %s (%s)\n", item.Ref+"/"+item.Run.Ref, item.Run.Status)
-		}
-		for _, objective := range item.Objectives {
-			fmt.Fprintf(writer, "Objective: %s/%s — %s (%s)\n", item.Ref, objective.Ref, objective.Outcome, objective.Status)
+		state := item.Derive()
+		fmt.Fprintf(writer, "%s — %s\n", item.Ref, item.Title)
+		fmt.Fprintln(writer, stateLine(item, state))
+		fmt.Fprintf(writer, "NEXT: %s (%s)\n", state.Next, state.Holder)
+		fmt.Fprintf(writer, "Outcome: %s\nPath: %s\n", item.Outcome, item.Path)
+		for _, objective := range state.Objectives {
+			suffix := ""
+			if len(objective.BlockedBy) > 0 {
+				suffix = " — waits " + strings.Join(objective.BlockedBy, ", ")
+			}
+			fmt.Fprintf(writer, "  %s %s/%s — %s%s\n", readinessGlyph(objective.Readiness), item.Ref, objective.Ref, objective.Outcome, suffix)
 		}
 	case missionbundle.Check:
 		fmt.Fprintf(writer, "%s valid=%t schema=%s checks=%d\n", item.Ref, item.Valid, item.Schema, len(item.Checks))
@@ -238,6 +243,44 @@ func renderHuman(writer io.Writer, value any) {
 	default:
 		data, _ := json.MarshalIndent(value, "", "  ")
 		fmt.Fprintln(writer, string(data))
+	}
+}
+
+// stateLine states lifecycle position in one line. Every field is derived; the
+// line is never stored, so it cannot disagree with the record it summarizes.
+func stateLine(bundle *missionbundle.Bundle, state missionbundle.State) string {
+	parts := []string{"State: " + state.Status}
+	if state.Run != "" {
+		parts = append(parts, fmt.Sprintf("run %s (%s)", state.Run, state.RunStatus))
+	}
+	if len(state.Objectives) > 0 {
+		parts = append(parts, fmt.Sprintf("%d/%d done", state.Done, len(state.Objectives)))
+		if state.Startable > 0 {
+			parts = append(parts, fmt.Sprintf("%d startable", state.Startable))
+		}
+		if state.Blocked > 0 {
+			parts = append(parts, fmt.Sprintf("%d blocked", state.Blocked))
+		}
+	}
+	if state.Budget > 0 {
+		parts = append(parts, fmt.Sprintf("repairs %d/%d", state.Repairs, state.Budget))
+	}
+	if len(bundle.Completion) > 0 {
+		parts = append(parts, fmt.Sprintf("%d claims", len(bundle.Completion)))
+	}
+	return strings.Join(parts, " · ")
+}
+
+func readinessGlyph(readiness missionbundle.Readiness) string {
+	switch readiness {
+	case missionbundle.ReadyDone:
+		return "✓"
+	case missionbundle.ReadyActive:
+		return "◐"
+	case missionbundle.ReadyStartable:
+		return "▶"
+	default:
+		return "·"
 	}
 }
 

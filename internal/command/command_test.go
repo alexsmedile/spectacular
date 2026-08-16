@@ -256,3 +256,82 @@ func digestTree(t *testing.T, root string) string {
 	})
 	return hex.EncodeToString(hash.Sum(nil))
 }
+
+// The frozen boundary names `show` first: a Mission with inline Objectives and
+// the same Mission with those Objectives promoted must render identically. The
+// package-level equivalence test compares derived structures, which leaves the
+// human renderer — the surface a reader actually sees — unguarded. This drives
+// the real CLI, so a change to renderHuman that leaks storage layout into the
+// output fails here.
+func TestShowRendersIdenticallyAcrossInlineAndPromotedObjectives(t *testing.T) {
+	root, contractRef := fixture(t)
+	plan := `---
+type: MissionPlan
+title: Render equivalence across representations
+owner: Alex
+contract:
+  ref: ` + contractRef + `
+outcome: Promotion changes storage, never the rendered conclusion.
+review: independent
+completion:
+  - claim: equivalence
+    pass_boundary: Inline and promoted bundles render identically.
+    proof_requirement: Real command output is compared byte for byte.
+objectives:
+  - outcome: Extract the shared derivation layer.
+    claims: [equivalence]
+  - outcome: Render the compact state line.
+    claims: [equivalence]
+    after: [O1]
+  - outcome: Compute per-claim drift flags.
+    claims: [equivalence]
+    after: [O1]
+authority:
+  operator: [inspect, edit-in-scope, choose-reversible-implementation, run-checks, generate-derived-files, bounded-repair, commit-local]
+  requires_owner: [activate-mission, change-outcome-or-completion, expand-scope, push, merge, release, irreversible-change, destructive-data, secret-change]
+scope:
+  mechanical: [internal/]
+  semantic: [Representation equivalence.]
+repair_budget: 1
+dependencies: []
+gaps: []
+stops: [scope-drift]
+---
+# Mission
+
+Prove the renderer is blind to storage layout.
+`
+	run(t, root, []byte(plan), 0, "mission", "start", "-", "--json")
+
+	// Every surface a reader can reach without --json. Adding a human-rendered
+	// surface without adding it here leaves it unguarded, which is the failure
+	// this test exists to prevent.
+	surfaces := [][]string{
+		{"mission", "show", "M1"},
+		{"mission", "show", "M1", "--graph"},
+		{"objective", "show", "M1/O1"},
+		{"objective", "show", "M1/O2"},
+		{"mission", "check", "M1"},
+	}
+	inline := map[string]string{}
+	for _, args := range surfaces {
+		inline[strings.Join(args, " ")] = run(t, root, nil, 0, args...)
+	}
+
+	// Promote a root and a leaf, so the bundle mixes both representations rather
+	// than converting wholesale.
+	for _, ref := range []string{"M1/O1", "M1/O3"} {
+		run(t, root, nil, 0, "objective", "promote", ref, "--json")
+	}
+	if matches, _ := filepath.Glob(filepath.Join(root, ".spectacular", "missions", "M1-*", "objectives", "*.md")); len(matches) != 2 {
+		t.Fatalf("promotion wrote %d Objective files, want 2", len(matches))
+	}
+
+	for _, args := range surfaces {
+		name := strings.Join(args, " ")
+		promoted := run(t, root, nil, 0, args...)
+		if inline[name] != promoted {
+			t.Errorf("`spectacular %s` differs between representations:\n--- inline ---\n%s\n--- promoted ---\n%s", name, inline[name], promoted)
+		}
+	}
+}

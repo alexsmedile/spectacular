@@ -110,6 +110,28 @@ func TestGraphFallsBackToLevelSetsOnlyWhenTooWide(t *testing.T) {
 	}
 }
 
+// The threshold itself is the contract, not a value far on either side of it.
+// A graph that fits exactly must stay a graph, and one rune narrower must fall
+// back — so an off-by-one in the selection rule fails here.
+func TestGraphSelectionIsExactAtTheWidthThreshold(t *testing.T) {
+	bundle := graphBundle(
+		objective("O1", "implemented"),
+		objective("O2", "pending", "O1"),
+		objective("O3", "pending", "O2"),
+		objective("O4", "pending", "O3"),
+	)
+	// Derive the threshold from the rendering rather than hardcoding it, so the
+	// assertion survives a heading change but still pins the boundary exactly.
+	threshold := graphWidth(bundle.objectiveGraph(bundle.Derive()))
+
+	if atThreshold := bundle.Graph(threshold); strings.Contains(atThreshold, "L0") {
+		t.Fatalf("a graph that fits exactly at width %d must not fall back:\n%s", threshold, atThreshold)
+	}
+	if belowThreshold := bundle.Graph(threshold - 1); !strings.Contains(belowThreshold, "L0") {
+		t.Fatalf("a graph one rune too wide for %d must fall back to level sets:\n%s", threshold-1, belowThreshold)
+	}
+}
+
 // Level sets name each Objective, so a reader is not forced to look up a ref,
 // and mark which work is independent.
 func TestLevelSetsNameObjectivesAndMarkParallelWork(t *testing.T) {

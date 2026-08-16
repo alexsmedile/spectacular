@@ -2,32 +2,84 @@
 
 ## Explore
 
-Use a Proposal only when exploration benefits from a durable place for the problem, alternatives,
-questions, research, or draft specifications. It may instead remain in an issue or the current
-conversation. A Proposal is mutable, optional, and neither authority nor current product truth.
+A Proposal is optional. Use one only when the exploration deserves a durable home
+— for the problem, alternatives, open questions, research, or a draft
+specification. Otherwise leave it in an issue or in the conversation.
 
-Read current Contracts/specifications before proposing observable behavior. Edit those files as
-ordinary Mission work after a direction is frozen; do not require a separate reconciliation
-lifecycle.
+A Proposal is mutable. It is neither authority nor current product truth.
+
+Read the current Contracts and specifications before proposing observable
+behavior. Once a direction is frozen, edit those files as ordinary Mission work.
+There is no separate reconciliation lifecycle.
 
 ## Plan
 
-Compare only genuinely different, outcome-sized approaches. Consider observable result, proof,
-coherence, dependencies, reversibility, learning value, integration path, and cancellation state.
-Record `sufficient | needs-evidence | needs-decision` and grill only unresolved criteria, scope,
-dependencies, risks, or blocking Gaps.
+Compare only approaches that genuinely differ and are outcome-sized. Weigh each on:
 
-Freeze a compact Mission preview:
+- observable result, and the proof it would need
+- coherence with what exists
+- dependencies and reversibility
+- learning value
+- integration path
+- what happens if it is cancelled
 
-- title, owner, outcome, applicable Contract, Git baseline;
-- one completion claim per verifiable domain with pass boundary and proof requirement;
-- `automatic | clustered | independent` review, defaulted once when shared;
-- Objectives with dependencies and claim coverage;
-- initial Run/operator, authority, mechanical and semantic scope;
-- budgets, dependencies, Gaps, stops, and recovery;
-- Markdown origin, rationale, detailed execution plan, and conditional bootstrap/review notes.
+Record one verdict: `sufficient | needs-evidence | needs-decision`.
 
-Present that preview once. Owner confirmation freezes the semantic envelope. During a declared
-manual bootstrap, hand-author `MISSION.md`, generate valid identities, and verify its structure
-directly. With supported tooling, let `mission start` generate identities, bindings, activation,
-and the canonical path atomically from the approved plan.
+Then grill only what is still unresolved — criteria, scope, dependencies, risks,
+or blocking Gaps. Do not re-interview settled ground.
+
+## Freeze a compact Mission preview
+
+Frontmatter:
+
+- title, owner, outcome, applicable Contract, Git baseline
+- one completion claim per verifiable domain, each with a pass boundary and a
+  proof requirement
+- review level: `automatic | clustered | independent`, defaulted once when shared
+- Objectives, with dependencies and claim coverage
+- initial Run and operator, authority, mechanical and semantic scope
+- budgets, dependencies, Gaps, stops, recovery
+
+Markdown body:
+
+- origin and rationale
+- the detailed execution plan
+- conditional bootstrap and review notes
+
+A claim is the part most often written too vaguely. It needs a boundary that can
+fail, and a proof that names the test:
+
+```yaml
+completion:
+    - claim: drift-flags
+      pass_boundary: Each frozen completion claim carries named drift flags
+          derived from repairs consumed, evidence age, verdict state, and
+          fingerprint age.
+      proof_requirement: Table-driven fixtures with known repair counts and
+          evidence ages assert the exact flag set, the ranking, and the default
+          selection including tie behavior.
+```
+
+`pass_boundary` states what must be observably true. `proof_requirement` states
+what would demonstrate it. "Works correctly" is neither.
+
+Present the preview **once**, in chat. Owner confirmation freezes the semantic
+envelope.
+
+The preview is a plan document, not yet a Mission. It carries no UUID, no
+activation block, and no fingerprint — `mission start` generates those. For the
+field-by-field shape of what it becomes, see
+[mission-anatomy.md](mission-anatomy.md).
+
+## Then activate
+
+```bash
+spectacular mission start plan.md --json   # or: ... start - --json  (stdin)
+spectacular mission check <ref> --json     # confirm what was generated
+```
+
+It generates identities, bindings, activation, and the canonical path at
+`.spectacular/missions/<slug>/MISSION.md` — atomically, from the approved plan.
+
+Under a declared manual bootstrap, hand-author that file, generate valid
+identities, and verify the structure directly — see [bootstrap.md](bootstrap.md).

@@ -3,10 +3,10 @@ type: Mission
 id: 01a009ff-ce94-724e-a6f8-66783f1a4003
 ref: M5
 title: Align the Spectacular Skill with compact Missions
-status: active
+status: completed
 owner: Alex
 created: "2026-08-16T09:55:54Z"
-updated: "2026-08-16T10:46:50Z"
+updated: "2026-08-16T10:52:24Z"
 
 contract:
   ref: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
@@ -55,11 +55,26 @@ objectives:
 run:
   ref: R1
   id: 01a009ff-ce94-7323-a942-754ef422e264
-  status: awaiting-review
+  status: completed
   operator: Codex primary session
   started_at: "2026-08-16T10:31:30Z"
   current_objective: O3
   repairs: 1
+
+reviews:
+  - ref: RV1
+    id: 01a00a33-87b8-7e0e-9100-450696ad1e80
+    file: reviews/RV1-independent-review.md
+    verdict: pass
+
+completion_record:
+  by: Alex
+  at: "2026-08-16T10:52:24Z"
+  authorization: Owner instructed M5 and M6 to continue through completion if no unresolved discrepancy remained.
+  reviewed_commit: 4074708c26c1158f4eb778b55c86aabe80979e76
+  review: RV1
+  limitations:
+    - Legacy CLI acceptance validation remains out of service until M6 replaces it.
 
 activation:
   by: Alex

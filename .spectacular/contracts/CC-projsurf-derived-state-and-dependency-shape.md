@@ -116,7 +116,7 @@ gaps:
     problem: Timelines across concurrently live Runs are not renderable; the Run model permits exactly one live Run.
     blocked_on: A Run-model change touching run start, fingerprints, atomicity, and review boundaries.
   - ref: dead-v1-governance-code
-    problem: ProposalInput, CreateProposal, and the candidate_* machinery in internal/governance are unreachable; proposal create is in the forbidden-command test and no current command calls them.
+    problem: ProposalInput, CreateProposal, and the candidate_* machinery in internal/governance are unreachable; proposal create is in the forbidden-command test and no current command calls them. The whole of internal/projection (917 lines of Card, Envelope, and ProjectView types) is likewise unreferenced by internal/command and internal/missionbundle, so the compact path never enters it and it carries no tests.
     blocked_on: A decision on whether removing them belongs with the Proposal schema work or with a separate cleanup.
   - ref: mission-ref-frontmatter-drift
     problem: M2, M3, and M4 carry `human_ref:` while M5 and M6 carry `ref:`, so Mission-order refs would otherwise be compared across two spellings.

@@ -745,10 +745,7 @@ func resolveContract(ws *discovery.Workspace, ref string) (Binding, error) {
 func nextMissionRef(ws *discovery.Workspace) string {
 	max := 0
 	for _, entry := range ws.OfType(domain.Mission) {
-		ref, _ := workspace.String(entry.Document, "ref", false)
-		if ref == "" {
-			ref, _ = workspace.String(entry.Document, "human_ref", false)
-		}
+		ref := workspace.RefOrEmpty(entry.Document)
 		if missionRefPattern.MatchString(ref) {
 			value, _ := strconv.Atoi(strings.TrimPrefix(ref, "M"))
 			if value > max {

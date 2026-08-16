@@ -111,7 +111,7 @@ func decode(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, error) {
 
 func decodeLegacy(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, error) {
 	doc := entry.Document
-	ref, err := workspace.String(doc, "human_ref", false)
+	ref, _, err := workspace.Ref(doc)
 	if err != nil {
 		return nil, err
 	}

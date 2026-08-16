@@ -234,6 +234,9 @@ func renderHuman(writer io.Writer, value any) {
 		}
 	case missionbundle.Check:
 		fmt.Fprintf(writer, "%s valid=%t schema=%s checks=%d\n", item.Ref, item.Valid, item.Schema, len(item.Checks))
+		for _, notice := range item.Notices {
+			fmt.Fprintf(writer, "notice: %s\n", notice)
+		}
 		if len(item.Drift) > 0 {
 			fmt.Fprintln(writer, "CLAIMS")
 			for _, claim := range item.Drift {

@@ -201,10 +201,7 @@ func load(root, marker string) (*Workspace, error) {
 		}
 		w.byPath[public] = entry
 		w.byID[doc.Record.ID] = entry
-		human, humanErr := workspace.String(doc, "ref", false)
-		if humanErr == nil && human == "" {
-			human, humanErr = workspace.String(doc, "human_ref", false)
-		}
+		human, _, humanErr := workspace.Ref(doc)
 		if humanErr != nil {
 			return nil, humanErr
 		} else if human != "" && (doc.Record.Type == domain.Mission || doc.Record.Type == domain.Contract || doc.Record.Type == domain.Proposal || doc.Record.Type == domain.Anchor) {

@@ -3,6 +3,7 @@ package missionbundle
 import (
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
@@ -251,4 +252,52 @@ func containsFlag(flags []Flag, want Flag) bool {
 		}
 	}
 	return false
+}
+
+// The rename from human_ref to ref stopped halfway. A reader must accept both
+// spellings while a checker reports the drift, because rewriting a frozen
+// record's frontmatter to finish a rename changes fingerprints for a cosmetic
+// reason. M8 validates Mission order against refs and needs one spelling.
+func TestRefSpellingDriftIsReportedNotRefused(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service := Service{Workspace: ws}
+	for ref, wantDrift := range map[string]bool{
+		"M2": true, "M3": true, "M4": true,
+		"M5": false, "M6": false, "M7": false,
+	} {
+		t.Run(ref, func(t *testing.T) {
+			check, checkErr := service.Check(ref)
+			if checkErr != nil {
+				t.Fatalf("legacy spelling must not refuse: %v", checkErr)
+			}
+			if !check.Valid {
+				t.Fatal("a legacy ref spelling is reported, never a validation failure")
+			}
+			drifted := false
+			for _, notice := range check.Notices {
+				if strings.Contains(notice, "ref-spelling-drift") {
+					drifted = true
+				}
+			}
+			if drifted != wantDrift {
+				t.Fatalf("ref-spelling-drift reported=%t, want %t", drifted, wantDrift)
+			}
+			// Every Mission resolves to its ref through the one decoder,
+			// whichever spelling the record uses.
+			bundle, loadErr := Load(ws, ref)
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+			if bundle.Ref != ref {
+				t.Fatalf("resolved ref %q, want %q regardless of spelling", bundle.Ref, ref)
+			}
+		})
+	}
 }

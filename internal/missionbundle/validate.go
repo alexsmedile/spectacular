@@ -54,6 +54,10 @@ func Validate(ws *discovery.Workspace, b *Bundle) (Check, error) {
 	if b.Legacy {
 		check.Schema = "legacy-v2"
 		check.Checks = []string{"canonical-record", "uuidv7-identity", "read-only-legacy-decoder"}
+		// Legacy records are exactly where the ref-spelling drift lives, so the
+		// notice is reported before returning rather than skipped with the
+		// mission.v2 validators.
+		check.Notices = b.Notices()
 		return check, nil
 	}
 	for _, item := range registry {
@@ -67,6 +71,7 @@ func Validate(ws *discovery.Workspace, b *Bundle) (Check, error) {
 	}
 	check.Authority = b.AuthorityTable()
 	check.Drift = b.Drift()
+	check.Notices = b.Notices()
 	return check, nil
 }
 

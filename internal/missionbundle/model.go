@@ -188,6 +188,10 @@ type Check struct {
 	Authority []AuthorityAnswer `json:"authority,omitempty"`
 	// Drift is the per-claim audit signal, most-flagged first. Derived on read.
 	Drift []ClaimDrift `json:"drift,omitempty"`
+	// Notices are reported, non-failing observations such as a record still
+	// using the legacy `human_ref:` spelling. A notice never makes Valid false:
+	// frozen records are not rewritten to finish a rename.
+	Notices []string `json:"notices,omitempty"`
 }
 
 type Result struct {

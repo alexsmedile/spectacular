@@ -1,6 +1,10 @@
 package missionbundle
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/alexsmedile/spectacular/v2/internal/workspace"
+)
 
 // Flag names one observed reason a claim may deserve attention. Flags are named
 // rather than scored: a score defaults cleanly but cannot be argued with, and
@@ -128,4 +132,19 @@ func (b *Bundle) AuditTarget() (ClaimDrift, bool) {
 		return ClaimDrift{}, false
 	}
 	return drift[0], true
+}
+
+// Notices reports observations that are worth telling a reader about but must
+// not fail validation. The legacy `human_ref:` spelling is the current case:
+// the rename to `ref:` stopped halfway, and rewriting a frozen record's
+// frontmatter to finish it would change fingerprints for a cosmetic reason.
+func (b *Bundle) Notices() []string {
+	if b.document == nil {
+		return nil
+	}
+	var notices []string
+	if _, legacy, err := workspace.Ref(b.document); err == nil && legacy {
+		notices = append(notices, "ref-spelling-drift: uses legacy `human_ref:`; new records declare `ref:`")
+	}
+	return notices
 }

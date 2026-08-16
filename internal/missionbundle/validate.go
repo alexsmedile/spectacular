@@ -66,6 +66,7 @@ func Validate(ws *discovery.Workspace, b *Bundle) (Check, error) {
 		check.Fingerprint = b.Activation.Fingerprint
 	}
 	check.Authority = b.AuthorityTable()
+	check.Drift = b.Drift()
 	return check, nil
 }
 

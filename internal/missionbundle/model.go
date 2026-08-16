@@ -186,6 +186,8 @@ type Check struct {
 	// Authority is the decision table the authority-vocabulary validator
 	// already resolves and previously discarded. It is derived on read.
 	Authority []AuthorityAnswer `json:"authority,omitempty"`
+	// Drift is the per-claim audit signal, most-flagged first. Derived on read.
+	Drift []ClaimDrift `json:"drift,omitempty"`
 }
 
 type Result struct {

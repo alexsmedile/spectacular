@@ -234,6 +234,37 @@ func renderHuman(writer io.Writer, value any) {
 		}
 	case missionbundle.Check:
 		fmt.Fprintf(writer, "%s valid=%t schema=%s checks=%d\n", item.Ref, item.Valid, item.Schema, len(item.Checks))
+		if len(item.Drift) > 0 {
+			fmt.Fprintln(writer, "CLAIMS")
+			for _, claim := range item.Drift {
+				flags := "clean"
+				if len(claim.Flags) > 0 {
+					names := make([]string, 0, len(claim.Flags))
+					for _, flag := range claim.Flags {
+						names = append(names, string(flag))
+					}
+					flags = strings.Join(names, ", ")
+				}
+				fmt.Fprintf(writer, "  %-20s %s\n", claim.Claim, flags)
+			}
+			if count := len(item.Drift[0].Flags); count > 0 {
+				noun := "flags"
+				if count == 1 {
+					noun = "flag"
+				}
+				tied := 0
+				for _, claim := range item.Drift {
+					if len(claim.Flags) == count {
+						tied++
+					}
+				}
+				suffix := ""
+				if tied > 1 {
+					suffix = fmt.Sprintf("; %d claims tied, plan order breaks it", tied)
+				}
+				fmt.Fprintf(writer, "  audit defaults to %s (%d %s%s)\n", item.Drift[0].Claim, count, noun, suffix)
+			}
+		}
 		if len(item.Authority) > 0 {
 			fmt.Fprintln(writer, "AUTHORITY")
 			for _, decision := range []missionbundle.Decision{missionbundle.DecisionOperator, missionbundle.DecisionOwner, missionbundle.DecisionUndeclared} {

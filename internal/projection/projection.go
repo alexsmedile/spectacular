@@ -234,20 +234,26 @@ func (b Builder) Mission(ref string) (Card, error) {
 		return Card{}, err
 	}
 	card.Outcome, _ = workspace.String(mission.Document, "outcome", false)
+	hasObjectives := false
+	var finalObjective *Pointer
 	if objectiveRefs, objectiveErr := workspace.Strings(mission.Document, "objectives", false); objectiveErr == nil {
 		for _, objectiveRef := range objectiveRefs {
+			hasObjectives = true
 			objective, lookupErr := b.Workspace.Lookup(objectiveRef, domain.Objective)
 			if lookupErr != nil {
 				return Card{}, lookupErr
 			}
 			pointer := b.pointer(objective)
-			if card.CurrentObjective == nil || value(objective.Document.Record.Status) != "satisfied" {
+			finalObjective = &pointer
+			status := value(objective.Document.Record.Status)
+			if status != "satisfied" && status != "implemented" {
 				card.CurrentObjective = &pointer
-			}
-			if value(objective.Document.Record.Status) != "satisfied" {
 				break
 			}
 		}
+	}
+	if mission.Document.Record.Status != nil && *mission.Document.Record.Status == "resolved" && card.CurrentObjective == nil {
+		card.CurrentObjective = finalObjective
 	}
 	if mission.Document.Record.Source != nil {
 		proposal, lookupErr := b.Workspace.Lookup(mission.Document.Record.Source.String(), domain.Proposal)
@@ -390,6 +396,10 @@ func (b Builder) Mission(ref string) (Card, error) {
 	mt, err := domain.ParseReference(missionBack)
 	if err != nil || mt.Type != domain.Mission || mt.ID != mission.Document.Record.ID {
 		return Card{}, domain.NewRefusal(domain.RefusalConflictingAuthority, "mission", "Run does not identify selected Mission", err)
+	}
+	if hasObjectives && card.CurrentObjective == nil {
+		card.OwnerGate = &OwnerGate{Code: "implementation_complete", Detail: "all Objectives are implemented; assessment or owner disposition is next", Source: b.pointer(mission)}
+		return card, nil
 	}
 	cpRef, err := workspace.String(run.Document, "latest_checkpoint", false)
 	if err != nil {

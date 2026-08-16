@@ -30,12 +30,14 @@ Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1
 | `spectacular mission prepare` | `--input <json-file> [--json]` | `spectacular.mission.prepare.v1` | `read-only` |
 | `spectacular mission create` | `--input <json-file> [--json]` | `spectacular.mission.create.v1` | `mutating` |
 | `spectacular mission transition` | `<ref> --to <state> --authorization <decision-ref> --expected-fingerprint <sha> --idempotency-key <key> [--assessment <ref>] [--reconciliation <ref>] [--disposition <value>] [--terminal-next-action <text>] [--satisfied-objectives <ref,ref>] [--json]` | `spectacular.mission.transition.v1` | `mutating` |
+| `spectacular mission progress` | `<ref> --objective <ref> --to implemented --actor <name> --expected-mission-fingerprint <sha> --expected-objective-fingerprint <sha> --idempotency-key <key> [--json]` | `spectacular.mission.progress.v1` | `mutating` |
 | `spectacular mission autopilot` | `--input <json-file> [--json]` | `spectacular.mission.autopilot.v1` | `read-only` |
 | `spectacular handoff show` | `<ref> [--json]` | `spectacular.handoff.show.v1` | `read-only` |
 | `spectacular handoff validate` | `<ref> [--json]` | `spectacular.handoff.validate.v1` | `read-only` |
 | `spectacular handoff create` | `--input <json-file> [--json]` | `spectacular.handoff.create.v1` | `mutating` |
 | `spectacular handoff return` | `--input <json-file> [--json]` | `spectacular.handoff.return.v1` | `mutating` |
 | `spectacular evidence create` | `--input <json-file> [--json]` | `spectacular.evidence.create.v1` | `mutating` |
+| `spectacular evidence create-set` | `--input <json-file|-> [--json]` | `spectacular.evidence.create-set.v1` | `mutating` |
 | `spectacular decision create` | `--input <json-file> [--json]` | `spectacular.decision.create.v1` | `mutating` |
 | `spectacular assessment record` | `--input <json-file> [--json]` | `spectacular.assessment.record.v1` | `mutating` |
 | `spectacular contract show` | `<ref> [--json]` | `spectacular.contract.show.v1` | `read-only` |

@@ -85,7 +85,7 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	missionInput := MissionInput{
 		ID: strings.TrimPrefix(missionRef, "Mission:"), Title: "Govern closure", Actor: "owner", Proposal: proposalRef, Outcome: "Reconcile and recover.",
 		Objectives: []ObjectiveInput{{ID: strings.TrimPrefix(objectiveRef, "Objective:"), Outcome: "Prove the loop", ExpectedProof: []string{"claim:closure"}}}, InitialRunID: strings.TrimPrefix(runRef, "Run:"),
-		DesignSufficiency: "sufficient", SliceQuality: "coherent", EvidenceClaims: []string{"claim:closure"}, Scope: []string{"v2"}, AllowedActions: []string{"test", "write-v2"}, ForbiddenEffects: []string{"provider-mutation"},
+		DesignSufficiency: "sufficient", SliceQuality: "coherent", EvidenceClaims: []string{"claim:closure"}, Scope: []string{"v2"}, AllowedActions: []string{"test", "write-v2", "update-mission-progress"}, ForbiddenEffects: []string{"provider-mutation"},
 		Baseline: contract.Fingerprint, BudgetUnits: 2, RepairBudget: 2, ExpiresAt: "2026-08-11T10:00:00Z", Stops: []string{"authority-drift"}, RecoveryPoint: "git-head", ReturnDestination: "central", Authorization: missionDecision, ExpectedProposalFingerprint: proposal.Fingerprint, IdempotencyKey: "mission-create-1",
 	}
 	if _, err := svc.CreateMission(missionInput); refusalCode(err) != domain.RefusalMissingRequiredField {
@@ -139,6 +139,87 @@ func TestProviderNeutralGovernedLoopAndSecondColdResume(t *testing.T) {
 	}
 	if replay, err := openService(t, root).TransitionMission(TransitionInput{Mission: missionRef, To: "active", Authorization: activateDecision, ExpectedFingerprint: mission.Fingerprint, IdempotencyKey: "mission-active-1"}); err != nil || !replay.IdempotentReplay {
 		t.Fatalf("transition replay=%#v err=%v", replay, err)
+	}
+	objectiveBeforeProgress := lookup(t, openService(t, root), objectiveRef, domain.Objective)
+	progressInput := MissionProgressInput{
+		Mission: missionRef, Objective: objectiveRef, To: "implemented", Actor: "executor",
+		ExpectedMissionFingerprint: active.Fingerprint, ExpectedObjectiveFingerprint: objectiveBeforeProgress.Fingerprint, IdempotencyKey: "objective-implemented-1",
+	}
+	staleProgress := progressInput
+	staleProgress.ExpectedObjectiveFingerprint = strings.Repeat("0", 64)
+	if _, err := openService(t, root).ProgressMission(staleProgress); refusalCode(err) != domain.RefusalStaleFingerprint {
+		t.Fatalf("stale Objective progress err=%v", err)
+	}
+	progress, err := openService(t, root).ProgressMission(progressInput)
+	must(t, err)
+	if progress.Ref != objectiveRef {
+		t.Fatalf("progress result = %#v", progress)
+	}
+	progressReplay, err := openService(t, root).ProgressMission(progressInput)
+	must(t, err)
+	if !progressReplay.IdempotentReplay {
+		t.Fatalf("progress replay = %#v", progressReplay)
+	}
+	implementedCard, err := (projection.Builder{Workspace: openService(t, root).Workspace, Now: func() time.Time { return testNow }}).Mission(missionRef)
+	must(t, err)
+	if implementedCard.CurrentObjective != nil || implementedCard.OwnerGate == nil || implementedCard.OwnerGate.Code != "implementation_complete" {
+		t.Fatalf("implemented Mission does not stop at owner gate: %#v", implementedCard)
+	}
+
+	autoDecision := DecisionInput{
+		Title: "Authorize automatic Evidence set", Actor: "Alex", ActorRole: "owner", AuthorityBasis: "accepted B+C contract",
+		Question: "record automatic Evidence", Scope: []string{"v2"}, Disposition: "record", Rationale: "Explicit owner authorization.",
+		Targets: []string{"new:Evidence:evidence-auto-1", "new:Evidence:evidence-auto-2"}, ExpectedFingerprints: []string{"absent", "absent"},
+		Operation: "evidence.create", AuthorizedEffects: []string{"evidence.create"}, ExpiresAt: "2026-08-11T10:00:00Z", IdempotencyKey: "decision-auto-evidence-set",
+	}
+	autoAuthority, err := openService(t, root).CreateDecision(autoDecision)
+	must(t, err)
+	parsedAuthority, err := domain.ParseReference(autoAuthority.Ref)
+	if err != nil || parsedAuthority.Type != domain.Decision {
+		t.Fatalf("automatic Decision identity = %q err=%v", autoAuthority.Ref, err)
+	}
+	autoReplay, err := openService(t, root).CreateDecision(autoDecision)
+	must(t, err)
+	if !autoReplay.IdempotentReplay || autoReplay.Ref != autoAuthority.Ref {
+		t.Fatalf("automatic Decision replay = %#v", autoReplay)
+	}
+	baseEvidence := EvidenceInput{
+		Title: "Automatic Evidence", Mission: missionRef, Objective: objectiveRef, Claim: "claim:closure", Classification: "direct", Scope: []string{"v2"},
+		Method: "deterministic tests", Actor: "executor", Target: proposalRef, Environment: "disposable", ObservedAt: "2026-08-10T10:00:00Z",
+		FreshnessValidUntil: "2026-08-11T10:00:00Z", RequiredChecks: []string{"go-test"}, CheckResults: []string{"pass:go-test"},
+		ReviewState: "independent-accepted", Authorization: autoAuthority.Ref,
+	}
+	firstEvidence := baseEvidence
+	firstEvidence.IdempotencyKey = "evidence-auto-1"
+	secondEvidence := baseEvidence
+	secondEvidence.Title = "Automatic Evidence two"
+	secondEvidence.IdempotencyKey = "evidence-auto-2"
+	setInput := EvidenceSetInput{Items: []EvidenceInput{firstEvidence, secondEvidence}, IdempotencyKey: "evidence-auto-set"}
+	setResults, err := openService(t, root).CreateEvidenceMany(setInput)
+	must(t, err)
+	if len(setResults) != 2 || setResults[0].Ref == setResults[1].Ref {
+		t.Fatalf("automatic Evidence set = %#v", setResults)
+	}
+	for _, result := range setResults {
+		parsed, parseErr := domain.ParseReference(result.Ref)
+		if parseErr != nil || parsed.Type != domain.Evidence {
+			t.Fatalf("automatic Evidence identity = %q err=%v", result.Ref, parseErr)
+		}
+	}
+	setReplay, err := openService(t, root).CreateEvidenceMany(setInput)
+	must(t, err)
+	if len(setReplay) != 2 || !setReplay[0].IdempotentReplay || setReplay[0].Ref != setResults[0].Ref {
+		t.Fatalf("automatic Evidence replay = %#v", setReplay)
+	}
+	beforeInvalidSet := len(openService(t, root).Workspace.OfType(domain.Evidence))
+	invalidSecond := secondEvidence
+	invalidSecond.ReviewState = "harsh"
+	firstInvalid := firstEvidence
+	if _, err := openService(t, root).CreateEvidenceMany(EvidenceSetInput{Items: []EvidenceInput{firstInvalid, invalidSecond}, IdempotencyKey: "evidence-invalid-set"}); refusalCode(err) != domain.RefusalInvalidKnownField {
+		t.Fatalf("invalid Evidence set err=%v", err)
+	}
+	if after := len(openService(t, root).Workspace.OfType(domain.Evidence)); after != beforeInvalidSet {
+		t.Fatalf("invalid Evidence set wrote partial records: before=%d after=%d", beforeInvalidSet, after)
 	}
 
 	handoffDecision := createDecision(t, root, "0199b000-0000-7000-8000-000000000014", "handoff.create", handoffRef, "absent", nil, "dispatch")
@@ -827,7 +908,7 @@ func TestAuthorityEffectsConditionsAndMissionExpiryAreEnforced(t *testing.T) {
 	contract := lookup(t, svc, contractRef, domain.Contract)
 	proposalRef := "Proposal:0199b000-0000-7000-8000-000000000085"
 	decisionRef := "Decision:0199b000-0000-7000-8000-000000000086"
-	_, err := svc.CreateDecision(DecisionInput{ID: strings.TrimPrefix(decisionRef, "Decision:"), Title: "Wrong effect", Actor: "Alex", ActorRole: "owner", AuthorityBasis: "test", Question: "create", Scope: []string{"v2"}, Disposition: "approve", Rationale: "test", Targets: []string{proposalRef}, ExpectedFingerprints: []string{"absent"}, Operation: "proposal.create", AuthorizedEffects: []string{"mission.create"}, Conditions: []string{"unknown-human-condition"}, ExpiresAt: "2026-08-11T10:00:00Z", IdempotencyKey: "wrong-effect"})
+	_, err := svc.CreateDecision(DecisionInput{ID: strings.TrimPrefix(decisionRef, "Decision:"), Title: "Wrong effect", Actor: "Alex", ActorRole: "owner", AuthorityBasis: "test", Question: "create", Scope: []string{"v2"}, Disposition: "approve", Rationale: "test", Targets: []string{proposalRef}, ExpectedFingerprints: []string{"absent"}, Operation: "proposal.create", AuthorizedEffects: []string{"mission.create"}, Conditions: []string{"target-absent"}, ExpiresAt: "2026-08-11T10:00:00Z", IdempotencyKey: "wrong-effect"})
 	must(t, err)
 	svc = openService(t, root)
 	_, err = svc.CreateProposal(ProposalInput{ID: strings.TrimPrefix(proposalRef, "Proposal:"), Title: "Unauthorized delta", Actor: "owner", Status: "accepted", TargetContract: contractRef, BaseVersion: "1", BaseFingerprint: contract.Fingerprint, Additions: []string{"unauthorized"}, Rationale: "test", Scope: []string{"v2"}, Authorization: decisionRef, IdempotencyKey: "unauthorized-proposal"})
@@ -837,11 +918,10 @@ func TestAuthorityEffectsConditionsAndMissionExpiryAreEnforced(t *testing.T) {
 	conditionProposal := "Proposal:0199b000-0000-7000-8000-000000000096"
 	conditionDecision := "Decision:0199b000-0000-7000-8000-000000000097"
 	_, err = openService(t, root).CreateDecision(DecisionInput{ID: strings.TrimPrefix(conditionDecision, "Decision:"), Title: "Unknown condition", Actor: "Alex", ActorRole: "owner", AuthorityBasis: "test", Question: "create", Scope: []string{"v2"}, Disposition: "approve", Rationale: "test", Targets: []string{conditionProposal}, ExpectedFingerprints: []string{"absent"}, Operation: "proposal.create", AuthorizedEffects: []string{"proposal.create"}, Conditions: []string{"unknown-human-condition"}, ExpiresAt: "2026-08-11T10:00:00Z", IdempotencyKey: "unknown-condition"})
-	must(t, err)
-	conditionInput := ProposalInput{ID: strings.TrimPrefix(conditionProposal, "Proposal:"), Title: "Condition delta", Actor: "owner", Status: "accepted", TargetContract: contractRef, BaseVersion: "1", BaseFingerprint: contract.Fingerprint, Additions: []string{"condition"}, Rationale: "test", Scope: []string{"v2"}, Authorization: conditionDecision, IdempotencyKey: "condition-proposal"}
-	if _, err := openService(t, root).CreateProposal(conditionInput); refusalCode(err) != domain.RefusalUnauthorized {
-		t.Fatalf("unevaluated Decision condition err=%v", err)
+	if refusalCode(err) != domain.RefusalInvalidKnownField {
+		t.Fatalf("unknown Decision condition persisted err=%v", err)
 	}
+	conditionInput := ProposalInput{ID: strings.TrimPrefix(conditionProposal, "Proposal:"), Title: "Condition delta", Actor: "owner", Status: "accepted", TargetContract: contractRef, BaseVersion: "1", BaseFingerprint: contract.Fingerprint, Additions: []string{"condition"}, Rationale: "test", Scope: []string{"v2"}, Authorization: conditionDecision, IdempotencyKey: "condition-proposal"}
 	scopeProposal := "Proposal:0199b000-0000-7000-8000-000000000098"
 	scopeDecision := "Decision:0199b000-0000-7000-8000-000000000099"
 	_, err = openService(t, root).CreateDecision(DecisionInput{ID: strings.TrimPrefix(scopeDecision, "Decision:"), Title: "Narrow scope", Actor: "Alex", ActorRole: "owner", AuthorityBasis: "test", Question: "create", Scope: []string{"v1"}, Disposition: "approve", Rationale: "test", Targets: []string{scopeProposal}, ExpectedFingerprints: []string{"absent"}, Operation: "proposal.create", AuthorizedEffects: []string{"proposal.create"}, ExpiresAt: "2026-08-11T10:00:00Z", IdempotencyKey: "narrow-scope"})

@@ -141,6 +141,12 @@
       "effect": "mutating"
     },
     {
+      "command": "spectacular mission progress",
+      "arguments": "<ref> --objective <ref> --to implemented --actor <name> --expected-mission-fingerprint <sha> --expected-objective-fingerprint <sha> --idempotency-key <key> [--json]",
+      "schema": "spectacular.mission.progress.v1",
+      "effect": "mutating"
+    },
+    {
       "command": "spectacular mission autopilot",
       "arguments": "--input <json-file> [--json]",
       "schema": "spectacular.mission.autopilot.v1",
@@ -174,6 +180,12 @@
       "command": "spectacular evidence create",
       "arguments": "--input <json-file> [--json]",
       "schema": "spectacular.evidence.create.v1",
+      "effect": "mutating"
+    },
+    {
+      "command": "spectacular evidence create-set",
+      "arguments": "--input <json-file|-> [--json]",
+      "schema": "spectacular.evidence.create-set.v1",
       "effect": "mutating"
     },
     {

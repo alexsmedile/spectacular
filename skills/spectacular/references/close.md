@@ -7,6 +7,12 @@ CLI only validates and records the explicit result.
 For repair, require a new hypothesis, new Evidence, or materially narrower action. Rerun the
 narrowest relevant check before broad verification and consume the declared budget.
 
+Persist Evidence when a material claim enters assessment, has a frozen Evidence requirement,
+depends on an external/provider observation, is disputed, or must survive into closure. Routine
+implementation progress does not need canonical Evidence merely because a local check passed; keep
+the tree-bound verification receipt transient until assessment. One Evidence record should map to
+one claim and its required review strength; batch creation is mechanical convenience, not proof.
+
 Close in this order:
 
 1. owner disposition;

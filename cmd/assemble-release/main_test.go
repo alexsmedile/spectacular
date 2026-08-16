@@ -37,11 +37,20 @@ func TestCanonicalSkillDefinesLeanLaunchAndQuestionContract(t *testing.T) {
 }
 
 func TestCanonicalSkillDefinesLeanExecutionAndFROST(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join("..", "..", "skills", "spectacular", "SKILL.md"))
+	root := filepath.Join("..", "..", "skills", "spectacular")
+	core, err := os.ReadFile(filepath.Join(root, "SKILL.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	content := string(data)
+	execute, err := os.ReadFile(filepath.Join(root, "references", "execute.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	audit, err := os.ReadFile(filepath.Join(root, "references", "audit.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(core) + string(execute) + string(audit)
 	for _, required := range []string{
 		"card -> claim packet -> exact sources -> full bundle",
 		"disjoint claims + dependencies",
@@ -55,6 +64,12 @@ func TestCanonicalSkillDefinesLeanExecutionAndFROST(t *testing.T) {
 		if !strings.Contains(content, required) {
 			t.Fatalf("canonical Skill omits %q", required)
 		}
+	}
+	if strings.Contains(string(core), "Frozen fit**") {
+		t.Fatal("core Skill embeds detailed FROST policy instead of routing to audit.md")
+	}
+	if strings.Contains(string(core), "--event <@Event> --json") {
+		t.Fatal("core Skill still forces full JSON context")
 	}
 }
 

@@ -22,7 +22,8 @@ their native providers.
    active Mission/Run, authority, expiry and blocking Gaps; host cache/permission boundaries; and
    generated drift. Report a plain outcome, one technical evidence line, and one clean next action.
 3. Compile only the entered scope:
-   `spectacular workspace context <project|Mission-ref> --event <@Event> --json`.
+   `spectacular workspace context <project|Mission-ref> --event <@Event>`. Add `--json` only when
+   an exact source, mismatch, mutation input, or audit requires the full bundle.
 4. Treat the compiled bundle as a projection. Follow its source pointers for authority and use its
    single continuation or owner gate; never repair canonical truth by editing the bundle.
 5. Load exactly one workflow reference below. Load the generated mechanical catalog only when
@@ -82,36 +83,9 @@ attempts, tools, and validation mechanics inside the envelope, but any change to
 behavior, pass thresholds, failure cases, evidence strength, or review independence returns to the
 owner. Apply the criterion's frozen review level instead of prompting a generic harsh critic.
 
-Use progressive context: `card -> claim packet -> exact sources -> full bundle`. The card carries
-Mission, Objective/Run, baseline, authority, Gaps, budgets, and next action. A claim packet adds its
-frozen criterion, dependencies, allowed inputs/actions, stops, and return contract. Load exact
-records, code, tests, or the full JSON bundle only when the work, a mismatch, or an audit requires
-them. Pass fingerprints and deltas between workers; do not repeatedly reload unchanged catalogs or
-project prose.
-
-Plan outcome-sized clusters before execution. Use this compact grammar:
-`[disjoint claims + dependencies] -> [exact inputs, stops, budget, return] -> work -> focused checks
--> boundary integration -> local green commit`. Prefer one mid-to-long session per cohesive cluster;
-do not fan out tiny tasks or recursive review loops. Run the cheapest claim-relevant checks while
-editing, integration checks at a cluster boundary, and the full repository/release gate once before
-distribution. Keep coherent commits local during clustering and use one push boundary after
-integrated evidence unless the owner requests otherwise.
-
-Review only at the frozen `automatic | clustered | independent` strength. Automatic claims use
-deterministic checks without a reviewer; clustered claims share one domain review; independent
-claims use a cold reviewer bound to the exact tree and claim. Batch compatible review and skip
-duplicate review when unchanged evidence already satisfies the criterion. Every critic evaluates
-FROST, never taste or generic harshness:
-
-- **Frozen fit** — exact claim, pass boundary, non-goals, and scope drift.
-- **Risk** — security, privacy, data loss, authority, and irreversible/provider effects.
-- **Operability** — failure behavior, diagnostics, recovery, and maintainability.
-- **System integrity** — dependencies, integration, regressions, and generated/distributed drift.
-- **Truth of proof** — attributable method, freshness, contrary evidence, and no overclaim.
-
-A review returns the exact tree and claims reviewed, findings with evidence, and `pass | repair |
-owner-gate`; it does not silently change criteria. A repair round requires a new hypothesis, new
-Evidence, or a narrower action rather than another identical loop.
+Execute compactly: `card -> claim packet -> exact sources`; then
+`claims + dependencies -> work -> focused checks -> one full gate -> owner gate`. Load detailed
+execution, delegation, review, and Evidence rules only from the routed workflow reference.
 
 When Spectacular develops itself, an active Mission remains governed by the preparation schema and
 completion contract active at its creation. Product changes apply to the next Mission; never

@@ -30,7 +30,7 @@ func validateSHA256(value, field string) error {
 }
 
 func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
-	id, err := domain.ParseID(input.ID)
+	id, err := s.resolveCreateID(domain.Handoff, input.ID, input.IdempotencyKey)
 	if err != nil {
 		return OperationResult{}, err
 	}
@@ -100,7 +100,7 @@ func (s Service) CreateHandoff(input HandoffInput) (OperationResult, error) {
 		return OperationResult{}, err
 	}
 	ref := string(domain.Handoff) + ":" + id.String()
-	if err := s.authorize(input.Authorization, "handoff.create", ref, "absent", input.Scope, []string{"handoff.create"}); err != nil {
+	if err := s.authorize(input.Authorization, "handoff.create", ref, "absent", input.Scope, []string{"handoff.create"}, creationAuthorityTarget(domain.Handoff, input.IdempotencyKey)); err != nil {
 		return OperationResult{}, err
 	}
 	if input.Supersedes != "" {
@@ -272,14 +272,18 @@ func (s Service) ValidateHandoff(ref string) (map[string]any, error) {
 	if _, err := parseFuture(handoffAuthority.ExpiresAt, s.now(), "expires_at"); err != nil {
 		return nil, err
 	}
-	if err := s.authorize(handoffAuthority.Authorization, "handoff.create", refOf(handoff), "absent", handoffAuthority.Scope, []string{"handoff.create"}); err != nil {
+	handoffKey, err := workspace.String(handoff.Document, "idempotency_key", true)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.authorize(handoffAuthority.Authorization, "handoff.create", refOf(handoff), "absent", handoffAuthority.Scope, []string{"handoff.create"}, creationAuthorityTarget(domain.Handoff, handoffKey)); err != nil {
 		return nil, err
 	}
 	return map[string]any{"ref": refOf(handoff), "fingerprint": handoff.Fingerprint, "valid": true, "proves": []string{"structure", "same_mission_containment", "envelope_subset", "current_authority", "current_baseline", "expiry", "return_shape"}, "does_not_prove": []string{"actor_identity", "actor_competence", "provider_permissions_or_effects", "evidence_truth_or_sufficiency", "mission_success"}}, nil
 }
 
 func (s Service) ReturnHandoff(input HandoffReturnInput) (OperationResult, error) {
-	id, err := domain.ParseID(input.ID)
+	id, err := s.resolveCreateID(domain.Handoff, input.ID, input.IdempotencyKey)
 	if err != nil {
 		return OperationResult{}, err
 	}
@@ -333,43 +337,116 @@ func (s Service) ReturnHandoff(input HandoffReturnInput) (OperationResult, error
 }
 
 func (s Service) CreateEvidence(input EvidenceInput) (OperationResult, error) {
-	id, err := domain.ParseID(input.ID)
+	doc, sources, err := s.prepareEvidence(input)
 	if err != nil {
 		return OperationResult{}, err
 	}
+	return s.createOne("evidence.create", doc, input.IdempotencyKey, sources)
+}
+
+func (s Service) CreateEvidenceMany(input EvidenceSetInput) ([]OperationResult, error) {
+	if len(input.Items) == 0 || input.IdempotencyKey == "" {
+		return nil, missing("evidence_set", "items and idempotency_key are required")
+	}
+	if len(input.Items) > 100 {
+		return nil, invalid("evidence_set", "at most 100 Evidence items are allowed")
+	}
+	seenKeys := map[string]bool{}
+	mission := ""
+	docs := make([]*workspace.Document, 0, len(input.Items))
+	sources := make([][]string, 0, len(input.Items))
+	for _, item := range input.Items {
+		if item.IdempotencyKey == "" || seenKeys[item.IdempotencyKey] {
+			return nil, invalid("idempotency_key", "Evidence set item keys must be non-empty and unique")
+		}
+		seenKeys[item.IdempotencyKey] = true
+		if mission == "" {
+			mission = item.Mission
+		} else if item.Mission != mission {
+			return nil, invalid("mission", "Evidence set items must belong to one Mission")
+		}
+		doc, itemSources, err := s.prepareEvidence(item)
+		if err != nil {
+			return nil, err
+		}
+		workspace.SetString(doc, "batch_idempotency_key", input.IdempotencyKey)
+		docs = append(docs, doc)
+		sources = append(sources, itemSources)
+	}
+	existingBatch := 0
+	for _, entry := range s.Workspace.OfType(domain.Evidence) {
+		key, err := workspace.String(entry.Document, "batch_idempotency_key", false)
+		if err != nil {
+			return nil, err
+		}
+		if key == input.IdempotencyKey {
+			existingBatch++
+		}
+	}
+	if existingBatch != 0 && existingBatch != len(docs) {
+		return nil, domain.NewRefusal(domain.RefusalIdempotencyConflict, "idempotency_key", "Evidence set replay changed item count", nil)
+	}
+	paths, err := humanlayout.Plan(s.Workspace.Entries, docs)
+	if err != nil {
+		return nil, err
+	}
+	primary, err := s.createMany("evidence.create-set", docs[0], docs, input.IdempotencyKey, flattenStrings(sources))
+	if err != nil {
+		return nil, err
+	}
+	results := make([]OperationResult, 0, len(docs))
+	for index, doc := range docs {
+		fingerprint, err := workspace.Fingerprint(doc)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, OperationResult{
+			Operation: "evidence.create", Ref: string(domain.Evidence) + ":" + doc.Record.ID.String(),
+			Path: filepath.ToSlash(paths[doc.Record.ID]), Fingerprint: fingerprint,
+			IdempotentReplay: primary.IdempotentReplay, Sources: sources[index],
+		})
+	}
+	return results, nil
+}
+
+func (s Service) prepareEvidence(input EvidenceInput) (*workspace.Document, []string, error) {
+	id, err := s.resolveCreateID(domain.Evidence, input.ID, input.IdempotencyKey)
+	if err != nil {
+		return nil, nil, err
+	}
 	if !contains([]string{"direct", "observation", "proxy", "judgment", "unknown"}, input.Classification) {
-		return OperationResult{}, invalid("classification", "must be direct, observation, proxy, judgment, or unknown")
+		return nil, nil, invalid("classification", "must be direct, observation, proxy, judgment, or unknown")
 	}
 	if !contains([]string{"unreviewed", "automatic-accepted", "clustered-accepted", "independent-accepted", "rejected"}, input.ReviewState) {
-		return OperationResult{}, invalid("review_state", "must be unreviewed, automatic-accepted, clustered-accepted, independent-accepted, or rejected")
+		return nil, nil, invalid("review_state", "must be unreviewed, automatic-accepted, clustered-accepted, independent-accepted, or rejected")
 	}
 	if input.Title == "" || input.Mission == "" || input.Claim == "" || len(input.Scope) == 0 || input.Method == "" || input.Actor == "" || input.Target == "" || input.ObservedAt == "" || input.FreshnessValidUntil == "" || input.ReviewState == "" || input.Authorization == "" || input.IdempotencyKey == "" {
-		return OperationResult{}, missing("evidence", "claim attribution, scope, method, target, freshness, review, authorization, and idempotency are required")
+		return nil, nil, missing("evidence", "claim attribution, scope, method, target, freshness, review, authorization, and idempotency are required")
 	}
 	mission, err := s.Workspace.Lookup(input.Mission, domain.Mission)
 	if err != nil {
-		return OperationResult{}, err
+		return nil, nil, err
 	}
 	if _, err := time.Parse(time.RFC3339, input.ObservedAt); err != nil {
-		return OperationResult{}, invalid("observed_at", "must be RFC3339")
+		return nil, nil, invalid("observed_at", "must be RFC3339")
 	}
 	if _, err := parseFuture(input.FreshnessValidUntil, s.now(), "freshness_valid_until"); err != nil {
-		return OperationResult{}, err
+		return nil, nil, err
 	}
 	ref := string(domain.Evidence) + ":" + id.String()
 	missionScope, err := workspace.Strings(mission.Document, "scope", true)
 	if err != nil {
-		return OperationResult{}, err
+		return nil, nil, err
 	}
 	missionExpiry, err := workspace.String(mission.Document, "expires_at", true)
 	if err != nil {
-		return OperationResult{}, err
+		return nil, nil, err
 	}
 	if _, err := parseFuture(missionExpiry, s.now(), "mission.expires_at"); err != nil {
-		return OperationResult{}, err
+		return nil, nil, err
 	}
-	if err := s.authorize(input.Authorization, "evidence.create", ref, "absent", missionScope, []string{"evidence.create"}); err != nil {
-		return OperationResult{}, err
+	if err := s.authorize(input.Authorization, "evidence.create", ref, "absent", missionScope, []string{"evidence.create"}, creationAuthorityTarget(domain.Evidence, input.IdempotencyKey)); err != nil {
+		return nil, nil, err
 	}
 	doc := s.document(domain.Evidence, id, input.Title, input.Actor, "")
 	workspace.SetString(doc, "mission", input.Mission)
@@ -398,11 +475,19 @@ func (s Service) CreateEvidence(input EvidenceInput) (OperationResult, error) {
 	workspace.SetString(doc, "authorization", input.Authorization)
 	workspace.SetString(doc, "idempotency_key", input.IdempotencyKey)
 	s.addFreshness(doc, input.FreshnessValidUntil)
-	return s.createOne("evidence.create", doc, input.IdempotencyKey, []string{input.Mission, input.Authorization})
+	return doc, []string{input.Mission, input.Authorization}, nil
+}
+
+func flattenStrings(groups [][]string) []string {
+	var values []string
+	for _, group := range groups {
+		values = append(values, group...)
+	}
+	return values
 }
 
 func (s Service) RecordAssessment(input AssessmentInput) (OperationResult, error) {
-	id, err := domain.ParseID(input.ID)
+	id, err := s.resolveCreateID(domain.Assessment, input.ID, input.IdempotencyKey)
 	if err != nil {
 		return OperationResult{}, err
 	}
@@ -448,7 +533,7 @@ func (s Service) RecordAssessment(input AssessmentInput) (OperationResult, error
 	if err != nil {
 		return OperationResult{}, err
 	}
-	if err := s.authorize(input.Authorization, "assessment.record", ref, "absent", missionScope, []string{"assessment.record"}); err != nil {
+	if err := s.authorize(input.Authorization, "assessment.record", ref, "absent", missionScope, []string{"assessment.record"}, creationAuthorityTarget(domain.Assessment, input.IdempotencyKey)); err != nil {
 		return OperationResult{}, err
 	}
 	doc := s.document(domain.Assessment, id, input.Title, input.Actor, "")

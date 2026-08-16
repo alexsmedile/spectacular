@@ -11,6 +11,8 @@
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |
 | `D6-5e3xke` | Decision | Authorize M3 implementation Evidence | `.spectacular/decisions/D6-5e3xke.md` |
+| `D7-cgsri6` | Decision | Authorize the lean control-plane Proposal | `.spectacular/decisions/D7-cgsri6.md` |
+| `D8-qhjurh` | Decision | Authorize the lean control-plane Mission | `.spectacular/decisions/D8-qhjurh.md` |
 | `M1` | Mission | Restore human-operable workspace | `.spectacular/archive/missions/M1-human-operability/MISSION.md` |
 | `M1/A1-nolpc6` | Assessment | RC.2 human-operability assessment | `.spectacular/archive/missions/M1-human-operability/assessments/A1-nolpc6.md` |
 | `M1/D1-t5to5d` | Decision | Continue the bounded human-operability repair | `.spectacular/archive/missions/M1-human-operability/decisions/D1-t5to5d.md` |
@@ -39,9 +41,16 @@
 | `M3/O3` | Objective | Common CLI mistakes have intuitive aliases or runnable corrective refusals. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O3-common-cli-mistakes-have-intuitive-aliases-or-runnable-corrective-refusals.md` |
 | `M3/O4` | Objective | Lean cluster, local commit, schema continuity, and FROST review guidance is explicit. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O4-lean-cluster-local-commit-schema-continuity-and-frost-review-guidance-is-explicit.md` |
 | `M3/R1` | Run | Initial governed Run | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/runs/R1-initial-governed-run/RUN.md` |
+| `M4` | Mission | Make Spectacular control operations lean | `.spectacular/missions/M4-make-spectacular-control-operations-lean/MISSION.md` |
+| `M4/D1-mfcxne` | Decision | Activate the lean control-plane Mission | `.spectacular/missions/M4-make-spectacular-control-operations-lean/decisions/D1-mfcxne.md` |
+| `M4/O1` | Objective | Compact-first policy and minimal verification are canonical. | `.spectacular/missions/M4-make-spectacular-control-operations-lean/objectives/O1-compact-first-policy-and-minimal-verification-are-canonical.md` |
+| `M4/O2` | Objective | Creation commands support stdin, automatic IDs, and atomic batches. | `.spectacular/missions/M4-make-spectacular-control-operations-lean/objectives/O2-creation-commands-support-stdin-automatic-ids-and-atomic-batches.md` |
+| `M4/O3` | Objective | Decision validation and compact Mission progress are immediate and atomic. | `.spectacular/missions/M4-make-spectacular-control-operations-lean/objectives/O3-decision-validation-and-compact-mission-progress-are-immediate-and-atomic.md` |
+| `M4/R1` | Run | Initial governed Run | `.spectacular/missions/M4-make-spectacular-control-operations-lean/runs/R1-initial-governed-run/RUN.md` |
 | `P1` | Proposal | Repair v2 human operability | `.spectacular/proposals/P1-human-operability.md` |
 | `P2` | Proposal | Add answer-key governed autonomy | `.spectacular/proposals/P2-add-answer-key-governed-autonomy.md` |
 | `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |
+| `P4` | Proposal | Make Spectacular control operations lean | `.spectacular/proposals/P4-make-spectacular-control-operations-lean.md` |
 | `PRODUCT` | Anchor | Product direction | `.spectacular/PRODUCT.md` |
 | `PROJECT` | Anchor | Spectacular v2 | `.spectacular/PROJECT.md` |
 | `STACK` | Anchor | Stack | `.spectacular/STACK.md` |

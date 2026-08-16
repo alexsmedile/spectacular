@@ -194,8 +194,8 @@ func TestSelfHostedHumanPointersExecuteWithoutMutation(t *testing.T) {
 }
 
 func TestPublicRegistryAndCommands(t *testing.T) {
-	if len(Registry) != 34 {
-		t.Fatalf("registry has %d commands, want 34", len(Registry))
+	if len(Registry) != 36 {
+		t.Fatalf("registry has %d commands, want 36", len(Registry))
 	}
 	seen := map[Operation]bool{}
 	for _, spec := range Registry {
@@ -792,6 +792,112 @@ func TestGovernedCreateUsesStrictInputAndRegisteredReadback(t *testing.T) {
 	out.Reset()
 	if exit := runner.Run([]string{"decision", "create", "--input", path, "--json"}); exit != 3 || !strings.Contains(out.String(), `"code":"invalid_known_field"`) {
 		t.Fatalf("unknown input exit=%d output=%s", exit, out.String())
+	}
+}
+
+func TestCreateAcceptsStdinAndGeneratesReplayableUUIDv7(t *testing.T) {
+	root := copyTree(t, filepath.Join("..", "..", "testdata", "scenario-b-c"))
+	input := map[string]any{
+		"title": "Authorize automatic identity", "actor": "Alex", "actor_role": "owner",
+		"authority_basis": "accepted B+C contract", "question": "Proceed?", "scope": []string{"v2"},
+		"disposition": "approve", "rationale": "Explicit owner authorization.", "alternatives": []string{},
+		"targets": []string{"new:Proposal:auto-proposal"}, "expected_fingerprints": []string{"absent"},
+		"operation": "proposal.create", "authorized_effects": []string{"proposal.create"},
+		"conditions": []string{"target-absent", "no-provider-effects"}, "expires_at": "2026-08-11T10:00:00Z",
+		"evidence": []string{}, "supersedes": "", "idempotency_key": "cli-auto-decision",
+	}
+	payload, err := json.Marshal(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	run := func() string {
+		var out, errOut bytes.Buffer
+		exit := (Runner{Cwd: root, Stdin: bytes.NewReader(payload), Stdout: &out, Stderr: &errOut, Now: fixedNow}).Run([]string{"decision", "create", "--input", "-", "--json"})
+		if exit != 0 {
+			t.Fatalf("stdin create exit=%d stderr=%s stdout=%s", exit, errOut.String(), out.String())
+		}
+		return out.String()
+	}
+	first := run()
+	var envelope struct {
+		Data governance.OperationResult `json:"data"`
+	}
+	if err := json.Unmarshal([]byte(first), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	ref, err := domain.ParseReference(envelope.Data.Ref)
+	if err != nil || ref.Type != domain.Decision {
+		t.Fatalf("automatic ref=%q err=%v", envelope.Data.Ref, err)
+	}
+	second := run()
+	if !strings.Contains(second, `"ref":"`+envelope.Data.Ref+`"`) || !strings.Contains(second, `"idempotent_replay":true`) {
+		t.Fatalf("automatic replay changed identity: first=%s second=%s", first, second)
+	}
+}
+
+func TestMissionProgressCommandEndsAtImplementationOwnerGate(t *testing.T) {
+	root := copyTree(t, filepath.Join("..", "..", "testdata", "scenario-b-c"))
+	manifest, err := os.ReadFile(filepath.Join(root, ".spectacular", "workspace.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	marker := sha256.Sum256(manifest)
+	markerFP := hex.EncodeToString(marker[:])
+	missionID := "0199d000-0000-7000-8000-000000000001"
+	objectiveID := "0199d000-0000-7000-8000-000000000002"
+	runID := "0199d000-0000-7000-8000-000000000003"
+	missionRef := "Mission:" + missionID
+	objectiveRef := "Objective:" + objectiveID
+	runRef := "Run:" + runID
+	records := filepath.Join(root, ".spectacular", "records")
+	if err := os.MkdirAll(records, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	objective := testDocument(t, domain.Objective, objectiveID, "Implement compact progress", "pending")
+	setTestFreshness(objective, markerFP)
+	workspace.SetString(objective, "mission", missionRef)
+	workspace.SetString(objective, "human_ref", "M9/O1")
+	workspace.SetString(objective, "outcome", "Implement compact progress")
+	workspace.SetStrings(objective, "dependencies", []string{})
+	workspace.SetStrings(objective, "expected_proof", []string{"claim:progress"})
+	writeTestDocument(t, filepath.Join(records, "objective.md"), objective)
+	objectiveFP, err := workspace.Fingerprint(objective)
+	if err != nil {
+		t.Fatal(err)
+	}
+	run := testDocument(t, domain.Run, runID, "Progress run", "active")
+	setTestFreshness(run, markerFP)
+	workspace.SetString(run, "mission", missionRef)
+	workspace.SetString(run, "baseline", strings.Repeat("a", 64))
+	workspace.SetString(run, "authority", "owner-direct:test")
+	writeTestDocument(t, filepath.Join(records, "run.md"), run)
+	runFP, err := workspace.Fingerprint(run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mission := testDocument(t, domain.Mission, missionID, "Compact Mission progress", "active")
+	setTestFreshness(mission, markerFP)
+	workspace.SetString(mission, "outcome", "Stop at an implementation owner gate")
+	workspace.SetString(mission, "human_ref", "M9")
+	workspace.SetStrings(mission, "objectives", []string{objectiveRef})
+	workspace.SetString(mission, "current_run", runRef)
+	workspace.SetString(mission, "expected_run_fingerprint", runFP)
+	workspace.SetStrings(mission, "allowed_actions", []string{"update-mission-progress"})
+	workspace.SetString(mission, "expires_at", "2026-08-11T10:00:00Z")
+	writeTestDocument(t, filepath.Join(records, "mission.md"), mission)
+	missionFP, err := workspace.Fingerprint(mission)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	args := []string{"mission", "progress", "M9", "--objective", "M9/O1", "--to", "implemented", "--actor", "executor", "--expected-mission-fingerprint", missionFP, "--expected-objective-fingerprint", objectiveFP, "--idempotency-key", "progress-command-1", "--json"}
+	var out, errOut bytes.Buffer
+	if exit := (Runner{Cwd: root, Stdout: &out, Stderr: &errOut, Now: fixedNow}).Run(args); exit != 0 {
+		t.Fatalf("progress exit=%d stderr=%s stdout=%s", exit, errOut.String(), out.String())
+	}
+	out.Reset()
+	if exit := (Runner{Cwd: root, Stdout: &out, Stderr: &errOut, Now: fixedNow}).Run([]string{"mission", "show", missionRef, "--json"}); exit != 0 || !strings.Contains(out.String(), `"code":"implementation_complete"`) || strings.Contains(out.String(), `"current_objective"`) {
+		t.Fatalf("progress did not produce owner gate: exit=%d output=%s", exit, out.String())
 	}
 }
 

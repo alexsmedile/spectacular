@@ -21,3 +21,9 @@
 | `M3/O3` | Objective | Common CLI mistakes have intuitive aliases or runnable corrective refusals. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O3-common-cli-mistakes-have-intuitive-aliases-or-runnable-corrective-refusals.md` |
 | `M3/O4` | Objective | Lean cluster, local commit, schema continuity, and FROST review guidance is explicit. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O4-lean-cluster-local-commit-schema-continuity-and-frost-review-guidance-is-explicit.md` |
 | `M3/R1` | Run | Initial governed Run | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/runs/R1-initial-governed-run/RUN.md` |
+| `M4` | Mission | Make Spectacular control operations lean | `.spectacular/missions/M4-make-spectacular-control-operations-lean/MISSION.md` |
+| `M4/D1-mfcxne` | Decision | Activate the lean control-plane Mission | `.spectacular/missions/M4-make-spectacular-control-operations-lean/decisions/D1-mfcxne.md` |
+| `M4/O1` | Objective | Compact-first policy and minimal verification are canonical. | `.spectacular/missions/M4-make-spectacular-control-operations-lean/objectives/O1-compact-first-policy-and-minimal-verification-are-canonical.md` |
+| `M4/O2` | Objective | Creation commands support stdin, automatic IDs, and atomic batches. | `.spectacular/missions/M4-make-spectacular-control-operations-lean/objectives/O2-creation-commands-support-stdin-automatic-ids-and-atomic-batches.md` |
+| `M4/O3` | Objective | Decision validation and compact Mission progress are immediate and atomic. | `.spectacular/missions/M4-make-spectacular-control-operations-lean/objectives/O3-decision-validation-and-compact-mission-progress-are-immediate-and-atomic.md` |
+| `M4/R1` | Run | Initial governed Run | `.spectacular/missions/M4-make-spectacular-control-operations-lean/runs/R1-initial-governed-run/RUN.md` |

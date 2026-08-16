@@ -9,3 +9,5 @@
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |
 | `D6-5e3xke` | Decision | Authorize M3 implementation Evidence | `.spectacular/decisions/D6-5e3xke.md` |
+| `D7-cgsri6` | Decision | Authorize the lean control-plane Proposal | `.spectacular/decisions/D7-cgsri6.md` |
+| `D8-qhjurh` | Decision | Authorize the lean control-plane Mission | `.spectacular/decisions/D8-qhjurh.md` |

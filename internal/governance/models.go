@@ -154,6 +154,11 @@ type EvidenceInput struct {
 	IdempotencyKey      string   `json:"idempotency_key"`
 }
 
+type EvidenceSetInput struct {
+	Items          []EvidenceInput `json:"items"`
+	IdempotencyKey string          `json:"idempotency_key"`
+}
+
 type DecisionInput struct {
 	ID                   string   `json:"id"`
 	Title                string   `json:"title"`
@@ -218,6 +223,16 @@ type TransitionInput struct {
 	Reconciliation      string
 	TerminalNextAction  string
 	SatisfiedObjectives []string
+}
+
+type MissionProgressInput struct {
+	Mission                      string
+	Objective                    string
+	To                           string
+	Actor                        string
+	ExpectedMissionFingerprint   string
+	ExpectedObjectiveFingerprint string
+	IdempotencyKey               string
 }
 
 type ReconcileInput struct {

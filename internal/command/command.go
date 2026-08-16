@@ -40,6 +40,7 @@ const (
 	argumentsScope
 	argumentsInput
 	argumentsTransition
+	argumentsProgress
 	argumentsReconcile
 	argumentsArchive
 	argumentsContext
@@ -66,11 +67,13 @@ const (
 	opProposalCreate
 	opMissionCreate
 	opMissionTransition
+	opMissionProgress
 	opHandoffShow
 	opHandoffValidate
 	opHandoffCreate
 	opHandoffReturn
 	opEvidenceCreate
+	opEvidenceCreateSet
 	opDecisionCreate
 	opAssessmentRecord
 	opContractShow
@@ -105,12 +108,14 @@ var Registry = []Spec{
 	{[]string{"mission", "prepare"}, "--input <json-file> [--json]", argumentsInput, "spectacular.mission.prepare.v1", ReadOnly, opMissionPrepare},
 	{[]string{"mission", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.mission.create.v1", Mutating, opMissionCreate},
 	{[]string{"mission", "transition"}, "<ref> --to <state> --authorization <decision-ref> --expected-fingerprint <sha> --idempotency-key <key> [--assessment <ref>] [--reconciliation <ref>] [--disposition <value>] [--terminal-next-action <text>] [--satisfied-objectives <ref,ref>] [--json]", argumentsTransition, "spectacular.mission.transition.v1", Mutating, opMissionTransition},
+	{[]string{"mission", "progress"}, "<ref> --objective <ref> --to implemented --actor <name> --expected-mission-fingerprint <sha> --expected-objective-fingerprint <sha> --idempotency-key <key> [--json]", argumentsProgress, "spectacular.mission.progress.v1", Mutating, opMissionProgress},
 	{[]string{"mission", "autopilot"}, "--input <json-file> [--json]", argumentsInput, "spectacular.mission.autopilot.v1", ReadOnly, opMissionAutopilot},
 	{[]string{"handoff", "show"}, "<ref> [--json]", argumentsOne, "spectacular.handoff.show.v1", ReadOnly, opHandoffShow},
 	{[]string{"handoff", "validate"}, "<ref> [--json]", argumentsOne, "spectacular.handoff.validate.v1", ReadOnly, opHandoffValidate},
 	{[]string{"handoff", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.handoff.create.v1", Mutating, opHandoffCreate},
 	{[]string{"handoff", "return"}, "--input <json-file> [--json]", argumentsInput, "spectacular.handoff.return.v1", Mutating, opHandoffReturn},
 	{[]string{"evidence", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.evidence.create.v1", Mutating, opEvidenceCreate},
+	{[]string{"evidence", "create-set"}, "--input <json-file|-> [--json]", argumentsInput, "spectacular.evidence.create-set.v1", Mutating, opEvidenceCreateSet},
 	{[]string{"decision", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.decision.create.v1", Mutating, opDecisionCreate},
 	{[]string{"assessment", "record"}, "--input <json-file> [--json]", argumentsInput, "spectacular.assessment.record.v1", Mutating, opAssessmentRecord},
 	{[]string{"contract", "show"}, "<ref> [--json]", argumentsOne, "spectacular.contract.show.v1", ReadOnly, opContractShow},
@@ -121,6 +126,7 @@ var Registry = []Spec{
 
 type Runner struct {
 	Cwd    string
+	Stdin  io.Reader
 	Stdout io.Writer
 	Stderr io.Writer
 	Now    func() time.Time
@@ -199,13 +205,13 @@ func (r Runner) Run(args []string) int {
 		value, err = g.CheckProposalBase(rest[0])
 	case opProposalCreate:
 		var input governance.ProposalInput
-		err = readInput(rest[1], &input)
+		err = r.readInput(rest[1], &input)
 		if err == nil {
 			value, err = g.CreateProposal(input)
 		}
 	case opMissionCreate:
 		var input governance.MissionInput
-		err = readInput(rest[1], &input)
+		err = r.readInput(rest[1], &input)
 		if err == nil {
 			value, err = g.CreateMission(input)
 		}
@@ -215,37 +221,49 @@ func (r Runner) Run(args []string) int {
 		if err == nil {
 			value, err = g.TransitionMission(input)
 		}
+	case opMissionProgress:
+		var input governance.MissionProgressInput
+		input, err = progressInput(rest)
+		if err == nil {
+			value, err = g.ProgressMission(input)
+		}
 	case opHandoffShow:
 		value, err = b.Detail(rest[0], domain.Handoff)
 	case opHandoffValidate:
 		value, err = g.ValidateHandoff(rest[0])
 	case opHandoffCreate:
 		var input governance.HandoffInput
-		err = readInput(rest[1], &input)
+		err = r.readInput(rest[1], &input)
 		if err == nil {
 			value, err = g.CreateHandoff(input)
 		}
 	case opHandoffReturn:
 		var input governance.HandoffReturnInput
-		err = readInput(rest[1], &input)
+		err = r.readInput(rest[1], &input)
 		if err == nil {
 			value, err = g.ReturnHandoff(input)
 		}
 	case opEvidenceCreate:
 		var input governance.EvidenceInput
-		err = readInput(rest[1], &input)
+		err = r.readInput(rest[1], &input)
 		if err == nil {
 			value, err = g.CreateEvidence(input)
 		}
+	case opEvidenceCreateSet:
+		var input governance.EvidenceSetInput
+		err = r.readInput(rest[1], &input)
+		if err == nil {
+			value, err = g.CreateEvidenceMany(input)
+		}
 	case opDecisionCreate:
 		var input governance.DecisionInput
-		err = readInput(rest[1], &input)
+		err = r.readInput(rest[1], &input)
 		if err == nil {
 			value, err = g.CreateDecision(input)
 		}
 	case opAssessmentRecord:
 		var input governance.AssessmentInput
-		err = readInput(rest[1], &input)
+		err = r.readInput(rest[1], &input)
 		if err == nil {
 			value, err = g.RecordAssessment(input)
 		}
@@ -259,7 +277,7 @@ func (r Runner) Run(args []string) int {
 		}
 	case opContractReconcileSet:
 		var input governance.ReconcileSetInput
-		err = readInput(rest[1], &input)
+		err = r.readInput(rest[1], &input)
 		if err == nil {
 			value, err = g.ReconcileMany(input.Items)
 		}
@@ -277,7 +295,7 @@ func (r Runner) Run(args []string) int {
 		}
 	case opMissionPrepare:
 		var input spectacularruntime.PreparationInput
-		err = readInput(rest[1], &input)
+		err = r.readInput(rest[1], &input)
 		if err == nil {
 			err = validatePreparationSources(workspace, input)
 		}
@@ -286,7 +304,7 @@ func (r Runner) Run(args []string) int {
 		}
 	case opMissionAutopilot:
 		var input spectacularruntime.AutopilotInput
-		err = readInput(rest[1], &input)
+		err = r.readInput(rest[1], &input)
 		if err == nil {
 			value, err = g.CompileAutopilot(input)
 		}
@@ -347,6 +365,10 @@ func (s Spec) validateArguments(args []string) string {
 		}
 	case argumentsTransition:
 		if _, err := transitionInput(args); err != nil {
+			return err.Error()
+		}
+	case argumentsProgress:
+		if _, err := progressInput(args); err != nil {
 			return err.Error()
 		}
 	case argumentsReconcile:
@@ -415,13 +437,22 @@ func validateBoundSource(workspace *discovery.Workspace, source spectacularrunti
 	return nil
 }
 
-func readInput(path string, target any) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return domain.NewRefusal(domain.RefusalRecordNotFound, "input", "read confirmed input", err)
+func (r Runner) readInput(path string, target any) error {
+	var reader io.Reader
+	if path == "-" {
+		reader = r.Stdin
+		if reader == nil {
+			reader = os.Stdin
+		}
+	} else {
+		file, err := os.Open(path)
+		if err != nil {
+			return domain.NewRefusal(domain.RefusalRecordNotFound, "input", "read confirmed input", err)
+		}
+		defer file.Close()
+		reader = file
 	}
-	defer file.Close()
-	decoder := json.NewDecoder(file)
+	decoder := json.NewDecoder(reader)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(target); err != nil {
 		return domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "decode confirmed JSON input", err)
@@ -494,6 +525,25 @@ func transitionInput(args []string) (governance.TransitionInput, error) {
 		objectives = strings.Split(raw, ",")
 	}
 	return governance.TransitionInput{Mission: ref, To: values["--to"], Authorization: values["--authorization"], ExpectedFingerprint: values["--expected-fingerprint"], IdempotencyKey: values["--idempotency-key"], Disposition: values["--disposition"], Assessment: values["--assessment"], Reconciliation: values["--reconciliation"], TerminalNextAction: values["--terminal-next-action"], SatisfiedObjectives: objectives}, nil
+}
+
+func progressInput(args []string) (governance.MissionProgressInput, error) {
+	ref, values, err := optionMap(args, true)
+	if err != nil {
+		return governance.MissionProgressInput{}, err
+	}
+	required := []string{"--objective", "--to", "--actor", "--expected-mission-fingerprint", "--expected-objective-fingerprint", "--idempotency-key"}
+	if err := requireOptions(values, required...); err != nil {
+		return governance.MissionProgressInput{}, err
+	}
+	if err := rejectUnknownOptions(values, required...); err != nil {
+		return governance.MissionProgressInput{}, err
+	}
+	return governance.MissionProgressInput{
+		Mission: ref, Objective: values["--objective"], To: values["--to"], Actor: values["--actor"],
+		ExpectedMissionFingerprint: values["--expected-mission-fingerprint"], ExpectedObjectiveFingerprint: values["--expected-objective-fingerprint"],
+		IdempotencyKey: values["--idempotency-key"],
+	}, nil
 }
 
 func reconcileInput(args []string) (governance.ReconcileInput, error) {
@@ -680,11 +730,27 @@ func renderHuman(w io.Writer, envelope projection.Envelope) {
 		fmt.Fprintf(w, "Scope: %s\nValid: %t\nRecords: %d\n", v.Scope, v.Valid, v.Records)
 	case contextcompiler.Bundle:
 		renderContext(w, v)
+	case governance.OperationResult:
+		renderOperationResult(w, v)
+	case []governance.OperationResult:
+		for _, item := range v {
+			renderOperationResult(w, item)
+		}
 	default:
 		data, _ := json.MarshalIndent(v, "", "  ")
 		fmt.Fprintln(w, string(data))
 	}
 	fmt.Fprintf(w, "\nGenerated: %s\nBasis: %s\n", envelope.GeneratedAt, envelope.GenerationBasis)
+}
+
+func renderOperationResult(w io.Writer, result governance.OperationResult) {
+	verb := "Created"
+	if result.IdempotentReplay {
+		verb = "Replayed"
+	} else if strings.Contains(result.Operation, "progress") || strings.Contains(result.Operation, "transition") {
+		verb = "Updated"
+	}
+	fmt.Fprintf(w, "%s: %s %s\nPath: %s\nFingerprint: %s\n", verb, result.Operation, result.Ref, result.Path, result.Fingerprint)
 }
 
 func renderContext(w io.Writer, bundle contextcompiler.Bundle) {
@@ -744,6 +810,13 @@ func renderCard(w io.Writer, c projection.Card) {
 	}
 	if c.CurrentObjective != nil {
 		fmt.Fprintf(w, "Objective: %s  %s\n", displayRef(*c.CurrentObjective), c.CurrentObjective.ShowCommand)
+	}
+	if c.Noun == string(domain.Mission) {
+		fmt.Fprintf(w, "Mutation basis: mission=%s", c.Source.Fingerprint)
+		if c.CurrentObjective != nil {
+			fmt.Fprintf(w, " objective=%s", c.CurrentObjective.Fingerprint)
+		}
+		fmt.Fprintln(w)
 	}
 	if c.CurrentRun != nil {
 		fmt.Fprintf(w, "Run: %s  %s\n", displayRef(*c.CurrentRun), c.CurrentRun.ShowCommand)

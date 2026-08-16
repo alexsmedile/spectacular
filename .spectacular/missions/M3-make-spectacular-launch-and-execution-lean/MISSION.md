@@ -2,10 +2,31 @@
 type: Mission
 id: 01a007f6-d88c-765a-a69e-e1100c71dabb
 title: Make Spectacular launch and execution lean
-status: active
+status: completed
 created_by: Codex primary implementation session
 created: "2026-08-16T00:29:36Z"
-updated: "2026-08-16T00:29:55Z"
+updated: "2026-08-16T13:05:00Z"
+closure:
+    kind: historical
+    at: "2026-08-16T13:05:00Z"
+    by: Alex
+    review: partial
+    implementation_commits:
+        - e5ee542934e50fb70858744d0270b8005cfbdd29
+        - 660b2e909b6b03aaa3520f129f9d54663d6142f7
+        - 52089d76726b807229c86398bd0a34c6bf484ef1
+        - 36bf56fb1eee2a738882a62c834d86c272c26f94
+    merged_commit: c63d1a229ada24ea8914fa0440d185e9aa30cec2
+    basis: Owner closed this Mission retroactively. All four claims carry Evidence records, and the independent-level claim was reviewed by a separate FROST reviewer against a Git tree verified to exist and to match its named commit.
+    evidence_present:
+        - E1-npnuyp covers claim:launch-preflight-questions
+        - E2-7nclqi covers claim:progressive-context
+        - E3-ravzes covers claim:cli-recovery
+        - E4-6oodeg covers claim:lean-execution-review at independent level
+    not_claimed:
+        - Objective and Run records were never advanced past their activation state.
+        - E1, E2, and E3 are executor-authored, matching their frozen automatic and clustered review levels but carrying no separate reviewer.
+        - No closure-time re-verification was run against the merged tree.
 source: Proposal:01a007f6-d88a-7922-a16e-abd2262feda4
 activation_decision: Decision:01a007f6-d893-7dec-8fc8-98639fac28cd
 allowed_actions:
@@ -93,3 +114,46 @@ stops:
     - The implementation would introduce v1 compatibility, generic record/search verbs, or automatic active-Mission migration.
 ---
 # Mission
+
+## Historical closure
+
+This Mission was closed retroactively on 2026-08-16, after its implementation
+had already shipped and merged to `main`. It is recorded as `historical` because
+the Objective and Run records were never advanced during execution — not because
+the work lacked proof. Of the three retroactively closed Missions, M3 has the
+strongest evidence.
+
+**What shipped.** Four commits: `e5ee542` (lean launch preflight), `660b2e9`
+(compact runtime context), `52089d7` (reconstructible CLI recovery), and
+`36bf56f` (lean execution and FROST review guidance). All are on `main` at merge
+`c63d1a2`.
+
+**What was proven.** Every one of the four frozen claims has an Evidence record,
+and each Evidence record names its checks:
+
+- `claim:launch-preflight-questions` (clustered) — E1, skill conformance plus
+  full repository verification.
+- `claim:progressive-context` (clustered) — E2, focused context-command tests
+  plus a live compact-context render of M3 itself.
+- `claim:cli-recovery` (automatic) — E3, command and generator tests including
+  zero-argument canonical generation.
+- `claim:lean-execution-review` (independent) — E4, a cold FROST inspection by a
+  reviewer separate from the executor, returning no findings, corroborated by
+  the full gate and a reproducible release/install/recovery check.
+
+E4 is the one claim whose frozen review level demanded independence, and it is
+the one Evidence record with `executor_authored: false`. Its `target` names Git
+tree `51d9be7b3c570eb89a23071ffa8aaeb4c5437e0b`; that tree exists in this
+repository and is exactly the tree of commit `36bf56f`, so the reviewed
+coordinates are real rather than asserted.
+
+**What was never done.** The Objective and Run records still carry their
+activation state, and no re-verification was run against the merged tree at
+closure time. E1, E2, and E3 are executor-authored — correct for their frozen
+automatic and clustered levels, but they are not independent confirmation.
+
+**Schema note.** This Mission validates at `legacy-v2` (3 checks), not
+`mission.v2` (14 checks). The M6 CLI reads it but cannot complete it: the legacy
+schema has no `owner` field, no frozen activation fingerprint, and no Contract
+binding, so `mission complete` refuses. The closure above was written by hand
+under owner authority.

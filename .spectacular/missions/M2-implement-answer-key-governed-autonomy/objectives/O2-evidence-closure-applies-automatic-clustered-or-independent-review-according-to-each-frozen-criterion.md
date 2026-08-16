@@ -2,7 +2,8 @@
 type: Objective
 id: 01a007c4-8b0e-7416-9e26-351a0c750e91
 title: Evidence closure applies automatic, clustered, or independent review according to each frozen criterion.
-status: pending
+status: implemented
+advanced_by: historical-closure 2026-08-16
 created_by: Codex primary implementation session
 created: "2026-08-15T23:33:04Z"
 updated: "2026-08-15T23:33:04Z"

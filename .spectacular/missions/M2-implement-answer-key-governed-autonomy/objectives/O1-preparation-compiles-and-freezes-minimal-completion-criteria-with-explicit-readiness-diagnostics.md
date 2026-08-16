@@ -2,7 +2,8 @@
 type: Objective
 id: 01a007c2-3d1e-7668-97aa-7f1e0f8274ea
 title: Preparation compiles and freezes minimal completion criteria with explicit readiness diagnostics.
-status: pending
+status: implemented
+advanced_by: historical-closure 2026-08-16
 created_by: Codex primary implementation session
 created: "2026-08-15T23:33:04Z"
 updated: "2026-08-15T23:33:04Z"

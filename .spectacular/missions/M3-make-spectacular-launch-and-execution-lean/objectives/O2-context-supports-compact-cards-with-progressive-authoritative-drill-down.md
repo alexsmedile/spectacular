@@ -2,7 +2,8 @@
 type: Objective
 id: 01a007f6-d88e-77ce-84fc-dfb369785341
 title: Context supports compact cards with progressive authoritative drill-down.
-status: pending
+status: implemented
+advanced_by: historical-closure 2026-08-16
 created_by: Codex primary implementation session
 created: "2026-08-16T00:29:36Z"
 updated: "2026-08-16T00:29:36Z"

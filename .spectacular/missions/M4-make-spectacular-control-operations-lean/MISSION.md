@@ -2,10 +2,23 @@
 type: Mission
 id: 01a0081c-978f-724d-a77b-cf06e3ce2f44
 title: Make Spectacular control operations lean
-status: active
+status: completed
 created_by: Codex primary implementation session
 created: "2026-08-16T01:10:12Z"
-updated: "2026-08-16T01:10:29Z"
+updated: "2026-08-16T13:05:00Z"
+closure:
+    kind: historical
+    at: "2026-08-16T13:05:00Z"
+    by: Alex
+    review: none
+    implementation_commit: ddcd153622e5f5bd036ff090fff992f2d0885c64
+    merged_commit: c63d1a229ada24ea8914fa0440d185e9aa30cec2
+    basis: Owner closed this Mission retroactively. The implementation shipped and is merged to main, and all three Objectives were advanced to implemented during execution, but no Evidence was captured and no review ran.
+    not_claimed:
+        - No Evidence records were captured for any of the four claims.
+        - No review ran at any level, including the two claims frozen at clustered.
+        - The Run record was never advanced past its activation state.
+        - The four frozen completion criteria were not individually verified at closure.
 source: Proposal:01a0081c-978f-723e-81dd-bba16b0e82cc
 activation_decision: Decision:01a0081c-978f-7246-af3d-dacce64c0958
 allowed_actions:
@@ -93,3 +106,37 @@ stops:
     - Compact verification hides a failing check or loses its detailed log.
 ---
 # Mission
+
+## Historical closure
+
+This Mission was closed retroactively on 2026-08-16, after its implementation
+had already shipped and merged to `main`. It is recorded as `historical` rather
+than `completed` through the normal path because no Evidence was ever captured
+and no review ran.
+
+**What shipped.** Commit `ddcd153` (`feat: make governed control operations
+lean`) — 30 files, roughly +1,077/−97. It implements compact-first context
+policy, creation commands accepting stdin and generated IDs in atomic batches,
+early Decision-vocabulary refusal, and the compact `mission progress` command
+that advances an Objective or emits an implementation-complete owner gate
+without hand-editing records. It also reworked `test/verify.sh` into the compact
+gate that later Missions used. The code is on `main` at merge `c63d1a2`.
+
+**What was done.** All three Objectives were advanced to `implemented` during
+execution — more record-keeping than M2 received.
+
+**What was never done.** No Evidence records exist for any of the four claims,
+including `claim:batch-autoid` and `claim:mission-control`, both frozen at
+`clustered` review level. The Run record still carries its activation state. The
+four frozen criteria were not individually verified at closure.
+
+The strongest available evidence that this implementation is sound is indirect:
+M5 and M6 were built on top of this control plane, both were independently
+reviewed and completed, and the full repository verification gate — itself
+substantially rewritten by this Mission — passes on the merged tree.
+
+**Schema note.** This Mission validates at `legacy-v2` (3 checks), not
+`mission.v2` (14 checks). The M6 CLI reads it but refuses to complete it, since
+the legacy schema carries no `owner` field, no frozen activation fingerprint,
+and no Contract binding. The closure above was written by hand under owner
+authority.

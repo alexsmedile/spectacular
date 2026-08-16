@@ -2,7 +2,8 @@
 type: Objective
 id: 01a007c4-8b0e-7455-af99-68a7dd6526b9
 title: Objective dependencies and Handoffs support cohesive, disjoint runner claim scopes and explicit returns.
-status: pending
+status: implemented
+advanced_by: historical-closure 2026-08-16
 created_by: Codex primary implementation session
 created: "2026-08-15T23:33:04Z"
 updated: "2026-08-15T23:33:04Z"

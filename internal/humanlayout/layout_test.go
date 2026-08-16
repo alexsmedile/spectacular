@@ -73,8 +73,11 @@ func TestIndexesClearAnEmptiedActiveCollection(t *testing.T) {
 	if !strings.Contains(active, "non-authoritative") || strings.Contains(active, "`M1`") {
 		t.Fatalf("active Mission index was not cleared:\n%s", active)
 	}
-	if archivedIndex := string(indexes[".spectacular/archive/missions/M1-archived-mission/index.md"]); !strings.Contains(archivedIndex, "`M1`") {
-		t.Fatalf("archive index omits moved Mission:\n%s", archivedIndex)
+	if archivedIndex := string(indexes[".spectacular/archive/index.md"]); !strings.Contains(archivedIndex, "`M1`") {
+		t.Fatalf("archive collection index omits moved Mission:\n%s", archivedIndex)
+	}
+	if _, exists := indexes[".spectacular/archive/missions/M1-archived-mission/index.md"]; exists {
+		t.Fatal("Mission-local index duplicates MISSION.md")
 	}
 }
 
@@ -85,6 +88,15 @@ func TestShortKeyIsStableIdentityNotContent(t *testing.T) {
 	}
 	if got := ShortKey(id); got != "t2lylz" {
 		t.Fatalf("short key=%q", got)
+	}
+}
+
+func TestHumanRefPrefersCompactRef(t *testing.T) {
+	doc := document(t, domain.Mission, "019fe381-5d61-7223-b362-03a5f99a7b02", "Compact Mission")
+	workspace.SetString(doc, "human_ref", "M-old")
+	workspace.SetString(doc, "ref", "M5")
+	if got := HumanRef(doc); got != "M5" {
+		t.Fatalf("HumanRef=%q want M5", got)
 	}
 }
 

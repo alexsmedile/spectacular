@@ -26,5 +26,5 @@ last_closed_mission: Mission:019fe381-5d61-7223-b362-03a5f99a7b02
 ---
 # Spectacular v2
 
-This is the live project Anchor. The current Mission repairs the RC workspace
-so a cold human can understand the project and resume work from the filesystem.
+This is the live project Anchor. M5 aligns the Skill and compact Mission model;
+the dependent M6 replaces the out-of-service CLI workflow with typed mechanics.

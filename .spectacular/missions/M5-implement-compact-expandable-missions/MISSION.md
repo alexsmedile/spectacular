@@ -6,7 +6,7 @@ title: Align the Spectacular Skill with compact Missions
 status: active
 owner: Alex
 created: "2026-08-16T09:55:54Z"
-updated: "2026-08-16T10:37:53Z"
+updated: "2026-08-16T10:46:50Z"
 
 contract:
   ref: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
@@ -59,12 +59,12 @@ run:
   operator: Codex primary session
   started_at: "2026-08-16T10:31:30Z"
   current_objective: O3
-  repairs: 0
+  repairs: 1
 
 activation:
   by: Alex
   at: "2026-08-16T10:31:30Z"
-  fingerprint: sha256:d9446e3fcb01c67f4d7d464ce721289f28a24734d8857a2297131e4ba7464717
+  fingerprint: sha256:3314b10debed8b94a6482dac8109685b039426fd8757a410c39f06dad892569f
 
 validation:
   schema: mission.v2
@@ -75,7 +75,7 @@ authority:
   requires_owner: [change-outcome-or-completion, expand-scope, push, merge, release, irreversible-change, destructive-data, secret-change]
 
 scope:
-  mechanical: [skills/spectacular/, cmd/assemble-release/main_test.go, .spectacular/PROJECT.md, .spectacular/contracts/, .spectacular/missions/M5-implement-compact-expandable-missions/, .spectacular/missions/M6-implement-compact-mission-cli/]
+  mechanical: [skills/spectacular/, cmd/assemble-release/main_test.go, internal/humanlayout/index.go, internal/humanlayout/layout.go, internal/humanlayout/layout_test.go, .spectacular/PROJECT.md, .spectacular/index.md, .spectacular/contracts/, .spectacular/missions/index.md, .spectacular/missions/M5-implement-compact-expandable-missions/, .spectacular/missions/M6-implement-compact-mission-cli/]
   semantic:
     - Spectacular Skill behavior for compact Mission preparation, execution, review, completion, and recovery.
     - Division of work between LLM judgment and deterministic mechanics.
@@ -98,6 +98,12 @@ The owner split the work after the compact schema checkpoint: update the Skill
 first, then implement the mechanical CLI in a separate Mission. This
 owner-confirmed amendment replaces M5's original CLI implementation scope while
 preserving its identities and compact file structure.
+
+The owner had also accepted indexes as rebuildable navigation caches rather
+than mandatory per-Mission files. The first independent review exposed stale
+workspace caches and an old generator that still created Mission-local
+`index.md` files. This bounded repair adds collection-cache integration to M5
+without making any cache authoritative or entering M6's command work.
 
 ## LLM and mechanical work
 

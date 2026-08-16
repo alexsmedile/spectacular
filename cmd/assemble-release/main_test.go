@@ -7,14 +7,64 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 )
 
-func TestCanonicalSkillDefinesLeanLaunchAndQuestionContract(t *testing.T) {
+// The Skill is the product: `assemble-release` ships SKILL.md and its references
+// as the artifact, and for an LLM-executed method the prose is the behavior. So
+// these tests are completion evidence for the claims M3 and M4 froze, not a style
+// guide.
+//
+// They therefore pin *concepts*, not sentences. An earlier version asserted whole
+// phrases, which locked the wording: rephrasing "The plan supplies meaning" to
+// "The plan carries meaning" turned the build red while the shipped behavior was
+// unchanged. A concept check still fails when a behavior is dropped, which is the
+// only failure worth having.
+//
+// A named vocabulary token is the exception. `manual-bootstrap` and the FROST lens
+// names are strings an agent must emit or match exactly, so rewording them *is* the
+// regression and they stay pinned literally.
+
+// concept is one behavior the released Skill must still instruct, identified by the
+// keywords that carry it rather than by the sentence that currently phrases it.
+type concept struct {
+	// behavior states what breaks for a reader of the release if this is missing.
+	behavior string
+	// keywords must all appear. Keep them to the load-bearing tokens, so an editor
+	// can improve a sentence without turning the build red.
+	keywords []string
+}
+
+// requireConcepts reports every missing concept rather than stopping at the first,
+// so one run names the full set of behaviors a Skill rewrite dropped.
+func requireConcepts(t *testing.T, claim, content string, concepts []concept) {
+	t.Helper()
+	for _, want := range concepts {
+		var missing []string
+		for _, keyword := range want.keywords {
+			if !strings.Contains(content, keyword) {
+				missing = append(missing, strconv.Quote(keyword))
+			}
+		}
+		if len(missing) == 0 {
+			continue
+		}
+		t.Errorf("released Skill no longer instructs: %s\n"+
+			"  missing keywords: %s\n"+
+			"  this is completion evidence for claim %q — if the behavior moved or was\n"+
+			"  deliberately dropped, update the claim, not just this assertion",
+			want.behavior, strings.Join(missing, ", "), claim)
+	}
+}
+
+// skillText concatenates the named release parts, which is what a reader of the
+// shipped artifact sees.
+func skillText(t *testing.T, parts ...string) string {
+	t.Helper()
 	root := filepath.Join("..", "..", "skills", "spectacular")
-	parts := []string{"SKILL.md", filepath.Join("references", "prepare.md")}
 	var content strings.Builder
 	for _, part := range parts {
 		data, err := os.ReadFile(filepath.Join(root, part))
@@ -23,54 +73,106 @@ func TestCanonicalSkillDefinesLeanLaunchAndQuestionContract(t *testing.T) {
 		}
 		content.Write(data)
 	}
-	for _, required := range []string{
-		"Read `.spectacular/PROJECT.md` first",
-		"read-only launch preflight",
-		"plain outcome; technical basis",
-		"action -> consequence",
-		"recommended default",
-	} {
-		if !strings.Contains(content.String(), required) {
-			t.Fatalf("canonical Skill omits %q", required)
-		}
-	}
+	return content.String()
 }
 
-func TestCanonicalSkillDefinesLeanExecutionAndFROST(t *testing.T) {
-	root := filepath.Join("..", "..", "skills", "spectacular")
-	core, err := os.ReadFile(filepath.Join(root, "SKILL.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	execute, err := os.ReadFile(filepath.Join(root, "references", "execute.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	audit, err := os.ReadFile(filepath.Join(root, "references", "audit.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	content := string(core) + string(execute) + string(audit)
-	for _, required := range []string{
-		"Mission card -> current Objective -> exact sources",
-		"The plan supplies meaning",
-		"Mechanical tooling supplies repeatability",
+func TestReleasedSkillInstructsTheLaunchPreflight(t *testing.T) {
+	content := skillText(t, "SKILL.md", filepath.Join("references", "prepare.md"))
+	requireConcepts(t, "lean-launch", content, []concept{
+		{
+			behavior: "enter the workspace through .spectacular/PROJECT.md before reading anything else",
+			keywords: []string{".spectacular/PROJECT.md"},
+		},
+		{
+			behavior: "run the launch check read-only, so a launch never mutates the workspace",
+			keywords: []string{"read-only", "preflight"},
+		},
+	})
+}
+
+func TestReleasedSkillInstructsTheOwnerQuestionShape(t *testing.T) {
+	content := skillText(t, "SKILL.md", filepath.Join("references", "prepare.md"))
+	requireConcepts(t, "dual-layer-questions", content, []concept{
+		{
+			behavior: "lead an owner question with the plain outcome, then the technical basis",
+			keywords: []string{"outcome", "Technical basis"},
+		},
+		{
+			behavior: "state each option as an action paired with its consequence",
+			keywords: []string{"action -> consequence"},
+		},
+		{
+			behavior: "name a recommended default so the owner can accept rather than decide",
+			keywords: []string{"Recommended default"},
+		},
+	})
+}
+
+func TestReleasedSkillInstructsProgressiveContext(t *testing.T) {
+	content := skillText(t, "SKILL.md", filepath.Join("references", "execute.md"))
+	requireConcepts(t, "compact-context", content, []concept{
+		{
+			behavior: "drill down from the Mission card to the current Objective to exact sources",
+			keywords: []string{"Mission card -> current Objective -> exact sources"},
+		},
+		{
+			behavior: "separate what the plan is authoritative for from what the tooling is authoritative for",
+			keywords: []string{"plan carries meaning", "tooling carries repeatability"},
+		},
+	})
+}
+
+func TestReleasedSkillPinsTheNamedVocabulary(t *testing.T) {
+	content := skillText(t,
+		"SKILL.md",
+		filepath.Join("references", "execute.md"),
+		filepath.Join("references", "audit.md"),
+	)
+	// Unlike the concept checks above, these are exact tokens an agent emits or
+	// matches. Rewording one is the regression, so they are pinned literally.
+	for _, token := range []string{
 		"manual-bootstrap",
 		"focused checks",
 		"Frozen fit",
 		"Truth of proof",
-		"active Mission retains the schema",
-		"A Decision is not activation authority",
 	} {
-		if !strings.Contains(content, required) {
-			t.Fatalf("canonical Skill omits %q", required)
+		if !strings.Contains(content, token) {
+			t.Errorf("released Skill omits the exact vocabulary token %q; "+
+				"this token is matched or emitted verbatim, so rewording it is a breaking change", token)
 		}
 	}
-	if strings.Contains(string(core), "Frozen fit**") {
-		t.Fatal("core Skill embeds detailed FROST policy instead of routing to audit.md")
+}
+
+func TestReleasedSkillInstructsSelfHostingAndActivationAuthority(t *testing.T) {
+	content := skillText(t,
+		"SKILL.md",
+		filepath.Join("references", "execute.md"),
+		filepath.Join("references", "audit.md"),
+	)
+	requireConcepts(t, "governed-self-hosting", content, []concept{
+		{
+			behavior: "hold the schema and completion criteria frozen while a Mission is active, even when Spectacular develops itself",
+			keywords: []string{"active Mission keeps the schema"},
+		},
+		{
+			behavior: "refuse to treat a Decision as authority to activate a Mission",
+			keywords: []string{"A Decision is not activation authority"},
+		},
+	})
+}
+
+// The core Skill routes to references instead of absorbing them. These are
+// structural assertions, not wording ones: they fail when detail migrates back
+// into the always-loaded file and inflates every launch.
+func TestCoreSkillRoutesDetailToReferencesInsteadOfAbsorbingIt(t *testing.T) {
+	core := skillText(t, "SKILL.md")
+	if strings.Contains(core, "Frozen fit**") {
+		t.Error("core Skill embeds detailed FROST policy instead of routing to audit.md; " +
+			"this reloads audit detail on every launch, which M4 froze as out of the core file")
 	}
-	if strings.Contains(string(core), "--event <@Event> --json") {
-		t.Fatal("core Skill still forces full JSON context")
+	if strings.Contains(core, "--event <@Event> --json") {
+		t.Error("core Skill still forces full JSON context; " +
+			"M3 froze the lean form, where full JSON is opt-in rather than the instructed default")
 	}
 }
 

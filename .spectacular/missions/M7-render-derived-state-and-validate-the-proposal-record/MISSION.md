@@ -4,7 +4,7 @@ id: 01a00af1-38c0-7268-9529-5856afc7b2f2
 title: Render derived state and validate the Proposal record
 status: active
 created: "2026-08-16T14:19:42Z"
-updated: "2026-08-16T20:08:43Z"
+updated: "2026-08-16T20:42:56Z"
 activation:
     at: "2026-08-16T21:30:00Z"
     by: Alex
@@ -119,6 +119,11 @@ owner: Alex
 ref: M7
 repair_budget: 3
 review: clustered
+reviews:
+    - file: reviews/RV1-clustered-review-of-m7-derived-state-drift-authority-equivalence-and-proposal-schema.md
+      id: 01a00c7b-43c0-7d36-94d6-206c32b17da5
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a00af1-38c0-7af4-9f24-a3074277d3c2

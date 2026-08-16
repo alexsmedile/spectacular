@@ -6,7 +6,7 @@ title: Implement the compact Mission CLI
 status: active
 owner: Alex
 created: "2026-08-16T10:31:30Z"
-updated: "2026-08-16T11:13:08Z"
+updated: "2026-08-16T11:14:15Z"
 
 contract:
   ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -42,13 +42,13 @@ objectives:
   - ref: O2
     id: 01a00a20-63dd-79dc-87ea-157563ccf6d6
     outcome: Implement the minimal read, start, progress, expansion, review, and completion command surface.
-    status: active
+    status: implemented
     after: [O1]
     claims: [typed-commands]
   - ref: O3
     id: 01a00a20-63dd-72df-b24e-4f1044c47e61
     outcome: Prove atomicity, safe refusals, representation equivalence, legacy readability, and compact distribution behavior.
-    status: pending
+    status: active
     after: [O2]
     claims: [atomic-stress]
 
@@ -58,7 +58,7 @@ run:
   status: active
   operator: Codex primary session
   started_at: "2026-08-16T10:53:23Z"
-  current_objective: O2
+  current_objective: O3
   repairs: 0
 
 activation:

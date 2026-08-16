@@ -20,9 +20,9 @@ for runtime_name in codex claude; do
   [[ -x "$destination/bin/spectacular" ]]
   [[ -f "$destination/plugins/spectacular/skills/spectacular/SKILL.md" ]]
   [[ -f "$destination/plugins/spectacular/.$runtime_name-plugin/plugin.json" ]]
-  (cd "$destination" && "$destination/bin/spectacular" anchor show project --json >/dev/null 2>&1) && exit 1 || code=$?
+  (cd "$destination" && "$destination/bin/spectacular" mission show M1 --json >/dev/null 2>&1) && exit 1 || code=$?
   [[ "$code" -eq 3 ]]
-  (cd "$v2_root/testdata/scenario-a" && "$destination/bin/spectacular" workspace context project --event @Orient --json) | grep -q 'spectacular.context.v1'
+  (cd "$v2_root/testdata/scenario-a" && "$destination/bin/spectacular" mission show M1 --json) | grep -q 'spectacular.mission.show.v2'
 done
 
 home_probe="$test_root/home-probe"

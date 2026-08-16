@@ -7,15 +7,14 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
-	contextcompiler "github.com/alexsmedile/spectacular/v2/internal/context"
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/governance"
-	"github.com/alexsmedile/spectacular/v2/internal/projection"
-	spectacularruntime "github.com/alexsmedile/spectacular/v2/internal/runtime"
+	"github.com/alexsmedile/spectacular/v2/internal/missionbundle"
 )
 
 type Effect string
@@ -23,105 +22,50 @@ type Effect string
 const ReadOnly Effect = "read-only"
 const Mutating Effect = "mutating"
 
+type argumentShape uint8
+
+const (
+	one argumentShape = iota
+	two
+	titleOption
+	byOption
+)
+
+type operation uint8
+
+const (
+	opMissionStart operation = iota + 1
+	opMissionShow
+	opMissionCheck
+	opObjectiveShow
+	opObjectivePromote
+	opObjectiveFinish
+	opRunShow
+	opRunStart
+	opReviewRecord
+	opMissionComplete
+)
+
 type Spec struct {
 	Words         []string
 	Arguments     string
-	ArgumentShape ArgumentShape
+	ArgumentShape argumentShape
 	JSONSchema    string
 	Effect        Effect
-	Operation     Operation
+	Operation     operation
 }
-type Operation uint8
-type ArgumentShape uint8
-
-const (
-	argumentsNone ArgumentShape = iota
-	argumentsOne
-	argumentsScope
-	argumentsInput
-	argumentsTransition
-	argumentsProgress
-	argumentsReconcile
-	argumentsArchive
-	argumentsContext
-)
-
-const (
-	opAnchorShowProject Operation = iota + 1
-	opAnchorShowProduct
-	opAnchorShowArchitecture
-	opAnchorShowStack
-	opMissionList
-	opMissionShow
-	opGapList
-	opGapShow
-	opRunShow
-	opCheckpointShow
-	opEvidenceShow
-	opDecisionShow
-	opWorkspaceValidate
-	opProposalShow
-	opObjectiveShow
-	opAssessmentShow
-	opProposalCheckBase
-	opProposalCreate
-	opMissionCreate
-	opMissionTransition
-	opMissionProgress
-	opHandoffShow
-	opHandoffValidate
-	opHandoffCreate
-	opHandoffReturn
-	opEvidenceCreate
-	opEvidenceCreateSet
-	opDecisionCreate
-	opAssessmentRecord
-	opContractShow
-	opContractReconcile
-	opContractReconcileSet
-	opMissionArchive
-	opWorkspaceContext
-	opMissionPrepare
-	opMissionAutopilot
-)
 
 var Registry = []Spec{
-	{[]string{"anchor", "show", "project"}, "[--json]", argumentsNone, "spectacular.anchor.show.v1", ReadOnly, opAnchorShowProject},
-	{[]string{"anchor", "show", "product"}, "[--json]", argumentsNone, "spectacular.anchor.show.v1", ReadOnly, opAnchorShowProduct},
-	{[]string{"anchor", "show", "architecture"}, "[--json]", argumentsNone, "spectacular.anchor.show.v1", ReadOnly, opAnchorShowArchitecture},
-	{[]string{"anchor", "show", "stack"}, "[--json]", argumentsNone, "spectacular.anchor.show.v1", ReadOnly, opAnchorShowStack},
-	{[]string{"mission", "list"}, "[--json]", argumentsNone, "spectacular.mission.list.v1", ReadOnly, opMissionList},
-	{[]string{"mission", "show"}, "<ref> [--json]", argumentsOne, "spectacular.mission.show.v1", ReadOnly, opMissionShow},
-	{[]string{"gap", "list"}, "--scope <ref> [--json]", argumentsScope, "spectacular.gap.list.v1", ReadOnly, opGapList},
-	{[]string{"gap", "show"}, "<ref> [--json]", argumentsOne, "spectacular.gap.show.v1", ReadOnly, opGapShow},
-	{[]string{"run", "show"}, "<ref> [--json]", argumentsOne, "spectacular.run.show.v1", ReadOnly, opRunShow},
-	{[]string{"checkpoint", "show"}, "<ref> [--json]", argumentsOne, "spectacular.checkpoint.show.v1", ReadOnly, opCheckpointShow},
-	{[]string{"evidence", "show"}, "<ref> [--json]", argumentsOne, "spectacular.evidence.show.v1", ReadOnly, opEvidenceShow},
-	{[]string{"decision", "show"}, "<ref> [--json]", argumentsOne, "spectacular.decision.show.v1", ReadOnly, opDecisionShow},
-	{[]string{"workspace", "validate"}, "<scope> [--json]", argumentsOne, "spectacular.workspace.validate.v1", ReadOnly, opWorkspaceValidate},
-	{[]string{"workspace", "context"}, "<project|mission-ref> --event <@Event> [--selector <$domain.verb>] [--json]", argumentsContext, "spectacular.workspace.context.v1", ReadOnly, opWorkspaceContext},
-	{[]string{"proposal", "show"}, "<ref> [--json]", argumentsOne, "spectacular.proposal.show.v1", ReadOnly, opProposalShow},
-	{[]string{"objective", "show"}, "<ref> [--json]", argumentsOne, "spectacular.objective.show.v1", ReadOnly, opObjectiveShow},
-	{[]string{"assessment", "show"}, "<ref> [--json]", argumentsOne, "spectacular.assessment.show.v1", ReadOnly, opAssessmentShow},
-	{[]string{"proposal", "check-base"}, "<ref> [--json]", argumentsOne, "spectacular.proposal.check-base.v1", ReadOnly, opProposalCheckBase},
-	{[]string{"proposal", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.proposal.create.v1", Mutating, opProposalCreate},
-	{[]string{"mission", "prepare"}, "--input <json-file> [--json]", argumentsInput, "spectacular.mission.prepare.v1", ReadOnly, opMissionPrepare},
-	{[]string{"mission", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.mission.create.v1", Mutating, opMissionCreate},
-	{[]string{"mission", "transition"}, "<ref> --to <state> --authorization <decision-ref> --expected-fingerprint <sha> --idempotency-key <key> [--assessment <ref>] [--reconciliation <ref>] [--disposition <value>] [--terminal-next-action <text>] [--satisfied-objectives <ref,ref>] [--json]", argumentsTransition, "spectacular.mission.transition.v1", Mutating, opMissionTransition},
-	{[]string{"mission", "progress"}, "<ref> --objective <ref> --to implemented --actor <name> --expected-mission-fingerprint <sha> --expected-objective-fingerprint <sha> --idempotency-key <key> [--json]", argumentsProgress, "spectacular.mission.progress.v1", Mutating, opMissionProgress},
-	{[]string{"mission", "autopilot"}, "--input <json-file> [--json]", argumentsInput, "spectacular.mission.autopilot.v1", ReadOnly, opMissionAutopilot},
-	{[]string{"handoff", "show"}, "<ref> [--json]", argumentsOne, "spectacular.handoff.show.v1", ReadOnly, opHandoffShow},
-	{[]string{"handoff", "validate"}, "<ref> [--json]", argumentsOne, "spectacular.handoff.validate.v1", ReadOnly, opHandoffValidate},
-	{[]string{"handoff", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.handoff.create.v1", Mutating, opHandoffCreate},
-	{[]string{"handoff", "return"}, "--input <json-file> [--json]", argumentsInput, "spectacular.handoff.return.v1", Mutating, opHandoffReturn},
-	{[]string{"evidence", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.evidence.create.v1", Mutating, opEvidenceCreate},
-	{[]string{"evidence", "create-set"}, "--input <json-file|-> [--json]", argumentsInput, "spectacular.evidence.create-set.v1", Mutating, opEvidenceCreateSet},
-	{[]string{"decision", "create"}, "--input <json-file> [--json]", argumentsInput, "spectacular.decision.create.v1", Mutating, opDecisionCreate},
-	{[]string{"assessment", "record"}, "--input <json-file> [--json]", argumentsInput, "spectacular.assessment.record.v1", Mutating, opAssessmentRecord},
-	{[]string{"contract", "show"}, "<ref> [--json]", argumentsOne, "spectacular.contract.show.v1", ReadOnly, opContractShow},
-	{[]string{"contract", "reconcile"}, "<ref> --proposal <ref> --authorization <decision-ref> --expected-fingerprint <sha|absent> --idempotency-key <key> [--json]", argumentsReconcile, "spectacular.contract.reconcile.v1", Mutating, opContractReconcile},
-	{[]string{"contract", "reconcile-set"}, "--input <json-file> [--json]", argumentsInput, "spectacular.contract.reconcile-set.v1", Mutating, opContractReconcileSet},
-	{[]string{"mission", "archive"}, "<ref> --authorization <decision-ref> --expected-fingerprint <sha> --idempotency-key <key> --terminal-packet <mission-ref> [--json]", argumentsArchive, "spectacular.mission.archive.v1", Mutating, opMissionArchive},
+	{[]string{"mission", "start"}, "<plan.md|-> [--json]", one, "spectacular.mission.start.v2", Mutating, opMissionStart},
+	{[]string{"mission", "show"}, "<ref> [--json]", one, "spectacular.mission.show.v2", ReadOnly, opMissionShow},
+	{[]string{"mission", "check"}, "<ref> [--json]", one, "spectacular.mission.check.v2", ReadOnly, opMissionCheck},
+	{[]string{"objective", "show"}, "<mission-ref>/<objective-ref> [--json]", one, "spectacular.objective.show.v2", ReadOnly, opObjectiveShow},
+	{[]string{"objective", "promote"}, "<mission-ref>/<objective-ref> [--json]", one, "spectacular.objective.promote.v2", Mutating, opObjectivePromote},
+	{[]string{"objective", "finish"}, "<mission-ref>/<objective-ref> [--json]", one, "spectacular.objective.finish.v2", Mutating, opObjectiveFinish},
+	{[]string{"run", "show"}, "<mission-ref>/<run-ref> [--json]", one, "spectacular.run.show.v2", ReadOnly, opRunShow},
+	{[]string{"run", "start"}, "<mission-ref> --title <title> [--json]", titleOption, "spectacular.run.start.v2", Mutating, opRunStart},
+	{[]string{"review", "record"}, "<mission-ref> <review.md|-> [--json]", two, "spectacular.review.record.v2", Mutating, opReviewRecord},
+	{[]string{"mission", "complete"}, "<ref> --by <owner> [--json]", byOption, "spectacular.mission.complete.v2", Mutating, opMissionComplete},
 }
 
 type Runner struct {
@@ -132,256 +76,118 @@ type Runner struct {
 	Now    func() time.Time
 }
 
+type envelope struct {
+	SchemaVersion string `json:"schema_version"`
+	GeneratedAt   string `json:"generated_at"`
+	Data          any    `json:"data"`
+}
+
 func (r Runner) Run(args []string) int {
 	original := append([]string(nil), args...)
 	invoked := "spectacular " + strings.Join(original, " ")
-	jsonMode, duplicateJSON := removeJSON(&args)
-	usage := func(detail string) int { return r.usage(jsonMode, invoked, detail) }
-	refuse := func(err error) int { return r.refuse(jsonMode, invoked, err) }
-	if duplicateJSON {
-		return usage("--json may be supplied at most once")
+	jsonMode, duplicate := removeJSON(&args)
+	if duplicate {
+		return r.usage(jsonMode, invoked, "--json may be supplied at most once")
 	}
 	spec, rest, ok := match(args)
 	if !ok {
-		return usage("unknown or incomplete command")
+		return r.usage(jsonMode, invoked, "unknown or incomplete command")
 	}
-	if detail := spec.validateArguments(rest); detail != "" {
+	if detail := validateArguments(spec, rest); detail != "" {
 		return r.commandUsage(jsonMode, invoked, spec, detail)
 	}
-	workspace, err := discovery.Open(r.Cwd)
+	ws, err := discovery.Open(r.Cwd)
 	if err != nil {
-		return refuse(err)
+		return r.refuse(jsonMode, invoked, err)
 	}
 	if spec.Effect == Mutating {
-		if err := governance.RecoverTransactions(workspace.Root); err != nil {
-			return refuse(err)
+		if err := governance.RecoverTransactions(ws.Root); err != nil {
+			return r.refuse(jsonMode, invoked, err)
 		}
-		workspace, err = discovery.Open(r.Cwd)
+		ws, err = discovery.Open(r.Cwd)
 		if err != nil {
-			return refuse(err)
+			return r.refuse(jsonMode, invoked, err)
 		}
 	}
-	b := projection.Builder{Workspace: workspace, Now: r.Now, ShowCommand: registeredShowCommand}
-	g := governance.Service{Workspace: workspace, Now: r.Now}
+	service := missionbundle.Service{Workspace: ws, Now: r.Now}
 	var value any
 	switch spec.Operation {
-	case opAnchorShowProject:
-		value, err = b.Project()
-	case opAnchorShowProduct:
-		value, err = b.Detail("PRODUCT", domain.Anchor)
-	case opAnchorShowArchitecture:
-		value, err = b.Detail("ARCHITECTURE", domain.Anchor)
-	case opAnchorShowStack:
-		value, err = b.Detail("STACK", domain.Anchor)
-	case opMissionList:
-		value, err = b.MissionList()
+	case opMissionStart:
+		path := inputPath(r.Cwd, rest[0])
+		stdin, readErr := r.stdinIfNeeded(rest[0])
+		if readErr != nil {
+			err = readErr
+			break
+		}
+		var plan missionbundle.Plan
+		var raw []byte
+		plan, raw, err = missionbundle.ReadPlan(path, stdin)
+		if err == nil {
+			value, err = service.Start(plan, raw)
+		}
 	case opMissionShow:
-		value, err = b.Mission(rest[0])
-	case opGapList:
-		value, err = b.Gaps(rest[1])
-	case opGapShow:
-		value, err = r.detail(b, rest, domain.Gap)
-	case opRunShow:
-		value, err = r.detail(b, rest, domain.Run)
-	case opCheckpointShow:
-		value, err = r.detail(b, rest, domain.Checkpoint)
-	case opEvidenceShow:
-		value, err = r.detail(b, rest, domain.Evidence)
-	case opDecisionShow:
-		value, err = r.detail(b, rest, domain.Decision)
-	case opWorkspaceValidate:
-		scope := rest[0]
-		if scope == "." {
-			scope = "project"
-		}
-		value, err = b.Validate(scope)
-	case opProposalShow:
-		value, err = g.ProposalView(rest[0])
+		value, err = service.Show(rest[0])
+	case opMissionCheck:
+		value, err = service.Check(rest[0])
 	case opObjectiveShow:
-		value, err = r.detail(b, rest, domain.Objective)
-	case opAssessmentShow:
-		value, err = r.detail(b, rest, domain.Assessment)
-	case opProposalCheckBase:
-		value, err = g.CheckProposalBase(rest[0])
-	case opProposalCreate:
-		var input governance.ProposalInput
-		err = r.readInput(rest[1], &input)
-		if err == nil {
-			value, err = g.CreateProposal(input)
+		var objective missionbundle.Objective
+		objective, _, err = service.Objective(rest[0])
+		value = objective
+	case opObjectivePromote:
+		value, err = service.PromoteObjective(rest[0])
+	case opObjectiveFinish:
+		value, err = service.FinishObjective(rest[0])
+	case opRunShow:
+		var run missionbundle.Run
+		run, _, err = service.Run(rest[0])
+		value = run
+	case opRunStart:
+		value, err = service.StartRun(rest[0], rest[2])
+	case opReviewRecord:
+		stdin, readErr := r.stdinIfNeeded(rest[1])
+		if readErr != nil {
+			err = readErr
+			break
 		}
-	case opMissionCreate:
-		var input governance.MissionInput
-		err = r.readInput(rest[1], &input)
-		if err == nil {
-			value, err = g.CreateMission(input)
-		}
-	case opMissionTransition:
-		var input governance.TransitionInput
-		input, err = transitionInput(rest)
-		if err == nil {
-			value, err = g.TransitionMission(input)
-		}
-	case opMissionProgress:
-		var input governance.MissionProgressInput
-		input, err = progressInput(rest)
-		if err == nil {
-			value, err = g.ProgressMission(input)
-		}
-	case opHandoffShow:
-		value, err = b.Detail(rest[0], domain.Handoff)
-	case opHandoffValidate:
-		value, err = g.ValidateHandoff(rest[0])
-	case opHandoffCreate:
-		var input governance.HandoffInput
-		err = r.readInput(rest[1], &input)
-		if err == nil {
-			value, err = g.CreateHandoff(input)
-		}
-	case opHandoffReturn:
-		var input governance.HandoffReturnInput
-		err = r.readInput(rest[1], &input)
-		if err == nil {
-			value, err = g.ReturnHandoff(input)
-		}
-	case opEvidenceCreate:
-		var input governance.EvidenceInput
-		err = r.readInput(rest[1], &input)
-		if err == nil {
-			value, err = g.CreateEvidence(input)
-		}
-	case opEvidenceCreateSet:
-		var input governance.EvidenceSetInput
-		err = r.readInput(rest[1], &input)
-		if err == nil {
-			value, err = g.CreateEvidenceMany(input)
-		}
-	case opDecisionCreate:
-		var input governance.DecisionInput
-		err = r.readInput(rest[1], &input)
-		if err == nil {
-			value, err = g.CreateDecision(input)
-		}
-	case opAssessmentRecord:
-		var input governance.AssessmentInput
-		err = r.readInput(rest[1], &input)
-		if err == nil {
-			value, err = g.RecordAssessment(input)
-		}
-	case opContractShow:
-		value, err = g.ContractView(rest[0])
-	case opContractReconcile:
-		var input governance.ReconcileInput
-		input, err = reconcileInput(rest)
-		if err == nil {
-			value, err = g.Reconcile(input)
-		}
-	case opContractReconcileSet:
-		var input governance.ReconcileSetInput
-		err = r.readInput(rest[1], &input)
-		if err == nil {
-			value, err = g.ReconcileMany(input.Items)
-		}
-	case opMissionArchive:
-		var input governance.ArchiveInput
-		input, err = archiveInput(rest)
-		if err == nil {
-			value, err = g.ArchiveMission(input)
-		}
-	case opWorkspaceContext:
-		var config contextcompiler.Config
-		config, err = contextInput(rest)
-		if err == nil {
-			value, err = (contextcompiler.Compiler{Workspace: workspace, Now: r.Now}).Compile(config)
-		}
-	case opMissionPrepare:
-		var input spectacularruntime.PreparationInput
-		err = r.readInput(rest[1], &input)
-		if err == nil {
-			err = validatePreparationSources(workspace, input)
-		}
-		if err == nil {
-			value, err = spectacularruntime.CompilePreparation(input, currentTime(r.Now))
-		}
-	case opMissionAutopilot:
-		var input spectacularruntime.AutopilotInput
-		err = r.readInput(rest[1], &input)
-		if err == nil {
-			value, err = g.CompileAutopilot(input)
-		}
+		value, err = service.RecordReview(rest[0], inputPath(r.Cwd, rest[1]), stdin)
+	case opMissionComplete:
+		value, err = service.Complete(rest[0], rest[2])
 	}
 	if err != nil {
-		return refuse(err)
+		return r.refuse(jsonMode, invoked, err)
 	}
-	envelope := b.Envelope(spec.JSONSchema, value)
+	now := r.Now
+	if now == nil {
+		now = time.Now
+	}
+	output := envelope{SchemaVersion: spec.JSONSchema, GeneratedAt: now().UTC().Format(time.RFC3339Nano), Data: value}
 	if jsonMode {
-		if err := writeJSON(r.Stdout, envelope); err != nil {
+		if err := writeJSON(r.Stdout, output); err != nil {
 			return r.refuse(true, invoked, err)
 		}
 	} else {
-		renderHuman(r.Stdout, envelope)
+		renderHuman(r.Stdout, value)
 	}
 	return 0
 }
 
-func registeredShowCommand(noun domain.RecordType, ref string) (string, bool) {
-	if noun == domain.Anchor {
-		want := strings.ToLower(ref)
-		for _, spec := range Registry {
-			if len(spec.Words) == 3 && spec.Words[0] == "anchor" && spec.Words[1] == "show" && spec.Words[2] == want {
-				return "spectacular " + strings.Join(spec.Words, " "), true
-			}
+func validateArguments(spec Spec, args []string) string {
+	switch spec.ArgumentShape {
+	case one:
+		if len(args) != 1 || args[0] == "" {
+			return "requires exactly one argument"
 		}
-		return "", false
-	}
-	want := strings.ToLower(string(noun))
-	for _, spec := range Registry {
-		if len(spec.Words) < 2 || spec.Words[0] != want || spec.Words[1] != "show" {
-			continue
+	case two:
+		if len(args) != 2 || args[0] == "" || args[1] == "" {
+			return "requires exactly two arguments"
 		}
-		command := "spectacular " + strings.Join(spec.Words, " ")
-		command += " " + ref
-		return command, true
-	}
-	return "", false
-}
-
-func (s Spec) validateArguments(args []string) string {
-	switch s.ArgumentShape {
-	case argumentsNone:
-		if len(args) != 0 {
-			return strings.Join(s.Words, " ") + " takes no arguments"
+	case titleOption:
+		if len(args) != 3 || args[0] == "" || args[1] != "--title" || args[2] == "" {
+			return "requires <mission-ref> --title <title>"
 		}
-	case argumentsOne:
-		if len(args) != 1 {
-			return strings.Join(s.Words, " ") + " requires exactly one argument"
-		}
-	case argumentsScope:
-		if len(args) != 2 || args[0] != "--scope" {
-			return strings.Join(s.Words, " ") + " requires --scope <ref>"
-		}
-	case argumentsInput:
-		if len(args) != 2 || args[0] != "--input" || args[1] == "" {
-			return strings.Join(s.Words, " ") + " requires --input <json-file>"
-		}
-	case argumentsTransition:
-		if _, err := transitionInput(args); err != nil {
-			return err.Error()
-		}
-	case argumentsProgress:
-		if _, err := progressInput(args); err != nil {
-			return err.Error()
-		}
-	case argumentsReconcile:
-		if _, err := reconcileInput(args); err != nil {
-			return err.Error()
-		}
-	case argumentsArchive:
-		if _, err := archiveInput(args); err != nil {
-			return err.Error()
-		}
-	case argumentsContext:
-		if _, err := contextInput(args); err != nil {
-			return err.Error()
+	case byOption:
+		if len(args) != 3 || args[0] == "" || args[1] != "--by" || args[2] == "" {
+			return "requires <ref> --by <owner>"
 		}
 	default:
 		return "command registry has an invalid argument shape"
@@ -389,201 +195,54 @@ func (s Spec) validateArguments(args []string) string {
 	return ""
 }
 
-func contextInput(args []string) (contextcompiler.Config, error) {
-	scope, values, err := optionMap(args, true)
+func (r Runner) stdinIfNeeded(path string) ([]byte, error) {
+	if path != "-" {
+		return nil, nil
+	}
+	reader := r.Stdin
+	if reader == nil {
+		reader = os.Stdin
+	}
+	data, err := io.ReadAll(reader)
 	if err != nil {
-		return contextcompiler.Config{}, err
+		return nil, domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "read stdin", err)
 	}
-	if err := requireOptions(values, "--event"); err != nil {
-		return contextcompiler.Config{}, err
-	}
-	if err := rejectUnknownOptions(values, "--event", "--selector"); err != nil {
-		return contextcompiler.Config{}, err
-	}
-	return contextcompiler.Config{Scope: scope, Event: values["--event"], Selector: values["--selector"]}, nil
+	return data, nil
 }
 
-func currentTime(now func() time.Time) time.Time {
-	if now == nil {
-		return time.Now().UTC()
+func inputPath(cwd, path string) string {
+	if path == "-" || filepath.IsAbs(path) {
+		return path
 	}
-	return now().UTC()
+	return filepath.Join(cwd, path)
 }
 
-func validatePreparationSources(workspace *discovery.Workspace, input spectacularruntime.PreparationInput) error {
-	if err := validateBoundSource(workspace, input.Proposal); err != nil {
-		return err
-	}
-	for _, source := range input.DirectionSources {
-		if err := validateBoundSource(workspace, source); err != nil {
-			return err
+func renderHuman(writer io.Writer, value any) {
+	switch item := value.(type) {
+	case *missionbundle.Bundle:
+		fmt.Fprintf(writer, "%s — %s\nState: %s\nOutcome: %s\nPath: %s\n", item.Ref, item.Title, item.Status, item.Outcome, item.Path)
+		if item.Run != nil {
+			fmt.Fprintf(writer, "Run: %s (%s)\n", item.Ref+"/"+item.Run.Ref, item.Run.Status)
 		}
-	}
-	return nil
-}
-
-func validateBoundSource(workspace *discovery.Workspace, source spectacularruntime.BoundSource) error {
-	ref, err := domain.ParseReference(source.Ref)
-	if err != nil {
-		return err
-	}
-	entry, err := workspace.Lookup(source.Ref, ref.Type)
-	if err != nil {
-		return err
-	}
-	if entry.Fingerprint != source.Fingerprint {
-		return domain.NewRefusal(domain.RefusalStaleFingerprint, "source", "bound source fingerprint is stale", nil)
-	}
-	return nil
-}
-
-func (r Runner) readInput(path string, target any) error {
-	var reader io.Reader
-	if path == "-" {
-		reader = r.Stdin
-		if reader == nil {
-			reader = os.Stdin
+		for _, objective := range item.Objectives {
+			fmt.Fprintf(writer, "Objective: %s/%s — %s (%s)\n", item.Ref, objective.Ref, objective.Outcome, objective.Status)
 		}
-	} else {
-		file, err := os.Open(path)
-		if err != nil {
-			return domain.NewRefusal(domain.RefusalRecordNotFound, "input", "read confirmed input", err)
-		}
-		defer file.Close()
-		reader = file
+	case missionbundle.Check:
+		fmt.Fprintf(writer, "%s valid=%t schema=%s checks=%d\n", item.Ref, item.Valid, item.Schema, len(item.Checks))
+	case missionbundle.Objective:
+		fmt.Fprintf(writer, "%s — %s (%s)\n", item.Ref, item.Outcome, item.Status)
+	case missionbundle.Run:
+		fmt.Fprintf(writer, "%s — %s (%s)\n", item.Ref, item.Title, item.Status)
+	case missionbundle.Result:
+		fmt.Fprintf(writer, "%s %s\nPath: %s\n", item.Operation, item.Ref, item.Path)
+	default:
+		data, _ := json.MarshalIndent(value, "", "  ")
+		fmt.Fprintln(writer, string(data))
 	}
-	decoder := json.NewDecoder(reader)
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(target); err != nil {
-		return domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "decode confirmed JSON input", err)
-	}
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		return domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "input must contain exactly one JSON value", err)
-	}
-	return nil
-}
-
-func optionMap(args []string, firstRef bool) (string, map[string]string, error) {
-	ref := ""
-	if firstRef {
-		if len(args) == 0 || strings.HasPrefix(args[0], "--") {
-			return "", nil, fmt.Errorf("requires a record reference")
-		}
-		ref, args = args[0], args[1:]
-	}
-	if len(args)%2 != 0 {
-		return "", nil, fmt.Errorf("options require values")
-	}
-	values := map[string]string{}
-	for i := 0; i < len(args); i += 2 {
-		if !strings.HasPrefix(args[i], "--") || args[i+1] == "" {
-			return "", nil, fmt.Errorf("invalid option pair")
-		}
-		if _, exists := values[args[i]]; exists {
-			return "", nil, fmt.Errorf("%s may be supplied at most once", args[i])
-		}
-		values[args[i]] = args[i+1]
-	}
-	return ref, values, nil
-}
-
-func requireOptions(values map[string]string, names ...string) error {
-	for _, name := range names {
-		if values[name] == "" {
-			return fmt.Errorf("requires %s", name)
-		}
-	}
-	return nil
-}
-
-func rejectUnknownOptions(values map[string]string, allowed ...string) error {
-	known := map[string]bool{}
-	for _, name := range allowed {
-		known[name] = true
-	}
-	for name := range values {
-		if !known[name] {
-			return fmt.Errorf("unknown option %s", name)
-		}
-	}
-	return nil
-}
-
-func transitionInput(args []string) (governance.TransitionInput, error) {
-	ref, values, err := optionMap(args, true)
-	if err != nil {
-		return governance.TransitionInput{}, err
-	}
-	if err := requireOptions(values, "--to", "--authorization", "--expected-fingerprint", "--idempotency-key"); err != nil {
-		return governance.TransitionInput{}, err
-	}
-	if err := rejectUnknownOptions(values, "--to", "--authorization", "--expected-fingerprint", "--idempotency-key", "--disposition", "--assessment", "--reconciliation", "--terminal-next-action", "--satisfied-objectives"); err != nil {
-		return governance.TransitionInput{}, err
-	}
-	var objectives []string
-	if raw := values["--satisfied-objectives"]; raw != "" {
-		objectives = strings.Split(raw, ",")
-	}
-	return governance.TransitionInput{Mission: ref, To: values["--to"], Authorization: values["--authorization"], ExpectedFingerprint: values["--expected-fingerprint"], IdempotencyKey: values["--idempotency-key"], Disposition: values["--disposition"], Assessment: values["--assessment"], Reconciliation: values["--reconciliation"], TerminalNextAction: values["--terminal-next-action"], SatisfiedObjectives: objectives}, nil
-}
-
-func progressInput(args []string) (governance.MissionProgressInput, error) {
-	ref, values, err := optionMap(args, true)
-	if err != nil {
-		return governance.MissionProgressInput{}, err
-	}
-	required := []string{"--objective", "--to", "--actor", "--expected-mission-fingerprint", "--expected-objective-fingerprint", "--idempotency-key"}
-	if err := requireOptions(values, required...); err != nil {
-		return governance.MissionProgressInput{}, err
-	}
-	if err := rejectUnknownOptions(values, required...); err != nil {
-		return governance.MissionProgressInput{}, err
-	}
-	return governance.MissionProgressInput{
-		Mission: ref, Objective: values["--objective"], To: values["--to"], Actor: values["--actor"],
-		ExpectedMissionFingerprint: values["--expected-mission-fingerprint"], ExpectedObjectiveFingerprint: values["--expected-objective-fingerprint"],
-		IdempotencyKey: values["--idempotency-key"],
-	}, nil
-}
-
-func reconcileInput(args []string) (governance.ReconcileInput, error) {
-	ref, values, err := optionMap(args, true)
-	if err != nil {
-		return governance.ReconcileInput{}, err
-	}
-	if err := requireOptions(values, "--proposal", "--authorization", "--expected-fingerprint", "--idempotency-key"); err != nil {
-		return governance.ReconcileInput{}, err
-	}
-	if err := rejectUnknownOptions(values, "--proposal", "--authorization", "--expected-fingerprint", "--idempotency-key"); err != nil {
-		return governance.ReconcileInput{}, err
-	}
-	return governance.ReconcileInput{Contract: ref, Proposal: values["--proposal"], Authorization: values["--authorization"], ExpectedFingerprint: values["--expected-fingerprint"], IdempotencyKey: values["--idempotency-key"]}, nil
-}
-
-func archiveInput(args []string) (governance.ArchiveInput, error) {
-	ref, values, err := optionMap(args, true)
-	if err != nil {
-		return governance.ArchiveInput{}, err
-	}
-	if err := requireOptions(values, "--authorization", "--expected-fingerprint", "--idempotency-key", "--terminal-packet"); err != nil {
-		return governance.ArchiveInput{}, err
-	}
-	if err := rejectUnknownOptions(values, "--authorization", "--expected-fingerprint", "--idempotency-key", "--terminal-packet"); err != nil {
-		return governance.ArchiveInput{}, err
-	}
-	return governance.ArchiveInput{Mission: ref, Authorization: values["--authorization"], ExpectedFingerprint: values["--expected-fingerprint"], IdempotencyKey: values["--idempotency-key"], TerminalPacket: values["--terminal-packet"]}, nil
-}
-
-func (r Runner) detail(b projection.Builder, args []string, noun domain.RecordType) (any, error) {
-	if len(args) != 1 {
-		return nil, domain.NewRefusal(domain.RefusalInvalidReference, "ref", "show requires exactly one ref", nil)
-	}
-	return b.Detail(args[0], noun)
 }
 
 func removeJSON(args *[]string) (bool, bool) {
-	found := false
-	duplicate := false
+	found, duplicate := false, false
 	out := (*args)[:0]
 	for _, arg := range *args {
 		if arg == "--json" {
@@ -598,19 +257,20 @@ func removeJSON(args *[]string) (bool, bool) {
 	*args = out
 	return found, duplicate
 }
+
 func match(args []string) (Spec, []string, bool) {
 	for _, spec := range Registry {
 		if len(args) < len(spec.Words) {
 			continue
 		}
-		ok := true
-		for i, w := range spec.Words {
-			if args[i] != w {
-				ok = false
+		matched := true
+		for i := range spec.Words {
+			if args[i] != spec.Words[i] {
+				matched = false
 				break
 			}
 		}
-		if ok {
+		if matched {
 			return spec, args[len(spec.Words):], true
 		}
 	}
@@ -623,44 +283,33 @@ type refusalEnvelope struct {
 	ExitStatus     int    `json:"exit_status"`
 	Code           string `json:"code"`
 	Field          string `json:"field,omitempty"`
-	Detail         string `json:"detail"`
+	Problem        string `json:"problem"`
 	Expected       string `json:"expected,omitempty"`
 	Actual         string `json:"actual,omitempty"`
 	Mutation       string `json:"mutation"`
-	Recovery       string `json:"recovery"`
+	Correction     string `json:"safe_correction"`
 }
 
 func (r Runner) refuse(jsonMode bool, invoked string, err error) int {
-	code := "internal_error"
-	field := ""
-	detail := err.Error()
-	expected := ""
-	actual := ""
-	recovery := "correct the refused field or obtain explicit owner authorization, then retry"
+	code, field, problem := "internal_error", "", err.Error()
+	expected, actual := "", ""
+	correction := "correct the named problem and retry; no files were changed"
 	var refusal *domain.Refusal
 	if errors.As(err, &refusal) {
-		code = string(refusal.Code)
-		field = refusal.Field
-		detail = refusal.Detail
-		expected = refusal.Expected
-		actual = refusal.Actual
+		code, field, problem = string(refusal.Code), refusal.Field, refusal.Detail
+		expected, actual = refusal.Expected, refusal.Actual
 		if refusal.Recovery != "" {
-			recovery = refusal.Recovery
+			correction = refusal.Recovery
 		}
 	}
 	if jsonMode {
-		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v1", invoked, 3, code, field, detail, expected, actual, "none", recovery})
+		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v2", invoked, 3, code, field, problem, expected, actual, "none", correction})
 	} else {
 		fmt.Fprintf(r.Stderr, "refused %s", code)
 		if field != "" {
 			fmt.Fprintf(r.Stderr, " field %s", field)
 		}
-		if detail != "" {
-			fmt.Fprintf(r.Stderr, ": %s", detail)
-		}
-		fmt.Fprintln(r.Stderr)
-		fmt.Fprintf(r.Stderr, "recovery: %s\n", recovery)
-		fmt.Fprintf(r.Stderr, "command: %s\nexit_status: 3\n", invoked)
+		fmt.Fprintf(r.Stderr, ": %s\ncorrection: %s\n", problem, correction)
 	}
 	return 3
 }
@@ -668,183 +317,29 @@ func (r Runner) refuse(jsonMode bool, invoked string, err error) int {
 func (r Runner) commandUsage(jsonMode bool, invoked string, spec Spec, detail string) int {
 	corrected := strings.TrimSpace("spectacular " + strings.Join(spec.Words, " ") + " " + spec.Arguments)
 	if jsonMode {
-		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v1", invoked, 2, "usage", "", detail, "", "", "none", corrected})
+		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v2", invoked, 2, "usage", "", detail, "", "", "none", corrected})
 	} else {
-		fmt.Fprintf(r.Stderr, "usage: %s\n%s\ntry: %s\ncommand: %s\nexit_status: 2\n", corrected, detail, corrected, invoked)
+		fmt.Fprintf(r.Stderr, "usage: %s\n%s\n", corrected, detail)
 	}
 	return 2
 }
 
 func (r Runner) usage(jsonMode bool, invoked, detail string) int {
 	if jsonMode {
-		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v1", invoked, 2, "usage", "", detail, "", "", "none", "correct the command invocation using registry-derived help"})
+		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v2", invoked, 2, "usage", "", detail, "", "", "none", "use a command from the public registry"})
 	} else {
 		fmt.Fprintln(r.Stderr, "usage:")
 		fmt.Fprintf(r.Stderr, "  %s %s\n", VersionInspection.Command, VersionInspection.Arguments)
-		for _, s := range Registry {
-			fmt.Fprintf(r.Stderr, "  spectacular %s %s\n", strings.Join(s.Words, " "), s.Arguments)
+		for _, spec := range Registry {
+			fmt.Fprintf(r.Stderr, "  spectacular %s %s\n", strings.Join(spec.Words, " "), spec.Arguments)
 		}
 		fmt.Fprintln(r.Stderr, detail)
-		fmt.Fprintf(r.Stderr, "command: %s\nexit_status: 2\n", invoked)
 	}
 	return 2
 }
-func writeJSON(w io.Writer, v any) error {
-	encoder := json.NewEncoder(w)
+
+func writeJSON(writer io.Writer, value any) error {
+	encoder := json.NewEncoder(writer)
 	encoder.SetEscapeHTML(false)
-	return encoder.Encode(v)
-}
-func renderHuman(w io.Writer, envelope projection.Envelope) {
-	switch v := envelope.Data.(type) {
-	case projection.ProjectView:
-		fmt.Fprintf(w, "Spectacular project orientation\n\n%s\n", v.Authoritative.Direction)
-		for _, item := range v.Authoritative.Boundaries {
-			fmt.Fprintf(w, "Boundary: %s\n", item)
-		}
-		for _, item := range v.Authoritative.Constraints {
-			fmt.Fprintf(w, "Constraint: %s\n", item)
-		}
-		for _, p := range v.Authoritative.CurrentTruth {
-			fmt.Fprintf(w, "Current truth: %-14s %s\n", displayRef(p), p.ShowCommand)
-		}
-		for _, p := range v.Projection.Missions {
-			fmt.Fprintf(w, "Mission:       %-14s %s\n", displayRef(p), p.ShowCommand)
-		}
-		for _, p := range v.Projection.Gaps {
-			fmt.Fprintf(w, "Blocking Gap:  %-14s %s\n", displayRef(p), p.ShowCommand)
-		}
-		if v.Projection.Continuation != nil {
-			fmt.Fprintf(w, "\nNext: %s %s\nAuthorized by: %s\n", v.Projection.Continuation.Operation, displayRef(v.Projection.Continuation.Target), displayRef(v.Projection.Continuation.AuthorizedBy))
-		}
-		if v.Projection.OwnerGate != nil {
-			fmt.Fprintf(w, "\nOwner gate: %s — %s\nInspect: %s\n", v.Projection.OwnerGate.Code, v.Projection.OwnerGate.Detail, v.Projection.OwnerGate.Source.ShowCommand)
-		}
-		fmt.Fprintf(w, "\nSource: %s\nFreshness: %s\n", v.Source.Path, v.Freshness.State)
-	case projection.Card:
-		renderCard(w, v)
-	case projection.List:
-		for _, card := range v.Items {
-			renderCard(w, card)
-		}
-	case projection.Validation:
-		fmt.Fprintf(w, "Scope: %s\nValid: %t\nRecords: %d\n", v.Scope, v.Valid, v.Records)
-	case contextcompiler.Bundle:
-		renderContext(w, v)
-	case governance.OperationResult:
-		renderOperationResult(w, v)
-	case []governance.OperationResult:
-		for _, item := range v {
-			renderOperationResult(w, item)
-		}
-	default:
-		data, _ := json.MarshalIndent(v, "", "  ")
-		fmt.Fprintln(w, string(data))
-	}
-	fmt.Fprintf(w, "\nGenerated: %s\nBasis: %s\n", envelope.GeneratedAt, envelope.GenerationBasis)
-}
-
-func renderOperationResult(w io.Writer, result governance.OperationResult) {
-	verb := "Created"
-	if result.IdempotentReplay {
-		verb = "Replayed"
-	} else if strings.Contains(result.Operation, "progress") || strings.Contains(result.Operation, "transition") {
-		verb = "Updated"
-	}
-	fmt.Fprintf(w, "%s: %s %s\nPath: %s\nFingerprint: %s\n", verb, result.Operation, result.Ref, result.Path, result.Fingerprint)
-}
-
-func renderContext(w io.Writer, bundle contextcompiler.Bundle) {
-	fmt.Fprintf(w, "Spectacular context — %s\n", bundle.Scope)
-	if bundle.Next.Kind == "continuation" {
-		fmt.Fprintf(w, "Next: %s %s (authorized by %s)\n", bundle.Next.Operation, bundle.Next.Target, bundle.Next.AuthorizedBy)
-	} else {
-		fmt.Fprintf(w, "Owner gate: %s — %s\n", bundle.Next.Code, bundle.Next.Detail)
-		if bundle.Next.Source != "" {
-			fmt.Fprintf(w, "Inspect gate: %s\n", bundle.Next.Source)
-		}
-	}
-	for _, source := range bundle.Authoritative {
-		renderContextSource(w, "Authority", source)
-	}
-	for _, source := range bundle.Gaps {
-		renderContextSource(w, "Gap", source)
-	}
-	for _, conflict := range bundle.Conflicts {
-		fmt.Fprintf(w, "Conflict: %s\n", conflict)
-	}
-	for _, omission := range bundle.Omissions {
-		fmt.Fprintf(w, "Omission: %s\n", omission)
-	}
-	for _, section := range bundle.Guidance {
-		fmt.Fprintf(w, "Guidance: %s %s — %s\n", section.Event, section.Selector, section.Prose)
-	}
-	fmt.Fprintf(w, "Loaded: %d/%d records\n", bundle.LoadedRecords, bundle.AvailableRecords)
-	fmt.Fprintln(w, "Full: rerun this command with --json.")
-}
-
-func renderContextSource(w io.Writer, label string, source contextcompiler.Source) {
-	fmt.Fprintf(w, "%s: %s %s — %s", label, source.Role, source.Ref, source.Path)
-	if ref, err := domain.ParseReference(source.Ref); err == nil {
-		if command, ok := registeredShowCommand(ref.Type, source.Ref); ok {
-			fmt.Fprintf(w, " | %s", command)
-		}
-	} else if source.Noun == string(domain.Anchor) {
-		if command, ok := registeredShowCommand(domain.Anchor, source.Ref); ok {
-			fmt.Fprintf(w, " | %s", command)
-		}
-	}
-	fmt.Fprintln(w)
-}
-
-func renderCard(w io.Writer, c projection.Card) {
-	ref := c.Ref
-	if ref == "" {
-		ref = c.ID
-	}
-	fmt.Fprintf(w, "%s %s — %s\n", c.Noun, ref, c.Title)
-	if c.Outcome != "" {
-		fmt.Fprintf(w, "Outcome: %s\n", c.Outcome)
-	}
-	if c.State != "" {
-		fmt.Fprintf(w, "State: %s\n", c.State)
-	}
-	if c.CurrentObjective != nil {
-		fmt.Fprintf(w, "Objective: %s  %s\n", displayRef(*c.CurrentObjective), c.CurrentObjective.ShowCommand)
-	}
-	if c.Noun == string(domain.Mission) {
-		fmt.Fprintf(w, "Mutation basis: mission=%s", c.Source.Fingerprint)
-		if c.CurrentObjective != nil {
-			fmt.Fprintf(w, " objective=%s", c.CurrentObjective.Fingerprint)
-		}
-		fmt.Fprintln(w)
-	}
-	if c.CurrentRun != nil {
-		fmt.Fprintf(w, "Run: %s  %s\n", displayRef(*c.CurrentRun), c.CurrentRun.ShowCommand)
-	}
-	if c.LatestCheckpoint != nil {
-		fmt.Fprintf(w, "Checkpoint: %s  %s\n", displayRef(*c.LatestCheckpoint), c.LatestCheckpoint.ShowCommand)
-	}
-	for _, p := range c.Pointers {
-		if (c.CurrentObjective != nil && p.Ref == c.CurrentObjective.Ref) || (c.CurrentRun != nil && p.Ref == c.CurrentRun.Ref) || (c.LatestCheckpoint != nil && p.Ref == c.LatestCheckpoint.Ref) {
-			continue
-		}
-		fmt.Fprintf(w, "Related: %s %-14s %s\n", p.Noun, displayRef(p), p.ShowCommand)
-	}
-	for _, p := range c.Gaps {
-		fmt.Fprintf(w, "Gap: %s  %s\n", displayRef(p), p.ShowCommand)
-	}
-	if c.Continuation != nil {
-		fmt.Fprintf(w, "Continuation: %s %s (authorized by %s)\n", c.Continuation.Operation, displayRef(c.Continuation.Target), displayRef(c.Continuation.AuthorizedBy))
-	}
-	if c.OwnerGate != nil {
-		fmt.Fprintf(w, "Owner gate: %s — %s\nInspect: %s\n", c.OwnerGate.Code, c.OwnerGate.Detail, c.OwnerGate.Source.ShowCommand)
-	}
-	fmt.Fprintf(w, "Source: %s\nFreshness: %s\n", c.Source.Path, c.Freshness.State)
-}
-
-func displayRef(pointer projection.Pointer) string {
-	if pointer.HumanRef != "" {
-		return pointer.HumanRef
-	}
-	return pointer.Ref
+	return encoder.Encode(value)
 }

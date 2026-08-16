@@ -119,6 +119,43 @@ When you ask, use four short parts:
 Do not run an interview when the Mission already answers the question. Turn silent
 product assumptions into explicit choices or Gaps. Carry accepted defaults forward.
 
+### Ask for authorization, not for labor
+
+An owner-gated action needs the owner's *decision*, not the owner's *hands*. When
+you reach one, ask to be authorized and say what you will do with the authorization:
+
+> `mission complete` is owner-gated because completion freezes the claims.
+> Authorize me to run it? (Y/N)
+
+Do not hand back a command to type when you could hold the keyboard on an explicit
+yes. Reserve owner-executed steps for actions where performing it *is* the
+authority — credential entry, an interactive login, a decision the record must
+attribute to the owner by name.
+
+When you do act on an authorization, record who authorized and who performed. An
+operator acting on owner approval is not the owner acting.
+
+### Batch gates; ask once
+
+Collect every owner decision a phase needs and put them in one exchange. Six small
+approvals across six messages cost more than one message listing six items.
+
+Before asking, check whether the answer is already available: an earlier
+authorization that plainly covers this case, a stated preference, a default the
+Mission froze. An approval carries forward to the same kind of action in the same
+phase. Re-asking something already answered is noise, not diligence.
+
+### State a boundary once
+
+Name an authority boundary the first time it becomes relevant, then act on it.
+Repeating the same constraint at every step reads as stalling, and buries the one
+place a decision is genuinely needed.
+
+When you must decline, be brief: one sentence on what you cannot do, one on the
+nearest thing you can, then continue with everything not blocked. Do not
+re-litigate a boundary the owner has already heard, and do not narrate the refusal
+at greater length than the work.
+
 ## Authority and execution
 
 **Owner only.** Outcome, completion criteria, semantic scope, review
@@ -130,7 +167,9 @@ stays mutable and outside the fingerprint.
 repairs — all inside the Mission.
 
 **Return to the owner.** Scope expansion, irreversible or provider effects,
-exhausted repair, any stop condition.
+exhausted repair, any stop condition. Returning means requesting a decision, then
+proceeding on the answer — not transferring the remaining work. Finish everything
+the gate does not block before you ask, so one answer completes the phase.
 
 Execute in this order:
 

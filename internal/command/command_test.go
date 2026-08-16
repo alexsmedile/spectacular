@@ -48,6 +48,35 @@ func fixture(t *testing.T) string {
 }
 func fixedNow() time.Time { return time.Date(2026, 8, 10, 10, 0, 0, 0, time.UTC) }
 
+func TestWorkspaceContextDefaultsToCompactPointersAndKeepsFullJSON(t *testing.T) {
+	args := []string{"workspace", "context", "Mission:" + missionID, "--event", "@Orient"}
+	var compact, stderr bytes.Buffer
+	if exit := (Runner{Cwd: fixture(t), Stdout: &compact, Stderr: &stderr, Now: fixedNow}).Run(args); exit != 0 {
+		t.Fatalf("compact context failed: %s", stderr.String())
+	}
+	for _, want := range []string{
+		"Spectacular context — Mission:" + missionID,
+		"Authority: mission-anchor Mission:" + missionID + " — " + fixtureMissionPath,
+		"spectacular mission show Mission:" + missionID,
+		"Gap:",
+		"Full: rerun this command with --json.",
+	} {
+		if !strings.Contains(compact.String(), want) {
+			t.Fatalf("compact context missing %q: %s", want, compact.String())
+		}
+	}
+	if strings.Contains(compact.String(), `"schema_version"`) {
+		t.Fatalf("default context is still a full JSON dump: %s", compact.String())
+	}
+
+	full := runJSON(t, fixture(t), append(args, "--json"))
+	for _, want := range []string{`"schema_version":"spectacular.context.v1"`, `"path":"` + fixtureMissionPath + `"`, `"fingerprint":"`} {
+		if !strings.Contains(full, want) {
+			t.Fatalf("full context lost %q: %s", want, full)
+		}
+	}
+}
+
 func TestSelfHostedWorkspaceIsHumanOperable(t *testing.T) {
 	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {

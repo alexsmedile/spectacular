@@ -662,12 +662,58 @@ func renderHuman(w io.Writer, envelope projection.Envelope) {
 		}
 	case projection.Validation:
 		fmt.Fprintf(w, "Scope: %s\nValid: %t\nRecords: %d\n", v.Scope, v.Valid, v.Records)
+	case contextcompiler.Bundle:
+		renderContext(w, v)
 	default:
 		data, _ := json.MarshalIndent(v, "", "  ")
 		fmt.Fprintln(w, string(data))
 	}
 	fmt.Fprintf(w, "\nGenerated: %s\nBasis: %s\n", envelope.GeneratedAt, envelope.GenerationBasis)
 }
+
+func renderContext(w io.Writer, bundle contextcompiler.Bundle) {
+	fmt.Fprintf(w, "Spectacular context — %s\n", bundle.Scope)
+	if bundle.Next.Kind == "continuation" {
+		fmt.Fprintf(w, "Next: %s %s (authorized by %s)\n", bundle.Next.Operation, bundle.Next.Target, bundle.Next.AuthorizedBy)
+	} else {
+		fmt.Fprintf(w, "Owner gate: %s — %s\n", bundle.Next.Code, bundle.Next.Detail)
+		if bundle.Next.Source != "" {
+			fmt.Fprintf(w, "Inspect gate: %s\n", bundle.Next.Source)
+		}
+	}
+	for _, source := range bundle.Authoritative {
+		renderContextSource(w, "Authority", source)
+	}
+	for _, source := range bundle.Gaps {
+		renderContextSource(w, "Gap", source)
+	}
+	for _, conflict := range bundle.Conflicts {
+		fmt.Fprintf(w, "Conflict: %s\n", conflict)
+	}
+	for _, omission := range bundle.Omissions {
+		fmt.Fprintf(w, "Omission: %s\n", omission)
+	}
+	for _, section := range bundle.Guidance {
+		fmt.Fprintf(w, "Guidance: %s %s — %s\n", section.Event, section.Selector, section.Prose)
+	}
+	fmt.Fprintf(w, "Loaded: %d/%d records\n", bundle.LoadedRecords, bundle.AvailableRecords)
+	fmt.Fprintln(w, "Full: rerun this command with --json.")
+}
+
+func renderContextSource(w io.Writer, label string, source contextcompiler.Source) {
+	fmt.Fprintf(w, "%s: %s %s — %s", label, source.Role, source.Ref, source.Path)
+	if ref, err := domain.ParseReference(source.Ref); err == nil {
+		if command, ok := registeredShowCommand(ref.Type, source.Ref); ok {
+			fmt.Fprintf(w, " | %s", command)
+		}
+	} else if source.Noun == string(domain.Anchor) {
+		if command, ok := registeredShowCommand(domain.Anchor, source.Ref); ok {
+			fmt.Fprintf(w, " | %s", command)
+		}
+	}
+	fmt.Fprintln(w)
+}
+
 func renderCard(w io.Writer, c projection.Card) {
 	ref := c.Ref
 	if ref == "" {

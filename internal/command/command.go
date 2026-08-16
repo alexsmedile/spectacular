@@ -234,6 +234,21 @@ func renderHuman(writer io.Writer, value any) {
 		}
 	case missionbundle.Check:
 		fmt.Fprintf(writer, "%s valid=%t schema=%s checks=%d\n", item.Ref, item.Valid, item.Schema, len(item.Checks))
+		if len(item.Authority) > 0 {
+			fmt.Fprintln(writer, "AUTHORITY")
+			for _, decision := range []missionbundle.Decision{missionbundle.DecisionOperator, missionbundle.DecisionOwner, missionbundle.DecisionUndeclared} {
+				var verbs []string
+				for _, answer := range item.Authority {
+					if answer.Decision == decision {
+						verbs = append(verbs, answer.Verb)
+					}
+				}
+				if len(verbs) > 0 {
+					fmt.Fprintf(writer, "  %-14s %s\n", decision, strings.Join(verbs, ", "))
+				}
+			}
+			fmt.Fprintln(writer, "  any other verb is undeclared and refused")
+		}
 	case missionbundle.Objective:
 		fmt.Fprintf(writer, "%s — %s (%s)\n", item.Ref, item.Outcome, item.Status)
 	case missionbundle.Run:

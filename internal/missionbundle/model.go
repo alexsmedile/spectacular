@@ -183,6 +183,9 @@ type Check struct {
 	Legacy      bool     `json:"legacy"`
 	Checks      []string `json:"checks"`
 	Fingerprint string   `json:"fingerprint,omitempty"`
+	// Authority is the decision table the authority-vocabulary validator
+	// already resolves and previously discarded. It is derived on read.
+	Authority []AuthorityAnswer `json:"authority,omitempty"`
 }
 
 type Result struct {

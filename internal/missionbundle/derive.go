@@ -126,6 +126,56 @@ func (b *Bundle) Derive() State {
 	return state
 }
 
+// Decision is what the authority block answers for one verb.
+type Decision string
+
+const (
+	// DecisionOperator means the Mission declares the verb for the operator.
+	DecisionOperator Decision = "operator"
+	// DecisionOwner means the verb is declared but gated on the owner.
+	DecisionOwner Decision = "requires-owner"
+	// DecisionUndeclared means the Mission does not declare the verb. It is a
+	// refusal rather than an implicit owner gate: defaulting would answer a
+	// question the record does not answer and turn a typo into a confident
+	// wrong result.
+	DecisionUndeclared Decision = "undeclared"
+)
+
+// AuthorityAnswer is the decision for one verb, with the vocabulary that
+// produced it available for a refusal message.
+type AuthorityAnswer struct {
+	Verb     string   `json:"verb"`
+	Decision Decision `json:"decision"`
+}
+
+// Authority answers a single authority question by lookup against the declared
+// block, rather than asking the reader to recall two arrays.
+func (b *Bundle) Authorize(verb string) AuthorityAnswer {
+	for _, declared := range b.Authority.Operator {
+		if declared == verb {
+			return AuthorityAnswer{Verb: verb, Decision: DecisionOperator}
+		}
+	}
+	for _, declared := range b.Authority.RequiresOwner {
+		if declared == verb {
+			return AuthorityAnswer{Verb: verb, Decision: DecisionOwner}
+		}
+	}
+	return AuthorityAnswer{Verb: verb, Decision: DecisionUndeclared}
+}
+
+// AuthorityTable answers every verb in the supported vocabularies at once. It is
+// what `mission check` renders: the decision for each verb the system knows
+// about, including the ones this Mission declines to declare.
+func (b *Bundle) AuthorityTable() []AuthorityAnswer {
+	known := append(append([]string{}, SupportedOperatorVerbs...), SupportedOwnerVerbs...)
+	answers := make([]AuthorityAnswer, 0, len(known))
+	for _, verb := range known {
+		answers = append(answers, b.Authorize(verb))
+	}
+	return answers
+}
+
 // nextAction states the single next thing to do, in the order the lifecycle
 // forces. Earlier cases are genuinely blocking for later ones.
 func nextAction(b *Bundle, state State) string {

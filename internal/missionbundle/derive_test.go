@@ -241,6 +241,93 @@ func TestDeriveToleratesDanglingDependencyWithoutPanicking(t *testing.T) {
 	}
 }
 
+// An undeclared verb is refused rather than defaulted to requires-owner.
+// Defaulting never permits what it shouldn't, but it answers a question the
+// record does not answer and turns a typo into a confident wrong result.
+func TestAuthorizeAnswersByLookupAndRefusesUndeclaredVerbs(t *testing.T) {
+	bundle := &Bundle{
+		Ref: "M7",
+		Authority: Authority{
+			Operator:      []string{"inspect", "run-checks"},
+			RequiresOwner: []string{"push", "release"},
+		},
+	}
+	for verb, want := range map[string]Decision{
+		"inspect":    DecisionOperator,
+		"run-checks": DecisionOperator,
+		"push":       DecisionOwner,
+		"release":    DecisionOwner,
+		// Supported by the vocabulary but not declared by this Mission.
+		"commit-local": DecisionUndeclared,
+		"merge":        DecisionUndeclared,
+		// Not a verb at all.
+		"deploy": DecisionUndeclared,
+		"":       DecisionUndeclared,
+	} {
+		if got := bundle.Authorize(verb).Decision; got != want {
+			t.Fatalf("Authorize(%q) = %q, want %q", verb, got, want)
+		}
+	}
+}
+
+// The table renders from the same vocabularies the validator enforces, so a
+// reader is never shown a verb the validator would reject, or vice versa.
+func TestAuthorityTableCoversTheValidatedVocabularyExactly(t *testing.T) {
+	bundle := &Bundle{
+		Ref: "M7",
+		Authority: Authority{
+			Operator:      SupportedOperatorVerbs,
+			RequiresOwner: SupportedOwnerVerbs,
+		},
+	}
+	table := bundle.AuthorityTable()
+	if len(table) != len(SupportedOperatorVerbs)+len(SupportedOwnerVerbs) {
+		t.Fatalf("table has %d entries for %d supported verbs", len(table), len(SupportedOperatorVerbs)+len(SupportedOwnerVerbs))
+	}
+	for _, answer := range table {
+		if answer.Decision == DecisionUndeclared {
+			t.Fatalf("%q is undeclared although the Mission declares the full vocabulary", answer.Verb)
+		}
+	}
+	// A Mission declaring nothing must answer undeclared for every verb rather
+	// than inventing a permission.
+	empty := (&Bundle{Ref: "M7"}).AuthorityTable()
+	for _, answer := range empty {
+		if answer.Decision != DecisionUndeclared {
+			t.Fatalf("%q = %q on a Mission with no authority block, want undeclared", answer.Verb, answer.Decision)
+		}
+	}
+}
+
+// Check must carry the table the authority-vocabulary validator resolves, so
+// the answer arrives without a new command or noun.
+func TestCheckCarriesTheAuthorityTableWithoutANewCommand(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	check, err := Service{Workspace: ws}.Check("M7")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(check.Authority) == 0 {
+		t.Fatal("mission check must render the authority decision table it already computes")
+	}
+	declared := 0
+	for _, answer := range check.Authority {
+		if answer.Decision != DecisionUndeclared {
+			declared++
+		}
+	}
+	if declared == 0 {
+		t.Fatal("M7 declares an authority block, so the table cannot be entirely undeclared")
+	}
+}
+
 // Derived state travels in JSON so an agent reading --json reaches the same
 // conclusion a human reads from the rendered output, and it must never reach
 // the canonical file. Mutations set canonical fields individually, so this

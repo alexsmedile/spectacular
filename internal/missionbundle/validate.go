@@ -65,6 +65,7 @@ func Validate(ws *discovery.Workspace, b *Bundle) (Check, error) {
 	if b.Activation != nil {
 		check.Fingerprint = b.Activation.Fingerprint
 	}
+	check.Authority = b.AuthorityTable()
 	return check, nil
 }
 
@@ -396,9 +397,16 @@ func validateReviews(ws *discovery.Workspace, b *Bundle) error {
 	return nil
 }
 
+// SupportedOperatorVerbs and SupportedOwnerVerbs are the closed vocabularies a
+// Mission may declare. They are package-level so the authority table rendered to
+// a reader and the vocabulary enforced by validation cannot drift apart.
+var SupportedOperatorVerbs = []string{"inspect", "edit-in-scope", "choose-reversible-implementation", "run-checks", "generate-derived-files", "bounded-repair", "commit-local"}
+
+var SupportedOwnerVerbs = []string{"activate-mission", "change-outcome-or-completion", "expand-scope", "push", "merge", "release", "irreversible-change", "destructive-data", "secret-change"}
+
 func validateAuthority(_ *discovery.Workspace, b *Bundle) error {
-	operator := allowedSet("inspect", "edit-in-scope", "choose-reversible-implementation", "run-checks", "generate-derived-files", "bounded-repair", "commit-local")
-	owner := allowedSet("activate-mission", "change-outcome-or-completion", "expand-scope", "push", "merge", "release", "irreversible-change", "destructive-data", "secret-change")
+	operator := allowedSet(SupportedOperatorVerbs...)
+	owner := allowedSet(SupportedOwnerVerbs...)
 	if len(b.Authority.Operator) == 0 || len(b.Authority.RequiresOwner) == 0 {
 		return invalid("authority", "operator and requires_owner vocabularies are required")
 	}

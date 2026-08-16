@@ -13,7 +13,9 @@ Validate immediately before dispatch and again after runtime replacement.
 Fan out only cohesive, outcome-sized work. Each Handoff names one Objective, that Objective's exact
 dependencies, a disjoint claim scope, authoritative `ref@fingerprint` inputs, and an explicit return
 contract. Do not create recursive critic loops or tiny sessions; finish working code and batch review
-at the frozen `automatic | clustered | independent` level for each claim.
+at the frozen `automatic | clustered | independent` level for each claim. Compile the progressive
+card and claim packet defined in the Skill before loading exact sources; receivers should not reload
+unchanged project prose or the complete catalog.
 
 Optional wall-time, token, spend, parallel-worker, and repair-round caps must disclose
 `hard | observed | unsupported` enforcement. `hard` is valid only when the independently validated

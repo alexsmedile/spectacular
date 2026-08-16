@@ -36,6 +36,28 @@ func TestCanonicalSkillDefinesLeanLaunchAndQuestionContract(t *testing.T) {
 	}
 }
 
+func TestCanonicalSkillDefinesLeanExecutionAndFROST(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "skills", "spectacular", "SKILL.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	for _, required := range []string{
+		"card -> claim packet -> exact sources -> full bundle",
+		"disjoint claims + dependencies",
+		"focused checks",
+		"local green commit",
+		"one push boundary",
+		"Frozen fit",
+		"Truth of proof",
+		"active Mission remains governed by the preparation schema",
+	} {
+		if !strings.Contains(content, required) {
+			t.Fatalf("canonical Skill omits %q", required)
+		}
+	}
+}
+
 func TestArchiveMetadataIsCanonicalAndReproducible(t *testing.T) {
 	entries := []archiveEntry{{name: "spectacular/VERSION", mode: 0o644, data: []byte("2.0.0\n")}}
 	first, err := encodeArchive(entries)

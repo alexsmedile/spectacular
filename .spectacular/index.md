@@ -10,6 +10,7 @@
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |
+| `D6-5e3xke` | Decision | Authorize M3 implementation Evidence | `.spectacular/decisions/D6-5e3xke.md` |
 | `M1` | Mission | Restore human-operable workspace | `.spectacular/archive/missions/M1-human-operability/MISSION.md` |
 | `M1/A1-nolpc6` | Assessment | RC.2 human-operability assessment | `.spectacular/archive/missions/M1-human-operability/assessments/A1-nolpc6.md` |
 | `M1/D1-t5to5d` | Decision | Continue the bounded human-operability repair | `.spectacular/archive/missions/M1-human-operability/decisions/D1-t5to5d.md` |
@@ -29,6 +30,10 @@
 | `M2/R1` | Run | Initial governed Run | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/runs/R1-initial-governed-run/RUN.md` |
 | `M3` | Mission | Make Spectacular launch and execution lean | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/MISSION.md` |
 | `M3/D1-deldrh` | Decision | Activate the Spectacular efficiency Mission | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/decisions/D1-deldrh.md` |
+| `M3/E1-npnuyp` | Evidence | Lean launch and question contract proof | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E1-npnuyp.md` |
+| `M3/E2-7nclqi` | Evidence | Progressive context proof | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E2-7nclqi.md` |
+| `M3/E3-ravzes` | Evidence | Reconstructible CLI recovery proof | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E3-ravzes.md` |
+| `M3/E4-6oodeg` | Evidence | Lean execution and FROST proof | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E4-6oodeg.md` |
 | `M3/O1` | Objective | Launch guidance performs the approved preflight and asks dual-layer decision questions. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O1-launch-guidance-performs-the-approved-preflight-and-asks-dual-layer-decision-questions.md` |
 | `M3/O2` | Objective | Context supports compact cards with progressive authoritative drill-down. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O2-context-supports-compact-cards-with-progressive-authoritative-drill-down.md` |
 | `M3/O3` | Objective | Common CLI mistakes have intuitive aliases or runnable corrective refusals. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O3-common-cli-mistakes-have-intuitive-aliases-or-runnable-corrective-refusals.md` |

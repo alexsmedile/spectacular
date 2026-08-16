@@ -33,3 +33,4 @@
 | `M6/RV1` | Review | M6 independent completion review | `.spectacular/missions/M6-implement-compact-mission-cli/reviews/RV1-m6-independent-completion-review.md` |
 | `M7` | Mission | Render derived state and validate the Proposal record | `.spectacular/missions/M7-render-derived-state-and-validate-the-proposal-record/MISSION.md` |
 | `M7/RV1` | Review | Clustered review of M7 derived state, drift, authority, equivalence, and Proposal schema | `.spectacular/missions/M7-render-derived-state-and-validate-the-proposal-record/reviews/RV1-clustered-review-of-m7-derived-state-drift-authority-equivalence-and-proposal-schema.md` |
+| `M8` | Mission | Freeze the schema and record what was asked for | `.spectacular/missions/M8-freeze-the-schema-and-record-what-was-asked-for/MISSION.md` |

@@ -31,6 +31,15 @@ Gap, coherent slice, or criterion remains unresolved. Ask plain, decision-sized 
 only those failures; make silent product assumptions explicit Decisions or Gaps. A receipt with no
 unmet requirements goes directly to owner activation without a mandatory interview.
 
+For each unresolved fork, ask in this compact grammar:
+
+`plain outcome -> technical basis -> {action -> consequence} -> recommended default`.
+
+Use concrete verbs such as `publish RC.2`, `revise the criterion`, or `leave the Mission defined`;
+do not substitute internal labels such as `accept`, `bounce`, or `escalate` unless the same line
+defines the exact state change. Once the owner accepts a recurring pattern, carry it as a default
+and ask only for remaining variables.
+
 Present the complete Mission envelope once: outcome, Objectives, frozen completion contract, scope,
 authority/effects, evidence claims, dependencies/Gaps, checks, budgets, expiry, stops, recovery,
 return, and preparation receipt. Only owner approval permits `mission create` and activation.

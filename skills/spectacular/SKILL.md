@@ -13,16 +13,29 @@ their native providers.
 ## Start every workflow
 
 1. Discover the explicit v2 workspace; never fall back to a v1 directory or implicit convention.
-   Read `PROJECT.md` and the named project Anchors first. Treat readable Mission paths and scoped
+   Read `.spectacular/PROJECT.md` first, or root `PROJECT.md` when the nested file is absent, then
+   read its named project Anchors. If both Project files exist, the nested Anchor wins and the root
+   file is supplementary. Treat readable Mission paths and scoped
    references as navigation; retain UUIDv7 and fingerprints when binding authority or mutation.
-2. Compile only the entered scope:
+2. Run a read-only launch preflight before interviewing or mutating: workspace location; Git branch,
+   cleanliness, upstream and default-branch freshness; declared version and published release state;
+   active Mission/Run, authority, expiry and blocking Gaps; host cache/permission boundaries; and
+   generated drift. Report a plain outcome, one technical evidence line, and one clean next action.
+3. Compile only the entered scope:
    `spectacular workspace context <project|Mission-ref> --event <@Event> --json`.
-3. Treat the compiled bundle as a projection. Follow its source pointers for authority and use its
+4. Treat the compiled bundle as a projection. Follow its source pointers for authority and use its
    single continuation or owner gate; never repair canonical truth by editing the bundle.
-4. Load exactly one workflow reference below. Load the generated mechanical catalog only when
+5. Load exactly one workflow reference below. Load the generated mechanical catalog only when
    constructing or checking a CLI invocation.
-5. Revalidate baseline, source fingerprints, authority, expiry, budgets, and stops before every
+6. Revalidate baseline, source fingerprints, authority, expiry, budgets, and stops before every
    consequential transition or resumed effect.
+
+## Ask owner questions
+
+Ask only when a semantic, authority, risk, irreversible-effect, or current-Contract fork remains.
+Use four short parts: plain outcome; technical basis; concrete `action -> consequence` options; and
+the recommended default with its reason. Avoid unexplained workflow labels. Pair every simplified
+paragraph with one technical line and every technical paragraph with one plain summary.
 
 ## Route the guided job
 

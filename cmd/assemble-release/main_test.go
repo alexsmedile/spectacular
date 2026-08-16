@@ -5,9 +5,36 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
+
+func TestCanonicalSkillDefinesLeanLaunchAndQuestionContract(t *testing.T) {
+	root := filepath.Join("..", "..", "skills", "spectacular")
+	parts := []string{"SKILL.md", filepath.Join("references", "prepare.md")}
+	var content strings.Builder
+	for _, part := range parts {
+		data, err := os.ReadFile(filepath.Join(root, part))
+		if err != nil {
+			t.Fatal(err)
+		}
+		content.Write(data)
+	}
+	for _, required := range []string{
+		"Read `.spectacular/PROJECT.md` first",
+		"read-only launch preflight",
+		"plain outcome; technical basis",
+		"action -> consequence",
+		"recommended default",
+	} {
+		if !strings.Contains(content.String(), required) {
+			t.Fatalf("canonical Skill omits %q", required)
+		}
+	}
+}
 
 func TestArchiveMetadataIsCanonicalAndReproducible(t *testing.T) {
 	entries := []archiveEntry{{name: "spectacular/VERSION", mode: 0o644, data: []byte("2.0.0\n")}}

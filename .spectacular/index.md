@@ -7,6 +7,9 @@
 | `CC-v2prod` | Contract | Spectacular v2 product contract | `.spectacular/contracts/CC-v2prod-spectacular-v2-product.md` |
 | `D1-rnkfzw` | Decision | Authorize the v2.1 governed-autonomy Proposal | `.spectacular/decisions/D1-rnkfzw.md` |
 | `D2-435ztz` | Decision | Authorize the v2.1 governed-autonomy Mission | `.spectacular/decisions/D2-435ztz.md` |
+| `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
+| `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
+| `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |
 | `M1` | Mission | Restore human-operable workspace | `.spectacular/archive/missions/M1-human-operability/MISSION.md` |
 | `M1/A1-nolpc6` | Assessment | RC.2 human-operability assessment | `.spectacular/archive/missions/M1-human-operability/assessments/A1-nolpc6.md` |
 | `M1/D1-t5to5d` | Decision | Continue the bounded human-operability repair | `.spectacular/archive/missions/M1-human-operability/decisions/D1-t5to5d.md` |
@@ -24,8 +27,16 @@
 | `M2/O3` | Objective | Objective dependencies and Handoffs support cohesive, disjoint runner claim scopes and explicit returns. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O3-objective-dependencies-and-handoffs-support-cohesive-disjoint-runner-claim-scopes-and-explicit-returns.md` |
 | `M2/O4` | Objective | Autopilot resource limits disclose hard, observed, or unsupported enforcement and reject false hard guarantees. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O4-autopilot-resource-limits-disclose-hard-observed-or-unsupported-enforcement-and-reject-false-hard-guarantees.md` |
 | `M2/R1` | Run | Initial governed Run | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/runs/R1-initial-governed-run/RUN.md` |
+| `M3` | Mission | Make Spectacular launch and execution lean | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/MISSION.md` |
+| `M3/D1-deldrh` | Decision | Activate the Spectacular efficiency Mission | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/decisions/D1-deldrh.md` |
+| `M3/O1` | Objective | Launch guidance performs the approved preflight and asks dual-layer decision questions. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O1-launch-guidance-performs-the-approved-preflight-and-asks-dual-layer-decision-questions.md` |
+| `M3/O2` | Objective | Context supports compact cards with progressive authoritative drill-down. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O2-context-supports-compact-cards-with-progressive-authoritative-drill-down.md` |
+| `M3/O3` | Objective | Common CLI mistakes have intuitive aliases or runnable corrective refusals. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O3-common-cli-mistakes-have-intuitive-aliases-or-runnable-corrective-refusals.md` |
+| `M3/O4` | Objective | Lean cluster, local commit, schema continuity, and FROST review guidance is explicit. | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O4-lean-cluster-local-commit-schema-continuity-and-frost-review-guidance-is-explicit.md` |
+| `M3/R1` | Run | Initial governed Run | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/runs/R1-initial-governed-run/RUN.md` |
 | `P1` | Proposal | Repair v2 human operability | `.spectacular/proposals/P1-human-operability.md` |
 | `P2` | Proposal | Add answer-key governed autonomy | `.spectacular/proposals/P2-add-answer-key-governed-autonomy.md` |
+| `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |
 | `PRODUCT` | Anchor | Product direction | `.spectacular/PRODUCT.md` |
 | `PROJECT` | Anchor | Spectacular v2 | `.spectacular/PROJECT.md` |
 | `STACK` | Anchor | Stack | `.spectacular/STACK.md` |

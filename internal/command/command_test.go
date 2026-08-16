@@ -433,6 +433,35 @@ func TestUsageAndRefusalChannelsAndCodes(t *testing.T) {
 	}
 }
 
+func TestValidateDotAliasAndCorrectiveFailures(t *testing.T) {
+	var out, errOut bytes.Buffer
+	runner := Runner{Cwd: fixture(t), Stdout: &out, Stderr: &errOut, Now: fixedNow}
+	if exit := runner.Run([]string{"workspace", "validate", "."}); exit != 0 {
+		t.Fatalf("dot alias failed: exit=%d stderr=%s", exit, errOut.String())
+	}
+	if !strings.Contains(out.String(), "Scope: project") {
+		t.Fatalf("dot alias did not normalize to project: %s", out.String())
+	}
+
+	out.Reset()
+	errOut.Reset()
+	if exit := runner.Run([]string{"workspace", "validate", "all"}); exit != 3 {
+		t.Fatalf("invalid scope exit=%d", exit)
+	}
+	if !strings.Contains(errOut.String(), "recovery: spectacular workspace validate project") {
+		t.Fatalf("human refusal lacks runnable recovery: %s", errOut.String())
+	}
+
+	out.Reset()
+	errOut.Reset()
+	if exit := runner.Run([]string{"workspace", "validate"}); exit != 2 {
+		t.Fatalf("invalid arguments exit=%d", exit)
+	}
+	if !strings.Contains(errOut.String(), "try: spectacular workspace validate <scope> [--json]") {
+		t.Fatalf("known-command usage lacks runnable correction: %s", errOut.String())
+	}
+}
+
 func TestKnownCommandArgumentsAreValidatedBeforeWorkspaceDiscovery(t *testing.T) {
 	nonWorkspace := t.TempDir()
 	tests := [][]string{

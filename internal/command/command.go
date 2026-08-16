@@ -140,7 +140,7 @@ func (r Runner) Run(args []string) int {
 		return usage("unknown or incomplete command")
 	}
 	if detail := spec.validateArguments(rest); detail != "" {
-		return usage(detail)
+		return r.commandUsage(jsonMode, invoked, spec, detail)
 	}
 	workspace, err := discovery.Open(r.Cwd)
 	if err != nil {
@@ -184,7 +184,11 @@ func (r Runner) Run(args []string) int {
 	case opDecisionShow:
 		value, err = r.detail(b, rest, domain.Decision)
 	case opWorkspaceValidate:
-		value, err = b.Validate(rest[0])
+		scope := rest[0]
+		if scope == "." {
+			scope = "project"
+		}
+		value, err = b.Validate(scope)
 	case opProposalShow:
 		value, err = g.ProposalView(rest[0])
 	case opObjectiveShow:
@@ -605,10 +609,22 @@ func (r Runner) refuse(jsonMode bool, invoked string, err error) int {
 			fmt.Fprintf(r.Stderr, ": %s", detail)
 		}
 		fmt.Fprintln(r.Stderr)
+		fmt.Fprintf(r.Stderr, "recovery: %s\n", recovery)
 		fmt.Fprintf(r.Stderr, "command: %s\nexit_status: 3\n", invoked)
 	}
 	return 3
 }
+
+func (r Runner) commandUsage(jsonMode bool, invoked string, spec Spec, detail string) int {
+	corrected := strings.TrimSpace("spectacular " + strings.Join(spec.Words, " ") + " " + spec.Arguments)
+	if jsonMode {
+		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v1", invoked, 2, "usage", "", detail, "", "", "none", corrected})
+	} else {
+		fmt.Fprintf(r.Stderr, "usage: %s\n%s\ntry: %s\ncommand: %s\nexit_status: 2\n", corrected, detail, corrected, invoked)
+	}
+	return 2
+}
+
 func (r Runner) usage(jsonMode bool, invoked, detail string) int {
 	if jsonMode {
 		_ = writeJSON(r.Stdout, refusalEnvelope{"spectacular.refusal.v1", invoked, 2, "usage", "", detail, "", "", "none", "correct the command invocation using registry-derived help"})

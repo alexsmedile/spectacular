@@ -6,27 +6,46 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/alexsmedile/spectacular/v2/internal/command"
 )
 
 func main() {
-	jsonPath := flag.String("json", "", "output path for the JSON command catalog")
-	markdownPath := flag.String("markdown", "", "output path for the Markdown command catalog")
-	version := flag.String("version", "", "release version written into generated catalogs")
-	flag.Parse()
-	if *jsonPath == "" || *markdownPath == "" || *version == "" {
-		fmt.Fprintln(os.Stderr, "--json, --markdown, and --version are required")
-		os.Exit(2)
+	if err := run(os.Args[1:], "."); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run(args []string, root string) error {
+	flags := flag.NewFlagSet("generate-interface", flag.ContinueOnError)
+	jsonPath := flags.String("json", filepath.Join(root, "skills", "spectacular", "generated", "mechanical-interface.json"), "output path for the JSON command catalog")
+	markdownPath := flags.String("markdown", filepath.Join(root, "skills", "spectacular", "generated", "mechanical-interface.md"), "output path for the Markdown command catalog")
+	version := flags.String("version", "", "release version written into generated catalogs")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if flags.NArg() != 0 {
+		return fmt.Errorf("unexpected arguments: %s", strings.Join(flags.Args(), " "))
+	}
+	if *version == "" {
+		data, err := os.ReadFile(filepath.Join(root, "VERSION"))
+		if err != nil {
+			return fmt.Errorf("read VERSION: %w", err)
+		}
+		*version = strings.TrimSpace(string(data))
+	}
+	if *version == "" {
+		return fmt.Errorf("VERSION is empty")
 	}
 	if err := write(*jsonPath, func(w io.Writer) error { return command.WriteCatalogJSONVersion(w, *version) }); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return err
 	}
 	if err := write(*markdownPath, func(w io.Writer) error { return command.WriteCatalogMarkdownVersion(w, *version) }); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
 
 func write(path string, render func(io.Writer) error) error {

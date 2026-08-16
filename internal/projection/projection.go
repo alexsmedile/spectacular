@@ -723,7 +723,7 @@ func (b Builder) Validate(scope string) (Validation, error) {
 	} else {
 		mission, err := b.Workspace.Lookup(scope, domain.Mission)
 		if err != nil {
-			return Validation{}, domain.NewRefusal(domain.RefusalInvalidScope, "scope", err.Error(), err)
+			return Validation{}, domain.NewStateRefusal(domain.RefusalInvalidScope, "scope", err.Error(), "project or an exact Mission reference", scope, "spectacular workspace validate project", err)
 		}
 		entries = []discovery.Entry{mission}
 		if _, err := b.Mission(scope); err != nil {

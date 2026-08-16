@@ -1,96 +1,123 @@
 ---
 type: Mission
 id: 01a00a20-63dd-7bc6-b0a2-cb443fd6d194
-ref: M6
 title: Implement the compact Mission CLI
-status: active
-owner: Alex
+status: completed
 created: "2026-08-16T10:31:30Z"
-updated: "2026-08-16T11:34:10Z"
-
-contract:
-  ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
-  fingerprint: sha256:80336b159e296ba63b5d85c80a48f8e540ae07d9aac52cdcdba4730059378a48
-
-baseline:
-  commit: e0e2fdcc6874adb0750b9e07cae43d6f09febc6d
-  branch: codex/lean-launch-context
-
-outcome: Spectacular provides a small typed CLI that validates compact Mission bundles and performs only the repeated or atomic mechanics that are safer and cheaper than LLM-only execution.
-review: independent
-
-completion:
-  - claim: typed-bundle
-    pass_boundary: One current decoder resolves MISSION.md plus inline or promoted Objectives, Runs, and reviews into the same typed logical bundle while preserving canonical Markdown and existing v2 readability.
-    proof_requirement: Golden fixtures and round-trip tests cover M5, M6, expanded bundles, existing v2 Missions, unknown fields, and exact source pointers without a second package root or file migration.
-  - claim: schema-validation
-    pass_boundary: The schema registry owns every mandatory identity, binding, fingerprint, claim, dependency, Run, review, authority, scope, layout, and transition check; Mission content cannot disable those checks.
-    proof_requirement: Table-driven negative tests mutate one valid property at a time and assert stable refusal code, exact field, concrete problem, safe correction, and no writes.
-  - claim: typed-commands
-    pass_boundary: The accepted start, show/check, Objective, Run, review, and completion commands use compact Markdown input where meaning is required, generate mechanics automatically, and avoid the superseded multi-step ceremony.
-    proof_requirement: Real-process tests cover compact and `--json` output, stdin/file input, generated identities/bindings, progress, promotion, R2 creation, independent review, owner completion, and cold resume.
-  - claim: atomic-stress
-    pass_boundary: Every mutating command is path-safe, atomic, concurrency-aware, and retry-stable across injected failures without duplicate identity or ambiguous inline/file state.
-    proof_requirement: Fault injection and fuzz/property tests cover every write boundary, collision, dependency graph, YAML shape, path escape, stale tree, concurrent mutation, and idempotent retry.
-
-objectives:
-  - ref: O1
-    id: 01a00a20-63dd-7033-832a-a1e6de4388dd
-    outcome: Build the shared typed Mission-bundle decoder, resolver, canonical writer, and schema registry.
-    status: implemented
-    claims: [typed-bundle, schema-validation]
-  - ref: O2
-    id: 01a00a20-63dd-79dc-87ea-157563ccf6d6
-    outcome: Implement the minimal read, start, progress, expansion, review, and completion command surface.
-    status: implemented
-    after: [O1]
-    claims: [typed-commands]
-  - ref: O3
-    id: 01a00a20-63dd-72df-b24e-4f1044c47e61
-    outcome: Prove atomicity, safe refusals, representation equivalence, legacy readability, and compact distribution behavior.
-    status: implemented
-    after: [O2]
-    claims: [atomic-stress]
-
-run:
-  ref: R1
-  id: 01a00a34-6ce4-73fd-b7d3-5cdad9302124
-  status: awaiting-review
-  operator: Codex primary session
-  started_at: "2026-08-16T10:53:23Z"
-  current_objective: O3
-  repairs: 1
-
+updated: "2026-08-16T12:30:56Z"
 activation:
-  by: Alex
-  at: "2026-08-16T10:53:23Z"
-  fingerprint: sha256:2bb4d9ff6f84db040db5eb7ecdbeb392f93aac0c242cca7bce1cfe04679ff7c5
-
-validation:
-  schema: mission.v2
-  mode: cli
-
+    at: "2026-08-16T10:53:23Z"
+    by: Alex
+    fingerprint: sha256:2bb4d9ff6f84db040db5eb7ecdbeb392f93aac0c242cca7bce1cfe04679ff7c5
 authority:
-  operator: [inspect, edit-in-scope, choose-reversible-implementation, run-checks, generate-derived-files, bounded-repair, commit-local]
-  requires_owner: [activate-mission, change-outcome-or-completion, expand-scope, push, merge, release, irreversible-change, destructive-data, secret-change]
-
-scope:
-  mechanical: [cmd/spectacular/, internal/, test/, skills/spectacular/generated/, install/, .spectacular/]
-  semantic:
-    - Typed decoding and validation of compact and expanded Mission bundles.
-    - Minimal noun-first commands for Mission, Objective, Run, review, and completion mechanics.
-    - Replacement of the superseded v2 CLI workflow without generic mutations or a parallel compatibility architecture.
-
-repair_budget: 3
+    operator:
+        - inspect
+        - edit-in-scope
+        - choose-reversible-implementation
+        - run-checks
+        - generate-derived-files
+        - bounded-repair
+        - commit-local
+    requires_owner:
+        - activate-mission
+        - change-outcome-or-completion
+        - expand-scope
+        - push
+        - merge
+        - release
+        - irreversible-change
+        - destructive-data
+        - secret-change
+baseline:
+    branch: codex/lean-launch-context
+    commit: e0e2fdcc6874adb0750b9e07cae43d6f09febc6d
+completion:
+    - claim: typed-bundle
+      pass_boundary: One current decoder resolves MISSION.md plus inline or promoted Objectives, Runs, and reviews into the same typed logical bundle while preserving canonical Markdown and existing v2 readability.
+      proof_requirement: Golden fixtures and round-trip tests cover M5, M6, expanded bundles, existing v2 Missions, unknown fields, and exact source pointers without a second package root or file migration.
+    - claim: schema-validation
+      pass_boundary: The schema registry owns every mandatory identity, binding, fingerprint, claim, dependency, Run, review, authority, scope, layout, and transition check; Mission content cannot disable those checks.
+      proof_requirement: Table-driven negative tests mutate one valid property at a time and assert stable refusal code, exact field, concrete problem, safe correction, and no writes.
+    - claim: typed-commands
+      pass_boundary: The accepted start, show/check, Objective, Run, review, and completion commands use compact Markdown input where meaning is required, generate mechanics automatically, and avoid the superseded multi-step ceremony.
+      proof_requirement: Real-process tests cover compact and `--json` output, stdin/file input, generated identities/bindings, progress, promotion, R2 creation, independent review, owner completion, and cold resume.
+    - claim: atomic-stress
+      pass_boundary: Every mutating command is path-safe, atomic, concurrency-aware, and retry-stable across injected failures without duplicate identity or ambiguous inline/file state.
+      proof_requirement: Fault injection and fuzz/property tests cover every write boundary, collision, dependency graph, YAML shape, path escape, stale tree, concurrent mutation, and idempotent retry.
+completion_record:
+    at: "2026-08-16T12:30:56Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 7fc3436b00642e0d7ccaec8cbd6e8b5e52d69f21
+contract:
+    fingerprint: sha256:80336b159e296ba63b5d85c80a48f8e540ae07d9aac52cdcdba4730059378a48
+    ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
 dependencies:
-  - M5 completed with independent review and owner acceptance.
+    - M5 completed with independent review and owner acceptance.
 gaps: []
-
+objectives:
+    - claims:
+        - typed-bundle
+        - schema-validation
+      id: 01a00a20-63dd-7033-832a-a1e6de4388dd
+      outcome: Build the shared typed Mission-bundle decoder, resolver, canonical writer, and schema registry.
+      ref: O1
+      status: implemented
+    - after:
+        - O1
+      claims:
+        - typed-commands
+      id: 01a00a20-63dd-79dc-87ea-157563ccf6d6
+      outcome: Implement the minimal read, start, progress, expansion, review, and completion command surface.
+      ref: O2
+      status: implemented
+    - after:
+        - O2
+      claims:
+        - atomic-stress
+      id: 01a00a20-63dd-72df-b24e-4f1044c47e61
+      outcome: Prove atomicity, safe refusals, representation equivalence, legacy readability, and compact distribution behavior.
+      ref: O3
+      status: implemented
+outcome: Spectacular provides a small typed CLI that validates compact Mission bundles and performs only the repeated or atomic mechanics that are safer and cheaper than LLM-only execution.
+owner: Alex
+ref: M6
+repair_budget: 3
+review: independent
+reviews:
+    - file: reviews/RV1-m6-independent-completion-review.md
+      id: 01a00a34-6cb8-7082-8673-d8191806b194
+      ref: RV1
+      verdict: pass
+run:
+    current_objective: O3
+    id: 01a00a34-6ce4-73fd-b7d3-5cdad9302124
+    operator: Codex primary session
+    ref: R1
+    repairs: 1
+    started_at: "2026-08-16T10:53:23Z"
+    status: completed
+scope:
+    mechanical:
+        - cmd/spectacular/
+        - internal/
+        - test/
+        - skills/spectacular/generated/
+        - install/
+        - .spectacular/
+    semantic:
+        - Typed decoding and validation of compact and expanded Mission bundles.
+        - Minimal noun-first commands for Mission, Objective, Run, review, and completion mechanics.
+        - Replacement of the superseded v2 CLI workflow without generic mutations or a parallel compatibility architecture.
 stops:
-  - The CLI begins authoring product meaning, grading proof sufficiency, or replacing owner judgment.
-  - Routine use requires a large JSON payload, mandatory Proposal/Decision/receipt/index/reconciliation sequence, or generic mutation API.
-  - Existing v2 readability requires rewriting canonical files, a second package root, or divergent decoders.
-  - A mutation can partially commit, follow a path outside `.spectacular`, change stable identity, or return an ambiguous refusal.
+    - The CLI begins authoring product meaning, grading proof sufficiency, or replacing owner judgment.
+    - Routine use requires a large JSON payload, mandatory Proposal/Decision/receipt/index/reconciliation sequence, or generic mutation API.
+    - Existing v2 readability requires rewriting canonical files, a second package root, or divergent decoders.
+    - A mutation can partially commit, follow a path outside `.spectacular`, change stable identity, or return an ambiguous refusal.
+validation:
+    mode: cli
+    schema: mission.v2
 ---
 # Mission
 

@@ -36,8 +36,8 @@ completion:
       pass_boundary: Compact Mission and Objective projections lead with one state line stating lifecycle position and a NEXT line stating the next action and who holds it, with every field derived from data the bundle already carries and no canonical field added.
       proof_requirement: Golden fixtures over compact and promoted bundles assert the rendered state line and NEXT line, and assert every field traces to a bundle field; a negative test proves no projection writes to the canonical tree.
     - claim: drift-flags
-      pass_boundary: Each frozen completion claim carries named drift flags derived from repairs consumed, evidence age and freshness, verdict state, and fingerprint age, and an unnamed audit target defaults to the most-flagged claim showing the flags that selected it.
-      proof_requirement: Table-driven fixtures with known repair counts, evidence ages, verdict states, and fingerprint ages assert the exact flag set, the ranking, and the default selection including tie behavior.
+      pass_boundary: Each frozen completion claim carries named drift flags derived from repairs consumed, verdict state, and fingerprint age, and an unnamed audit target defaults to the most-flagged claim showing the flags that selected it.
+      proof_requirement: Table-driven fixtures with known repair counts, verdict states, and fingerprint ages assert the exact flag set, the ranking, and the default selection including tie behavior.
     - claim: authority-table
       pass_boundary: Mission check renders the authority decision table from the vocabularies the authority-vocabulary validator already resolves, and an undeclared verb is refused with code, field, problem, declared vocabulary, and safe correction, without adding any command or noun to the frozen surface.
       proof_requirement: Table-driven lookups cover declared operator verbs, declared owner-gated verbs, and undeclared verbs; a surface test asserts the accepted command list is unchanged.
@@ -45,8 +45,8 @@ completion:
       pass_boundary: A Mission with inline Objectives and the same Mission with those Objectives promoted produce byte-identical show, graph, and state-line output, and the Objective view falls back from graph to level sets only when the graph would exceed terminal width.
       proof_requirement: Golden tests assert byte equality across both representations for every projection surface, and view fixtures assert the approved notation plus the exact width threshold that selects level sets.
     - claim: proposal-schema
-      pass_boundary: A Proposal validates against the compact authored shape of type, id, ref, title, status, created_by, created, updated, scope, and target_contract, with ref required on new records, legacy human_ref decoded and reported as drift rather than refused, and no creation command provided.
-      proof_requirement: P5 and P6 validate unchanged; P3 and P4 validate with legacy fields preserved and human_ref reported as drift; negative tests assert refusal on missing required fields and assert no proposal creation command is accepted.
+      pass_boundary: A Proposal validates against the compact authored shape of type, id, ref, title, status, created_by, created, updated, and target_contract, with ref required on new records, legacy human_ref decoded and reported as drift rather than refused, and no creation command provided.
+      proof_requirement: Every Proposal in the repository validates with legacy fields preserved and human_ref reported as drift; negative tests assert refusal on missing required fields and assert no proposal creation command is accepted.
 contract:
     fingerprint: sha256:1ffd39b498b44dce4e77cdf902f5f827bdf40eb2b317573c38a405f9b9ae9a0b
     ref: Contract:01a00aae-8921-7b27-96a9-1a4c175e7dc6
@@ -170,6 +170,25 @@ M2, M3, and M4 say `human_ref:` and M5 and M6 say `ref:`. One decoder that accep
 and reports the legacy spelling as drift closes the gap without rewriting any completed
 Mission's frontmatter. `nextMissionRef` already reads both spellings; this extends that
 tolerance to the validation path so M8 has one spelling to compare.
+
+## Two completion criteria were narrowed after independent review
+
+Independent review found two frozen criteria naming inputs the record cannot
+supply. The owner narrowed both rather than implementing against a shape that does
+not exist.
+
+`drift-flags` named "evidence age and freshness". `Reviewer.Evidence` is a list of
+bare references with no timestamps, so evidence age is not derivable. `Review.Created`
+exists but measures when a review was recorded, not how old its evidence is;
+implementing against it would have produced a flag whose name misdescribed what it
+measured. The other three inputs — repairs consumed, verdict state, fingerprint age —
+are implemented and tested.
+
+`proposal-schema` named `scope` among the required fields. No Proposal in this
+repository is refused for lacking it, and P1 does not carry it at all. Requiring it
+would have invalidated an accepted record to satisfy a field the authored shape never
+adopted. The same criterion also described P5 and P6 as using the current `ref:`
+spelling; all six Proposals use `human_ref:`, and the text now matches the record.
 
 ## What is deliberately out of scope
 

@@ -294,3 +294,50 @@ Three subsections added under "Ask owner questions", plus a clarification of
 - `git-stack` and `git-ops` were named as related surfaces. Neither exists as an
   editable skill — `git-stack` is a plugin agent. If the same batching lesson
   applies to commit/push/merge flows, it needs a home there.
+
+## `NEXT` asks for a review that already exists
+
+**Found:** 2026-08-16, closing M7. **Where:** `internal/missionbundle/derive.go:193`.
+
+After `review record` wrote RV1 and the Mission carried a passing review pointer,
+`mission show M7` still printed:
+
+```
+NEXT: every Objective is implemented; record a review
+```
+
+`nextAction` selects that branch on `state.Done == len(b.Objectives)` alone. It
+never reads `b.Reviews`, so a recorded review cannot retire the instruction. The
+same line is emitted before and after the review exists.
+
+### Why it matters more than a wrong string
+
+M7 froze `state-line` on the boundary that every field is *derived from data the
+bundle already carries*. The bundle carries `reviews` with verdicts. The NEXT line
+ignores it, so the projection disagrees with the record it summarizes — which is
+also, verbatim, an M7 stop condition:
+
+> A state line, drift flag, or readiness conclusion disagrees with the record it
+> summarizes.
+
+The stop did not fire because nothing tests NEXT against a bundle that has both
+implemented Objectives and a recorded review. The M7 golden fixtures cover the
+pre-review state only.
+
+### What the correct behavior probably is
+
+Once every Objective is implemented and at least one review is bound to the
+current activation fingerprint with a passing verdict, NEXT should name owner
+completion, not another review. A review bound to a *stale* fingerprint should
+keep asking, since that is exactly the drift the fingerprint exists to catch.
+
+That distinction is a real design question, not a typo: it decides whether a
+passing review survives a boundary amendment. It is written here rather than
+patched silently.
+
+### Not fixed here
+
+M8 is active and froze its own scope. This is not in it, and amending an active
+Mission's scope to absorb a found bug is the drift M8 exists to prevent. It waits
+for the cleanup Mission — where it belongs alongside the unaddressed
+"review the open gaps and dead weight" ask.

@@ -164,7 +164,12 @@ type Bundle struct {
 	CompletionRecord *CompletionRecord `json:"completion_record,omitempty"`
 	Path             string            `json:"path"`
 	Legacy           bool              `json:"legacy"`
-	Body             string            `json:"-"`
+	// State is derived on read so a JSON reader reaches the same conclusion a
+	// human reads from the rendered output. It is never decoded from the file
+	// and never written back: mutations set canonical fields individually, so
+	// this cannot reach the canonical tree.
+	State *State `yaml:"-" json:"state,omitempty"`
+	Body  string `json:"-"`
 
 	entry    discovery.Entry
 	document *workspace.Document

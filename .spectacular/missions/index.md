@@ -31,3 +31,4 @@
 | `M5/RV1` | Review | M5 independent completion review | `.spectacular/missions/M5-implement-compact-expandable-missions/reviews/RV1-independent-review.md` |
 | `M6` | Mission | Implement the compact Mission CLI | `.spectacular/missions/M6-implement-compact-mission-cli/MISSION.md` |
 | `M6/RV1` | Review | M6 independent completion review | `.spectacular/missions/M6-implement-compact-mission-cli/reviews/RV1-m6-independent-completion-review.md` |
+| `M7` | Mission | Render derived state and validate the Proposal record | `.spectacular/missions/M7-render-derived-state-and-validate-the-proposal-record/MISSION.md` |

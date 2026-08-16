@@ -193,7 +193,13 @@ func (s Service) start(plan Plan, raw []byte) (Result, error) {
 }
 
 func (s Service) Show(ref string) (*Bundle, error) {
-	return Load(s.Workspace, ref)
+	bundle, err := Load(s.Workspace, ref)
+	if err != nil {
+		return nil, err
+	}
+	state := bundle.Derive()
+	bundle.State = &state
+	return bundle, nil
 }
 
 func (s Service) Check(ref string) (Check, error) {

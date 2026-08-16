@@ -1,6 +1,9 @@
 package missionbundle
 
 import (
+	"bytes"
+	"encoding/json"
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -235,6 +238,48 @@ func TestDeriveToleratesDanglingDependencyWithoutPanicking(t *testing.T) {
 	}
 	if got := state.Objectives[0].BlockedBy; !reflect.DeepEqual(got, []string{"O9"}) {
 		t.Fatalf("blocked by %v, want the unresolved ref [O9]", got)
+	}
+}
+
+// Derived state travels in JSON so an agent reading --json reaches the same
+// conclusion a human reads from the rendered output, and it must never reach
+// the canonical file. Mutations set canonical fields individually, so this
+// guards the property rather than the mechanism.
+func TestDerivedStateTravelsInJSONButNeverToTheCanonicalFile(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle, err := Service{Workspace: ws}.Show("M7")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bundle.State == nil {
+		t.Fatal("Show must derive state so a JSON reader sees readiness")
+	}
+	if bundle.State.Next == "" || len(bundle.State.Objectives) != len(bundle.Objectives) {
+		t.Fatalf("derived state must cover every Objective and name a next action: next=%q %d of %d",
+			bundle.State.Next, len(bundle.State.Objectives), len(bundle.Objectives))
+	}
+	encoded, err := json.Marshal(bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(encoded, []byte(`"readiness"`)) {
+		t.Fatal("JSON output must carry per-Objective readiness")
+	}
+	source, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(bundle.Path)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, derived := range []string{"state:", "readiness:", "blocked_by:", "startable:", "holder:"} {
+		if bytes.Contains(source, []byte("\n"+derived)) {
+			t.Fatalf("derived field %q reached the canonical file", derived)
+		}
 	}
 }
 

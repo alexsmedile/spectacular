@@ -5,6 +5,7 @@
 |---|---|---|---|
 | `ARCHITECTURE` | Anchor | Architecture | `.spectacular/ARCHITECTURE.md` |
 | `CC-missioncli` | Contract | Spectacular mechanical Mission CLI | `.spectacular/contracts/CC-missioncli-spectacular-mechanical-cli.md` |
+| `CC-projsurf` | Contract | Derived state and dependency shape | `.spectacular/contracts/CC-projsurf-derived-state-and-dependency-shape.md` |
 | `CC-v2prod` | Contract | Spectacular v2 product contract | `.spectacular/contracts/CC-v2prod-spectacular-v2-product.md` |
 | `D1-rnkfzw` | Decision | Authorize the v2.1 governed-autonomy Proposal | `.spectacular/decisions/D1-rnkfzw.md` |
 | `D2-435ztz` | Decision | Authorize the v2.1 governed-autonomy Mission | `.spectacular/decisions/D2-435ztz.md` |
@@ -52,10 +53,13 @@
 | `M5/RV1` | Review | M5 independent completion review | `.spectacular/missions/M5-implement-compact-expandable-missions/reviews/RV1-independent-review.md` |
 | `M6` | Mission | Implement the compact Mission CLI | `.spectacular/missions/M6-implement-compact-mission-cli/MISSION.md` |
 | `M6/RV1` | Review | M6 independent completion review | `.spectacular/missions/M6-implement-compact-mission-cli/reviews/RV1-m6-independent-completion-review.md` |
+| `M7` | Mission | Render derived state and validate the Proposal record | `.spectacular/missions/M7-render-derived-state-and-validate-the-proposal-record/MISSION.md` |
 | `P1` | Proposal | Repair v2 human operability | `.spectacular/proposals/P1-human-operability.md` |
 | `P2` | Proposal | Add answer-key governed autonomy | `.spectacular/proposals/P2-add-answer-key-governed-autonomy.md` |
 | `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |
 | `P4` | Proposal | Make Spectacular control operations lean | `.spectacular/proposals/P4-make-spectacular-control-operations-lean.md` |
+| `P5` | Proposal | Reduce repeated cost and brittle paths | `.spectacular/proposals/P5-reduce-repeated-cost-and-brittle-paths.md` |
+| `P6` | Proposal | Condense projection surfaces | `.spectacular/proposals/P6-condense-projection-surfaces.md` |
 | `PRODUCT` | Anchor | Product direction | `.spectacular/PRODUCT.md` |
 | `PROJECT` | Anchor | Spectacular v2 | `.spectacular/PROJECT.md` |
 | `STACK` | Anchor | Stack | `.spectacular/STACK.md` |

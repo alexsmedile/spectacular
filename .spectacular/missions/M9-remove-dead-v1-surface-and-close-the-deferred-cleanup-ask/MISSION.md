@@ -2,9 +2,9 @@
 type: Mission
 id: 01a00d6e-df08-75d3-a6c3-5975bb421630
 title: Remove dead v1 surface and close the deferred cleanup ask
-status: active
+status: completed
 created: "2026-08-17T10:13:17Z"
-updated: "2026-08-17T10:39:01Z"
+updated: "2026-08-17T10:43:42Z"
 activation:
     at: "2026-08-17T10:13:17Z"
     by: Alex
@@ -44,6 +44,12 @@ completion:
     - claim: gaps-swept
       pass_boundary: Every open Gap is either closed with the change that closes it named, restated with a current reason to stay open, or converted into a recorded follow-up. A Gap is never closed by deleting it. `dead-v1-governance-code` reaches a terminal state consistent with what this Mission actually removed.
       proof_requirement: Each open Gap at Mission start is listed with its resolution and the record that carries it; a check asserts no Gap references a deleted package or a path that no longer exists.
+completion_record:
+    at: "2026-08-17T10:43:42Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 25dae41c1acf26751b27d100fe1845c07b60bea8
 contract:
     fingerprint: sha256:1ffd39b498b44dce4e77cdf902f5f827bdf40eb2b317573c38a405f9b9ae9a0b
     ref: Contract:01a00aae-8921-7b27-96a9-1a4c175e7dc6
@@ -131,7 +137,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-17T10:13:17Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - cmd/spectacular/

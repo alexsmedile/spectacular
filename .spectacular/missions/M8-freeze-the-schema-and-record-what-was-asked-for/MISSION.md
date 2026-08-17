@@ -2,9 +2,9 @@
 type: Mission
 id: 01a00c59-6bb0-7be4-89cf-07e157ba6b5c
 title: Freeze the schema and record what was asked for
-status: active
+status: completed
 created: "2026-08-16T20:59:04Z"
-updated: "2026-08-17T01:54:51Z"
+updated: "2026-08-17T01:55:05Z"
 activation:
     at: "2026-08-16T20:59:04Z"
     by: Alex
@@ -47,6 +47,12 @@ completion:
     - claim: request-fidelity
       pass_boundary: A Mission records the request that produced it as a source, a capture time, and a list of distinct asks, each carrying a disposition of covered, deferred, or declined; a covered ask names completion claims that exist, a deferred or declined ask carries a stated reason, and completion refuses while any ask is undispositioned. The request text sits outside the activation fingerprint so it can be sharpened; the dispositions sit inside it so a covered ask cannot be silently relabelled after activation.
       proof_requirement: Fixtures assert refusal on an undispositioned ask, on a covered ask naming a claim that does not exist, and on a deferred ask with no reason; fingerprint tests prove that editing request text preserves activation while changing any disposition invalidates it; a negative test asserts the validator never infers a disposition the author did not write.
+completion_record:
+    at: "2026-08-17T01:55:05Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 244d4c488c897a27564b2166fcae4fc757100b95
 contract:
     fingerprint: sha256:1ffd39b498b44dce4e77cdf902f5f827bdf40eb2b317573c38a405f9b9ae9a0b
     ref: Contract:01a00aae-8921-7b27-96a9-1a4c175e7dc6
@@ -133,7 +139,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-16T20:59:04Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - cmd/spectacular/

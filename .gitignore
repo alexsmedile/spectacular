@@ -11,3 +11,25 @@ release-output/
 .spectacular/transactions/
 _archive/
 _backups/
+
+# Local-only working folders. Each states its own intent in an AGENTS.md or
+# header; the rules below are what enforce it.
+
+# Product content produced by the release-post skill. articles/AGENTS.md declares
+# this folder gitignored and never committed to the spectacular repo.
+articles/
+
+# Research artifacts: saved NotebookLM queries, agent-memory reports, source
+# dumps. Inputs to thinking, not product surface; regenerable and unversioned.
+_research/
+
+# Canonical snapshots are local recovery artifacts only. They duplicate what git
+# history already holds, so nothing here travels with a review or a release. If a
+# snapshot is ever needed as evidence, export it deliberately rather than
+# force-adding this folder.
+_snapshots/
+
+# Local editor and plugin state, per-machine. Shared project settings belong in
+# a tracked file, not this one.
+.claude/settings.json
+.claude/worktrees/

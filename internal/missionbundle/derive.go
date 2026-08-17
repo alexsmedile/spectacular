@@ -131,6 +131,12 @@ func (b *Bundle) Derive() State {
 	}
 
 	state.Next = nextAction(b, state)
+	// Completion is owner-gated, so the holder follows the action. Deriving this
+	// from the same condition keeps the two lines from disagreeing.
+	if state.Status == "active" && state.Done == len(b.Objectives) && len(b.Objectives) > 0 &&
+		!(state.Budget > 0 && state.Repairs >= state.Budget) && hasCurrentPassingReview(b) {
+		state.Holder = "owner"
+	}
 	return state
 }
 
@@ -199,6 +205,9 @@ func nextAction(b *Bundle, state State) string {
 	case state.Budget > 0 && state.Repairs >= state.Budget:
 		return "repair budget is exhausted; the owner decides whether to continue"
 	case state.Done == len(b.Objectives) && len(b.Objectives) > 0:
+		if hasCurrentPassingReview(b) {
+			return "every Objective is implemented and reviewed; the owner completes the Mission"
+		}
 		return "every Objective is implemented; record a review"
 	case state.Startable == 1:
 		return "work " + firstWithReadiness(state, ReadyStartable, ReadyActive)
@@ -209,6 +218,39 @@ func nextAction(b *Bundle, state State) string {
 	default:
 		return "no Objectives are declared"
 	}
+}
+
+// hasCurrentPassingReview reports whether the bundle carries a review that both
+// passes and is bound to the current activation fingerprint.
+//
+// The fingerprint binding is the point. A review describes the boundary that was
+// frozen when it was written; if the boundary is later amended, the fingerprint
+// changes and the review no longer describes what the record now claims. Treating
+// a stale review as satisfying is exactly the drift the fingerprint exists to
+// catch, so a stale binding keeps asking for a review rather than retiring the
+// instruction. A Mission with no activation has no boundary to be stale against
+// and is judged on the verdict alone.
+func hasCurrentPassingReview(b *Bundle) bool {
+	current := ""
+	if b.Activation != nil {
+		current = b.Activation.Fingerprint
+	}
+	for _, pointer := range b.Reviews {
+		if pointer.Verdict != "pass" {
+			continue
+		}
+		if pointer.Document == nil {
+			// An unresolved pointer cannot prove its binding. The verdict alone
+			// is not enough to retire the instruction.
+			continue
+		}
+		bound := pointer.Document.Reviewed.ActivationFingerprint
+		if current != "" && bound != "" && bound != current {
+			continue
+		}
+		return true
+	}
+	return false
 }
 
 // holderFor names who may take the next action. Activation and completion are

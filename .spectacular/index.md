@@ -57,6 +57,7 @@
 | `M7/RV1` | Review | Clustered review of M7 derived state, drift, authority, equivalence, and Proposal schema | `.spectacular/missions/M7-render-derived-state-and-validate-the-proposal-record/reviews/RV1-clustered-review-of-m7-derived-state-drift-authority-equivalence-and-proposal-schema.md` |
 | `M8` | Mission | Freeze the schema and record what was asked for | `.spectacular/missions/M8-freeze-the-schema-and-record-what-was-asked-for/MISSION.md` |
 | `M8/RV1` | Review | Independent review of M8 frozen schema, request fidelity, edge kinds, fallbacks, and mission order | `.spectacular/missions/M8-freeze-the-schema-and-record-what-was-asked-for/reviews/RV1-independent-review-of-m8-frozen-schema-request-fidelity-edge-kinds-fallbacks-and-mission-order.md` |
+| `M9` | Mission | Remove dead v1 surface and close the deferred cleanup ask | `.spectacular/missions/M9-remove-dead-v1-surface-and-close-the-deferred-cleanup-ask/MISSION.md` |
 | `P1` | Proposal | Repair v2 human operability | `.spectacular/proposals/P1-human-operability.md` |
 | `P2` | Proposal | Add answer-key governed autonomy | `.spectacular/proposals/P2-add-answer-key-governed-autonomy.md` |
 | `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |

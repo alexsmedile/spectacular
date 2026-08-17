@@ -40,6 +40,142 @@ func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
 	}
 }
 
+// TestDeletedV1SurfaceStaysDeleted asserts the v1 context-compiler chain cannot
+// return by import. The three packages were unreachable from the main package and
+// were removed as a unit; a reintroduced import is the first symptom of the chain
+// growing back, and it would compile silently without this check.
+func TestDeletedV1SurfaceStaysDeleted(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Split so this file does not match its own search strings.
+	modulePrefix := "github.com/alexsmedile/spectacular/v2/internal/"
+	deleted := []string{"con" + "text", "pro" + "jection", "guard" + "rails"}
+	self, err := filepath.Abs("command_test.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() {
+			// .claude holds agent worktrees: separate checkouts, not this module.
+			switch entry.Name() {
+			case ".git", ".claude", "_archive", "_backups", "node_modules":
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, ".go") || path == self {
+			return nil
+		}
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+		for _, name := range deleted {
+			if strings.Contains(string(data), modulePrefix+name) {
+				rel, _ := filepath.Rel(root, path)
+				t.Errorf("%s references deleted package %s%s", rel, modulePrefix, name)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestWorkingTreeHasNoUnexplainedUntrackedPaths asserts every path is tracked,
+// ignored by a stated rule, or absent. An untracked path is invisible to the
+// record and silently lost on a fresh clone, so "not committed yet" and
+// "deliberately excluded" must not look the same.
+//
+// It reports rather than fails when git is unavailable: this is a repository
+// hygiene check, not a property of the code under test.
+func TestWorkingTreeHasNoUnexplainedUntrackedPaths(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command("git", "status", "--porcelain", "--untracked-files=all")
+	cmd.Dir = root
+	out, err := cmd.Output()
+	if err != nil {
+		t.Skipf("git unavailable in this environment: %v", err)
+	}
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if !strings.HasPrefix(line, "??") {
+			continue
+		}
+		path := strings.TrimSpace(strings.TrimPrefix(line, "??"))
+		// Records this Mission is actively producing are staged by the commit
+		// that closes it, not by an ignore rule.
+		if strings.HasPrefix(path, ".spectacular/missions/") {
+			continue
+		}
+		t.Errorf("untracked path %q is neither tracked nor ignored by a stated rule", path)
+	}
+}
+
+// TestGapsDoNotReferenceDeletedPackages asserts no open Gap points at something
+// this repository no longer has. A Gap naming a deleted package is worse than a
+// closed one: it reads as live work and sends a reader looking for code that is
+// gone.
+func TestGapsDoNotReferenceDeletedPackages(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	deleted := []string{"internal/context", "internal/projection", "internal/guardrails"}
+	governance := filepath.Join(root, "internal", "governance")
+	if _, statErr := os.Stat(governance); statErr != nil {
+		t.Fatalf("internal/governance is referenced by an open Gap but is missing: %v", statErr)
+	}
+	err = filepath.WalkDir(filepath.Join(root, ".spectacular"), func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() || !strings.HasSuffix(path, ".md") {
+			return nil
+		}
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+		// Only the gaps: block matters; body prose may discuss history freely.
+		// The block runs until the next top-level key, so an empty `gaps: []`
+		// contributes no lines rather than swallowing the rest of the file.
+		var block []string
+		inGaps := false
+		for _, line := range strings.Split(string(data), "\n") {
+			if strings.HasPrefix(line, "gaps:") {
+				inGaps = true
+				continue
+			}
+			if inGaps {
+				indented := strings.HasPrefix(line, " ") || strings.HasPrefix(line, "\t")
+				if strings.TrimSpace(line) != "" && !indented {
+					break
+				}
+				block = append(block, line)
+			}
+		}
+		for _, pkg := range deleted {
+			if strings.Contains(strings.Join(block, "\n"), pkg) {
+				rel, _ := filepath.Rel(root, path)
+				t.Errorf("%s has a Gap referencing deleted package %s", rel, pkg)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSelfHostedCompactMissionsUseSharedCheck(t *testing.T) {
 	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {

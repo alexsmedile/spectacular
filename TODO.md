@@ -284,16 +284,49 @@ roadmap row. The `github-work-bridge` request was correctly restored to reserved
   failing. It self-heals on the next mutating command, but a hand-authored record
   leaves the tree red until then.
 
-## Dead v1 code (cleanup phase, after M7 and M8)
+## Dead v1 code (removed by M9/O1, 2026-08-17)
 
-- `internal/projection/` — 917 lines of v1 Card, Envelope, and ProjectView types.
-  Referenced by neither `internal/command` nor `internal/missionbundle`, and has no
-  test files. The compact path never enters it. This is why `Derive()` went into
-  `missionbundle` beside the Bundle it reads rather than into the package named for
-  projection.
-- `internal/governance` — `ProposalInput`, `CreateProposal`, and the `candidate_*`
-  machinery are unreachable; `proposal create` is in the forbidden-command test.
-- Both are recorded in CC-projsurf's `dead-v1-governance-code` Gap in general terms.
-  Kept here rather than in the Contract because editing a Contract that an active
-  Mission is frozen against breaks its binding — which is exactly what happened when
-  this note was first written into the Gap on 2026-08-16 and had to be reverted.
+Resolved. A dependency walk from `cmd/spectacular` proved four packages absent
+from the main package's transitive closure. Three were deleted as one unit;
+`internal/index` was found during the same walk and is recorded below.
+
+- `internal/context`, `internal/projection`, `internal/guardrails` — v1's context
+  compiler. `guardrails` supplied declared guidance, `projection` built cards and
+  pointers over the workspace, and `context` assembled them into a bounded,
+  fingerprinted `Bundle` answering "what should be loaded right now". Deleted
+  together: `compiler.go` imported the other two, so removing any one alone broke
+  the build.
+- `internal/governance` — **retained**. It is reachable from main. Only the
+  unreachable `ProposalInput`, `CreateProposal`, and `candidate_*` members were
+  pruned; `ApplyTransaction`, `FileChange`, and `RecoverTransactions` are live in
+  `internal/command` and `internal/missionbundle/service.go`. The earlier note
+  here overstated this as a whole-package removal.
+- The original note said `projection` had "no test files" and was unreferenced.
+  Both were wrong in detail: it had a live importer in `internal/context`, and the
+  chain carried tests. The reachability question is the one that decides deletion,
+  not the grep.
+
+### Capabilities lost with the context compiler
+
+Recorded before deletion, per M9's stop on discarding a capability without naming
+it. Git history holds the implementation; these are the ideas worth reimplementing
+against the v2 model if they earn a Mission:
+
+- **Conflict reporting.** The Bundle named what it could not reconcile. No v2
+  surface reports its own internal disagreements.
+- **Omission reporting.** The Bundle named what it deliberately left out. v2
+  states limits nowhere.
+- **Loaded versus available record counts.** The Bundle reported loading twelve of
+  forty records, making a bounded-context claim checkable rather than asserted.
+
+The discipline itself survived the rewrite: the compiler's package comment — its
+output "is a disposable projection and never owns Mission or Contract truth" — is
+the same rule `Bundle.Derive()` follows. v2 reached it more cheaply by deriving
+state on read, beside the Bundle it reads.
+
+### `internal/index`
+
+Also unreachable: zero importers, not even from a test outside itself. It is the
+v1 predecessor of `discovery.Workspace.Lookup`, carrying 8 tests and no callers.
+Left in place by M9 — the Mission's frozen scope names three packages, and adding
+a fourth is `expand-scope`. It needs an owner decision or a follow-up Mission.

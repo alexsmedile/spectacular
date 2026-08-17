@@ -31,9 +31,10 @@ var registry = []validator{
 	{"baseline-binding", validateBaseline},
 	{"activation-fingerprint", validateActivation},
 	{"completion-claim-coverage", validateClaims},
-	{"frozen-fallbacks", validateFallbacks},
+	{"fallback-fingerprint-coverage", validateFallbacks},
 	{"resolved-gap-integrity", validateResolvedGaps},
 	{"request-coverage", validateRequest},
+	{"interface-dependency-frozen-target", validateInterfaceDependencies},
 	{"objective-dependency-dag", validateDAG},
 	{"mission-order-integrity", validateMissionOrderIntegrity},
 	{"mission-order-activation", validateMissionOrderActivation},
@@ -251,6 +252,29 @@ func FrozenFingerprint(b *Bundle) (string, error) {
 	return "sha256:" + hex.EncodeToString(digest[:]), nil
 }
 
+// validateInterfaceDependencies is the check CC-projsurf declares as
+// interface-dependency-frozen-target. It was implemented inside the
+// dependency-graph validator, so the refusal it produced could not be traced to
+// the check the Contract promised. Split out so a declared name maps to one
+// function.
+func validateInterfaceDependencies(_ *discovery.Workspace, b *Bundle) error {
+	known := map[string]bool{}
+	for _, objective := range b.Objectives {
+		known[objective.Ref] = true
+	}
+	for _, objective := range b.Objectives {
+		for _, dependency := range objective.AfterInterface {
+			if dependency == objective.Ref {
+				return invalid("objectives.after_interface", "interface dependency cannot reference self: "+dependency)
+			}
+			if !known[dependency] {
+				return invalid("objectives.after_interface", "interface dependency references an unknown or unfrozen target: "+dependency)
+			}
+		}
+	}
+	return nil
+}
+
 func validateMissionOrderIntegrity(ws *discovery.Workspace, b *Bundle) error {
 	if len(b.AfterMission) == 0 {
 		return nil
@@ -424,14 +448,6 @@ func validateDAG(_ *discovery.Workspace, b *Bundle) error {
 		for _, dependency := range objective.After {
 			if !known[dependency] || dependency == objective.Ref {
 				return invalid("objectives.after", "dependencies must reference another Objective in the Mission: "+dependency)
-			}
-		}
-		for _, dependency := range objective.AfterInterface {
-			if dependency == objective.Ref {
-				return invalid("objectives.after_interface", "interface dependency cannot reference self: "+dependency)
-			}
-			if !known[dependency] {
-				return invalid("objectives.after_interface", "interface dependency references an unknown or unfrozen target: "+dependency)
 			}
 		}
 	}

@@ -88,3 +88,43 @@ func validateResolvedGaps(ws *discovery.Workspace, b *Bundle) error {
 	}
 	return nil
 }
+
+// DeclaredNotices are the observation names a Contract may declare in
+// mandatory_validation. A notice reports and never refuses, so it is not a
+// validator — CC-projsurf declares ref-spelling-drift alongside its validators and
+// annotates it "legacy human_ref reported, not refused", which is a notice
+// described accurately and filed in the wrong list.
+var DeclaredNotices = []string{"ref-spelling-drift"}
+
+// ProposalValidations are check names satisfied by the Proposal validator rather
+// than the Mission registry. A Contract that governs Proposal shape declares them,
+// and they run through `proposal check`.
+var ProposalValidations = []string{"proposal-schema-v2"}
+
+// ResolveDeclaredValidation reports whether a name a Contract declares in
+// mandatory_validation corresponds to something that actually runs. A declaration
+// nothing verifies is the same defect as a Gap left reading blocked_on after it was
+// resolved: the record promises what the system does not enforce, and nothing
+// catches the divergence.
+func ResolveDeclaredValidation(name string) (kind string, ok bool) {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return "", false
+	}
+	for _, validator := range registry {
+		if validator.name == trimmed {
+			return "validator", true
+		}
+	}
+	for _, notice := range DeclaredNotices {
+		if notice == trimmed {
+			return "notice", true
+		}
+	}
+	for _, proposal := range ProposalValidations {
+		if proposal == trimmed {
+			return "proposal-validator", true
+		}
+	}
+	return "", false
+}

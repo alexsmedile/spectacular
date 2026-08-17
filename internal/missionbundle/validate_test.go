@@ -20,8 +20,9 @@ import (
 func TestSchemaRegistryOwnsEveryMandatoryValidation(t *testing.T) {
 	want := []string{
 		"activation-fingerprint", "authority-vocabulary", "baseline-binding", "completion-claim-coverage",
-		"contract-binding", "frozen-fallbacks", "mechanical-scope", "mission-order-activation",
-		"mission-order-integrity", "objective-dependency-dag", "reference-integrity", "request-coverage",
+		"contract-binding", "fallback-fingerprint-coverage", "interface-dependency-frozen-target",
+		"mechanical-scope", "mission-order-activation", "mission-order-integrity",
+		"objective-dependency-dag", "reference-integrity", "request-coverage",
 		"resolved-gap-integrity", "review-independence", "run-state", "safe-file-layout",
 		"transition-atomicity", "uuidv7-identity", "yaml-schema",
 	}
@@ -63,7 +64,7 @@ func TestMandatoryValidatorsReturnTypedZeroMutationRefusals(t *testing.T) {
 		{"baseline-binding", m6, func(b *Bundle) { b.Baseline.Commit = "0000000000000000000000000000000000000000" }, validateBaseline, domain.RefusalInvalidKnownField, "baseline.commit"},
 		{"activation-fingerprint", m6, func(b *Bundle) { b.Outcome += " drift" }, validateActivation, domain.RefusalStaleFingerprint, "activation.fingerprint"},
 		{"completion-claim-coverage", m6, func(b *Bundle) { b.Objectives[0].Claims = []string{"unknown"} }, validateClaims, domain.RefusalInvalidKnownField, "objectives.claims"},
-		{"frozen-fallbacks", m6, func(b *Bundle) {
+		{"fallback-fingerprint-coverage", m6, func(b *Bundle) {
 			b.Fallbacks = []Fallback{{Approach: "", RejectedBecause: "y", InvalidatedIf: "z"}}
 		}, validateFallbacks, domain.RefusalInvalidKnownField, "fallbacks.approach"},
 		{"request-coverage", m6, func(b *Bundle) {

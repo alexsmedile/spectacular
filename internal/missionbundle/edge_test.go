@@ -104,7 +104,16 @@ func TestInterfaceEdgeSplitValidation(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				candidate := cloneBundle(t, base)
 				candidate.Objectives = test.objectives
-				err := validateDAG(ws, candidate)
+				// The interface-dependency frozen-target check and the dependency
+				// graph are separate registered validators. This fixture runs both
+				// in registry order, exactly as the Mission check does: the
+				// interface check runs first, because a self-referencing interface
+				// edge is both a self-reference and a cycle and the specific
+				// refusal is the useful one.
+				err := validateInterfaceDependencies(ws, candidate)
+				if err == nil {
+					err = validateDAG(ws, candidate)
+				}
 				if test.valid {
 					if err != nil {
 						t.Fatalf("unexpected error for valid graph: %v", err)

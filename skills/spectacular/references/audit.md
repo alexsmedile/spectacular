@@ -26,6 +26,27 @@ Then work through:
 - dependencies and Gaps
 - stops
 
+### A completed Mission's Contract binding is a freeze point, not a stale pointer
+
+`mission check` reports `contract-drift` when a Mission's `contract.fingerprint`
+no longer matches the Contract on disk. On a **completed** Mission this is a
+notice, the Mission stays `valid=true`, and **nothing is wrong**. The binding
+states which agreement that Mission was executed against, which is what lets you
+derive why the work was shaped the way it was.
+
+Read the Contract as it was, not as it is:
+
+```bash
+git log -S <bound-fingerprint> -- .spectacular/contracts/<file>.md
+```
+
+Never re-point a completed Mission to silence the notice. That overwrites the
+freeze point with today's answer and destroys the thing the audit depends on.
+Amendments re-point only the live Mission, by design — see `D10-repoint`.
+
+Drift on a **live** Mission is different and is worth investigating: its binding
+is supposed to track the Contract it is working against.
+
 ## Apply FROST
 
 | | Check | Across |

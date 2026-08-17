@@ -122,7 +122,8 @@ Only the live Mission is re-pointed to the new fingerprint. A completed Mission
 keeps the binding it agreed to: `mission check` reports the difference as a
 contract-drift notice, and `git log -S <fingerprint>` recovers the exact Contract
 text that was in force. Rewriting it would replace a historical fact with today's
-answer.
+answer, so a completed Mission is never re-pointed to silence the notice
+(`D10-repoint`).
 
 A Gap is never closed by deleting it.
 

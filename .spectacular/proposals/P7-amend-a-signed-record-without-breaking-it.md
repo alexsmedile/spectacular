@@ -6,7 +6,7 @@ title: Amend a signed record without breaking it
 status: draft
 created_by: Alex
 created: "2026-08-17T11:29:31Z"
-updated: "2026-08-17T11:47:00Z"
+updated: "2026-08-17T12:05:00Z"
 scope:
     - v2
 target_contract: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -163,7 +163,8 @@ genuinely constrains what is being judged.
 - **Move Gaps out of Contracts into their own record type.** A Mission could then close a
   Gap without touching the frozen Contract. Declined: it adds a noun, and
   `CC-missioncli`'s ten-command surface is closed with growth named as a stop. It also
-  costs a migration to solve a problem the status gate solves without one.
+  costs a migration to solve a problem the status gate solves without one. Note that
+  partial scaffolding for this already exists and is unused — see "Still open" below.
 - **Exclude the `gaps:` block from the Contract fingerprint, the way Run progress is
   excluded.** Cheapest to implement and the most dangerous. A Gap is part of what the
   owner accepted; excluding it would let a live Mission quietly retire a blocker it was
@@ -176,18 +177,66 @@ genuinely constrains what is being judged.
   passing reviews as a side effect of an unrelated Contract edit. Re-pointing
   `contract.fingerprint` is a narrower operation and leaves the frozen envelope alone.
 
-## Open questions for the owner
-- **Is field-scoped hashing needed for Contracts, or does the ceremony make it
-  unnecessary?** If an amendment is explicit and logged, whole-file hashing may be fine —
-  the owner approved the delta, so the check no longer needs to classify it.
-- **Where does the amendment log live?** On the Contract itself, in `.spectacular/decisions/`,
-  or in the transaction record. A Contract that carries its own amendment history is
-  self-describing but grows; a separate log keeps the Contract stable but splits the story.
-- **Does the same ceremony apply to a live Mission's plan?** Amending a frozen plan
-  mid-Run is a different risk than amending a Contract, and may deserve a stricter gate
-  or an outright refusal.
-- **Does amendment need a scope limit?** An amendment that may touch any field is a
-  rewrite with extra steps. It may be worth naming which fields an amendment may reach.
+## The ceremony as decided
+
+Four further decisions settle the shape. Together with the status gate above, they are
+what a Mission would build.
+
+**The log lives on the Contract.** An `amendments:` block in the Contract's own
+frontmatter, appended once per amendment:
+
+```yaml
+amendments:
+  - at: "2026-08-17T11:29:31Z"
+    by: Alex
+    reason: M9 resolved dead-v1-governance-code
+    fields: [gaps.dead-v1-governance-code]
+    from_fingerprint: sha256:a7ae29b…
+    to_fingerprint:   sha256:4f1c8d2…
+```
+
+The Contract stays self-describing: a reader sees the agreement and how it got here in
+one file, with no second record to find and no chance of the history going missing while
+the Contract survives. It grows over time, which is accepted — an agreement that
+accumulates its own amendments is the normal shape for a signed document. Note that the
+block sits inside the fingerprinted file, so appending to it necessarily changes the
+fingerprint; that is not a problem once amendment is a sanctioned operation, but it does
+mean the log cannot be written by anything other than the ceremony itself.
+
+**A live Mission's Contract is not amendable.** The ceremony applies only where no bound
+Mission is live. A live Mission's binding is precisely what it is being judged against,
+and changing it mid-flight is the drift the seal exists to catch. If a Contract is
+discovered wrong while a Mission runs, the owner stops the Mission first. This keeps the
+surface small and adds no new risk to work in flight — and it avoids the re-activation
+trap, where picking up an amended Contract would recompute the activation fingerprint and
+invalidate passing reviews as a side effect.
+
+**Whole-file hashing stays.** Field-scoped hashing for Contracts is not needed once
+amendment is explicit: the owner approved the delta at the gate, so the check no longer
+has to classify it. Whole-file is simpler and catches everything. This leaves the
+asymmetry with the activation fingerprint in place deliberately — the two checks answer
+different questions, and only the activation one needs to distinguish semantic change
+from mutable progress. Revisit only if a real case demands it.
+
+**An amendment may reach Gaps and editorial fields only.** Closing a Gap, correcting
+prose, and bumping `updated:` are amendable. Changing `purpose`, `outcome`,
+`required_behavior`, or any other field that states what was agreed requires a new
+Contract version instead. Without this limit, "amendment" becomes "rewrite with extra
+steps" — the reason string is the only thing distinguishing the two, and nothing
+validates a reason string. The limit is what keeps the ceremony honest.
+
+## Still open
+
+- **What does a new Contract version look like?** The scope limit above routes semantic
+  change to "a new Contract version", and `contract_version:` already exists on the
+  record, but nothing defines how versioning works or what happens to Missions bound to
+  the previous version. This is out of scope here and should not be settled by accident.
+- **`Gap` is already a record type.** `internal/domain/reference.go` lists `Gap` among
+  the valid record types, and `internal/discovery/discovery.go` already recognizes
+  `.spectacular/gaps/` as a standard collection root. Nothing uses either today. That
+  scaffolding suggests an earlier intent to make Gaps standalone records — the approach
+  declined above. Worth understanding before someone rediscovers it and assumes it is
+  the sanctioned path.
 
 ## Note on where this is written
 

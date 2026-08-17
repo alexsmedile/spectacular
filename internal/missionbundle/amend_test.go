@@ -133,15 +133,8 @@ func TestResolutionIsEmittedAsAParseableBlockScalar(t *testing.T) {
 // preview is the only thing the owner reads before authorizing, so it has to name
 // every file the real run would write.
 func TestDryRunDescribesTheAmendmentAndWritesNothing(t *testing.T) {
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
-	}
-	ws, err := discovery.Open(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	gap, contractRef := anOpenGap(t, ws)
+	ws, gap, contractRef := amendableWorkspace(t)
+	root := ws.Root
 	before := treeDigest(t, filepath.Join(root, ".spectacular"))
 
 	service := Service{Workspace: ws}
@@ -177,16 +170,26 @@ func TestAmendmentRefusesWhileABoundMissionIsLive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// M11 is active and bound to CC-missioncli, so that Contract is protected.
-	live, err := Load(ws, "M11")
-	if err != nil {
-		t.Fatal(err)
+	// Whichever Mission is live is the one that protects its Contract. Naming a
+	// specific Mission made this test skip as soon as that Mission completed,
+	// which is precisely when it stops being watched.
+	var contractRef string
+	for _, entry := range ws.Entries {
+		if entry.Document == nil || entry.Document.Record.Type != domain.Mission {
+			continue
+		}
+		bundle, loadErr := Load(ws, entry.Document.Record.ID.String())
+		if loadErr != nil || bundle.Status != "active" || bundle.Contract.Ref == "" {
+			continue
+		}
+		contractRef = bundle.Contract.Ref
+		break
 	}
-	if live.Status != "active" {
-		t.Skipf("M11 status is %q; this test needs a live Mission", live.Status)
+	if contractRef == "" {
+		t.Skip("no live Mission is bound to a Contract in this workspace")
 	}
 	service := Service{Workspace: ws}
-	_, err = service.AmendContract(live.Contract.Ref, "any-gap", "Alex", "text", true)
+	_, err = service.AmendContract(contractRef, "any-gap", "Alex", "text", true)
 	if err == nil {
 		t.Fatal("amending a Contract with a live bound Mission must refuse")
 	}
@@ -198,17 +201,9 @@ func TestAmendmentRefusesWhileABoundMissionIsLive(t *testing.T) {
 // Without a declaring Mission and without an explicit owner override there is no
 // approved wording to write, so the amendment refuses rather than inventing text.
 func TestAmendmentRefusesWithNoApprovedWording(t *testing.T) {
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
-	}
-	ws, err := discovery.Open(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	gap, contractRef := anOpenGap(t, ws)
+	ws, gap, contractRef := amendableWorkspace(t)
 	service := Service{Workspace: ws}
-	_, err = service.AmendContract(contractRef, gap, "Alex", "", true)
+	_, err := service.AmendContract(contractRef, gap, "Alex", "", true)
 	if err == nil {
 		t.Fatal("an amendment with no declared resolution and no override must refuse")
 	}
@@ -262,15 +257,8 @@ func TestAmendmentLogAppendsAndRecordsBothFingerprints(t *testing.T) {
 // Contract, the log, and every re-pointed Mission untouched, because a half-applied
 // amendment is a Contract whose fingerprint no Mission agrees with.
 func TestAmendmentRollsBackAtEveryWriteBoundary(t *testing.T) {
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
-	}
-	ws, err := discovery.Open(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	gap, contractRef := anOpenGap(t, ws)
+	ws, gap, contractRef := amendableWorkspace(t)
+	root := ws.Root
 	before := treeDigest(t, filepath.Join(root, ".spectacular"))
 
 	// Derive the boundary count from the amendment itself rather than hardcoding it,
@@ -297,9 +285,12 @@ func TestAmendmentRollsBackAtEveryWriteBoundary(t *testing.T) {
 	}
 }
 
-// anOpenGap finds a Gap still carrying blocked_on, so these tests describe the
+// anOpenGap finds a Gap still carrying blocked_on, so a test describes the
 // workspace as it is rather than asserting a specific Gap that a later amendment
-// would legitimately close.
+// would legitimately close. This is for tests that only need an open Gap to
+// exist. A test that amends one needs amendableWorkspace instead, because the
+// first open Gap in the real workspace may sit on a Contract with a live bound
+// Mission, which the amendment path refuses by design.
 func anOpenGap(t *testing.T, ws *discovery.Workspace) (string, string) {
 	t.Helper()
 	for _, entry := range ws.Entries {
@@ -319,6 +310,73 @@ func anOpenGap(t *testing.T, ws *discovery.Workspace) (string, string) {
 	}
 	t.Skip("no Contract in the workspace carries an open Gap")
 	return "", ""
+}
+
+// amendableWorkspace builds a workspace holding one Contract with one open Gap
+// and no Mission bound to it.
+//
+// These tests previously opened the real repository and amended whichever open
+// Gap they found first. That made them depend on which Missions happened to be
+// live: amending a Contract a live Mission is bound to is refused by design, so
+// activating any Mission on that Contract broke three tests of the amendment
+// path for a reason that had nothing to do with the amendment path. Skipping
+// instead of failing would have been worse — the suite would go green while the
+// tests proved nothing.
+//
+// A fixture makes the precondition something the test establishes rather than
+// something it hopes for, so these run unconditionally.
+func amendableWorkspace(t *testing.T) (*discovery.Workspace, string, string) {
+	t.Helper()
+	root := t.TempDir()
+	directory := filepath.Join(root, ".spectacular", "contracts")
+	if err := os.MkdirAll(directory, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	const contract = `---
+type: Contract
+id: 01a00aae-8921-7b27-96a9-1a4c175e7dc6
+human_ref: CC-fixture
+title: Fixture contract
+purpose: a contract that no live Mission is bound to
+updated: "2026-08-16T00:00:00Z"
+gaps:
+    - ref: fixture-open-gap
+      problem: the amendment path needs an open Gap that is safe to close
+      blocked_on: an owner decision that has not been made
+---
+
+Fixture Contract body.
+`
+	if err := os.WriteFile(filepath.Join(directory, "CC-fixture-contract.md"), []byte(contract), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	const manifest = "schema_version: spectacular.workspace.v1\nrecord_roots:\n  - .\nproject_anchor: PROJECT.md\n"
+	if err := os.WriteFile(filepath.Join(root, ".spectacular", "workspace.yaml"), []byte(manifest), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	const anchor = `---
+type: Anchor
+id: 019fe381-5d61-7223-b362-03a5f99a7b14
+title: Fixture project
+---
+
+Fixture anchor.
+`
+	if err := os.WriteFile(filepath.Join(root, ".spectacular", "PROJECT.md"), []byte(anchor), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contractRef := string(domain.Contract) + ":01a00aae-8921-7b27-96a9-1a4c175e7dc6"
+
+	// The fixture is only meaningful if the amendment path agrees nothing is live
+	// on it. Asking the production code keeps the fixture honest.
+	if live, mission := (Service{Workspace: ws}).liveBoundMission(contractRef); live {
+		t.Fatalf("fixture workspace unexpectedly carries a live Mission %s", mission)
+	}
+	return ws, "fixture-open-gap", contractRef
 }
 
 // yamlUnmarshalFrontmatter decodes a record's frontmatter so a test can prove the

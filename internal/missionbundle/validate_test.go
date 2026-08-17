@@ -198,14 +198,23 @@ func cloneBundle(t *testing.T, source *Bundle) *Bundle {
 	return &result
 }
 
+// treeDigest fingerprints the records under a workspace. It deliberately skips
+// .spectacular/transactions/, which is the transaction machinery's own scratch
+// space rather than a record: a lock file created by the first transaction is
+// not a modification to the workspace, and counting it made "nothing was
+// written" depend on whether a transaction had ever run in that tree before.
 func treeDigest(t *testing.T, root string) string {
 	t.Helper()
 	hash := sha256.New()
+	transactions := filepath.Join(root, "transactions")
 	if err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if info.IsDir() {
+			if path == transactions {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		rel, _ := filepath.Rel(root, path)

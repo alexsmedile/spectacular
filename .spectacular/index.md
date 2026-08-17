@@ -64,6 +64,7 @@
 | `M9` | Mission | Remove dead v1 surface and close the deferred cleanup ask | `.spectacular/missions/M9-remove-dead-v1-surface-and-close-the-deferred-cleanup-ask/MISSION.md` |
 | `M9/RV1` | Review | Independent review of M9 v1 surface removal, next-action review integration, working-tree accounting, and gap sweep | `.spectacular/missions/M9-remove-dead-v1-surface-and-close-the-deferred-cleanup-ask/reviews/RV1-independent-review-of-m9-v1-surface-removal-next-action-review-integration-working-tree-accounting-and-gap-sweep.md` |
 | `P1` | Proposal | Repair v2 human operability | `.spectacular/proposals/P1-human-operability.md` |
+| `P10` | Proposal | Preparation judgment checkpoint | `.spectacular/proposals/P10-preparation-judgment-checkpoint.md` |
 | `P2` | Proposal | Add answer-key governed autonomy | `.spectacular/proposals/P2-add-answer-key-governed-autonomy.md` |
 | `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |
 | `P4` | Proposal | Make Spectacular control operations lean | `.spectacular/proposals/P4-make-spectacular-control-operations-lean.md` |

@@ -4,6 +4,7 @@
 | Ref | Type | Title | Source |
 |---|---|---|---|
 | `P1` | Proposal | Repair v2 human operability | `.spectacular/proposals/P1-human-operability.md` |
+| `P10` | Proposal | Preparation judgment checkpoint | `.spectacular/proposals/P10-preparation-judgment-checkpoint.md` |
 | `P2` | Proposal | Add answer-key governed autonomy | `.spectacular/proposals/P2-add-answer-key-governed-autonomy.md` |
 | `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |
 | `P4` | Proposal | Make Spectacular control operations lean | `.spectacular/proposals/P4-make-spectacular-control-operations-lean.md` |

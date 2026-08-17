@@ -14,9 +14,11 @@ target_contract: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
 
 # Preparation judgment checkpoint
 
-Exploration for a possible Mission. Nothing here is frozen. The problem is demonstrated;
-the mechanism is a direction. Anything below may be dropped, split, or reversed at
-plan-freeze.
+Exploration for a possible Mission. Nothing here is frozen — the five design decisions
+below are owner-accepted but a Proposal carries no authority, and they bind only when a
+Mission plan freezes them. The problem is demonstrated and the shape is settled; the
+wording, the field names, and the slicing may still change. Anything below may be dropped,
+split, or reversed at plan-freeze.
 
 ## The problem in one line
 
@@ -132,16 +134,34 @@ Held deliberately:
   and belongs to the Skill. Whether a Mission that claimed a verdict actually carries one
   is mechanical.
 
-## Open questions
+## Decisions
 
-These need owner decisions and are the reason this is a Proposal.
+All five questions are resolved. They are kept here with their reasoning because the
+Mission plan will freeze them and the reasoning is what the owner approved.
 
-**1. Are the verdicts frozen in the Mission, or do they stay in chat?**
-Freezing them makes them auditable and lets `mission check` report them — and the
-`resolves_gaps:` precedent from M11 shows how a frozen semantic field behaves. It also
-grows the fingerprinted envelope and adds two required fields to every plan.
-*Recommendation: frozen, because a verdict nobody can check later is the state we already
-have.*
+**1. Are the verdicts frozen in the Mission, or do they stay in chat? (decided: frozen)**
+
+`CC-missioncli` states the rule: fingerprint the frozen semantic envelope at activation
+while excluding mutable Mission, Objective, Run, and repair progress. Freezing covers what
+was agreed; exclusion covers what happens while doing it.
+
+The two verdicts pass that test. *This design is sufficient to start* and *this slice is
+one coherent outcome* are judgments the owner accepts at activation — the same class as
+`review` and `gaps`, both frozen. They are not like `objectives`, `runs`, or `reviews`,
+which are excluded precisely because they accumulate.
+
+Freezing also makes Q2 possible. A refusal needs a field to read; verdicts that live only
+in chat cannot be enforced, and that is the state `prepare.md:32` already produces — a
+verdict recorded as a word that nothing consumes.
+
+The mildly novel part: the verdicts are *inputs to* activation, so freezing them puts the
+reasoning that produced the approval inside the fingerprint, not just the approval.
+`resolves_gaps:` set that precedent last Mission for the same reason — frozen specifically
+so a Mission cannot acquire amend authority after the owner approved the boundary. The
+same argument applies here: a Mission must not be able to declare itself sufficient
+afterwards.
+
+This takes the frozen envelope from thirteen fields to fifteen.
 
 **2. Does a non-`sufficient` verdict refuse activation, or warn? (decided: split)**
 Refusing outright means an owner who knowingly accepts a risk cannot proceed without
@@ -169,7 +189,7 @@ Both are now written — the trigger list where the level is chosen, and what ac
 independence where the review is recorded. Kept in this Proposal's scope rather than split
 out, because splitting would leave a known gap open for no benefit.
 
-**5. How should Skill growth be governed? (decided — recorded here for the Mission)**
+**5. How should Skill growth be governed? (decided: report the delta, review judges it)**
 M11 froze a pass boundary reading "The Skill does not grow", and the Skill grew 33 lines.
 The claim was passed with the delta logged, which is the correct outcome for the wrong
 reason: the boundary was a proxy for "is the Skill getting bloated", stated as an absolute

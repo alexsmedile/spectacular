@@ -4,7 +4,7 @@ id: 01a00c59-6bb0-7be4-89cf-07e157ba6b5c
 title: Freeze the schema and record what was asked for
 status: active
 created: "2026-08-16T20:59:04Z"
-updated: "2026-08-16T20:59:04Z"
+updated: "2026-08-17T01:54:51Z"
 activation:
     at: "2026-08-16T20:59:04Z"
     by: Alex
@@ -94,33 +94,38 @@ owner: Alex
 ref: M8
 repair_budget: 3
 request:
-    source: chat, session opening
-    captured_at: "2026-08-16T20:59:04Z"
     asks:
         - ask: Freeze fallbacks into the activation fingerprint and return them on repair exhaustion
-          disposition: covered
           claims:
-              - frozen-fallbacks
+            - frozen-fallbacks
+          disposition: covered
         - ask: Split Objective dependencies into artifact and interface edge kinds
-          disposition: covered
           claims:
-              - interface-edge-split
+            - interface-edge-split
+          disposition: covered
         - ask: Declare Mission order as typed refs and validate the Mission graph
-          disposition: covered
           claims:
-              - mission-order
+            - mission-order
+          disposition: covered
         - ask: Draw Objective edge kinds and Mission order edges in graph projections
-          disposition: covered
           claims:
-              - graph-edge-kinds
+            - graph-edge-kinds
+          disposition: covered
         - ask: Record what was asked for with per-ask dispositions and request coverage validation
-          disposition: covered
           claims:
-              - request-fidelity
+            - request-fidelity
+          disposition: covered
         - ask: Review open gaps and dead weight and perform a repository cleanup
           disposition: deferred
           reason: Needs its own cleanup Mission; outside M8 schema freeze boundary
+    captured_at: "2026-08-16T20:59:04Z"
+    source: chat, session opening
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m8-frozen-schema-request-fidelity-edge-kinds-fallbacks-and-mission-order.md
+      id: 01a00c5e-f1c0-7ede-bc28-be1039cb38b0
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O5
     id: 01a00c59-6bb0-788c-bcbe-9ed2cd017523

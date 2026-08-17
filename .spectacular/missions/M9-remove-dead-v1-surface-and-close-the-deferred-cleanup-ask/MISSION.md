@@ -4,7 +4,7 @@ id: 01a00d6e-df08-75d3-a6c3-5975bb421630
 title: Remove dead v1 surface and close the deferred cleanup ask
 status: active
 created: "2026-08-17T10:13:17Z"
-updated: "2026-08-17T10:24:45Z"
+updated: "2026-08-17T10:39:01Z"
 activation:
     at: "2026-08-17T10:13:17Z"
     by: Alex
@@ -119,6 +119,11 @@ request:
     captured_at: "2026-08-17T00:00:00Z"
     source: chat, session continuing from M8 completion
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m9-v1-surface-removal-next-action-review-integration-working-tree-accounting-and-gap-sweep.md
+      id: 01a00f36-1248-7fb6-9388-aa4ab2b59feb
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a00d6e-df08-72cb-9aa0-37920de5735c

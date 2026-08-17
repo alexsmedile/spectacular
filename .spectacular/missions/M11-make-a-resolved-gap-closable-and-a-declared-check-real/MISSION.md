@@ -4,7 +4,7 @@ id: 01a0102c-a360-71fe-a1be-8e1b010460b2
 title: Make a resolved Gap closable and a declared check real
 status: active
 created: "2026-08-17T15:01:01Z"
-updated: "2026-08-17T15:01:17Z"
+updated: "2026-08-17T15:16:30Z"
 activation:
     at: "2026-08-17T15:01:01Z"
     by: Alex
@@ -99,7 +99,7 @@ objectives:
       id: 01a0102c-a360-7c88-bddd-edef780acf9f
       outcome: Add a contract amend command that closes a declared Gap in one transaction, logs the amendment beside the Contract, re-points every bound Mission, and previews with --dry-run.
       ref: O3
-      status: pending
+      status: implemented
     - after:
         - O3
       claims:
@@ -114,7 +114,7 @@ objectives:
       id: 01a0102c-a360-73ba-a254-cc1b96f46950
       outcome: Make every declared validation name resolve, and wire the existing Proposal validator to the CLI as an eleventh command.
       ref: O5
-      status: pending
+      status: implemented
     - after:
         - O5
       claims:

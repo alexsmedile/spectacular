@@ -30,6 +30,7 @@ const (
 	two
 	titleOption
 	byOption
+	amendOptions
 )
 
 type operation uint8
@@ -45,6 +46,8 @@ const (
 	opRunStart
 	opReviewRecord
 	opMissionComplete
+	opProposalCheck
+	opContractAmend
 )
 
 type Spec struct {
@@ -67,6 +70,8 @@ var Registry = []Spec{
 	{[]string{"run", "start"}, "<mission-ref> --title <title> [--json]", titleOption, "spectacular.run.start.v2", Mutating, opRunStart},
 	{[]string{"review", "record"}, "<mission-ref> <review.md|-> [--json]", two, "spectacular.review.record.v2", Mutating, opReviewRecord},
 	{[]string{"mission", "complete"}, "<ref> --by <owner> [--json]", byOption, "spectacular.mission.complete.v2", Mutating, opMissionComplete},
+	{[]string{"proposal", "check"}, "<ref> [--json]", one, "spectacular.proposal.check.v2", ReadOnly, opProposalCheck},
+	{[]string{"contract", "amend"}, "<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]", amendOptions, "spectacular.contract.amend.v2", Mutating, opContractAmend},
 }
 
 type Runner struct {
@@ -101,6 +106,14 @@ func (r Runner) Run(args []string) int {
 	if graphMode && timelineMode {
 		return r.usage(jsonMode, invoked, "cannot combine --graph and --timeline")
 	}
+	dryRun, duplicateDryRun := removeFlag(&args, "--dry-run")
+	if duplicateDryRun {
+		return r.usage(jsonMode, invoked, "--dry-run may be supplied at most once")
+	}
+	override, _, badOverride := removeValueFlag(&args, "--resolution")
+	if badOverride {
+		return r.usage(jsonMode, invoked, "--resolution requires exactly one value")
+	}
 	spec, rest, ok := match(args)
 	if !ok {
 		return r.usage(jsonMode, invoked, "unknown or incomplete command")
@@ -114,11 +127,17 @@ func (r Runner) Run(args []string) int {
 	if timelineMode && spec.Operation != opMissionShow {
 		return r.commandUsage(jsonMode, invoked, spec, "--timeline applies to mission show")
 	}
+	if dryRun && spec.Operation != opContractAmend {
+		return r.commandUsage(jsonMode, invoked, spec, "--dry-run applies to contract amend")
+	}
+	if override != "" && spec.Operation != opContractAmend {
+		return r.commandUsage(jsonMode, invoked, spec, "--resolution applies to contract amend")
+	}
 	ws, err := discovery.Open(r.Cwd)
 	if err != nil {
 		return r.refuse(jsonMode, invoked, err)
 	}
-	if spec.Effect == Mutating {
+	if spec.Effect == Mutating && !dryRun {
 		if err := governance.RecoverTransactions(ws.Root); err != nil {
 			return r.refuse(jsonMode, invoked, err)
 		}
@@ -170,6 +189,10 @@ func (r Runner) Run(args []string) int {
 		value, err = service.RecordReview(rest[0], inputPath(r.Cwd, rest[1]), stdin)
 	case opMissionComplete:
 		value, err = service.Complete(rest[0], rest[2])
+	case opProposalCheck:
+		value, err = missionbundle.ValidateProposal(ws, rest[0])
+	case opContractAmend:
+		value, err = service.AmendContract(rest[0], rest[2], rest[4], override, dryRun)
 	}
 	if err != nil {
 		return r.refuse(jsonMode, invoked, err)
@@ -218,6 +241,10 @@ func validateArguments(spec Spec, args []string) string {
 	case byOption:
 		if len(args) != 3 || args[0] == "" || args[1] != "--by" || args[2] == "" {
 			return "requires <ref> --by <owner>"
+		}
+	case amendOptions:
+		if len(args) != 5 || args[0] == "" || args[1] != "--gap" || args[2] == "" || args[3] != "--by" || args[4] == "" {
+			return "requires <contract-ref> --gap <gap-ref> --by <owner>"
 		}
 	default:
 		return "command registry has an invalid argument shape"
@@ -283,6 +310,32 @@ func renderHuman(writer io.Writer, value any) {
 				}
 				fmt.Fprintf(writer, "  - %s%s (invalidated if: %s)\n", fb.Approach, rec, fb.InvalidatedIf)
 			}
+		}
+	case missionbundle.ProposalCheck:
+		fmt.Fprintf(writer, "%s valid=%t checks=%d\n", item.Ref, item.Valid, len(item.Checks))
+		for _, notice := range item.Notices {
+			fmt.Fprintf(writer, "notice: %s\n", notice)
+		}
+	case missionbundle.Amendment:
+		verb := "amended"
+		switch {
+		case item.DryRun:
+			verb = "would amend"
+		case item.NoOp:
+			verb = "already closed on"
+		}
+		fmt.Fprintf(writer, "%s %s\n", verb, item.Contract)
+		fmt.Fprintf(writer, "  gaps.%s: blocked_on -> resolution (declared by %s)\n", item.Gap, item.Mission)
+		if !item.NoOp {
+			fmt.Fprintf(writer, "  %s\n", item.Resolution)
+			fmt.Fprintf(writer, "  fingerprint %s -> %s\n", short(item.From), short(item.To))
+			if len(item.Repointed) > 0 {
+				fmt.Fprintf(writer, "  re-points contract.fingerprint on %s\n", strings.Join(item.Repointed, " "))
+			}
+			fmt.Fprintf(writer, "  logged in %s\n", item.Log)
+		}
+		if item.DryRun {
+			fmt.Fprintln(writer, "no files written")
 		}
 	case missionbundle.Check:
 		fmt.Fprintf(writer, "%s valid=%t schema=%s checks=%d\n", item.Ref, item.Valid, item.Schema, len(item.Checks))
@@ -391,6 +444,30 @@ func removeJSON(args *[]string) (bool, bool) {
 
 // removeFlag strips a boolean flag, reporting whether it was present and
 // whether it was supplied more than once.
+// removeValueFlag extracts a `--name value` pair. Returns the value, whether it was
+// present, and whether it was malformed — supplied twice or with no value after it.
+func removeValueFlag(args *[]string, name string) (string, bool, bool) {
+	value, found, bad := "", false, false
+	out := (*args)[:0]
+	for i := 0; i < len(*args); i++ {
+		if (*args)[i] != name {
+			out = append(out, (*args)[i])
+			continue
+		}
+		if found || i+1 >= len(*args) || (*args)[i+1] == "" {
+			bad = true
+			if i+1 < len(*args) {
+				i++
+			}
+			continue
+		}
+		value, found = (*args)[i+1], true
+		i++
+	}
+	*args = out
+	return value, found, bad
+}
+
 func removeFlag(args *[]string, name string) (bool, bool) {
 	found, duplicate := false, false
 	out := (*args)[:0]
@@ -500,4 +577,15 @@ func writeJSON(writer io.Writer, value any) error {
 	encoder := json.NewEncoder(writer)
 	encoder.SetEscapeHTML(false)
 	return encoder.Encode(value)
+}
+
+// short abbreviates a sha256 fingerprint for human output. The full value stays in
+// --json and in the amendment log; a reader comparing two fingerprints by eye needs
+// the first few characters, not sixty-four.
+func short(fingerprint string) string {
+	trimmed := strings.TrimPrefix(fingerprint, "sha256:")
+	if len(trimmed) > 12 {
+		return trimmed[:12] + "…"
+	}
+	return trimmed
 }

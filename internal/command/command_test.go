@@ -19,6 +19,7 @@ func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
 	want := []string{
 		"mission start", "mission show", "mission check", "objective show", "objective promote",
 		"objective finish", "run show", "run start", "review record", "mission complete",
+		"proposal check", "contract amend",
 	}
 	if len(Registry) != len(want) {
 		t.Fatalf("registry has %d commands, want %d", len(Registry), len(want))

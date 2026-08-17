@@ -67,26 +67,65 @@ authority, risk, or irreversible effects.
 > by itself. Spectacular keeps evidence, assessment, owner disposition,
 > reconciliation, and closure distinct.
 
+## The Core Model: Human + Agent Collaboration
+
+Spectacular is designed around a strict division of responsibilities:
+
+> - **The Go binary** handles invariants, hashes, transitions, and JSON projections.
+> - **The Skill** handles judgment, planning, problem-solving, and human interactions.
+> - **The filesystem (Canonical Markdown)** remains human-readable without running proprietary daemons or databases.
+
+```
+                    +---------------------------------------+
+                    |           HUMAN & OPERATOR            |
+                    |   Direction, judgment, authorization  |
+                    +-------------------+-------------------+
+                                        |
+                                        v
+                    +---------------------------------------+
+                    |             THE SKILL                 |
+                    |   Translates requests into actionable |
+                    |   plans via Contracts & Missions      |
+                    +---------+-------------------+---------+
+                              |                   |
+            +-----------------+                   +-----------------+
+            v                                                       v
++-----------------------+                               +-----------------------+
+|  CANONICAL MARKDOWN   |                               |      THE GO CLI       |
+|  - Minimal Frontmatter| <---------------------------> |  - Invariant checks   |
+|    for verifiable keys|       (Read / Validate)       |  - Fingerprints & DAG |
+|  - Rich Prose context |                               |  - Atomic transitions|
++-----------------------+                               +-----------------------+
+```
+
+We do not attempt to 100% schemify or machine-check every piece of context. Frontmatter is kept minimal for the fundamental verifiable boundaries (identities, fingerprints, completion boundaries, dependencies), while rich Markdown prose carries the rationale, design intent, and nuance.
+
+The primary role of the **Skill** is to turn the user's request into an agentificable plan through two primary instruments:
+- **Contract (`contracts/`)**: The accepted specification and product behavior agreement.
+- **Mission (`missions/`)**: The frozen action plan, execution boundaries, failable completion claims, and run state.
+
+Git branching, worktrees, and execution flow are managed by the Skill orchestrator, while the CLI mechanically catches drift and prevents errors.
+
 ## How it works
 
 ```text
 Orient
-  │  start from the project Anchor and current truth
+  │  start from the project Anchor and current truth (PROJECT.md)
   ▼
 Explore / propose
-  │  turn an idea into an explicit, reviewable change
+  │  turn an idea into an explicit, reviewable change (Proposal)
   ▼
 Prepare a Mission
-  │  bind scope, authority, evidence, budget, expiry, and stop conditions
+  │  bind scope, authority, failable completion claims, and stop conditions
   ▼
 Execute
-  │  work within the approved envelope; checkpoint and hand off safely
+  │  work within the approved envelope on a dedicated branch; checkpoint safely
   ▼
-Assess
-  │  inspect evidence, freshness, Gaps, and completion claims
+Assess & Review
+  │  inspect earned evidence, run tree gates, and execute independent review
   ▼
-Reconcile / resolve / archive
-     bring the capability truth forward, close deliberately, or choose recovery
+Complete
+     reconcile truth, close atomically with owner attribution (--by <owner>)
 ```
 
 The human-guided skill makes judgments and presents decisions. The native CLI
@@ -175,46 +214,24 @@ bounded result. It never transfers Mission accountability.
 
 ## The workspace
 
-### This is v2, not the old OKF workspace
+### Canonical v2 workspace layout
 
-The v1 workspace used named collections and indexes—such as `roadmaps/`,
-`decisions/`, `ideas/`, `requests/`, and `specs/index.md`. Those are **not**
-part of Spectacular v2. V2 intentionally does not have OKF indexes, a generic
-collection hierarchy, or a folder for each kind of work.
-
-Instead, v2 stores a small set of canonical Markdown **records**. A record is
-one typed document: its front matter identifies what it is and binds its
-relationships and freshness; its body carries the human-readable detail. The
-CLI validates the record graph, fingerprints the sources, and emits projections
-with pointers back to the authoritative records.
-
-`workspace.yaml` declares where those canonical records live. `record_roots`
-is a list, so a project may organize record files under one or more explicit
-folders. This repository's self-hosted v2 workspace uses one root,
-`records/`:
+Spectacular v2 stores a compact, clean set of canonical Markdown documents under `.spectacular/`. Each document contains minimal, typed YAML frontmatter for machine-verifiable integrity (identities, hashes, claim boundaries, bindings) and rich Markdown prose for human and agent understanding.
 
 ```text
 .spectacular/
-├── workspace.yaml       # schema, record roots, and project Anchor
-└── records/
-    ├── project.md       # Anchor record: direction, boundaries, current truth
-    ├── proposal.md      # Proposal record: candidate change, before acceptance
-    ├── mission.md       # Mission record: approved bounded work
-    ├── run.md           # Run record: current execution boundary
-    ├── checkpoint.md    # Checkpoint record: resumable state
-    ├── evidence.md      # Evidence record: attributable proof
-    ├── decision.md      # Decision record: owner authorization or disposition
-    └── gap.md           # Gap record: unresolved or blocking uncertainty
+├── PROJECT.md           # Root Anchor: project direction, boundaries, current_truth
+├── ARCHITECTURE.md      # Architecture Anchor
+├── PRODUCT.md           # Product Anchor
+├── STACK.md             # Technology stack Anchor
+├── contracts/           # Accepted product specifications and mechanical contracts
+├── missions/            # Bounded execution plans (MISSION.md, reviews, evidence)
+├── proposals/           # Optional candidate explorations (P1, P2, ...)
+├── decisions/           # Durable architectural decision records (ADRs)
+└── index.md             # Generated, non-authoritative workspace index
 ```
 
-`records/` is therefore not an opaque database, a chat log, or an OKF index.
-It is the declared root containing the canonical source documents for this
-workspace. The names above are this repository's current self-hosted records,
-not a copied project template.
-
-Records point to one another and carry fingerprints. Public CLI projections
-include source pointers and an executable `show_command`, so an agent can
-drill into the authority behind a visible summary.
+The CLI validates the record graph, fingerprints the sources, and emits projections with pointers back to the authoritative records. There is no opaque database or proprietary daemon—just git-versioned Markdown.
 
 ## For—and not for
 

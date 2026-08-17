@@ -67,6 +67,18 @@
       "arguments": "<ref> --by <owner> [--json]",
       "schema": "spectacular.mission.complete.v2",
       "effect": "mutating"
+    },
+    {
+      "command": "spectacular proposal check",
+      "arguments": "<ref> [--json]",
+      "schema": "spectacular.proposal.check.v2",
+      "effect": "read-only"
+    },
+    {
+      "command": "spectacular contract amend",
+      "arguments": "<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]",
+      "schema": "spectacular.contract.amend.v2",
+      "effect": "mutating"
     }
   ]
 }

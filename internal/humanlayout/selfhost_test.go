@@ -23,7 +23,13 @@ func TestSelfHostedIndexesAreRebuildableCollectionCaches(t *testing.T) {
 		t.Fatal(err)
 	}
 	for path, expected := range generated {
-		actual, readErr := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+		target := filepath.Join(root, filepath.FromSlash(path))
+		if os.Getenv("WRITE_INDEXES") == "1" {
+			if err := os.WriteFile(target, expected, 0644); err != nil {
+				t.Fatalf("write generated index %s: %v", path, err)
+			}
+		}
+		actual, readErr := os.ReadFile(target)
 		if readErr != nil {
 			t.Fatalf("read generated index %s: %v", path, readErr)
 		}

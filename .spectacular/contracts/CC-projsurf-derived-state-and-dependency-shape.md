@@ -111,13 +111,19 @@ conformance_checks:
 gaps:
   - ref: lifecycle-diagram-ungenerated
     problem: The lifecycle diagram is hand-maintained because no explicit state model exists to generate it from; transitions are implicit in service.go control flow.
-    blocked_on: Extraction of a declarative transition model.
+    resolution: >-
+        an owner-supplied resolution
   - ref: concurrent-run-timelines
     problem: Timelines across concurrently live Runs are not renderable; the Run model permits exactly one live Run.
     blocked_on: A Run-model change touching run start, fingerprints, atomicity, and review boundaries.
   - ref: dead-v1-governance-code
     problem: ProposalInput, CreateProposal, and the candidate_* machinery in internal/governance are unreachable; proposal create is in the forbidden-command test and no current command calls them.
-    blocked_on: A decision on whether removing them belongs with the Proposal schema work or with a separate cleanup.
+    resolution: >-
+        Closed by M9 as a separate cleanup, which was the decision this Gap asked for. The
+        framing here was too narrow — a dependency walk found every internal/governance
+        service export unreachable, not only the three symbols named above. The package was
+        pruned rather than removed, because transaction.go is self-contained and its transaction
+        primitives have live callers in internal/command and internal/missionbundle.
   - ref: mission-ref-frontmatter-drift
     problem: M2, M3, and M4 carry `human_ref:` while M5 and M6 carry `ref:`, so Mission-order refs would otherwise be compared across two spellings.
     resolution: Closed by this Contract. M7 normalizes decoding through one path that accepts both and reports the legacy spelling as drift; M8's mission-order-integrity resolves refs through that decoder. Completed Missions are not rewritten.

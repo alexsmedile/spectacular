@@ -154,12 +154,10 @@ func TestAmendingABoundContractNoLongerBreaksCompletedMissions(t *testing.T) {
 		}
 	})
 
-	const openGap = "    blocked_on: A decision on whether removing them belongs with the Proposal schema work or with a separate cleanup."
-	if !strings.Contains(string(original), openGap) {
-		t.Skip("dead-v1-governance-code no longer reads blocked_on:; the amendment this test simulates has landed")
-	}
-	amended := strings.Replace(string(original), openGap,
-		"    resolution: Closed by M9 as a separate cleanup, which was the decision this Gap asked for.", 1)
+	// Any edit to the Contract reproduces the failure; the original was a Gap
+	// rewrite, and an appended comment is the same class of change with no
+	// dependence on a Gap that later amendments legitimately close.
+	amended := string(original) + "\n<!-- amended after the bound Missions completed -->\n"
 	if err := os.WriteFile(contract, []byte(amended), 0o644); err != nil {
 		t.Fatal(err)
 	}

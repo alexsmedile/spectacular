@@ -18,3 +18,5 @@ Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1
 | `spectacular run start` | `<mission-ref> --title <title> [--json]` | `spectacular.run.start.v2` | `mutating` |
 | `spectacular review record` | `<mission-ref> <review.md|-> [--json]` | `spectacular.review.record.v2` | `mutating` |
 | `spectacular mission complete` | `<ref> --by <owner> [--json]` | `spectacular.mission.complete.v2` | `mutating` |
+| `spectacular proposal check` | `<ref> [--json]` | `spectacular.proposal.check.v2` | `read-only` |
+| `spectacular contract amend` | `<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]` | `spectacular.contract.amend.v2` | `mutating` |

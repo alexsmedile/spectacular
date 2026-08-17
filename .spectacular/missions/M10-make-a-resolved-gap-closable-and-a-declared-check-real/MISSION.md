@@ -4,7 +4,7 @@ id: 01a00f98-0480-7ea2-9f3e-8e3a961aacc6
 title: Make a resolved Gap closable and a declared check real
 status: active
 created: "2026-08-17T14:24:36Z"
-updated: "2026-08-17T14:24:36Z"
+updated: "2026-08-17T14:31:58Z"
 activation:
     at: "2026-08-17T14:24:36Z"
     by: Alex
@@ -76,7 +76,7 @@ objectives:
       id: 01a00f98-0480-7c24-ba07-8a9ce8bffd69
       outcome: Gate the bound-Contract check on Mission status so a completed Mission reports drift instead of refusing on it.
       ref: O1
-      status: pending
+      status: implemented
     - claims:
         - mission-declares-resolved-gaps
       id: 01a00f98-0480-70f2-b7ad-1f949dfe6793

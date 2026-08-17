@@ -174,6 +174,15 @@ func validateContract(ws *discovery.Workspace, b *Bundle) error {
 	digest := sha256.Sum256(data)
 	actual := "sha256:" + hex.EncodeToString(digest[:])
 	if actual != b.Contract.Fingerprint {
+		// A completed Mission's binding is history: it records which Contract text
+		// the work was executed against. The fingerprint exists to stop a Contract
+		// shifting under work in flight, and nothing is in flight here, so the
+		// change is reported rather than refused. Refusing it offered no legal
+		// correction — a completed Mission is never rewritten to satisfy it.
+		if b.Status == "completed" {
+			b.contractDrift = actual
+			return nil
+		}
 		return domain.NewStateRefusal(domain.RefusalStaleFingerprint, "contract.fingerprint", "bound Contract content changed", b.Contract.Fingerprint, actual, "review the Contract delta and explicitly amend or restart the Mission", nil)
 	}
 	return nil

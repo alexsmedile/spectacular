@@ -1,6 +1,7 @@
 package missionbundle
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
@@ -135,16 +136,22 @@ func (b *Bundle) AuditTarget() (ClaimDrift, bool) {
 }
 
 // Notices reports observations that are worth telling a reader about but must
-// not fail validation. The legacy `human_ref:` spelling is the current case:
-// the rename to `ref:` stopped halfway, and rewriting a frozen record's
-// frontmatter to finish it would change fingerprints for a cosmetic reason.
+// not fail validation. Two cases: the legacy `human_ref:` spelling, where the
+// rename to `ref:` stopped halfway and rewriting a frozen record's frontmatter
+// to finish it would change fingerprints for a cosmetic reason; and a bound
+// Contract that changed after this Mission completed, which is a fact about the
+// Contract rather than a defect in the Mission.
 func (b *Bundle) Notices() []string {
-	if b.document == nil {
-		return nil
-	}
 	var notices []string
-	if _, legacy, err := workspace.Ref(b.document); err == nil && legacy {
-		notices = append(notices, "ref-spelling-drift: uses legacy `human_ref:`; new records declare `ref:`")
+	if b.document != nil {
+		if _, legacy, err := workspace.Ref(b.document); err == nil && legacy {
+			notices = append(notices, "ref-spelling-drift: uses legacy `human_ref:`; new records declare `ref:`")
+		}
+	}
+	if b.contractDrift != "" {
+		notices = append(notices, fmt.Sprintf(
+			"contract-drift: %s changed after this Mission completed; bound at %s, now %s",
+			b.Contract.Ref, b.Contract.Fingerprint, b.contractDrift))
 	}
 	return notices
 }

@@ -235,6 +235,13 @@ type Bundle struct {
 
 	entry    discovery.Entry
 	document *workspace.Document
+
+	// contractDrift records that the bound Contract's content changed after this
+	// Mission completed. A live Mission refuses on that change; a completed one
+	// reports it, because its binding is a record of what the work was executed
+	// against and re-hashing it asks a question with no remaining consequence.
+	// Set by validateContract, read by Notices.
+	contractDrift string
 }
 
 type Check struct {

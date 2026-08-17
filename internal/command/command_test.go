@@ -64,7 +64,11 @@ func TestDeletedV1SurfaceStaysDeleted(t *testing.T) {
 			return walkErr
 		}
 		if entry.IsDir() {
-			// .claude holds agent worktrees: separate checkouts, not this module.
+			// Skip trees that are not this module's source. `.claude/worktrees/`
+			// may hold agent worktrees: separate checkouts at arbitrary commits,
+			// so one sitting before a deletion would report it as live. Empty is
+			// normal. `_archive` and `_backups` keep superseded copies on purpose,
+			// and `node_modules` is vendored.
 			switch entry.Name() {
 			case ".git", ".claude", "_archive", "_backups", "node_modules":
 				return filepath.SkipDir

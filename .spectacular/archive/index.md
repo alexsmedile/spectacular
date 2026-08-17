@@ -13,3 +13,4 @@
 | `M1/O1` | Objective | Implement readable workspace and interface | `.spectacular/archive/missions/M1-human-operability/objectives/O1-implement-readable-workspace.md` |
 | `M1/R1` | Run | Implement human workspace layout | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/RUN.md` |
 | `M1/R1/C1` | Checkpoint | Human-operability candidate ready for owner review | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-in-progress.md` |
+| `M10` | Mission | Make a resolved Gap closable and a declared check real | `.spectacular/archive/missions/M10-superseded-by-d9/MISSION.md` |

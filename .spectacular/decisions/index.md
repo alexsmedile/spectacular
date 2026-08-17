@@ -11,3 +11,4 @@
 | `D6-5e3xke` | Decision | Authorize M3 implementation Evidence | `.spectacular/decisions/D6-5e3xke.md` |
 | `D7-cgsri6` | Decision | Authorize the lean control-plane Proposal | `.spectacular/decisions/D7-cgsri6.md` |
 | `D8-qhjurh` | Decision | Authorize the lean control-plane Mission | `.spectacular/decisions/D8-qhjurh.md` |
+| `D9-amendcmd` | Decision | Amend a Contract through its own command, not through Mission completion | `.spectacular/decisions/D9-amendcmd.md` |

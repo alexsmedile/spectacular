@@ -582,7 +582,11 @@ func validateReviews(ws *discovery.Workspace, b *Bundle) error {
 // a reader and the vocabulary enforced by validation cannot drift apart.
 var SupportedOperatorVerbs = []string{"inspect", "edit-in-scope", "choose-reversible-implementation", "run-checks", "generate-derived-files", "bounded-repair", "commit-local"}
 
-var SupportedOwnerVerbs = []string{"activate-mission", "change-outcome-or-completion", "expand-scope", "push", "merge", "release", "irreversible-change", "destructive-data", "secret-change"}
+// amend-contract is owner authority because an amendment states that a signed
+// agreement now says something different. It is deliberately not an operator verb:
+// edit-in-scope would let an agent rewrite the terms it is being judged against,
+// and scope.mechanical is advisory rather than enforced against writes.
+var SupportedOwnerVerbs = []string{"activate-mission", "amend-contract", "change-outcome-or-completion", "expand-scope", "push", "merge", "release", "irreversible-change", "destructive-data", "secret-change"}
 
 func validateAuthority(_ *discovery.Workspace, b *Bundle) error {
 	operator := allowedSet(SupportedOperatorVerbs...)

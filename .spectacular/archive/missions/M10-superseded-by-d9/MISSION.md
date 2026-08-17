@@ -2,8 +2,10 @@
 type: Mission
 id: 01a00f98-0480-7ea2-9f3e-8e3a961aacc6
 title: Make a resolved Gap closable and a declared check real
-status: active
+status: resolved
 created: "2026-08-17T14:24:36Z"
+archive_authorization: Decision:01a0103a-ce5c-72bc-a1d9-fb5e2f3b27ad
+archive_input_fingerprint: e212c8a2224cf0b560cf563734a8cdf9e8a73719676a425638017712a0377ea8
 updated: "2026-08-17T14:42:21Z"
 activation:
     at: "2026-08-17T14:24:36Z"

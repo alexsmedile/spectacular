@@ -25,6 +25,7 @@
 | `M1/O1` | Objective | Implement readable workspace and interface | `.spectacular/archive/missions/M1-human-operability/objectives/O1-implement-readable-workspace.md` |
 | `M1/R1` | Run | Implement human workspace layout | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/RUN.md` |
 | `M1/R1/C1` | Checkpoint | Human-operability candidate ready for owner review | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-in-progress.md` |
+| `M10` | Mission | Make a resolved Gap closable and a declared check real | `.spectacular/missions/M10-make-a-resolved-gap-closable-and-a-declared-check-real/MISSION.md` |
 | `M2` | Mission | Implement answer-key governed autonomy | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/MISSION.md` |
 | `M2/D1-znlkfe` | Decision | Activate the v2.1 governed-autonomy Mission | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/decisions/D1-znlkfe.md` |
 | `M2/O1` | Objective | Preparation compiles and freezes minimal completion criteria with explicit readiness diagnostics. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O1-preparation-compiles-and-freezes-minimal-completion-criteria-with-explicit-readiness-diagnostics.md` |

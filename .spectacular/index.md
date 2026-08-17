@@ -70,6 +70,7 @@
 | `P6` | Proposal | Condense projection surfaces | `.spectacular/proposals/P6-condense-projection-surfaces.md` |
 | `P7` | Proposal | Amend a signed record without breaking it | `.spectacular/proposals/P7-amend-a-signed-record-without-breaking-it.md` |
 | `P8` | Proposal | Add mechanical Git branch guardrails to mission start | `.spectacular/proposals/P8-cli-git-branch-guardrail.md` |
+| `P9` | Proposal | Frozen Handoff records | `.spectacular/proposals/P9-frozen-handoff-records.md` |
 | `PRODUCT` | Anchor | Product direction | `.spectacular/PRODUCT.md` |
 | `PROJECT` | Anchor | Spectacular v2 | `.spectacular/PROJECT.md` |
 | `STACK` | Anchor | Stack | `.spectacular/STACK.md` |

@@ -30,6 +30,7 @@ const (
 	two
 	titleOption
 	byOption
+	twoByOption
 	amendOptions
 )
 
@@ -45,6 +46,7 @@ const (
 	opRunShow
 	opRunStart
 	opReviewRecord
+	opHandoffRecord
 	opMissionComplete
 	opProposalCheck
 	opContractAmend
@@ -69,6 +71,7 @@ var Registry = []Spec{
 	{[]string{"run", "show"}, "<mission-ref>/<run-ref> [--json]", one, "spectacular.run.show.v2", ReadOnly, opRunShow},
 	{[]string{"run", "start"}, "<mission-ref> --title <title> [--json]", titleOption, "spectacular.run.start.v2", Mutating, opRunStart},
 	{[]string{"review", "record"}, "<mission-ref> <review.md|-> [--json]", two, "spectacular.review.record.v2", Mutating, opReviewRecord},
+	{[]string{"handoff", "record"}, "<mission-ref> <handoff.md|-> --by <sender> [--json]", twoByOption, "spectacular.handoff.record.v2", Mutating, opHandoffRecord},
 	{[]string{"mission", "complete"}, "<ref> --by <owner> [--json]", byOption, "spectacular.mission.complete.v2", Mutating, opMissionComplete},
 	{[]string{"proposal", "check"}, "<ref> [--json]", one, "spectacular.proposal.check.v2", ReadOnly, opProposalCheck},
 	{[]string{"contract", "amend"}, "<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]", amendOptions, "spectacular.contract.amend.v2", Mutating, opContractAmend},
@@ -187,6 +190,13 @@ func (r Runner) Run(args []string) int {
 			break
 		}
 		value, err = service.RecordReview(rest[0], inputPath(r.Cwd, rest[1]), stdin)
+	case opHandoffRecord:
+		stdin, readErr := r.stdinIfNeeded(rest[1])
+		if readErr != nil {
+			err = readErr
+			break
+		}
+		value, err = service.RecordHandoff(rest[0], inputPath(r.Cwd, rest[1]), rest[3], stdin)
 	case opMissionComplete:
 		value, err = service.Complete(rest[0], rest[2])
 	case opProposalCheck:
@@ -241,6 +251,10 @@ func validateArguments(spec Spec, args []string) string {
 	case byOption:
 		if len(args) != 3 || args[0] == "" || args[1] != "--by" || args[2] == "" {
 			return "requires <ref> --by <owner>"
+		}
+	case twoByOption:
+		if len(args) != 4 || args[0] == "" || args[1] == "" || args[2] != "--by" || args[3] == "" {
+			return "requires <mission-ref> <handoff.md|-> --by <sender>"
 		}
 	case amendOptions:
 		if len(args) != 5 || args[0] == "" || args[1] != "--gap" || args[2] == "" || args[3] != "--by" || args[4] == "" {
@@ -300,6 +314,35 @@ func renderHuman(writer io.Writer, value any) {
 				suffix = " — waits " + strings.Join(objective.BlockedBy, ", ")
 			}
 			fmt.Fprintf(writer, "  %s %s/%s — %s%s\n", readinessGlyph(objective.Readiness), item.Ref, objective.Ref, objective.Outcome, suffix)
+		}
+		if len(item.Handoffs) > 0 {
+			fmt.Fprintln(writer, "HANDOFFS")
+			superseded := map[string]string{}
+			for _, handoff := range item.Handoffs {
+				if handoff.Document != nil && handoff.Document.Supersedes != "" {
+					superseded[handoff.Document.Supersedes] = handoff.Ref
+				}
+			}
+			for _, handoff := range item.Handoffs {
+				title, sender, binding := "", "", ""
+				if handoff.Document != nil {
+					title = handoff.Document.Title
+					sender = handoff.Document.Sender.Actor
+					// A receiver acts on the state the sender bound. Saying whether
+					// that tree is still the working tree is the difference between
+					// a pointer and a usable instruction.
+					binding = "tree moved since it was sent"
+					if handoff.Document.TreeCurrent {
+						binding = "tree matches"
+					}
+				}
+				fmt.Fprintf(writer, "  %s/%s — %s (from %s; %s)\n", item.Ref, handoff.Ref, title, sender, binding)
+				// A reader arriving at a superseded Handoff is pointed forward
+				// rather than left to act on a correction that already happened.
+				if replacement, ok := superseded[handoff.Ref]; ok {
+					fmt.Fprintf(writer, "      superseded by %s/%s\n", item.Ref, replacement)
+				}
+			}
 		}
 		if len(item.Fallbacks) > 0 && state.Budget > 0 && state.Repairs >= state.Budget {
 			fmt.Fprintln(writer, "FALLBACKS")

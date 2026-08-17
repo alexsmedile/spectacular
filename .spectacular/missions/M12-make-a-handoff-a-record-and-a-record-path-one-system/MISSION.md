@@ -4,7 +4,7 @@ id: 01a010a6-01b0-7323-a6a6-7bc38c571762
 title: Make a handoff a record and a record path one system
 status: active
 created: "2026-08-17T21:31:06Z"
-updated: "2026-08-17T21:59:59Z"
+updated: "2026-08-17T22:19:41Z"
 activation:
     at: "2026-08-17T21:31:06Z"
     by: Alex
@@ -93,7 +93,7 @@ objectives:
       id: 01a010a6-01b0-770f-8ea6-d475a9a6d44b
       outcome: Add the handoff record command, writing a Handoff through the layout system in one atomic transaction and verifying its git binding against the real repository.
       ref: O3
-      status: pending
+      status: implemented
     - after:
         - O3
       claims:

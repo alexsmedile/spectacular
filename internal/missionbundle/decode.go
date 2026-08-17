@@ -118,6 +118,9 @@ func decode(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, error) {
 	if err := resolveRuns(ws, b); err != nil {
 		return nil, err
 	}
+	if err := resolveHandoffs(ws, b); err != nil {
+		return nil, err
+	}
 	if err := resolveReviews(ws, b); err != nil {
 		return nil, err
 	}
@@ -165,6 +168,42 @@ func decodeLegacy(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, erro
 		}
 	}
 	return b, nil
+}
+
+// resolveHandoffs loads each Handoff a Mission points at so any reader sees the
+// record, not just the pointer. It reuses the schema decoder rather than
+// restating the fields, so a field added to a Handoff reaches readers without a
+// second place to update.
+func resolveHandoffs(ws *discovery.Workspace, b *Bundle) error {
+	if len(b.Handoffs) == 0 {
+		return nil
+	}
+	base := filepath.Dir(b.entry.Absolute)
+	current := workingTree(ws.Root)
+	for i := range b.Handoffs {
+		pointer := &b.Handoffs[i]
+		path, err := containedFile(base, pointer.File)
+		if err != nil {
+			return err
+		}
+		doc, err := workspace.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if doc.Record.Type != domain.Handoff || doc.Record.ID.String() != pointer.ID {
+			return domain.NewRefusal(domain.RefusalTargetTypeMismatch, "handoffs.file", "Handoff identity or type does not match its pointer", nil)
+		}
+		resolved, err := decodeHandoff(doc, pointer.File)
+		if err != nil {
+			return err
+		}
+		if resolved.Ref != pointer.Ref {
+			return domain.NewRefusal(domain.RefusalInvalidReference, "handoffs.file", "Handoff ref does not match its pointer", nil)
+		}
+		resolved.TreeCurrent = resolved.Reviewed.Tree == current
+		pointer.Document = resolved
+	}
+	return nil
 }
 
 func resolveReviews(ws *discovery.Workspace, b *Bundle) error {

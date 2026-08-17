@@ -566,7 +566,7 @@ func validateReviews(ws *discovery.Workspace, b *Bundle) error {
 		if !commitPattern.MatchString(reviewed.Commit) || !commitPattern.MatchString(reviewed.Tree) || reviewed.ActivationFingerprint != b.Activation.Fingerprint {
 			return invalid("reviews.reviewed", "review must bind an exact commit, tree, and current activation fingerprint")
 		}
-		if err := verifyReviewedGit(ws.Root, reviewed.Commit, reviewed.Tree); err != nil {
+		if err := verifyReviewedGit(ws.Root, reviewed.Commit, reviewed.Tree, "reviews"); err != nil {
 			return err
 		}
 		var claims []struct {

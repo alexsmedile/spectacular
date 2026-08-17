@@ -152,7 +152,7 @@ func TestReviewedGitBindingRejectsFabricatedCoordinates(t *testing.T) {
 	}
 	commit := strings.TrimSpace(commandOutput(t, root, "git", "rev-parse", "HEAD"))
 	tree := strings.TrimSpace(commandOutput(t, root, "git", "rev-parse", "HEAD^{tree}"))
-	if err := verifyReviewedGit(root, commit, tree); err != nil {
+	if err := verifyReviewedGit(root, commit, tree, "review"); err != nil {
 		t.Fatalf("exact commit/tree rejected: %v", err)
 	}
 	for _, test := range []struct {
@@ -163,7 +163,7 @@ func TestReviewedGitBindingRejectsFabricatedCoordinates(t *testing.T) {
 		{"mismatched tree", commit, strings.Repeat("0", 40), "review.reviewed.tree", domain.RefusalStaleFingerprint},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			err := verifyReviewedGit(root, test.commit, test.tree)
+			err := verifyReviewedGit(root, test.commit, test.tree, "review")
 			var refusal *domain.Refusal
 			if !errors.As(err, &refusal) || refusal.Code != test.code || refusal.Field != test.field || refusal.Detail == "" || refusal.Recovery == "" {
 				t.Fatalf("refusal=%+v err=%v", refusal, err)

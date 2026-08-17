@@ -1,8 +1,10 @@
 package missionbundle
 
 import (
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
@@ -13,6 +15,17 @@ import (
 // A Handoff ref ends in a short key derived from its identity, because a Handoff
 // is a leaf record like Evidence rather than an ordinal like a Review.
 var handoffPattern = regexp.MustCompile(`^H[1-9][0-9]*-[a-z2-7]{6}$`)
+
+// HandoffBinding is the commit and tree a Handoff was sent against. It is not
+// Reviewed: a Review also binds the Mission's activation fingerprint, because a
+// review judges a Mission's frozen claims. A Handoff delegates work against a
+// state of the repository and has no verdict on the Mission, so carrying an
+// activation fingerprint would write an empty field into every Handoff and
+// imply a binding the record does not have.
+type HandoffBinding struct {
+	Commit string `yaml:"commit" json:"commit"`
+	Tree   string `yaml:"tree" json:"tree"`
+}
 
 // HandoffPointer is the Mission's record that a Handoff exists, mirroring
 // ReviewPointer. The Mission owns the list; the Handoff owns its own content.
@@ -43,26 +56,31 @@ type Sender struct {
 // scored it would be asserting a fact it cannot know. The receiver re-verifies
 // what arrives under Assumed before acting on it.
 type Handoff struct {
-	ID       string   `json:"id"`
-	Ref      string   `json:"ref"`
-	Title    string   `json:"title"`
-	Status   string   `json:"status,omitempty"`
-	Source   string   `json:"source,omitempty"`
-	Mission  string   `json:"mission"`
-	Created  string   `json:"created,omitempty"`
-	Reviewed Reviewed `json:"reviewed"`
-	Sender   Sender   `json:"sender"`
-	Task     string   `json:"task"`
-	Asserted []string `json:"asserted"`
-	Assumed  []string `json:"assumed"`
-	Stops    []string `json:"stops"`
-	Returns  []string `json:"returns"`
+	ID       string         `json:"id"`
+	Ref      string         `json:"ref"`
+	Title    string         `json:"title"`
+	Status   string         `json:"status,omitempty"`
+	Source   string         `json:"source,omitempty"`
+	Mission  string         `json:"mission"`
+	Created  string         `json:"created,omitempty"`
+	Reviewed HandoffBinding `json:"reviewed"`
+	Sender   Sender         `json:"sender"`
+	Task     string         `json:"task"`
+	Asserted []string       `json:"asserted"`
+	Assumed  []string       `json:"assumed"`
+	Stops    []string       `json:"stops"`
+	Returns  []string       `json:"returns"`
 	// Supersedes names the Handoff this one corrects, empty when it corrects
 	// nothing. A Handoff is never edited; a correction is a new Handoff. The
 	// superseded record survives as what its sender believed at the time.
 	Supersedes string `json:"supersedes,omitempty"`
 	Path       string `json:"path"`
-	Body       string `json:"-"`
+	// TreeCurrent reports whether the tree this Handoff bound is still the tree on
+	// disk. A receiver acts on the state the sender bound, so a stale binding is
+	// the difference between a usable instruction and a pointer into a state that
+	// no longer exists. It is derived on read and never stored.
+	TreeCurrent bool   `yaml:"-" json:"tree_current"`
+	Body        string `json:"-"`
 
 	document *workspace.Document
 }
@@ -176,6 +194,26 @@ func validateHandoffs(ws *discovery.Workspace, b *Bundle) error {
 	return nil
 }
 
+// HandoffDraft is the input a sender writes. It is deliberately not the Handoff
+// record: the sender states the delegation, and the command derives identity,
+// ref, and placement so two senders filing the same delegation cannot disagree
+// about where it lives.
+type HandoffDraft struct {
+	Type     string         `yaml:"type"`
+	Title    string         `yaml:"title"`
+	Reviewed HandoffBinding `yaml:"reviewed"`
+	Sender   Sender         `yaml:"sender"`
+	Task     string         `yaml:"task"`
+	// Asserted and Assumed are pointers so an absent list is distinguishable
+	// from an empty one at the command boundary, the same distinction the
+	// schema draws on disk. A sender who omits asserted: is told to state it.
+	Asserted   *[]string `yaml:"asserted"`
+	Assumed    *[]string `yaml:"assumed"`
+	Stops      []string  `yaml:"stops"`
+	Returns    []string  `yaml:"returns"`
+	Supersedes string    `yaml:"supersedes"`
+}
+
 // validateHandoffContent enforces the schema of one Handoff against the Mission
 // that carries it.
 func validateHandoffContent(h *Handoff, b *Bundle) error {
@@ -212,4 +250,28 @@ func validateHandoffContent(h *Handoff, b *Bundle) error {
 		return invalid("handoff.reviewed", "a Handoff must bind an exact commit and tree")
 	}
 	return nil
+}
+
+// workingTree reports the tree a Handoff would be compared against: HEAD's tree
+// when the working tree is clean, and empty when it is dirty or unreadable.
+//
+// git write-tree would give an exact answer for a dirty tree, but it writes
+// objects into the repository, and a read command must not mutate the thing it
+// is reporting on. An uncommitted change means the sender's bound state is not
+// what is on disk, which is exactly what "moved" reports, so the cheaper
+// non-mutating check answers the question the reader is asking.
+func workingTree(root string) string {
+	status := exec.Command("git", "status", "--porcelain")
+	status.Dir = root
+	dirty, err := status.Output()
+	if err != nil || len(strings.TrimSpace(string(dirty))) > 0 {
+		return ""
+	}
+	head := exec.Command("git", "rev-parse", "HEAD^{tree}")
+	head.Dir = root
+	out, err := head.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }

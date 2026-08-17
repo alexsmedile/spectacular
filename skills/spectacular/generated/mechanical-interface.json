@@ -63,6 +63,12 @@
       "effect": "mutating"
     },
     {
+      "command": "spectacular handoff record",
+      "arguments": "<mission-ref> <handoff.md|-> --by <sender> [--json]",
+      "schema": "spectacular.handoff.record.v2",
+      "effect": "mutating"
+    },
+    {
       "command": "spectacular mission complete",
       "arguments": "<ref> --by <owner> [--json]",
       "schema": "spectacular.mission.complete.v2",

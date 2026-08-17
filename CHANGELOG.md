@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Restates the command-surface rule. Adding a command now requires owner authorization
+  and the count is reported rather than defended, replacing a hard stop at twelve. The
+  number was a proxy for keeping the surface from sprawling unnoticed, and as an absolute
+  it would have refused a correct command in order to protect a count.
+
 ## 2.3.0 — 2026-08-17
 
 A signed Contract can now be amended, so a Contract that becomes wrong no longer

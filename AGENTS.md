@@ -18,9 +18,12 @@ compatibility readers, migrations, generic record/search verbs, or a second
 package root. Keep release version values aligned through `VERSION` and the
 generated mechanical interface.
 
-The public command surface is twelve commands. Growth past twelve is a stop, not a
-judgement call: argue the case in a Proposal and let the owner decide. `proposal
-create` stays forbidden.
+The public command surface is twelve commands. Adding one requires owner
+authorization: argue the case in a Proposal, state the count before and after, and
+let the owner decide. An agent never adds a command on its own reading of intent.
+The number is reported, not defended — a thirteenth command the owner authorized is
+correct, and a twelfth that nobody asked for is not. `proposal create` stays
+forbidden.
 
 A Contract is amended through `contract amend`, never by editing a bound Contract by
 hand. An amendment may reach the `gaps:` block and editorial frontmatter only;

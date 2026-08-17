@@ -563,8 +563,32 @@ Sketches worth evaluating, none decided:
 The third is the cheapest and would have caught this instance. The first two are real
 schema work and would change the frozen envelope, so they need their own Proposal.
 
+### A second instance: the twelve-command cap
+
+The same defect appeared in `AGENTS.md`, in a rule the owner then corrected during
+`P9` review. It had read:
+
+> The public command surface is twelve commands. Growth past twelve is a stop, not a
+> judgement call.
+
+Twelve was a proxy for *do not let the surface sprawl unnoticed*. Stated as an
+absolute, it made a thirteenth command a violation regardless of whether it was the
+right thing to build — and `P9` immediately needed one, for a record type whose layout
+rule, prefix, and collection root already exist and that only lacks a way to write it.
+The rule would have refused a correct command in order to protect a number.
+
+The owner's reframe: **adding a command requires owner authorization, and the count is
+reported rather than defended.** Same shape as the Skill-size decision — the concern
+is real, the number is evidence, and the judgment belongs to a person.
+
+Both instances share a signature worth learning to recognize: an absolute stated over
+a countable quantity, where the count is not the thing anyone actually cares about.
+The reliable tell is that the rule can be satisfied while the concern is violated, and
+violated while the concern is satisfied. Two independent occurrences in one repository
+suggests this is a default failure mode of writing rules for agents, not a slip.
+
 ### Related
 
 `P10` records the immediate decision for the Skill-size case: report the delta, let
-review judge it, no line-count stop. It does not attempt the general mechanism. The
-general mechanism is this entry.
+review judge it, no line-count stop. `P9` records the command-surface case. Neither
+attempts the general mechanism. The general mechanism is this entry.

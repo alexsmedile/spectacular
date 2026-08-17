@@ -4,7 +4,7 @@ id: 01a010a6-01b0-7323-a6a6-7bc38c571762
 title: Make a handoff a record and a record path one system
 status: active
 created: "2026-08-17T21:31:06Z"
-updated: "2026-08-17T22:19:41Z"
+updated: "2026-08-17T22:21:39Z"
 activation:
     at: "2026-08-17T21:31:06Z"
     by: Alex
@@ -101,7 +101,7 @@ objectives:
       id: 01a010a6-01b0-78c0-b735-f7396847cc8e
       outcome: Make a Handoff correctable only by superseding it, and report the supersession where a reader of the original will see it.
       ref: O4
-      status: pending
+      status: implemented
     - claims:
         - gap-rewrite-knows-its-scalars
       id: 01a010a6-01b0-7289-bf41-e482299bd784

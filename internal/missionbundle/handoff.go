@@ -275,3 +275,38 @@ func workingTree(root string) string {
 	}
 	return strings.TrimSpace(string(out))
 }
+
+// NewestHandoff follows the supersedes chain forward from a Handoff ref and
+// returns the Handoff that finally replaced it, or the record itself when nothing
+// supersedes it. A correction is a new record rather than an edit, so a reader
+// arriving at an old Handoff needs a way to reach the one that is current.
+//
+// The walk is bounded by the number of Handoffs on the Mission. Validation
+// refuses a self-supersession, but this is a read path over records already on
+// disk, and a read that can be made to spin is worse than one that stops and
+// reports what it found.
+func NewestHandoff(b *Bundle, ref string) *Handoff {
+	replacedBy := map[string]*Handoff{}
+	byRef := map[string]*Handoff{}
+	for _, pointer := range b.Handoffs {
+		if pointer.Document == nil {
+			continue
+		}
+		byRef[pointer.Ref] = pointer.Document
+		if pointer.Document.Supersedes != "" {
+			replacedBy[pointer.Document.Supersedes] = pointer.Document
+		}
+	}
+	current := byRef[ref]
+	if current == nil {
+		return nil
+	}
+	for range b.Handoffs {
+		next := replacedBy[current.Ref]
+		if next == nil {
+			return current
+		}
+		current = next
+	}
+	return current
+}

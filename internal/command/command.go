@@ -339,8 +339,14 @@ func renderHuman(writer io.Writer, value any) {
 				fmt.Fprintf(writer, "  %s/%s — %s (from %s; %s)\n", item.Ref, handoff.Ref, title, sender, binding)
 				// A reader arriving at a superseded Handoff is pointed forward
 				// rather than left to act on a correction that already happened.
+				// Through a chain, the pointer names the record that is current
+				// rather than the next link, which would leave the reader walking.
 				if replacement, ok := superseded[handoff.Ref]; ok {
-					fmt.Fprintf(writer, "      superseded by %s/%s\n", item.Ref, replacement)
+					if newest := missionbundle.NewestHandoff(item, handoff.Ref); newest != nil && newest.Ref != replacement {
+						fmt.Fprintf(writer, "      superseded by %s/%s (current: %s/%s)\n", item.Ref, replacement, item.Ref, newest.Ref)
+					} else {
+						fmt.Fprintf(writer, "      superseded by %s/%s\n", item.Ref, replacement)
+					}
 				}
 			}
 		}

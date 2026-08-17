@@ -300,3 +300,62 @@ func TestMissionReportsItsHandoffsAndSupersessions(t *testing.T) {
 		t.Fatal("the original Handoff claims to supersede something")
 	}
 }
+
+// A supersedes chain longer than one link resolves to the newest Handoff. A
+// reader arriving at the oldest record must be able to follow the corrections
+// forward rather than stopping at the first replacement.
+func TestSupersedesChainResolvesToTheNewestHandoff(t *testing.T) {
+	service, mission, commit, tree := handoffFixtureMission(t)
+	root := service.Workspace.Root
+
+	// Each link binds a distinct commit so the three are distinct records rather
+	// than the same logical Handoff converging under the idempotency rule.
+	refs := []string{}
+	previous := ""
+	for i := 0; i < 3; i++ {
+		writeFixtureCommit(t, root, i)
+		linkCommit := strings.TrimSpace(commandOutput(t, root, "git", "rev-parse", "HEAD"))
+		linkTree := strings.TrimSpace(commandOutput(t, root, "git", "rev-parse", "HEAD^{tree}"))
+		attempt := openMissionService(t, root)
+		result, err := attempt.RecordHandoff(mission, "-", "Alex", handoffDraftInput(linkCommit, linkTree, previous))
+		if err != nil {
+			t.Fatalf("link %d: %v", i, err)
+		}
+		previous = strings.TrimPrefix(result.Ref, mission+"/")
+		refs = append(refs, previous)
+	}
+	_ = commit
+	_ = tree
+
+	bundle, err := Load(openMissionService(t, root).Workspace, mission)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(bundle.Handoffs) != 3 {
+		t.Fatalf("Mission carries %d handoffs, want a three-link chain", len(bundle.Handoffs))
+	}
+	newest := NewestHandoff(bundle, refs[0])
+	if newest == nil || newest.Ref != refs[2] {
+		got := "nil"
+		if newest != nil {
+			got = newest.Ref
+		}
+		t.Fatalf("following the chain from %s reached %s, want the newest %s", refs[0], got, refs[2])
+	}
+	// The newest Handoff is superseded by nothing, so it resolves to itself.
+	if last := NewestHandoff(bundle, refs[2]); last == nil || last.Ref != refs[2] {
+		t.Fatal("the newest Handoff must resolve to itself")
+	}
+}
+
+// writeFixtureCommit makes a distinct commit so each link of a supersedes chain
+// binds a different tree.
+func writeFixtureCommit(t *testing.T, root string, n int) {
+	t.Helper()
+	path := filepath.Join(root, "chain.txt")
+	if err := os.WriteFile(path, []byte(strings.Repeat("x", n+1)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	commandOutput(t, root, "git", "add", "chain.txt")
+	commandOutput(t, root, "git", "commit", "-qm", "chain link")
+}

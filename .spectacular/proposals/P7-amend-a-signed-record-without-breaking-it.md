@@ -6,7 +6,7 @@ title: Amend a signed record without breaking it
 status: draft
 created_by: Alex
 created: "2026-08-17T11:29:31Z"
-updated: "2026-08-17T12:18:00Z"
+updated: "2026-08-17T12:41:00Z"
 scope:
     - v2
 target_contract: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -88,6 +88,27 @@ remaining consequence and produces a refusal with no available correction.
 *"review the Contract delta and explicitly amend or restart the Mission."* There is no
 amend command. A reader who follows the instruction finds nothing there.
 
+## The same defect, found elsewhere
+
+A declaration nothing verifies is the shape of this whole problem, and the Gap is not the
+only instance. `CC-projsurf` declares seven names in `mandatory_validation:`. Four resolve
+to nothing in the validator registry:
+
+| Declared | Reality |
+|---|---|
+| `fallback-fingerprint-coverage` | registered as `frozen-fallbacks`; a naming mismatch |
+| `interface-dependency-frozen-target` | implemented inside `objective-dependency-dag`, not separately named |
+| `ref-spelling-drift` | not a validator at all — it is a notice, by design, and belongs in a different list |
+| `proposal-schema-v2` | `ValidateProposal` exists with no caller outside its own test |
+
+`CC-missioncli` declares fourteen and all fourteen resolve, so this is drift introduced by
+newer work rather than a long-standing state. The behaviors mostly exist; what is missing is
+any check that a declared name corresponds to something that runs. A Contract can therefore
+promise a validation that never executes, and `mission check` passes.
+
+That is the same failure as a Gap written as `blocked_on:` after it was resolved: the record
+says something the system does not enforce, and nothing catches the divergence.
+
 ## What the owner actually wants
 
 Three things, in order: what is wrong, what the fix is, and how to continue. Today the
@@ -111,19 +132,23 @@ by default if nobody decides. It cannot work. There is no between.
 
 ## Direction — a small ceremony
 
-Open, fix, close, and log. Sketch, not a design:
+Open, fix, close, and log — riding the owner gate that already exists at completion rather
+than adding a second one. Sketch, not a design:
 
 ```
-$ spectacular contract amend CC-projsurf --reason "M9 resolved dead-v1-governance-code"
-  4 Missions bound: M6 M7 M8 M9 (all completed)
+$ spectacular mission complete M9 --by Alex
+  will amend CC-projsurf:
+    gaps.dead-v1-governance-code -> resolution: closed by M9 as a separate cleanup…
+  will re-point contract.fingerprint on M6 M7 M8 M9 (all completed)
   proceed? [y/N]
 ```
 
-The amendment is owner-authorized at the gate, which is the same approval the signature
-represented in the first place. Then the Contract is edited, resealed, and the change is
-recorded — what changed, why, by whom, when. The log is the point. An amendment that
-leaves no trace is the thing the fingerprint exists to prevent; an amendment that leaves
-a trace is ordinary governance.
+A Mission declares at plan time which Gaps it resolves, so the owner approves the exact
+wording at activation and sees it again before it is written. The amendment is a consequence
+of completing the work, not an independent act, which is why it needs no command of its own.
+Then the Contract is edited, resealed, and the change is recorded — what changed, why, by
+whom, when. The log is the point. An amendment that leaves no trace is the thing the
+fingerprint exists to prevent; an amendment that leaves a trace is ordinary governance.
 
 Bound Missions have their `contract.fingerprint` re-pointed to the new value.
 
@@ -251,6 +276,31 @@ That does not reverse the declined approach above. Gaps that qualify a Contract 
 embedded in it, because they are part of what the owner accepted, and the ceremony is
 what closes them. What the standalone form adds is a home for the Gaps that were never
 Contract-shaped to begin with.
+
+**A Mission bound to an earlier Contract version is simply outdated.** It ran against that
+version; that is a true fact about it and not a problem to solve. No migration, no
+superseded copy, no re-pointing on a version bump — `mission check` states the version and
+moves on. This is what keeps `contract_version:` cheap enough to be worth wiring: the field
+records which agreement the work was done under, and history answers everything else.
+
+**`contract_version:` should be wired rather than left inert.** It is currently read by
+nothing, which is why `CC-v2prod` reaching "2" meant nothing mechanically. If versioning is
+where semantic change goes, the field has to be validated and reported, or the rule routes
+change into a field no reader can trust.
+
+**Proposal is a primitive and gets its own command.** `CC-projsurf` already requires
+Proposals to be validated — *"Validate Proposals without providing a creation command;
+Proposals are authored as Markdown and checked, not generated through ceremony"* — and the
+forbidden-command test names `proposal create`, never `proposal check`. `ValidateProposal`
+exists in `internal/missionbundle/proposal.go` with no caller outside its own test, so the
+required behavior was built and never wired. This Proposal has therefore never been
+validated by anything.
+
+The surface goes to eleven commands deliberately. A Proposal is the one record type that
+need not live in the workspace at all — it can sit in an issue, a chat, or a scratch file —
+which is precisely why it needs `check` and not `create`: the author brings a Proposal from
+wherever it lives and the tool says whether it is well-formed. Creation ceremony is what
+would make Proposals mandatory, and that is the thing declined.
 
 ## Still open
 

@@ -4,7 +4,7 @@ id: 01a010a6-01b0-7323-a6a6-7bc38c571762
 title: Make a handoff a record and a record path one system
 status: active
 created: "2026-08-17T21:31:06Z"
-updated: "2026-08-17T22:32:57Z"
+updated: "2026-08-17T22:36:28Z"
 activation:
     at: "2026-08-17T21:31:06Z"
     by: Alex
@@ -122,7 +122,7 @@ objectives:
       id: 01a010a6-01b0-7bf6-b633-0d178e951189
       outcome: State in the workflow that a delegation is recorded as a Handoff, that it is frozen, and that the receiver re-verifies what was assumed.
       ref: O7
-      status: pending
+      status: implemented
 outcome: A handoff between agents is a checkable, tree-bound record inside the workspace instead of a temp file, every record type resolves its path through one layout system, and both open Gaps in the Contract amendment path are closed.
 owner: Alex
 ref: M12

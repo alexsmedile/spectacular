@@ -56,7 +56,7 @@ completion:
       pass_boundary: 'The close reference states that a Mission declares the Gaps it resolved and that completion amends the Contract. The line asserting there is no separate Contract reconciliation command is corrected rather than deleted: there is still no separate command, and it now says why — reconciliation is part of completion. The prepare reference states that a Mission resolving a Gap declares it at plan time. The Skill does not grow: the hand-written Gap sweep prose the previous Mission needed is no longer necessary, and line counts before and after are recorded.'
       proof_requirement: The references are re-read end to end for a Mission that resolves a Gap and one that does not, confirming neither path acquires steps. Line counts before and after are recorded in the Evidence.
 contract:
-    fingerprint: sha256:80336b159e296ba63b5d85c80a48f8e540ae07d9aac52cdcdba4730059378a48
+    fingerprint: sha256:95e351f2854fe11b4183c66b30e1899e3a804ab10884e488e51adaf671e20ec7
     ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
 dependencies:
     - M9 completed with a recorded review and owner acceptance.

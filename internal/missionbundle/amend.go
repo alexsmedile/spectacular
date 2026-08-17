@@ -107,7 +107,19 @@ func (s Service) amendContract(contractRef, gapRef, owner, override string, dryR
 	}
 
 	// A live bound Mission still has the Contract constraining work in flight.
-	if live, ref := s.liveBoundMission(contractRef); live {
+	// The Mission that declared this Gap is the exception: completion refuses
+	// while a declared Gap is open and amendment refused while that Mission was
+	// live, so the two guards deadlocked the first Mission ever to declare one.
+	// A Mission closing the Gap it froze wording for at its own activation gate
+	// is doing the authorized thing, not moving the ground under itself. Any
+	// other live bound Mission still blocks.
+	// An override is not exempt: its wording was typed at a prompt rather than
+	// frozen at an activation gate, so it has no declaring Mission to be.
+	exempt := gapRef
+	if source == "owner-supplied" {
+		exempt = ""
+	}
+	if live, ref := s.liveBoundMission(contractRef, exempt); live {
 		return Amendment{}, domain.NewStateRefusal(domain.RefusalUnauthorized, "contract",
 			"a Mission bound to this Contract is live", "no live bound Mission", ref,
 			"complete or stop "+ref+" before amending the Contract it is bound to", nil)
@@ -219,7 +231,12 @@ func (s Service) declaringMission(contractID, contractRef, gapRef string) (strin
 		"declare the Gap in the resolving Mission's resolves_gaps so the owner approves the wording at activation", nil)
 }
 
-func (s Service) liveBoundMission(contractRef string) (bool, string) {
+// liveBoundMission reports a live Mission bound to this Contract, exempting the
+// one whose frozen resolves_gaps declares gapRef. Exempting only the declaring
+// Mission keeps the guard's purpose intact: an unrelated live Mission still has
+// the Contract constraining work in flight and still blocks. gapRef is empty
+// when the caller wants no exemption.
+func (s Service) liveBoundMission(contractRef, gapRef string) (bool, string) {
 	for _, entry := range s.Workspace.Entries {
 		if entry.Document == nil || entry.Document.Record.Type != domain.Mission {
 			continue
@@ -228,11 +245,25 @@ func (s Service) liveBoundMission(contractRef string) (bool, string) {
 		if err != nil || bundle.Contract.Ref != contractRef {
 			continue
 		}
-		if bundle.Status == "active" {
-			return true, bundle.Ref
+		if bundle.Status != "active" {
+			continue
 		}
+		if gapRef != "" && bundle.declaresGap(gapRef) {
+			continue
+		}
+		return true, bundle.Ref
 	}
 	return false, ""
+}
+
+// declaresGap reports whether this Mission froze a resolution for gapRef.
+func (b *Bundle) declaresGap(gapRef string) bool {
+	for _, declared := range b.ResolvesGaps {
+		if declared.Gap == gapRef {
+			return true
+		}
+	}
+	return false
 }
 
 // repointBoundMissions updates only contract.fingerprint on every bound Mission.

@@ -2,9 +2,9 @@
 type: Mission
 id: 01a010a6-01b0-7323-a6a6-7bc38c571762
 title: Make a handoff a record and a record path one system
-status: active
+status: completed
 created: "2026-08-17T21:31:06Z"
-updated: "2026-08-17T23:00:49Z"
+updated: "2026-08-17T23:22:14Z"
 activation:
     at: "2026-08-17T21:31:06Z"
     by: Alex
@@ -54,8 +54,14 @@ completion:
     - claim: the-workflow-states-the-handoff
       pass_boundary: The runtime and execute references state that a delegation is recorded as a Handoff, that a Handoff is frozen and corrected by superseding it, and that the receiver re-verifies what the sender filed under `assumed` before acting on it. The existing statement of what a receiver may not do is unchanged. Line counts before and after are recorded; the guidance is stated once and not repeated across references.
       proof_requirement: The references are re-read end to end for a Mission that records a Handoff and one that does not, confirming neither path acquires steps. Line counts before and after are recorded in the Evidence.
+completion_record:
+    at: "2026-08-17T23:22:14Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 800a412a3f3c692e3456776b5246af483805e50c
 contract:
-    fingerprint: sha256:6c19cc655e1cce0aa6bb8f9c227b0d8b1c353472f32f9c7155ac4aa665fefbf3
+    fingerprint: sha256:95e351f2854fe11b4183c66b30e1899e3a804ab10884e488e51adaf671e20ec7
     ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
 dependencies:
     - M11 completed with a recorded independent review and owner acceptance; the amendment path this Mission repairs is what M11 built.
@@ -145,7 +151,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-17T21:31:06Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - cmd/spectacular/

@@ -67,7 +67,7 @@ completion_record:
     review: RV1
     reviewed_commit: 37aead960967a657e4134c912bca1b34a8146f06
 contract:
-    fingerprint: sha256:315f4ad56bd85ccc8b0bc616988180b0c4af0dcd12868478f4562e7747fd25f6
+    fingerprint: sha256:95e351f2854fe11b4183c66b30e1899e3a804ab10884e488e51adaf671e20ec7
     ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
 dependencies:
     - M9 completed with a recorded review and owner acceptance.

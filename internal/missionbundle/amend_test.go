@@ -373,7 +373,7 @@ Fixture anchor.
 
 	// The fixture is only meaningful if the amendment path agrees nothing is live
 	// on it. Asking the production code keeps the fixture honest.
-	if live, mission := (Service{Workspace: ws}).liveBoundMission(contractRef); live {
+	if live, mission := (Service{Workspace: ws}).liveBoundMission(contractRef, ""); live {
 		t.Fatalf("fixture workspace unexpectedly carries a live Mission %s", mission)
 	}
 	return ws, "fixture-open-gap", contractRef

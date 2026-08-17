@@ -97,9 +97,12 @@ gaps:
       scalar containing the literal text `blocked_on:` would collide. The amendable-field guard limits
       the blast radius to the `gaps:` block, which is exactly what an amendment may change, so it does
       not catch this. Confirmed as a documented limitation by M11's independent review.
-    blocked_on: >-
-      Tracking block-scalar depth while walking the Gap entry, so a `blocked_on:` inside a scalar body
-      is skipped, plus the adversarial fixture the review described.
+    resolution: >-
+        The Gap rewrite tracks block-scalar depth while walking a Gap entry, so a `blocked_on:`
+        appearing inside a scalar body is not mistaken for the key. The textual approach is kept
+        deliberately, so an amendment's diff still touches only what it changed. An adversarial
+        fixture carrying the literal text inside a `problem:` scalar asserts the correct key is
+        rewritten and the scalar body is left byte-identical.
   - ref: repoint-assumes-one-fingerprint
     problem: >-
       Re-pointing a bound Mission replaces the first occurrence of the old Contract fingerprint in the
@@ -108,11 +111,13 @@ gaps:
       prose, a pass boundary, or a rejected approach could have the wrong occurrence rewritten and would
       still parse. M9 shows the shape is plausible: its body quotes a stale-fingerprint refusal
       containing three distinct fingerprint values, none of them its own binding.
-    blocked_on: >-
-      A decision between anchoring the replacement to the `contract:` block and refusing when the
-      fingerprint appears more than once. The refusal is smaller and turns a silent corruption into a
-      stated problem, which is the right direction for a mechanism that rewrites records the owner is
-      not reading.
+    resolution: >-
+        Re-pointing a bound Mission refuses when the old Contract fingerprint appears more than
+        once in the Mission file, naming the Mission, the fingerprint, and every occurrence,
+        rather than rewriting the first one. The refusal was chosen over anchoring to the
+        `contract:` block because it is smaller and turns a silent corruption into a stated
+        problem in a mechanism that rewrites records the owner is not reading. Anchoring remains
+        available later if the refusal proves noisy.
 ---
 # Spectacular mechanical Mission CLI
 

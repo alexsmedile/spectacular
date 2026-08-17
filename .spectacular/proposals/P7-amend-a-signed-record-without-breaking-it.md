@@ -6,7 +6,7 @@ title: Amend a signed record without breaking it
 status: draft
 created_by: Alex
 created: "2026-08-17T11:29:31Z"
-updated: "2026-08-17T11:29:31Z"
+updated: "2026-08-17T11:47:00Z"
 scope:
     - v2
 target_contract: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -96,6 +96,19 @@ system supplies the first and stops.
 A refusal that names a correction the system cannot perform is worse than a refusal that
 admits the dead end, because it costs the reader a search before they learn it is closed.
 
+## The workaround that was assumed to exist does not
+
+M9's own body records the sweep and states that "the Contract is amended after M9
+completes, when nothing is bound to it." That sentence describes a window that does not
+exist. `validateContract` has no status gate, so a completed Mission verifies its
+Contract binding as strictly as a live one — the amendment refuses after completion for
+the same reason it refused during. `TODO.md` records the same collision on 2026-08-16,
+when a note written into one of these Gaps had to be reverted.
+
+This matters beyond one deferred edit. "Record the resolution in the Mission body and
+amend the Contract between Missions" is the current practice and the thing that happens
+by default if nobody decides. It cannot work. There is no between.
+
 ## Direction — a small ceremony
 
 Open, fix, close, and log. Sketch, not a design:
@@ -124,15 +137,46 @@ narrower case: *"Completed Missions are not rewritten."*
 A closed Mission is closed. A live Mission has room to change. A Contract is a living
 agreement and accumulates amendments.
 
-## Open questions for the owner
+## Decided by the owner
 
-- **Does a completed Mission need the Contract check at all?** Skipping it for completed
-  status is the smallest change that would have made this edit legal, and it touches one
-  function. It may be sufficient on its own, or it may be a partial fix that hides the
-  amendment gap rather than closing it.
-- **Should drift on a completed Mission be silent or reported?** If the check is
-  relaxed, a reader may still want to know the Contract moved after completion.
-  `ref-spelling-drift` already establishes report-not-refuse as an available shape.
+**A completed Mission reports Contract drift instead of refusing on it.**
+
+`validateContract` gains a status gate, matching `validateBaseline` and
+`validateActivation`, which both already early-return rather than checking a boundary
+that no longer constrains anything. For a completed Mission the bound Contract's
+fingerprint is history: it records which Contract text the work was executed against,
+and re-hashing it asks a question with no remaining consequence and no available
+correction.
+
+Drift is still surfaced. A reader deserves to know the Contract moved after completion;
+what they do not deserve is a refusal with no legal fix. The existing `Notices` channel
+carries this — `ref-spelling-drift` in `internal/missionbundle/drift.go` already
+establishes report-not-refuse for exactly this shape, so the mechanism does not need to
+be invented.
+
+This is the smallest change that makes the deferred amendment legal. It does not weaken
+the seal for work in flight: a live Mission still refuses, because there the Contract
+genuinely constrains what is being judged.
+
+## Approaches considered and declined
+
+- **Move Gaps out of Contracts into their own record type.** A Mission could then close a
+  Gap without touching the frozen Contract. Declined: it adds a noun, and
+  `CC-missioncli`'s ten-command surface is closed with growth named as a stop. It also
+  costs a migration to solve a problem the status gate solves without one.
+- **Exclude the `gaps:` block from the Contract fingerprint, the way Run progress is
+  excluded.** Cheapest to implement and the most dangerous. A Gap is part of what the
+  owner accepted; excluding it would let a live Mission quietly retire a blocker it was
+  supposed to respect. Declined explicitly — the seal is not weakened to make this easy.
+- **Codify the current workaround as a named between-Missions phase.** Declined because
+  it does not work, not because it is unattractive: there is no window between Missions,
+  as recorded above.
+- **Re-activate a bound Mission to pick up the amended Contract.** Declined: re-activation
+  recomputes the activation fingerprint, which reviews bind to, so it would invalidate
+  passing reviews as a side effect of an unrelated Contract edit. Re-pointing
+  `contract.fingerprint` is a narrower operation and leaves the frozen envelope alone.
+
+## Open questions for the owner
 - **Is field-scoped hashing needed for Contracts, or does the ceremony make it
   unnecessary?** If an amendment is explicit and logged, whole-file hashing may be fine —
   the owner approved the delta, so the check no longer needs to classify it.

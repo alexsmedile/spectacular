@@ -577,6 +577,13 @@ func (s Service) complete(missionRef, owner string) (Result, error) {
 	if bundle.Review != "automatic" && len(bundle.Reviews) == 0 {
 		return Result{}, invalid("reviews", "record the required review before Mission completion")
 	}
+	// Completion enforces resolves_gaps rather than executing it. A Mission that
+	// declared it would close a Gap has not finished until the Gap is closed, and
+	// the write belongs to `contract amend` — the amendment happens when the work
+	// resolving the Gap lands, not as a side effect of a lifecycle transition.
+	if err := s.assertDeclaredGapsClosed(bundle); err != nil {
+		return Result{}, err
+	}
 	now := s.now()
 	bundle.document.Record.Status = stringPtr("completed")
 	bundle.document.Record.Updated = stringPtr(now)

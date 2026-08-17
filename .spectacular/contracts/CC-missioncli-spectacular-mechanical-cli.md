@@ -7,7 +7,7 @@ status: current
 owner: Alex
 created: "2026-08-16T10:31:30Z"
 updated: "2026-08-16T10:38:58Z"
-contract_version: "1"
+contract_version: "2"
 
 purpose: Supply deterministic Mission mechanics where exact repeated enforcement saves LLM work, tokens, and recovery cost.
 outcome: The plan supplies meaning, the CLI supplies invariants, and both operate one canonical compact Mission bundle without duplicate vocabularies or ceremony.
@@ -50,8 +50,12 @@ command_surface:
   - run start <mission-ref> --title <title>
   - review record <mission-ref> <review.md|->
   - mission complete <ref> --by <owner>
+  - proposal check <ref>
+  - contract amend <contract-ref> --gap <gap-ref> --by <owner>
 
 mandatory_validation:
+  - contract-version
+  - resolved-gap-integrity
   - yaml-schema
   - uuidv7-identity
   - reference-integrity

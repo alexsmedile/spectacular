@@ -3,14 +3,18 @@ package missionbundle
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
+	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/governance"
+	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
 
 // Amendment is what `contract amend` reports: what changed, or under --dry-run what
@@ -434,4 +438,94 @@ func appendAmendmentLog(root, path string, entry amendmentEntry) ([]byte, error)
 	body += fmt.Sprintf("\n- at: %q\n  by: %s\n  mission: %s\n  gap: %s\n  contract: %s\n  source: %s\n  fields: [gaps]\n  from: %s\n  to: %s\n",
 		entry.At, entry.By, entry.Mission, entry.Gap, entry.Contract, entry.Source, entry.From, entry.To)
 	return []byte(body), nil
+}
+
+// assertDeclaredGapsClosed refuses completion while any Gap the Mission declared it
+// resolves still reads blocked_on. The refusal names the Gap and the command that
+// closes it, so a reader learns the fix rather than only the problem — the failure
+// the original stale_fingerprint refusal made, promising an amend path that did not
+// exist.
+func (s Service) assertDeclaredGapsClosed(b *Bundle) error {
+	if len(b.ResolvesGaps) == 0 {
+		return nil
+	}
+	gaps, err := ContractGaps(s.Workspace, b.Contract.Ref)
+	if err != nil {
+		return err
+	}
+	state := make(map[string]contractGap, len(gaps))
+	for _, gap := range gaps {
+		state[gap.Ref] = gap
+	}
+	for _, declared := range b.ResolvesGaps {
+		gap, known := state[declared.Gap]
+		if !known {
+			return invalid("resolves_gaps.gap", "declared Gap is no longer on the bound Contract: "+declared.Gap)
+		}
+		if gap.Resolution != "" {
+			continue
+		}
+		return domain.NewStateRefusal(domain.RefusalInvalidKnownField, "resolves_gaps.gap",
+			"Gap "+declared.Gap+" is still open and this Mission declared it would be closed",
+			"resolution", "blocked_on",
+			"close it with: spectacular contract amend "+b.Contract.Ref+" --gap "+declared.Gap+" --by "+b.Owner, nil)
+	}
+	return nil
+}
+
+// ContractVersion reads a Contract's declared version. The field existed on every
+// Contract and was read by nothing, which is why one Contract reaching version 2
+// meant nothing mechanically. Versioning is where semantic change goes, so the field
+// has to be validated and reported or the rule routes change into a field no reader
+// can trust.
+func ContractVersion(ws *discovery.Workspace, ref string) (int, error) {
+	entry, err := ws.Lookup(ref, domain.Contract)
+	if err != nil {
+		return 0, err
+	}
+	// Existing Contracts quote the value, so both `contract_version: 2` and
+	// `contract_version: "2"` are accepted. Rewriting the records to unquote it
+	// would be a Contract edit for a cosmetic reason.
+	version, err := workspace.Int(entry.Document, "contract_version", true)
+	if err != nil {
+		text, textErr := workspace.String(entry.Document, "contract_version", true)
+		if textErr != nil {
+			return 0, invalidCause("contract_version", "a Contract must declare contract_version", err)
+		}
+		version, err = strconv.Atoi(strings.TrimSpace(text))
+		if err != nil {
+			return 0, invalidCause("contract_version", "contract_version must be an integer", err)
+		}
+	}
+	if version < 1 {
+		return 0, invalid("contract_version", "contract_version must be a positive integer")
+	}
+	return version, nil
+}
+
+// validateContractVersion reports the bound Contract's version and never refuses
+// over it. A Mission bound to an earlier version is simply outdated: it ran against
+// that version, which is a true fact about it and not a problem to solve. No
+// migration and no superseded copies — the history of what changed is the commit
+// history.
+//
+// A malformed version refuses, because a version nobody can read is worse than
+// none. An absent one does not: requiring it would refuse every Mission bound to a
+// Contract authored before the field was read, which is the same
+// no-legal-correction failure this Mission exists to remove.
+func validateContractVersion(ws *discovery.Workspace, b *Bundle) error {
+	version, err := ContractVersion(ws, b.Contract.Ref)
+	if err != nil {
+		if domain.RefusalHasCode(err, domain.RefusalMissingRequiredField) {
+			return nil
+		}
+		var refusal *domain.Refusal
+		if errors.As(err, &refusal) && refusal.Field == "contract_version" &&
+			strings.Contains(refusal.Actual, "required property is absent") {
+			return nil
+		}
+		return err
+	}
+	b.contractVersion = version
+	return nil
 }

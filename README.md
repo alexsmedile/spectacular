@@ -75,30 +75,13 @@ Spectacular is designed around a strict division of responsibilities:
 > - **The Skill** handles judgment, planning, problem-solving, and human interactions.
 > - **The filesystem (Canonical Markdown)** remains human-readable without running proprietary daemons or databases.
 
-```
-                    +---------------------------------------+
-                    |           HUMAN & OPERATOR            |
-                    |   Direction, judgment, authorization  |
-                    +-------------------+-------------------+
-                                        |
-                                        v
-                    +---------------------------------------+
-                    |             THE SKILL                 |
-                    |   Translates requests into actionable |
-                    |   plans via Contracts & Missions      |
-                    +---------+-------------------+---------+
-                              |                   |
-            +-----------------+                   +-----------------+
-            v                                                       v
-+-----------------------+                               +-----------------------+
-|  CANONICAL MARKDOWN   |                               |      THE GO CLI       |
-|  - Minimal Frontmatter| <---------------------------> |  - Invariant checks   |
-|    for verifiable keys|       (Read / Validate)       |  - Fingerprints & DAG |
-|  - Rich Prose context |                               |  - Atomic transitions|
-+-----------------------+                               +-----------------------+
-```
+![The Spectacular Division of Labor](docs/diagrams/division-of-labor.svg)
+
+### Translating Intent into Verified Execution
 
 We do not attempt to 100% schemify or machine-check every piece of context. Frontmatter is kept minimal for the fundamental verifiable boundaries (identities, fingerprints, completion boundaries, dependencies), while rich Markdown prose carries the rationale, design intent, and nuance.
+
+![Spectacular Human + Agent Collaboration Model](docs/diagrams/architecture.svg)
 
 The primary role of the **Skill** is to turn the user's request into an agentificable plan through two primary instruments:
 - **Contract (`contracts/`)**: The accepted specification and product behavior agreement.

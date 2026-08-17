@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="100%" height="100%" style="background:#0b0f17; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#070a12" />
+    </linearGradient>
+    
+    <linearGradient id="cardGradHuman" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <linearGradient id="cardGradSkill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#241b35" />
+      <stop offset="100%" stop-color="#151022" />
+    </linearGradient>
+
+    <linearGradient id="cardGradMarkdown" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#132e27" />
+      <stop offset="100%" stop-color="#0a1a16" />
+    </linearGradient>
+
+    <linearGradient id="cardGradGo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#132738" />
+      <stop offset="100%" stop-color="#0a1622" />
+    </linearGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+
+    <!-- Arrow Markers -->
+    <marker id="arrowAmber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f59e0b" />
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#c084fc" />
+    </marker>
+    <marker id="arrowTeal" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#2dd4bf" />
+    </marker>
+    <marker id="arrowCyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+    </marker>
+    <marker id="arrowGray" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <!-- Container Box -->
+  <rect x="10" y="10" width="780" height="460" rx="16" fill="url(#bgGrad)" stroke="#1e293b" stroke-width="1.5" />
+
+  <!-- Header -->
+  <text x="400" y="42" text-anchor="middle" font-size="18" font-weight="700" fill="#f8fafc" letter-spacing="0.5">HUMAN + AGENT COLLABORATION MODEL</text>
+  <text x="400" y="60" text-anchor="middle" font-size="12" font-weight="400" fill="#94a3b8">Translating Human Intent into Verified Machine Execution</text>
+
+  <!-- CONNECTORS -->
+  <!-- Line: Human -> Skill -->
+  <path d="M 400 148 L 400 184" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrowAmber)" />
+
+  <!-- Line: Skill -> Markdown -->
+  <path d="M 330 262 L 230 308" stroke="#c084fc" stroke-width="2" marker-end="url(#arrowPurple)" />
+
+  <!-- Line: Skill -> Go CLI -->
+  <path d="M 470 262 L 570 308" stroke="#c084fc" stroke-width="2" marker-end="url(#arrowPurple)" />
+
+  <!-- Bi-directional: Markdown <-> Go CLI -->
+  <path d="M 374 380 L 426 380" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowCyan)" marker-start="url(#arrowCyan)" />
+  <rect x="382" y="358" width="36" height="16" rx="4" fill="#0f172a" stroke="#38bdf8" stroke-width="1" />
+  <text x="400" y="370" text-anchor="middle" font-size="9" font-weight="600" fill="#38bdf8">SYNC</text>
+
+  <!-- 1. HUMAN & OPERATOR CARD -->
+  <g filter="url(#shadow)">
+    <rect x="250" y="80" width="300" height="68" rx="10" fill="url(#cardGradHuman)" stroke="#f59e0b" stroke-width="1.5" />
+    <circle cx="272" cy="102" r="5" fill="#f59e0b" />
+    <text x="286" y="106" font-size="13" font-weight="700" fill="#fbbf24" letter-spacing="0.5">HUMAN &amp; OPERATOR</text>
+    <text x="286" y="124" font-size="11" font-weight="400" fill="#cbd5e1">Direction · Judgment · Strategic Authority</text>
+    <rect x="472" y="93" width="66" height="18" rx="9" fill="#78350f" stroke="#f59e0b" stroke-width="0.75" />
+    <text x="505" y="106" text-anchor="middle" font-size="9" font-weight="700" fill="#fef3c7">DECIDES</text>
+  </g>
+
+  <!-- 2. THE SKILL CARD -->
+  <g filter="url(#shadow)">
+    <rect x="220" y="190" width="360" height="74" rx="10" fill="url(#cardGradSkill)" stroke="#a855f7" stroke-width="1.5" />
+    <circle cx="242" cy="214" r="5" fill="#c084fc" />
+    <text x="256" y="218" font-size="13" font-weight="700" fill="#e9d5ff" letter-spacing="0.5">THE SKILL (Orchestrator)</text>
+    <text x="256" y="235" font-size="11" font-weight="400" fill="#cbd5e1">Translates requests into agentificable plans</text>
+    <text x="256" y="250" font-size="10" font-weight="500" fill="#a855f7">Contracts (agreements) &amp; Missions (action plans)</text>
+    <rect x="500" y="205" width="66" height="18" rx="9" fill="#4c1d95" stroke="#c084fc" stroke-width="0.75" />
+    <text x="533" y="218" text-anchor="middle" font-size="9" font-weight="700" fill="#f3e8ff">REASONS</text>
+  </g>
+
+  <!-- 3. CANONICAL MARKDOWN CARD -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="315" width="320" height="130" rx="10" fill="url(#cardGradMarkdown)" stroke="#10b981" stroke-width="1.5" />
+    <circle cx="72" cy="338" r="5" fill="#34d399" />
+    <text x="86" y="342" font-size="13" font-weight="700" fill="#a7f3d0" letter-spacing="0.5">CANONICAL MARKDOWN</text>
+    <rect x="290" y="329" width="66" height="18" rx="9" fill="#064e3b" stroke="#34d399" stroke-width="0.75" />
+    <text x="323" y="342" text-anchor="middle" font-size="9" font-weight="700" fill="#d1fae5">TRUTH</text>
+    
+    <line x1="66" y1="358" x2="354" y2="358" stroke="#1e3a34" stroke-width="1" />
+    
+    <text x="72" y="378" font-size="11" font-weight="600" fill="#6ee7b7">• Minimal Frontmatter</text>
+    <text x="86" y="393" font-size="10" font-weight="400" fill="#94a3b8">Identities, hashes, claim boundaries, DAG</text>
+    
+    <text x="72" y="413" font-size="11" font-weight="600" fill="#6ee7b7">• Rich Prose Context</text>
+    <text x="86" y="428" font-size="10" font-weight="400" fill="#94a3b8">Intent, nuance, rationale &amp; design choices</text>
+  </g>
+
+  <!-- 4. THE GO CLI CARD -->
+  <g filter="url(#shadow)">
+    <rect x="430" y="315" width="320" height="130" rx="10" fill="url(#cardGradGo)" stroke="#0ea5e9" stroke-width="1.5" />
+    <circle cx="452" cy="338" r="5" fill="#38bdf8" />
+    <text x="466" y="342" font-size="13" font-weight="700" fill="#bae6fd" letter-spacing="0.5">THE GO CLI</text>
+    <rect x="670" y="329" width="66" height="18" rx="9" fill="#0c4a6e" stroke="#38bdf8" stroke-width="0.75" />
+    <text x="703" y="342" text-anchor="middle" font-size="9" font-weight="700" fill="#e0f2fe">SAFETY</text>
+    
+    <line x1="446" y1="358" x2="734" y2="358" stroke="#16384c" stroke-width="1" />
+    
+    <text x="452" y="378" font-size="11" font-weight="600" fill="#7dd3fc">• Mechanical Invariants</text>
+    <text x="466" y="393" font-size="10" font-weight="400" fill="#94a3b8">SHA-256 fingerprints, atomic transitions, gates</text>
+    
+    <text x="452" y="413" font-size="11" font-weight="600" fill="#7dd3fc">• Token Economy</text>
+    <text x="466" y="428" font-size="10" font-weight="400" fill="#94a3b8">Derived JSON state without reading full history</text>
+  </g>
+</svg>

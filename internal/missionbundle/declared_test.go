@@ -125,3 +125,50 @@ func TestRenamedValidatorsKeepTheirRefusalIdentity(t *testing.T) {
 		})
 	}
 }
+
+// contract_version stops being inert. It is validated and reported, never enforced:
+// a Mission bound to an earlier version simply ran against that version, which is a
+// true fact about it and not a problem to solve.
+func TestContractVersionIsValidatedAndReported(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle, err := Load(ws, "M11")
+	if err != nil {
+		t.Fatal(err)
+	}
+	declared, err := ContractVersion(ws, bundle.Contract.Ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if declared < 1 {
+		t.Fatalf("version=%d, want a positive integer", declared)
+	}
+	check, err := Validate(ws, bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if check.ContractVersion != declared {
+		t.Fatalf("check reports v%d, Contract declares v%d", check.ContractVersion, declared)
+	}
+	if !check.Valid {
+		t.Fatal("a declared version must not make a Mission invalid")
+	}
+
+	// Every Contract in the workspace must carry a readable version, or the field
+	// cannot be relied on as the place semantic change is recorded.
+	for _, entry := range ws.Entries {
+		if entry.Document == nil || entry.Document.Record.Type != domain.Contract {
+			continue
+		}
+		ref := string(domain.Contract) + ":" + entry.Document.Record.ID.String()
+		if _, err := ContractVersion(ws, ref); err != nil {
+			t.Errorf("%s: %v", filepath.Base(entry.Path), err)
+		}
+	}
+}

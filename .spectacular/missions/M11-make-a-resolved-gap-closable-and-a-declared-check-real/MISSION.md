@@ -4,7 +4,7 @@ id: 01a0102c-a360-71fe-a1be-8e1b010460b2
 title: Make a resolved Gap closable and a declared check real
 status: active
 created: "2026-08-17T15:01:01Z"
-updated: "2026-08-17T15:16:30Z"
+updated: "2026-08-17T15:26:07Z"
 activation:
     at: "2026-08-17T15:01:01Z"
     by: Alex
@@ -61,7 +61,7 @@ completion:
       pass_boundary: 'The close reference states that a Mission declares the Gaps it resolved and that completion amends the Contract. The line asserting there is no separate Contract reconciliation command is corrected rather than deleted: there is still no separate command, and it now says why — reconciliation is part of completion. The prepare reference states that a Mission resolving a Gap declares it at plan time. The Skill does not grow: the hand-written Gap sweep prose the previous Mission needed is no longer necessary, and line counts before and after are recorded.'
       proof_requirement: The references are re-read end to end for a Mission that resolves a Gap and one that does not, confirming neither path acquires steps. Line counts before and after are recorded in the Evidence.
 contract:
-    fingerprint: sha256:80336b159e296ba63b5d85c80a48f8e540ae07d9aac52cdcdba4730059378a48
+    fingerprint: sha256:315f4ad56bd85ccc8b0bc616988180b0c4af0dcd12868478f4562e7747fd25f6
     ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
 dependencies:
     - M9 completed with a recorded review and owner acceptance.
@@ -107,7 +107,7 @@ objectives:
       id: 01a0102c-a360-71b9-b047-01e22b4bf310
       outcome: Make completion enforce the resolves_gaps declaration, refusing while a declared Gap is still open rather than writing the resolution itself.
       ref: O4
-      status: pending
+      status: implemented
     - claims:
         - declared-validators-resolve
         - proposals-are-checkable
@@ -122,7 +122,7 @@ objectives:
       id: 01a0102c-a360-7f3c-8800-13778ba3d42f
       outcome: Validate and report contract_version, and bump the bound Contract to version 2 for the command it gains.
       ref: O6
-      status: pending
+      status: implemented
     - after:
         - O4
         - O6

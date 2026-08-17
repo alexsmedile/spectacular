@@ -253,16 +253,23 @@ type Bundle struct {
 	// against and re-hashing it asks a question with no remaining consequence.
 	// Set by validateContract, read by Notices.
 	contractDrift string
+
+	// contractVersion is the bound Contract's declared version, reported rather
+	// than enforced. Set by validateContractVersion, read by Notices.
+	contractVersion int
 }
 
 type Check struct {
-	Ref         string   `json:"ref"`
-	Path        string   `json:"path"`
-	Schema      string   `json:"schema"`
-	Valid       bool     `json:"valid"`
-	Legacy      bool     `json:"legacy"`
-	Checks      []string `json:"checks"`
-	Fingerprint string   `json:"fingerprint,omitempty"`
+	Ref string `json:"ref"`
+	// ContractVersion is the bound Contract's declared version. Reported, never
+	// enforced: a Mission bound to an earlier version simply ran against it.
+	ContractVersion int      `json:"contract_version,omitempty"`
+	Path            string   `json:"path"`
+	Schema          string   `json:"schema"`
+	Valid           bool     `json:"valid"`
+	Legacy          bool     `json:"legacy"`
+	Checks          []string `json:"checks"`
+	Fingerprint     string   `json:"fingerprint,omitempty"`
 	// Authority is the decision table the authority-vocabulary validator
 	// already resolves and previously discarded. It is derived on read.
 	Authority []AuthorityAnswer `json:"authority,omitempty"`

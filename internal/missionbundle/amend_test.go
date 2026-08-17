@@ -332,3 +332,77 @@ func yamlUnmarshalFrontmatter(t *testing.T, record string, out any) error {
 	}
 	return yaml.Unmarshal([]byte(frontmatter), out)
 }
+
+// Completion enforces the declaration instead of executing it. A Mission that said
+// it would close a Gap has not finished until the Gap is closed, and the refusal has
+// to name the command that closes it — the failure the original stale_fingerprint
+// refusal made was naming an amend path that did not exist.
+func TestCompletionRefusesWhileADeclaredGapIsStillOpen(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gap, contractRef := anOpenGap(t, ws)
+	bundle, err := Load(ws, "M9")
+	if err != nil {
+		t.Fatal(err)
+	}
+	service := Service{Workspace: ws}
+
+	// Declaring nothing leaves completion exactly as it was.
+	if err := service.assertDeclaredGapsClosed(bundle); err != nil {
+		t.Fatalf("a Mission declaring no Gaps must be unaffected, got %v", err)
+	}
+
+	bundle.Contract.Ref = contractRef
+	bundle.ResolvesGaps = []ResolvedGap{{Gap: gap, Resolution: "whatever this Mission promised"}}
+	err = service.assertDeclaredGapsClosed(bundle)
+	if err == nil {
+		t.Fatal("completion must refuse while a declared Gap is still open")
+	}
+	if !strings.Contains(err.Error(), gap) {
+		t.Fatalf("refusal does not name the Gap: %v", err)
+	}
+	// Recovery is where a refusal states the fix; Error() carries only code, field,
+	// and problem, and the CLI prints the correction separately.
+	refusal, ok := err.(*domain.Refusal)
+	if !ok {
+		t.Fatalf("returned %T, want a typed refusal", err)
+	}
+	if !strings.Contains(refusal.Recovery, "contract amend") || !strings.Contains(refusal.Recovery, gap) {
+		t.Fatalf("correction does not name the command that closes it: %q", refusal.Recovery)
+	}
+
+	// A Gap that already carries a resolution satisfies the declaration.
+	closed, closedContract := aClosedGap(t, ws)
+	bundle.Contract.Ref = closedContract
+	bundle.ResolvesGaps = []ResolvedGap{{Gap: closed, Resolution: "already written"}}
+	if err := service.assertDeclaredGapsClosed(bundle); err != nil {
+		t.Fatalf("a closed Gap must satisfy the declaration, got %v", err)
+	}
+}
+
+func aClosedGap(t *testing.T, ws *discovery.Workspace) (string, string) {
+	t.Helper()
+	for _, entry := range ws.Entries {
+		if entry.Document == nil || entry.Document.Record.Type != domain.Contract {
+			continue
+		}
+		ref := string(domain.Contract) + ":" + entry.Document.Record.ID.String()
+		gaps, err := ContractGaps(ws, ref)
+		if err != nil {
+			continue
+		}
+		for _, gap := range gaps {
+			if gap.Resolution != "" {
+				return gap.Ref, ref
+			}
+		}
+	}
+	t.Skip("no Contract in the workspace carries a closed Gap")
+	return "", ""
+}

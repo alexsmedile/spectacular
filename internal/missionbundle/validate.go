@@ -28,6 +28,7 @@ var registry = []validator{
 	{"uuidv7-identity", validateIdentity},
 	{"reference-integrity", validateReferences},
 	{"contract-binding", validateContract},
+	{"contract-version", validateContractVersion},
 	{"baseline-binding", validateBaseline},
 	{"activation-fingerprint", validateActivation},
 	{"completion-claim-coverage", validateClaims},
@@ -75,6 +76,7 @@ func Validate(ws *discovery.Workspace, b *Bundle) (Check, error) {
 	if b.Activation != nil {
 		check.Fingerprint = b.Activation.Fingerprint
 	}
+	check.ContractVersion = b.contractVersion
 	check.Authority = b.AuthorityTable()
 	check.Drift = b.Drift()
 	check.Notices = b.Notices()

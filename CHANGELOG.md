@@ -2,10 +2,52 @@
 
 ## [Unreleased]
 
+A delegation is now a record rather than a chat message, and record paths resolve
+through one system instead of two.
+
+- Adds `handoff record <mission-ref> <handoff.md|-> --by <sender>`, which files a
+  delegation into the Mission bundle and binds the exact commit and tree it was sent
+  against, verified against the repository. A Handoff separates `asserted` — what the
+  sender verified — from `assumed`, what the sender is carrying on trust; both are
+  required, an empty list is a legal statement and an absent one is not. Neither is ever
+  scored: the split records a claim its sender signs, and the receiver re-verifies
+  everything under `assumed` before acting on it.
+- A recorded Handoff is frozen and corrected by recording a new one carrying
+  `supersedes:`. The original survives as what its sender believed at the time, and
+  `mission show` points a reader of a superseded record forward to the one that is
+  current. A Handoff is never edited in place.
+- Resolves the Review record path through the layout system rather than a hardcoded
+  join, so Reviews and Handoffs are placed by one mechanism. No recorded Review moved.
+- The command surface goes to thirteen, authorized by the owner. `proposal create`
+  stays forbidden.
 - Restates the command-surface rule. Adding a command now requires owner authorization
   and the count is reported rather than defended, replacing a hard stop at twelve. The
   number was a proxy for keeping the surface from sprawling unnoticed, and as an absolute
   it would have refused a correct command in order to protect a count.
+- Fixes the Gap rewrite mistaking text for a key. It located `blocked_on:` by walking
+  lines without tracking block-scalar depth, so a Gap whose `problem:` scalar contained
+  the literal text would have had the resolution spliced into the middle of a sentence
+  while the real key stayed untouched. The textual approach is kept deliberately, so an
+  amendment's diff still touches only what it changed.
+- Re-pointing a bound Mission now refuses when the old Contract fingerprint appears more
+  than once in the Mission file, naming the Mission, the fingerprint, and every
+  occurrence, rather than rewriting the first one and leaving the real binding stale.
+  The refusal was chosen over anchoring to the `contract:` block because it turns a
+  silent corruption into a stated problem.
+- Amendment no longer refuses while the Mission that declared the Gap is live. Completion
+  refuses until a declared Gap closes and amendment refused while the declaring Mission
+  was live, which deadlocked the first Mission ever to declare one. A Mission closing the
+  Gap whose wording it froze at its own activation gate is exempt; an unrelated live bound
+  Mission still blocks, and an owner `--resolution` override is never exempt because its
+  wording was typed at a prompt rather than approved at an activation gate.
+- Re-points only the live Mission. Amendments previously rewrote `contract.fingerprint`
+  on every bound Mission, completed and archived included. A completed Mission's binding
+  is the historical fact of which agreement it was executed against, and rewriting it
+  replaces that fact with today's answer — destroying the record re-pointing was meant to
+  protect. The stale binding was never a defect: `mission check` reports it as a
+  contract-drift notice, the Mission stays valid, and `git log -S <fingerprint>` recovers
+  the exact Contract text in force. A live Mission still re-points, because its binding is
+  a statement about the present.
 
 ## 2.3.0 — 2026-08-17
 

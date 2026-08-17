@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.3.0 — 2026-08-17
+
 A signed Contract can now be amended, so a Contract that becomes wrong no longer
 stays wrong, and every check a Contract declares either runs or fails loudly.
 

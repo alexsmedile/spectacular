@@ -2,9 +2,9 @@
 type: Mission
 id: 01a0102c-a360-71fe-a1be-8e1b010460b2
 title: Make a resolved Gap closable and a declared check real
-status: active
+status: completed
 created: "2026-08-17T15:01:01Z"
-updated: "2026-08-17T15:38:12Z"
+updated: "2026-08-17T15:52:40Z"
 activation:
     at: "2026-08-17T15:01:01Z"
     by: Alex
@@ -60,6 +60,12 @@ completion:
     - claim: workflow-states-the-step
       pass_boundary: 'The close reference states that a Mission declares the Gaps it resolved and that completion amends the Contract. The line asserting there is no separate Contract reconciliation command is corrected rather than deleted: there is still no separate command, and it now says why — reconciliation is part of completion. The prepare reference states that a Mission resolving a Gap declares it at plan time. The Skill does not grow: the hand-written Gap sweep prose the previous Mission needed is no longer necessary, and line counts before and after are recorded.'
       proof_requirement: The references are re-read end to end for a Mission that resolves a Gap and one that does not, confirming neither path acquires steps. Line counts before and after are recorded in the Evidence.
+completion_record:
+    at: "2026-08-17T15:52:40Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 37aead960967a657e4134c912bca1b34a8146f06
 contract:
     fingerprint: sha256:315f4ad56bd85ccc8b0bc616988180b0c4af0dcd12868478f4562e7747fd25f6
     ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -149,7 +155,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-17T15:01:01Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - cmd/spectacular/

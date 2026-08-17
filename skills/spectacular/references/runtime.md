@@ -70,6 +70,9 @@ A recorded Handoff is frozen. Correct it by recording a new one carrying
 `mission show` points a reader of the superseded record forward to the one that
 is current. Never edit a Handoff in place.
 
+The receiving agent inspects incoming Handoffs via `spectacular mission show <ref> --json`
+or directly in `.spectacular/missions/<mission>/handoffs/`.
+
 ## Fan out sparingly
 
 Delegate only cohesive mid-to-long work whose claim ownership is disjoint.

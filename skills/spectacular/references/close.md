@@ -2,7 +2,9 @@
 
 ## Assess each claim
 
-Check every completion claim against its frozen pass boundary. For each one:
+Check every completion claim against its frozen pass boundary using the FROST
+framework (Frozen fit, Risk, Operability, System integrity, Truth of proof)
+defined in [audit.md](audit.md). For each one:
 
 - does the Evidence meet the stated proof requirement
 - is that Evidence attributable to a method, not just asserted
@@ -33,13 +35,34 @@ Earned only when the Mission requires clustered or independent review.
 spectacular review record <mission-ref> <review.md|-> --json
 ```
 
-The record holds:
+The review input is a Markdown file with `ReviewDraft` frontmatter:
 
-- reviewed tree and fingerprint
-- reviewer identity, and their relation to the operator
-- claim-by-claim verdicts
-- findings and limitations
-- time
+```yaml
+---
+type: ReviewDraft
+title: Independent review of M<n>
+status: passed
+reviewed:
+    commit: <40-char-git-commit>
+    tree: <40-char-git-tree>
+    activation_fingerprint: <sha256-mission-activation-fingerprint>
+reviewer:
+    actor: <identity-different-from-operator>
+    operator: <operator-name>
+    relation_to_operator: independent
+    implemented_reviewed_scope: false
+    independence_basis: <attributable statement of independence>
+    evidence:
+        - <attributable command or observation>
+claims:
+    - claim: <exact-claim-name-from-mission>
+      verdict: pass
+findings: []
+limitations: []
+---
+
+# Review body
+```
 
 **Independent review needs a reviewer who did not implement the reviewed scope.**
 A fresh agent is not automatically an independent one. Freshness is not

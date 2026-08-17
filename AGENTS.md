@@ -18,6 +18,15 @@ compatibility readers, migrations, generic record/search verbs, or a second
 package root. Keep release version values aligned through `VERSION` and the
 generated mechanical interface.
 
+The public command surface is twelve commands. Growth past twelve is a stop, not a
+judgement call: argue the case in a Proposal and let the owner decide. `proposal
+create` stays forbidden.
+
+A Contract is amended through `contract amend`, never by editing a bound Contract by
+hand. An amendment may reach the `gaps:` block and editorial frontmatter only;
+changing a field that states what was agreed is a `contract_version:` bump instead.
+A Gap is never closed by deleting it — its entry survives with a stated resolution.
+
 ## `docs/` is human-facing product documentation
 
 `docs/` holds the public documentation for Spectacular — the kind of material

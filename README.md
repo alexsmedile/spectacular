@@ -207,7 +207,7 @@ Spectacular v2 stores a compact, clean set of canonical Markdown documents under
 ├── ARCHITECTURE.md      # Architecture Anchor
 ├── PRODUCT.md           # Product Anchor
 ├── STACK.md             # Technology stack Anchor
-├── contracts/           # Accepted product specifications and mechanical contracts
+├── contracts/           # Accepted specifications, plus an append-only amendment log per Contract
 ├── missions/            # Bounded execution plans (MISSION.md, reviews, evidence)
 ├── proposals/           # Optional candidate explorations (P1, P2, ...)
 ├── decisions/           # Durable architectural decision records (ADRs)

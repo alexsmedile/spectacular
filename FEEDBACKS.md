@@ -428,3 +428,69 @@ The mode is recorded in the Run body and honored for the whole Mission. Owner ga
 and stops fire in every mode: autopilot means fewer interruptions, never fewer
 gates. Default is checkpoints at Objective boundaries when the question was never
 asked.
+
+## Two latent assumptions in `contract amend`
+
+**Found:** 2026-08-17, independent review of M11 (RV1). **Where:**
+`internal/missionbundle/amend.go`.
+
+Both were raised as attack surfaces in the review handoff, both were confirmed by
+the reviewer as documented limitations rather than defects, and both are true today
+only because of how the workspace happens to be authored. Neither is enforced.
+
+### The Gap rewrite matches `blocked_on:` by line
+
+`rewriteGap` finds the target Gap by ref, then walks forward looking for a line
+matching `^(\s*)blocked_on:`. It splices that key and its indented continuation and
+emits a folded block scalar in place.
+
+This is deliberate. The alternative — decode the Contract and re-emit canonical
+YAML — reflows every block scalar in the file, and an amendment whose diff touches
+prose it did not change is not reviewable. That tradeoff is the right one.
+
+The cost is that the match is textual. A Gap whose `problem:` is itself a block
+scalar containing the literal text `blocked_on:` would collide, because the walk
+does not know it is inside a scalar body. The reviewer reached the same conclusion
+independently.
+
+`assertOnlyAmendableFieldsChanged` limits the blast radius: a mangling that moved a
+top-level key outside `{gaps, updated}` refuses. But a mangling confined to the
+`gaps:` block passes that guard, because `gaps:` is exactly what an amendment is
+allowed to change.
+
+### Re-pointing assumes the fingerprint appears once per Mission
+
+`repointBoundMissions` calls `strings.Replace(data, old, new, 1)` on the raw Mission
+file. It rewrites the first occurrence of the old fingerprint string.
+
+Verified across every Mission in the workspace: each contains its
+`contract.fingerprint` exactly once. So the single-occurrence assumption holds — and
+nothing checks it. A Mission that quoted its own bound fingerprint in prose, a
+`pass_boundary`, or a rejected approach could have the wrong occurrence rewritten,
+and the record would still parse.
+
+M9 demonstrates the shape is plausible: its body quotes a `stale_fingerprint`
+refusal verbatim, including a fingerprint value. It happens to be a different
+fingerprint.
+
+### Why these are written here rather than patched
+
+M11 was implemented and under independent review when both were confirmed. Amending
+a Mission's scope to absorb a defect found during its own review is the drift the
+freeze exists to prevent, and the review is bound to a specific tree.
+
+Both belong as Gaps on `CC-missioncli`, which owns the mechanical surface. That is
+now possible: M11 built `contract amend`, and a Gap declared on a Contract can be
+closed by the Mission that resolves it. Writing them as Gaps is the first ordinary
+use of the mechanism rather than a special case.
+
+### What the fixes probably are
+
+For the rewrite: track block-scalar depth while walking, so a `blocked_on:` inside a
+scalar body is skipped. Cheap, and testable with the adversarial fixture the
+reviewer described.
+
+For re-pointing: anchor the replacement to the `contract:` block rather than the raw
+file, or refuse when the fingerprint appears more than once and say which lines. The
+second is smaller and turns a silent corruption into a refusal, which is the right
+direction for a mechanism that rewrites records the owner is not reading.

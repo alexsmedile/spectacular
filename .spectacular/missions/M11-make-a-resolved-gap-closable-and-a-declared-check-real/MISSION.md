@@ -4,7 +4,7 @@ id: 01a0102c-a360-71fe-a1be-8e1b010460b2
 title: Make a resolved Gap closable and a declared check real
 status: active
 created: "2026-08-17T15:01:01Z"
-updated: "2026-08-17T15:28:25Z"
+updated: "2026-08-17T15:38:12Z"
 activation:
     at: "2026-08-17T15:01:01Z"
     by: Alex
@@ -137,6 +137,11 @@ owner: Alex
 ref: M11
 repair_budget: 3
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m11-gap-closure-declared-check-resolution-contract-amend-command-and-versioning.md
+      id: 01a0103d-7fc8-74d4-9a8c-f3dae87cc687
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a0102c-a360-7a28-bc91-25908aa0e5c5

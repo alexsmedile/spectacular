@@ -28,6 +28,68 @@
 - [ ] Decide whether `TODO.md` should remain local-only and gitignored. If so, mirror every durable team-visible follow-up into a tracked Spectacular idea, question, roadmap entry, or request so pushing a branch cannot lose it.
 - [ ] Confirm that ignored canonical snapshots are intentionally local recovery artifacts. If any snapshot must travel with a review or release, define an explicit export/evidence mechanism rather than silently force-adding `_snapshots/`.
 
+## Handoff records — the layout exists, nothing creates one (2026-08-17)
+
+A `Handoff` is already a first-class record type with a Mission-scoped home. Nothing
+creates one, and no Handoff exists in the workspace.
+
+Already built:
+
+- `domain.Handoff` is a valid record type (`internal/domain/reference.go`).
+- `internal/humanlayout/layout.go` routes it to
+  `.spectacular/missions/<mission>/handoffs/H<n>-<shortkey>-<title>.md`, with `H` as the
+  ref prefix, `mission:` as the parent field, and a short-key suffix like Evidence and
+  Decisions.
+- `internal/discovery/discovery.go` recognizes `handoffs` as a collection root.
+
+Missing: any way to write one, and any schema saying what a Handoff must carry.
+
+Note the inversion against Review, which is the same feature from the other end:
+
+| | Handoff | Review |
+|---|---|---|
+| layout rule | yes (`layout.go`) | none |
+| creating command | none | `review record` (`service.go:540`, path hardcoded) |
+| collection root in discovery | yes | no |
+
+So `reviews/` works by convention inside one function rather than through the layout
+system, and `handoffs/` works through the layout system with nothing to invoke it.
+Whatever fixes either should probably fix both.
+
+Why it earns attention rather than sitting reserved: session handoffs are being written
+by hand into scratch files today, and one of them was materially wrong. The M9-to-M10
+handoff asserted that a completed Mission's Contract could be amended "when nothing is
+bound to it" — no such window existed, and acting on it refused four Missions at once.
+A handoff is the artifact a fresh agent acts on when its context is emptiest, and it is
+the only one in the workflow whose accuracy has been shown to matter and is not checked
+at all. Contracts carry fingerprints, Missions run twenty-one validators, Reviews carry
+independence rules; a handoff is a temp file.
+
+**Decided: a Handoff is frozen** (owner, 2026-08-17). It attests to a state at a moment,
+and a handoff edited after the receiving agent read it is not the document that was acted
+on. It binds to a commit, a tree, and an activation fingerprint the way a Review does, so
+a receiving agent can tell whether what it was handed still describes the workspace.
+
+The consequence to design deliberately: a frozen handoff cannot be corrected in place, and
+handoffs have been wrong. The receiving agent needs somewhere to record that the document
+it was given was mistaken — an appended correction, a second Handoff superseding the first,
+or a finding on the Mission. Silent divergence between a frozen handoff and reality is the
+failure mode to avoid, not the freeze itself.
+
+Open before building:
+
+- [ ] How a receiving agent records that a frozen Handoff was wrong: an appended
+      correction block, a superseding Handoff with a `supersedes:` ref, or a finding on
+      the Mission. The M9-to-M10 handoff would have needed this.
+- [ ] What must a Handoff carry to be checkable: reviewed commit and tree, the Mission
+      and activation fingerprint it describes, sender identity, and what is asserted
+      versus what is assumed. The wrong assertion above would have been caught by a
+      field distinguishing the two.
+- [ ] Whether this needs a command at all, or whether `handoff` stays authored as
+      Markdown and validated, the way Proposals are. The command surface is at twelve
+      and growth past it is a stop.
+- [ ] Whether Review's hardcoded path moves into `layout.go` at the same time.
+
 ## Configurable workspace folder name
 
 Currently the workspace directory is hardcoded as `.spectacular/`. Let users configure it at `init` time (and persist the choice) so it fits the host project's naming preference.

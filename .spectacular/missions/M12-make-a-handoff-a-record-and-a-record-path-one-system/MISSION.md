@@ -4,7 +4,7 @@ id: 01a010a6-01b0-7323-a6a6-7bc38c571762
 title: Make a handoff a record and a record path one system
 status: active
 created: "2026-08-17T21:31:06Z"
-updated: "2026-08-17T22:36:28Z"
+updated: "2026-08-17T23:00:49Z"
 activation:
     at: "2026-08-17T21:31:06Z"
     by: Alex
@@ -133,6 +133,11 @@ resolves_gaps:
     - gap: repoint-assumes-one-fingerprint
       resolution: Re-pointing a bound Mission refuses when the old Contract fingerprint appears more than once in the Mission file, naming the Mission, the fingerprint, and every occurrence, rather than rewriting the first one. The refusal was chosen over anchoring to the `contract:` block because it is smaller and turns a silent corruption into a stated problem in a mechanism that rewrites records the owner is not reading. Anchoring remains available later if the refusal proves noisy.
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m12.md
+      id: 01a011a2-a190-74b1-961d-cccec7f9f582
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a010a6-01b0-7320-acc2-5c695bec2843

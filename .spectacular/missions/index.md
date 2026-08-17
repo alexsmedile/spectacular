@@ -6,6 +6,7 @@
 | `M11` | Mission | Make a resolved Gap closable and a declared check real | `.spectacular/missions/M11-make-a-resolved-gap-closable-and-a-declared-check-real/MISSION.md` |
 | `M11/RV1` | Review | Independent review of M11 gap closure, declared check resolution, contract amend command, and versioning | `.spectacular/missions/M11-make-a-resolved-gap-closable-and-a-declared-check-real/reviews/RV1-independent-review-of-m11-gap-closure-declared-check-resolution-contract-amend-command-and-versioning.md` |
 | `M12` | Mission | Make a handoff a record and a record path one system | `.spectacular/missions/M12-make-a-handoff-a-record-and-a-record-path-one-system/MISSION.md` |
+| `M12/RV1` | Review | Independent review of M12 | `.spectacular/missions/M12-make-a-handoff-a-record-and-a-record-path-one-system/reviews/RV1-independent-review-of-m12.md` |
 | `M2` | Mission | Implement answer-key governed autonomy | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/MISSION.md` |
 | `M2/D1-znlkfe` | Decision | Activate the v2.1 governed-autonomy Mission | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/decisions/D1-znlkfe.md` |
 | `M2/O1` | Objective | Preparation compiles and freezes minimal completion criteria with explicit readiness diagnostics. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O1-preparation-compiles-and-freezes-minimal-completion-criteria-with-explicit-readiness-diagnostics.md` |

@@ -31,6 +31,38 @@ The tooling computes it. Do not hand-roll a hash to make a check pass.
 A normal start creates one file:
 `.spectacular/missions/<slug>/MISSION.md`, with inline Objectives and R1.
 
+### Settle the execution mode in the same breath as activation
+
+Activation authorizes the plan. It does not say how often the owner wants to be
+interrupted while it runs — and asking that question later, one Objective at a
+time, is how a Mission turns into homework.
+
+Ask it once, with activation, as a single question offering three modes:
+
+| Mode | The owner is asked | Fits |
+|---|---|---|
+| **Autopilot** | only at owner gates and stops | mechanical work, reversible steps, a plan the owner already read closely |
+| **Checkpoints** | at named points, briefly | most Missions; the default when unsure |
+| **HITL** | at a specific named human activity | work that genuinely needs the owner's hands or eyes at a known moment |
+
+Two rules make the answer usable:
+
+- **Restate the checkpoints when offering the mode.** "Checkpoints" means nothing
+  until the owner sees which ones — name them, one line each, from the Objective
+  graph: end of each Objective, end of each Run, or a specific boundary. Three to
+  five is a checkpoint list; every Objective is not.
+- **For HITL, name the activity and the moment.** Not "I'll check in during O3" but
+  "before deleting `internal/context`, you confirm the dependency walk". If you
+  cannot name what the human does, it is a checkpoint, not HITL.
+
+Record the answer in the Run body and honor it for the whole Mission. Owner gates
+and stop conditions still fire in every mode — autopilot means fewer interruptions,
+never fewer gates. An owner who chose autopilot has not authorized scope expansion,
+an irreversible effect, or working past a stop.
+
+If the mode was never settled, default to checkpoints at Objective boundaries and
+say that you are doing so.
+
 Two things that are not activation authority:
 
 - A Proposal is optional input. Mission start never creates one.
@@ -76,6 +108,98 @@ Then recheck:
 A material semantic change goes back to the owner. Reversible implementation
 changes stay with the operator.
 
+## Pick the isolation the job needs
+
+Two independent questions, and answering only the first is how work gets lost.
+
+**Which branch does this commit belong on?** — decides what the history looks like.
+**Which working tree do I edit in?** — decides whether a concurrent session can
+destroy it.
+
+A branch alone gives no protection from a second session: branches share one
+working tree, and `checkout`, `stash`, and `reset` operate on all of it. A worktree
+gives a second directory with its own checked-out branch, so two sessions cannot
+reach each other's files.
+
+| Situation | Branch | Worktree |
+|---|---|---|
+| One session, one Mission | Mission branch | no — the main tree is yours |
+| Owner-requested quick patch, nothing else running | `main` directly | no |
+| A second session runs while a Mission is in flight | separate branches | **yes, one per session** |
+| Reviewing a Mission while its author keeps working | reviewer takes a worktree at the reviewed commit | **yes** |
+| A subagent editing files you also edit | same branch, same tree | no — a worktree would fork the work |
+
+The rule of thumb: **a branch separates history; a worktree separates hands.** Add
+the worktree when two sets of hands are live at once, not merely when two topics
+are.
+
+### Two sessions at once
+
+This is the case that needs setting up before it is needed, not during. A Mission
+session and a feedback session sharing one tree will collide the first time either
+switches branches.
+
+```bash
+git worktree add ../<repo>-<purpose> <branch>   # second directory, own branch
+git worktree add ../<repo>-review <commit>      # detached, for reviewing a fixed tree
+git worktree list                               # what exists now
+git worktree remove ../<repo>-<purpose>         # when done
+```
+
+Each session works in its own directory and never `cd`s into the other. Both share
+one `.git`, so history, branches, and merges behave normally.
+
+Split the work by surface, and the branches almost never touch the same files:
+
+- **Mission code** — `internal/`, `cmd/`, `test/` — on the Mission branch.
+- **Skill, feedback, and docs** — `skills/`, `FEEDBACKS.md`, `TODO.md`, `docs/` —
+  on `main`. These record what the Mission is teaching you while it runs, and
+  holding them hostage to the Mission's review is what makes them never get written.
+
+When a worktree is live, say which tree you are in before any Git operation. "On
+branch X" is not enough information when three trees exist.
+
+### Worktree hazards
+
+- **A branch can only be checked out in one tree.** While `main` is checked out in
+  a worktree, the primary tree cannot switch to it. This is a feature — it is what
+  makes the isolation real — but it surprises the first time.
+- **Stale worktrees keep old code alive.** Agent worktrees under `.claude/` hold
+  full copies at whatever commit they were created. After deleting a package, those
+  copies still contain it, and a repository-wide grep will find it. Exclude
+  non-module directories from structural checks, and remove worktrees the moment
+  they have served their purpose.
+- **`git worktree list` before assuming.** A tree you did not create may already
+  hold the branch you want.
+
+## Branch before you activate
+
+**A Mission gets its own branch. Create it before `mission start`, not after.**
+
+Multi-step work on `main` has no merge point, no review boundary, and no cheap
+way back. The Mission's own authority block gates `merge` for the owner, which
+presupposes there is something to merge *from*; activating on `main` quietly
+removes that gate by removing its subject.
+
+```bash
+git checkout -b <mission-slug>      # before mission start
+```
+
+`mission start` records the current branch into `baseline:`, so the branch must
+exist first. A Mission whose `baseline: branch: main` is a Mission that skipped
+this step — check for it when resuming, and say so rather than continuing
+silently.
+
+The one exception: the owner asks for immediate action or a quick patch, **and**
+no concurrent session is running. Then patching `main` directly is allowed. State
+that you are taking the exception and why. Anything multi-step is not a quick
+patch, whatever it was called when it started.
+
+Retrofitting a branch after commits have landed on `main` is possible but not
+free — `git branch <name> <sha>` then `git reset --hard <base>` moves the commits,
+and the reset **discards every uncommitted change in the working tree**. Commit or
+stash first.
+
 ## Choose the branch before you edit
 
 A Mission's work belongs on the branch its `baseline:` names. Before starting a
@@ -96,14 +220,9 @@ and the resolution is where work gets silently reverted.
 Start a separate branch only when the file sets are genuinely disjoint. Isolation
 buys a clean review only when nothing else is editing the same lines.
 
-Two related traps:
-
-- A worktree holds its branch. While `main` is checked out in one, no other tree
-  can check it out. Remove a worktree the moment it has served its purpose:
-  `git worktree remove <path>`.
-- If both branches have already diverged on the same file, reconcile on the
-  feature branch — `git merge main` there, resolve, verify — and only then move it
-  onto `main`. Never resolve a content conflict directly on `main`.
+If both branches have already diverged on the same file, reconcile on the feature
+branch — `git merge main` there, resolve, verify — and only then move it onto
+`main`. Never resolve a content conflict directly on `main`.
 
 ## Work in outcome-sized clusters
 

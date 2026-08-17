@@ -34,7 +34,7 @@ stay in their own providers.
 
 2. **Run one read-only preflight.** Check:
    - workspace, and which Mission is selected
-   - Git: branch, clean tree, fresh against upstream/default, release state
+   - Git: branch, worktrees, clean tree, fresh against upstream/default, release state
    - Contract and baseline bindings
    - owner, activation time, activation fingerprint
    - validation mode
@@ -42,6 +42,21 @@ stay in their own providers.
    - blockers: dependencies, Gaps, stops
 
    Report three lines: plain outcome, one technical evidence line, one next action.
+
+   Answer two isolation questions, not one. **Which branch** decides what the
+   history looks like; **which working tree** decides whether a concurrent session
+   can destroy the work. A branch alone shares one tree, so `checkout`, `stash`,
+   and `reset` still reach everything.
+
+   If the preflight lands on the default branch and the job is multi-step, branch
+   before activating — `git checkout -b <mission-slug>`. Working a Mission on
+   `main` leaves no merge point and no review boundary. The exception is an
+   owner-requested quick patch with no concurrent session; take it explicitly, not
+   silently.
+
+   Run `git worktree list` as part of this check. If a second session is live — a
+   reviewer, a feedback session, another Mission — take a worktree rather than
+   sharing the tree. A branch separates history; a worktree separates hands.
 
 3. **Enter the Mission through `MISSION.md`.** Read its frontmatter control card
    and its body. Follow pointers to Objective, Run, Evidence, or review files only
@@ -134,6 +149,16 @@ attribute to the owner by name.
 
 When you do act on an authorization, record who authorized and who performed. An
 operator acting on owner approval is not the owner acting.
+
+### Settle execution mode at activation
+
+Activation is also when to ask how much the owner wants to be involved while the
+Mission runs: autopilot, checkpoints, or a named human-in-the-loop moment. Ask it
+once, alongside the activation gate, and name the actual checkpoints rather than
+offering the word. Owner gates and stops fire in every mode.
+
+See [execute.md](references/execute.md) for the three modes and what makes an
+answer usable.
 
 ### Batch gates; ask once
 

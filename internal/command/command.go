@@ -459,7 +459,15 @@ func (r Runner) refuse(jsonMode bool, invoked string, err error) int {
 		if field != "" {
 			fmt.Fprintf(r.Stderr, " field %s", field)
 		}
-		fmt.Fprintf(r.Stderr, ": %s\ncorrection: %s\n", problem, correction)
+		fmt.Fprintf(r.Stderr, ": %s\n", problem)
+		// The JSON envelope already carries `actual`; the human path dropped it,
+		// so a decode failure named the field and hid the parser's line number.
+		// A reader then hunts for a bad field when a mistyped character several
+		// lines away is the real fault.
+		if detail := strings.TrimSpace(strings.ReplaceAll(actual, "\n", "; ")); detail != "" && detail != problem {
+			fmt.Fprintf(r.Stderr, "cause: %s\n", detail)
+		}
+		fmt.Fprintf(r.Stderr, "correction: %s\n", correction)
 	}
 	return 3
 }

@@ -309,6 +309,30 @@ func TestRefusalIsTypedAndDoesNotMutate(t *testing.T) {
 	}
 }
 
+// TestHumanRefusalSurfacesTheUnderlyingCause asserts the human output carries the
+// wrapped cause, not only the field. A YAML syntax error surfaces as
+// invalid_known_field on `input`, which reads as "you named a field that does not
+// exist" and sends the reader hunting through field names. The parser's line
+// number is the only text that points at the real fault, and the JSON envelope
+// already carried it while the human path dropped it.
+func TestHumanRefusalSurfacesTheUnderlyingCause(t *testing.T) {
+	root, contractRef := fixture(t)
+	// A scalar opening with a backtick is a YAML reserved indicator, not a field error.
+	plan := "---\ntype: MissionPlan\ntitle: Probe\nowner: Alex\ncontract:\n  ref: " +
+		contractRef + "\noutcome: `backtick opens this scalar`\n---\n# Probe\n"
+
+	human := run(t, root, []byte(plan), 3, "mission", "start", "-")
+	if !strings.Contains(human, "cause:") || !strings.Contains(human, "line 6") {
+		t.Fatalf("human refusal hides the parser cause and its line number: %s", human)
+	}
+
+	// The JSON envelope must keep carrying it in the `actual` field.
+	structured := run(t, root, []byte(plan), 3, "mission", "start", "-", "--json")
+	if !strings.Contains(structured, "line 6") {
+		t.Fatalf("JSON refusal lost the parser cause: %s", structured)
+	}
+}
+
 func run(t *testing.T, root string, stdin []byte, want int, args ...string) string {
 	t.Helper()
 	var stdout, stderr bytes.Buffer

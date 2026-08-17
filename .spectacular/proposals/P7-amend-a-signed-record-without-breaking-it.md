@@ -6,7 +6,7 @@ title: Amend a signed record without breaking it
 status: draft
 created_by: Alex
 created: "2026-08-17T11:29:31Z"
-updated: "2026-08-17T12:05:00Z"
+updated: "2026-08-17T12:18:00Z"
 scope:
     - v2
 target_contract: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -160,11 +160,13 @@ genuinely constrains what is being judged.
 
 ## Approaches considered and declined
 
-- **Move Gaps out of Contracts into their own record type.** A Mission could then close a
-  Gap without touching the frozen Contract. Declined: it adds a noun, and
-  `CC-missioncli`'s ten-command surface is closed with growth named as a stop. It also
-  costs a migration to solve a problem the status gate solves without one. Note that
-  partial scaffolding for this already exists and is unused — see "Still open" below.
+- **Move *all* Gaps out of Contracts into their own record type.** A Mission could then
+  close any Gap without touching the frozen Contract. Declined as the general answer: a
+  Gap that qualifies a Contract is part of what the owner accepted, and relocating it to
+  dodge the seal is the same weakening as excluding it from the fingerprint, one
+  indirection further out. It also costs a migration to solve a problem the status gate
+  solves without one. Standalone Gaps are still wanted for Gaps that were never
+  Contract-shaped — see the decision below.
 - **Exclude the `gaps:` block from the Contract fingerprint, the way Run progress is
   excluded.** Cheapest to implement and the most dangerous. A Gap is part of what the
   owner accepted; excluding it would let a live Mission quietly retire a blocker it was
@@ -225,18 +227,42 @@ Contract version instead. Without this limit, "amendment" becomes "rewrite with 
 steps" — the reason string is the only thing distinguishing the two, and nothing
 validates a reason string. The limit is what keeps the ceremony honest.
 
+**Versioning is `contract_version:` plus Git.** The field already exists on every
+Contract and is the right place to carry the version. Semantic change bumps it; the
+history of what changed is the commit history, which already records every Contract edit
+with its diff, author, time, and message. No new versioning machinery, no stored
+changelog, no superseded-Contract copies.
+
+This settles the division cleanly. `amendments:` records the small, in-place corrections
+the ceremony permits — the ones that must not silently rewrite an agreement. A
+`contract_version:` bump marks a semantic change, and Git carries its story. Note that no
+Go code reads `contract_version:` today; it is inert metadata, and `CC-v2prod` is already
+at `"2"` from an ordinary commit with no mechanism behind it. Any Mission that acts on
+versioning should make the field meaningful rather than assume it already is.
+
+**Gaps may be repository-wide or Mission-local.** `.spectacular/gaps/` as a collection
+root serves the first; a Mission-local Gap belongs with its Mission. This is why the
+scaffolding exists and why it should stay: not every Gap is a limitation of a Contract.
+A Gap discovered during execution that concerns only that Mission's work has no business
+in a signed agreement, and forcing it there is part of what created the problem this
+Proposal describes.
+
+That does not reverse the declined approach above. Gaps that qualify a Contract stay
+embedded in it, because they are part of what the owner accepted, and the ceremony is
+what closes them. What the standalone form adds is a home for the Gaps that were never
+Contract-shaped to begin with.
+
 ## Still open
 
-- **What does a new Contract version look like?** The scope limit above routes semantic
-  change to "a new Contract version", and `contract_version:` already exists on the
-  record, but nothing defines how versioning works or what happens to Missions bound to
-  the previous version. This is out of scope here and should not be settled by accident.
-- **`Gap` is already a record type.** `internal/domain/reference.go` lists `Gap` among
-  the valid record types, and `internal/discovery/discovery.go` already recognizes
-  `.spectacular/gaps/` as a standard collection root. Nothing uses either today. That
-  scaffolding suggests an earlier intent to make Gaps standalone records — the approach
-  declined above. Worth understanding before someone rediscovers it and assumes it is
-  the sanctioned path.
+- **Which Gaps belong where.** Repository-wide, Mission-local, and Contract-embedded are
+  three homes with no stated rule for choosing between them. The rule matters more than
+  the mechanism: without it, the standalone form becomes an escape hatch for Gaps that
+  should have qualified a Contract and been subject to the ceremony.
+- **`Gap` is already a record type with nothing using it.** `internal/domain/reference.go`
+  lists `Gap` among the valid record types and `internal/discovery/discovery.go` already
+  recognizes `.spectacular/gaps/` as a standard collection root, but no code reads either.
+  The scaffolding is now wanted rather than suspect — it needs a schema, a validator, and
+  a reference form before it is usable.
 
 ## Note on where this is written
 

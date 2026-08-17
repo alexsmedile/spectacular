@@ -11,10 +11,14 @@ import (
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 )
 
-// repointWorkspace builds a Contract with one open Gap and one completed Mission
-// bound to it, whose body carries `quoted` verbatim. The Mission's binding
-// fingerprint is computed from the Contract on disk, so the fixture re-points for
-// real rather than against an invented value.
+// repointWorkspace builds a Contract with one open Gap and one live Mission bound
+// to it, whose body carries `quoted` verbatim. The Mission's binding fingerprint is
+// computed from the Contract on disk, so the fixture re-points for real rather than
+// against an invented value.
+//
+// The Mission is live and declares the Gap because only a live Mission re-points:
+// a completed Mission keeps its historical binding, and a fixture using one would
+// pass this test vacuously by never reaching the code it exists to guard.
 func repointWorkspace(t *testing.T, quoted func(fingerprint string) string) (*discovery.Workspace, string, string) {
 	t.Helper()
 	root := t.TempDir()
@@ -55,7 +59,7 @@ type: Mission
 id: 01a010a6-01b0-7320-acc2-5c695bec2900
 ref: M1
 title: Bound mission
-status: completed
+status: active
 owner: Alex
 created: "2026-08-16T00:00:00Z"
 updated: "2026-08-16T00:00:00Z"
@@ -94,7 +98,11 @@ validation:
     schema: mission.v2
 authority:
     operator: []
-    requires_owner: []
+    requires_owner:
+        - amend-contract
+resolves_gaps:
+    - gap: open-gap
+      resolution: the frozen wording approved at activation
 scope:
     mechanical: []
     semantic: []
@@ -153,7 +161,7 @@ func TestRepointingRefusesAnAmbiguousFingerprint(t *testing.T) {
 			ws, contractRef, gap := repointWorkspace(t, test.body)
 			before := treeDigest(t, filepath.Join(ws.Root, ".spectacular"))
 			service := Service{Workspace: ws}
-			result, err := service.AmendContract(contractRef, gap, "Alex", "an owner-supplied resolution", false)
+			result, err := service.AmendContract(contractRef, gap, "Alex", "", false)
 
 			if !test.refuses {
 				if err != nil {
@@ -203,7 +211,7 @@ func TestDryRunReportsTheAmbiguousFingerprint(t *testing.T) {
 	})
 	before := treeDigest(t, filepath.Join(ws.Root, ".spectacular"))
 	service := Service{Workspace: ws}
-	if _, err := service.AmendContract(contractRef, gap, "Alex", "an owner-supplied resolution", true); err == nil {
+	if _, err := service.AmendContract(contractRef, gap, "Alex", "", true); err == nil {
 		t.Fatal("a dry run must report the ambiguity as a would-refuse")
 	}
 	if after := treeDigest(t, filepath.Join(ws.Root, ".spectacular")); after != before {

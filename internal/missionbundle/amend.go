@@ -280,6 +280,20 @@ func (s Service) repointBoundMissions(contractRef, fingerprint string) ([]string
 		if err != nil || bundle.Contract.Ref != contractRef || bundle.Contract.Fingerprint == fingerprint {
 			continue
 		}
+		// Only a live Mission re-points. A live Mission is still working against
+		// the Contract, so its binding has to track the current text or its own
+		// next check reports drift against an amendment it just made.
+		//
+		// A completed Mission is the opposite case. Its binding is the historical
+		// fact of what it agreed to, and rewriting it writes today's answer over
+		// that fact — destroying the record re-pointing was meant to protect. The
+		// stale binding is not a defect: `mission check` reports it as a
+		// contract-drift notice, the Mission stays valid, and `git log -S <old
+		// fingerprint>` finds the exact Contract text that was agreed. Re-pointing
+		// would replace a true, recoverable statement with a misleading one.
+		if bundle.Status != "active" {
+			continue
+		}
 		data, err := os.ReadFile(entry.Absolute)
 		if err != nil {
 			return nil, nil, invalidCause("mission", "cannot read a bound Mission", err)

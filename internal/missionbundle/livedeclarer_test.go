@@ -153,6 +153,58 @@ func TestALiveMissionThatDeclaresNothingStillBlocks(t *testing.T) {
 	}
 }
 
+// A completed Mission's binding is the historical fact of what it agreed to.
+// Re-pointing it would write today's Contract over that fact, destroying the record
+// re-pointing was meant to protect; the stale binding is instead reported as a
+// contract-drift notice and stays recoverable through `git log -S <fingerprint>`.
+// Only the live Mission, which is still working against the Contract, re-points.
+func TestOnlyALiveMissionIsRepointed(t *testing.T) {
+	ws, contractRef, gap := liveDeclarerWorkspace(t, true)
+
+	// A second Mission on the same Contract, completed, bound at the same text.
+	completed := filepath.Join(ws.Root, ".spectacular", "missions", "M2-done")
+	if err := os.MkdirAll(completed, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	live, err := os.ReadFile(filepath.Join(ws.Root, ".spectacular", "missions", "M1-live", "MISSION.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	done := strings.NewReplacer(
+		"ref: M1", "ref: M2",
+		"status: active", "status: completed",
+		"5c695bec2910", "5c695bec2920",
+		"5c695bec2911", "5c695bec2921",
+		"5c695bec2912", "5c695bec2922",
+	).Replace(string(live))
+	if err := os.WriteFile(filepath.Join(completed, "MISSION.md"), []byte(done), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	reopened, err := discovery.Open(ws.Root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	before, err := os.ReadFile(filepath.Join(completed, "MISSION.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := (Service{Workspace: reopened}).AmendContract(contractRef, gap, "Alex", "", false)
+	if err != nil {
+		t.Fatalf("the amendment must succeed, got: %v", err)
+	}
+	if len(result.Repointed) != 1 || result.Repointed[0] != "M1" {
+		t.Fatalf("re-pointed %v, want only the live Mission M1", result.Repointed)
+	}
+	after, err := os.ReadFile(filepath.Join(completed, "MISSION.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(after) != string(before) {
+		t.Fatal("a completed Mission's binding was rewritten; its historical record must survive verbatim")
+	}
+}
+
 // An override's wording was typed at a prompt, not frozen at an activation gate, so
 // it has no declaring Mission to be. The exemption must not become a way to hand-write
 // a resolution past the live guard by naming a Gap some live Mission happens to declare.

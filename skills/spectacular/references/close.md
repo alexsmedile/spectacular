@@ -110,8 +110,19 @@ would be re-pointed, and writes nothing. The text is the wording frozen in the
 Mission's declaration, so the owner approved it at activation.
 
 The amendment reaches the `gaps:` block and editorial fields only. A semantic
-change is a new `contract_version:`, not an amendment. It refuses while any bound
-Mission is live, so amend between Missions or stop the live one first.
+change is a new `contract_version:`, not an amendment.
+
+It refuses while a bound Mission that did **not** declare this Gap is live —
+that Mission still has the Contract constraining work in flight. The Mission that
+declared the Gap is the exception, and closes it while live; an owner
+`--resolution` override is never exempt, because its wording was typed at a
+prompt rather than approved at an activation gate.
+
+Only the live Mission is re-pointed to the new fingerprint. A completed Mission
+keeps the binding it agreed to: `mission check` reports the difference as a
+contract-drift notice, and `git log -S <fingerprint>` recovers the exact Contract
+text that was in force. Rewriting it would replace a historical fact with today's
+answer.
 
 A Gap is never closed by deleting it.
 

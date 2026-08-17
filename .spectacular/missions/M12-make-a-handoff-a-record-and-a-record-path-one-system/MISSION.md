@@ -4,7 +4,7 @@ id: 01a010a6-01b0-7323-a6a6-7bc38c571762
 title: Make a handoff a record and a record path one system
 status: active
 created: "2026-08-17T21:31:06Z"
-updated: "2026-08-17T22:21:39Z"
+updated: "2026-08-17T22:32:57Z"
 activation:
     at: "2026-08-17T21:31:06Z"
     by: Alex
@@ -107,13 +107,13 @@ objectives:
       id: 01a010a6-01b0-7289-bf41-e482299bd784
       outcome: Make the Gap rewrite block-scalar aware, closing gap-rewrite-matches-by-line.
       ref: O5
-      status: pending
+      status: implemented
     - claims:
         - repointing-refuses-an-ambiguous-fingerprint
       id: 01a010a6-01b0-78b7-895a-e22dc1448cef
       outcome: Refuse re-pointing when the old fingerprint is ambiguous, closing repoint-assumes-one-fingerprint.
       ref: O6
-      status: pending
+      status: implemented
     - after:
         - O4
         - O6

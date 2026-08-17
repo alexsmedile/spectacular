@@ -42,6 +42,37 @@ identity. The file then carries the exact:
 Accountability stays with the Mission owner. A host task or thread is only a
 destination pointer — it owns nothing.
 
+## Record the delegation as a Handoff
+
+```bash
+spectacular handoff record <mission-ref> <handoff.md|-> --by <sender> --json
+```
+
+The Handoff lands in the Mission bundle and binds the exact commit and tree it
+was sent against, verified against the repository. A delegation that lives only
+in a chat message or a temp file leaves no record of what was asked or what state
+it was asked against.
+
+Separate what you checked from what you are carrying over:
+
+| Field | Means |
+|---|---|
+| `asserted` | the sender verified this |
+| `assumed` | the sender is taking this on trust |
+
+Both are required; an empty list is a legal statement, an absent one is not.
+**Neither is ever scored** — nothing verifies that an `asserted` item was really
+checked. The split records a claim its sender signs. **The receiver re-verifies
+everything under `assumed` before acting on it.**
+
+A recorded Handoff is frozen. Correct it by recording a new one carrying
+`supersedes:`; the original survives as what its sender believed at the time, and
+`mission show` points a reader of the superseded record forward to the one that
+is current. Never edit a Handoff in place.
+
+The receiving agent inspects incoming Handoffs via `spectacular mission show <ref> --json`
+or directly in `.spectacular/missions/<mission>/handoffs/`.
+
 ## Fan out sparingly
 
 Delegate only cohesive mid-to-long work whose claim ownership is disjoint.

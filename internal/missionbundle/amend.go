@@ -50,6 +50,11 @@ var amendableFields = map[string]bool{"gaps": true, "updated": true}
 // not reviewable.
 var blockedOnLine = regexp.MustCompile(`(?m)^(\s*)blocked_on:(.*)$`)
 
+// blockScalarKey matches any key whose value opens a folded or literal block
+// scalar, with or without a chomping indicator. The lines that follow are prose,
+// so the rewrite must skip them rather than read them as keys.
+var blockScalarKey = regexp.MustCompile(`(?m)^\s*[A-Za-z0-9_.-]+:\s*[|>][+-]?\s*$`)
+
 // AmendContract closes one Gap on a Contract by rewriting its blocked_on to
 // resolution, using the text a Mission froze in its resolves_gaps declaration.
 // override carries an owner-supplied resolution for a Gap that predates the
@@ -248,6 +253,21 @@ func (s Service) repointBoundMissions(contractRef, fingerprint string) ([]string
 		if err != nil {
 			return nil, nil, invalidCause("mission", "cannot read a bound Mission", err)
 		}
+		// Re-pointing rewrites the first occurrence of the old fingerprint. That is
+		// only correct when there is exactly one: a Mission quoting its own binding
+		// in prose would have the prose rewritten and the real binding left stale,
+		// which is a silent corruption in a record the owner is not reading.
+		//
+		// The ambiguity is refused rather than resolved by anchoring to the
+		// contract: block, because the refusal is smaller and turns a silent
+		// corruption into a stated problem. Anchoring stays available if this
+		// proves noisy.
+		if occurrences := countLines(string(data), bundle.Contract.Fingerprint); len(occurrences) > 1 {
+			return nil, nil, domain.NewStateRefusal(domain.RefusalInvalidKnownField, "contract.fingerprint",
+				"Mission "+bundle.Ref+" carries the old Contract fingerprint on more than one line, so re-pointing cannot tell the binding from a quotation",
+				"exactly one occurrence", "lines "+joinInts(occurrences)+" of "+entry.Path,
+				"quote the fingerprint indirectly in the Mission body, or re-point it by hand; the amendment wrote nothing", nil)
+		}
 		updated := strings.Replace(string(data), bundle.Contract.Fingerprint, fingerprint, 1)
 		if updated == string(data) {
 			continue
@@ -272,13 +292,34 @@ func rewriteGap(contract, gapRef, resolution string) (string, error) {
 	if start < 0 {
 		return "", invalid("gap", "cannot locate Gap "+gapRef+" in the Contract text")
 	}
+	// scalarIndent is the indent of the key that opened a block scalar, or -1 when
+	// the walk is at key level. A line inside a scalar body is prose the sender
+	// wrote: `blocked_on:` appearing there is text, not a key, and rewriting it
+	// splices the resolution into the middle of someone's sentence while leaving
+	// the real key untouched.
+	scalarIndent := -1
 	for i := start + 1; i < len(lines); i++ {
 		trimmed := strings.TrimSpace(lines[i])
+		indentOf := len(lines[i]) - len(strings.TrimLeft(lines[i], " "))
+		if scalarIndent >= 0 {
+			// A blank line inside a scalar body stays in the body; the scalar ends
+			// at the first non-blank line indented no deeper than its key.
+			if trimmed == "" || indentOf > scalarIndent {
+				continue
+			}
+			scalarIndent = -1
+		}
 		if strings.HasPrefix(trimmed, "- ") || (trimmed != "" && !strings.HasPrefix(lines[i], " ")) {
 			break // next Gap entry, or the end of the block
 		}
 		match := blockedOnLine.FindStringSubmatch(lines[i])
 		if match == nil {
+			// Any other key opening a block scalar hides prose beneath it. This is
+			// checked after blocked_on rather than before, because blocked_on may
+			// itself be a block scalar and is still the key being rewritten.
+			if blockScalarKey.MatchString(lines[i]) {
+				scalarIndent = indentOf
+			}
 			continue
 		}
 		indent := match[1]
@@ -528,4 +569,25 @@ func validateContractVersion(ws *discovery.Workspace, b *Bundle) error {
 	}
 	b.contractVersion = version
 	return nil
+}
+
+// countLines returns the 1-indexed lines on which needle appears. Re-pointing
+// names every occurrence in its refusal, because a reader correcting an ambiguous
+// Mission needs to see which line is the binding and which is the quotation.
+func countLines(text, needle string) []int {
+	var lines []int
+	for i, line := range strings.Split(text, "\n") {
+		if strings.Contains(line, needle) {
+			lines = append(lines, i+1)
+		}
+	}
+	return lines
+}
+
+func joinInts(values []int) string {
+	parts := make([]string, len(values))
+	for i, value := range values {
+		parts[i] = strconv.Itoa(value)
+	}
+	return strings.Join(parts, ", ")
 }

@@ -511,7 +511,7 @@ func (s Service) recordReview(missionRef, path string, stdin []byte) (Result, er
 	if draft.Reviewed.ActivationFingerprint != bundle.Activation.Fingerprint || !commitPattern.MatchString(draft.Reviewed.Commit) || !commitPattern.MatchString(draft.Reviewed.Tree) {
 		return Result{}, invalid("review.reviewed", "review must bind exact commit, tree, and Mission activation fingerprint")
 	}
-	if err := verifyReviewedGit(s.Workspace.Root, draft.Reviewed.Commit, draft.Reviewed.Tree); err != nil {
+	if err := verifyReviewedGit(s.Workspace.Root, draft.Reviewed.Commit, draft.Reviewed.Tree, "review"); err != nil {
 		return Result{}, err
 	}
 	for _, existing := range bundle.Reviews {
@@ -537,13 +537,150 @@ func (s Service) recordReview(missionRef, path string, stdin []byte) (Result, er
 	workspace.SetValue(doc, "claims", draft.Claims)
 	workspace.SetStrings(doc, "findings", draft.Findings)
 	workspace.SetStrings(doc, "limitations", draft.Limitations)
-	relative := filepath.ToSlash(filepath.Join("reviews", ref+"-"+humanlayout.Slug(draft.Title)+".md"))
+	reviewPath, relative, err := s.missionRecordPath(bundle, doc, ref)
+	if err != nil {
+		return Result{}, err
+	}
 	bundle.Reviews = append(bundle.Reviews, ReviewPointer{Ref: ref, ID: id.String(), File: relative, Verdict: "pass"})
 	workspace.SetValue(bundle.document, "reviews", bundle.Reviews)
 	bundle.document.Record.Updated = stringPtr(now)
-	reviewPath := filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), relative))
 	paths := map[domain.ID]string{bundle.document.Record.ID: bundle.Path, id: reviewPath}
 	return s.apply("review.record:"+bundle.ID+":"+id.String(), []*workspace.Document{bundle.document, doc}, paths, "review.record", bundle.Ref+"/"+ref, reviewPath)
+}
+
+func (s Service) RecordHandoff(missionRef, path, sender string, stdin []byte) (Result, error) {
+	locked, unlock, err := s.beginMutation()
+	if err != nil {
+		return Result{}, err
+	}
+	defer unlock()
+	return locked.recordHandoff(missionRef, path, sender, stdin)
+}
+
+func (s Service) recordHandoff(missionRef, path, sender string, stdin []byte) (Result, error) {
+	bundle, err := Load(s.Workspace, missionRef)
+	if err != nil {
+		return Result{}, err
+	}
+	if bundle.Legacy || bundle.Status != "active" {
+		return Result{}, invalid("mission", "handoff recording requires an active compact Mission")
+	}
+	if _, err := Validate(s.Workspace, bundle); err != nil {
+		return Result{}, err
+	}
+	data, err := readInput(path, stdin)
+	if err != nil {
+		return Result{}, err
+	}
+	frontmatter, body, err := splitInput(data)
+	if err != nil {
+		return Result{}, err
+	}
+	var draft HandoffDraft
+	if err := yaml.Unmarshal(frontmatter, &draft); err != nil {
+		return Result{}, invalidCause("input", "decode HandoffDraft frontmatter", err)
+	}
+	if draft.Type != "HandoffDraft" || draft.Title == "" {
+		return Result{}, invalid("handoff", "requires type HandoffDraft and a title")
+	}
+	// The asserted/assumed split is why this record exists, so an absent list is
+	// refused at the boundary rather than defaulted to empty. Empty stays legal:
+	// a sender who verified nothing is saying something.
+	if draft.Asserted == nil {
+		return Result{}, invalid("handoff.asserted", "a Handoff must state asserted, even as an empty list")
+	}
+	if draft.Assumed == nil {
+		return Result{}, invalid("handoff.assumed", "a Handoff must state assumed, even as an empty list")
+	}
+	// --by names the sender of record. A draft may carry the same identity, but
+	// the two disagreeing means the caller and the record would attribute the
+	// delegation to different people.
+	if draft.Sender.Actor != "" && draft.Sender.Actor != sender {
+		return Result{}, domain.NewStateRefusal(domain.RefusalUnauthorized, "by",
+			"handoff sender must match the identity recording it", draft.Sender.Actor, sender,
+			"record the Handoff as its stated sender, or correct the draft", nil)
+	}
+	draft.Sender.Actor = sender
+	if !commitPattern.MatchString(draft.Reviewed.Commit) || !commitPattern.MatchString(draft.Reviewed.Tree) {
+		return Result{}, invalid("handoff.reviewed", "handoff must bind an exact commit and tree")
+	}
+	// The git binding is verified against the real repository, so a Handoff cannot
+	// point at a commit that does not exist or a tree that is not that commit's.
+	// A receiver re-verifies from this binding, and a binding that was never
+	// checked would send them to a state that never existed.
+	if err := verifyReviewedGit(s.Workspace.Root, draft.Reviewed.Commit, draft.Reviewed.Tree, "handoff"); err != nil {
+		return Result{}, err
+	}
+	if draft.Supersedes != "" {
+		found := false
+		for _, existing := range bundle.Handoffs {
+			if existing.Ref == draft.Supersedes {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return Result{}, invalid("handoff.supersedes", "supersedes must name a Handoff recorded on this Mission: "+draft.Supersedes)
+		}
+	}
+
+	// Recording the same logical Handoff twice converges rather than duplicating.
+	// Identity is derived from the Mission, the bound commit, and what is being
+	// superseded, so a retry after a crash lands on the record already written.
+	key := "handoff.record:" + bundle.ID + ":" + draft.Reviewed.Commit + ":" + draft.Supersedes
+	id, err := stableID(bundle.Activation.At, key)
+	if err != nil {
+		return Result{}, err
+	}
+	for _, existing := range bundle.Handoffs {
+		if existing.ID == id.String() {
+			return Result{
+				Operation: "handoff.record",
+				Ref:       bundle.Ref + "/" + existing.Ref,
+				Path:      filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), existing.File)),
+			}, nil
+		}
+	}
+
+	ref := "H" + strconv.Itoa(len(bundle.Handoffs)+1) + "-" + humanlayout.ShortKey(id)
+	now := s.now()
+	doc := &workspace.Document{
+		Record:  domain.Record{Type: domain.Handoff, ID: id, Title: stringPtr(draft.Title), Created: stringPtr(now)},
+		Unknown: map[string]*yaml.Node{}, Body: body,
+	}
+	workspace.SetString(doc, "ref", ref)
+	workspace.SetString(doc, "mission", bundle.Ref)
+	workspace.SetValue(doc, "reviewed", draft.Reviewed)
+	workspace.SetValue(doc, "sender", draft.Sender)
+	workspace.SetString(doc, "task", draft.Task)
+	workspace.SetStrings(doc, "asserted", *draft.Asserted)
+	workspace.SetStrings(doc, "assumed", *draft.Assumed)
+	workspace.SetStrings(doc, "stops", draft.Stops)
+	workspace.SetStrings(doc, "returns", draft.Returns)
+	if draft.Supersedes != "" {
+		workspace.SetString(doc, "supersedes", draft.Supersedes)
+	}
+	handoffPath, relative, err := s.missionRecordPath(bundle, doc, ref)
+	if err != nil {
+		return Result{}, err
+	}
+
+	// The record is validated before it is written, so the schema refuses a bad
+	// Handoff at the command rather than leaving one on disk for a later read to
+	// reject.
+	candidate, err := decodeHandoff(doc, handoffPath)
+	if err != nil {
+		return Result{}, err
+	}
+	if err := validateHandoffContent(candidate, bundle); err != nil {
+		return Result{}, err
+	}
+
+	bundle.Handoffs = append(bundle.Handoffs, HandoffPointer{Ref: ref, ID: id.String(), File: relative})
+	workspace.SetValue(bundle.document, "handoffs", bundle.Handoffs)
+	bundle.document.Record.Updated = stringPtr(now)
+	paths := map[domain.ID]string{bundle.document.Record.ID: bundle.Path, id: handoffPath}
+	return s.apply("handoff.record:"+bundle.ID+":"+id.String(), []*workspace.Document{bundle.document, doc}, paths, "handoff.record", bundle.Ref+"/"+ref, handoffPath)
 }
 
 func (s Service) Complete(missionRef, owner string) (Result, error) {
@@ -822,22 +959,52 @@ func stableID(at, key string) (domain.ID, error) {
 	return domain.ParseID(uuid.UUID(raw).String())
 }
 
-func verifyReviewedGit(root, commit, tree string) error {
+// missionRecordPath resolves a Mission-scoped record's canonical location through
+// the layout system rather than through a join written at the call site, so a
+// record created by any path lands where the layout rule says it lands. It
+// returns the workspace-relative path and the bundle-relative pointer the
+// Mission stores.
+func (s Service) missionRecordPath(bundle *Bundle, doc *workspace.Document, ref string) (string, string, error) {
+	// The layout system reads the scoped ref from the field workspace.Ref reads,
+	// so the Mission scope is written there for the resolution and the record's
+	// own ref is restored afterward. A record stores its leaf ref and names its
+	// Mission in mission:; the scoped spelling is how the layout rule is asked
+	// where that record belongs, not something the file carries.
+	unscoped := workspace.RefOrEmpty(doc)
+	workspace.SetString(doc, workspace.RefField, bundle.Ref+"/"+ref)
+	path, err := humanlayout.PlannedPath(s.Workspace.Entries, doc)
+	workspace.SetString(doc, workspace.RefField, unscoped)
+	if err != nil {
+		return "", "", err
+	}
+	path = filepath.ToSlash(path)
+	bundleDirectory := filepath.ToSlash(filepath.Dir(bundle.Path))
+	relative, err := filepath.Rel(bundleDirectory, path)
+	if err != nil {
+		return "", "", invalidCause("record", "resolve record path relative to its Mission", err)
+	}
+	return path, filepath.ToSlash(relative), nil
+}
+
+// verifyReviewedGit checks a record's git binding against the real repository.
+// The field prefix names the record being verified, so a Handoff's refusal does
+// not tell its sender to correct a review.
+func verifyReviewedGit(root, commit, tree string, field string) error {
 	if !commitPattern.MatchString(commit) || !commitPattern.MatchString(tree) {
-		return invalid("review.reviewed", "review must bind canonical 40-character Git commit and tree IDs")
+		return invalid(field+".reviewed", "a bound record must carry canonical 40-character Git commit and tree IDs")
 	}
 	commitCommand := exec.Command("git", "rev-parse", "--verify", commit+"^{commit}")
 	commitCommand.Dir = root
 	resolvedCommit, err := commitCommand.Output()
 	if err != nil || strings.TrimSpace(string(resolvedCommit)) != commit {
-		return domain.NewStateRefusal(domain.RefusalInvalidKnownField, "review.reviewed.commit", "reviewed commit does not exist in this repository", "existing exact commit", commit, "review the committed tree, then record its exact commit and tree", err)
+		return domain.NewStateRefusal(domain.RefusalInvalidKnownField, field+".reviewed.commit", "reviewed commit does not exist in this repository", "existing exact commit", commit, "review the committed tree, then record its exact commit and tree", err)
 	}
 	treeCommand := exec.Command("git", "rev-parse", "--verify", commit+"^{tree}")
 	treeCommand.Dir = root
 	resolvedTree, err := treeCommand.Output()
 	actual := strings.TrimSpace(string(resolvedTree))
 	if err != nil || actual != tree {
-		return domain.NewStateRefusal(domain.RefusalStaleFingerprint, "review.reviewed.tree", "reviewed tree does not belong to the reviewed commit", actual, tree, "record the exact tree from git rev-parse <commit>^{tree}", err)
+		return domain.NewStateRefusal(domain.RefusalStaleFingerprint, field+".reviewed.tree", "reviewed tree does not belong to the reviewed commit", actual, tree, "record the exact tree from git rev-parse <commit>^{tree}", err)
 	}
 	return nil
 }

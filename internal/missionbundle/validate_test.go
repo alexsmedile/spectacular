@@ -21,7 +21,7 @@ func TestSchemaRegistryOwnsEveryMandatoryValidation(t *testing.T) {
 	want := []string{
 		"activation-fingerprint", "authority-vocabulary", "baseline-binding", "completion-claim-coverage",
 		"contract-binding", "contract-version", "fallback-fingerprint-coverage",
-		"interface-dependency-frozen-target",
+		"handoff-integrity", "interface-dependency-frozen-target",
 		"mechanical-scope", "mission-order-activation", "mission-order-integrity",
 		"objective-dependency-dag", "reference-integrity", "request-coverage",
 		"resolved-gap-integrity", "review-independence", "run-state", "safe-file-layout",
@@ -152,7 +152,7 @@ func TestReviewedGitBindingRejectsFabricatedCoordinates(t *testing.T) {
 	}
 	commit := strings.TrimSpace(commandOutput(t, root, "git", "rev-parse", "HEAD"))
 	tree := strings.TrimSpace(commandOutput(t, root, "git", "rev-parse", "HEAD^{tree}"))
-	if err := verifyReviewedGit(root, commit, tree); err != nil {
+	if err := verifyReviewedGit(root, commit, tree, "review"); err != nil {
 		t.Fatalf("exact commit/tree rejected: %v", err)
 	}
 	for _, test := range []struct {
@@ -163,7 +163,7 @@ func TestReviewedGitBindingRejectsFabricatedCoordinates(t *testing.T) {
 		{"mismatched tree", commit, strings.Repeat("0", 40), "review.reviewed.tree", domain.RefusalStaleFingerprint},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			err := verifyReviewedGit(root, test.commit, test.tree)
+			err := verifyReviewedGit(root, test.commit, test.tree, "review")
 			var refusal *domain.Refusal
 			if !errors.As(err, &refusal) || refusal.Code != test.code || refusal.Field != test.field || refusal.Detail == "" || refusal.Recovery == "" {
 				t.Fatalf("refusal=%+v err=%v", refusal, err)
@@ -198,27 +198,39 @@ func cloneBundle(t *testing.T, source *Bundle) *Bundle {
 	return &result
 }
 
+// treeDigest fingerprints the records under a workspace. It deliberately skips
+// the transaction machinery's own scratch space, which is not a record: a lock
+// file created by the first transaction is not a modification to the workspace,
+// and counting it made "nothing was written" depend on whether a transaction had
+// ever run in that tree before.
+//
+// Both .spectacular/transactions/ and any stray .lock are skipped. The directory
+// covers pending-transaction journals as well as the lock; the .lock rule also
+// catches a mutation lock held outside that directory, which is transient state
+// rather than something an assertion about writes should see.
 func treeDigest(t *testing.T, root string) string {
 	t.Helper()
 	hash := sha256.New()
-	if err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	transactions := filepath.Join(root, "transactions")
+	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() || filepath.Base(path) == ".lock" {
+		if info.IsDir() {
+			if path == transactions {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if filepath.Base(path) == ".lock" {
 			return nil
 		}
 		rel, _ := filepath.Rel(root, path)
-		data, readErr := os.ReadFile(path)
-		if readErr != nil {
-			return readErr
-		}
+		data, _ := os.ReadFile(path)
 		hash.Write([]byte(rel))
 		hash.Write(data)
 		return nil
-	}); err != nil {
-		t.Fatal(err)
-	}
+	})
 	return hex.EncodeToString(hash.Sum(nil))
 }
 

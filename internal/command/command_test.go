@@ -16,13 +16,20 @@ import (
 )
 
 func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
+	// Thirteen commands. M12 authorized the thirteenth, `handoff record`, by
+	// freezing the count in its completion claim before the work began. The number
+	// is stated here rather than defended: the list is the assertion, and a
+	// fourteenth arriving without that authorization fails this test.
 	want := []string{
 		"mission start", "mission show", "mission check", "objective show", "objective promote",
-		"objective finish", "run show", "run start", "review record", "mission complete",
-		"proposal check", "contract amend",
+		"objective finish", "run show", "run start", "review record", "handoff record",
+		"mission complete", "proposal check", "contract amend",
 	}
 	if len(Registry) != len(want) {
 		t.Fatalf("registry has %d commands, want %d", len(Registry), len(want))
+	}
+	if len(want) != 13 {
+		t.Fatalf("the public surface is %d commands; M12 authorized thirteen", len(want))
 	}
 	for i, spec := range Registry {
 		if got := strings.Join(spec.Words, " "); got != want[i] {

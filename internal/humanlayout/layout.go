@@ -133,7 +133,7 @@ func nextRef(doc *workspace.Document, all map[domain.ID]*workspace.Document, use
 		domain.Mission: "M", domain.Proposal: "P",
 		domain.Objective: "O", domain.Run: "R", domain.Checkpoint: "C",
 		domain.Evidence: "E", domain.Decision: "D", domain.Gap: "G",
-		domain.Handoff: "H", domain.Assessment: "A",
+		domain.Handoff: "H", domain.Assessment: "A", domain.Review: "RV",
 	}[doc.Record.Type]
 	if prefix == "" {
 		return "", fmt.Errorf("no human reference grammar for %s", doc.Record.Type)
@@ -175,7 +175,7 @@ func nextRef(doc *workspace.Document, all map[domain.ID]*workspace.Document, use
 func parentRef(doc *workspace.Document, all map[domain.ID]*workspace.Document) (string, error) {
 	field := ""
 	switch doc.Record.Type {
-	case domain.Objective, domain.Run, domain.Evidence, domain.Handoff, domain.Assessment:
+	case domain.Objective, domain.Run, domain.Evidence, domain.Handoff, domain.Assessment, domain.Review:
 		field = "mission"
 	case domain.Checkpoint:
 		field = "run"
@@ -218,8 +218,57 @@ func parentRef(doc *workspace.Document, all map[domain.ID]*workspace.Document) (
 	return HumanRef(owner), nil
 }
 
+// missionRefFor resolves the Mission a scoped record belongs to. A record
+// created through Plan carries its parent in its human_ref; one recorded before
+// the layout rule existed carries an unscoped ref and names its Mission in the
+// mission: field. Both must resolve to the same directory, or moving a record
+// path into the layout system would relocate records already on disk.
+func missionRefFor(doc *workspace.Document, ref string, all map[domain.ID]*workspace.Document) (string, error) {
+	if scoped := strings.Split(ref, "/")[0]; scoped != ref {
+		return scoped, nil
+	}
+	value, _ := workspace.String(doc, "mission", false)
+	if value == "" {
+		return "", fmt.Errorf("record %s names no Mission", ref)
+	}
+	// A Mission is named either by typed reference or by its compact ref. Records
+	// written into a Mission bundle use the compact spelling, so both resolve here
+	// rather than only the form domain.ParseReference accepts.
+	if typed, err := domain.ParseReference(value); err == nil {
+		owner := all[typed.ID]
+		if owner == nil {
+			return "", fmt.Errorf("human layout parent %s is unavailable", value)
+		}
+		if owner.Record.Type != domain.Mission {
+			return "", fmt.Errorf("human layout parent %s is not a Mission", value)
+		}
+		return HumanRef(owner), nil
+	}
+	return value, nil
+}
+
 func Path(doc *workspace.Document, all map[domain.ID]*workspace.Document) (string, error) {
 	return pathFor(doc, all, nil)
+}
+
+// PlannedPath resolves one record against the workspace as it stands, honoring
+// the bundle directories already on disk. A Mission's directory is frozen at its
+// first title, so deriving it from the current title would place new records in a
+// directory that does not exist. Path is the raw rule; this is the rule applied to
+// a real workspace.
+func PlannedPath(existing []discovery.Entry, doc *workspace.Document) (string, error) {
+	all := map[domain.ID]*workspace.Document{}
+	stableDirectories := map[string]string{}
+	for _, entry := range existing {
+		all[entry.Document.Record.ID] = entry.Document
+		if ref := HumanRef(entry.Document); ref != "" {
+			if rootFile := bundleRootFile(entry.Document.Record.Type); rootFile != "" && filepath.Base(entry.Path) == rootFile {
+				stableDirectories[ref] = filepath.ToSlash(filepath.Dir(strings.TrimPrefix(entry.Path, ".spectacular/")))
+			}
+		}
+	}
+	all[doc.Record.ID] = doc
+	return pathFor(doc, all, stableDirectories)
 }
 
 func pathFor(doc *workspace.Document, all map[domain.ID]*workspace.Document, stableDirectories map[string]string) (string, error) {
@@ -257,6 +306,15 @@ func pathFor(doc *workspace.Document, all map[domain.ID]*workspace.Document, sta
 		return filepath.ToSlash(filepath.Join(".spectacular", "contracts", ref+"-"+title+".md")), nil
 	case domain.Proposal:
 		return filepath.ToSlash(filepath.Join(".spectacular", "proposals", ref+"-"+title+".md")), nil
+	case domain.Review:
+		// A Review carries its title in the filename rather than a short key. The
+		// recorded Reviews in the workspace already read this way, and a reviewer
+		// scanning a Mission's reviews/ directory is looking for what was reviewed.
+		mission, err := missionRefFor(doc, ref, all)
+		if err != nil {
+			return "", err
+		}
+		return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(mission, all, stableDirectories), "reviews", leaf+"-"+title+".md")), nil
 	case domain.Evidence, domain.Decision, domain.Gap, domain.Handoff, domain.Assessment:
 		folder := strings.ToLower(string(doc.Record.Type)) + "s"
 		if doc.Record.Type == domain.Evidence {

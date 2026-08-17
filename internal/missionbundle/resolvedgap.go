@@ -47,6 +47,20 @@ func validateResolvedGaps(ws *discovery.Workspace, b *Bundle) error {
 	if len(b.ResolvesGaps) == 0 {
 		return nil
 	}
+	// Amending a Contract is owner authority. A Mission that declares it will close
+	// a Gap must say so in requires_owner, or the declaration claims an authority the
+	// record never granted.
+	declaredAuthority := false
+	for _, verb := range b.Authority.RequiresOwner {
+		if verb == "amend-contract" {
+			declaredAuthority = true
+			break
+		}
+	}
+	if !declaredAuthority {
+		return invalid("authority.requires_owner",
+			"a Mission declaring resolves_gaps must list amend-contract in requires_owner")
+	}
 	gaps, err := ContractGaps(ws, b.Contract.Ref)
 	if err != nil {
 		return err

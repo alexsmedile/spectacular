@@ -4,7 +4,7 @@ id: 01a0102c-a360-71fe-a1be-8e1b010460b2
 title: Make a resolved Gap closable and a declared check real
 status: active
 created: "2026-08-17T15:01:01Z"
-updated: "2026-08-17T15:26:07Z"
+updated: "2026-08-17T15:28:25Z"
 activation:
     at: "2026-08-17T15:01:01Z"
     by: Alex
@@ -131,7 +131,7 @@ objectives:
       id: 01a0102c-a360-7d40-a4ed-6562de9dd822
       outcome: State in the workflow that a Mission declares resolved Gaps and that completion amends the Contract.
       ref: O7
-      status: pending
+      status: implemented
 outcome: A resolved Gap is closable through a Contract command of its own, a Mission declares and completion enforces which Gaps it closes, a completed Mission reads its Contract without refusing on a change it cannot cause, and every check a Contract declares either runs or fails loudly.
 owner: Alex
 ref: M11

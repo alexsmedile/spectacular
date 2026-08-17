@@ -62,7 +62,29 @@ independence.
    `--by` is what makes the confirmation attributable — it names the person who
    accepted. Never pass a name the owner did not actually give you.
 
-There is no separate Contract reconciliation command. Do not ask for one.
+There is no Contract reconciliation ritual at completion. Completion checks the
+Gaps the Mission declared it would close and refuses while any is still open; it
+never writes the Contract itself.
+
+## Close a declared Gap
+
+A Mission that declared `resolves_gaps:` closes each one when the work resolving
+it lands, not at completion:
+
+```bash
+spectacular contract amend <contract-ref> --gap <gap-ref> --by <owner> --dry-run
+spectacular contract amend <contract-ref> --gap <gap-ref> --by <owner>
+```
+
+`--dry-run` prints the resolution text, both fingerprints, and every Mission that
+would be re-pointed, and writes nothing. The text is the wording frozen in the
+Mission's declaration, so the owner approved it at activation.
+
+The amendment reaches the `gaps:` block and editorial fields only. A semantic
+change is a new `contract_version:`, not an amendment. It refuses while any bound
+Mission is live, so amend between Missions or stop the live one first.
+
+A Gap is never closed by deleting it.
 
 ## Refuse completion
 
@@ -71,7 +93,7 @@ Refuse when any of these is true:
 - the frozen criteria changed
 - proof is stale, missing, or conflicting
 - required independent review is incomplete
-- a dependency or Gap still blocks
+- a dependency or Gap still blocks, or a declared resolved Gap is still open
 - the repair budget is exhausted
 - the baseline drifted
 - owner confirmation is missing

@@ -10,6 +10,36 @@ import (
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
 
+// A declaration without amend-contract in requires_owner claims an authority the
+// record never granted, so it refuses before any Gap ref is examined.
+func TestResolvedGapRequiresDeclaredOwnerAuthority(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	source, err := Load(ws, "M9")
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle := cloneBundle(t, source)
+	bundle.ResolvesGaps = []ResolvedGap{{Gap: "anything", Resolution: "text"}}
+	err = validateResolvedGaps(ws, bundle)
+	if err == nil {
+		t.Fatal("a declaration without amend-contract authority must refuse")
+	}
+	refusal, ok := err.(*domain.Refusal)
+	if !ok {
+		t.Fatalf("returned %T, want a typed refusal", err)
+	}
+	if refusal.Field != "authority.requires_owner" {
+		t.Fatalf("refused on %q, want authority.requires_owner", refusal.Field)
+	}
+}
+
 // A Mission may only close Gaps the Contract it is bound to actually declares.
 // The refs are held at plan-freeze rather than at completion: a Mission that
 // discovers at the gate that it never had the authority to close a Gap has
@@ -59,6 +89,7 @@ func TestResolvedGapDeclarationIsHeldToTheBoundContract(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			bundle := cloneBundle(t, source)
+			bundle.Authority.RequiresOwner = append(bundle.Authority.RequiresOwner, "amend-contract")
 			bundle.ResolvesGaps = test.declare
 			err := validateResolvedGaps(ws, bundle)
 			if test.field == "" {
@@ -113,6 +144,7 @@ func TestResolvedGapRefusesAGapOnADifferentContract(t *testing.T) {
 	}
 
 	bundle := cloneBundle(t, subject)
+	bundle.Authority.RequiresOwner = append(bundle.Authority.RequiresOwner, "amend-contract")
 	bundle.ResolvesGaps = []ResolvedGap{{Gap: gaps[0].Ref, Resolution: "closed"}}
 	err = validateResolvedGaps(ws, bundle)
 	if err == nil {

@@ -12,6 +12,12 @@ Read the current Contracts and specifications before proposing observable
 behavior. Once a direction is frozen, edit those files as ordinary Mission work.
 There is no separate reconciliation lifecycle.
 
+Check a Proposal that has a durable home:
+
+```bash
+spectacular proposal check <ref>
+```
+
 ## Plan
 
 Compare only approaches that genuinely differ and are outcome-sized. Weigh each on:
@@ -39,6 +45,11 @@ Frontmatter:
 - Objectives, with dependencies and claim coverage
 - initial Run and operator, authority, mechanical and semantic scope
 - budgets, dependencies, Gaps, stops, recovery
+- `resolves_gaps:` when the Mission closes a Gap on its bound Contract, as `gap`
+  and `resolution` pairs. Both are frozen, so the owner approves the exact wording
+  at activation and the Mission cannot gain amend authority afterwards. Completion
+  refuses while a declared Gap is still open. Requires `amend-contract` in
+  `requires_owner`.
 
 Markdown body:
 

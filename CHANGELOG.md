@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.2.0 — 2026-08-17
+
+Dead v1 surface removed, derived state reads recorded reviews, and Skill guidance
+for branching, worktrees, and execution mode.
+
+- Removes the unreachable v1 context-compiler chain — `internal/context`,
+  `internal/projection`, and `internal/guardrails` — as one unit, and
+  `internal/index`, the v1 predecessor of `discovery.Workspace.Lookup`. Prunes
+  `internal/governance` to the transaction machinery that has live callers.
+- Fixes the derived next action to consult the reviews a Mission carries. It
+  previously fired on implemented Objectives alone, so a recorded review could not
+  retire the instruction to record one. A review bound to a stale activation
+  fingerprint keeps asking, since that is the drift the fingerprint exists to catch.
+- Surfaces the underlying cause in human refusals. A YAML syntax error reported
+  only `invalid_known_field`, sending readers hunting through field names while the
+  parser's line number sat unprinted in the JSON envelope.
+- Adds Skill guidance for choosing a branch and a worktree by what the job needs,
+  including running a Mission session and a feedback session concurrently without
+  either destroying the other's work.
+- Adds an execution-mode question at activation — autopilot, checkpoints, or a
+  named human-in-the-loop moment — so involvement is settled once instead of
+  arriving one gate at a time.
+- Accounts for every untracked working-tree path with a `.gitignore` rule that
+  states its reason, and records `_snapshots/` as local recovery only.
+
 ## 2.1.1 — 2026-08-17
 
 Test performance optimizations and contributor verification guidance.

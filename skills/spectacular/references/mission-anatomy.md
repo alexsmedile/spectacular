@@ -120,3 +120,22 @@ Start with one file: `<mission>/MISSION.md`.
 
 When you split, keep the same UUID and ref, and leave one pointer where the inline
 detail was. `MISSION.md` stays the index. Do not add a Mission-local `index.md`.
+
+## Anchor anatomy & modular contracts
+
+### Core Triad (Required at Kickoff)
+- `PROJECT.md`: Direction, immutable boundaries, non-goals, and `current_truth` binding.
+- `STACK.md`: Language/runtime versions, allowed dependencies, database engines, baseline verification command.
+- `ARCHITECTURE.md`: Layering pattern (e.g. hexagonal/clean), directory layout, dependency directions between Domain, Store, Server, and API.
+
+### On-Demand Anchors (Earned only)
+Specialized anchors emerge only when domain or operational complexity exceeds inline thresholds:
+- `VOCABULARY.md`: Project ubiquitous language and core entity state machines.
+  * *Threshold*: If <= 3-4 simple entities, keep inline in `PROJECT.md`.
+  * *Earned triggers*: (1) Synonym collision / naming ambiguity (e.g. `User` vs `Account`, `Job` vs `Task`); (2) Non-trivial state machine invariants (e.g. `DRAFT` -> `ACTIVE` -> `REVIEW`); (3) Bespoke non-standard concepts (e.g. `Anchor`, `Gap`, `Handoff`); (4) Multi-contract shared models.
+- `SECURITY.md`: Project-specific isolation, multi-tenancy, secrets, or compliance rules (only if non-standard).
+- `GUARDRAILS.md`: Custom AI operational rules (only upon explicit owner request; defaults suffice).
+- `PRODUCT.md`: Dedicated commercial/marketing models (only if distinct from repository engineering).
+
+### Modular Capability Contracts
+Capability Contracts are small, component-level specifications (`CC-<module>.md`). A Mission can bind to a primary contract or coordinate across multiple modular contracts, editing them as ordinary Mission work when observable capabilities change.

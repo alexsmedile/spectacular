@@ -85,6 +85,34 @@ conformance_checks:
   - Fault injection covers every write boundary in start, promote, Run start, review record, and complete.
   - Fuzzing covers YAML shape, identity/ref collisions, dependency graphs, paths, and round-trip preservation.
   - Real-process tests prove compact default output and machine-readable `--json` output without making JSON the routine authoring format.
+
+gaps:
+  - ref: gap-rewrite-matches-by-line
+    problem: >-
+      The Gap rewrite in the amendment path locates a Gap by ref and then walks forward for a line
+      matching `blocked_on:`, splicing that key and its indented continuation. The textual approach is
+      deliberate — decoding and re-emitting canonical YAML would reflow every block scalar in the
+      Contract, and an amendment whose diff touches prose it did not change is not reviewable — but the
+      match does not know when it is inside a scalar body. A Gap whose `problem:` is itself a block
+      scalar containing the literal text `blocked_on:` would collide. The amendable-field guard limits
+      the blast radius to the `gaps:` block, which is exactly what an amendment may change, so it does
+      not catch this. Confirmed as a documented limitation by M11's independent review.
+    blocked_on: >-
+      Tracking block-scalar depth while walking the Gap entry, so a `blocked_on:` inside a scalar body
+      is skipped, plus the adversarial fixture the review described.
+  - ref: repoint-assumes-one-fingerprint
+    problem: >-
+      Re-pointing a bound Mission replaces the first occurrence of the old Contract fingerprint in the
+      raw Mission file. Every Mission in the workspace carries its binding exactly once, so the
+      assumption holds today and nothing enforces it. A Mission that quoted its own bound fingerprint in
+      prose, a pass boundary, or a rejected approach could have the wrong occurrence rewritten and would
+      still parse. M9 shows the shape is plausible: its body quotes a stale-fingerprint refusal
+      containing three distinct fingerprint values, none of them its own binding.
+    blocked_on: >-
+      A decision between anchoring the replacement to the `contract:` block and refusing when the
+      fingerprint appears more than once. The refusal is smaller and turns a silent corruption into a
+      stated problem, which is the right direction for a mechanism that rewrites records the owner is
+      not reading.
 ---
 # Spectacular mechanical Mission CLI
 

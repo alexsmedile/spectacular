@@ -143,34 +143,61 @@ grows the fingerprinted envelope and adds two required fields to every plan.
 *Recommendation: frozen, because a verdict nobody can check later is the state we already
 have.*
 
-**2. Does a non-`sufficient` verdict refuse activation, or warn?**
-Refusing makes the check real but means an owner who knowingly accepts a
-`needs-evidence` risk cannot proceed without editing the plan to lie. Warning preserves
-owner authority and matches the `contract-drift` notice precedent.
-*Recommendation: refuse on `needs-decision`, notice on `needs-evidence`. A missing owner
-decision is a genuine stop; missing evidence is often the Mission's own first Objective.*
+**2. Does a non-`sufficient` verdict refuse activation, or warn? (decided: split)**
+Refusing outright means an owner who knowingly accepts a risk cannot proceed without
+editing the plan to lie.
 
-**3. Do the two specialist roles become real agents?**
-H16 proposed a Mission Slice Advisor and a Design Sufficiency Reviewer. This repository has
-no `.claude/agents/` directory at all, so this would be new machinery.
-*Recommendation: no, not initially. Write the two checks as Skill guidance first and see
-whether the judgment is actually hard enough to need a separate context. Extraction is
-cheap later; an unused agent definition is not.*
+`needs-decision` refuses: a missing owner decision is a genuine stop, and the correction is
+available — make the decision. `needs-evidence` reports a notice: gathering that evidence
+is frequently the Mission's own first Objective, so refusing would block the work that
+resolves it.
 
-**4. Does this Proposal also fix the `independent` review trigger, or is that separate?**
-It is the same class of defect — a field with no guidance — and H16 supplied a trigger
-list. But it is a distinct surface and could be its own slice.
-*Recommendation: same Mission, separate Objective. It is the third hollow seam and
-splitting it leaves a known gap open for no benefit — which is precisely the slice-quality
-question this Proposal is about, applied to itself.*
+**3. Do the two specialist roles become real agents? (decided: later)**
+Not in this Mission. The two checks are written as Skill guidance first. If the judgment
+turns out to be hard enough to need its own context, extraction is cheap then; an unused
+agent definition rots now. This repository has no `.claude/agents/` directory at all, so
+nothing is being removed by deferring.
 
-**5. Is `prepare.md` the right home, given it must not grow?**
-M11's `workflow-states-the-step` claim was not met because the Skill grew 33 lines against
-a "does not grow" boundary. This work is larger than that. Either the boundary needs
-restating, or this content displaces existing text rather than adding to it.
-*Recommendation: name a net-line budget in the Mission plan and treat displacement as the
-default. `prepare.md` is 96 lines and its `Plan` section already gestures at both checks;
-rewriting that section is likely smaller than appending to it.*
+**4. Does this Proposal also fix the `independent` review trigger? (decided: yes — already
+written)**
+The same defect: three files mention the level, none said when to choose it.
+`prepare.md:44` asked the owner to pick from `automatic | clustered | independent` with no
+criteria; `close.md:30` described what an earned review costs; `close.md:44` said freshness
+is not independence without saying what is.
+
+Both are now written — the trigger list where the level is chosen, and what actually earns
+independence where the review is recorded. Kept in this Proposal's scope rather than split
+out, because splitting would leave a known gap open for no benefit.
+
+**5. How should Skill growth be governed? (decided — recorded here for the Mission)**
+M11 froze a pass boundary reading "The Skill does not grow", and the Skill grew 33 lines.
+The claim was passed with the delta logged, which is the correct outcome for the wrong
+reason: the boundary was a proxy for "is the Skill getting bloated", stated as an absolute
+that the real work immediately contradicted.
+
+The owner's decision is that a hard line-count stop is the wrong instrument. Growth is
+sometimes correct — guidance that does not exist cannot be followed, and three hollow seams
+are the direct cost of guidance that was never written.
+
+Replace the stop with a **reported delta and a review judgment**. A Mission touching
+`skills/` records lines added and removed per file, and the reviewer answers one question:
+*was the growth worth what it bought?* A Mission may grow the Skill by 200 lines and pass
+if the guidance is load-bearing, and may grow it by 10 and fail if it is restatement.
+
+This is the `contract-drift` pattern applied to Skill size: report the fact, let judgment
+handle it, refuse nothing. It also means the boundary can actually fail, which "does not
+grow" could not — that one was violated in letter and upheld in spirit at the same time.
+
+Still worth preferring displacement where it is genuinely smaller: `prepare.md` is 96 lines
+and its `Plan` section already weighs seven slice criteria and already asks for the
+sufficiency verdict. That is the right content in the wrong frame, so rewriting it is
+probably cheaper than appending beside it — as a drafting preference, not a limit.
+
+The general form of this defect — a `pass_boundary` that freezes a countable proxy instead
+of the concern it stands for — is recorded in `FEEDBACKS.md` under "A boundary was written
+as a hard stop when it was a proxy for a concern". It may want a second boundary kind, a
+hardness marker, or preparation-time detection. That is a separate Proposal; this one only
+decides the Skill-size case.
 
 ## What this does not touch
 

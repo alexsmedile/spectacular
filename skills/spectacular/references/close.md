@@ -45,6 +45,12 @@ The record holds:
 A fresh agent is not automatically an independent one. Freshness is not
 independence.
 
+What earns it: the reviewer did not author the work, inspects primary evidence
+rather than the executor's summary of it, and where the consequence is high uses
+a different method, a qualified human, a specialist tool, or an independent
+observation. The reviewer reports verdicts and findings; it never declares the
+Mission complete.
+
 ## Complete in one flow
 
 1. Run focused checks, then one full tree-bound gate — `bash test/verify.sh all`.

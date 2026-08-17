@@ -41,7 +41,15 @@ Frontmatter:
 - title, owner, outcome, applicable Contract, Git baseline
 - one completion claim per verifiable domain, each with a pass boundary and a
   proof requirement
-- review level: `automatic | clustered | independent`, defaulted once when shared
+- review level: `automatic | clustered | independent`, defaulted once when shared.
+  Choose `independent` when any claim touches security, privacy, or rights;
+  stored data or a migration; a shared or public interface; compatibility; more
+  than one system boundary; an external provider; a destructive or
+  hard-to-reverse effect; a production or observational claim; a material
+  architecture change; a novel pattern; or evidence only the executor can see.
+  Also choose it when the work is disputed. Otherwise `automatic` is honest, and
+  `clustered` fits several small related claims. A reviewer who did not implement
+  the scope is what makes it independent — see [close.md](close.md).
 - Objectives, with dependencies and claim coverage
 - initial Run and operator, authority, mechanical and semantic scope
 - budgets, dependencies, Gaps, stops, recovery

@@ -494,3 +494,77 @@ For re-pointing: anchor the replacement to the `contract:` block rather than the
 file, or refuse when the fingerprint appears more than once and say which lines. The
 second is smaller and turns a silent corruption into a refusal, which is the right
 direction for a mechanism that rewrites records the owner is not reading.
+
+## A boundary was written as a hard stop when it was a proxy for a concern
+
+**Found:** 2026-08-17, owner review of M11's frozen claims. **Where:**
+`.spectacular/missions/M11-.../MISSION.md:61`, and the `pass_boundary` field
+generally.
+
+M11 froze a claim whose pass boundary read, verbatim: **"The Skill does not grow."**
+The Skill grew by 33 lines. The reviewer passed the claim and logged the delta, which
+was the right call — the growth was guidance that did not previously exist — but it
+means the boundary was violated in letter and upheld in spirit simultaneously. A
+boundary that resolves that way did not test anything.
+
+The owner's diagnosis: the boundary was never really about line count. The concern was
+*is the Skill getting bloated with restatement?* "Does not grow" was a proxy for that
+concern, chosen because it is easy to state mechanically, and the proxy was wrong in
+the first case that exercised it. As the owner put it, the limit was hard and had not
+been checked against the work it would govern.
+
+### The generalization
+
+This is not specific to Skill size. It is a property of `pass_boundary` as a field.
+
+An agent writing a completion claim is under pressure to make the boundary
+*checkable*, because `prepare.md` correctly insists that "works correctly" is not a
+boundary. The cheapest way to satisfy that pressure is to reach for a countable
+proxy — a line count, a file count, a timing number — and freeze it. The proxy is
+mechanically honest and semantically wrong, and freezing removes the chance to notice
+before it matters.
+
+So the failure mode is: **the frozen boundary tests the proxy, not the concern.** The
+owner approves it at activation because it reads rigorous, and it fails or passes for
+reasons unrelated to what anyone cared about.
+
+### The reframe the owner proposed
+
+Not a hard stop. **Report the delta, and have review judge whether it was worth it.**
+
+For the Skill-size case: a Mission touching `skills/` records lines added and removed
+per file, and the reviewer answers one question — did the growth buy anything? A
+Mission may grow the Skill by 200 lines and pass if the guidance is load-bearing, and
+by 10 and fail if it is restatement.
+
+This is the `contract-drift` notice pattern applied to a different surface: state the
+fact, let judgment handle it, refuse nothing. It also produces a boundary that can
+actually fail, which "does not grow" could not.
+
+### What might be built
+
+The owner named this as feedback for later review rather than work to do now, and
+flagged the open question directly: these may be **different properties, or degrees of
+boundary hardness**, rather than one mechanism.
+
+Sketches worth evaluating, none decided:
+
+- A second boundary kind alongside `pass_boundary` — something like an `observation`
+  or `reported_delta`, which the CLI must find present and populated at completion but
+  never evaluates for pass or fail. The verdict is the reviewer's.
+- A hardness marker on the existing field, so a claim declares whether its boundary is
+  a hard invariant, a reported measurement, or a judgment the reviewer owns. The CLI
+  enforces the first, carries the second, and refuses to score the third.
+- Preparation-time detection: when a `pass_boundary` reduces to a bare count or
+  threshold, ask whether that number is the concern or a stand-in for it. This is
+  closest to the "intent extraction" the owner described, and it is the version that
+  needs no schema change — it is Skill guidance at the moment the claim is drafted.
+
+The third is the cheapest and would have caught this instance. The first two are real
+schema work and would change the frozen envelope, so they need their own Proposal.
+
+### Related
+
+`P10` records the immediate decision for the Skill-size case: report the delta, let
+review judge it, no line-count stop. It does not attempt the general mechanism. The
+general mechanism is this entry.

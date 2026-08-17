@@ -1,4 +1,55 @@
-# Explore and plan
+# Explore, plan, and genesis
+
+## One-Shot Genesis (Zero-to-One Kickoff)
+
+When starting a project from scratch, or when receiving an initial PRD or prompt of intent:
+
+1. **Treat PRD as a Starter Input**: An initial PRD is an ephemeral launchpad, not an eternal file. Distill it immediately into:
+   - **The Core Triad of Anchors**:
+     * `.spectacular/PROJECT.md`: What & Why (Core scope, system boundaries, non-goals).
+     * `.spectacular/STACK.md`: What with (Languages, runtimes, database, libraries, baseline test command).
+     * `.spectacular/ARCHITECTURE.md`: How (Directory layout, layers, component boundaries between DB, Server, API, and Domain).
+   - **On-Demand Anchors (Earned only)**:
+     * `.spectacular/VOCABULARY.md`: Defined terms and ubiquitous language, only when domain ontology is rich.
+     * `.spectacular/SECURITY.md`: Non-standard compliance, isolation, or secret rules, only if project-specific.
+     * `.spectacular/GUARDRAILS.md`: Custom AI operational rules, only upon explicit owner request.
+     * `.spectacular/PRODUCT.md`: Business/marketing scope, only if separated from repository engineering.
+   - **`M1-bootstrap` Mission Plan**: 2–4 executable claims with verifiable `pass_boundary` and `proof_requirement`.
+
+2. **Adopt Strong Defaults (Zero Grilling)**: Do not stall kickoff with multi-question interviews. Choose sane, production-grade defaults for toolchain and architecture; prompt only on irreversible semantic forks.
+
+3. **Present One Genesis Preview**: Show the Core Triad summary and `M1-bootstrap` plan once in chat. On owner confirmation ("Yes" / "Proceed"), write the Core Anchors and activate `M1` with `spectacular mission start`.
+
+For live templates and layouts, see [genesis-examples.md](genesis-examples.md).
+
+## Campaign Planning (Mini-Roadmaps & Campaign Blocks)
+
+A **Campaign** (synonyms: *Initiative*, *Milestone Arc*, *Flight Plan*, *Theme*) organizes 4–10 macro-concepts into a topological dependency sequence before freezing individual Missions. It is a high-level overview, not a heavy ceremonial document.
+
+### What a Campaign Declares:
+1. **Strategic Goal**: The overarching milestone outcome (e.g. *Launch Background Job Engine from zero to production*).
+2. **Topological Map**: A dependency flow diagram (Mermaid primary, ASCII fallback) showing logical unblocking order.
+3. **Exit Condition**: The observable milestone state certifying the campaign is achieved.
+
+### What a Campaign Block Declares (The 4 Fields):
+Each Campaign Block is an essential 4-field card (or diagram node), not a separate file:
+- **Title / Theme**: Named macro-capability (e.g. `Block 2: Ingestion HTTP API`).
+- **Capability Unlocked**: What the system will observably do when this block closes.
+- **Prerequisites**: Upstream blocks that must be closed first.
+- **Status & Mapping**: `PLANNED` | `IN PROGRESS -> M<N>` | `CLOSED (M<N>)`.
+
+### Division of Responsibility:
+- **Campaign / Block (Fluid Overview)**: Macro-capabilities, unblocking dependencies, fluid future blocks. Lives inline in chat/preview or as a 15-line `## Active Campaign` section in `.spectacular/PROJECT.md` (no extra files).
+- **Mission (Frozen Execution)**: Atomic, frozen envelope with UUIDv7 identity, SHA-256 fingerprint, exact Git baseline, and strict verifiable claims (`pass_boundary` & `proof_requirement`).
+
+### Block-to-Mission Mapping:
+- One Campaign Block can resolve into one or more Missions upon execution (e.g. *Stripe Engine* $\to$ `M2-stripe-webhook` + `M3-subscription-lifecycle`).
+- Multiple small adjacent blocks can be closed by a single cohesive Mission.
+- Downstream blocks remain fluid until upstream proof and evidence are earned.
+
+### Visual Presentation:
+- **Mermaid Flowchart (Primary)**: Rendered in chat and markdown using `flowchart LR` or `flowchart TD` with block status (`CLOSED`, `IN PROGRESS`, `PLANNED`).
+- **ASCII Diagram (Fallback)**: Compact plain-text layout for CLI and terminal logs.
 
 ## Explore
 

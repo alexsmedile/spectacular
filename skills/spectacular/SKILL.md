@@ -16,10 +16,12 @@ stay in their own providers.
 
 | Surface | Responsibility |
 |---|---|
-| Anchor | Accepted project truth: direction, boundaries, constraints. `PROJECT.md` is the root one |
+| Anchor | Accepted project truth. Core Triad: `PROJECT.md` (root scope/boundaries), `STACK.md` (tools/runtimes), `ARCHITECTURE.md` (layers/components). On-Demand: `VOCABULARY.md`, `SECURITY.md`, `GUARDRAILS.md`, `PRODUCT.md` |
+| PRD / Starter Input | Ephemeral kickoff input; digested into Core Anchors and `M1-bootstrap` claims, never kept as eternal context bloat |
+| Campaign | Strategic roadmap arc (synonyms: *Initiative*, *Milestone Arc*, *Flight Plan*, *Theme*); 4–10 topological Campaign Blocks visualized via Mermaid (ASCII fallback) |
 | Proposal | Optional, mutable exploration in chat, an issue, or a Spectacular file |
 | Mission | Frozen execution plan and primary entry point in `MISSION.md` |
-| Contract/specification | Accepted product behavior; edit as ordinary Mission work |
+| Contract / specification | Modular, composable capability specifications (`CC-<module>`); edit as ordinary Mission work |
 | Decision | ADR-like durable choice and rationale, never routine lifecycle approval |
 | Objective / Run | Inline while simple; promoted to a file only when independently useful |
 | Evidence / review | Earned proof and assessment; neither silently changes success criteria |
@@ -27,7 +29,8 @@ stay in their own providers.
 ## Start every workflow
 
 1. **Find the workspace.** Read `.spectacular/PROJECT.md`. Only if that file is
-   missing, read root `PROJECT.md`.
+   missing, read root `PROJECT.md`. If neither exists, this is a greenfield
+   workspace: route to One-Shot Genesis in [prepare.md](references/prepare.md).
 
    That file is the root Anchor. Its `current_truth` field names the other Anchors
    and Contracts by id. Read those, and skip the ones this Mission does not touch.
@@ -80,7 +83,7 @@ Pick by what the session actually needs. The user rarely names the job.
 | Load | When the session needs it | Guided job |
 |---|---|---|
 | [orient.md](references/orient.md) | You do not yet know the project direction, which Mission is active, or where it stands. Cold start, vague opener, or several active Missions. | `orient` |
-| [prepare.md](references/prepare.md) | The work is not frozen yet. The problem is open, approaches compete, or a Mission must be drafted and previewed. | `explore`, `propose`, `plan` |
+| [prepare.md](references/prepare.md) | The project is new (Genesis), or the work is not frozen yet. The problem is open, approaches compete, or a Mission must be drafted and previewed. | `genesis`, `explore`, `propose`, `plan` |
 | [execute.md](references/execute.md) | A Mission is ready to activate, or an already-active one has work left to do. | `start`, `resume` |
 | [runtime.md](references/runtime.md) | The work leaves this session — delegation, a subagent, another operator, or unattended Autopilot. | `handoff`, Autopilot |
 | [close.md](references/close.md) | The work looks done and its claims now need assessment, Evidence, review, or owner acceptance. | `review`, `complete` |

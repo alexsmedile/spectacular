@@ -94,6 +94,13 @@ func (r Runner) Run(args []string) int {
 	if duplicateGraph {
 		return r.usage(jsonMode, invoked, "--graph may be supplied at most once")
 	}
+	timelineMode, duplicateTimeline := removeFlag(&args, "--timeline")
+	if duplicateTimeline {
+		return r.usage(jsonMode, invoked, "--timeline may be supplied at most once")
+	}
+	if graphMode && timelineMode {
+		return r.usage(jsonMode, invoked, "cannot combine --graph and --timeline")
+	}
 	spec, rest, ok := match(args)
 	if !ok {
 		return r.usage(jsonMode, invoked, "unknown or incomplete command")
@@ -103,6 +110,9 @@ func (r Runner) Run(args []string) int {
 	}
 	if graphMode && spec.Operation != opMissionShow {
 		return r.commandUsage(jsonMode, invoked, spec, "--graph applies to mission show")
+	}
+	if timelineMode && spec.Operation != opMissionShow {
+		return r.commandUsage(jsonMode, invoked, spec, "--timeline applies to mission show")
 	}
 	ws, err := discovery.Open(r.Cwd)
 	if err != nil {
@@ -173,6 +183,12 @@ func (r Runner) Run(args []string) int {
 		if err := writeJSON(r.Stdout, output); err != nil {
 			return r.refuse(true, invoked, err)
 		}
+	} else if timelineMode {
+		bundle, isBundle := value.(*missionbundle.Bundle)
+		if !isBundle {
+			return r.usage(jsonMode, invoked, "--timeline applies to mission show")
+		}
+		fmt.Fprint(r.Stdout, bundle.Timeline(ws, terminalWidth()))
 	} else if graphMode {
 		bundle, isBundle := value.(*missionbundle.Bundle)
 		if !isBundle {
@@ -257,6 +273,16 @@ func renderHuman(writer io.Writer, value any) {
 				suffix = " — waits " + strings.Join(objective.BlockedBy, ", ")
 			}
 			fmt.Fprintf(writer, "  %s %s/%s — %s%s\n", readinessGlyph(objective.Readiness), item.Ref, objective.Ref, objective.Outcome, suffix)
+		}
+		if len(item.Fallbacks) > 0 && state.Budget > 0 && state.Repairs >= state.Budget {
+			fmt.Fprintln(writer, "FALLBACKS")
+			for _, fb := range item.Fallbacks {
+				rec := ""
+				if fb.Recommendation {
+					rec = " [recommendation]"
+				}
+				fmt.Fprintf(writer, "  - %s%s (invalidated if: %s)\n", fb.Approach, rec, fb.InvalidatedIf)
+			}
 		}
 	case missionbundle.Check:
 		fmt.Fprintf(writer, "%s valid=%t schema=%s checks=%d\n", item.Ref, item.Valid, item.Schema, len(item.Checks))

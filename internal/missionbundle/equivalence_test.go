@@ -93,6 +93,7 @@ func projectionSnapshot(t *testing.T, root, ref string) map[string]string {
 	return map[string]string{
 		"graph":      bundle.Graph(DefaultGraphWidth),
 		"levelSets":  bundle.Graph(1),
+		"timeline":   bundle.Timeline(service.Workspace, DefaultGraphWidth),
 		"stateLine":  string(state),
 		"drift":      string(drift),
 		"authority":  string(authority),

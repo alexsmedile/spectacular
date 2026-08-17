@@ -8,7 +8,7 @@ updated: "2026-08-16T20:59:04Z"
 activation:
     at: "2026-08-16T20:59:04Z"
     by: Alex
-    fingerprint: sha256:6dc7923de0c075822aafa65828254f7bbd5a15691d554f04b2028e584b7de104
+    fingerprint: sha256:db565ea862ca28817d2626942fb15231fecf34b208afd9253e39df597ff281bb
 authority:
     operator:
         - inspect
@@ -59,13 +59,13 @@ objectives:
       id: 01a00c59-6bb0-7ab9-8fc5-e2dcbeb8cc08
       outcome: Add fallbacks to the Mission model and the activation fingerprint, and return them at repair exhaustion.
       ref: O1
-      status: pending
+      status: implemented
     - claims:
         - interface-edge-split
       id: 01a00c59-6bb0-7c9f-a854-eda2c935a602
       outcome: Split Objective dependencies into artifact and interface edge kinds in the model and the DAG validator.
       ref: O2
-      status: pending
+      status: implemented
     - after:
         - O2
       claims:
@@ -73,13 +73,13 @@ objectives:
       id: 01a00c59-6bb0-7745-957a-5f0bd946071a
       outcome: Declare Mission order as typed refs resolved through the existing decoder and validate the Mission-level graph.
       ref: O3
-      status: pending
+      status: implemented
     - claims:
         - request-fidelity
       id: 01a00c59-6bb0-7c81-8e61-fb60b1bc5187
       outcome: Add the request record with per-ask dispositions and the request-coverage validator.
       ref: O4
-      status: pending
+      status: implemented
     - after:
         - O2
         - O3
@@ -88,14 +88,41 @@ objectives:
       id: 01a00c59-6bb0-71ee-ad32-37613afd93eb
       outcome: Draw both Objective edge kinds and Mission order edges without breaking representation equivalence.
       ref: O5
-      status: pending
+      status: implemented
 outcome: The record carries frozen fallbacks, two Objective edge kinds, typed Mission order, and the request that produced the plan, so a reader can tell what was asked for and what was dropped.
 owner: Alex
 ref: M8
 repair_budget: 3
+request:
+    source: chat, session opening
+    captured_at: "2026-08-16T20:59:04Z"
+    asks:
+        - ask: Freeze fallbacks into the activation fingerprint and return them on repair exhaustion
+          disposition: covered
+          claims:
+              - frozen-fallbacks
+        - ask: Split Objective dependencies into artifact and interface edge kinds
+          disposition: covered
+          claims:
+              - interface-edge-split
+        - ask: Declare Mission order as typed refs and validate the Mission graph
+          disposition: covered
+          claims:
+              - mission-order
+        - ask: Draw Objective edge kinds and Mission order edges in graph projections
+          disposition: covered
+          claims:
+              - graph-edge-kinds
+        - ask: Record what was asked for with per-ask dispositions and request coverage validation
+          disposition: covered
+          claims:
+              - request-fidelity
+        - ask: Review open gaps and dead weight and perform a repository cleanup
+          disposition: deferred
+          reason: Needs its own cleanup Mission; outside M8 schema freeze boundary
 review: independent
 run:
-    current_objective: O1
+    current_objective: O5
     id: 01a00c59-6bb0-788c-bcbe-9ed2cd017523
     operator: Alex
     ref: R1

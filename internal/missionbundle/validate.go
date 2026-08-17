@@ -31,7 +31,11 @@ var registry = []validator{
 	{"baseline-binding", validateBaseline},
 	{"activation-fingerprint", validateActivation},
 	{"completion-claim-coverage", validateClaims},
+	{"frozen-fallbacks", validateFallbacks},
+	{"request-coverage", validateRequest},
 	{"objective-dependency-dag", validateDAG},
+	{"mission-order-integrity", validateMissionOrderIntegrity},
+	{"mission-order-activation", validateMissionOrderActivation},
 	{"run-state", validateRun},
 	{"review-independence", validateReviews},
 	{"authority-vocabulary", validateAuthority},
@@ -213,12 +217,157 @@ func FrozenFingerprint(b *Bundle) (string, error) {
 		"authority": b.Authority, "scope": b.Scope, "repair_budget": b.RepairBudget,
 		"dependencies": b.Dependencies, "gaps": b.Gaps, "stops": b.Stops,
 	}
+	if len(b.Fallbacks) > 0 {
+		value["fallbacks"] = b.Fallbacks
+	}
+	if len(b.AfterMission) > 0 {
+		value["after_mission"] = b.AfterMission
+	}
+	if b.Request != nil {
+		value["request_dispositions"] = b.Request.dispositions()
+	}
 	data, err := json.Marshal(value)
 	if err != nil {
 		return "", err
 	}
 	digest := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(digest[:]), nil
+}
+
+func validateMissionOrderIntegrity(ws *discovery.Workspace, b *Bundle) error {
+	if len(b.AfterMission) == 0 {
+		return nil
+	}
+	for _, predRef := range b.AfterMission {
+		ref := strings.TrimSpace(predRef)
+		if ref == "" {
+			return invalid("after_mission", "empty Mission ref in after_mission")
+		}
+		if ref == b.Ref || ref == b.ID {
+			return invalid("after_mission", "Mission cannot depend on itself: "+ref)
+		}
+		entry, err := ws.Lookup(ref, domain.Mission)
+		if err != nil {
+			return invalidCause("after_mission", "dangling Mission ref: "+ref, err)
+		}
+		if entry.Document.Record.ID.String() == b.ID {
+			return invalid("after_mission", "Mission cannot depend on itself: "+ref)
+		}
+	}
+
+	visiting, done := map[string]bool{}, map[string]bool{}
+	var visit func(currentRef string) error
+	visit = func(currentRef string) error {
+		if visiting[currentRef] {
+			return invalid("after_mission", "Mission order must be acyclic")
+		}
+		if done[currentRef] {
+			return nil
+		}
+		visiting[currentRef] = true
+		entry, err := ws.Lookup(currentRef, domain.Mission)
+		if err == nil {
+			targetBundle, decodeErr := decode(ws, entry)
+			if decodeErr == nil && targetBundle != nil {
+				for _, nextPred := range targetBundle.AfterMission {
+					if err := visit(nextPred); err != nil {
+						return err
+					}
+				}
+			}
+		}
+		delete(visiting, currentRef)
+		done[currentRef] = true
+		return nil
+	}
+	visiting[b.Ref] = true
+	for _, predRef := range b.AfterMission {
+		if err := visit(predRef); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateMissionOrderActivation(ws *discovery.Workspace, b *Bundle) error {
+	if len(b.AfterMission) == 0 || b.Status != "active" {
+		return nil
+	}
+	for _, predRef := range b.AfterMission {
+		ref := strings.TrimSpace(predRef)
+		entry, err := ws.Lookup(ref, domain.Mission)
+		if err != nil {
+			return invalidCause("after_mission", "cannot load predecessor Mission: "+ref, err)
+		}
+		pred, err := decode(ws, entry)
+		if err != nil {
+			return invalidCause("after_mission", "cannot decode predecessor Mission: "+ref, err)
+		}
+		if pred.Status != "completed" {
+			return invalid("after_mission", fmt.Sprintf("predecessor Mission %s is not completed (status: %s)", ref, pred.Status))
+		}
+	}
+	return nil
+}
+
+func validateFallbacks(_ *discovery.Workspace, b *Bundle) error {
+	if len(b.Fallbacks) == 0 {
+		return nil
+	}
+	for _, fb := range b.Fallbacks {
+		if strings.TrimSpace(fb.Approach) == "" {
+			return invalid("fallbacks.approach", "fallback requires approach")
+		}
+		if strings.TrimSpace(fb.RejectedBecause) == "" {
+			return invalid("fallbacks.rejected_because", "fallback requires rejected_because")
+		}
+		if strings.TrimSpace(fb.InvalidatedIf) == "" {
+			return invalid("fallbacks.invalidated_if", "fallback requires invalidated_if")
+		}
+	}
+	return nil
+}
+
+func validateRequest(_ *discovery.Workspace, b *Bundle) error {
+	if b.Request == nil {
+		return nil
+	}
+	if strings.TrimSpace(b.Request.Source) == "" {
+		return invalid("request.source", "request record requires a source")
+	}
+	if !timestamp(b.Request.CapturedAt) {
+		return invalid("request.captured_at", "request record requires an RFC3339 captured_at timestamp")
+	}
+	if len(b.Request.Asks) == 0 {
+		return invalid("request.asks", "request record requires at least one ask")
+	}
+	criteria := map[string]bool{}
+	for _, criterion := range b.Completion {
+		criteria[criterion.Claim] = true
+	}
+	for _, ask := range b.Request.Asks {
+		if strings.TrimSpace(ask.Ask) == "" {
+			return invalid("request.asks.ask", "request ask cannot be empty")
+		}
+		switch ask.Disposition {
+		case "covered":
+			if len(ask.Claims) == 0 {
+				return invalid("request.asks.claims", "covered ask must declare at least one claim")
+			}
+			for _, claim := range ask.Claims {
+				if !criteria[claim] {
+					return invalid("request.asks.claims", "covered ask references an unknown completion claim")
+				}
+			}
+		case "deferred", "declined":
+			if strings.TrimSpace(ask.Reason) == "" {
+				return invalid("request.asks.reason", "deferred or declined ask must declare a reason")
+			}
+		default:
+			return invalid("request.asks.disposition", "ask disposition must be covered, deferred, or declined")
+		}
+	}
+	return nil
 }
 
 func validateClaims(_ *discovery.Workspace, b *Bundle) error {
@@ -254,10 +403,18 @@ func validateDAG(_ *discovery.Workspace, b *Bundle) error {
 	visiting, done := map[string]bool{}, map[string]bool{}
 	deps := map[string][]string{}
 	for _, objective := range b.Objectives {
-		deps[objective.Ref] = objective.After
+		deps[objective.Ref] = append(append([]string(nil), objective.After...), objective.AfterInterface...)
 		for _, dependency := range objective.After {
 			if !known[dependency] || dependency == objective.Ref {
-				return invalid("objectives.after", "dependencies must reference another Objective in the Mission")
+				return invalid("objectives.after", "dependencies must reference another Objective in the Mission: "+dependency)
+			}
+		}
+		for _, dependency := range objective.AfterInterface {
+			if dependency == objective.Ref {
+				return invalid("objectives.after_interface", "interface dependency cannot reference self: "+dependency)
+			}
+			if !known[dependency] {
+				return invalid("objectives.after_interface", "interface dependency references an unknown or unfrozen target: "+dependency)
 			}
 		}
 	}

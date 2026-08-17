@@ -187,6 +187,55 @@ func TestGraphLabelsTheMissionByRefAndTitle(t *testing.T) {
 	}
 }
 
+func TestObjectiveGraphDistinguishesEdgeKinds(t *testing.T) {
+	t.Run("solid line for artifact dependency and dotted line for interface dependency", func(t *testing.T) {
+		artifactBundle := graphBundle(
+			objective("O1", "implemented"),
+			objective("O2", "pending", "O1"),
+		)
+		artifactRender := artifactBundle.Graph(DefaultGraphWidth)
+		if !strings.Contains(artifactRender, "O1✓ ──O2") {
+			t.Fatalf("artifact edge must render with solid line (──):\n%s", artifactRender)
+		}
+
+		interfaceBundle := graphBundle(
+			objective("O1", "implemented"),
+			Objective{Ref: "O2", Outcome: "Interface target", Status: "pending", AfterInterface: []string{"O1"}, Claims: []string{"c"}},
+		)
+		interfaceRender := interfaceBundle.Graph(DefaultGraphWidth)
+		if !strings.Contains(interfaceRender, "O1✓ ┄─O2") {
+			t.Fatalf("interface edge must render with dotted line (┄─):\n%s", interfaceRender)
+		}
+	})
+
+	t.Run("mixed fork draws solid fork for artifact and dotted join for interface", func(t *testing.T) {
+		mixedFork := graphBundle(
+			objective("O1", "implemented"),
+			objective("O2", "pending", "O1"),
+			Objective{Ref: "O3", Outcome: "Interface branch", Status: "pending", AfterInterface: []string{"O1"}, Claims: []string{"c"}},
+		)
+		rendered := mixedFork.Graph(DefaultGraphWidth)
+		if !strings.Contains(rendered, "┬─") {
+			t.Fatalf("artifact branch in fork must use ┬─:\n%s", rendered)
+		}
+		if !strings.Contains(rendered, "└┄") {
+			t.Fatalf("interface branch in fork must use └┄:\n%s", rendered)
+		}
+	})
+}
+
+func TestLevelSetsDistinguishesEdgeKinds(t *testing.T) {
+	bundle := graphBundle(
+		Objective{Ref: "O1", Outcome: "Extract the shared derivation layer", Status: "implemented", Claims: []string{"c"}},
+		Objective{Ref: "O2", Outcome: "Render the compact state line", Status: "pending", After: []string{"O1"}, AfterInterface: []string{"O3"}, Claims: []string{"c"}},
+		Objective{Ref: "O3", Outcome: "Compute per-claim drift flags", Status: "pending", Claims: []string{"c"}},
+	)
+	rendered := bundle.Graph(1)
+	if !strings.Contains(rendered, "(after O1, after_interface O3)") {
+		t.Fatalf("level sets must distinguish after and after_interface:\n%s", rendered)
+	}
+}
+
 // graphBody returns the drawn rows, without the heading or the legend.
 func graphBody(rendered string) []string {
 	var rows []string

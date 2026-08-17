@@ -20,7 +20,8 @@ import (
 func TestSchemaRegistryOwnsEveryMandatoryValidation(t *testing.T) {
 	want := []string{
 		"activation-fingerprint", "authority-vocabulary", "baseline-binding", "completion-claim-coverage",
-		"contract-binding", "mechanical-scope", "objective-dependency-dag", "reference-integrity",
+		"contract-binding", "frozen-fallbacks", "mechanical-scope", "mission-order-activation",
+		"mission-order-integrity", "objective-dependency-dag", "reference-integrity", "request-coverage",
 		"review-independence", "run-state", "safe-file-layout", "transition-atomicity",
 		"uuidv7-identity", "yaml-schema",
 	}
@@ -62,7 +63,15 @@ func TestMandatoryValidatorsReturnTypedZeroMutationRefusals(t *testing.T) {
 		{"baseline-binding", m6, func(b *Bundle) { b.Baseline.Commit = "0000000000000000000000000000000000000000" }, validateBaseline, domain.RefusalInvalidKnownField, "baseline.commit"},
 		{"activation-fingerprint", m6, func(b *Bundle) { b.Outcome += " drift" }, validateActivation, domain.RefusalStaleFingerprint, "activation.fingerprint"},
 		{"completion-claim-coverage", m6, func(b *Bundle) { b.Objectives[0].Claims = []string{"unknown"} }, validateClaims, domain.RefusalInvalidKnownField, "objectives.claims"},
+		{"frozen-fallbacks", m6, func(b *Bundle) {
+			b.Fallbacks = []Fallback{{Approach: "", RejectedBecause: "y", InvalidatedIf: "z"}}
+		}, validateFallbacks, domain.RefusalInvalidKnownField, "fallbacks.approach"},
+		{"request-coverage", m6, func(b *Bundle) {
+			b.Request = &Request{Source: "chat", CapturedAt: "2026-08-16T20:59:04Z", Asks: []Ask{{Ask: "something", Disposition: "invalid"}}}
+		}, validateRequest, domain.RefusalInvalidKnownField, "request.asks.disposition"},
 		{"objective-dependency-dag", m6, func(b *Bundle) { b.Objectives[0].After = []string{b.Objectives[0].Ref} }, validateDAG, domain.RefusalInvalidKnownField, "objectives.after"},
+		{"mission-order-integrity", m6, func(b *Bundle) { b.AfterMission = []string{"dangling-mission"} }, validateMissionOrderIntegrity, domain.RefusalInvalidKnownField, "after_mission"},
+		{"mission-order-activation", m6, func(b *Bundle) { b.Status = "active"; b.AfterMission = []string{"M8"} }, validateMissionOrderActivation, domain.RefusalInvalidKnownField, "after_mission"},
 		{"run-state", m6, func(b *Bundle) { b.Run.Repairs = b.RepairBudget + 1 }, validateRun, domain.RefusalInvalidKnownField, "run"},
 		{"review-independence", m5, func(b *Bundle) { b.Reviews[0].Verdict = "repair" }, validateReviews, domain.RefusalInvalidKnownField, "reviews"},
 		{"authority-vocabulary", m6, func(b *Bundle) { b.Authority.Operator = append(b.Authority.Operator, "invent-authority") }, validateAuthority, domain.RefusalInvalidKnownField, "authority.operator"},
@@ -230,7 +239,7 @@ func acyclicByKahn(objectives []Objective) bool {
 	indegree := map[string]int{}
 	dependents := map[string][]string{}
 	for _, objective := range objectives {
-		for _, dependency := range objective.After {
+		for _, dependency := range append(append([]string(nil), objective.After...), objective.AfterInterface...) {
 			if !known[dependency] {
 				continue
 			}
@@ -288,7 +297,7 @@ func FuzzObjectiveDependencyGraph(f *testing.F) {
 		}
 		selfOrUnknown := false
 		for _, objective := range objectives {
-			for _, dependency := range objective.After {
+			for _, dependency := range append(append([]string(nil), objective.After...), objective.AfterInterface...) {
 				if !known[dependency] || dependency == objective.Ref {
 					selfOrUnknown = true
 				}
@@ -308,8 +317,8 @@ func FuzzObjectiveDependencyGraph(f *testing.F) {
 			if !errors.As(err, &refusal) {
 				t.Fatalf("refusal was not typed: %v", err)
 			}
-			if refusal.Field != "objectives.after" {
-				t.Fatalf("refusal field=%q, want objectives.after", refusal.Field)
+			if refusal.Field != "objectives.after" && refusal.Field != "objectives.after_interface" {
+				t.Fatalf("refusal field=%q, want objectives.after or objectives.after_interface", refusal.Field)
 			}
 			if refusal.Detail == "" || refusal.Recovery == "" {
 				t.Fatalf("refusal lacked problem or correction: %+v", refusal)

@@ -82,6 +82,15 @@ func decode(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, error) {
 	if _, err = decodeOptional(doc, "baseline", &b.Baseline); err != nil {
 		return nil, err
 	}
+	if _, err = decodeOptional(doc, "request", &b.Request); err != nil {
+		return nil, err
+	}
+	if _, err = decodeOptional(doc, "fallbacks", &b.Fallbacks); err != nil {
+		return nil, err
+	}
+	if _, err = decodeOptional(doc, "after_mission", &b.AfterMission); err != nil {
+		return nil, err
+	}
 	if _, err = decodeOptional(doc, "run", &b.Run); err != nil {
 		return nil, err
 	}

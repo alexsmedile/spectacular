@@ -31,7 +31,9 @@ type ObjectiveState struct {
 	Readiness Readiness `json:"readiness"`
 	// BlockedBy lists the declared predecessors that are not yet implemented.
 	// It is empty unless Readiness is ReadyBlocked.
-	BlockedBy []string `json:"blocked_by,omitempty"`
+	BlockedBy      []string `json:"blocked_by,omitempty"`
+	After          []string `json:"after,omitempty"`
+	AfterInterface []string `json:"after_interface,omitempty"`
 	// Level is the longest dependency distance from a root Objective. Roots are
 	// level 0. It orders the level-set view and has no meaning beyond ordering.
 	Level int `json:"level"`
@@ -40,14 +42,16 @@ type ObjectiveState struct {
 // State is the derived answer to "where is this Mission and what happens next".
 // It is computed from bundle fields alone and is never written back.
 type State struct {
-	Ref        string           `json:"ref"`
-	Title      string           `json:"title"`
-	Status     string           `json:"status"`
-	Run        string           `json:"run,omitempty"`
-	RunStatus  string           `json:"run_status,omitempty"`
-	Repairs    int              `json:"repairs"`
-	Budget     int              `json:"repair_budget"`
-	Objectives []ObjectiveState `json:"objectives,omitempty"`
+	Ref          string           `json:"ref"`
+	Title        string           `json:"title"`
+	Status       string           `json:"status"`
+	Run          string           `json:"run,omitempty"`
+	RunStatus    string           `json:"run_status,omitempty"`
+	Repairs      int              `json:"repairs"`
+	Budget       int              `json:"repair_budget"`
+	Objectives   []ObjectiveState `json:"objectives,omitempty"`
+	Fallbacks    []Fallback       `json:"fallbacks,omitempty"`
+	AfterMission []string         `json:"after_mission,omitempty"`
 	// Startable, Blocked, and Done count Objectives by derived readiness.
 	Startable int `json:"startable"`
 	Blocked   int `json:"blocked"`
@@ -65,12 +69,14 @@ type State struct {
 // combination of Mission status, Run status, and readiness counts.
 func (b *Bundle) Derive() State {
 	state := State{
-		Ref:       b.Ref,
-		Title:     b.Title,
-		Status:    b.Status,
-		Budget:    b.RepairBudget,
-		Holder:    holderFor(b),
-		Startable: 0,
+		Ref:          b.Ref,
+		Title:        b.Title,
+		Status:       b.Status,
+		Budget:       b.RepairBudget,
+		Holder:       holderFor(b),
+		Startable:    0,
+		Fallbacks:    b.Fallbacks,
+		AfterMission: b.AfterMission,
 	}
 	if b.Run != nil {
 		state.Run = b.Run.Ref
@@ -92,10 +98,12 @@ func (b *Bundle) Derive() State {
 	levels := objectiveLevels(b.Objectives)
 	for _, objective := range b.Objectives {
 		derived := ObjectiveState{
-			Ref:     objective.Ref,
-			Outcome: objective.Outcome,
-			Status:  objective.Status,
-			Level:   levels[objective.Ref],
+			Ref:            objective.Ref,
+			Outcome:        objective.Outcome,
+			Status:         objective.Status,
+			After:          objective.After,
+			AfterInterface: objective.AfterInterface,
+			Level:          levels[objective.Ref],
 		}
 		switch {
 		case objective.Status == "implemented":
@@ -261,7 +269,7 @@ func objectiveLevels(objectives []Objective) map[string]int {
 		}
 		seen[ref] = true
 		level := 0
-		for _, predecessor := range objective.After {
+		for _, predecessor := range append(append([]string(nil), objective.After...), objective.AfterInterface...) {
 			if candidate := resolve(predecessor, seen) + 1; candidate > level {
 				level = candidate
 			}

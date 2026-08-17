@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/alexsmedile/spectacular/v2/internal/missionbundle"
 )
 
 func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
@@ -309,6 +311,7 @@ Prove the renderer is blind to storage layout.
 	surfaces := [][]string{
 		{"mission", "show", "M1"},
 		{"mission", "show", "M1", "--graph"},
+		{"mission", "show", "M1", "--timeline"},
 		{"objective", "show", "M1/O1"},
 		{"objective", "show", "M1/O2"},
 		{"mission", "check", "M1"},
@@ -333,5 +336,70 @@ Prove the renderer is blind to storage layout.
 		if inline[name] != promoted {
 			t.Errorf("`spectacular %s` differs between representations:\n--- inline ---\n%s\n--- promoted ---\n%s", name, inline[name], promoted)
 		}
+	}
+}
+
+func TestTimelineCommandValidation(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("timeline on valid mission", func(t *testing.T) {
+		out := run(t, root, nil, 0, "mission", "show", "M6", "--timeline")
+		if !strings.Contains(out, "Timeline") || !strings.Contains(out, "M6 · ") {
+			t.Fatalf("expected timeline output, got:\n%s", out)
+		}
+	})
+
+	t.Run("cannot combine graph and timeline", func(t *testing.T) {
+		var out bytes.Buffer
+		runner := Runner{Cwd: root, Stdout: &out, Stderr: &out}
+		code := runner.Run([]string{"mission", "show", "M6", "--graph", "--timeline"})
+		if code == 0 {
+			t.Fatalf("expected failure when combining --graph and --timeline")
+		}
+	})
+}
+
+func TestRepairExhaustionSurfacesAllFallbacksAndNeverSuppressesAlternatives(t *testing.T) {
+	// Test directly against renderHuman with a Bundle at repair exhaustion
+	bundle := &missionbundle.Bundle{
+		Ref:          "M8",
+		Title:        "Freeze the schema and record what was asked for",
+		Status:       "active",
+		RepairBudget: 2,
+		Run: &missionbundle.Run{
+			Ref:     "R1",
+			Status:  "active",
+			Repairs: 2,
+		},
+		Fallbacks: []missionbundle.Fallback{
+			{
+				Approach:        "Keep two package roots",
+				RejectedBecause: "Doubles decode surface",
+				InvalidatedIf:   "Single decoder fails",
+				Recommendation:  true,
+			},
+			{
+				Approach:        "Generate parallel schema adapters",
+				RejectedBecause: "High overhead",
+				InvalidatedIf:   "Unmaintainable",
+				Recommendation:  false,
+			},
+		},
+	}
+
+	var out bytes.Buffer
+	renderHuman(&out, bundle)
+	rendered := out.String()
+
+	if !strings.Contains(rendered, "FALLBACKS") {
+		t.Fatalf("rendered output lacks FALLBACKS section:\n%s", rendered)
+	}
+	if !strings.Contains(rendered, "Keep two package roots [recommendation]") {
+		t.Fatalf("rendered output lacks recommendation label:\n%s", rendered)
+	}
+	if !strings.Contains(rendered, "Generate parallel schema adapters") {
+		t.Fatalf("rendered output suppressed alternative fallback:\n%s", rendered)
 	}
 }

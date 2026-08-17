@@ -3,6 +3,8 @@
 package missionbundle
 
 import (
+	"sort"
+
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
@@ -25,16 +27,73 @@ type Criterion struct {
 	ProofRequirement string `yaml:"proof_requirement" json:"proof_requirement"`
 }
 
+// Fallback records a seriously-considered rejected approach frozen at plan
+// time. If repair exhausts mid-Run, the recorded fallbacks are surfaced to the
+// owner alongside the failure that consumed the budget.
+type Fallback struct {
+	Approach        string `yaml:"approach" json:"approach"`
+	RejectedBecause string `yaml:"rejected_because" json:"rejected_because"`
+	InvalidatedIf   string `yaml:"invalidated_if" json:"invalidated_if"`
+	Recommendation  bool   `yaml:"recommendation,omitempty" json:"recommendation,omitempty"`
+}
+
+// Ask is one distinct thing the owner asked for, carrying what the plan decided
+// to do about it. The disposition is authored, never inferred: a validator that
+// guessed would produce false refusals on correct plans and false confidence on
+// plausible-sounding ones.
+type Ask struct {
+	Ask string `yaml:"ask" json:"ask"`
+	// Disposition is covered, deferred, or declined.
+	Disposition string `yaml:"disposition" json:"disposition"`
+	// Claims names the completion claims answering a covered ask. Every named
+	// claim must exist; whether it genuinely answers the ask is review's job.
+	Claims []string `yaml:"claims,omitempty" json:"claims,omitempty"`
+	// Reason states why a deferred or declined ask is not being done.
+	Reason string `yaml:"reason,omitempty" json:"reason,omitempty"`
+}
+
+// Request records what produced the plan, so a reader can tell what was asked
+// for and what was dropped. Nothing else in the record holds the original ask:
+// `outcome` is the agent's interpretation of it, and once frozen, no gate checks
+// the interpretation against its source.
+type Request struct {
+	Source     string `yaml:"source" json:"source"`
+	CapturedAt string `yaml:"captured_at" json:"captured_at"`
+	Asks       []Ask  `yaml:"asks" json:"asks"`
+}
+
+// dispositions projects the part of a Request that the activation fingerprint
+// freezes: the decisions, without the text that states them.
+//
+// The split is deliberate. Sharpening an ask mid-Mission must not invalidate
+// activation, because punishing clarification is exactly the wrong incentive.
+// Relabelling an ask from covered to deferred after activation is precisely the
+// drift this record exists to catch, so it costs a re-activation.
+func (r *Request) dispositions() []Ask {
+	if r == nil {
+		return nil
+	}
+	frozen := make([]Ask, 0, len(r.Asks))
+	for _, ask := range r.Asks {
+		claims := append([]string(nil), ask.Claims...)
+		sort.Strings(claims)
+		// Ask text and Reason are prose and stay outside the boundary.
+		frozen = append(frozen, Ask{Disposition: ask.Disposition, Claims: claims})
+	}
+	return frozen
+}
+
 type Objective struct {
-	Ref     string   `yaml:"ref" json:"ref"`
-	ID      string   `yaml:"id" json:"id"`
-	Source  string   `yaml:"-" json:"source,omitempty"`
-	Outcome string   `yaml:"outcome,omitempty" json:"outcome,omitempty"`
-	Status  string   `yaml:"status,omitempty" json:"status,omitempty"`
-	After   []string `yaml:"after,omitempty" json:"after,omitempty"`
-	Claims  []string `yaml:"claims,omitempty" json:"claims,omitempty"`
-	File    string   `yaml:"file,omitempty" json:"file,omitempty"`
-	Body    string   `yaml:"-" json:"-"`
+	Ref            string   `yaml:"ref" json:"ref"`
+	ID             string   `yaml:"id" json:"id"`
+	Source         string   `yaml:"-" json:"source,omitempty"`
+	Outcome        string   `yaml:"outcome,omitempty" json:"outcome,omitempty"`
+	Status         string   `yaml:"status,omitempty" json:"status,omitempty"`
+	After          []string `yaml:"after,omitempty" json:"after,omitempty"`
+	AfterInterface []string `yaml:"after_interface,omitempty" json:"after_interface,omitempty"`
+	Claims         []string `yaml:"claims,omitempty" json:"claims,omitempty"`
+	File           string   `yaml:"file,omitempty" json:"file,omitempty"`
+	Body           string   `yaml:"-" json:"-"`
 
 	document *workspace.Document
 }
@@ -147,6 +206,7 @@ type Bundle struct {
 	Contract         Binding           `json:"contract,omitempty"`
 	Baseline         *Baseline         `json:"baseline,omitempty"`
 	Outcome          string            `json:"outcome,omitempty"`
+	Request          *Request          `json:"request,omitempty"`
 	Review           string            `json:"review,omitempty"`
 	Completion       []Criterion       `json:"completion,omitempty"`
 	Objectives       []Objective       `json:"objectives,omitempty"`
@@ -160,6 +220,8 @@ type Bundle struct {
 	Dependencies     []string          `json:"dependencies,omitempty"`
 	Gaps             []string          `json:"gaps,omitempty"`
 	Stops            []string          `json:"stops,omitempty"`
+	Fallbacks        []Fallback        `json:"fallbacks,omitempty"`
+	AfterMission     []string          `json:"after_mission,omitempty"`
 	Reviews          []ReviewPointer   `json:"reviews,omitempty"`
 	CompletionRecord *CompletionRecord `json:"completion_record,omitempty"`
 	Path             string            `json:"path"`

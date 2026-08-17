@@ -34,6 +34,7 @@ type Plan struct {
 	Owner        string      `yaml:"owner"`
 	Contract     Binding     `yaml:"contract"`
 	Outcome      string      `yaml:"outcome"`
+	Request      *Request    `yaml:"request,omitempty"`
 	Review       string      `yaml:"review"`
 	Completion   []Criterion `yaml:"completion"`
 	Objectives   []Objective `yaml:"objectives"`
@@ -43,6 +44,8 @@ type Plan struct {
 	Dependencies []string    `yaml:"dependencies"`
 	Gaps         []string    `yaml:"gaps"`
 	Stops        []string    `yaml:"stops"`
+	Fallbacks    []Fallback  `yaml:"fallbacks,omitempty"`
+	AfterMission []string    `yaml:"after_mission,omitempty"`
 	Body         string      `yaml:"-"`
 }
 
@@ -152,6 +155,9 @@ func (s Service) start(plan Plan, raw []byte) (Result, error) {
 	workspace.SetValue(doc, "contract", contract)
 	workspace.SetValue(doc, "baseline", Baseline{Commit: commit, Branch: branch})
 	workspace.SetString(doc, "outcome", plan.Outcome)
+	if plan.Request != nil {
+		workspace.SetValue(doc, "request", plan.Request)
+	}
 	workspace.SetString(doc, "review", plan.Review)
 	workspace.SetValue(doc, "completion", plan.Completion)
 	workspace.SetValue(doc, "objectives", objectives)
@@ -164,8 +170,14 @@ func (s Service) start(plan Plan, raw []byte) (Result, error) {
 	workspace.SetStrings(doc, "dependencies", plan.Dependencies)
 	workspace.SetStrings(doc, "gaps", plan.Gaps)
 	workspace.SetStrings(doc, "stops", plan.Stops)
+	if len(plan.Fallbacks) > 0 {
+		workspace.SetValue(doc, "fallbacks", plan.Fallbacks)
+	}
+	if len(plan.AfterMission) > 0 {
+		workspace.SetStrings(doc, "after_mission", plan.AfterMission)
+	}
 	workspace.SetString(doc, "start_key", startKey)
-	temporary := &Bundle{Outcome: plan.Outcome, Review: plan.Review, Completion: plan.Completion, Authority: plan.Authority, Scope: plan.Scope, RepairBudget: plan.RepairBudget, Dependencies: plan.Dependencies, Gaps: plan.Gaps, Stops: plan.Stops}
+	temporary := &Bundle{Outcome: plan.Outcome, Request: plan.Request, Review: plan.Review, Completion: plan.Completion, Authority: plan.Authority, Scope: plan.Scope, RepairBudget: plan.RepairBudget, Dependencies: plan.Dependencies, Gaps: plan.Gaps, Stops: plan.Stops, Fallbacks: plan.Fallbacks, AfterMission: plan.AfterMission}
 	fingerprint, err := FrozenFingerprint(temporary)
 	if err != nil {
 		return Result{}, err
@@ -175,10 +187,10 @@ func (s Service) start(plan Plan, raw []byte) (Result, error) {
 	candidate := &Bundle{
 		ID: missionID.String(), Ref: missionRef, Title: plan.Title, Status: "active", Owner: plan.Owner,
 		Contract: contract, Baseline: &Baseline{Commit: commit, Branch: branch}, Outcome: plan.Outcome,
-		Review: plan.Review, Completion: plan.Completion, Objectives: objectives, Run: &run,
+		Request: plan.Request, Review: plan.Review, Completion: plan.Completion, Objectives: objectives, Run: &run,
 		Activation: &Activation{By: plan.Owner, At: now, Fingerprint: fingerprint}, Validation: Validation{Schema: Schema, Mode: "cli"},
 		Authority: plan.Authority, Scope: plan.Scope, RepairBudget: plan.RepairBudget,
-		Dependencies: plan.Dependencies, Gaps: plan.Gaps, Stops: plan.Stops, Path: path,
+		Dependencies: plan.Dependencies, Gaps: plan.Gaps, Stops: plan.Stops, Fallbacks: plan.Fallbacks, AfterMission: plan.AfterMission, Path: path,
 		document: doc,
 	}
 	for _, check := range registry {

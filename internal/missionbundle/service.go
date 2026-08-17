@@ -537,11 +537,13 @@ func (s Service) recordReview(missionRef, path string, stdin []byte) (Result, er
 	workspace.SetValue(doc, "claims", draft.Claims)
 	workspace.SetStrings(doc, "findings", draft.Findings)
 	workspace.SetStrings(doc, "limitations", draft.Limitations)
-	relative := filepath.ToSlash(filepath.Join("reviews", ref+"-"+humanlayout.Slug(draft.Title)+".md"))
+	reviewPath, relative, err := s.missionRecordPath(bundle, doc, ref)
+	if err != nil {
+		return Result{}, err
+	}
 	bundle.Reviews = append(bundle.Reviews, ReviewPointer{Ref: ref, ID: id.String(), File: relative, Verdict: "pass"})
 	workspace.SetValue(bundle.document, "reviews", bundle.Reviews)
 	bundle.document.Record.Updated = stringPtr(now)
-	reviewPath := filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), relative))
 	paths := map[domain.ID]string{bundle.document.Record.ID: bundle.Path, id: reviewPath}
 	return s.apply("review.record:"+bundle.ID+":"+id.String(), []*workspace.Document{bundle.document, doc}, paths, "review.record", bundle.Ref+"/"+ref, reviewPath)
 }
@@ -820,6 +822,26 @@ func stableID(at, key string) (domain.ID, error) {
 	raw[6] = (raw[6] & 0x0f) | 0x70
 	raw[8] = (raw[8] & 0x3f) | 0x80
 	return domain.ParseID(uuid.UUID(raw).String())
+}
+
+// missionRecordPath resolves a Mission-scoped record's canonical location through
+// the layout system rather than through a join written at the call site, so a
+// record created by any path lands where the layout rule says it lands. It
+// returns the workspace-relative path and the bundle-relative pointer the
+// Mission stores.
+func (s Service) missionRecordPath(bundle *Bundle, doc *workspace.Document, ref string) (string, string, error) {
+	workspace.SetString(doc, "human_ref", bundle.Ref+"/"+ref)
+	path, err := humanlayout.PlannedPath(s.Workspace.Entries, doc)
+	if err != nil {
+		return "", "", err
+	}
+	path = filepath.ToSlash(path)
+	bundleDirectory := filepath.ToSlash(filepath.Dir(bundle.Path))
+	relative, err := filepath.Rel(bundleDirectory, path)
+	if err != nil {
+		return "", "", invalidCause("record", "resolve record path relative to its Mission", err)
+	}
+	return path, filepath.ToSlash(relative), nil
 }
 
 func verifyReviewedGit(root, commit, tree string) error {

@@ -234,6 +234,7 @@ type Bundle struct {
 	Fallbacks        []Fallback        `json:"fallbacks,omitempty"`
 	AfterMission     []string          `json:"after_mission,omitempty"`
 	Reviews          []ReviewPointer   `json:"reviews,omitempty"`
+	Handoffs         []HandoffPointer  `json:"handoffs,omitempty"`
 	CompletionRecord *CompletionRecord `json:"completion_record,omitempty"`
 	Path             string            `json:"path"`
 	Legacy           bool              `json:"legacy"`

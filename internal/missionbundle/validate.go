@@ -41,6 +41,7 @@ var registry = []validator{
 	{"mission-order-activation", validateMissionOrderActivation},
 	{"run-state", validateRun},
 	{"review-independence", validateReviews},
+	{"handoff-integrity", validateHandoffs},
 	{"authority-vocabulary", validateAuthority},
 	{"mechanical-scope", validateScope},
 	{"safe-file-layout", validateLayout},

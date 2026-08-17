@@ -4,7 +4,7 @@ id: 01a010a6-01b0-7323-a6a6-7bc38c571762
 title: Make a handoff a record and a record path one system
 status: active
 created: "2026-08-17T21:31:06Z"
-updated: "2026-08-17T21:31:06Z"
+updated: "2026-08-17T21:59:59Z"
 activation:
     at: "2026-08-17T21:31:06Z"
     by: Alex
@@ -78,13 +78,13 @@ objectives:
       id: 01a010a6-01b0-77c3-81ef-c655a68b91c8
       outcome: Add the Handoff schema and its validation, including the asserted/assumed split, the supersedes ref, and reference integrity against the Mission and the superseded Handoff.
       ref: O1
-      status: pending
+      status: implemented
     - claims:
         - record-paths-resolve-through-one-system
       id: 01a010a6-01b0-7aa0-91eb-e4d065a567d9
       outcome: Give Review a layout branch so its path is produced by layout.go, and remove the hardcoded join from service.go without moving any recorded Review.
       ref: O2
-      status: pending
+      status: implemented
     - after:
         - O1
         - O2

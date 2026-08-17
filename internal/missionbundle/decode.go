@@ -106,6 +106,9 @@ func decode(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, error) {
 	if _, err = decodeOptional(doc, "reviews", &b.Reviews); err != nil {
 		return nil, err
 	}
+	if _, err = decodeOptional(doc, "handoffs", &b.Handoffs); err != nil {
+		return nil, err
+	}
 	if _, err = decodeOptional(doc, "completion_record", &b.CompletionRecord); err != nil {
 		return nil, err
 	}

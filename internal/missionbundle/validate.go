@@ -32,6 +32,7 @@ var registry = []validator{
 	{"activation-fingerprint", validateActivation},
 	{"completion-claim-coverage", validateClaims},
 	{"frozen-fallbacks", validateFallbacks},
+	{"resolved-gap-integrity", validateResolvedGaps},
 	{"request-coverage", validateRequest},
 	{"objective-dependency-dag", validateDAG},
 	{"mission-order-integrity", validateMissionOrderIntegrity},
@@ -231,6 +232,13 @@ func FrozenFingerprint(b *Bundle) (string, error) {
 	}
 	if len(b.AfterMission) > 0 {
 		value["after_mission"] = b.AfterMission
+	}
+	// Included so a Mission cannot acquire the authority to amend its bound
+	// Contract, or change the wording it will write, after the owner has approved
+	// the boundary. Omitted when absent so existing activation fingerprints, frozen
+	// before this field existed, still verify.
+	if len(b.ResolvesGaps) > 0 {
+		value["resolves_gaps"] = b.ResolvesGaps
 	}
 	if b.Request != nil {
 		value["request_dispositions"] = b.Request.dispositions()

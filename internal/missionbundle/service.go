@@ -46,7 +46,11 @@ type Plan struct {
 	Stops        []string    `yaml:"stops"`
 	Fallbacks    []Fallback  `yaml:"fallbacks,omitempty"`
 	AfterMission []string    `yaml:"after_mission,omitempty"`
-	Body         string      `yaml:"-"`
+	// ResolvesGaps names Gaps on the bound Contract that this Mission closes at
+	// completion, with the resolution text it will write. Frozen at activation so
+	// the authority to amend a Contract cannot be acquired afterwards.
+	ResolvesGaps []ResolvedGap `yaml:"resolves_gaps,omitempty"`
+	Body         string        `yaml:"-"`
 }
 
 type ReviewDraft struct {
@@ -176,8 +180,11 @@ func (s Service) start(plan Plan, raw []byte) (Result, error) {
 	if len(plan.AfterMission) > 0 {
 		workspace.SetStrings(doc, "after_mission", plan.AfterMission)
 	}
+	if len(plan.ResolvesGaps) > 0 {
+		workspace.SetValue(doc, "resolves_gaps", plan.ResolvesGaps)
+	}
 	workspace.SetString(doc, "start_key", startKey)
-	temporary := &Bundle{Outcome: plan.Outcome, Request: plan.Request, Review: plan.Review, Completion: plan.Completion, Authority: plan.Authority, Scope: plan.Scope, RepairBudget: plan.RepairBudget, Dependencies: plan.Dependencies, Gaps: plan.Gaps, Stops: plan.Stops, Fallbacks: plan.Fallbacks, AfterMission: plan.AfterMission}
+	temporary := &Bundle{Outcome: plan.Outcome, Request: plan.Request, Review: plan.Review, Completion: plan.Completion, Authority: plan.Authority, Scope: plan.Scope, RepairBudget: plan.RepairBudget, Dependencies: plan.Dependencies, Gaps: plan.Gaps, Stops: plan.Stops, Fallbacks: plan.Fallbacks, AfterMission: plan.AfterMission, ResolvesGaps: plan.ResolvesGaps}
 	fingerprint, err := FrozenFingerprint(temporary)
 	if err != nil {
 		return Result{}, err
@@ -190,7 +197,8 @@ func (s Service) start(plan Plan, raw []byte) (Result, error) {
 		Request: plan.Request, Review: plan.Review, Completion: plan.Completion, Objectives: objectives, Run: &run,
 		Activation: &Activation{By: plan.Owner, At: now, Fingerprint: fingerprint}, Validation: Validation{Schema: Schema, Mode: "cli"},
 		Authority: plan.Authority, Scope: plan.Scope, RepairBudget: plan.RepairBudget,
-		Dependencies: plan.Dependencies, Gaps: plan.Gaps, Stops: plan.Stops, Fallbacks: plan.Fallbacks, AfterMission: plan.AfterMission, Path: path,
+		Dependencies: plan.Dependencies, Gaps: plan.Gaps, Stops: plan.Stops, Fallbacks: plan.Fallbacks, AfterMission: plan.AfterMission,
+		ResolvesGaps: plan.ResolvesGaps, Path: path,
 		document: doc,
 	}
 	for _, check := range registry {

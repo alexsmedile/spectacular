@@ -37,6 +37,16 @@ type Fallback struct {
 	Recommendation  bool   `yaml:"recommendation,omitempty" json:"recommendation,omitempty"`
 }
 
+// ResolvedGap declares one Gap on the bound Contract that this Mission closes,
+// and the resolution text it will write. Both halves are frozen: the ref so a
+// Mission cannot acquire the authority to amend a Contract after activation, and
+// the text so the owner approves the exact wording at the activation gate rather
+// than whatever completion happens to compose.
+type ResolvedGap struct {
+	Gap        string `yaml:"gap" json:"gap"`
+	Resolution string `yaml:"resolution" json:"resolution"`
+}
+
 // Ask is one distinct thing the owner asked for, carrying what the plan decided
 // to do about it. The disposition is authored, never inferred: a validator that
 // guessed would produce false refusals on correct plans and false confidence on
@@ -219,6 +229,7 @@ type Bundle struct {
 	RepairBudget     int               `json:"repair_budget,omitempty"`
 	Dependencies     []string          `json:"dependencies,omitempty"`
 	Gaps             []string          `json:"gaps,omitempty"`
+	ResolvesGaps     []ResolvedGap     `json:"resolves_gaps,omitempty"`
 	Stops            []string          `json:"stops,omitempty"`
 	Fallbacks        []Fallback        `json:"fallbacks,omitempty"`
 	AfterMission     []string          `json:"after_mission,omitempty"`

@@ -4,7 +4,7 @@ id: 01a00f98-0480-7ea2-9f3e-8e3a961aacc6
 title: Make a resolved Gap closable and a declared check real
 status: active
 created: "2026-08-17T14:24:36Z"
-updated: "2026-08-17T14:31:58Z"
+updated: "2026-08-17T14:42:21Z"
 activation:
     at: "2026-08-17T14:24:36Z"
     by: Alex
@@ -82,7 +82,7 @@ objectives:
       id: 01a00f98-0480-70f2-b7ad-1f949dfe6793
       outcome: Add a frozen resolves_gaps declaration validated against the bound Contract's Gap refs at plan-freeze.
       ref: O2
-      status: pending
+      status: implemented
     - after:
         - O1
         - O2

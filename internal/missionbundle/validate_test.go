@@ -22,8 +22,8 @@ func TestSchemaRegistryOwnsEveryMandatoryValidation(t *testing.T) {
 		"activation-fingerprint", "authority-vocabulary", "baseline-binding", "completion-claim-coverage",
 		"contract-binding", "frozen-fallbacks", "mechanical-scope", "mission-order-activation",
 		"mission-order-integrity", "objective-dependency-dag", "reference-integrity", "request-coverage",
-		"review-independence", "run-state", "safe-file-layout", "transition-atomicity",
-		"uuidv7-identity", "yaml-schema",
+		"resolved-gap-integrity", "review-independence", "run-state", "safe-file-layout",
+		"transition-atomicity", "uuidv7-identity", "yaml-schema",
 	}
 	if got := ValidatorNames(); !reflect.DeepEqual(got, want) {
 		t.Fatalf("validators=%v want=%v", got, want)

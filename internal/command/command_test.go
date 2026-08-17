@@ -40,10 +40,12 @@ func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
 	}
 }
 
-// TestDeletedV1SurfaceStaysDeleted asserts the v1 context-compiler chain cannot
-// return by import. The three packages were unreachable from the main package and
-// were removed as a unit; a reintroduced import is the first symptom of the chain
-// growing back, and it would compile silently without this check.
+// TestDeletedV1SurfaceStaysDeleted asserts the removed v1 packages cannot return
+// by import. The context-compiler chain (context, projection, guardrails) was
+// unreachable from the main package and removed as a unit; index was the v1
+// predecessor of discovery.Workspace.Lookup and removed after. A reintroduced
+// import is the first symptom of any of them growing back, and it would compile
+// silently without this check.
 func TestDeletedV1SurfaceStaysDeleted(t *testing.T) {
 	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
@@ -51,7 +53,7 @@ func TestDeletedV1SurfaceStaysDeleted(t *testing.T) {
 	}
 	// Split so this file does not match its own search strings.
 	modulePrefix := "github.com/alexsmedile/spectacular/v2/internal/"
-	deleted := []string{"con" + "text", "pro" + "jection", "guard" + "rails"}
+	deleted := []string{"con" + "text", "pro" + "jection", "guard" + "rails", "in" + "dex"}
 	self, err := filepath.Abs("command_test.go")
 	if err != nil {
 		t.Fatal(err)

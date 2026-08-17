@@ -324,9 +324,21 @@ output "is a disposable projection and never owns Mission or Contract truth" —
 the same rule `Bundle.Derive()` follows. v2 reached it more cheaply by deriving
 state on read, beside the Bundle it reads.
 
-### `internal/index`
+### `internal/index` — removed 2026-08-17, on owner approval
 
-Also unreachable: zero importers, not even from a test outside itself. It is the
-v1 predecessor of `discovery.Workspace.Lookup`, carrying 8 tests and no callers.
-Left in place by M9 — the Mission's frozen scope names three packages, and adding
-a fourth is `expand-scope`. It needs an owner decision or a follow-up Mission.
+Found during M9's dependency walk and left in place at the time: the Mission's
+frozen scope named three packages, and adding a fourth is `expand-scope`. Removed
+immediately after M9 completed, on the owner's explicit approval, rather than
+carried as a standing follow-up.
+
+It was the v1 predecessor of `discovery.Workspace.Lookup` — an in-memory record
+index keyed by ID and workspace path, with sorted iteration and defensive cloning
+on read. Zero importers, not even from a test outside itself; 8 tests exercising
+only its own surface.
+
+Nothing was salvaged. `discovery` already provides the lookup this package
+existed for, and unlike the context compiler it carried no capability the current
+system lacks. The defensive `cloneEntry`/`cloneRecord` pattern is the one idea
+worth remembering: it returned copies so a caller could not mutate indexed state
+through a read. `discovery` should be checked against that property if it is ever
+found to hand out shared structures.

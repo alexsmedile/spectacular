@@ -43,6 +43,12 @@ stay in their own providers.
 
    Report three lines: plain outcome, one technical evidence line, one next action.
 
+   If the preflight lands on the default branch and the job is multi-step, branch
+   before activating — `git checkout -b <mission-slug>`. Working a Mission on
+   `main` leaves no merge point and no review boundary. The exception is an
+   owner-requested quick patch with no concurrent session; take it explicitly, not
+   silently.
+
 3. **Enter the Mission through `MISSION.md`.** Read its frontmatter control card
    and its body. Follow pointers to Objective, Run, Evidence, or review files only
    when the current work needs them. Do not preload project history, every record,
@@ -134,6 +140,16 @@ attribute to the owner by name.
 
 When you do act on an authorization, record who authorized and who performed. An
 operator acting on owner approval is not the owner acting.
+
+### Settle execution mode at activation
+
+Activation is also when to ask how much the owner wants to be involved while the
+Mission runs: autopilot, checkpoints, or a named human-in-the-loop moment. Ask it
+once, alongside the activation gate, and name the actual checkpoints rather than
+offering the word. Owner gates and stops fire in every mode.
+
+See [execute.md](references/execute.md) for the three modes and what makes an
+answer usable.
 
 ### Batch gates; ask once
 

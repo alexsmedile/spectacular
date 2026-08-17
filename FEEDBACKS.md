@@ -341,3 +341,90 @@ M8 is active and froze its own scope. This is not in it, and amending an active
 Mission's scope to absorb a found bug is the drift M8 exists to prevent. It waits
 for the cleanup Mission — where it belongs alongside the unaddressed
 "review the open gaps and dead weight" ask.
+
+## A Mission was activated and executed on `main`
+
+**Found:** 2026-08-17, running M9. **Where:**
+`skills/spectacular/references/execute.md`, the branch section.
+
+M9 deleted ~4,300 lines across four Objectives and was activated, executed, and
+committed directly on `main`. No branch, no merge point, no review boundary. The
+owner caught it after the fact: "you did not start mission 9 on a branch, which I
+believe was the wrong move."
+
+### Why the Skill did not prevent it
+
+`execute.md` had a section titled "Choose the branch before you edit". Every line
+under it was about picking among branches that *already exist*: check whether an
+active branch touches these files, work on that one, do not split a file set
+across two. It answered "which branch?" and never "should there be a branch?"
+
+Read literally, the guidance was satisfied. `git branch --show-current` returned
+`main`, no other branch touched the paths, so there was no conflict to avoid and
+the section had nothing further to say.
+
+### What should have caught it anyway
+
+Three signals were present and none was read:
+
+1. `mission start` wrote `baseline: branch: main` into the record without comment.
+   The system watched a Mission freeze onto the default branch and said nothing.
+2. The Mission's own authority block gates `merge` for the owner — which
+   presupposes a branch to merge *from*. Activating on `main` removes that gate by
+   removing its subject.
+3. Four Objectives and a four-figure deletion count is not a quick patch.
+
+### Applied to the Skill
+
+- `execute.md` gains "Branch before you activate" **ahead of** the existing
+  branch-choice guidance: a Mission gets its own branch, created before
+  `mission start` because activation records the current branch into `baseline:`.
+  A `baseline: branch: main` is now named as the symptom to check for on resume.
+- The one exception is stated: an owner-requested quick patch with no concurrent
+  session, taken explicitly rather than silently. Multi-step work is not a quick
+  patch whatever it was called at the start.
+- The retrofit is documented with its cost — `git branch <name> <sha>` then
+  `git reset --hard <base>` moves the commits and **discards every uncommitted
+  change in the working tree**. This bit during the M9 retrofit: the reset wiped
+  the tree, and the files were only recoverable because the branch already held
+  the commit.
+- `SKILL.md` step 2 now acts on the preflight's branch reading instead of merely
+  reporting it.
+
+### Still open
+
+Whether the tooling should refuse or warn on activation when the current branch is
+the default one. The Skill is guidance; a `baseline: branch: main` is a mechanical
+fact the CLI could notice. That is a Mission, not a Skill edit — it touches
+`mission start`, which is inside the frozen ten-command surface.
+
+## Activation did not ask how much the owner wanted to be involved
+
+**Found:** 2026-08-17, after M9. **Where:** `skills/spectacular/references/execute.md`.
+
+Activation authorized *what* M9 would do and said nothing about *how often the
+owner would be interrupted while it ran*. The question surfaced piecemeal instead:
+a scope decision at O1, a Contract-binding conflict at O4, a review-independence
+gate at close. Each was legitimate, but the owner had no way to say up front "run
+the mechanical parts unattended, stop at these three points".
+
+This is the same shape as the earlier "Owner gates were handed back as homework"
+entry. That one fixed the *register* of a gate — ask for authorization, not labor.
+This one is about *frequency*: how many gates the owner sees at all.
+
+### Applied to the Skill
+
+`execute.md` gains "Settle the execution mode in the same breath as activation" —
+one question at activation offering autopilot, checkpoints, or a named HITL moment,
+with two rules that make an answer usable:
+
+- **Restate the checkpoints when offering the mode.** "Checkpoints" means nothing
+  until the owner sees which ones. Three to five named points is a list; every
+  Objective is not.
+- **For HITL, name the activity and the moment.** If you cannot say what the human
+  actually does, it is a checkpoint, not HITL.
+
+The mode is recorded in the Run body and honored for the whole Mission. Owner gates
+and stops fire in every mode: autopilot means fewer interruptions, never fewer
+gates. Default is checkpoints at Objective boundaries when the question was never
+asked.

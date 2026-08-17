@@ -205,7 +205,7 @@ func treeDigest(t *testing.T, root string) string {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() {
+		if info.IsDir() || filepath.Base(path) == ".lock" {
 			return nil
 		}
 		rel, _ := filepath.Rel(root, path)

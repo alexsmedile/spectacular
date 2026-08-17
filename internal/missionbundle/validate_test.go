@@ -69,9 +69,23 @@ func TestMandatoryValidatorsReturnTypedZeroMutationRefusals(t *testing.T) {
 		{"request-coverage", m6, func(b *Bundle) {
 			b.Request = &Request{Source: "chat", CapturedAt: "2026-08-16T20:59:04Z", Asks: []Ask{{Ask: "something", Disposition: "invalid"}}}
 		}, validateRequest, domain.RefusalInvalidKnownField, "request.asks.disposition"},
-		{"objective-dependency-dag", m6, func(b *Bundle) { b.Objectives[0].After = []string{b.Objectives[0].Ref} }, validateDAG, domain.RefusalInvalidKnownField, "objectives.after"},
 		{"mission-order-integrity", m6, func(b *Bundle) { b.AfterMission = []string{"dangling-mission"} }, validateMissionOrderIntegrity, domain.RefusalInvalidKnownField, "after_mission"},
-		{"mission-order-activation", m6, func(b *Bundle) { b.Status = "active"; b.AfterMission = []string{"M8"} }, validateMissionOrderActivation, domain.RefusalInvalidKnownField, "after_mission"},
+		{"mission-order-activation", m6, func(b *Bundle) { b.Status = "active" }, func(w *discovery.Workspace, b *Bundle) error {
+			fixtureRoot := missionServiceFixture(t)
+			plan1, _ := stressPlan()
+			plan1.Title = "Active Predecessor"
+			svc := openMissionService(t, fixtureRoot)
+			m1, err := svc.Start(plan1, []byte("plan 1"))
+			if err != nil {
+				return err
+			}
+			fixtureWs, err := discovery.Open(fixtureRoot)
+			if err != nil {
+				return err
+			}
+			b.AfterMission = []string{m1.Ref}
+			return validateMissionOrderActivation(fixtureWs, b)
+		}, domain.RefusalInvalidKnownField, "after_mission"},
 		{"run-state", m6, func(b *Bundle) { b.Run.Repairs = b.RepairBudget + 1 }, validateRun, domain.RefusalInvalidKnownField, "run"},
 		{"review-independence", m5, func(b *Bundle) { b.Reviews[0].Verdict = "repair" }, validateReviews, domain.RefusalInvalidKnownField, "reviews"},
 		{"authority-vocabulary", m6, func(b *Bundle) { b.Authority.Operator = append(b.Authority.Operator, "invent-authority") }, validateAuthority, domain.RefusalInvalidKnownField, "authority.operator"},

@@ -173,10 +173,22 @@ func TestMissionOrderNegativeValidators(t *testing.T) {
 	})
 
 	t.Run("refusal on activation ahead of incomplete predecessor", func(t *testing.T) {
+		fixtureRoot := missionServiceFixture(t)
+		plan1, _ := stressPlan()
+		plan1.Title = "Active Predecessor"
+		svc := openMissionService(t, fixtureRoot)
+		m1, err := svc.Start(plan1, []byte("plan 1"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		fixtureWs, err := discovery.Open(fixtureRoot)
+		if err != nil {
+			t.Fatal(err)
+		}
 		candidate := cloneBundle(t, base)
 		candidate.Status = "active"
-		candidate.AfterMission = []string{"M8"} // M8 is currently active, not completed!
-		err := validateMissionOrderActivation(ws, candidate)
+		candidate.AfterMission = []string{m1.Ref}
+		err = validateMissionOrderActivation(fixtureWs, candidate)
 		if err == nil {
 			t.Fatal("expected refusal on activation ahead of active/incomplete predecessor, got nil")
 		}
@@ -187,16 +199,28 @@ func TestMissionOrderNegativeValidators(t *testing.T) {
 		if refusal.Field != "after_mission" {
 			t.Fatalf("refusal.Field=%s, want after_mission", refusal.Field)
 		}
-		if !strings.Contains(refusal.Detail, "M8") || !strings.Contains(refusal.Detail, "not completed") {
+		if !strings.Contains(refusal.Detail, m1.Ref) || !strings.Contains(refusal.Detail, "not completed") {
 			t.Fatalf("refusal detail %q does not state predecessor is not completed", refusal.Detail)
 		}
 	})
 
 	t.Run("unactivated mission (defined) passes activation validator even with incomplete predecessor", func(t *testing.T) {
+		fixtureRoot := missionServiceFixture(t)
+		plan1, _ := stressPlan()
+		plan1.Title = "Active Predecessor"
+		svc := openMissionService(t, fixtureRoot)
+		m1, err := svc.Start(plan1, []byte("plan 1"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		fixtureWs, err := discovery.Open(fixtureRoot)
+		if err != nil {
+			t.Fatal(err)
+		}
 		candidate := cloneBundle(t, base)
 		candidate.Status = "defined"
-		candidate.AfterMission = []string{"M8"}
-		if err := validateMissionOrderActivation(ws, candidate); err != nil {
+		candidate.AfterMission = []string{m1.Ref}
+		if err := validateMissionOrderActivation(fixtureWs, candidate); err != nil {
 			t.Fatalf("unactivated mission should pass activation check: %v", err)
 		}
 	})

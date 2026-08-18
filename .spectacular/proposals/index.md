@@ -9,7 +9,4 @@
 | `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |
 | `P4` | Proposal | Make Spectacular control operations lean | `.spectacular/proposals/P4-make-spectacular-control-operations-lean.md` |
 | `P5` | Proposal | Reduce repeated cost and brittle paths | `.spectacular/proposals/P5-reduce-repeated-cost-and-brittle-paths.md` |
-| `P6` | Proposal | Condense projection surfaces | `.spectacular/proposals/P6-condense-projection-surfaces.md` |
-| `P7` | Proposal | Amend a signed record without breaking it | `.spectacular/proposals/P7-amend-a-signed-record-without-breaking-it.md` |
 | `P8` | Proposal | Add mechanical Git branch guardrails to mission start | `.spectacular/proposals/P8-cli-git-branch-guardrail.md` |
-| `P9` | Proposal | Frozen Handoff records | `.spectacular/proposals/P9-frozen-handoff-records.md` |

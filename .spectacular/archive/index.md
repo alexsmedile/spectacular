@@ -14,3 +14,6 @@
 | `M1/R1` | Run | Implement human workspace layout | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/R1-implement-layout.md` |
 | `M1/R1/C1` | Checkpoint | Human-operability candidate ready for owner review | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-in-progress.md` |
 | `M10` | Mission | Make a resolved Gap closable and a declared check real | `.spectacular/archive/missions/M10-superseded-by-d9/M10-superseded-by-d9.md` |
+| `P6` | Proposal | Condense projection surfaces | `.spectacular/archive/proposals/P6-condense-projection-surfaces.md` |
+| `P7` | Proposal | Amend a signed record without breaking it | `.spectacular/archive/proposals/P7-amend-a-signed-record-without-breaking-it.md` |
+| `P9` | Proposal | Frozen Handoff records | `.spectacular/archive/proposals/P9-frozen-handoff-records.md` |

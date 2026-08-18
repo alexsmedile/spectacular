@@ -42,6 +42,18 @@ binding — `mission check` reporting `contract-drift` on one is a notice, the M
 stays `valid=true`, and `git log -S <fingerprint>` recovers the Contract text as it
 was. See `D10-repoint`.
 
+A Proposal that has shipped is retired, not left at `draft`. Nothing writes a Proposal's
+status — `proposal check` validates the value it finds and no command advances it — so an
+absorbed Proposal reads `draft` until an owner says otherwise. Retiring one means naming its
+resolver in `resolved_by:`, setting `accepted`, and moving it to
+`.spectacular/archive/proposals/` with `archive_authorization:` and
+`archive_input_fingerprint:`, exactly as an archived Mission carries them. Write
+`resolved_by:` before the move, never after: once the record leaves `proposals/`, that field
+is the only thing tying it to the work that answered it. A Proposal is absorbed when the
+question it asked was answered, not when most of it was — P5 shipped three of four
+directions and stays live. Live `proposals/` holds open questions only. See
+`D11-proposal-retirement`.
+
 ## `docs/` is human-facing product documentation
 
 `docs/` holds the public documentation for Spectacular — the kind of material

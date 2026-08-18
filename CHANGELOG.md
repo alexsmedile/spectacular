@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+- Defines what happens to a Proposal once its work has shipped. A Proposal had a
+  validated status and no end state: nothing advances the field, so an absorbed Proposal
+  read `draft` indefinitely and the live folder described a backlog that no longer
+  existed. An absorbed Proposal now names its resolver in `resolved_by:` and is retired
+  to `.spectacular/archive/proposals/` under an authorizing Decision and a fingerprint,
+  the same admission rule an archived Mission follows. `resolved_by:` is written before
+  the move, because once the record leaves `proposals/` that field is the only thing
+  tying it to the work that answered it. P6, P7, and P9 were retired under
+  `D11-proposal-retirement`; P5 stays live, having shipped three of its four directions.
+  No command was added — retirement is an owner act.
+
 ## 2.4.0 — 2026-08-18
 
 A delegation is now a record rather than a chat message, record paths resolve through

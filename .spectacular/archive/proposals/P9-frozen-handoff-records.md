@@ -4,6 +4,9 @@ id: 01a0105e-6520-7eff-9a8e-5a8a100674ab
 ref: P9
 title: Frozen Handoff records
 status: accepted
+resolved_by: M12
+archive_authorization: Decision:01a01241-982d-7a8b-a0c4-799c717abfdd
+archive_input_fingerprint: d3e36db09c661b92b58151c6e9589ec29277adbd0661b499e3db0dd4966f7f18
 created_by: Alex
 created: "2026-08-17T15:36:56Z"
 updated: "2026-08-18T00:00:00Z"

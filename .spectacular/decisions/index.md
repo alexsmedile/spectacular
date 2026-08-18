@@ -5,6 +5,7 @@
 |---|---|---|---|
 | `D1-rnkfzw` | Decision | Authorize the v2.1 governed-autonomy Proposal | `.spectacular/decisions/D1-rnkfzw.md` |
 | `D10-repoint` | Decision | Re-point only the live Mission; a completed Mission keeps the binding it agreed to | `.spectacular/decisions/D10-repoint.md` |
+| `D11-proposal-retirement` | Decision | Retire an absorbed Proposal to the archive with a stated resolver | `.spectacular/decisions/D11-proposal-retirement.md` |
 | `D2-435ztz` | Decision | Authorize the v2.1 governed-autonomy Mission | `.spectacular/decisions/D2-435ztz.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |

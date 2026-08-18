@@ -38,20 +38,26 @@ work and one contract Gap. Nothing here blocks using the product.
 - [ ] **P8 — mechanical Git branch guardrail.** `mission start` still accepts activation
   on `main`/`master`, so a multi-step Mission can destroy the review and isolation
   boundary it depends on. Demonstrated problem, no implementation. The highest-value
-  open item.
+  open item — this release needed a manual `--allow-main` override to cut, which is the
+  same hole from the other side.
 - [ ] **P10 — preparation judgment checkpoint.** A Mission can freeze and activate with
   nobody having asked whether the approach is understood or the slice correctly sized.
   Five design decisions are owner-accepted; they bind only when a Mission freezes them.
-- [ ] **P5 — repeated cost and brittle paths.** Framing is firm, shapes are not. Oldest
-  open draft; re-read before acting, it predates several shipped changes.
-- [ ] **P6 — condense projection surfaces.** Body marks most items `(implemented)`.
-  Likely needs closing as superseded rather than executing.
+- [ ] **P5 — a trace of the last preflight, with decay.** Three of P5's four directions
+  shipped (drift-aimed audits, `fallbacks:`/`invalidated_if:`, `after_interface:`); only
+  the preflight trace remains. It is the cheapest of the four and unblocked. P5 stays live
+  and annotated in place rather than retired — see `D11-proposal-retirement`.
 
-### Stale proposal statuses
+### Proposal lifecycle — settled
 
-- [ ] P7 (`contract amend`) and P9 (frozen Handoff records) still read `status: draft`
-  but both shipped — P7 in 2.3.0, P9 in 2.4.0. Their content records decisions that were
-  made and built. Move them to `accepted`/`resolved` so the status field stops lying.
+`D11-proposal-retirement` defines what happens when a Proposal is done: it gains
+`resolved_by:` naming the Mission that absorbed it, moves to
+`.spectacular/archive/proposals/` with `archive_authorization:` and a fingerprint, and
+leaves `proposals/` holding only open questions. P6, P7, and P9 were retired under it.
+
+- [ ] P1–P4 read `accepted` and shipped long ago, but predate `resolved_by:` and were not
+  in D11's targets. Retiring them needs their absorbing Missions identified and a Decision
+  authorizing the move. Low urgency; they are correct where they are, just not yet retired.
 
 ### Open Contract Gap
 

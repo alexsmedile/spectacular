@@ -4,6 +4,9 @@ id: 01a00f7b-e046-700f-9b13-ca4b04d03790
 ref: P7
 title: Amend a signed record without breaking it
 status: accepted
+resolved_by: M11
+archive_authorization: Decision:01a01241-982d-7a8b-a0c4-799c717abfdd
+archive_input_fingerprint: 73dea21d4c2357d77ddefd205cd7dfc0db779201ab19d915f7ba439805f33f51
 created_by: Alex
 created: "2026-08-17T11:29:31Z"
 updated: "2026-08-18T00:00:00Z"

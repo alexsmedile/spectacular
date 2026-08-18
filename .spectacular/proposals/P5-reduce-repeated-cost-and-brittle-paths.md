@@ -92,6 +92,19 @@ table-driven negative tests need the second, which is frozen at plan time.
 Four, listed cheapest-first. They are independent; adopting one does not require any
 other.
 
+> **Status as of 2026-08-18 (v2.4.0).** Three of the four shipped and one did not, which is
+> why this Proposal stays live rather than being retired under `D11-proposal-retirement`.
+>
+> | Direction | State |
+> |---|---|
+> | A trace of the last preflight, with decay | **open** — nothing persists a trace |
+> | Aim audits at drift instead of at memory | shipped — `mission check` reports per-claim drift and `audit` defaults to a claim |
+> | Keep rejected approaches as thin fallbacks | shipped — `fallbacks:` with `invalidated_if:` validates |
+> | Separate "needs the artifact" from "needs the interface" | shipped — `after_interface:` is a distinct edge kind with cycle detection |
+>
+> The open direction is the cheapest of the four and is unblocked. A Proposal is absorbed when
+> the question it asked has been answered, not when most of it has.
+
 ### A trace of the last preflight, with decay
 
 Persist what the last preflight observed, alongside hashes of its inputs. On the next

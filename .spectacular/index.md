@@ -9,6 +9,7 @@
 | `CC-v2prod` | Contract | Spectacular v2 product contract | `.spectacular/contracts/CC-v2prod-spectacular-v2-product.md` |
 | `D1-rnkfzw` | Decision | Authorize the v2.1 governed-autonomy Proposal | `.spectacular/decisions/D1-rnkfzw.md` |
 | `D10-repoint` | Decision | Re-point only the live Mission; a completed Mission keeps the binding it agreed to | `.spectacular/decisions/D10-repoint.md` |
+| `D11-proposal-retirement` | Decision | Retire an absorbed Proposal to the archive with a stated resolver | `.spectacular/decisions/D11-proposal-retirement.md` |
 | `D2-435ztz` | Decision | Authorize the v2.1 governed-autonomy Mission | `.spectacular/decisions/D2-435ztz.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
@@ -72,10 +73,10 @@
 | `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |
 | `P4` | Proposal | Make Spectacular control operations lean | `.spectacular/proposals/P4-make-spectacular-control-operations-lean.md` |
 | `P5` | Proposal | Reduce repeated cost and brittle paths | `.spectacular/proposals/P5-reduce-repeated-cost-and-brittle-paths.md` |
-| `P6` | Proposal | Condense projection surfaces | `.spectacular/proposals/P6-condense-projection-surfaces.md` |
-| `P7` | Proposal | Amend a signed record without breaking it | `.spectacular/proposals/P7-amend-a-signed-record-without-breaking-it.md` |
+| `P6` | Proposal | Condense projection surfaces | `.spectacular/archive/proposals/P6-condense-projection-surfaces.md` |
+| `P7` | Proposal | Amend a signed record without breaking it | `.spectacular/archive/proposals/P7-amend-a-signed-record-without-breaking-it.md` |
 | `P8` | Proposal | Add mechanical Git branch guardrails to mission start | `.spectacular/proposals/P8-cli-git-branch-guardrail.md` |
-| `P9` | Proposal | Frozen Handoff records | `.spectacular/proposals/P9-frozen-handoff-records.md` |
+| `P9` | Proposal | Frozen Handoff records | `.spectacular/archive/proposals/P9-frozen-handoff-records.md` |
 | `PRODUCT` | Anchor | Product direction | `.spectacular/PRODUCT.md` |
 | `PROJECT` | Anchor | Spectacular v2 | `.spectacular/PROJECT.md` |
 | `STACK` | Anchor | Stack | `.spectacular/STACK.md` |

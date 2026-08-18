@@ -3,6 +3,9 @@ type: Proposal
 id: 01a00a98-32b3-7612-b19a-b8ffa479505c
 title: Condense projection surfaces
 status: accepted
+resolved_by: M7
+archive_authorization: Decision:01a01241-982d-7a8b-a0c4-799c717abfdd
+archive_input_fingerprint: 67d5aeb6461fc238310a8a60de7e13303b2669cad9dd88989c6d75b6d5508eca
 human_ref: P6
 created_by: Alex
 created: "2026-08-16T12:42:21Z"

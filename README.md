@@ -7,7 +7,7 @@ setting missions, recording evidence, and carrying the next safe action forward.
 
 *Agents build. Humans decide.*
 
-[Quick start](#quick-start) · [See it in action](#see-it-in-action) · [How it works](#how-it-works) · [Reference](#reference)
+[Quick start](#quick-start) · [See it in action](#see-it-in-action) · [How it works](#how-it-works) · [Documentation](docs/README.md)
 
 ---
 
@@ -245,6 +245,13 @@ The CLI validates the record graph, fingerprints the sources, and emits projecti
 - a throwaway prompt or a one-session change with no need to resume;
 - teams seeking a general task tracker or hosted agent dashboard; or
 - workflows that require agents to infer or acquire external permissions.
+
+## Documentation
+
+- [Quickstart](docs/quickstart.md) — install the CLI and run one Mission end to end.
+- [Architecture](docs/architecture.md) — the surfaces, the record types, and what the CLI refuses to decide.
+- [Process](docs/process.md) — the Mission lifecycle and its gates.
+- [All documentation](docs/README.md) — index.
 
 ## Reference
 

@@ -34,7 +34,7 @@ The project root is intentionally small:
 `GUARDRAILS.md` is owner-authored guidance selected by the runtime. Every
 `index.md` is a deterministic, committed, non-authoritative projection.
 
-**Anchor naming rule**: Single-word uppercase filenames (`<NOUN>.md`) are reserved exclusively for Project Anchors and workspace landmark files (`README.md`, `AGENTS.md`, `HUMAN-WORKSPACE-CONTRACT.md`, `FEEDBACKS.md`). All governed records carry their scoped prefix in their filename.
+**Anchor naming rule**: Single-word uppercase filenames (`<NOUN>.md`) are reserved exclusively for Project Anchors and workspace landmark files (`README.md`, `AGENTS.md`, `HUMAN-WORKSPACE-CONTRACT.md`). All governed records carry their scoped prefix in their filename. The same shape is used by untracked local working files such as `TODO.md` and `FEEDBACKS.md`; a record that needs to rely on one quotes what it needs, because the file is not published alongside the record.
 
 ## Mission bundles
 

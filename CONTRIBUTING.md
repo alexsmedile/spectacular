@@ -15,7 +15,7 @@ Before every release-facing change, run `bash test/verify.sh all`. See
 interface. Regenerate it when changing the registry; do not hand-maintain a
 command inventory.
 
-Follow [HUMAN-WORKSPACE-CONTRACT.md](HUMAN-WORKSPACE-CONTRACT.md). Canonical
+Follow [docs/human-workspace-contract.md](docs/human-workspace-contract.md). Canonical
 records keep UUIDv7 identity but persist under readable project Anchors and
 Mission bundles; generated `index.md` files are committed projections and
 never authority.

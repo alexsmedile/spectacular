@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" width="100%" height="100%" role="img" aria-label="The Spectacular Mission lifecycle, from Proposal through owner completion" style="background:#0b0f17; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="lcBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#070a12" />
+    </linearGradient>
+    <linearGradient id="cardProposal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#241b35" /><stop offset="100%" stop-color="#151022" />
+    </linearGradient>
+    <linearGradient id="cardMission" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#132738" /><stop offset="100%" stop-color="#0a1622" />
+    </linearGradient>
+    <linearGradient id="cardRun" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" /><stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="cardDone" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#132e27" /><stop offset="100%" stop-color="#0a1a16" />
+    </linearGradient>
+    <filter id="lcShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+    <marker id="lcArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#94a3b8" />
+    </marker>
+    <marker id="lcArrowGate" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f59e0b" />
+    </marker>
+  </defs>
+
+  <rect width="800" height="420" fill="url(#lcBg)" />
+  <text x="40" y="44" font-size="18" font-weight="700" fill="#f8fafc" letter-spacing="0.5">The Mission lifecycle</text>
+  <text x="40" y="66" font-size="12" font-weight="400" fill="#94a3b8">Agents build. Humans decide. The gates are where authority lives.</text>
+
+  <!-- Proposal -->
+  <g filter="url(#lcShadow)">
+    <rect x="40" y="100" width="150" height="78" rx="10" fill="url(#cardProposal)" stroke="#c084fc" stroke-width="1.4" />
+  </g>
+  <text x="56" y="126" font-size="13" font-weight="700" fill="#e9d5ff" letter-spacing="0.5">Proposal</text>
+  <text x="56" y="146" font-size="10" font-weight="400" fill="#cbd5e1">optional exploration</text>
+  <text x="56" y="162" font-size="10" font-weight="400" fill="#94a3b8">mutable · no authority</text>
+
+  <!-- Mission -->
+  <g filter="url(#lcShadow)">
+    <rect x="250" y="100" width="150" height="78" rx="10" fill="url(#cardMission)" stroke="#38bdf8" stroke-width="1.4" />
+  </g>
+  <text x="266" y="126" font-size="13" font-weight="700" fill="#7dd3fc" letter-spacing="0.5">Mission</text>
+  <text x="266" y="146" font-size="10" font-weight="400" fill="#cbd5e1">frozen agreement</text>
+  <text x="266" y="162" font-size="10" font-weight="400" fill="#94a3b8">fingerprinted at activation</text>
+
+  <!-- Run -->
+  <g filter="url(#lcShadow)">
+    <rect x="460" y="100" width="150" height="78" rx="10" fill="url(#cardRun)" stroke="#94a3b8" stroke-width="1.4" />
+  </g>
+  <text x="476" y="126" font-size="13" font-weight="700" fill="#f8fafc" letter-spacing="0.5">Run</text>
+  <text x="476" y="146" font-size="10" font-weight="400" fill="#cbd5e1">one bounded attempt</text>
+  <text x="476" y="162" font-size="10" font-weight="400" fill="#94a3b8">objectives earned, not planned</text>
+
+  <!-- Complete -->
+  <g filter="url(#lcShadow)">
+    <rect x="620" y="250" width="140" height="78" rx="10" fill="url(#cardDone)" stroke="#34d399" stroke-width="1.4" />
+  </g>
+  <text x="636" y="276" font-size="13" font-weight="700" fill="#6ee7b7" letter-spacing="0.5">Completed</text>
+  <text x="636" y="296" font-size="10" font-weight="400" fill="#cbd5e1">owner act only</text>
+  <text x="636" y="312" font-size="10" font-weight="400" fill="#94a3b8">gaps must be closed</text>
+
+  <!-- Evidence / Review -->
+  <g filter="url(#lcShadow)">
+    <rect x="380" y="250" width="180" height="78" rx="10" fill="url(#cardRun)" stroke="#94a3b8" stroke-width="1.4" />
+  </g>
+  <text x="396" y="276" font-size="13" font-weight="700" fill="#f8fafc" letter-spacing="0.5">Evidence · Review</text>
+  <text x="396" y="296" font-size="10" font-weight="400" fill="#cbd5e1">proof recorded as records</text>
+  <text x="396" y="312" font-size="10" font-weight="400" fill="#94a3b8">a verdict, not a claim</text>
+
+  <!-- flow arrows -->
+  <path d="M 190 139 L 244 139" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#lcArrow)" />
+  <path d="M 400 139 L 454 139" stroke="#f59e0b" stroke-width="2" marker-end="url(#lcArrowGate)" />
+  <path d="M 535 178 L 535 244" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#lcArrow)" />
+  <path d="M 560 289 L 614 289" stroke="#f59e0b" stroke-width="2" marker-end="url(#lcArrowGate)" />
+
+  <!-- gate labels -->
+  <text x="427" y="128" text-anchor="middle" font-size="9" font-weight="700" fill="#fbbf24" letter-spacing="0.4">GATE</text>
+  <text x="427" y="118" text-anchor="middle" font-size="8.5" font-weight="600" fill="#fbbf24" letter-spacing="0.3">activation</text>
+  <text x="587" y="280" text-anchor="middle" font-size="9" font-weight="700" fill="#fbbf24" letter-spacing="0.4">GATE</text>
+  <text x="587" y="270" text-anchor="middle" font-size="8.5" font-weight="600" fill="#fbbf24" letter-spacing="0.3">completion</text>
+
+  <!-- amend loop -->
+  <path d="M 325 178 C 325 220, 250 226, 250 250" stroke="#c084fc" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#lcArrow)" />
+  <g>
+    <rect x="150" y="250" width="200" height="60" rx="10" fill="#151022" stroke="#c084fc" stroke-width="1.2" />
+    <text x="166" y="274" font-size="11" font-weight="700" fill="#e9d5ff">contract amend</text>
+    <text x="166" y="292" font-size="9.5" font-weight="400" fill="#94a3b8">the agreement changed — deliberately</text>
+  </g>
+
+  <text x="40" y="378" font-size="10" font-weight="400" fill="#64748b">A frozen Mission is never edited to match what happened. If the agreement is wrong, it is amended on the record.</text>
+  <text x="40" y="396" font-size="10" font-weight="400" fill="#64748b">A completed Mission keeps its original binding forever — the freeze point records what it was judged against.</text>
+</svg>

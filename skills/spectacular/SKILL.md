@@ -28,6 +28,37 @@ stay in their own providers.
 
 ## Start every workflow
 
+0. **Confirm the mechanical layer is present.** Run `spectacular --version`
+   once, before anything else.
+
+   If it resolves, proceed normally. If it does not, say so plainly and stop
+   before any governed mutation. Do not emulate a missing CLI: never hand-write a
+   record that a command owns, never invent a fingerprint, and never describe an
+   edit as atomic when it was a plain file write. A user who believes they have
+   freeze points and does not is worse off than one who knows the tooling is
+   absent.
+
+   Without the CLI you may still read records, explain the method, and draft a
+   Mission plan for later activation. You may not start, promote, finish,
+   complete, amend, or record — those produce fingerprints and transactional
+   writes that only the binary provides.
+
+   Onboard the user in one step rather than a lecture:
+
+   > Spectacular's CLI is not on PATH, so I can read and draft but cannot run
+   > governed execution. Install it from a verified release directory:
+   >
+   > ```sh
+   > install/install.sh install --prefix /absolute/prefix --source /absolute/release --runtime claude
+   > ```
+   >
+   > Then re-run `spectacular --version`. See [docs/installation.md](../../docs/installation.md).
+
+   The Skill and the CLI are distributed separately and update separately: the
+   Skill travels with the plugin, the binary is installed from a release
+   directory. A host that installed only the Skill is expected and supported —
+   it is a reduced mode, not a broken one.
+
 1. **Find the workspace.** Read `.spectacular/PROJECT.md`. Only if that file is
    missing, read root `PROJECT.md`. If neither exists, this is a greenfield
    workspace: route to One-Shot Genesis in [prepare.md](references/prepare.md).

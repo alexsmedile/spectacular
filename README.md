@@ -248,7 +248,8 @@ The CLI validates the record graph, fingerprints the sources, and emits projecti
 
 ## Documentation
 
-- [Quickstart](docs/quickstart.md) — install the CLI and run one Mission end to end.
+- [Installation](docs/installation.md) — the Skill and the CLI install separately; how to do both, and how to update.
+- [Quickstart](docs/quickstart.md) — run one Mission end to end.
 - [Architecture](docs/architecture.md) — the surfaces, the record types, and what the CLI refuses to decide.
 - [Process](docs/process.md) — the Mission lifecycle and its gates.
 - [All documentation](docs/README.md) — index.

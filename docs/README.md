@@ -6,6 +6,8 @@ Product documentation for humans. For contributor rules see
 
 ## Start here
 
+- **[Installation](installation.md)** — install and update the Skill and the CLI,
+  which ship as two separate halves.
 - **[Quickstart](quickstart.md)** — install the CLI and run one Mission end to
   end, from idea to owner completion.
 

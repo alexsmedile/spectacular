@@ -122,9 +122,16 @@ sh scripts/orient.sh          # workspace, Missions and status, what is live
 sh scripts/where.sh M12       # resolve a ref to its record path
 ```
 
-They read and report only — no writes, no fingerprints, and no fingerprint
-verification. They parse flat frontmatter fields, so they are a floor rather than
-an equivalent: prefer the CLI whenever it is installed.
+Where Node is available, two helpers parse frontmatter properly:
+
+```sh
+node scripts/show.mjs M12       # state, outcome, objectives, dependency edges, gaps
+node scripts/check.mjs          # structural validation across every record
+```
+
+All of them read and report only — no writes, no fingerprints, and no fingerprint
+verification. The shell tier reads flat fields; the Node tier checks structure;
+neither verifies a binding. Prefer the CLI whenever it is installed.
 
 ## What travels, and what does not
 

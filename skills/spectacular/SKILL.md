@@ -68,10 +68,17 @@ stay in their own providers.
    sh scripts/where.sh <ref>     # resolve a ref to its record path
    ```
 
-   They read and report only. They never write, never compute a fingerprint, and
-   never verify one — `orient.sh` says so on its last line. Prefer the CLI
-   whenever it is present: the fallbacks parse flat frontmatter fields, so they
-   are a floor, not an equivalent.
+   Where Node is available, two richer helpers parse frontmatter properly:
+
+   ```sh
+   node scripts/show.mjs <ref>    # state, outcome, objectives, dependency edges, gaps
+   node scripts/check.mjs [<ref>] # structural validation; no ref checks every record
+   ```
+
+   All of them read and report only. None writes, computes a fingerprint, or
+   verifies one, and each says so in its own output. Prefer the CLI whenever it
+   is present: the shell tier reads flat fields, the Node tier checks structure,
+   and neither verifies a binding — they are a floor, not an equivalent.
 
 1. **Find the workspace.** Read `.spectacular/PROJECT.md`. Only if that file is
    missing, read root `PROJECT.md`. If neither exists, this is a greenfield

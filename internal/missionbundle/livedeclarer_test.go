@@ -113,7 +113,7 @@ gaps: []
 
 Mission body.
 `
-	write("missions/M1-live/MISSION.md", mission)
+	write("missions/M1-live/M1-live.md", mission)
 
 	ws, err := discovery.Open(root)
 	if err != nil {
@@ -166,7 +166,7 @@ func TestOnlyALiveMissionIsRepointed(t *testing.T) {
 	if err := os.MkdirAll(completed, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	live, err := os.ReadFile(filepath.Join(ws.Root, ".spectacular", "missions", "M1-live", "MISSION.md"))
+	live, err := os.ReadFile(filepath.Join(ws.Root, ".spectacular", "missions", "M1-live", "M1-live.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +177,7 @@ func TestOnlyALiveMissionIsRepointed(t *testing.T) {
 		"5c695bec2911", "5c695bec2921",
 		"5c695bec2912", "5c695bec2922",
 	).Replace(string(live))
-	if err := os.WriteFile(filepath.Join(completed, "MISSION.md"), []byte(done), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(completed, "M2-done.md"), []byte(done), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	reopened, err := discovery.Open(ws.Root)
@@ -185,7 +185,7 @@ func TestOnlyALiveMissionIsRepointed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	before, err := os.ReadFile(filepath.Join(completed, "MISSION.md"))
+	before, err := os.ReadFile(filepath.Join(completed, "M2-done.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,7 +196,7 @@ func TestOnlyALiveMissionIsRepointed(t *testing.T) {
 	if len(result.Repointed) != 1 || result.Repointed[0] != "M1" {
 		t.Fatalf("re-pointed %v, want only the live Mission M1", result.Repointed)
 	}
-	after, err := os.ReadFile(filepath.Join(completed, "MISSION.md"))
+	after, err := os.ReadFile(filepath.Join(completed, "M2-done.md"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -103,7 +103,7 @@ func handoffBundle(t *testing.T, fixtures ...handoffFixture) (*discovery.Workspa
 	}
 	bundle := &Bundle{
 		Ref: "M12", ID: "01a010a6-01b0-7320-acc2-5c695bec2843",
-		entry: discovery.Entry{Absolute: filepath.Join(root, ".spectacular", "missions", "M12-handoffs", "MISSION.md")},
+		entry: discovery.Entry{Absolute: filepath.Join(root, ".spectacular", "missions", "M12-handoffs", "M12-handoffs.md")},
 	}
 	for _, fixture := range fixtures {
 		fixture.write(t, directory)

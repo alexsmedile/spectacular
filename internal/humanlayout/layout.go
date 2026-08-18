@@ -57,7 +57,7 @@ func Plan(existing []discovery.Entry, docs []*workspace.Document) (map[domain.ID
 		priorByID[entry.Document.Record.ID] = entry.Document
 		if ref := HumanRef(entry.Document); ref != "" {
 			used[ref] = true
-			if rootFile := bundleRootFile(entry.Document.Record.Type); rootFile != "" && filepath.Base(entry.Path) == rootFile {
+			if isBundleRoot(entry.Document.Record.Type, entry.Path) {
 				stableDirectories[ref] = filepath.ToSlash(filepath.Dir(strings.TrimPrefix(entry.Path, ".spectacular/")))
 			}
 		}
@@ -99,15 +99,24 @@ func Plan(existing []discovery.Entry, docs []*workspace.Document) (map[domain.ID
 	return paths, nil
 }
 
-func bundleRootFile(noun domain.RecordType) string {
+func isBundleRoot(noun domain.RecordType, path string) bool {
+	clean := filepath.ToSlash(path)
+	parts := strings.Split(clean, "/")
 	switch noun {
 	case domain.Mission:
-		return "MISSION.md"
+		for i, part := range parts {
+			if part == "missions" && i+3 == len(parts) {
+				return true
+			}
+		}
 	case domain.Run:
-		return "RUN.md"
-	default:
-		return ""
+		for i, part := range parts {
+			if part == "runs" && i+3 == len(parts) {
+				return true
+			}
+		}
 	}
+	return false
 }
 
 func rank(t domain.RecordType) int {
@@ -262,7 +271,7 @@ func PlannedPath(existing []discovery.Entry, doc *workspace.Document) (string, e
 	for _, entry := range existing {
 		all[entry.Document.Record.ID] = entry.Document
 		if ref := HumanRef(entry.Document); ref != "" {
-			if rootFile := bundleRootFile(entry.Document.Record.Type); rootFile != "" && filepath.Base(entry.Path) == rootFile {
+			if isBundleRoot(entry.Document.Record.Type, entry.Path) {
 				stableDirectories[ref] = filepath.ToSlash(filepath.Dir(strings.TrimPrefix(entry.Path, ".spectacular/")))
 			}
 		}
@@ -287,13 +296,13 @@ func pathFor(doc *workspace.Document, all map[domain.ID]*workspace.Document, sta
 	filename := leaf + ".md"
 	switch doc.Record.Type {
 	case domain.Mission:
-		return filepath.ToSlash(filepath.Join(".spectacular", "missions", ref+"-"+title, "MISSION.md")), nil
+		return filepath.ToSlash(filepath.Join(".spectacular", "missions", ref+"-"+title, ref+"-"+title+".md")), nil
 	case domain.Objective:
 		mission := strings.Split(ref, "/")[0]
 		return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(mission, all, stableDirectories), "objectives", leaf+"-"+title+".md")), nil
 	case domain.Run:
 		mission := strings.Split(ref, "/")[0]
-		return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(mission, all, stableDirectories), "runs", leaf+"-"+title, "RUN.md")), nil
+		return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(mission, all, stableDirectories), "runs", leaf+"-"+title, leaf+"-"+title+".md")), nil
 	case domain.Checkpoint:
 		parts := strings.Split(ref, "/")
 		mission, run := parts[0], parts[1]

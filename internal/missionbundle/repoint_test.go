@@ -115,7 +115,7 @@ stops:
 
 ` + quoted(fingerprint) + `
 `
-	write("missions/M1-bound/MISSION.md", mission)
+	write("missions/M1-bound/M1-bound.md", mission)
 
 	ws, err := discovery.Open(root)
 	if err != nil {
@@ -182,7 +182,7 @@ func TestRepointingRefusesAnAmbiguousFingerprint(t *testing.T) {
 			}
 			// The refusal names the Mission, the file, and every occurrence, so a
 			// reader can tell the binding from the quotation.
-			for _, want := range []string{"M1", "MISSION.md"} {
+			for _, want := range []string{"M1", "M1-bound.md"} {
 				if !strings.Contains(refusal.Error(), want) && !strings.Contains(refusal.Actual, want) {
 					t.Fatalf("refusal does not name %q: %+v", want, refusal)
 				}

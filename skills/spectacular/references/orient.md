@@ -8,7 +8,7 @@ Answer one question: where does this project stand, and what happens next.
 |---|---|
 | Project Anchor | `.spectacular/PROJECT.md` |
 | direction sources | the Anchors and Contracts its `current_truth` field names |
-| the selected Mission | `.spectacular/missions/<slug>/MISSION.md` |
+| the selected Mission | `.spectacular/missions/<slug>/<ref>-<slug>.md` |
 
 If `.spectacular/PROJECT.md` does not exist, the repository is greenfield (uninitialized). Do not report an error: route immediately to One-Shot Genesis in [prepare.md](prepare.md).
 

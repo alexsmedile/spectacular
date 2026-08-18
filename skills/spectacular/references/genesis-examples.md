@@ -104,7 +104,7 @@ direction: Unambiguous naming definitions for domain entities and lifecycle stat
 
 ---
 
-## 3. Kickoff Mission: `M1-bootstrap/MISSION.md`
+## 3. Kickoff Mission: `M1-bootstrap/M1-bootstrap.md`
 
 ```yaml
 ---

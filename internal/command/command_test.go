@@ -302,7 +302,7 @@ The claim passes.
 	if !strings.Contains(shown, `"status":"completed"`) || !strings.Contains(shown, `"file":"objectives/O1-implement-the-loop.md"`) {
 		t.Fatalf("completed show=%s", shown)
 	}
-	missions, _ := filepath.Glob(filepath.Join(root, ".spectacular", "missions", "M1-*", "MISSION.md"))
+	missions, _ := filepath.Glob(filepath.Join(root, ".spectacular", "missions", "M1-*", "M1-*.md"))
 	data, err := os.ReadFile(missions[0])
 	if err != nil || !strings.Contains(string(data), "Implement the accepted plan.") || !strings.Contains(string(data), "start_key: sha256:") {
 		t.Fatalf("round trip lost Markdown or unknown fields: %v\n%s", err, data)

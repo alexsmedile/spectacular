@@ -645,8 +645,9 @@ func validateScope(_ *discovery.Workspace, b *Bundle) error {
 }
 
 func validateLayout(ws *discovery.Workspace, b *Bundle) error {
-	if filepath.Base(b.Path) != "MISSION.md" || !strings.HasPrefix(filepath.ToSlash(b.Path), ".spectacular/missions/") {
-		return invalid("path", "Mission entry point must be .spectacular/missions/<bundle>/MISSION.md")
+	base := filepath.Base(b.Path)
+	if !strings.HasPrefix(filepath.ToSlash(b.Path), ".spectacular/missions/") || !strings.HasPrefix(base, b.Ref+"-") || !strings.HasSuffix(base, ".md") {
+		return invalid("path", "Mission entry point must be .spectacular/missions/<bundle>/<ref>-<slug>.md")
 	}
 	if _, err := os.Lstat(filepath.Join(ws.Root, filepath.FromSlash(b.Path))); err != nil {
 		return invalidCause("path", "Mission entry point is unavailable", err)

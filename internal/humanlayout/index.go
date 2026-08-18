@@ -19,7 +19,7 @@ type indexRow struct {
 }
 
 // Indexes returns deterministic non-authoritative Markdown projections for
-// the root and affected collections. MISSION.md is the Mission-bundle index;
+// the root and affected collections. The root Mission record is the Mission-bundle index;
 // generating another index inside every Mission would duplicate it.
 func Indexes(existing []discovery.Entry, pending []*workspace.Document, paths map[domain.ID]string) (map[string][]byte, error) {
 	pendingIDs := map[domain.ID]bool{}

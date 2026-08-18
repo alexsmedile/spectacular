@@ -3,10 +3,10 @@ type: Proposal
 id: 01a00f7b-e046-700f-9b13-ca4b04d03790
 ref: P7
 title: Amend a signed record without breaking it
-status: draft
+status: accepted
 created_by: Alex
 created: "2026-08-17T11:29:31Z"
-updated: "2026-08-17T12:41:00Z"
+updated: "2026-08-18T00:00:00Z"
 scope:
     - v2
 target_contract: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a

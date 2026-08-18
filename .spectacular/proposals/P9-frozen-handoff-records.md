@@ -3,10 +3,10 @@ type: Proposal
 id: 01a0105e-6520-7eff-9a8e-5a8a100674ab
 ref: P9
 title: Frozen Handoff records
-status: draft
+status: accepted
 created_by: Alex
 created: "2026-08-17T15:36:56Z"
-updated: "2026-08-17T15:36:56Z"
+updated: "2026-08-18T00:00:00Z"
 scope:
     - v2
 target_contract: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a

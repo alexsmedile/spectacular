@@ -2,11 +2,11 @@
 type: Proposal
 id: 01a00a98-32b3-7612-b19a-b8ffa479505c
 title: Condense projection surfaces
-status: draft
+status: accepted
 human_ref: P6
 created_by: Alex
 created: "2026-08-16T12:42:21Z"
-updated: "2026-08-16T12:42:21Z"
+updated: "2026-08-18T00:00:00Z"
 scope:
     - v2
 target_contract: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a

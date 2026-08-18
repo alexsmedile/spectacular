@@ -24,7 +24,8 @@ func TestMain(m *testing.M) {
 	if !ok {
 		os.Exit(1)
 	}
-	repoRoot = filepath.Dir(filepath.Dir(source))
+	// cli_test.go lives at test/acceptance/, so the repo root is three levels up.
+	repoRoot = filepath.Dir(filepath.Dir(filepath.Dir(source)))
 	var err error
 	buildRoot, err = os.MkdirTemp("", "spectacular-acceptance-")
 	if err != nil {

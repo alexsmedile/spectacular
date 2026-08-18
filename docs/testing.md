@@ -26,6 +26,23 @@ diagnosis faster, but it never substitutes for a higher boundary.
 - Coverage is diagnostic. Release acceptance is scenario and invariant based,
   not a percentage target.
 
+## Where the tests live
+
+Unit tests sit next to the code they cover, as `*_test.go`. Everything the
+runner drives lives under `test/`:
+
+```text
+test/
+├── verify.sh          # the runner: quick | acceptance | release | all
+├── acceptance/        # CLI acceptance suite, built binary against fixtures
+└── release.sh         # distribution gate: build, checksums, install, recovery
+testdata/              # shared fixtures (Go treats this name specially)
+```
+
+`testdata/` stays at the repository root because the Go toolchain ignores that
+directory name when resolving packages, and several scripts resolve fixtures
+from the root.
+
 ## Canonical runner
 
 ```sh

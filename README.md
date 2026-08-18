@@ -257,7 +257,7 @@ The CLI validates the record graph, fingerprints the sources, and emits projecti
 
 - [Spectacular skill](skills/spectacular/SKILL.md) — operating guidance and workflow routing.
 - [Mechanical interface](skills/spectacular/generated/mechanical-interface.md) — generated CLI catalog; do not edit by hand.
-- [Release recovery manifest](RECOVERY.md) — v2 cutover baseline and v1 recovery point.
+- [Release recovery manifest](docs/recovery.md) — v2 cutover baseline and v1 recovery point.
 - [Contributor guide](AGENTS.md) — live product surface and required verification.
 
 ## Release status

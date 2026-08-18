@@ -9,7 +9,7 @@ bash test/verify.sh acceptance
 ```
 
 Before every release-facing change, run `bash test/verify.sh all`. See
-[TESTING.md](TESTING.md) for the boundaries and evidence owned by each layer.
+[docs/testing.md](docs/testing.md) for the boundaries and evidence owned by each layer.
 
 `internal/command.Registry` is the single source for the generated mechanical
 interface. Regenerate it when changing the registry; do not hand-maintain a

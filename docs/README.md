@@ -20,6 +20,8 @@ Product documentation for humans. For contributor rules see
 
 - **[Human workspace contract](human-workspace-contract.md)** — the normative
   rules for what a canonical workspace must look like on disk.
+- **[Testing](testing.md)** — the verification tiers and what each one proves.
+- **[Release recovery](recovery.md)** — the v2 cutover baseline and v1 recovery point.
 - **[Mechanical interface](../skills/spectacular/generated/mechanical-interface.md)**
   — the generated command catalog. Generated from the command registry, so it
   cannot drift from the binary. When a document and this catalog disagree, the

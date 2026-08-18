@@ -30,7 +30,7 @@ check() {
 tree_basis() {
   (
     cd "$repo_root"
-    git ls-files -co --exclude-standard -- VERSION cmd internal skills install .spectacular test acceptance release \
+    git ls-files -co --exclude-standard -- VERSION cmd internal skills install .spectacular test \
       | LC_ALL=C sort -u \
       | while IFS= read -r path; do
           [[ -f "$path" ]] || continue
@@ -41,7 +41,7 @@ tree_basis() {
 }
 
 static_checks() {
-  formatting="$(cd "$repo_root" && gofmt -l cmd internal acceptance)"
+  formatting="$(cd "$repo_root" && gofmt -l cmd internal test/acceptance)"
   if [[ -n "$formatting" ]]; then
     echo "gofmt required:" >&2
     echo "$formatting" >&2
@@ -58,12 +58,12 @@ quick_checks() {
 }
 
 acceptance_checks() {
-  check acceptance go test -count=1 ./acceptance
+  check acceptance go test -count=1 ./test/acceptance
 }
 
 release_checks() {
   check install-distribution bash install/test.sh
-  check release-distribution bash release/test.sh
+  check release-distribution bash test/release.sh
 }
 
 case "$mode" in

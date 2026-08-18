@@ -1,3 +1,5 @@
+![Spectacular](docs/diagrams/banner.svg)
+
 # Spectacular — See, Steer, and Ship AI Work.
 
 AI work that outlives the chat: a governed workspace for exploring ideas,
@@ -207,12 +209,24 @@ Spectacular v2 stores a compact, clean set of canonical Markdown documents under
 ├── ARCHITECTURE.md      # Architecture Anchor
 ├── PRODUCT.md           # Product Anchor
 ├── STACK.md             # Technology stack Anchor
-├── contracts/           # Accepted specifications, plus an append-only amendment log per Contract
-├── missions/            # Bounded execution plans (M<N>-<slug>.md, reviews, evidence)
-├── proposals/           # Optional candidate explorations (P1, P2, ...)
-├── decisions/           # Durable architectural decision records (ADRs)
+├── GUARDRAILS.md        # Standing constraints on agent authority
+├── contracts/           # Accepted specifications, each with its Gaps and amendment history
+├── missions/            # Bounded execution plans, one bundle per Mission
+│   └── M12-<slug>/
+│       ├── M12-<slug>.md          # the Mission record, named by its own ref
+│       ├── objectives/            # earned expansion, one file per Objective
+│       ├── runs/R1-<slug>/R1-<slug>.md
+│       ├── evidence/  reviews/  handoffs/  decisions/  gaps/
+├── proposals/           # Open explorations only (P5, P8, P10, ...)
+├── decisions/           # Durable decision records (D1 ... D11)
+├── archive/             # Retired records: completed Missions, absorbed Proposals
 └── index.md             # Generated, non-authoritative workspace index
 ```
+
+Every governed record is named by its own reference, so a file is identifiable
+without its parent directory. A record that is finished does not disappear: a
+completed Mission and an absorbed Proposal move to `archive/` carrying the Decision
+that authorized the move and a fingerprint of what was archived.
 
 The CLI validates the record graph, fingerprints the sources, and emits projections with pointers back to the authoritative records. There is no opaque database or proprietary daemon—just git-versioned Markdown.
 
@@ -241,9 +255,10 @@ The CLI validates the record graph, fingerprints the sources, and emits projecti
 
 ## Release status
 
-This repository contains the Spectacular v2 release candidate,
-`2.0.0-rc.1`. The root module, `cmd/spectacular`, `skills/`, `install/`, and
-`.spectacular/` are the live v2 surface.
+Spectacular v2 is released. The current version is in [`VERSION`](VERSION), with
+per-release notes in [`CHANGELOG.md`](CHANGELOG.md). The root module,
+`cmd/spectacular`, `skills/`, `install/`, and `.spectacular/` are the live product
+surface.
 
 ## License
 

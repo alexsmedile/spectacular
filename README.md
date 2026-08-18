@@ -126,16 +126,22 @@ Spectacular v2's CLI is installed from a **locally verified release directory**.
 It does not fetch a binary, require Go on the consuming machine, or publish a
 release on your behalf.
 
+Download the archive and `SHA256SUMS` for your platform from the
+[latest release](https://github.com/alexsmedile/spectacular/releases/latest),
+then install from the directory holding them:
+
 ```sh
 install/install.sh install \
-  --prefix /absolute/prefix \
-  --source /absolute/release \
-  --runtime codex
+  --prefix "$HOME/.local" \
+  --source "$PWD" \
+  --runtime claude \
+  --version "$VERSION"
 ```
 
-This verifies the selected archive and checksum, then places the native
-`spectacular` binary at `/absolute/prefix/bin/spectacular`. Use
-`--runtime claude` for a Claude-targeted release.
+`--source` is the directory that **contains** the archive, not an unpacked
+tree — the installer verifies the checksum and extracts it itself. This places
+the native binary at `$HOME/.local/bin/spectacular`, already on `PATH` on most
+systems. Use `--runtime codex` for a Codex-targeted release.
 
 The release also contains the matching plugin files, but **installing the CLI
 does not by itself activate the agent skill in Codex or Claude**. The CLI reads

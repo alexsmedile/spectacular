@@ -43,14 +43,40 @@ immediate children of `skills/` containing a `SKILL.md`.
 npx skills add alexsmedile/spectacular
 ```
 
-**Antigravity** — clone into the plugin directory:
+**Antigravity** has no marketplace or install command — a plugin is any folder
+carrying a root `plugin.json` that sits in a scanned directory. Place it
+yourself, by clone or by symlink:
 
 ```sh
-# workspace
+# workspace — read by both the desktop app and the agy CLI
 git clone https://github.com/alexsmedile/spectacular .agents/plugins/spectacular
-# global
+
+# global — Antigravity 2.0 desktop
 git clone https://github.com/alexsmedile/spectacular ~/.gemini/config/plugins/spectacular
+
+# global — agy CLI (a separate state tree; installing to one does not serve the other)
+git clone https://github.com/alexsmedile/spectacular ~/.gemini/antigravity-cli/plugins/spectacular
 ```
+
+The desktop app and the `agy` CLI scan **different** global directories. A
+plugin present in one is not visible to the other.
+
+Working from a local checkout, symlink it instead of cloning twice — the link
+tracks your tree with no update step:
+
+```sh
+ln -s /absolute/path/to/spectacular ~/.gemini/config/plugins/spectacular
+```
+
+Verify what Antigravity actually loads:
+
+```sh
+agy plugin validate ~/.gemini/config/plugins/spectacular
+```
+
+Note that `agy plugin list` reports *imported* plugins only, and stays empty for
+plugins discovered by directory scan. An empty list is not evidence that the
+install failed — `validate` is the check that answers it.
 
 ## Install the CLI
 
@@ -70,17 +96,42 @@ curl -LO $BASE/SHA256SUMS
 # 2. verify before unpacking
 shasum -a 256 --check SHA256SUMS --ignore-missing
 
-# 3. unpack and install
-tar -xzf spectacular-v$VERSION-$PLATFORM.tar.gz -C /tmp/spectacular-release
+# 3. install from the directory holding the archive
 install/install.sh install \
-  --prefix /absolute/prefix \
-  --source /tmp/spectacular-release \
-  --runtime claude
+  --prefix "$HOME/.local" \
+  --source "$PWD" \
+  --runtime claude \
+  --version $VERSION
 ```
+
+Pass `--version` explicitly, or also download the release's `VERSION` asset into
+the same directory — the installer reads the version from that file when the
+flag is absent, and refuses with `release version is invalid` if neither is
+present.
+
+`--source` is the directory that **contains** the `.tar.gz` and `SHA256SUMS` —
+not an unpacked tree. The installer re-verifies the checksum, inspects the
+archive inventory, extracts to a staging area, and checks that the binary,
+generated interface, Skill, and runtime manifest all report the same version
+before anything is placed. Unpacking it yourself first is not a step.
 
 The installer works from a **locally verified release directory**. It does not
 fetch a binary itself, require Go on your machine, or publish anything on your
 behalf — verification is a step you perform and can inspect.
+
+`--prefix` must be an absolute path, and cannot be `/` or your home directory
+itself. `$HOME/.local` is the usual choice: the binary lands at
+`$HOME/.local/bin/spectacular`, which is already on `PATH` on most systems. If
+`spectacular --version` is not found afterwards, add that `bin` directory to
+`PATH`.
+
+The installer refuses when any target path is an existing **symbolic link**,
+rather than following it and writing through. A leftover link from an older
+install must be removed before installing:
+
+```sh
+ls -l "$HOME/.local/bin/spectacular"   # inspect what it points at first
+```
 
 `--runtime` accepts `claude` or `codex`. Use `--os` and `--arch` to select a
 platform explicitly when staging for another machine.
@@ -102,12 +153,28 @@ The two halves update independently.
 **Skill** — re-run the marketplace command for your host:
 
 ```sh
-/plugin marketplace update spectacular     # Claude Code
-codex plugin marketplace upgrade           # Codex
-npx skills add alexsmedile/spectacular     # npx skills
+# Claude Code — refresh the marketplace, then update the plugin.
+# Updating alone does not pull a newer marketplace snapshot, and the
+# plugin id must be namespaced or it is reported as not found.
+claude plugin marketplace update spectacular
+claude plugin update spectacular@spectacular   # restart to apply
+
+# Codex — name the marketplace explicitly
+codex plugin marketplace upgrade spectacular
+
+# npx skills
+npx skills add alexsmedile/spectacular
 ```
 
-Antigravity installs are git clones — `git pull` in the plugin directory.
+Confirm which version a host actually resolved before assuming it updated —
+a registered marketplace can stay pinned to an old revision indefinitely:
+
+```sh
+codex plugin list | grep spectacular
+```
+
+Antigravity installs are git clones — `git pull` in the plugin directory. A
+symlinked install tracks its target and needs no update step.
 
 **CLI** — point the installer at the newer release directory:
 

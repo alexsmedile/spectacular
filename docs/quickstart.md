@@ -111,17 +111,25 @@ whole system: the agent produces work and proof; a human decides it is done.
 ## Installation
 
 The CLI installs from a locally verified release directory. It does not fetch a
-binary or require Go on the consuming machine:
+binary or require Go on the consuming machine.
+
+Download the archive and `SHA256SUMS` for your platform from the
+[latest release](https://github.com/alexsmedile/spectacular/releases/latest),
+then install from the directory holding them:
 
 ```sh
 install/install.sh install \
-  --prefix /absolute/prefix \
-  --source /absolute/release \
-  --runtime codex
+  --prefix "$HOME/.local" \
+  --source "$PWD" \
+  --runtime claude \
+  --version "$VERSION"
 ```
 
-Verify the SHA-256 checksum in `SHA256SUMS` before installing a release archive.
-The installer refuses an archive whose checksum does not match.
+`--source` is the directory **containing** the `.tar.gz` — the installer
+verifies the checksum and extracts it for you, so do not unpack it first.
+
+Confirm with `spectacular --version`. Full options, platform selection, and
+update steps: [Installation](installation.md).
 
 ## Where to go next
 

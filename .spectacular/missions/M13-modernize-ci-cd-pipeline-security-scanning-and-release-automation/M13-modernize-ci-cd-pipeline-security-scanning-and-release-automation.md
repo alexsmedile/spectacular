@@ -2,9 +2,9 @@
 type: Mission
 id: 01a01533-1f38-74f4-86f5-c6a84d1e19da
 title: Modernize CI/CD pipeline, security scanning, and release automation
-status: active
+status: completed
 created: "2026-08-18T14:35:39Z"
-updated: "2026-08-18T14:37:23Z"
+updated: "2026-08-18T14:38:28Z"
 activation:
     at: "2026-08-18T14:35:39Z"
     by: Alex
@@ -44,6 +44,12 @@ completion:
     - claim: continuous-delivery-release-workflow-is-automated
       pass_boundary: A dedicated .github/workflows/release.yml triggers on git tags (refs/tags/v*), executes test/verify.sh all, compiles the 4-platform archives via cmd/assemble-release, and publishes the GitHub Release with attached assets and SHA256SUMS.
       proof_requirement: .github/workflows/release.yml triggers on tags v*, builds with cmd/assemble-release, and attaches the 4 archives and SHA256SUMS.
+completion_record:
+    at: "2026-08-18T14:38:28Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: b41ea052a2bfe484838054ff1c8d7d6fd83eb8c6
 contract:
     fingerprint: sha256:aa2f59e740e9526bacef1dd9999127861836460e5f2f96b5fe05bc86a458ee1a
     ref: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
@@ -86,7 +92,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-18T14:35:39Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - .github/workflows/

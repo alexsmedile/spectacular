@@ -74,6 +74,31 @@ a different method, a qualified human, a specialist tool, or an independent
 observation. The reviewer reports verdicts and findings; it never declares the
 Mission complete.
 
+### Dual-Path Independent Review Workflow
+
+When an independent review is required, offer the user two execution paths:
+
+#### Path A: In-Harness Subagent Dispatch
+If the host runtime supports subagents (e.g. Antigravity `invoke_subagent` or Claude Code subagents):
+1. Spawn a dedicated child subagent in a pristine context using the `strict-verifier` or `reasoning` profile.
+2. Provide the subagent with the exact reviewed Git commit SHA, tree SHA, frozen completion claims, and the FROST framework instructions ([audit.md](audit.md)).
+3. The subagent inspects the Git diff and primary evidence directly, evaluates each claim, and outputs the `ReviewDraft` markdown into `.spectacular/missions/<slug>/reviews/`.
+4. Record the review via `spectacular review record <mission-ref> <review-file> --json`.
+
+#### Path B: External Model / Human Handoff (Clipboard & File Prompt)
+When running in a single-agent harness or utilizing a distinct external reasoning model (e.g. OpenAI o3, DeepSeek-R1, an external Claude session, or a human peer):
+1. The Skill generates a self-contained, copy-pasteable review prompt in `.spectacular/missions/<slug>/handoffs/review-handoff-prompt.md` (and prints it in chat).
+2. The prompt includes:
+   - Git baseline, reviewed commit SHA, and tree SHA
+   - Exact frozen completion claims with `pass_boundary` and `proof_requirement`
+   - FROST inspection protocol (Frozen fit, Risk, Operability, System integrity, Truth of proof)
+   - The required `ReviewDraft` YAML schema
+3. The external reviewer inspects the work and returns the structured `ReviewDraft`.
+4. Pipe the result directly into the CLI:
+   ```bash
+   spectacular review record <mission-ref> - --json
+   ```
+
 ## Complete in one flow
 
 1. Run focused checks, then one full tree-bound gate — `bash test/verify.sh all`.

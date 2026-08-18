@@ -4,17 +4,17 @@
 
 When starting a project from scratch, or when receiving an initial PRD or prompt of intent:
 
-1. **Treat PRD as a Starter Input**: An initial PRD is an ephemeral launchpad, not an eternal file. Distill it immediately into:
+1. **Scan for Intake Inputs**: Check for existing project kickoff documents in the project root or workspace (e.g. `./PRD.md`, `scratch/PRD.tmp.md`, intake notes, or output from `write-prd`). Treat any starter PRD as an ephemeral launchpad, not an eternal file. Distill its 8 foundational dimensions losslessly into:
    - **The Core Triad of Anchors**:
-     * `.spectacular/PROJECT.md`: What & Why (Core scope, system boundaries, non-goals).
+     * `.spectacular/PROJECT.md`: What & Why (Core scope, system boundaries, and strict non-goals).
      * `.spectacular/STACK.md`: What with (Languages, runtimes, database, libraries, baseline test command).
      * `.spectacular/ARCHITECTURE.md`: How (Directory layout, layers, component boundaries between DB, Server, API, and Domain).
    - **On-Demand Anchors (Earned only)**:
-     * `.spectacular/VOCABULARY.md`: Defined terms and ubiquitous language, only when domain ontology is rich.
+     * `.spectacular/VOCABULARY.md`: Defined terms and ubiquitous language, only when domain ontology or state machines are rich.
      * `.spectacular/SECURITY.md`: Non-standard compliance, isolation, or secret rules, only if project-specific.
      * `.spectacular/GUARDRAILS.md`: Custom AI operational rules, only upon explicit owner request.
-     * `.spectacular/PRODUCT.md`: Business/marketing scope, only if separated from repository engineering.
-   - **`M1-bootstrap` Mission Plan**: 2–4 executable claims with verifiable `pass_boundary` and `proof_requirement`.
+     * `.spectacular/PRODUCT.md`: User personas, target market, and user journeys, only if separated from repository engineering.
+   - **`M1-bootstrap` Mission Plan**: 2–4 executable claims with verifiable `pass_boundary` and `proof_requirement` directly derived from the PRD's measurable success criteria.
 
 2. **Adopt Strong Defaults (Zero Grilling)**: Do not stall kickoff with multi-question interviews. Choose sane, production-grade defaults for toolchain and architecture; prompt only on irreversible semantic forks.
 

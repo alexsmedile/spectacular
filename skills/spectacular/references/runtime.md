@@ -1,5 +1,19 @@
 # Handoff and Autopilot
 
+## Abstract Model Profiles
+
+Spectacular is runtime-agnostic. Different host harnesses expose different model knobs (e.g. Antigravity subagent models, Claude Code model flags, Goose droids, OpenAI model tiers). To optimize both reasoning depth and token cost/latency, Missions, Objectives, and Handoffs declare abstract **Model Profiles**:
+
+| Semantic Profile | Ideal Model Archetype | Spectacular Role | Typical Work |
+|---|---|---|---|
+| `reasoning` | Deep reasoning / Thinking (Claude Sonnet w/ Thinking, Gemini Pro, o1/o3) | **Orchestrator** | Genesis, Campaign planning, Claim design, Gap resolution, complex audits. |
+| `fast-code` | Fast, high-throughput code fluency (Gemini Flash, Claude Haiku, GPT-4o-mini) | **Worker / Runner** | Bounded Objective implementation, file edits, local test sweeps, refactoring. |
+| `strict-verifier` | High instruction adherence, clean context | **Validator / Reviewer** | Adversarial verification, independent FROST review, regression suites. |
+
+When dispatching subagents or delegating tasks:
+- The Skill maps `fast-code` to faster, lightweight runner models (e.g. `Model: flash` in Antigravity).
+- The Skill maps `reasoning` or `strict-verifier` to deep reasoning models (e.g. `Model: pro` or isolated reviewer contexts).
+
 ## Autopilot is explicit and non-default
 
 Never assume it. When the owner turns it on, bind the charter to:
@@ -72,6 +86,14 @@ is current. Never edit a Handoff in place.
 
 The receiving agent inspects incoming Handoffs via `spectacular mission show <ref> --json`
 or directly in `.spectacular/missions/<mission>/handoffs/`.
+
+### Handoff and review directory architecture
+
+To keep multi-agent artifacts clean and unambiguous:
+
+- `.spectacular/missions/<slug>/handoffs/`: Governed task delegation records (`spectacular handoff record`) AND review handoff prompts (`review-handoff-prompt.md`) for external or subagent reviewers.
+- `.spectacular/missions/<slug>/reviews/`: Formal review output (`ReviewDraft` records recorded via `spectacular review record`).
+- `scratch/` or project root: Ephemeral scratchpad files (e.g. 1-shot intake PRDs before Genesis digestion).
 
 ## Fan out sparingly
 

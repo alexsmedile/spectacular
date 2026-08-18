@@ -1,0 +1,24 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "spectacular",
+  "version": "2.4.0",
+  "description": "Guide governed Spectacular Missions from orientation through verified closure.",
+  "author": {
+    "name": "Alessandro Smedile"
+  },
+  "homepage": "https://github.com/alexsmedile/spectacular",
+  "repository": "https://github.com/alexsmedile/spectacular",
+  "license": "MIT",
+  "keywords": [
+    "spectacular",
+    "missions",
+    "governance",
+    "context",
+    "evidence"
+  ],
+  "extensions": {
+    "com.google.antigravity": {
+      "description": "Govern Missions through verified closure."
+    }
+  }
+}

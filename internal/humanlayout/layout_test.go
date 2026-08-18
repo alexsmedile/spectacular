@@ -31,9 +31,9 @@ func TestPlanBuildsReadableScopedMissionBundle(t *testing.T) {
 		ref  string
 		path string
 	}{
-		{mission, "M1", ".spectacular/missions/M1-restore-human-operability/MISSION.md"},
+		{mission, "M1", ".spectacular/missions/M1-restore-human-operability/M1-restore-human-operability.md"},
 		{objective, "M1/O1", ".spectacular/missions/M1-restore-human-operability/objectives/O1-implement-readable-workspace.md"},
-		{run, "M1/R1", ".spectacular/missions/M1-restore-human-operability/runs/R1-implement-layout/RUN.md"},
+		{run, "M1/R1", ".spectacular/missions/M1-restore-human-operability/runs/R1-implement-layout/R1-implement-layout.md"},
 		{checkpoint, "M1/R1/C1", ".spectacular/missions/M1-restore-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-approved.md"},
 		{evidence, "M1/E1-t2lylz", ".spectacular/missions/M1-restore-human-operability/evidence/E1-t2lylz.md"},
 	} {
@@ -60,10 +60,10 @@ func TestIndexesClearAnEmptiedActiveCollection(t *testing.T) {
 	workspace.SetString(mission, "human_ref", "M1")
 	existing := []discovery.Entry{{
 		Document: mission,
-		Path:     ".spectacular/missions/M1-archived-mission/MISSION.md",
+		Path:     ".spectacular/missions/M1-archived-mission/M1-archived-mission.md",
 	}}
 	archived := map[domain.ID]string{
-		mission.Record.ID: ".spectacular/archive/missions/M1-archived-mission/MISSION.md",
+		mission.Record.ID: ".spectacular/archive/missions/M1-archived-mission/M1-archived-mission.md",
 	}
 	indexes, err := Indexes(existing, []*workspace.Document{mission}, archived)
 	if err != nil {
@@ -77,7 +77,7 @@ func TestIndexesClearAnEmptiedActiveCollection(t *testing.T) {
 		t.Fatalf("archive collection index omits moved Mission:\n%s", archivedIndex)
 	}
 	if _, exists := indexes[".spectacular/archive/missions/M1-archived-mission/index.md"]; exists {
-		t.Fatal("Mission-local index duplicates MISSION.md")
+		t.Fatal("Mission-local index duplicates mission root")
 	}
 }
 
@@ -105,7 +105,7 @@ func TestPlanKeepsExistingBundleDirectoriesStable(t *testing.T) {
 	workspace.SetString(mission, "human_ref", "M1")
 	existing := []discovery.Entry{{
 		Document: mission,
-		Path:     ".spectacular/missions/M1-original-bundle-name/MISSION.md",
+		Path:     ".spectacular/missions/M1-original-bundle-name/M1-original-bundle-name.md",
 	}}
 	evidence := document(t, domain.Evidence, "019fe381-5d61-7223-b362-03a5f99a7b07", "Fresh proof")
 	workspace.SetString(evidence, "mission", "Mission:"+mission.Record.ID.String())

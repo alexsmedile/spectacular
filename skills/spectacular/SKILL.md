@@ -20,10 +20,10 @@ stay in their own providers.
 | PRD / Starter Input | Ephemeral kickoff input; digested into Core Anchors and `M1-bootstrap` claims, never kept as eternal context bloat |
 | Campaign | Strategic roadmap arc (synonyms: *Initiative*, *Milestone Arc*, *Flight Plan*, *Theme*); 4–10 topological Campaign Blocks visualized via Mermaid (ASCII fallback) |
 | Proposal | Optional, mutable exploration in chat, an issue, or a Spectacular file |
-| Mission | Frozen execution plan and primary entry point in `MISSION.md` |
+| Mission | Frozen execution plan and primary entry point in `M<N>-<slug>.md` |
 | Contract / specification | Modular, composable capability specifications (`CC-<module>`); edit as ordinary Mission work |
 | Decision | ADR-like durable choice and rationale, never routine lifecycle approval |
-| Objective / Run | Inline while simple; promoted to a file only when independently useful |
+| Objective / Run | Inline while simple; promoted to a file only when independently useful (`O<N>-<slug>.md`, `R<N>-<slug>.md`) |
 | Evidence / review | Earned proof and assessment; neither silently changes success criteria |
 
 ## Start every workflow
@@ -61,7 +61,7 @@ stay in their own providers.
    reviewer, a feedback session, another Mission — take a worktree rather than
    sharing the tree. A branch separates history; a worktree separates hands.
 
-3. **Enter the Mission through `MISSION.md`.** Read its frontmatter control card
+3. **Enter the Mission through `M<N>-<slug>.md`.** Read its frontmatter control card
    and its body. Follow pointers to Objective, Run, Evidence, or review files only
    when the current work needs them. Do not preload project history, every record,
    or generated catalogs.
@@ -96,10 +96,12 @@ Two rules for the ambiguous case:
 
 ## Divide meaning from mechanics
 
-A simple active Mission is one file: `<mission>/MISSION.md`. Its frontmatter holds
+A simple active Mission is one file: `<mission>/<mission>.md` (e.g. `M5-implement-compact-missions/M5-implement-compact-missions.md`). Its frontmatter holds
 the frozen parts; its Markdown body holds the explanation. Split into
 `objectives/` or `runs/` only when detail, delegation, ownership, or an
 independent boundary earns it.
+
+**The Anchor naming rule**: Bare single-word uppercase names (`<NOUN>.md` e.g. `PROJECT.md`, `STACK.md`, `ARCHITECTURE.md`, `README.md`, `AGENTS.md`) are reserved exclusively for Project Anchors and workspace landmark contracts. All governed records (Missions, Runs, Objectives, Proposals, Reviews, Decisions, Evidence, Gaps) carry their scoped prefix in their filename.
 
 **The plan carries meaning** — outcome, criteria, scope, authority, rationale.
 You may draft or edit these canonical files directly when that is the fastest

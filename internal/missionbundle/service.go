@@ -190,7 +190,8 @@ func (s Service) start(plan Plan, raw []byte) (Result, error) {
 		return Result{}, err
 	}
 	workspace.SetValue(doc, "activation", Activation{By: plan.Owner, At: now, Fingerprint: fingerprint})
-	path := filepath.ToSlash(filepath.Join(".spectacular", "missions", missionRef+"-"+humanlayout.Slug(plan.Title), "MISSION.md"))
+	slug := humanlayout.Slug(plan.Title)
+	path := filepath.ToSlash(filepath.Join(".spectacular", "missions", missionRef+"-"+slug, missionRef+"-"+slug+".md"))
 	candidate := &Bundle{
 		ID: missionID.String(), Ref: missionRef, Title: plan.Title, Status: "active", Owner: plan.Owner,
 		Contract: contract, Baseline: &Baseline{Commit: commit, Branch: branch}, Outcome: plan.Outcome,
@@ -1021,8 +1022,8 @@ func runDocument(bundle *Bundle, run Run, title string) (*workspace.Document, st
 	workspace.SetString(doc, "operator", run.Operator)
 	workspace.SetString(doc, "started_at", run.StartedAt)
 	workspace.SetString(doc, "current_objective", run.CurrentObjective)
-	workspace.SetInt(doc, "repairs", run.Repairs)
-	path := filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), "runs", run.Ref+"-"+humanlayout.Slug(title)+".md"))
+	slug := humanlayout.Slug(title)
+	path := filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), "runs", run.Ref+"-"+slug, run.Ref+"-"+slug+".md"))
 	return doc, path, nil
 }
 

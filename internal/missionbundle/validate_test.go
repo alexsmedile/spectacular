@@ -92,7 +92,7 @@ func TestMandatoryValidatorsReturnTypedZeroMutationRefusals(t *testing.T) {
 		{"review-independence", m5, func(b *Bundle) { b.Reviews[0].Verdict = "repair" }, validateReviews, domain.RefusalInvalidKnownField, "reviews"},
 		{"authority-vocabulary", m6, func(b *Bundle) { b.Authority.Operator = append(b.Authority.Operator, "invent-authority") }, validateAuthority, domain.RefusalInvalidKnownField, "authority.operator"},
 		{"mechanical-scope", m6, func(b *Bundle) { b.Scope.Mechanical = []string{"../escape"} }, validateScope, domain.RefusalInvalidKnownField, "scope.mechanical"},
-		{"safe-file-layout", m6, func(b *Bundle) { b.Path = ".spectacular/MISSION.md" }, validateLayout, domain.RefusalInvalidKnownField, "path"},
+		{"safe-file-layout", m6, func(b *Bundle) { b.Path = ".spectacular/M6-implement-compact-mission-cli.md" }, validateLayout, domain.RefusalInvalidKnownField, "path"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

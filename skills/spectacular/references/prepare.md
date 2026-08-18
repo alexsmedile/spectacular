@@ -149,7 +149,7 @@ spectacular mission check <ref> --json     # confirm what was generated
 ```
 
 It generates identities, bindings, activation, and the canonical path at
-`.spectacular/missions/<slug>/MISSION.md` — atomically, from the approved plan.
+`.spectacular/missions/<slug>/<ref>-<slug>.md` — atomically, from the approved plan.
 
 Under a declared manual bootstrap, hand-author that file, generate valid
 identities, and verify the structure directly — see [bootstrap.md](bootstrap.md).

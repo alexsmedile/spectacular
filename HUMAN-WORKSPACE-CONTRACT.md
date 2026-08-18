@@ -27,10 +27,14 @@ The project root is intentionally small:
 └── archive/missions/
 ```
 
+## Project anchors
+
 `PROJECT.md` is the project Anchor. `PRODUCT.md`, `ARCHITECTURE.md`, and
 `STACK.md` are authoritative project Anchors for their named questions.
 `GUARDRAILS.md` is owner-authored guidance selected by the runtime. Every
 `index.md` is a deterministic, committed, non-authoritative projection.
+
+**Anchor naming rule**: Single-word uppercase filenames (`<NOUN>.md`) are reserved exclusively for Project Anchors and workspace landmark files (`README.md`, `AGENTS.md`, `HUMAN-WORKSPACE-CONTRACT.md`, `FEEDBACKS.md`). All governed records carry their scoped prefix in their filename.
 
 ## Mission bundles
 
@@ -39,10 +43,10 @@ Mission reference:
 
 ```text
 missions/M4-human-operability/
-├── MISSION.md
+├── M4-human-operability.md
 ├── objectives/O1-design-human-layout.md
 ├── runs/R1-implement-layout/
-│   ├── RUN.md
+│   ├── R1-implement-layout.md
 │   └── checkpoints/C1-layout-approved.md
 ├── evidence/E1-grkfsd.md
 ├── decisions/D1-mpzktq.md

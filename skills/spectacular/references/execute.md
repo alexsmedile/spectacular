@@ -29,7 +29,7 @@ cover mutable state: status, Objective progress, Run state, repair count.
 The tooling computes it. Do not hand-roll a hash to make a check pass.
 
 A normal start creates one file:
-`.spectacular/missions/<slug>/MISSION.md`, with inline Objectives and R1.
+`.spectacular/missions/<slug>/<ref>-<slug>.md`, with inline Objectives and R1.
 
 ### Settle the execution mode in the same breath as activation
 

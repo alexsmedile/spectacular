@@ -1,12 +1,12 @@
 # Mission anatomy
 
 The full field lists. `SKILL.md` carries the summary; this file carries the
-inventory. Load it when you are writing or auditing a `MISSION.md`, not on every
+inventory. Load it when you are writing or auditing a Mission record, not on every
 session.
 
 ## Shape
 
-A real `MISSION.md`, trimmed to one of each thing:
+A real Mission file (`M7-render-derived-state.md`), trimmed to one of each thing:
 
 ```yaml
 ---
@@ -44,7 +44,7 @@ gaps: []
 # Origin, rationale, detailed plans, review instructions
 ```
 
-Live examples are in `.spectacular/missions/*/MISSION.md`. Read one before
+Live examples are in `.spectacular/missions/*/*.md`. Read one before
 authoring a new Mission by hand.
 
 ## Frontmatter
@@ -111,15 +111,15 @@ The tooling never decides these:
 
 ## Growth
 
-Start with one file: `<mission>/MISSION.md`.
+Start with one file: `<mission-dir>/<mission-ref>-<slug>.md` (e.g. `.spectacular/missions/M5-implement-compact-missions/M5-implement-compact-missions.md`).
 
-- Add `objectives/` when an Objective earns its own detail, delegation, owner, or
+- Add `objectives/` (`O<N>-<slug>.md`) when an Objective earns its own detail, delegation, owner, or
   independent review.
-- Add `runs/` when a Run has a distinct job, operator, baseline, or recovery
+- Add `runs/` (`<run-dir>/<run-ref>-<slug>.md`) when a Run has a distinct job, operator, baseline, or recovery
   boundary.
 
 When you split, keep the same UUID and ref, and leave one pointer where the inline
-detail was. `MISSION.md` stays the index. Do not add a Mission-local `index.md`.
+detail was. The root Mission record stays the index. Do not add a Mission-local `index.md`.
 
 ## Anchor anatomy & modular contracts
 

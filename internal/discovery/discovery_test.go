@@ -39,14 +39,14 @@ func TestOpenResolvesHumanReferencesAndIgnoresGeneratedIndexes(t *testing.T) {
 	}
 	write(t, filepath.Join(meta, "workspace.yaml"), "schema_version: spectacular.workspace.v1\nrecord_roots: [.]\nproject_anchor: PROJECT.md\n")
 	write(t, filepath.Join(meta, "PROJECT.md"), "---\ntype: Anchor\nid: 0198a1a0-0000-7000-8000-000000000003\nhuman_ref: PROJECT\n---\n")
-	write(t, filepath.Join(missionDir, "MISSION.md"), "---\ntype: Mission\nid: 0198a1a0-0000-7000-8000-000000000002\nhuman_ref: M4\n---\n")
+	write(t, filepath.Join(missionDir, "M4-readable.md"), "---\ntype: Mission\nid: 0198a1a0-0000-7000-8000-000000000002\nhuman_ref: M4\n---\n")
 	write(t, filepath.Join(meta, "index.md"), "# generated and intentionally not canonical\n")
 	opened, err := Open(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 	entry, err := opened.Lookup("M4", domain.Mission)
-	if err != nil || entry.Path != ".spectacular/missions/M4-readable/MISSION.md" {
+	if err != nil || entry.Path != ".spectacular/missions/M4-readable/M4-readable.md" {
 		t.Fatalf("human lookup=%#v err=%v", entry, err)
 	}
 }

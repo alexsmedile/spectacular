@@ -4,8 +4,13 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  v2:
+  static-checks:
+    name: Static Checks & Security
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,8 +19,64 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26.x'
-      - run: bash test/verify.sh all
-      - run: test -z "$(find -L . -path ./.git -prune -o -type l -print -quit)"
-      - run: test ! -e cli && test ! -e tests/cli && test ! -e packs && test ! -e hooks && test ! -e migrations
-      - run: '! rg -n "spectacular (status|inspect|new|advance|record|search)" README.md AGENTS.md skills/spectacular .claude-plugin .codex-plugin'
-      - run: '! rg -n "github.com/alexsmedile/spectacular\"" --glob "*.go" .'
+          cache: true
+      - name: Static Checks & Manifest Sync
+        run: bash test/verify.sh quick
+      - name: Invariant Anti-Regression Checks
+        run: |
+          test -z "$(find -L . -path ./.git -prune -o -type l -print -quit)"
+          test ! -e cli && test ! -e tests/cli && test ! -e packs && test ! -e hooks && test ! -e migrations
+          ! rg -n "spectacular (status|inspect|new|advance|record|search)" README.md AGENTS.md skills/spectacular .claude-plugin .codex-plugin
+          ! rg -n "github.com/alexsmedile/spectacular\"" --glob "*.go" .
+
+  unit-and-race:
+    name: Unit & Race Tests
+    runs-on: ubuntu-latest
+    needs: static-checks
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+      - name: Run Tests with Race Detector & Coverage
+        run: |
+          go test -race -count=1 -coverprofile=coverage.out -covermode=atomic ./cmd/... ./install/... ./internal/...
+      - name: Upload Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.out
+          retention-days: 7
+
+  acceptance:
+    name: Acceptance Fixtures
+    runs-on: ubuntu-latest
+    needs: static-checks
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+      - name: Run Acceptance Tests
+        run: bash test/verify.sh acceptance
+
+  release-proof:
+    name: Cross-Platform Reproducibility & Staging Proof
+    runs-on: ubuntu-latest
+    needs: [unit-and-race, acceptance]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+      - name: Run Release & Staging Distribution Checks
+        run: bash test/verify.sh release

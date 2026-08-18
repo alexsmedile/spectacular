@@ -40,6 +40,45 @@ tree_basis() {
   )
 }
 
+manifest_checks() {
+  local version
+  version="$(sed -n '1p' "$repo_root/VERSION" | tr -d '[:space:]')"
+  if [[ -z "$version" ]]; then
+    echo "VERSION is empty" >&2
+    exit 1
+  fi
+  if [[ -f "$repo_root/plugin.json" ]]; then
+    if ! grep -q "\"version\": \"$version\"" "$repo_root/plugin.json"; then
+      echo "plugin.json version drift: expected $version" >&2
+      exit 1
+    fi
+  fi
+  if [[ -f "$repo_root/.claude-plugin/plugin.json" ]]; then
+    if ! grep -q "\"version\": \"$version\"" "$repo_root/.claude-plugin/plugin.json"; then
+      echo ".claude-plugin/plugin.json version drift: expected $version" >&2
+      exit 1
+    fi
+  fi
+  if [[ -f "$repo_root/.codex-plugin/plugin.json" ]]; then
+    if ! grep -q "\"version\": \"$version\"" "$repo_root/.codex-plugin/plugin.json"; then
+      echo ".codex-plugin/plugin.json version drift: expected $version" >&2
+      exit 1
+    fi
+  fi
+  if [[ -f "$repo_root/skills/spectacular/SKILL.md" ]]; then
+    if ! grep -q "version: $version" "$repo_root/skills/spectacular/SKILL.md"; then
+      echo "skills/spectacular/SKILL.md version drift: expected $version" >&2
+      exit 1
+    fi
+  fi
+}
+
+security_checks() {
+  if command -v gitleaks >/dev/null 2>&1; then
+    check gitleaks gitleaks git --redact -v --no-banner
+  fi
+}
+
 static_checks() {
   formatting="$(cd "$repo_root" && gofmt -l cmd internal test/acceptance)"
   if [[ -n "$formatting" ]]; then
@@ -47,6 +86,8 @@ static_checks() {
     echo "$formatting" >&2
     exit 1
   fi
+  manifest_checks
+  security_checks
   check go-mod-verify go mod verify
   check go-vet go vet ./...
   check diff-check git diff --check

@@ -13,7 +13,9 @@ a change was made under.
 
 If a Mission is too big, the answer is a smaller Mission, not a parallel one.
 
-## Explore: the Proposal
+## Explore: the Proposal and Starter Inputs
+
+When starting a project or capability, an initial PRD or starter input (e.g. `./PRD.md`, `scratch/PRD.tmp.md`, or output from the `write-prd` skill) serves as an ephemeral launchpad. Spectacular's One-Shot Genesis distills its 8 foundational dimensions losslessly into the Core Triad (`PROJECT.md`, `STACK.md`, `ARCHITECTURE.md`), On-Demand Anchors, and the `M1-bootstrap` Mission plan.
 
 A Proposal is optional. Write one when the approach is genuinely unclear and you
 want to argue with it before committing.
@@ -41,9 +43,11 @@ as one recoverable transaction.
 **Branch before activating.** A Mission that runs on `main` has destroyed the
 review and isolation boundary it depends on before it starts.
 
-## Execute: Runs and Objectives
+## Execute: Runs, Objectives, and Model Profiles
 
 A Run is one bounded attempt at the frozen Mission.
+
+Missions, Objectives, and Handoffs declare abstract **Model Profiles** (`reasoning` for orchestrators/audits, `fast-code` for worker implementation sweeps, `strict-verifier` for adversarial review), allowing skills to dispatch the right model tier on any host harness.
 
 Objectives are **earned, not planned**. Expand one when the work is real, rather
 than enumerating a full tree upfront that will be wrong by the second Objective.
@@ -66,6 +70,10 @@ Proof is a record, not a message.
 A **Review** carries a verdict. An **Assessment** carries a judgment. **Evidence**
 carries what was observed. None of them is a claim that something works — they
 are the artifact a later reader uses to decide whether to trust it.
+
+Independent review supports a **dual-path workflow**:
+1. **In-Harness Subagents**: A clean-slate child agent is dispatched with the commit SHA and FROST criteria, writing `ReviewDraft` directly to `reviews/`.
+2. **External Model / Human Handoff**: A copy-pasteable review prompt is generated in `handoffs/review-handoff-prompt.md` to run against external models (e.g. OpenAI o3, DeepSeek-R1) or peer reviewers, returning the verdict into `spectacular review record`.
 
 A **Handoff** binds the exact commit and tree it was sent against, verified
 against the repository, and splits what the sender knows into two lists:

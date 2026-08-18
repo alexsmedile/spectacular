@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+- Adds Abstract Model Profiles (`reasoning`, `fast-code`, `strict-verifier`) to semantic
+  work descriptions, decoupling agent roles from host-specific model flags. High-reasoning
+  models handle Genesis, scoping, and audits; fluent coding models execute routine worker
+  sweeps; and clean-context verifiers conduct adversarial validation.
+- Adds Dual-Path Independent Review workflows for `review level: independent`:
+  Path A dispatches clean-context in-harness subagents with the Git commit/tree hash
+  and FROST checklist directly to `reviews/`; Path B generates a copy-pasteable review
+  prompt in `handoffs/review-handoff-prompt.md` to evaluate against external models
+  (OpenAI o3, DeepSeek-R1, external sessions, peer developers) and record via CLI.
+- Teaches One-Shot Genesis to auto-detect intake starter PRDs (`./PRD.md`,
+  `scratch/PRD.tmp.md`, or outputs from the companion `write-prd` skill) and losslessly
+  digest all 8 foundational PRD dimensions into Core Anchors, On-Demand Anchors, and
+  the `M1-bootstrap` Mission plan without interactive interview fatigue.
+- Clarifies the directory boundary between governed delegation handoffs and review
+  prompts (`.spectacular/missions/<slug>/handoffs/`), formal review verdicts (`reviews/`),
+  and ephemeral kickoff/scratchpad files (`scratch/` or project root).
 - Defines what happens to a Proposal once its work has shipped. A Proposal had a
   validated status and no end state: nothing advances the field, so an absorbed Proposal
   read `draft` indefinitely and the live folder described a backlog that no longer

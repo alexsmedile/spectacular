@@ -59,6 +59,20 @@ stay in their own providers.
    directory. A host that installed only the Skill is expected and supported —
    it is a reduced mode, not a broken one.
 
+   **Use the bundled fallbacks in reduced mode.** They ship with the Skill and
+   need no toolchain:
+
+   ```sh
+   sh scripts/doctor.sh          # which mode this session is in, and what is unavailable
+   sh scripts/orient.sh          # workspace, Missions and their status, what is live
+   sh scripts/where.sh <ref>     # resolve a ref to its record path
+   ```
+
+   They read and report only. They never write, never compute a fingerprint, and
+   never verify one — `orient.sh` says so on its last line. Prefer the CLI
+   whenever it is present: the fallbacks parse flat frontmatter fields, so they
+   are a floor, not an equivalent.
+
 1. **Find the workspace.** Read `.spectacular/PROJECT.md`. Only if that file is
    missing, read root `PROJECT.md`. If neither exists, this is a greenfield
    workspace: route to One-Shot Genesis in [prepare.md](references/prepare.md).

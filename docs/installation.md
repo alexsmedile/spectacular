@@ -111,6 +111,21 @@ install/install.sh uninstall --prefix /absolute/prefix   # remove, recoverably
 `uninstall` is recoverable by design: it leaves enough behind for `recover` to
 restore the installation.
 
+## Working without the CLI
+
+The Skill bundles read-only shell fallbacks at `skills/spectacular/scripts/`.
+They need no toolchain and run wherever the Skill lands:
+
+```sh
+sh scripts/doctor.sh          # which mode you are in, and what is unavailable
+sh scripts/orient.sh          # workspace, Missions and status, what is live
+sh scripts/where.sh M12       # resolve a ref to its record path
+```
+
+They read and report only — no writes, no fingerprints, and no fingerprint
+verification. They parse flat frontmatter fields, so they are a floor rather than
+an equivalent: prefer the CLI whenever it is installed.
+
 ## What travels, and what does not
 
 The Agent Plugins standard covers `skills/` and `mcp.json`. Everything else in

@@ -2,6 +2,29 @@
 
 ## [Unreleased]
 
+## 2.5.0 — 2026-08-18
+
+- Detects the CLI before doing anything and states the reduced mode when it is absent.
+  The Skill previously assumed the binary was present and had no way to tell a user it
+  was not. Reading, explaining, and drafting stay available without it; starting,
+  promoting, completing, amending, and recording do not, because those produce
+  fingerprints and transactional writes. The Skill is instructed never to emulate a
+  missing CLI — no hand-written record that a command owns, no invented fingerprint, and
+  no plain file write described as atomic.
+- Bundles read-only fallbacks with the Skill so a host without the binary is usable
+  rather than blind. Three POSIX shell scripts need no toolchain (`doctor.sh`,
+  `orient.sh`, `where.sh`), and two Node helpers parse frontmatter properly
+  (`show.mjs`, `check.mjs`). All read and report only; none writes, computes a
+  fingerprint, or verifies one, and each says so in its own output.
+- Publishes through the portable Agent Plugins manifest, making the repository
+  installable on ChatGPT, Cursor, GitHub Copilot, Kiro, and VS Code from one root
+  `plugin.json`. Claude Code and Codex keep their vendor manifests. Only `skills/` and
+  `mcp.json` travel under the standard, so a conformant host installs the method and the
+  binary is installed alongside it.
+- Adds human-facing product documentation under `docs/`: a quickstart that runs one
+  Mission end to end, an architecture page, a process page with a lifecycle diagram, and
+  an installation guide covering both halves and both update paths.
+
 - Adds Abstract Model Profiles (`reasoning`, `fast-code`, `strict-verifier`) to semantic
   work descriptions, decoupling agent roles from host-specific model flags. High-reasoning
   models handle Genesis, scoping, and audits; fluent coding models execute routine worker

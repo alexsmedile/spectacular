@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "spectacular",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Guide governed Spectacular Missions from orientation through verified closure.",
   "author": {
     "name": "Alessandro Smedile"

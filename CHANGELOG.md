@@ -2,8 +2,10 @@
 
 ## [Unreleased]
 
-A delegation is now a record rather than a chat message, and record paths resolve
-through one system instead of two.
+## 2.4.0 — 2026-08-18
+
+A delegation is now a record rather than a chat message, record paths resolve through
+one system instead of two, and every record names itself.
 
 - Adds `handoff record <mission-ref> <handoff.md|-> --by <sender>`, which files a
   delegation into the Mission bundle and binds the exact commit and tree it was sent
@@ -48,6 +50,11 @@ through one system instead of two.
   contract-drift notice, the Mission stays valid, and `git log -S <fingerprint>` recovers
   the exact Contract text in force. A live Mission still re-points, because its binding is
   a statement about the present.
+- Names a Mission or Run record by its own reference: `MISSION.md` and `RUN.md` become
+  `<ref>-<slug>.md`, so a record is identifiable from a search result, an editor tab, or a
+  diff without its parent directory supplying the context. The layout system resolves the
+  scoped name, and a Run resolves to `runs/<run-ref>-<slug>/<run-ref>-<slug>.md`. Every
+  existing Mission and Run, live and archived, was renamed with its history preserved.
 
 ## 2.3.0 — 2026-08-17
 

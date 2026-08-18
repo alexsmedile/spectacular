@@ -54,15 +54,33 @@ git clone https://github.com/alexsmedile/spectacular ~/.gemini/config/plugins/sp
 
 ## Install the CLI
 
-The installer works from a **locally verified release directory**. It does not
-fetch a binary, require Go on your machine, or publish anything on your behalf.
+Download the archive for your platform from the
+[latest release](https://github.com/alexsmedile/spectacular/releases/latest),
+verify it, and install from the unpacked directory:
 
 ```sh
+# 1. download the archive and SHA256SUMS for your platform
+VERSION=2.5.0
+PLATFORM=darwin-arm64          # or darwin-amd64, linux-amd64, linux-arm64
+BASE=https://github.com/alexsmedile/spectacular/releases/download/v$VERSION
+
+curl -LO $BASE/spectacular-v$VERSION-$PLATFORM.tar.gz
+curl -LO $BASE/SHA256SUMS
+
+# 2. verify before unpacking
+shasum -a 256 --check SHA256SUMS --ignore-missing
+
+# 3. unpack and install
+tar -xzf spectacular-v$VERSION-$PLATFORM.tar.gz -C /tmp/spectacular-release
 install/install.sh install \
   --prefix /absolute/prefix \
-  --source /absolute/release \
+  --source /tmp/spectacular-release \
   --runtime claude
 ```
+
+The installer works from a **locally verified release directory**. It does not
+fetch a binary itself, require Go on your machine, or publish anything on your
+behalf — verification is a step you perform and can inspect.
 
 `--runtime` accepts `claude` or `codex`. Use `--os` and `--arch` to select a
 platform explicitly when staging for another machine.

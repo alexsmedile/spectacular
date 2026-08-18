@@ -46,13 +46,16 @@ stay in their own providers.
    Onboard the user in one step rather than a lecture:
 
    > Spectacular's CLI is not on PATH, so I can read and draft but cannot run
-   > governed execution. Install it from a verified release directory:
+   > governed execution. Download the archive for your platform from
+   > https://github.com/alexsmedile/spectacular/releases/latest, verify it
+   > against the published `SHA256SUMS`, unpack it, and install:
    >
    > ```sh
-   > install/install.sh install --prefix /absolute/prefix --source /absolute/release --runtime claude
+   > install/install.sh install --prefix /absolute/prefix --source /unpacked/release --runtime claude
    > ```
    >
-   > Then re-run `spectacular --version`. See [docs/installation.md](../../docs/installation.md).
+   > Then re-run `spectacular --version`. See [docs/installation.md](../../docs/installation.md)
+   > for the full command sequence.
 
    The Skill and the CLI are distributed separately and update separately: the
    Skill travels with the plugin, the binary is installed from a release

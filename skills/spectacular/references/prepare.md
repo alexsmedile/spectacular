@@ -133,6 +133,12 @@ completion:
 `pass_boundary` states what must be observably true. `proof_requirement` states
 what would demonstrate it. "Works correctly" is neither.
 
+**Adapting proof to the project**: A proof requirement does not demand an elaborate test framework. If the repository lacks automated test suites (e.g. documentation, static sites, CLI scripts, prototypes), name the most direct, objective verification method available:
+- **Build / Run checks**: `npm run build` compiles clean; `python script.py --test-flag` exits 0.
+- **Reproducible scratch fixtures**: A small verification script in `scratch/` testing exact input/output pairs.
+- **Structural / Schema checks**: `spectacular mission check <ref>` validates cleanly; `markdownlint` passes; internal links resolve.
+- The invariant is simply that the proof is **failable, objective, and attributable**—never mere self-assertion.
+
 Present the preview **once**, in chat. Owner confirmation freezes the semantic
 envelope.
 

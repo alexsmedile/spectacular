@@ -230,7 +230,7 @@ branch — `git merge main` there, resolve, verify — and only then move it ont
 [claims + dependencies] -> [work] -> [focused checks] -> [boundary integration] -> [local commit]
 ```
 
-- Run one full repository and release gate after integration — `bash test/verify.sh all`.
+- Run one full repository and release gate after integration (e.g. host project test suite, or `bash test/verify.sh all` in this repo).
   Do not repeat it per small edit.
 - Read detailed logs only when something fails.
 - Keep Git, secret, and distribution checks at the boundary where they apply:

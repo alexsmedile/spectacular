@@ -101,7 +101,7 @@ When running in a single-agent harness or utilizing a distinct external reasonin
 
 ## Complete in one flow
 
-1. Run focused checks, then one full tree-bound gate — `bash test/verify.sh all`.
+1. Run focused checks, then one full tree-bound gate (e.g. the host project's test suite like `npm test`/`pytest`, a clean build/run verification if no test suite exists, or in this repo `bash test/verify.sh all`).
 2. Verify every frozen claim, and every required Evidence or review:
    `spectacular mission check <ref> --json`.
 3. Confirm the applicable product and specification edits are in the same worktree.

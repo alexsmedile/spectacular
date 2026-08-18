@@ -142,6 +142,16 @@ does not by itself activate the agent skill in Codex or Claude**. The CLI reads
 and validates canonical workspace records; the skill guides an agent through
 the human decisions around them.
 
+### Consumer Execution Tiers
+
+Spectacular adapts to the tools available in the host repository:
+
+| Tier | Runtime | Capabilities |
+|---|---|---|
+| **Tier 1: Native CLI** | Compiled binary (`spectacular`) | Full mechanical engine: sub-10ms DAG derivations, schema validation, atomic transitions, and JSON projections. |
+| **Tier 2: Node Fallback** | Node.js (`skills/spectacular/scripts/check.mjs`, `show.mjs`) | Reads, checks, and displays records in environments or CI runners without a native Go binary. |
+| **Tier 3: Shell Fallback** | POSIX Shell (`orient.sh`, `where.sh`, `doctor.sh`) | Minimal read-only preflight and inspection for restricted container environments. |
+
 ### Install the skill
 
 For development from this checkout, `skills/spectacular/` is the skill source

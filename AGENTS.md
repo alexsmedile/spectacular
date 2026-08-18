@@ -8,10 +8,18 @@ authoritative; edit it rather than the symlink.
 
 Run `bash test/verify.sh all` before release changes or Mission completion.
 Use tiered verification during development:
+- `bash test/verify.sh preflight`: Tier 0 static syntax/tree sanity + Tier 1 contract
+  drift on the live Mission. Read-only, sub-second, emits a
+  `spectacular.preflight-receipt.v1` JSON receipt on stdout. Run it before any heavy
+  tier; if it fails, repair and do not run `acceptance`, `release`, or `all`.
+  `PREFLIGHT_MISSION_REF=<ref>` pins the Mission checked;
+  `PREFLIGHT_ALL_MISSIONS=1` sweeps every Mission instead of the live one.
 - `bash test/verify.sh quick`: static checks + unit tests in `cmd/`, `internal/`, `install/` (fastest inner loop).
 - `bash test/verify.sh acceptance`: static checks + end-to-end acceptance fixtures.
 - `bash test/verify.sh release`: 4-platform compilation, checksums, installer/rollback/recovery, and plugin manifests.
 - `bash test/verify.sh all`: full race-detector test suite and release distribution gate.
+
+Never run `verify.sh` during orientation, conversational answers, status queries, or pure Markdown/documentation edits. `verify.sh` tests the Go codebase of this repository; use `quick` only after modifying Go source code, and `all` only at a final Mission completion or release gate.
 
 Do not reintroduce v1 commands,
 compatibility readers, migrations, generic record/search verbs, or a second

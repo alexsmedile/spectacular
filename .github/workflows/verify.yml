@@ -18,8 +18,10 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version: '1.26.6'
           cache: true
+      - name: Download Modules
+        run: go mod download
       - name: Static Checks & Manifest Sync
         run: bash test/verify.sh quick
       - name: Invariant Anti-Regression Checks
@@ -39,8 +41,10 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version: '1.26.6'
           cache: true
+      - name: Download Modules
+        run: go mod download
       - name: Run Tests with Race Detector & Coverage
         run: |
           go test -race -count=1 -coverprofile=coverage.out -covermode=atomic ./cmd/... ./install/... ./internal/...
@@ -61,8 +65,10 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version: '1.26.6'
           cache: true
+      - name: Download Modules
+        run: go mod download
       - name: Run Acceptance Tests
         run: bash test/verify.sh acceptance
 
@@ -76,7 +82,9 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version: '1.26.6'
           cache: true
+      - name: Download Modules
+        run: go mod download
       - name: Run Release & Staging Distribution Checks
         run: bash test/verify.sh release

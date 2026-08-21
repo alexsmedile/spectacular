@@ -509,7 +509,16 @@ func (s Service) recordReview(missionRef, path string, stdin []byte) (Result, er
 	if bundle.Review == "independent" && (draft.Reviewer.RelationToOperator != "independent" || draft.Reviewer.ImplementedReviewedScope || draft.Reviewer.Actor == "" || draft.Reviewer.Operator == "" || draft.Reviewer.Actor == draft.Reviewer.Operator || draft.Reviewer.IndependenceBasis == "" || len(draft.Reviewer.Evidence) == 0) {
 		return Result{}, invalid("review.reviewer", "independent review requires distinct reviewer/operator identities, a non-implementation statement, basis, and attributable evidence")
 	}
-	if draft.Reviewed.ActivationFingerprint != bundle.Activation.Fingerprint || !commitPattern.MatchString(draft.Reviewed.Commit) || !commitPattern.MatchString(draft.Reviewed.Tree) {
+	if draft.Reviewed.ActivationFingerprint != bundle.Activation.Fingerprint || !commitPattern.MatchString(draft.Reviewed.Commit) {
+		return Result{}, invalid("review.reviewed", "review must bind exact commit, tree, and Mission activation fingerprint")
+	}
+	if draft.Reviewed.Tree == "" {
+		resolvedTree, err := resolveCommitTree(s.Workspace.Root, draft.Reviewed.Commit)
+		if err != nil {
+			return Result{}, domain.NewStateRefusal(domain.RefusalInvalidKnownField, "review.reviewed.commit", "reviewed commit does not exist in this repository", "existing exact commit", draft.Reviewed.Commit, "review the committed tree, then record its exact commit and tree", err)
+		}
+		draft.Reviewed.Tree = resolvedTree
+	} else if !commitPattern.MatchString(draft.Reviewed.Tree) {
 		return Result{}, invalid("review.reviewed", "review must bind exact commit, tree, and Mission activation fingerprint")
 	}
 	if err := verifyReviewedGit(s.Workspace.Root, draft.Reviewed.Commit, draft.Reviewed.Tree, "review"); err != nil {
@@ -602,7 +611,16 @@ func (s Service) recordHandoff(missionRef, path, sender string, stdin []byte) (R
 			"record the Handoff as its stated sender, or correct the draft", nil)
 	}
 	draft.Sender.Actor = sender
-	if !commitPattern.MatchString(draft.Reviewed.Commit) || !commitPattern.MatchString(draft.Reviewed.Tree) {
+	if !commitPattern.MatchString(draft.Reviewed.Commit) {
+		return Result{}, invalid("handoff.reviewed", "handoff must bind an exact commit and tree")
+	}
+	if draft.Reviewed.Tree == "" {
+		resolvedTree, err := resolveCommitTree(s.Workspace.Root, draft.Reviewed.Commit)
+		if err != nil {
+			return Result{}, domain.NewStateRefusal(domain.RefusalInvalidKnownField, "handoff.reviewed.commit", "reviewed commit does not exist in this repository", "existing exact commit", draft.Reviewed.Commit, "review the committed tree, then record its exact commit and tree", err)
+		}
+		draft.Reviewed.Tree = resolvedTree
+	} else if !commitPattern.MatchString(draft.Reviewed.Tree) {
 		return Result{}, invalid("handoff.reviewed", "handoff must bind an exact commit and tree")
 	}
 	// The git binding is verified against the real repository, so a Handoff cannot
@@ -985,6 +1003,16 @@ func (s Service) missionRecordPath(bundle *Bundle, doc *workspace.Document, ref 
 		return "", "", invalidCause("record", "resolve record path relative to its Mission", err)
 	}
 	return path, filepath.ToSlash(relative), nil
+}
+
+func resolveCommitTree(root, commit string) (string, error) {
+	cmd := exec.Command("git", "rev-parse", "--verify", commit+"^{tree}")
+	cmd.Dir = root
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
 }
 
 // verifyReviewedGit checks a record's git binding against the real repository.

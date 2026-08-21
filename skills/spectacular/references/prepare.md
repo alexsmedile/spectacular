@@ -20,7 +20,7 @@ When starting a project from scratch, or when receiving an initial PRD or prompt
 
 3. **Present One Genesis Preview**: Show the Core Triad summary and `M1-bootstrap` plan once in chat. On owner confirmation ("Yes" / "Proceed"), write the Core Anchors and activate `M1` with `spectacular mission start`.
 
-For live templates and layouts, see [genesis-examples.md](genesis-examples.md).
+For live templates and layouts, see [genesis-examples.md](genesis-examples.md) or run `spectacular mission start --help` to emit the exact `MissionPlan` YAML frontmatter template directly to stdout.
 
 ## Campaign Planning (Mini-Roadmaps & Campaign Blocks)
 

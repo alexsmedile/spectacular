@@ -35,7 +35,7 @@ Earned only when the Mission requires clustered or independent review.
 spectacular review record <mission-ref> <review.md|-> --json
 ```
 
-The review input is a Markdown file with `ReviewDraft` frontmatter:
+The review input is a Markdown file with `ReviewDraft` frontmatter (get a starter skeleton via `spectacular review record --help`):
 
 ```yaml
 ---
@@ -44,7 +44,7 @@ title: Independent review of M<n>
 status: passed
 reviewed:
     commit: <40-char-git-commit>
-    tree: <40-char-git-tree>
+    # tree: optional (auto-derived from commit if omitted)
     activation_fingerprint: <sha256-mission-activation-fingerprint>
 reviewer:
     actor: <identity-different-from-operator>

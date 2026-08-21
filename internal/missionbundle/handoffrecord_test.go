@@ -359,3 +359,37 @@ func writeFixtureCommit(t *testing.T, root string, n int) {
 	commandOutput(t, root, "git", "add", "chain.txt")
 	commandOutput(t, root, "git", "commit", "-qm", "chain link")
 }
+
+func TestHandoffRecordAutoDerivesTreeWhenOmitted(t *testing.T) {
+	service, mission, commit, tree := handoffFixtureMission(t)
+	var b strings.Builder
+	b.WriteString("---\ntype: HandoffDraft\n")
+	b.WriteString("title: Delegate without explicit tree\n")
+	b.WriteString("reviewed:\n    commit: " + commit + "\n")
+	b.WriteString("sender:\n    actor: Alex\n    relation_to_receiver: operator\n")
+	b.WriteString("task: Do the bounded thing.\n")
+	b.WriteString("asserted: []\n")
+	b.WriteString("assumed: []\n")
+	b.WriteString("stops:\n    - scope would grow\n")
+	b.WriteString("returns:\n    - the diff and the passing tests\n")
+	b.WriteString("---\n\nBody.\n")
+
+	result, err := service.RecordHandoff(mission, "-", "Alex", []byte(b.String()))
+	if err != nil {
+		t.Fatalf("recording handoff without tree failed: %v", err)
+	}
+
+	reopened := openMissionService(t, service.Workspace.Root)
+	bundle, err := Load(reopened.Workspace, mission)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(bundle.Handoffs) != 1 {
+		t.Fatalf("expected 1 handoff, got %d", len(bundle.Handoffs))
+	}
+	if bundle.Handoffs[0].Document.Reviewed.Tree != tree {
+		t.Fatalf("expected tree %s to be auto-derived, got %s", tree, bundle.Handoffs[0].Document.Reviewed.Tree)
+	}
+	_ = result
+}
+

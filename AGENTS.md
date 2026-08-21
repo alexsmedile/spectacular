@@ -26,11 +26,10 @@ compatibility readers, migrations, generic record/search verbs, or a second
 package root. Keep release version values aligned through `VERSION` and the
 generated mechanical interface.
 
-The public command surface is thirteen commands. Adding one requires owner
-authorization: argue the case in a Proposal, state the count before and after, and
-let the owner decide. An agent never adds a command on its own reading of intent.
-The number is reported, not defended — a fourteenth command the owner authorized is
-correct, and a thirteenth that nobody asked for is not. `proposal create` stays
+Adding or modifying public CLI commands requires explicit user/owner
+authorization. An agent must never introduce or alter a command on its own
+reading of intent. When proposing a new command, state the rationale, the current
+and proposed command count, and wait for owner approval. `proposal create` stays
 forbidden.
 
 A Contract is amended through `contract amend`, never by editing a bound Contract by

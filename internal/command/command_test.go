@@ -577,3 +577,66 @@ func TestRepairExhaustionSurfacesAllFallbacksAndNeverSuppressesAlternatives(t *t
 		t.Fatalf("rendered output suppressed alternative fallback:\n%s", rendered)
 	}
 }
+
+func TestHelpAndSchemaFlags(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("global help", func(t *testing.T) {
+		outHelp := run(t, root, nil, 0, "--help")
+		if !strings.Contains(outHelp, "spectacular — governed execution") || !strings.Contains(outHelp, "spectacular mission start") {
+			t.Fatalf("expected global help, got:\n%s", outHelp)
+		}
+
+		outH := run(t, root, nil, 0, "-h")
+		if !strings.Contains(outH, "spectacular — governed execution") {
+			t.Fatalf("expected global help with -h, got:\n%s", outH)
+		}
+
+		outJSON := run(t, root, nil, 0, "--help", "--json")
+		if !strings.Contains(outJSON, `"schema_version":"spectacular.command-catalog.v1"`) {
+			t.Fatalf("expected json envelope for global help, got:\n%s", outJSON)
+		}
+	})
+
+	t.Run("subcommand help with templates", func(t *testing.T) {
+		startHelp := run(t, root, nil, 0, "mission", "start", "--help")
+		if !strings.Contains(startHelp, "type: MissionPlan") || !strings.Contains(startHelp, "spectacular mission start") {
+			t.Fatalf("expected mission start template, got:\n%s", startHelp)
+		}
+
+		startH := run(t, root, nil, 0, "mission", "start", "-h")
+		if !strings.Contains(startH, "type: MissionPlan") {
+			t.Fatalf("expected mission start template with -h, got:\n%s", startH)
+		}
+
+		reviewHelp := run(t, root, nil, 0, "review", "record", "--help")
+		if !strings.Contains(reviewHelp, "type: ReviewDraft") {
+			t.Fatalf("expected review record template, got:\n%s", reviewHelp)
+		}
+
+		handoffHelp := run(t, root, nil, 0, "handoff", "record", "--help")
+		if !strings.Contains(handoffHelp, "type: HandoffDraft") {
+			t.Fatalf("expected handoff record template, got:\n%s", handoffHelp)
+		}
+
+		jsonHelp := run(t, root, nil, 0, "mission", "start", "--help", "--json")
+		if !strings.Contains(jsonHelp, `"schema_version":"spectacular.command-help.v1"`) || !strings.Contains(jsonHelp, `"input_type":"MissionPlan"`) {
+			t.Fatalf("expected json help envelope, got:\n%s", jsonHelp)
+		}
+	})
+
+	t.Run("subcommand schema inspection", func(t *testing.T) {
+		for _, spec := range Registry {
+			cmdArgs := append([]string(nil), spec.Words...)
+			cmdArgs = append(cmdArgs, "--schema")
+			schemaOut := run(t, root, nil, 0, cmdArgs...)
+			if !strings.Contains(schemaOut, `"schema_version":"spectacular.command-schema.v1"`) || !strings.Contains(schemaOut, spec.JSONSchema) {
+				t.Fatalf("schema output for %v missing schema %s:\n%s", spec.Words, spec.JSONSchema, schemaOut)
+			}
+		}
+	})
+}
+

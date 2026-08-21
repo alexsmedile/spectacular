@@ -59,22 +59,221 @@ type Spec struct {
 	JSONSchema    string
 	Effect        Effect
 	Operation     operation
+	Description   string
+	InputType     string
+	OutputType    string
+	Template      string
 }
 
 var Registry = []Spec{
-	{[]string{"mission", "start"}, "<plan.md|-> [--json]", one, "spectacular.mission.start.v2", Mutating, opMissionStart},
-	{[]string{"mission", "show"}, "<ref> [--json]", one, "spectacular.mission.show.v2", ReadOnly, opMissionShow},
-	{[]string{"mission", "check"}, "<ref> [--json]", one, "spectacular.mission.check.v2", ReadOnly, opMissionCheck},
-	{[]string{"objective", "show"}, "<mission-ref>/<objective-ref> [--json]", one, "spectacular.objective.show.v2", ReadOnly, opObjectiveShow},
-	{[]string{"objective", "promote"}, "<mission-ref>/<objective-ref> [--json]", one, "spectacular.objective.promote.v2", Mutating, opObjectivePromote},
-	{[]string{"objective", "finish"}, "<mission-ref>/<objective-ref> [--json]", one, "spectacular.objective.finish.v2", Mutating, opObjectiveFinish},
-	{[]string{"run", "show"}, "<mission-ref>/<run-ref> [--json]", one, "spectacular.run.show.v2", ReadOnly, opRunShow},
-	{[]string{"run", "start"}, "<mission-ref> --title <title> [--json]", titleOption, "spectacular.run.start.v2", Mutating, opRunStart},
-	{[]string{"review", "record"}, "<mission-ref> <review.md|-> [--json]", two, "spectacular.review.record.v2", Mutating, opReviewRecord},
-	{[]string{"handoff", "record"}, "<mission-ref> <handoff.md|-> --by <sender> [--json]", twoByOption, "spectacular.handoff.record.v2", Mutating, opHandoffRecord},
-	{[]string{"mission", "complete"}, "<ref> --by <owner> [--json]", byOption, "spectacular.mission.complete.v2", Mutating, opMissionComplete},
-	{[]string{"proposal", "check"}, "<ref> [--json]", one, "spectacular.proposal.check.v2", ReadOnly, opProposalCheck},
-	{[]string{"contract", "amend"}, "<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]", amendOptions, "spectacular.contract.amend.v2", Mutating, opContractAmend},
+	{
+		Words:         []string{"mission", "start"},
+		Arguments:     "<plan.md|-> [--json]",
+		ArgumentShape: one,
+		JSONSchema:    "spectacular.mission.start.v2",
+		Effect:        Mutating,
+		Operation:     opMissionStart,
+		Description:   "Activates a new compact Mission from a valid MissionPlan markdown document or stdin.",
+		InputType:     "MissionPlan",
+		OutputType:    "Mission",
+		Template: `---
+type: MissionPlan
+title: <title>
+owner: <owner>
+contract:
+  ref: <contract-ref>
+outcome: <outcome>
+review: independent
+completion:
+  - claim: <claim-name>
+    pass_boundary: <boundary>
+    proof_requirement: <proof>
+objectives:
+  - outcome: <outcome>
+    claims: [<claim-name>]
+authority:
+  operator: [inspect, edit-in-scope, choose-reversible-implementation, run-checks, generate-derived-files, bounded-repair, commit-local]
+  requires_owner: [activate-mission, change-outcome-or-completion, expand-scope, push, merge, release, irreversible-change, destructive-data, secret-change]
+scope:
+  mechanical: [<paths>]
+  semantic: [<scope>]
+repair_budget: 1
+dependencies: []
+gaps: []
+stops: [scope-drift]
+---
+# Mission
+
+<Description and approach>
+`,
+	},
+	{
+		Words:         []string{"mission", "show"},
+		Arguments:     "<ref> [--json]",
+		ArgumentShape: one,
+		JSONSchema:    "spectacular.mission.show.v2",
+		Effect:        ReadOnly,
+		Operation:     opMissionShow,
+		Description:   "Displays the live state, objectives, handoffs, and next actions for a Mission.",
+		OutputType:    "Bundle",
+	},
+	{
+		Words:         []string{"mission", "check"},
+		Arguments:     "<ref> [--json]",
+		ArgumentShape: one,
+		JSONSchema:    "spectacular.mission.check.v2",
+		Effect:        ReadOnly,
+		Operation:     opMissionCheck,
+		Description:   "Validates structural integrity, contract drift, and claim drift of a Mission.",
+		OutputType:    "Check",
+	},
+	{
+		Words:         []string{"objective", "show"},
+		Arguments:     "<mission-ref>/<objective-ref> [--json]",
+		ArgumentShape: one,
+		JSONSchema:    "spectacular.objective.show.v2",
+		Effect:        ReadOnly,
+		Operation:     opObjectiveShow,
+		Description:   "Displays details of an Objective.",
+		OutputType:    "Objective",
+	},
+	{
+		Words:         []string{"objective", "promote"},
+		Arguments:     "<mission-ref>/<objective-ref> [--json]",
+		ArgumentShape: one,
+		JSONSchema:    "spectacular.objective.promote.v2",
+		Effect:        Mutating,
+		Operation:     opObjectivePromote,
+		Description:   "Promotes an inline Objective into a standalone document.",
+		OutputType:    "Objective",
+	},
+	{
+		Words:         []string{"objective", "finish"},
+		Arguments:     "<mission-ref>/<objective-ref> [--json]",
+		ArgumentShape: one,
+		JSONSchema:    "spectacular.objective.finish.v2",
+		Effect:        Mutating,
+		Operation:     opObjectiveFinish,
+		Description:   "Marks an Objective as complete.",
+		OutputType:    "Objective",
+	},
+	{
+		Words:         []string{"run", "show"},
+		Arguments:     "<mission-ref>/<run-ref> [--json]",
+		ArgumentShape: one,
+		JSONSchema:    "spectacular.run.show.v2",
+		Effect:        ReadOnly,
+		Operation:     opRunShow,
+		Description:   "Displays details of an execution Run.",
+		OutputType:    "Run",
+	},
+	{
+		Words:         []string{"run", "start"},
+		Arguments:     "<mission-ref> --title <title> [--json]",
+		ArgumentShape: titleOption,
+		JSONSchema:    "spectacular.run.start.v2",
+		Effect:        Mutating,
+		Operation:     opRunStart,
+		Description:   "Starts a new execution Run under an active Mission.",
+		OutputType:    "Run",
+	},
+	{
+		Words:         []string{"review", "record"},
+		Arguments:     "<mission-ref> <review.md|-> [--json]",
+		ArgumentShape: two,
+		JSONSchema:    "spectacular.review.record.v2",
+		Effect:        Mutating,
+		Operation:     opReviewRecord,
+		Description:   "Records a formal review against frozen completion criteria.",
+		InputType:     "ReviewDraft",
+		OutputType:    "Review",
+		Template: `---
+type: ReviewDraft
+title: <title>
+status: passed
+reviewed:
+  commit: <commit-sha>
+  # tree: optional (auto-derived from commit if omitted)
+  activation_fingerprint: <activation-fingerprint>
+reviewer:
+  actor: <reviewer-name>
+  operator: <operator-name>
+  relation_to_operator: independent
+  implemented_reviewed_scope: false
+  independence_basis: <basis>
+  evidence: [<evidence-refs>]
+claims:
+  - claim: <claim-name>
+    verdict: pass
+findings: []
+limitations: []
+---
+# Review
+
+<Review observations and assessment>
+`,
+	},
+	{
+		Words:         []string{"handoff", "record"},
+		Arguments:     "<mission-ref> <handoff.md|-> --by <sender> [--json]",
+		ArgumentShape: twoByOption,
+		JSONSchema:    "spectacular.handoff.record.v2",
+		Effect:        Mutating,
+		Operation:     opHandoffRecord,
+		Description:   "Records an explicit handoff between operators or sessions.",
+		InputType:     "HandoffDraft",
+		OutputType:    "Handoff",
+		Template: `---
+type: HandoffDraft
+title: <title>
+task: <task in receiver's terms>
+supersedes: ""
+reviewed:
+  commit: <commit-sha>
+  # tree: optional (auto-derived from commit if omitted)
+sender:
+  actor: <sender-name>
+  relation_to_receiver: <relation>
+asserted: []
+assumed: []
+stops: [<stops>]
+returns: [<returns>]
+---
+# Handoff
+
+<Handoff context and receiver instructions>
+`,
+	},
+	{
+		Words:         []string{"mission", "complete"},
+		Arguments:     "<ref> --by <owner> [--json]",
+		ArgumentShape: byOption,
+		JSONSchema:    "spectacular.mission.complete.v2",
+		Effect:        Mutating,
+		Operation:     opMissionComplete,
+		Description:   "Completes an active Mission with owner sign-off.",
+		OutputType:    "Result",
+	},
+	{
+		Words:         []string{"proposal", "check"},
+		Arguments:     "<ref> [--json]",
+		ArgumentShape: one,
+		JSONSchema:    "spectacular.proposal.check.v2",
+		Effect:        ReadOnly,
+		Operation:     opProposalCheck,
+		Description:   "Validates a Proposal document.",
+		OutputType:    "ProposalCheck",
+	},
+	{
+		Words:         []string{"contract", "amend"},
+		Arguments:     "<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]",
+		ArgumentShape: amendOptions,
+		JSONSchema:    "spectacular.contract.amend.v2",
+		Effect:        Mutating,
+		Operation:     opContractAmend,
+		Description:   "Amends a Contract Gap resolution with owner authorization.",
+		OutputType:    "Amendment",
+	},
 }
 
 type Runner struct {
@@ -98,6 +297,18 @@ func (r Runner) Run(args []string) int {
 	if duplicate {
 		return r.usage(jsonMode, invoked, "--json may be supplied at most once")
 	}
+	helpMode, duplicateHelp := removeFlag(&args, "--help")
+	hMode, duplicateH := removeFlag(&args, "-h")
+	if duplicateHelp || duplicateH {
+		return r.usage(jsonMode, invoked, "--help/-h may be supplied at most once")
+	}
+	help := helpMode || hMode
+
+	schemaMode, duplicateSchema := removeFlag(&args, "--schema")
+	if duplicateSchema {
+		return r.usage(jsonMode, invoked, "--schema may be supplied at most once")
+	}
+
 	graphMode, duplicateGraph := removeFlag(&args, "--graph")
 	if duplicateGraph {
 		return r.usage(jsonMode, invoked, "--graph may be supplied at most once")
@@ -117,10 +328,29 @@ func (r Runner) Run(args []string) int {
 	if badOverride {
 		return r.usage(jsonMode, invoked, "--resolution requires exactly one value")
 	}
-	spec, rest, ok := match(args)
-	if !ok {
+
+	if len(args) == 0 {
+		if help {
+			return r.globalHelp(jsonMode)
+		}
 		return r.usage(jsonMode, invoked, "unknown or incomplete command")
 	}
+
+	spec, rest, ok := match(args)
+	if !ok {
+		if help {
+			return r.globalHelp(jsonMode)
+		}
+		return r.usage(jsonMode, invoked, "unknown or incomplete command")
+	}
+
+	if help {
+		return r.commandHelp(jsonMode, spec)
+	}
+	if schemaMode {
+		return r.commandSchema(jsonMode, spec)
+	}
+
 	if detail := validateArguments(spec, rest); detail != "" {
 		return r.commandUsage(jsonMode, invoked, spec, detail)
 	}
@@ -641,4 +871,119 @@ func short(fingerprint string) string {
 		return trimmed[:12] + "…"
 	}
 	return trimmed
+}
+
+type CommandHelpData struct {
+	Command     string `json:"command"`
+	Arguments   string `json:"arguments"`
+	Schema      string `json:"schema"`
+	Effect      Effect `json:"effect"`
+	Description string `json:"description"`
+	InputType   string `json:"input_type,omitempty"`
+	OutputType  string `json:"output_type,omitempty"`
+	Template    string `json:"template,omitempty"`
+}
+
+func (r Runner) globalHelp(jsonMode bool) int {
+	now := r.Now
+	if now == nil {
+		now = time.Now
+	}
+	if jsonMode {
+		output := envelope{
+			SchemaVersion: "spectacular.command-catalog.v1",
+			GeneratedAt:   now().UTC().Format(time.RFC3339Nano),
+			Data: struct {
+				ReleaseInspection CatalogEntry   `json:"release_inspection"`
+				Commands          []CatalogEntry `json:"commands"`
+			}{
+				ReleaseInspection: VersionInspection,
+				Commands:          Catalog(),
+			},
+		}
+		_ = writeJSON(r.Stdout, output)
+		return 0
+	}
+	fmt.Fprintln(r.Stdout, "spectacular — governed execution for agents and developers")
+	fmt.Fprintln(r.Stdout)
+	fmt.Fprintln(r.Stdout, "Usage:")
+	fmt.Fprintf(r.Stdout, "  %s %s\n", VersionInspection.Command, VersionInspection.Arguments)
+	for _, spec := range Registry {
+		fmt.Fprintf(r.Stdout, "  spectacular %s %s\n", strings.Join(spec.Words, " "), spec.Arguments)
+	}
+	fmt.Fprintln(r.Stdout)
+	fmt.Fprintln(r.Stdout, "Flags:")
+	fmt.Fprintln(r.Stdout, "  -h, --help    Show command help, usage, and starter YAML templates")
+	fmt.Fprintln(r.Stdout, "  --schema      Inspect machine-readable schema specification")
+	fmt.Fprintln(r.Stdout, "  --json        Emit machine-readable JSON output envelope")
+	return 0
+}
+
+func (r Runner) commandHelp(jsonMode bool, spec Spec) int {
+	now := r.Now
+	if now == nil {
+		now = time.Now
+	}
+	data := CommandHelpData{
+		Command:     "spectacular " + strings.Join(spec.Words, " "),
+		Arguments:   spec.Arguments,
+		Schema:      spec.JSONSchema,
+		Effect:      spec.Effect,
+		Description: spec.Description,
+		InputType:   spec.InputType,
+		OutputType:  spec.OutputType,
+		Template:    spec.Template,
+	}
+	if jsonMode {
+		output := envelope{
+			SchemaVersion: "spectacular.command-help.v1",
+			GeneratedAt:   now().UTC().Format(time.RFC3339Nano),
+			Data:          data,
+		}
+		_ = writeJSON(r.Stdout, output)
+		return 0
+	}
+	fmt.Fprintf(r.Stdout, "%s — %s (%s)\n", data.Command, spec.Effect, spec.JSONSchema)
+	if spec.Description != "" {
+		fmt.Fprintln(r.Stdout, spec.Description)
+	}
+	fmt.Fprintln(r.Stdout)
+	fmt.Fprintf(r.Stdout, "Usage:\n  %s %s\n", data.Command, spec.Arguments)
+	if spec.Template != "" {
+		fmt.Fprintf(r.Stdout, "\nInput Template (%s YAML frontmatter):\n%s", spec.InputType, spec.Template)
+	}
+	return 0
+}
+
+type CommandSchemaData struct {
+	Command    string `json:"command"`
+	Schema     string `json:"schema"`
+	Effect     Effect `json:"effect"`
+	Arguments  string `json:"arguments"`
+	InputType  string `json:"input_type,omitempty"`
+	OutputType string `json:"output_type,omitempty"`
+	Template   string `json:"template,omitempty"`
+}
+
+func (r Runner) commandSchema(jsonMode bool, spec Spec) int {
+	now := r.Now
+	if now == nil {
+		now = time.Now
+	}
+	data := CommandSchemaData{
+		Command:    "spectacular " + strings.Join(spec.Words, " "),
+		Schema:     spec.JSONSchema,
+		Effect:     spec.Effect,
+		Arguments:  spec.Arguments,
+		InputType:  spec.InputType,
+		OutputType: spec.OutputType,
+		Template:   spec.Template,
+	}
+	output := envelope{
+		SchemaVersion: "spectacular.command-schema.v1",
+		GeneratedAt:   now().UTC().Format(time.RFC3339Nano),
+		Data:          data,
+	}
+	_ = writeJSON(r.Stdout, output)
+	return 0
 }

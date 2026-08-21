@@ -201,6 +201,51 @@ claims:
 	}
 }
 
+func TestRecordReviewAutoDerivesTreeWhenOmitted(t *testing.T) {
+	root := missionServiceFixture(t)
+	plan, raw := stressPlan()
+	svc := openMissionService(t, root)
+	started, err := svc.Start(plan, raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc = openMissionService(t, root)
+	bundle, err := svc.Show(started.Ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit := gitOutput(t, root, "rev-parse", "HEAD")
+	tree := gitOutput(t, root, "rev-parse", "HEAD^{tree}")
+	review := []byte(fmt.Sprintf(`---
+type: ReviewDraft
+title: Atomic review without explicit tree
+status: passed
+reviewed:
+  commit: %s
+  activation_fingerprint: %s
+claims:
+  - claim: atomic
+    verdict: pass
+---
+# Review
+`, commit, bundle.Activation.Fingerprint))
+	res, err := svc.RecordReview(started.Ref, "-", review)
+	if err != nil {
+		t.Fatalf("RecordReview failed without tree: %v", err)
+	}
+	reloaded, err := openMissionService(t, root).Show(started.Ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reloaded.Reviews) != 1 {
+		t.Fatalf("expected 1 review, got %d", len(reloaded.Reviews))
+	}
+	if reloaded.Reviews[0].Document.Reviewed.Tree != tree {
+		t.Fatalf("expected auto-derived tree %s, got %s", tree, reloaded.Reviews[0].Document.Reviewed.Tree)
+	}
+	_ = res
+}
+
 func TestPromoteRefusesUndiscoveredDerivedTargetCollision(t *testing.T) {
 	root := missionServiceFixture(t)
 	plan, raw := stressPlan()

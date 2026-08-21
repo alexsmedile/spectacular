@@ -62,8 +62,11 @@ destination pointer — it owns nothing.
 spectacular handoff record <mission-ref> <handoff.md|-> --by <sender> --json
 ```
 
+Run `spectacular handoff record --help` to output the exact `HandoffDraft` YAML frontmatter template.
+
 The Handoff lands in the Mission bundle and binds the exact commit and tree it
-was sent against, verified against the repository. A delegation that lives only
+was sent against, verified against the repository (if `tree` is omitted from the draft,
+it is auto-derived from the commit). A delegation that lives only
 in a chat message or a temp file leaves no record of what was asked or what state
 it was asked against.
 

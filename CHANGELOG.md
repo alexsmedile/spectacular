@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+- Adds `-h` and `--help` flag interception across all subcommands. For document-input
+  commands (`mission start`, `review record`, `handoff record`), `--help` emits the syntax
+  and an annotated, minimal valid YAML frontmatter starter skeleton directly to stdout,
+  eliminating the need to crawl reference docs for template schemas.
+- Adds `--schema` inspection flag to all commands, returning machine-readable JSON schema
+  metadata, input types (e.g. `MissionPlan`, `ReviewDraft`, `HandoffDraft`), and output types.
+- Auto-derives `reviewed.tree` from `commit^{tree}` in `ReviewDraft` and `HandoffDraft`
+  when omitted, removing the redundant requirement to manually compute and copy `git rev-parse HEAD^{tree}`.
+- Reframes the public command surface rule in `AGENTS.md` to require explicit owner authorization
+  when modifying or introducing commands, rather than enforcing a rigid static cap.
+
 ## 2.5.0 — 2026-08-18
 
 - Detects the CLI before doing anything and states the reduced mode when it is absent.

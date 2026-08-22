@@ -164,7 +164,8 @@ a provisional improvement or regression signal, but it cannot establish a
 conclusive verdict or full release readiness without valid evidence.
 
 - Any candidate-only safety failure: comparative regression; a shared safety
-  failure is separately diagnosed and does not prove the candidate caused it.
+  failure is separately diagnosed, keeps the comparison inconclusive, and does
+  not prove the candidate caused it.
 - Any per-case candidate score below its paired baseline: visible regression, even if aggregate scores rise.
 - Task success must be no worse than baseline.
 - Candidate task success, routing, pointer, interaction, and recovery pass rates each target at least 95% in the full tier.

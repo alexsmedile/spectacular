@@ -3,96 +3,161 @@ campaign_schema: spectacular.campaign.v1
 title: Decision-aware bounded execution
 focus: Give each delegated Objective compact authority, safe isolation, and measured execution boundaries without making Spectacular a Git wrapper.
 current: B1
-exit_condition: Decision-aware charters reduce total context ingestion by at least 40%, isolated Objective execution preserves authority and data under every stop path, and adaptive guardrails pass the paired behavioral gate without regression.
+exit_condition: Decision-aware charters reduce total context ingestion by at least 40%, isolated Objective execution preserves authority and data under every stop path, clustered Evidence is fresh and attributable, and only measured deterministic guardrails ship without regression.
 blocks:
   - ref: B1
-    title: Bounded charter and Decision mechanics
+    title: Governance and Contract baseline
     state: planned
     after: []
     missions: []
   - ref: B2
-    title: Isolated Objective dispatch and recovery
+    title: Charter engine and benchmark
     state: planned
     after: [B1]
     missions: []
   - ref: B3
-    title: Adaptive scope and quality guardrails
+    title: Charter and Decision command surface
     state: planned
     after: [B2]
+    missions: []
+  - ref: B4
+    title: Objective-scoped Run lifecycle
+    state: planned
+    after: [B3]
+    missions: []
+  - ref: B5
+    title: Isolated Handoff dispatch
+    state: planned
+    after: [B4]
+    missions: []
+  - ref: B6
+    title: Basic clustered Evidence
+    state: planned
+    after: [B5]
+    missions: []
+  - ref: B7
+    title: Measured scope hardening
+    state: planned
+    after: [B6]
     missions: []
 ---
 
 # Campaign: Decision-aware bounded execution
 
-> Planning map only. It grants no execution authority.
+> Planning map only. It grants no execution authority. Each block is a separately
+> activated, independently reviewed Mission candidate so the owner can accept or
+> repair one behavior boundary at a time.
+
+Only B1/M15 is activation-ready. The retained M16-M21 plan files are future design
+sketches: preserve them as input, but do not keep them synchronized, validate them,
+or review them as final plans. Re-prepare only the next block after its predecessor's
+Evidence is accepted.
 
 <!-- spectacular:campaign-mermaid:start -->
 ```mermaid
 flowchart LR
-  B1["Bounded charter and Decision mechanics\nplanned"]
-  B2["Isolated Objective dispatch and recovery\nplanned"]
-  B3["Adaptive scope and quality guardrails\nplanned"]
+  B1["Governance and Contract baseline\nplanned"]
+  B2["Charter engine and benchmark\nplanned"]
+  B3["Charter and Decision command surface\nplanned"]
+  B4["Objective-scoped Run lifecycle\nplanned"]
+  B5["Isolated Handoff dispatch\nplanned"]
+  B6["Basic clustered Evidence\nplanned"]
+  B7["Measured scope hardening\nplanned"]
   B1 --> B2
   B2 --> B3
+  B3 --> B4
+  B4 --> B5
+  B5 --> B6
+  B6 --> B7
 ```
 <!-- spectacular:campaign-mermaid:end -->
 
-## B1 — Candidate M15: Compile bounded, decision-aware charters
+## B1 — Candidate M15: Reconcile governance and Contract baselines
 
-**Capability unlocked:** An Orchestrator can select relevant Decisions by meaning,
-compile an attributable charter for one Objective, and record a durable owner
-choice without changing Run state.
+Restore D12's inherited proof conditions through D21, record the real 14-command
+baseline, reconcile stale Contract command counts, and freeze the Contract-version
+transition map, reference tokenizer, and Run transition table. No product
+implementation or public command changes.
 
-**Proof boundary:** Total context ingestion falls by at least 40% against the M14
-full-scan baseline with no regression in safety, task success, recovery, or
-decision fidelity. Only after that proof passes may the public surface grow from
-14 to 18 commands through `charter`, `decide`, `run transition`, and
-`evidence record`, with `run start` becoming Objective-scoped.
+## B2 — Candidate M16: Build and benchmark the charter engine
 
-## B2 — Candidate M16: Dispatch isolated Objectives safely
+Implement the internal read-only compiler using the bound Contract, explicit
+Mission/Objective `sources:`, and invocation-added sources. Enforce the settled
+1,200/1,400/1,440 behavior and prove at least 40% lower total context ingestion
+against pinned M14 fixtures with zero behavioral regression. No public command.
 
-**Capability unlocked:** The Orchestrator can dispatch eligible, disjoint Runs on
-Objectives across concurrent Missions into native-Git worktrees while the owner
-continues steering.
+## B3 — Candidate M17: Expose charter and Decision recording
 
-**Proof boundary:** Every unmet entry gate refuses before effect; every timeout,
-scope escape, exhausted repair, and conflict preserves work under a named ref;
-only clean verified integrations become eligible for owner-confirmed cleanup.
+Expose `charter` and atomic `decide` only after M16 proof. Decision recording
+updates the Decision record and all generated indexes as one recoverable operation,
+reports only explicitly unblocked work, and never mutates Run state. Surface: 14→16.
 
-## B3 — Candidate M17: Calibrate scope and anti-slop guardrails
+## B4 — Candidate M18: Introduce the Objective-scoped Run lifecycle
 
-**Capability unlocked:** Delegated work is stopped for real authority or scope
-violations while coherent larger slices remain possible with justification.
+Version the Run Contract, make `run start` Objective-scoped, and add explicit
+attributable `run transition`. Prove old completed Missions still decode under
+their frozen bindings. Surface: 16→17.
 
-**Proof boundary:** Paired fixtures distinguish scope escape, unauthorized
-dependencies, and immutable-context loss from harmless numeric-default overruns;
-the M14 behavioral gate reports no regression.
+## B5 — Candidate M19: Dispatch frozen Handoffs in native-Git isolation
+
+Enforce exact-file or trailing-directory `writes:` reservations across active
+Missions. Spectacular inspects native Git state but creates, switches, merges, and
+deletes nothing. Cleanup remains an Orchestrator proposal requiring owner consent.
+Retire P8 only after its isolation question is fully answered and shipped.
+
+## B6 — Candidate M20: Record basic clustered Evidence
+
+Add atomic Evidence recording for Runs, Objectives, clusters, and final Mission
+gates. Preserve attribution, fresh commit/tree, declared checks, contrary evidence,
+and limitations without letting Evidence certify itself. Proof-sensitive dispatch
+remains an explicit frozen Handoff condition managed by the Orchestrator. No second
+dependency graph or concurrent timeline is added. Surface: 17→18.
+
+## B7 — Candidate M21: Measure and harden scope guardrails
+
+Use paired fixtures to distinguish actual authority escape, dependency drift, and
+immutable-context loss from harmless file-count or size overruns. Promote only
+deterministic rules with no benign-fixture rejection; zero new rules is acceptable.
+Two-to-four files remains guidance, coherent larger directory perimeters remain
+possible, and subjective quality stays with the Orchestrator. The existing
+`concurrent-run-timelines` Gap remains open until real demand earns that feature.
+
+## Contract transition map
+
+- M15 binds the stable product Contract while versioning the unbound CLI and
+  project-surface Contracts for the real baseline and explicit `sources:` input.
+- M16 binds the reconciled CLI Contract. M17 binds the stable product Contract
+  while versioning the CLI Contract for the 16-command surface only after M16 proof.
+- M18 binds the stable product Contract while versioning the CLI and project-surface
+  Contracts for Objective-scoped Runs and the 17-command surface;
+  completed Mission fingerprints are never repointed.
+- M19 binds the new project-surface Contract while versioning the product Contract
+  for frozen-Handoff isolation behavior.
+- M20 binds the product Contract while versioning only the CLI Contract for atomic
+  clustered Evidence and the 18-command surface; CC-projsurf and its timeline Gap
+  remain unchanged.
+- M21 binds the new CLI Contract and versions CC-projsurf only if a deterministic
+  guardrail earns promotion; otherwise it changes no Contract. It always runs the
+  final Campaign regression.
 
 ## Decisions carried forward
 
-- Native Git owns branch and worktree effects; Spectacular inspects and records.
-- Repository-changing Runners require an active Mission.
+- Native Git owns branch and worktree effects; Spectacular only inspects and records.
 - High-level planning owns the Objective DAG and disjoint writable perimeters.
-- One Orchestrator session is bounded to one Mission; separate integration
-  worktrees may host concurrent Missions.
-- Runs belong to Objectives. Distinct eligible Objectives may run concurrently;
-  no numeric ceiling substitutes for dependency and writable-scope checks.
-- Roughly 1,200 tokens budgets the governance envelope, not source or diagnostics.
-- Two to four writable files is a default, not a universal hard limit.
-- The AI selects Decision refs from a compact summary; compiled charters cite refs
-  such as `Sources: [D12, D13]`.
-- `charter` is a temporary live-retrieval helper; the frozen Handoff preserves the
-  actual assignment and returned Evidence links back to it.
-- `decide` records a complete Orchestrator-drafted Decision, refreshes indexes,
-  and reports only explicitly unblocked work without mutating Run state.
-- Runs and Objectives may finish implementation before clustered or final proof;
-  `after_proof:` is used only when downstream work must wait for the frozen gate.
-- Baselines are always observed; fail-first is conditional on the claimed change.
-- `A/B/C/M/G/F` are visible conversation shortcuts, never hidden authority.
+- Runs belong to Objectives; no numeric ceiling substitutes for dependencies and
+  reservations.
+- Charter retrieval is live and explicit; no persistent cache or recursive semantic
+  source discovery.
+- The frozen Handoff is the assignment. Charter output is temporary assistance.
+- Evidence may cluster; small Runs do not require wasteful standalone proof records.
+- Proof-sensitive sequencing remains an explicit Handoff condition; no second
+  dependency graph or automatic proof scheduler is introduced.
+- Active Mission operational fields may change. A frozen semantic planning error
+  stops work for owner repair, abort, or a new Mission; P11 adds no `mission revise`.
+- `A/B/C/M/G/F` remain visible conversation shortcuts, never hidden authority.
 
 ## Non-goals
 
-- No persistent preflight cache; live frontmatter retrieval remains the baseline
-  until benchmarks prove caching has earned a separate Mission.
 - P10 preparation-verdict mechanics belong to a separate Mission.
-- No external scheduler, Git wrapper, or whole-workspace delegated scan.
+- No external scheduler, Git wrapper, persistent preflight cache, autonomous
+  semantic source selection, or whole-workspace delegated scan.

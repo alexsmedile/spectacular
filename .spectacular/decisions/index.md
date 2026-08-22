@@ -16,6 +16,7 @@
 | `D19-confirm-cleanup-at-mission-closure` | Decision | Propose verified Git cleanup and confirm it at Mission closure | `.spectacular/decisions/D19-confirm-cleanup-at-mission-closure.md` |
 | `D2-435ztz` | Decision | Authorize the v2.1 governed-autonomy Mission | `.spectacular/decisions/D2-435ztz.md` |
 | `D20-use-live-charter-retrieval-without-a-persistent-cache` | Decision | Compile charters from live governance without a persistent cache | `.spectacular/decisions/D20-use-live-charter-retrieval-without-a-persistent-cache.md` |
+| `D21-context-sandwich-execution-gates` | Decision | Preserve proof gates while staging the context-sandwich command surface | `.spectacular/decisions/D21-context-sandwich-execution-gates.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |

@@ -6,7 +6,7 @@ title: Context-sandwich compilation and decision steering protocol
 status: draft
 created_by: Alex
 created: "2026-08-22T15:51:00Z"
-updated: "2026-08-22T16:54:04Z"
+updated: "2026-08-22T22:01:33Z"
 scope:
     - v2
 target_contract: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
@@ -14,13 +14,16 @@ target_contract: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
 
 # Context-sandwich compilation and decision steering protocol
 
-Exploration for the M15-M17 campaign. This Proposal is mutable and grants no
+Exploration for the M15-M21 campaign. This Proposal is mutable and grants no
 execution authority. The owner-resolved boundaries below become binding only when
 an approved Mission freezes them.
 
-**Preparation verdict: `sufficient`.** The outcome, responsibility boundaries,
-command-surface change, proof threshold, and Mission slices are settled. M15 still
-must prove the claimed context reduction before either new command can ship.
+**Preparation verdict: `sufficient for M15`.** The outcome, responsibility
+boundaries, command-surface change, proof threshold, and Mission slices are settled.
+M15's activation gate still asks the owner to approve the exact recommended
+tokenizer and Run transition matrix below. M16 and M18 cannot activate before that
+approval is frozen. M16 must then prove the claimed context reduction before either
+new command can ship in M17.
 
 ## Problem
 
@@ -34,6 +37,19 @@ It must improve context efficiency without becoming a Git wrapper, an autonomous
 scheduler, or a second source of authority.
 
 ## Settled boundaries
+
+### Progressive planning
+
+- Only the next Mission is prepared as an activation-ready plan. Later Campaign
+  blocks remain fluid summaries until upstream Evidence is accepted.
+- Existing downstream drafts may be retained as design sketches. They are not kept
+  synchronized, repeatedly validated, or independently reviewed before promotion.
+- When a block becomes next, the Orchestrator re-prepares it from current Contracts,
+  Decisions, and Evidence, reusing still-valid material rather than preserving stale
+  precision.
+- Owner questions are limited to open semantic choices and batched once. A final
+  plan review is the default; another review requires a material semantic repair or
+  newly discovered conflict.
 
 ### Authority and lifecycle
 
@@ -140,8 +156,14 @@ after benchmarks demonstrate a material scale, latency, or token bottleneck.
 ## Compiled charter
 
 The charter is a read-only retrieval helper that compiles a three-layer governance
-envelope for one Objective. It helps the Orchestrator write the complete Handoff;
-it is not itself the assignment and is not stored as a canonical record.
+envelope for one Objective. Mission and Objective frontmatter gain an explicit
+`sources:` list of typed canonical refs. Compilation automatically retrieves the
+bound Contract plus those directly declared `sources:` entries, in declaration
+order with duplicates removed. The Orchestrator may add more explicit source refs
+at invocation. The compiler never follows prose links, recursively walks a source's
+own citations, or invents an uncited source by semantic inference. The charter
+helps the Orchestrator write the complete Handoff; it is not itself the assignment
+and is not stored as a canonical record.
 
 ```text
 1. FROZEN TRUTH
@@ -167,12 +189,20 @@ compilation warns, requests judgment, or refuses as specified above. It never
 emits an incomplete authority envelope. A broad but coherent Objective may split
 into sequential Runs; independently provable outcomes split into Objectives.
 
+**Recommended M15 owner choice:** use `spectacular-charter-tokenizer.v1`.
+Byte-exact UTF-8 is counted
+with a bundled `o200k_base` vocabulary and merge table identified by SHA-256 in the
+generated interface and receipt. No Unicode normalization occurs; invalid UTF-8
+refuses. Changing tokenizer data creates a new tokenizer version and re-runs every
+boundary fixture instead of silently changing an existing limit.
+
 ## Dispatch and recovery
 
 An asynchronous Run is eligible only when all of these are true:
 
 1. its Mission is active;
-2. upstream Objectives have accepted Evidence;
+2. its declared implementation dependencies are satisfied and any proof condition
+   frozen in its Handoff has been accepted by the Orchestrator;
 3. its bounded charter has compiled and a frozen Handoff names the Mission,
    Objective, Run, selected sources, and writable perimeter;
 4. native Git isolation exists and its `writes:` perimeter is disjoint from every
@@ -190,22 +220,33 @@ reservation. Completed and stopped Runs release it. Errors never select a state
 automatically: the Orchestrator records the reason and next action, and asks the
 owner when recovery changes scope, abandons work, or creates collision risk.
 
+**Recommended M15 owner choice:** a new Run starts active. Legal transitions are:
+active to paused, blocked,
+awaiting-review, completed, or stopped; paused to active, blocked, or stopped;
+blocked to active or stopped; and awaiting-review to active for rework, completed,
+or stopped. Completed and stopped are terminal. Further work begins a new Run.
+
 Evidence may cover one Run, one Objective, a cluster of Objectives, or the final
 Mission. It names every Mission, Objective, Run, Handoff, and claim it answers.
+It also records actor, executor, method, observed time, commit and tree, declared
+checks and results, contrary evidence, and limitations.
 The Handoff is never edited; a corrected or changed assignment is a new Handoff.
 A completed Run means its execution ended successfully, not that proof has been
 accepted. `objective finish` requires no reserving Run and at least one completed
 Run; its claims may remain visibly unproven until their frozen Evidence or Review
 gate. Small work does not earn a separate Evidence document merely for ceremony.
 
-Normal `after:` dependencies wait for implemented work. An optional
-`after_proof:` edge waits for the proof level frozen by the Mission plan. This
-allows low-risk work to continue toward a clustered or final gate while preventing
-risk-sensitive downstream work from consuming an unproved result.
+Normal `after:` dependencies wait for implemented work. Proof-sensitive sequencing
+stays an explicit Orchestrator condition in the frozen Handoff: the Orchestrator
+names the required Evidence or Review and does not dispatch until it is accepted.
+P11 adds no second proof-dependency graph. If repeated Missions demonstrate that
+this manual gate is unreliable, a later Proposal may justify mechanical proof edges
+with real failure evidence.
 
 ## Mechanical interface
 
-The campaign may grow the public surface from 14 to 18 commands:
+The campaign may grow the public surface from 14 to 18 commands in three reviewed
+stages:
 
 - `spectacular charter <mission-ref>/<objective-ref>`: read-only compilation and
   deterministic receipt for a selected Decision-ref set and declared perimeter.
@@ -221,35 +262,71 @@ The existing `run start` signature changes from `<mission-ref>` to
 reserving Run. No new canonical noun is introduced. Observable Contract and Run
 model behavior changes through Contract version bumps, not amendments.
 
+M17 may expose `charter` and `decide` only after M16's paired proof passes, growing
+14 commands to 16. M18 may expose `run transition` and change `run start`, growing
+16 to 17. M20 may expose `evidence record`, growing 17 to 18. M15, M16, M19, and
+M21 add no public command.
+
+Completed Missions remain byte-identical historical plans under the Contract and
+Run model they activated against. New semantics apply only to a new Mission bound
+to the new Contract version. A decoder defect is repaired rather than hidden by
+rewriting history; owner-authorized archival may remove retired history from
+routine orientation but never from recovery. While active, a Mission mutates only
+operational state. Evidence that its frozen semantic plan is mistaken stops work
+and returns an owner gate for a new activation version that preserves the prior
+activation.
+
 ## Proof strategy
 
-M14's paired benchmark harness is the release gate for this campaign.
+M14's immutable paired benchmark fixtures are the release gate for this campaign.
 
-- M15 must demonstrate at least 40% lower total context ingestion than the
+- M16 must demonstrate at least 40% lower total context ingestion than the
   full-scan baseline while preserving task success, safety, recovery, and decision
   fidelity.
 - Measurements separate governance-envelope tokens, named source tokens, and
   repair diagnostics so the 1,200-token target cannot hide cost elsewhere.
-- M16 must prove refusal-before-effect for every dispatch gate and zero data loss
-  for every stop path.
-- M17 may promote a numeric default into a hard boundary only when paired fixtures
-  demonstrate a reliable safety boundary without rejecting coherent work.
+- M17 proves atomic Decision and index recording before the first command growth.
+- M18 proves Objective-scoped lifecycle and historical decoding before changing
+  `run start` or exposing `run transition`.
+- M19 proves refusal-before-effect for every dispatch gate and zero data loss for
+  every stop path.
+- M20 proves atomic clustered Evidence, complete attribution, fresh commit/tree
+  coverage, declared checks, limitations, and no self-certification.
+- M21 measures candidate file/scope guardrails and promotes only deterministic rules
+  that reject real violations without rejecting coherent work. Zero new rules is a
+  valid result. The concurrent-timeline Gap stays open until actual demand earns it.
 - Every campaign Mission receives independent review because it changes public
   interfaces, authority routing, multi-worktree behavior, or benchmark policy.
 
 ## Campaign roadmap
 
 ```text
-M15  Compile bounded, decision-aware charters
-     Add `charter` and `decide` only after the >=40% paired proof passes
+M15  Reconcile governance and Contract baselines
+     Restore inherited proof gates and freeze the Contract transition map
   |
   v
-M16  Dispatch isolated Objectives safely
-     Validate gates, native-Git isolation, quarantine, merge readiness, cleanup
+M16  Build and benchmark the read-only charter engine
+     Prove the >=40% paired gate; add no public command
   |
   v
-M17  Calibrate scope and anti-slop guardrails
-     Enforce true authority boundaries; benchmark numeric defaults before hardening
+M17  Expose charter and Decision recording
+     Grow 14 to 16 only after M16 proof
+  |
+  v
+M18  Introduce the Objective-scoped Run lifecycle
+     Change `run start`; add `run transition`; grow 16 to 17
+  |
+  v
+M19  Dispatch frozen Handoffs in native-Git isolation
+     Enforce cross-Mission write reservations and owner-confirmed cleanup
+  |
+  v
+M20  Record basic clustered Evidence
+     Add `evidence record`; grow 17 to 18
+  |
+  v
+M21  Measure and harden scope guardrails
+     Promote only proven deterministic checks; finish the Campaign regression
 ```
 
 P10's preparation-judgment checkpoint remains a separate Mission candidate. It
@@ -262,6 +339,11 @@ does not block M15, and P11 does not absorb it into the worker runtime.
   Spectacular CLI.
 - No concurrent reserving Runs on the same Objective or overlapping writable
   perimeter.
+- No second proof-dependency graph or automatic proof scheduler.
+- No generated concurrent timeline built merely to close an existing Gap.
+- No general semantic quality or "anti-slop" classifier.
+- No requirement to fully draft, synchronize, validate, or review every downstream
+  Campaign Mission before the next Mission begins.
 - No whole-workspace scan by a delegated Runner.
 - No mandatory Decision record for trivial implementation details.
 - No fixed file, line, or token proxy treated as proof of quality.

@@ -1,5 +1,7 @@
 # Orient
 
+Use this when: Orchestrator resolving ambiguous, cold-start, or uninitialized workspace state.
+
 Answer one question: where does this project stand, and what happens next.
 
 ## Read

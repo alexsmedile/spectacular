@@ -1,5 +1,7 @@
 # Review and complete
 
+Use this when: Primary operator or reviewer assessing claims, collecting Evidence, coordinating review, or completing a Mission.
+
 ## Assess each claim
 
 Check every completion claim against its frozen pass boundary using the FROST
@@ -82,12 +84,12 @@ When an independent review is required, offer the user two execution paths:
 If the host runtime supports subagents (e.g. Antigravity `invoke_subagent` or Claude Code subagents):
 1. Spawn a dedicated child subagent in a pristine context using the `strict-verifier` or `reasoning` profile.
 2. Provide the subagent with the exact reviewed Git commit SHA, tree SHA, frozen completion claims, and the FROST framework instructions ([audit.md](audit.md)).
-3. The subagent inspects the Git diff and primary evidence directly, evaluates each claim, and outputs the `ReviewDraft` markdown into `.spectacular/missions/<slug>/reviews/`.
-4. Record the review via `spectacular review record <mission-ref> <review-file> --json`.
+3. The subagent inspects the Git diff and primary evidence directly, evaluates each claim, and writes the `ReviewDraft` to a temporary file outside `.spectacular/`.
+4. Record the review via `spectacular review record <mission-ref> <temporary-review-file> --json`; only the CLI-generated Review belongs in `reviews/`.
 
 #### Path B: External Model / Human Handoff (Clipboard & File Prompt)
 When running in a single-agent harness or utilizing a distinct external reasoning model (e.g. OpenAI o3, DeepSeek-R1, an external Claude session, or a human peer):
-1. The Skill generates a self-contained, copy-pasteable review prompt in `.spectacular/missions/<slug>/handoffs/review-handoff-prompt.md` (and prints it in chat).
+1. The Skill generates a self-contained, copy-pasteable review prompt in `scratch/` or a temporary directory outside `.spectacular/` (and prints it in chat).
 2. The prompt includes:
    - Git baseline, reviewed commit SHA, and tree SHA
    - Exact frozen completion claims with `pass_boundary` and `proof_requirement`

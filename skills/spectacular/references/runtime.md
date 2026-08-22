@@ -1,18 +1,18 @@
 # Handoff and Autopilot
 
+Use this when: Orchestrator packaging delegation, Handoff context contracts, or Autopilot charters.
+
 ## Abstract Model Profiles
 
 Spectacular is runtime-agnostic. Different host harnesses expose different model knobs (e.g. Antigravity subagent models, Claude Code model flags, Goose droids, OpenAI model tiers). To optimize both reasoning depth and token cost/latency, Missions, Objectives, and Handoffs declare abstract **Model Profiles**:
 
 | Semantic Profile | Ideal Model Archetype | Spectacular Role | Typical Work |
 |---|---|---|---|
-| `reasoning` | Deep reasoning / Thinking (Claude Sonnet w/ Thinking, Gemini Pro, o1/o3) | **Orchestrator** | Genesis, Campaign planning, Claim design, Gap resolution, complex audits. |
-| `fast-code` | Fast, high-throughput code fluency (Gemini Flash, Claude Haiku, GPT-4o-mini) | **Worker / Runner** | Bounded Objective implementation, file edits, local test sweeps, refactoring. |
+| `reasoning` | Deep reasoning / thinking capability | **Orchestrator** | Genesis, Campaign planning, Claim design, Gap resolution, complex audits. |
+| `fast-code` | Fast, high-throughput code fluency | **Worker / Runner** | Bounded Objective implementation, file edits, local test sweeps, refactoring. |
 | `strict-verifier` | High instruction adherence, clean context | **Validator / Reviewer** | Adversarial verification, independent FROST review, regression suites. |
 
-When dispatching subagents or delegating tasks:
-- The Skill maps `fast-code` to faster, lightweight runner models (e.g. `Model: flash` in Antigravity).
-- The Skill maps `reasoning` or `strict-verifier` to deep reasoning models (e.g. `Model: pro` or isolated reviewer contexts).
+When dispatching subagents or delegating tasks, map the semantic profile to an available host capability. If model selection is unavailable, use the host default without blocking delegation; isolation and the context contract still apply.
 
 ## Autopilot is explicit and non-default
 
@@ -124,9 +124,9 @@ or directly in `.spectacular/missions/<mission>/handoffs/`.
 
 To keep multi-agent artifacts clean and unambiguous:
 
-- `.spectacular/missions/<slug>/handoffs/`: Governed task delegation records (`spectacular handoff record`) AND review handoff prompts (`review-handoff-prompt.md`) for external or subagent reviewers.
-- `.spectacular/missions/<slug>/reviews/`: Formal review output (`ReviewDraft` records recorded via `spectacular review record`).
-- `scratch/` or project root: Ephemeral scratchpad files (e.g. 1-shot intake PRDs before Genesis digestion).
+- `.spectacular/missions/<slug>/handoffs/`: Governed task delegation records created by `spectacular handoff record`.
+- `.spectacular/missions/<slug>/reviews/`: Canonical Reviews created by `spectacular review record`; never place an input `ReviewDraft` here.
+- `scratch/` or a temporary directory: Ephemeral intake, review prompts, and `ReviewDraft` inputs before the CLI records them.
 
 ## Fan out sparingly
 

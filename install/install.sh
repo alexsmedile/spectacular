@@ -165,7 +165,7 @@ install_release() {
   payload="$temporary/spectacular"
   [[ "$($payload/bin/spectacular --version)" == "spectacular $release_version" ]] || die "binary version does not match selected release"
   grep -Fq '"release_version": "'"$release_version"'"' "$payload/plugins/spectacular/skills/spectacular/generated/mechanical-interface.json" || die "generated interface version mismatch"
-  grep -Fq 'version: '"$release_version" "$payload/plugins/spectacular/skills/spectacular/SKILL.md" || die "Skill version mismatch"
+  grep -Fq '  version: "'"$release_version"'"' "$payload/plugins/spectacular/skills/spectacular/SKILL.md" || die "Skill version mismatch"
   grep -Fq '"version": "'"$release_version"'"' "$payload/plugins/spectacular/.$runtime_name-plugin/plugin.json" || die "runtime manifest version mismatch"
 
   transaction="$prefix/.spectacular-install-$$"

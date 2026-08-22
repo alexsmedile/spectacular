@@ -1,0 +1,5 @@
+{"type":"step-finish","part":{"type":"step-finish","tokens":{"input":300,"cache":{"read":100},"output":50}}}
+{"type":"tool","part":{"type":"tool","tool":"read","state":{"input":{"filePath":".agents/skills/spectacular/references/execute.md"}}}}
+{"type":"spectacular.eval.usage","input_tokens":300,"cached_input_tokens":100,"output_tokens":50}
+{"type":"tool_call"}
+{"type":"spectacular.eval.file_read","path":".agents/skills/spectacular/references/execute.md"}

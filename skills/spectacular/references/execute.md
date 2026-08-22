@@ -1,5 +1,23 @@
 # Start and resume
 
+Use this when: Orchestrator or primary operator activating, resuming, or executing a Mission; detailed Git isolation.
+
+## Read-Only Preflight Checklist
+
+Run one read-only preflight before governed execution:
+- **Workspace & Mission**: Confirm `.spectacular/PROJECT.md` and which Mission is selected.
+- **Git State**: Branch, worktrees (`git worktree list`), clean tree, fresh against upstream/default, release state.
+- **Bindings**: Contract fingerprint and baseline commit binding.
+- **Identity**: Owner, activation time, activation fingerprint.
+- **Validation Mode**: Supported CLI mechanics vs. declared `manual-bootstrap`.
+- **Execution State**: Current active Objective and Run.
+- **Blockers**: Upstream dependencies, unresolved Gaps, active stops.
+
+### Report in Three Lines:
+1. **Plain outcome**: Current project direction, selected Mission, and lifecycle status.
+2. **Technical evidence**: Git branch/worktree, commit SHA, Contract fingerprint, validation mode.
+3. **Next action**: Exactly one safe next action, or one owner gate.
+
 ## Start
 
 Start only an owner-confirmed Mission. Before activating, confirm all of it:
@@ -111,13 +129,16 @@ spectacular mission check <ref> --json         # read-only; verify after
 generates identities, bindings, and activation atomically — you do not author the
 UUID or the fingerprint yourself.
 
-Under `manual-bootstrap`, build the same canonical shape directly and verify it
-with focused scripts — see [bootstrap.md](bootstrap.md). Never route the work
-through an incompatible legacy command sequence to make it look validated.
+Under `manual-bootstrap`, draft the future shape outside governed lifecycle
+transitions — see [bootstrap.md](bootstrap.md). Never create identities or
+fingerprints, or route through an incompatible legacy command sequence to make
+the draft look validated.
+
+When Spectacular develops itself, an active Mission keeps the schema and completion criteria frozen while active; the plan carries meaning, and tooling carries repeatability.
 
 ## Resume
 
-Read three things: the Mission card, the current Objective section, and the exact
+Progressively drill down from the Mission card -> current Objective -> exact sources: read three things: the Mission card, the current Objective section, and the exact
 pointers they name.
 
 ```bash

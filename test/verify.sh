@@ -66,7 +66,7 @@ manifest_checks() {
     fi
   fi
   if [[ -f "$repo_root/skills/spectacular/SKILL.md" ]]; then
-    if ! grep -q "version: $version" "$repo_root/skills/spectacular/SKILL.md"; then
+    if ! grep -q '^  version: "'"$version"'"$' "$repo_root/skills/spectacular/SKILL.md"; then
       echo "skills/spectacular/SKILL.md version drift: expected $version" >&2
       exit 1
     fi

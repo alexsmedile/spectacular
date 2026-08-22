@@ -1,0 +1,3 @@
+Method: `sh tests/check.sh`
+Observed: exit 0 before the authorization condition was added.
+Limitation: the check does not inspect provider authorization.

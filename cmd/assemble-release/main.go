@@ -179,7 +179,7 @@ func validateSources(root, version string) error {
 	if err != nil {
 		return err
 	}
-	if !bytes.Contains(skill, []byte("\nversion: "+version+"\n")) {
+	if !bytes.Contains(skill, []byte("\nmetadata:\n  version: \""+version+"\"\n")) {
 		return errors.New("canonical Skill version is not aligned")
 	}
 	return nil

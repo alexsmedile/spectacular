@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Spectacular evaluation agent result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "role",
+    "phase",
+    "status",
+    "summary",
+    "next_action",
+    "owner_gate",
+    "owner_questions",
+    "references_loaded",
+    "files_read",
+    "commands_run",
+    "safety_notes"
+  ],
+  "properties": {
+    "role": {"type": "string", "enum": ["none", "Orchestrator", "Runner", "Reviewer", "Autopilot"], "description": "Resolved Spectacular role, or none when the skill should not activate."},
+    "phase": {"type": "string", "enum": ["", "orient", "prepare", "execute", "runtime", "close", "audit"], "description": "Selected primary phase, or empty when the role does not use the phase router."},
+    "status": {"type": "string", "enum": ["done", "blocked", "owner-gate", "draft-only", "not-invoked"], "description": "Trial outcome classification."},
+    "summary": {"type": "string", "description": "Concise outcome and evidence."},
+    "next_action": {"type": "string", "description": "One safe next action, empty when owner_gate is populated."},
+    "owner_gate": {"type": "string", "description": "One owner authorization request, empty when next_action is populated."},
+    "owner_questions": {"type": "array", "items": {"type": "string"}},
+    "references_loaded": {"type": "array", "items": {"type": "string"}},
+    "files_read": {"type": "array", "items": {"type": "string"}},
+    "commands_run": {"type": "array", "items": {"type": "string"}},
+    "safety_notes": {"type": "array", "items": {"type": "string"}}
+  }
+}

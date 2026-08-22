@@ -1,5 +1,7 @@
 # Mission anatomy
 
+Use this when: Agent authoring, splitting, or auditing detailed Spectacular record structures and fields.
+
 The full field lists. `SKILL.md` carries the summary; this file carries the
 inventory. Load it when you are writing or auditing a Mission record, not on every
 session.
@@ -109,6 +111,15 @@ The tooling never decides these:
 - dependencies, Gaps, stops
 - rationale and prose
 
+## Divide meaning from mechanics
+
+| Use tooling when | Use judgment when |
+|---|---|
+| failure is expensive | meaning depends on context |
+| the rule is exact and repeated | the prose is the value |
+| the transition must be atomic | several answers are valid |
+| | encoding it mechanically costs more than checking the result |
+
 ## Growth
 
 Start with one file: `<mission-dir>/<mission-ref>-<slug>.md` (e.g. `.spectacular/missions/M5-implement-compact-missions/M5-implement-compact-missions.md`).
@@ -139,6 +150,8 @@ outcome, scope, authority, and completion claims remain authoritative. Do not
 add a Campaign binding to Mission frontmatter.
 
 ## Anchor anatomy & modular contracts
+
+**The Anchor naming rule**: Bare single-word uppercase names (`<NOUN>.md` e.g. `PROJECT.md`, `STACK.md`, `ARCHITECTURE.md`, `README.md`, `AGENTS.md`) are reserved exclusively for Project Anchors and workspace landmark contracts. All governed records (Missions, Runs, Objectives, Proposals, Reviews, Decisions, Evidence, Gaps) carry their scoped prefix in their filename.
 
 ### Core Triad (Required at Kickoff)
 - `PROJECT.md`: Direction, immutable boundaries, non-goals, and `current_truth` binding.

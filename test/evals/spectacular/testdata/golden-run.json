@@ -1,0 +1,88 @@
+{
+  "schema": "spectacular.skill-run-report.v1",
+  "read_isolation": "os-enforced",
+  "minimum_repetitions": 1,
+  "summary": {
+    "verdict": "pass",
+    "measurement_status": "valid",
+    "comparative_effect": "parity",
+    "readiness": "not-assessed",
+    "safety_failures": {},
+    "dimension_rates": {
+      "baseline": {
+        "context": 1,
+        "interaction": 1,
+        "recovery": 1,
+        "routing": 1,
+        "safety": 1,
+        "task_success": 1
+      },
+      "candidate": {
+        "context": 1,
+        "interaction": 1,
+        "recovery": 1,
+        "routing": 1,
+        "safety": 1,
+        "task_success": 1
+      }
+    },
+    "observed_cost": {
+      "baseline": {
+        "trials_with_usage": 1,
+        "total_trials": 1,
+        "median_input_tokens": 100,
+        "median_cached_input_tokens": 0,
+        "median_output_tokens": 20,
+        "median_tool_calls": 2,
+        "median_duration_ms": 100,
+        "total_input_tokens": 100,
+        "total_output_tokens": 20,
+        "total_tool_calls": 2,
+        "total_duration_ms": 100,
+        "successful_trials": 1,
+        "input_tokens_per_success": 100
+      },
+      "candidate": {
+        "trials_with_usage": 1,
+        "total_trials": 1,
+        "median_input_tokens": 75,
+        "median_cached_input_tokens": 0,
+        "median_output_tokens": 18,
+        "median_tool_calls": 1,
+        "median_duration_ms": 80,
+        "total_input_tokens": 75,
+        "total_output_tokens": 18,
+        "total_tool_calls": 1,
+        "total_duration_ms": 80,
+        "successful_trials": 1,
+        "input_tokens_per_success": 75
+      }
+    },
+    "pairing": {
+      "pairs": 1,
+      "both_pass": 1,
+      "both_fail": 0,
+      "candidate_wins": 0,
+      "candidate_losses": 0,
+      "discordant_rate": 0,
+      "exact_sign_p_value": null
+    },
+    "cost_findings": [
+      "paired total input-token reduction 0.250"
+    ]
+  },
+  "trials": [
+    {
+      "id": "aa-r01-baseline",
+      "trace": "trials/aa-r01-baseline/trace.jsonl",
+      "result": "trials/aa-r01-baseline/result.json",
+      "workspace": "trials/aa-r01-baseline/workspace"
+    },
+    {
+      "id": "aa-r01-candidate",
+      "trace": "trials/aa-r01-candidate/trace.jsonl",
+      "result": "trials/aa-r01-candidate/result.json",
+      "workspace": "trials/aa-r01-candidate/workspace"
+    }
+  ]
+}

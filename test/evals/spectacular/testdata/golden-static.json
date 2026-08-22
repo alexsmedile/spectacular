@@ -1,0 +1,61 @@
+{
+  "schema_version": "spectacular.skill-static-comparison.v1",
+  "generated_at": "2026-08-22T12:00:00Z",
+  "baseline": {
+    "label": "baseline",
+    "revision": "old",
+    "commit": "aaa",
+    "kernel_lines": 0,
+    "kernel_body_lines": 100,
+    "kernel_words": 900,
+    "kernel_bytes": 0,
+    "reference_files": 0,
+    "total_guidance_lines": 0,
+    "total_guidance_words": 5000,
+    "primary_route_words": {
+      "audit": 1000,
+      "close": 1000,
+      "execute": 1000,
+      "orient": 1000,
+      "prepare": 1000,
+      "runtime": 1000
+    }
+  },
+  "candidate": {
+    "label": "candidate",
+    "revision": "new",
+    "commit": "bbb",
+    "kernel_lines": 0,
+    "kernel_body_lines": 40,
+    "kernel_words": 360,
+    "kernel_bytes": 0,
+    "reference_files": 0,
+    "total_guidance_lines": 0,
+    "total_guidance_words": 4500,
+    "primary_route_words": {
+      "audit": 500,
+      "close": 500,
+      "execute": 500,
+      "orient": 500,
+      "prepare": 500,
+      "runtime": 500
+    }
+  },
+  "delta": {
+    "kernel_body_line_reduction": 0.6,
+    "kernel_word_reduction": 0.6,
+    "guidance_word_reduction": 0.1,
+    "route_word_reduction": {
+      "audit": 0.5,
+      "close": 0.5,
+      "execute": 0.5,
+      "orient": 0.5,
+      "prepare": 0.5,
+      "runtime": 0.5
+    }
+  },
+  "verdict": "improved",
+  "limitations": [
+    "static only"
+  ]
+}

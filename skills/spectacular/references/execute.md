@@ -133,9 +133,11 @@ Under `manual-bootstrap`, build the same canonical shape directly and verify it
 with focused scripts — see [bootstrap.md](bootstrap.md). Never route the work
 through an incompatible legacy command sequence to make it look validated.
 
+When Spectacular develops itself, an active Mission keeps the schema and completion criteria frozen while active; the plan carries meaning, and tooling carries repeatability.
+
 ## Resume
 
-Read three things: the Mission card, the current Objective section, and the exact
+Progressively drill down from the Mission card -> current Objective -> exact sources: read three things: the Mission card, the current Objective section, and the exact
 pointers they name.
 
 ```bash

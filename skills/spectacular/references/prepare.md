@@ -161,6 +161,8 @@ field-by-field shape of what it becomes, see
 
 ## Then activate
 
+Always run the launch check read-only as a preflight, so a launch never mutates the workspace unexpectedly:
+
 ```bash
 spectacular mission start plan.md --json   # or: ... start - --json  (stdin)
 spectacular mission check <ref> --json     # confirm what was generated

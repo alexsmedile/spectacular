@@ -68,6 +68,26 @@ authority, risk, or irreversible effects.
 | A lost terminal or replacement agent | A scoped **Handoff** with a recovery point and return destination |
 | A guess about what to do next | One compiled, safe continuation—or a specific owner gate |
 
+## Token Economy & Progressive Disclosure
+
+Modern LLMs boast 1M+ token context windows, but reasoning quality degrades well before the limit:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│               THE "1M CONTEXT WINDOW" REALITY TRAP                      │
+│                                                                         │
+│  ├── 0 – 50k:      PEAK ATTENTION CONCENTRATION (100% Needle-in-Haystack) │
+│  ├── 50k – 150k:   Codebase Ingestion + Tool Calls + Test Output        │
+│  ├── 150k – 400k:  Subtle Instruction Drift / "Lost in the Middle"       │
+│  └── 400k – 1M+:   REGRESSION FRONTIER (Dropped constraints & latency)  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+Spectacular treats tokens as a precious budget:
+1. **The 3-Layer Context Sandwich (`spectacular charter`)**: Compiles project truth, owner steering, and write perimeters into a strict **$\le 1{,}200$ token prompt envelope**, leaving 99%+ of the model's attention window free for code reading, AST analysis, and test execution.
+2. **Lean Active Missions (400 – 900 tokens)**: Core mission files remain compact and focused on single-invariant claims and verifiable deliverables.
+3. **Reference Attachments (`references/` & `sources: [...]`)**: Detailed schemas, extensive API fragments, and data fixtures live in auxiliary reference files rather than bloating the primary mission plan. Agents load them progressively only when working on the specific objective that needs them.
+
 > [!NOTE]
 > A passing check, a generated view, a handoff, or an archive is not acceptance
 > by itself. Spectacular keeps evidence, assessment, owner disposition,

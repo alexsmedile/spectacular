@@ -171,6 +171,23 @@ what would demonstrate it. "Works correctly" is neither.
 - **Structural / Schema checks**: `spectacular mission check <ref>` validates cleanly; `markdownlint` passes; internal links resolve.
 - The invariant is simply that the proof is **failable, objective, and attributable**—never mere self-assertion.
 
+## Reference Attachments Pattern (Progressive Disclosure)
+
+When a Mission requires extensive technical details (such as a 200-line JSON schema, SQL DDL migrations, long API fragments, or complex sample payloads), **never inline them directly into the core Mission file**.
+
+Inlining large payloads bloats the active Mission past the 900-token threshold and pollutes the agent's attention on unrelated objectives.
+
+**The Solution: Reference Files**:
+1. Place large technical specifications in `references/` (e.g. `.spectacular/missions/M.../references/schema.json` or workspace `references/`).
+2. Link the reference in the Mission's `sources:` list or the specific Objective's `sources:` list:
+   ```yaml
+   objectives:
+     - outcome: Implement user schema validation.
+       claims: [user-schema-validation]
+       sources: [references/user-schema.json]
+   ```
+3. The core Mission stays lean (400–900 tokens), and the Context Charter compiler progressively resolves the exact reference only for the Objective that needs it.
+
 ## Contract Updates: Amend vs. Version Bump
 
 Updating a Contract follows two explicit paths:

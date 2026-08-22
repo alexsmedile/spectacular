@@ -1,30 +1,11 @@
 package missionbundle
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 )
 
 func TestRecordDecision_StdinAndAtomicity(t *testing.T) {
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
-	}
-	ws, err := discovery.Open(root)
-	if err != nil {
-		t.Fatalf("discovery.Open failed: %v", err)
-	}
-
-	service := Service{
-		Workspace: ws,
-		Now:       func() time.Time { return time.Date(2026, 8, 23, 1, 0, 0, 0, time.UTC) },
-	}
-
 	payload := `---
 type: DecisionDraft
 title: Test Recording Decision Architecture

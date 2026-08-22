@@ -2,9 +2,9 @@
 type: Mission
 id: 01a02ba2-1a58-7c60-85e0-09bac27b5cb2
 title: Expose charter and atomic Decision recording
-status: active
+status: completed
 created: "2026-08-22T22:45:36Z"
-updated: "2026-08-22T22:48:50Z"
+updated: "2026-08-22T22:49:03Z"
 activation:
     at: "2026-08-22T22:45:36Z"
     by: Alex
@@ -42,6 +42,12 @@ completion:
     - claim: authorized-surface-16
       pass_boundary: The CLI registry, mechanical interface, generated schemas, and CC-missioncli contract accurately reflect exactly 16 registered commands without extraneous verbs or aliases.
       proof_requirement: Registry-derived tests assert exact 16-command count, and CC-missioncli is version-bumped (v3 -> v4).
+completion_record:
+    at: "2026-08-22T22:49:03Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: f4911077a1093cfe36c821897b30491ab2646f0f
 contract:
     fingerprint: sha256:aa2f59e740e9526bacef1dd9999127861836460e5f2f96b5fe05bc86a458ee1a
     ref: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
@@ -73,6 +79,11 @@ owner: Alex
 ref: M17
 repair_budget: 2
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m17-charter-and-atomic-decision-recording-surface.md
+      id: 01a02ba6-a280-7a04-822c-2b923c487d9b
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a02ba2-1a58-7ba0-b04b-4228e91d0a29
@@ -80,7 +91,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-22T22:45:36Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - cmd/spectacular/

@@ -55,7 +55,7 @@ to a Campaign in frozen frontmatter: roadmap edits must not create Mission drift
 
 ## The mechanical interface
 
-The CLI is fourteen commands, generated into a catalog at
+The CLI is seventeen commands, generated into a catalog at
 [`mechanical-interface.md`](../skills/spectacular/generated/mechanical-interface.md).
 The catalog is generated from the command registry, so it cannot drift from what
 the binary does. When a document and the generated interface disagree, the
@@ -67,8 +67,16 @@ this by injecting a fault at every write boundary and asserting the workspace is
 unchanged.
 
 Adding a command requires owner authorization. The count is reported, not
-defended — a fifteenth command the owner authorizes is correct, and a fourteenth
+defended — an eighteenth command the owner authorizes is correct, and a seventeenth
 nobody asked for is not.
+
+## Token budget architecture & context compilation
+
+Spectacular is designed around strict context window economics. While modern LLMs accept large context windows, reasoning quality and instruction adherence degrade significantly well before theoretical limits.
+
+1. **The Context Sandwich (`spectacular charter`)**: Rather than feeding raw multi-file governance directories to worker agents, Spectacular compiles a 3-layer execution envelope (Frozen Truth, Owner Steering, and Execution Perimeter) capped at $\le 1{,}200$ tokens (`o200k_base`).
+2. **Workspace Configuration (`.spectacular/config.yaml`)**: Project-level token budgets and defaults are declared in `config.yaml`, enabling teams to tune target and warning envelopes cleanly without polluting project mission vision.
+3. **Reference Attachments (`references/` & `sources: [...]`)**: Complex data structures, large schemas, and extensive test fixtures live in modular reference files. Core missions remain lean (400–900 tokens), referencing attachments on-demand rather than inlining monolithic blocks.
 
 ## What the machine does and does not do
 

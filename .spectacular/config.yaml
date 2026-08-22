@@ -1,0 +1,25 @@
+# Spectacular Workspace Configuration
+# Authoritative token budgets, engine defaults, and runtime overrides.
+schema_version: "spectacular.config.v1"
+
+token_budgets:
+  mission_active:
+    target: 900
+    hard_cap: 1200
+  mission_sketch:
+    target: 300
+    hard_cap: 400
+  charter:
+    target: 1200
+    warn: 1400
+    hard_cap: 1440
+  decision:
+    target: 400
+    hard_cap: 500
+  campaign:
+    target: 1000
+    hard_cap: 1500
+
+defaults:
+  operator: "Alex"
+  tokenizer: "o200k_base"

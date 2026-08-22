@@ -4,7 +4,9 @@ package spectaculareval
 
 import (
 	"context"
+	"errors"
 	"os/exec"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -25,6 +27,9 @@ func TestTrialCancellationKillsAdapterProcessGroup(t *testing.T) {
 	}
 	alive, checkErr := processGroupHasLiveMember(command.Process.Pid)
 	if checkErr != nil {
+		if errors.Is(checkErr, syscall.EPERM) {
+			t.Skip("sandboxed environment prevents inspecting foreign process groups")
+		}
 		t.Fatalf("inspect adapter process group: %v", checkErr)
 	}
 	if alive {

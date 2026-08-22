@@ -94,10 +94,30 @@ Compare only approaches that genuinely differ and are outcome-sized. Weigh each 
 
 Record one verdict: `sufficient | needs-evidence | needs-decision`.
 
-Then grill only what is still unresolved — criteria, scope, dependencies, risks,
-or blocking Gaps. Do not re-interview settled ground.
+### Upfront Architectural Grilling vs. Progressive Horizon Detailing
+- **Upfront Architectural Grilling**: Settle foundational architectural choices that span multiple blocks (e.g. B1 through B7) early at the Campaign/Decision level. Ask focused decision questions before freezing execution blocks.
+- **Progressive Horizon Detailing**:
+  > *"Fully detail the active/next mission; keep downstream ones as drafts / sketches. Small missions should stay direct and lean. Simpler straightforward tasks can run with no mission if user approves or asks for."*
+  - Detail **only** the active or immediate next Mission block. Downstream blocks remain lightweight draft sketches without premature claim matrices.
+  - Token budgets from `.spectacular/config.yaml` govern document sizing:
+    - **Active Mission**: 400 – 900 tokens (upper limit: 1,200 tokens).
+    - **Draft / Sketch Mission**: 100 – 300 tokens.
+    - **Decision**: 150 – 400 tokens.
+    - **Context Charter**: $\le 1{,}200$ tokens (hard cap: 1,440 tokens).
 
 ## Freeze a compact Mission preview
+
+### Plan Style & Authoring Guidance (Lossless Compression)
+1. **User Superpower at the Center**: Lead with what the developer or user gets (the concrete superpower and observable benefit).
+2. **Lean & Direct for Small Missions**: Small, single-objective missions should stay direct, lean, and free of artificial ceremony. Avoid filler diagrams or forced multi-pillar structures on routine tasks.
+3. **Hub-and-Spoke for Complex Milestones (Recommended)**: For large, multi-objective campaign blocks, structuring claims as distinct technical pillars (e.g. Compiler, Budget, Proof) clarifies the architectural nodes.
+4. **Lossless Information Compression**:
+   - **Process Chains**: Use arrows over verbose narrative (`B1 → B2 → B3`, `active → paused | blocked → completed`).
+   - **Matrix Tuples**: Use compact key-value lists for scope and stops (`mechanical: [cmd/, internal/]`, `stops: [rewrite]`).
+   - **Canonical Pointers**: Reference records by identifier (`Contract:019f...`, `D21`) rather than duplicating text.
+   - **BLUF**: Bottom Line Up Front — strip conversational preamble and state verifiable outcomes directly.
+5. **Atomic Single-Invariant Claims**: One claim = **one** observable invariant + **one** verifiable proof check.
+6. **Key Deliverables in Body**: Include a direct action checklist of target files and verification commands.
 
 Frontmatter:
 
@@ -113,7 +133,7 @@ Frontmatter:
   Also choose it when the work is disputed. Otherwise `automatic` is honest, and
   `clustered` fits several small related claims. A reviewer who did not implement
   the scope is what makes it independent — see [close.md](close.md).
-- Objectives, with dependencies and claim coverage
+- Objectives, with dependencies, claim coverage, and optional `sources:` references
 - initial Run and operator, authority, mechanical and semantic scope
 - budgets, dependencies, Gaps, stops, recovery
 - `resolves_gaps:` when the Mission closes a Gap on its bound Contract, as `gap`
@@ -124,9 +144,9 @@ Frontmatter:
 
 Markdown body:
 
-- origin and rationale
-- the detailed execution plan
-- conditional bootstrap and review notes
+- `## Purpose & Scope`: Concise 2-3 sentence overview.
+- `## Key Deliverables & Actions`: Direct file-by-file action checklist.
+- origin and rationale, if non-obvious.
 
 A claim is the part most often written too vaguely. It needs a boundary that can
 fail, and a proof that names the test:
@@ -150,6 +170,32 @@ what would demonstrate it. "Works correctly" is neither.
 - **Reproducible scratch fixtures**: A small verification script in `scratch/` testing exact input/output pairs.
 - **Structural / Schema checks**: `spectacular mission check <ref>` validates cleanly; `markdownlint` passes; internal links resolve.
 - The invariant is simply that the proof is **failable, objective, and attributable**—never mere self-assertion.
+
+## Reference Attachments Pattern (Progressive Disclosure)
+
+When a Mission requires extensive technical details (such as a 200-line JSON schema, SQL DDL migrations, long API fragments, or complex sample payloads), **never inline them directly into the core Mission file**.
+
+Inlining large payloads bloats the active Mission past the 900-token threshold and pollutes the agent's attention on unrelated objectives.
+
+**The Solution: Reference Files**:
+1. Place large technical specifications in `references/` (e.g. `.spectacular/missions/M.../references/schema.json` or workspace `references/`).
+2. Link the reference in the Mission's `sources:` list or the specific Objective's `sources:` list:
+   ```yaml
+   objectives:
+     - outcome: Implement user schema validation.
+       claims: [user-schema-validation]
+       sources: [references/user-schema.json]
+   ```
+3. The core Mission stays lean (400–900 tokens), and the Context Charter compiler progressively resolves the exact reference only for the Objective that needs it.
+
+## Contract Updates: Amend vs. Version Bump
+
+Updating a Contract follows two explicit paths:
+
+| Update Kind | When to Use | Action |
+|---|---|---|
+| **Path A: Amend** | Closing a declared Gap or updating editorial frontmatter | Run `spectacular contract amend <contract-ref> --gap <gap-ref> --by <owner>`. Does not bump `contract_version`. |
+| **Path B: Version Bump** | Changing behavioral invariants, command surfaces, or schema | In an authorized Mission, edit `.spectacular/contracts/<file>.md`, increment `contract_version: "N" -> "N+1"`, and check with `spectacular mission check`. Past missions stay frozen to their old version SHA. |
 
 Present the preview **once**, in chat. Owner confirmation freezes the semantic
 envelope.

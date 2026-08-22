@@ -52,8 +52,14 @@
     },
     {
       "command": "spectacular run start",
-      "arguments": "<mission-ref> --title <title> [--json]",
+      "arguments": "<mission-ref>[/<objective-ref>] --title <title> [--json]",
       "schema": "spectacular.run.start.v2",
+      "effect": "mutating"
+    },
+    {
+      "command": "spectacular run transition",
+      "arguments": "<target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>] [--json]",
+      "schema": "spectacular.run.transition.v2",
       "effect": "mutating"
     },
     {
@@ -90,6 +96,18 @@
       "command": "spectacular contract amend",
       "arguments": "<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]",
       "schema": "spectacular.contract.amend.v2",
+      "effect": "mutating"
+    },
+    {
+      "command": "spectacular charter",
+      "arguments": "<mission-ref>/<objective-ref> [sources...] [--json]",
+      "schema": "spectacular.charter.show.v2",
+      "effect": "read-only"
+    },
+    {
+      "command": "spectacular decide",
+      "arguments": "<decision.md|-> [--json]",
+      "schema": "spectacular.decision.record.v2",
       "effect": "mutating"
     }
   ]

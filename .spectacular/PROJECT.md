@@ -7,6 +7,8 @@ boundaries:
     - v2 is the sole live product surface.
     - Canonical Markdown remains directly understandable without a database or generated view.
     - Runtime and providers execute effects; Spectacular records authority and evidence boundaries.
+    - Governance is prompt-budgeted: context steering envelopes remain <=1,200 tokens via spectacular charter.
+    - Detailed schemas, specifications, and data fragments live in modular reference attachments rather than bloating core mission plans.
 constraints:
     - UUIDv7 is durable identity; human references are navigation; SHA-256 is revision identity.
     - No v1 compatibility, generic record/search commands, or authoritative projections.

@@ -93,10 +93,20 @@ func (r *Request) dispositions() []Ask {
 	return frozen
 }
 
+type TransitionHistory struct {
+	At         string `yaml:"at" json:"at"`
+	From       string `yaml:"from" json:"from"`
+	To         string `yaml:"to" json:"to"`
+	By         string `yaml:"by" json:"by"`
+	Reason     string `yaml:"reason" json:"reason"`
+	NextAction string `yaml:"next_action,omitempty" json:"next_action,omitempty"`
+}
+
 type Objective struct {
 	Ref            string   `yaml:"ref" json:"ref"`
 	ID             string   `yaml:"id" json:"id"`
 	Source         string   `yaml:"-" json:"source,omitempty"`
+	Sources        []string `yaml:"sources,omitempty" json:"sources,omitempty"`
 	Outcome        string   `yaml:"outcome,omitempty" json:"outcome,omitempty"`
 	Status         string   `yaml:"status,omitempty" json:"status,omitempty"`
 	After          []string `yaml:"after,omitempty" json:"after,omitempty"`
@@ -104,22 +114,26 @@ type Objective struct {
 	Claims         []string `yaml:"claims,omitempty" json:"claims,omitempty"`
 	File           string   `yaml:"file,omitempty" json:"file,omitempty"`
 	Body           string   `yaml:"-" json:"-"`
+	Run            *Run     `yaml:"run,omitempty" json:"run,omitempty"`
+	Runs           []Run    `yaml:"runs,omitempty" json:"runs,omitempty"`
 
 	document *workspace.Document
 }
 
 type Run struct {
-	Ref              string `yaml:"ref" json:"ref"`
-	ID               string `yaml:"id" json:"id"`
-	Source           string `yaml:"-" json:"source,omitempty"`
-	Title            string `yaml:"title,omitempty" json:"title,omitempty"`
-	Status           string `yaml:"status" json:"status"`
-	Operator         string `yaml:"operator" json:"operator"`
-	StartedAt        string `yaml:"started_at" json:"started_at"`
-	CurrentObjective string `yaml:"current_objective" json:"current_objective"`
-	Repairs          int    `yaml:"repairs" json:"repairs"`
-	File             string `yaml:"file,omitempty" json:"file,omitempty"`
-	Body             string `yaml:"-" json:"-"`
+	Ref              string              `yaml:"ref" json:"ref"`
+	ID               string              `yaml:"id" json:"id"`
+	Source           string              `yaml:"-" json:"source,omitempty"`
+	Title            string              `yaml:"title,omitempty" json:"title,omitempty"`
+	Status           string              `yaml:"status" json:"status"`
+	Operator         string              `yaml:"operator" json:"operator"`
+	StartedAt        string              `yaml:"started_at" json:"started_at"`
+	CurrentObjective string              `yaml:"current_objective,omitempty" json:"current_objective,omitempty"`
+	Objective        string              `yaml:"objective,omitempty" json:"objective,omitempty"`
+	Repairs          int                 `yaml:"repairs" json:"repairs"`
+	File             string              `yaml:"file,omitempty" json:"file,omitempty"`
+	History          []TransitionHistory `yaml:"history,omitempty" json:"history,omitempty"`
+	Body             string              `yaml:"-" json:"-"`
 
 	document *workspace.Document
 }

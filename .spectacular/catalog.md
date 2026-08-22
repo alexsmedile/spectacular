@@ -23,6 +23,7 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `D2-435ztz` | Decision | Authorize the v2.1 governed-autonomy Mission | `.spectacular/decisions/D2-435ztz.md` |
 | `D20-use-live-charter-retrieval-without-a-persistent-cache` | Decision | Compile charters from live governance without a persistent cache | `.spectacular/decisions/D20-use-live-charter-retrieval-without-a-persistent-cache.md` |
 | `D21-context-sandwich-execution-gates` | Decision | Preserve proof gates while staging the context-sandwich command surface | `.spectacular/decisions/D21-context-sandwich-execution-gates.md` |
+| `D22-accepted` | Decision | Run transition state machine and charter tokenizer specification | `.spectacular/decisions/D22-accepted.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |
@@ -50,6 +51,14 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `M14` | Mission | Build the Spectacular effectiveness benchmark suite | `.spectacular/missions/M14-build-the-spectacular-effectiveness-benchmark-suite/M14-build-the-spectacular-effectiveness-benchmark-suite.md` |
 | `M14/RV1` | Review | Independent review of the Spectacular effectiveness benchmark suite | `.spectacular/missions/M14-build-the-spectacular-effectiveness-benchmark-suite/reviews/RV1-independent-review-of-the-spectacular-effectiveness-benchmark-suite.md` |
 | `M14/RV2` | Review | Independent review of hardened benchmark validity and mode frontier | `.spectacular/missions/M14-build-the-spectacular-effectiveness-benchmark-suite/reviews/RV2-independent-review-of-hardened-benchmark-validity-and-mode-frontier.md` |
+| `M15` | Mission | Reconcile P11 governance and Contract baselines | `.spectacular/missions/M15-reconcile-p11-governance-and-contract-baselines/M15-reconcile-p11-governance-and-contract-baselines.md` |
+| `M15/RV1` | Review | Independent review of M15 governance and contract baseline reconciliation | `.spectacular/missions/M15-reconcile-p11-governance-and-contract-baselines/reviews/RV1-independent-review-of-m15-governance-and-contract-baseline-reconciliation.md` |
+| `M16` | Mission | Build and benchmark the bounded charter engine | `.spectacular/missions/M16-build-and-benchmark-the-bounded-charter-engine/M16-build-and-benchmark-the-bounded-charter-engine.md` |
+| `M16/RV1` | Review | Independent review of M16 charter compiler and effectiveness benchmark proof | `.spectacular/missions/M16-build-and-benchmark-the-bounded-charter-engine/reviews/RV1-independent-review-of-m16-charter-compiler-and-effectiveness-benchmark-proof.md` |
+| `M17` | Mission | Expose charter and atomic Decision recording | `.spectacular/missions/M17-expose-charter-and-atomic-decision-recording/M17-expose-charter-and-atomic-decision-recording.md` |
+| `M17/RV1` | Review | Independent review of M17 charter and atomic decision recording surface | `.spectacular/missions/M17-expose-charter-and-atomic-decision-recording/reviews/RV1-independent-review-of-m17-charter-and-atomic-decision-recording-surface.md` |
+| `M18` | Mission | Introduce the Objective-scoped Run lifecycle | `.spectacular/missions/M18-introduce-the-objective-scoped-run-lifecycle/M18-introduce-the-objective-scoped-run-lifecycle.md` |
+| `M18/RV1` | Review | Independent review of M18 objective-scoped run lifecycle and transitions | `.spectacular/missions/M18-introduce-the-objective-scoped-run-lifecycle/reviews/RV1-independent-review-of-m18-objective-scoped-run-lifecycle-and-transitions.md` |
 | `M2` | Mission | Implement answer-key governed autonomy | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/M2-implement-answer-key-governed-autonomy.md` |
 | `M2/D1-znlkfe` | Decision | Activate the v2.1 governed-autonomy Mission | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/decisions/D1-znlkfe.md` |
 | `M2/O1` | Objective | Preparation compiles and freezes minimal completion criteria with explicit readiness diagnostics. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O1-preparation-compiles-and-freezes-minimal-completion-criteria-with-explicit-readiness-diagnostics.md` |

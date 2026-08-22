@@ -26,6 +26,48 @@ type Manifest struct {
 	Guardrails    string   `yaml:"guardrails,omitempty"`
 }
 
+type TokenBudget struct {
+	Target  int `yaml:"target" json:"target"`
+	Warn    int `yaml:"warn,omitempty" json:"warn,omitempty"`
+	HardCap int `yaml:"hard_cap" json:"hard_cap"`
+}
+
+type TokenBudgets struct {
+	MissionActive TokenBudget `yaml:"mission_active" json:"mission_active"`
+	MissionSketch TokenBudget `yaml:"mission_sketch" json:"mission_sketch"`
+	Charter       TokenBudget `yaml:"charter" json:"charter"`
+	Decision      TokenBudget `yaml:"decision" json:"decision"`
+	Campaign      TokenBudget `yaml:"campaign" json:"campaign"`
+}
+
+type ConfigDefaults struct {
+	Operator  string `yaml:"operator,omitempty" json:"operator,omitempty"`
+	Tokenizer string `yaml:"tokenizer,omitempty" json:"tokenizer,omitempty"`
+}
+
+type Config struct {
+	SchemaVersion string         `yaml:"schema_version" json:"schema_version"`
+	TokenBudgets  TokenBudgets   `yaml:"token_budgets" json:"token_budgets"`
+	Defaults      ConfigDefaults `yaml:"defaults,omitempty" json:"defaults,omitempty"`
+}
+
+func DefaultConfig() Config {
+	return Config{
+		SchemaVersion: "spectacular.config.v1",
+		TokenBudgets: TokenBudgets{
+			MissionActive: TokenBudget{Target: 900, HardCap: 1200},
+			MissionSketch: TokenBudget{Target: 300, HardCap: 400},
+			Charter:       TokenBudget{Target: 1200, Warn: 1400, HardCap: 1440},
+			Decision:      TokenBudget{Target: 400, HardCap: 500},
+			Campaign:      TokenBudget{Target: 1000, HardCap: 1500},
+		},
+		Defaults: ConfigDefaults{
+			Operator:  "Alex",
+			Tokenizer: "o200k_base",
+		},
+	}
+}
+
 type Entry struct {
 	Path        string
 	Absolute    string
@@ -37,6 +79,7 @@ type Workspace struct {
 	Root        string
 	MetadataDir string
 	Manifest    Manifest
+	Config      Config
 	Entries     []Entry
 	byID        map[domain.ID]Entry
 	byPath      map[string]Entry
@@ -226,6 +269,38 @@ func load(root, marker string) (*Workspace, error) {
 	if anchor.Document.Record.Type != domain.Anchor {
 		return nil, refusal(domain.RefusalNounMismatch, anchorPath, "project_anchor must be Anchor", nil)
 	}
+	cfg := DefaultConfig()
+	for _, configName := range []string{"config.yaml", "config.yml"} {
+		configPath := filepath.Join(meta, configName)
+		if configData, err := os.ReadFile(configPath); err == nil && utf8.Valid(configData) {
+			var parsed Config
+			if yaml.Unmarshal(configData, &parsed) == nil {
+				if parsed.TokenBudgets.MissionActive.Target > 0 {
+					cfg.TokenBudgets.MissionActive = parsed.TokenBudgets.MissionActive
+				}
+				if parsed.TokenBudgets.MissionSketch.Target > 0 {
+					cfg.TokenBudgets.MissionSketch = parsed.TokenBudgets.MissionSketch
+				}
+				if parsed.TokenBudgets.Charter.Target > 0 {
+					cfg.TokenBudgets.Charter = parsed.TokenBudgets.Charter
+				}
+				if parsed.TokenBudgets.Decision.Target > 0 {
+					cfg.TokenBudgets.Decision = parsed.TokenBudgets.Decision
+				}
+				if parsed.TokenBudgets.Campaign.Target > 0 {
+					cfg.TokenBudgets.Campaign = parsed.TokenBudgets.Campaign
+				}
+				if parsed.Defaults.Operator != "" {
+					cfg.Defaults.Operator = parsed.Defaults.Operator
+				}
+				if parsed.Defaults.Tokenizer != "" {
+					cfg.Defaults.Tokenizer = parsed.Defaults.Tokenizer
+				}
+			}
+			break
+		}
+	}
+	w.Config = cfg
 	return w, nil
 }
 

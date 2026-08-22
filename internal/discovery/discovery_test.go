@@ -123,6 +123,53 @@ func TestOpenRefusesAuthorityMarkerSymlinksBeforeReading(t *testing.T) {
 	})
 }
 
+func TestOpenLoadsConfigYAML(t *testing.T) {
+	root := t.TempDir()
+	meta := filepath.Join(root, ".spectacular")
+	if err := os.MkdirAll(meta, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write(t, filepath.Join(meta, "workspace.yaml"), "schema_version: spectacular.workspace.v1\nrecord_roots: [.]\nproject_anchor: PROJECT.md\n")
+	write(t, filepath.Join(meta, "PROJECT.md"), "---\ntype: Anchor\nid: 0198a1a0-0000-7000-8000-000000000003\nhuman_ref: PROJECT\n---\n")
+
+	// 1. Without config.yaml -> should have DefaultConfig
+	ws1, err := Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ws1.Config.TokenBudgets.MissionActive.Target != 900 {
+		t.Fatalf("expected default active mission target 900, got %d", ws1.Config.TokenBudgets.MissionActive.Target)
+	}
+
+	// 2. With config.yaml -> should overlay custom overrides
+	configContent := `schema_version: "spectacular.config.v1"
+token_budgets:
+  mission_active:
+    target: 850
+    hard_cap: 1100
+defaults:
+  operator: "CustomOperator"
+`
+	write(t, filepath.Join(meta, "config.yaml"), configContent)
+	ws2, err := Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ws2.Config.TokenBudgets.MissionActive.Target != 850 {
+		t.Fatalf("expected custom target 850, got %d", ws2.Config.TokenBudgets.MissionActive.Target)
+	}
+	if ws2.Config.TokenBudgets.MissionActive.HardCap != 1100 {
+		t.Fatalf("expected custom hard_cap 1100, got %d", ws2.Config.TokenBudgets.MissionActive.HardCap)
+	}
+	if ws2.Config.Defaults.Operator != "CustomOperator" {
+		t.Fatalf("expected custom operator CustomOperator, got %s", ws2.Config.Defaults.Operator)
+	}
+	// Non-overridden values should retain defaults
+	if ws2.Config.TokenBudgets.Charter.Target != 1200 {
+		t.Fatalf("expected default charter target 1200, got %d", ws2.Config.TokenBudgets.Charter.Target)
+	}
+}
+
 func write(t *testing.T, path, text string) {
 	t.Helper()
 	if err := os.WriteFile(path, []byte(text), 0o644); err != nil {

@@ -9,17 +9,19 @@ ok=0
 warn=0
 
 say()  { printf '  %-10s %s\n' "$1" "$2"; }
+script_dir=$(CDPATH= cd "$(dirname "$0")" && pwd)
+. "$script_dir/lib/cli-mode.sh"
 
 printf 'SPECTACULAR ENVIRONMENT\n\n'
 
 # 1. The mechanical layer.
-if command -v spectacular >/dev/null 2>&1; then
-  version=$(spectacular --version 2>/dev/null || echo 'unreadable')
-  say "cli" "present — $version"
+spectacular_cli_probe "$script_dir/../generated/mechanical-interface.json"
+if [ "$SPECTACULAR_CLI_MODE" = full ]; then
+  say "cli" "$SPECTACULAR_CLI_DETAIL"
   ok=$((ok+1))
   cli=1
 else
-  say "cli" "ABSENT — governed execution unavailable"
+  say "cli" "$SPECTACULAR_CLI_DETAIL"
   warn=$((warn+1))
   cli=0
 fi

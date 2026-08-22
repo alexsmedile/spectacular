@@ -6,7 +6,7 @@ Use this when: Orchestrator preparing Genesis, exploration, Proposal, or compact
 
 When starting a project from scratch, or when receiving an initial PRD or prompt of intent:
 
-1. **Scan for Intake Inputs**: Check for existing project kickoff documents in the project root or workspace (e.g. `./PRD.md`, `scratch/PRD.tmp.md`, intake notes, or output from `write-prd`). Treat any starter PRD as an ephemeral launchpad, not an eternal file. Distill its 8 foundational dimensions losslessly into:
+1. **Scan for Intake Inputs**: Check for existing project kickoff documents in the project root or workspace (e.g. `./PRD.md`, `scratch/PRD.tmp.md`, intake notes, or output from `write-prd`). Treat any starter PRD as an ephemeral launchpad, not an eternal file. Account for these eight foundational dimensions: (1) owner and user-observable outcome, (2) scope boundaries and non-goals, (3) inputs, outputs, and core workflow, (4) stack, runtime, and dependency constraints, (5) architecture and component boundaries, (6) data, state, security, and privacy constraints, (7) acceptance criteria and failable proof, and (8) operations, failure recovery, and delivery constraints. Distill them losslessly into:
    - **The Core Triad of Anchors**:
      * `.spectacular/PROJECT.md`: What & Why (Core scope, system boundaries, and strict non-goals).
      * `.spectacular/STACK.md`: What with (Languages, runtimes, database, libraries, baseline test command).
@@ -20,7 +20,7 @@ When starting a project from scratch, or when receiving an initial PRD or prompt
 
 2. **Adopt Strong Defaults (Zero Grilling)**: Do not stall kickoff with multi-question interviews. Choose sane, production-grade defaults for toolchain and architecture; prompt only on irreversible semantic forks.
 
-3. **Present One Genesis Preview**: Show the Core Triad summary and `M1-bootstrap` plan once in chat. On owner confirmation ("Yes" / "Proceed"), write the Core Anchors and activate `M1` with `spectacular mission start`.
+3. **Prove coverage, then preview**: Before presenting anything for approval, make a source-to-destination coverage pass: map every one of the eight dimensions to a Core/earned Anchor or an `M1-bootstrap` claim, or mark it as an explicit open Gap. Only when all eight are accounted for, show the Core Triad summary and `M1-bootstrap` plan once. On owner confirmation ("Yes" / "Proceed"), write the Core Anchors and activate `M1` with `spectacular mission start`.
 
 For live templates and layouts, see [genesis-examples.md](genesis-examples.md) or run `spectacular mission start --help` to emit the exact `MissionPlan` YAML frontmatter template directly to stdout.
 
@@ -161,7 +161,7 @@ field-by-field shape of what it becomes, see
 
 ## Then activate
 
-Always run the launch check read-only as a preflight, so a launch never mutates the workspace unexpectedly:
+After owner confirmation, run the mutating launch once, then verify the generated Mission with the read-only check:
 
 ```bash
 spectacular mission start plan.md --json   # or: ... start - --json  (stdin)
@@ -171,5 +171,6 @@ spectacular mission check <ref> --json     # confirm what was generated
 It generates identities, bindings, activation, and the canonical path at
 `.spectacular/missions/<slug>/<ref>-<slug>.md` — atomically, from the approved plan.
 
-Under a declared manual bootstrap, hand-author that file, generate valid
-identities, and verify the structure directly — see [bootstrap.md](bootstrap.md).
+Under declared `manual-bootstrap`, draft the future shape outside the governed
+lifecycle; do not generate identities or activate it by hand — see
+[bootstrap.md](bootstrap.md).

@@ -30,6 +30,7 @@ type RunConfig struct {
 	Model                     string
 	Adapter                   string
 	AdapterArgs               []string
+	SpectacularCLI            string
 	OutputDir                 string
 	AllowHeldOut              bool
 	ReadIsolation             string
@@ -60,6 +61,8 @@ type runManifest struct {
 	Adapter                   string                    `json:"adapter"`
 	AdapterDigest             string                    `json:"adapter_digest"`
 	AdapterArgs               []string                  `json:"adapter_args,omitempty"`
+	SpectacularCLI            string                    `json:"spectacular_cli"`
+	SpectacularCLIDigest      string                    `json:"spectacular_cli_digest"`
 	ReadIsolation             string                    `json:"read_isolation"`
 	TrialTimeoutMS            int64                     `json:"trial_timeout_ms"`
 	RequireCertifiedTelemetry bool                      `json:"require_certified_telemetry"`
@@ -110,9 +113,18 @@ func RunPaired(config RunConfig) (RunReport, error) {
 	if err != nil {
 		return RunReport{}, fmt.Errorf("resolve adapter path: %w", err)
 	}
-	for label, path := range map[string]string{"result schema": config.SchemaPath, "adapter": config.Adapter} {
+	if strings.TrimSpace(config.SpectacularCLI) == "" {
+		return RunReport{}, errors.New("pinned Spectacular CLI is required; pass --spectacular-cli")
+	}
+	config.SpectacularCLI, err = absolutePath(config.SpectacularCLI)
+	if err != nil {
+		return RunReport{}, fmt.Errorf("resolve pinned Spectacular CLI: %w", err)
+	}
+	for label, path := range map[string]string{"result schema": config.SchemaPath, "adapter": config.Adapter, "Spectacular CLI": config.SpectacularCLI} {
 		if info, statErr := os.Stat(path); statErr != nil || info.IsDir() {
 			return RunReport{}, fmt.Errorf("%s is not a readable file: %s", label, path)
+		} else if label == "Spectacular CLI" && info.Mode()&0o111 == 0 {
+			return RunReport{}, fmt.Errorf("%s is not executable: %s", label, path)
 		}
 	}
 	catalog, err := LoadCatalog(config.CatalogPath)
@@ -310,6 +322,10 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 	resultPath := filepath.Join(temporary, "result.json")
 	tracePath := filepath.Join(temporary, "trace.jsonl")
 	trialSchemaPath := filepath.Join(temporary, "result.schema.json")
+	cliDirectory := filepath.Join(temporary, "bin")
+	if err := stagePinnedCLI(config.SpectacularCLI, cliDirectory); err != nil {
+		return Trial{}, err
+	}
 	prompt := variantPrompt(mode, spec.Case.Prompt)
 	if err := os.WriteFile(promptPath, []byte(prompt+"\n"), 0o644); err != nil {
 		return Trial{}, err
@@ -338,7 +354,10 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 		defer cancel()
 	}
 	command.Dir = workspace
-	command.Env = append(cleanEvalEnvironment(os.Environ(), config.Repo, config.OutputDir),
+	baseEnvironment := cleanEvalEnvironment(os.Environ(), config.Repo, config.OutputDir)
+	baseEnvironment = withoutEnvironmentKey(baseEnvironment, "PATH")
+	command.Env = append(baseEnvironment,
+		"PATH="+cliDirectory+string(os.PathListSeparator)+os.Getenv("PATH"),
 		"PWD="+workspace,
 		"SPECTACULAR_EVAL_WORKSPACE="+workspace,
 		"SPECTACULAR_EVAL_PROMPT="+promptPath,
@@ -540,6 +559,31 @@ func cleanEvalEnvironment(environment []string, forbiddenRoots ...string) []stri
 	return cleaned
 }
 
+func withoutEnvironmentKey(environment []string, key string) []string {
+	filtered := environment[:0]
+	for _, entry := range environment {
+		name, _, _ := strings.Cut(entry, "=")
+		if name != key {
+			filtered = append(filtered, entry)
+		}
+	}
+	return filtered
+}
+
+func stagePinnedCLI(source, directory string) error {
+	if err := os.MkdirAll(directory, 0o755); err != nil {
+		return err
+	}
+	data, err := os.ReadFile(source)
+	if err != nil {
+		return fmt.Errorf("read pinned Spectacular CLI: %w", err)
+	}
+	if err := os.WriteFile(filepath.Join(directory, "spectacular"), data, 0o755); err != nil {
+		return fmt.Errorf("stage pinned Spectacular CLI: %w", err)
+	}
+	return nil
+}
+
 func runPostChecks(workspace string, agentSnapshot map[string]string, checks []PostCheck) ([]PostconditionResult, error) {
 	results := make([]PostconditionResult, 0, len(checks))
 	for _, check := range checks {
@@ -655,6 +699,10 @@ func openRunManifest(config RunConfig, seed int64, specs []trialSpec, commits ma
 	if err != nil {
 		return runManifest{}, err
 	}
+	cliDigest, err := fileDigest(config.SpectacularCLI)
+	if err != nil {
+		return runManifest{}, err
+	}
 	harnessDigest, err := benchmarkInputsDigest(filepath.Dir(config.CatalogPath), config.OutputDir)
 	if err != nil {
 		return runManifest{}, err
@@ -665,7 +713,7 @@ func openRunManifest(config RunConfig, seed int64, specs []trialSpec, commits ma
 		if json.Unmarshal(data, &manifest) != nil {
 			return runManifest{}, errors.New("existing run manifest is invalid")
 		}
-		if manifest.SchemaVersion != "spectacular.skill-run-manifest.v1" || manifest.BaselineRef != config.BaselineRef || manifest.BaselineMode != config.BaselineMode || manifest.BaselineCommit != commits["baseline"] || manifest.CandidateRef != config.CandidateRef || manifest.CandidateMode != config.CandidateMode || manifest.CandidateCommit != commits["candidate"] || manifest.CatalogDigest != catalogDigest || manifest.HarnessDigest != harnessDigest || manifest.SchemaDigest != schemaDigest || manifest.Adapter != config.Adapter || manifest.AdapterDigest != adapterDigest || strings.Join(manifest.AdapterArgs, "\x00") != strings.Join(config.AdapterArgs, "\x00") || manifest.ReadIsolation != config.ReadIsolation || manifest.TrialTimeoutMS != config.TrialTimeout.Milliseconds() || manifest.RequireCertifiedTelemetry != config.RequireCertifiedTelemetry || manifest.Model != config.Model || manifest.Tier != config.Tier || manifest.Seed != seed || strings.Join(manifest.Planned, "\n") != strings.Join(planned, "\n") {
+		if manifest.SchemaVersion != "spectacular.skill-run-manifest.v1" || manifest.BaselineRef != config.BaselineRef || manifest.BaselineMode != config.BaselineMode || manifest.BaselineCommit != commits["baseline"] || manifest.CandidateRef != config.CandidateRef || manifest.CandidateMode != config.CandidateMode || manifest.CandidateCommit != commits["candidate"] || manifest.CatalogDigest != catalogDigest || manifest.HarnessDigest != harnessDigest || manifest.SchemaDigest != schemaDigest || manifest.Adapter != config.Adapter || manifest.AdapterDigest != adapterDigest || strings.Join(manifest.AdapterArgs, "\x00") != strings.Join(config.AdapterArgs, "\x00") || manifest.SpectacularCLI != config.SpectacularCLI || manifest.SpectacularCLIDigest != cliDigest || manifest.ReadIsolation != config.ReadIsolation || manifest.TrialTimeoutMS != config.TrialTimeout.Milliseconds() || manifest.RequireCertifiedTelemetry != config.RequireCertifiedTelemetry || manifest.Model != config.Model || manifest.Tier != config.Tier || manifest.Seed != seed || strings.Join(manifest.Planned, "\n") != strings.Join(planned, "\n") {
 			return runManifest{}, errors.New("existing run manifest does not match requested comparison")
 		}
 		if manifest.Completed == nil {
@@ -689,6 +737,7 @@ func openRunManifest(config RunConfig, seed int64, specs []trialSpec, commits ma
 		CandidateRef: config.CandidateRef, CandidateMode: config.CandidateMode, CandidateCommit: commits["candidate"],
 		CatalogDigest: catalogDigest, HarnessDigest: harnessDigest, SchemaDigest: schemaDigest,
 		Adapter: config.Adapter, AdapterDigest: adapterDigest, AdapterArgs: append([]string(nil), config.AdapterArgs...),
+		SpectacularCLI: config.SpectacularCLI, SpectacularCLIDigest: cliDigest,
 		ReadIsolation:  config.ReadIsolation,
 		TrialTimeoutMS: config.TrialTimeout.Milliseconds(), RequireCertifiedTelemetry: config.RequireCertifiedTelemetry,
 		Model: config.Model, Tier: config.Tier, Seed: seed, Planned: planned,

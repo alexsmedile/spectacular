@@ -1,7 +1,8 @@
 ---
 name: spectacular
-version: 2.6.0-rc1
-description: Guide work in a canonical Spectacular v2 workspace through optional Proposal exploration, compact Mission preparation and activation, governed execution, earned Objective/Run expansion, Evidence and review, owner completion, audit, and cold recovery. Use for `/spectacular` jobs such as orient, explore, propose, plan, start, resume, handoff, review, complete, or audit; for compiling bounded runtime context or an Autopilot charter; and for safely continuing after session or runtime replacement.
+description: Guide work only when the user explicitly invokes `$spectacular` or `/spectacular`, or when operating inside a canonical `.spectacular/` workspace. Route Orchestrator work through orient, prepare/explore/plan/start, execute/resume, runtime handoff/autopilot, close/review/complete, and audit. Do not invoke for generic planning, ordinary code review, Git operations, project-status questions, or short tasks outside a Spectacular workspace.
+metadata:
+  version: "2.6.0-rc1"
 ---
 
 # Spectacular
@@ -20,10 +21,10 @@ Markdown is canonical. Folders and explicit pointers provide navigable context. 
 | **Mission / Contract** | Frozen execution envelope (`M<N>`) / modular capability specification (`CC-<module>`). |
 
 ### Mechanical Mode (3-State Model)
-Invoke `spectacular --version` once at startup. If absent, unreadable, or incompatible → reduced mode:
+Invoke `spectacular --version --json` once at startup and require `spectacular.build-info.v1` plus the exact release in `generated/mechanical-interface.json`. If absent, unreadable, or incompatible → reduced mode:
 - **CLI Usable**: Standard governed workflow and typed CLI validation.
 - **CLI Absent**: Read/draft-only. Route to [reduced-mode.md](references/reduced-mode.md). Never emulate command-owned records, fabricate fingerprints, or claim atomic writes.
-- **Declared `manual-bootstrap`**: Owner-approved exception only ([bootstrap.md](references/bootstrap.md)). Follow manual checklist; never cite CLI validation or atomicity. Delegated agents cannot declare bootstrap.
+- **Declared `manual-bootstrap`**: Owner-approved drafting exception only ([bootstrap.md](references/bootstrap.md)); it cannot create, activate, transition, or complete fingerprint-bound records. Delegated agents cannot declare bootstrap.
 
 ## 2. Role Resolution & Context Discipline
 

@@ -7,6 +7,8 @@
 set -eu
 
 fail() { printf '%s\n' "$1" >&2; exit 1; }
+script_dir=$(CDPATH= cd "$(dirname "$0")" && pwd)
+. "$script_dir/lib/cli-mode.sh"
 
 # Walk up for .spectacular/, like the CLI does.
 dir=$(pwd)
@@ -28,11 +30,12 @@ else
   printf 'project:   (no PROJECT.md — greenfield workspace)\n'
 fi
 
-# CLI presence decides which mode the caller is in.
-if command -v spectacular >/dev/null 2>&1; then
-  printf 'cli:       %s\n' "$(spectacular --version 2>/dev/null || echo 'present, version unreadable')"
+# Exact schema and release compatibility decide which mode the caller is in.
+spectacular_cli_probe "$script_dir/../generated/mechanical-interface.json"
+if [ "$SPECTACULAR_CLI_MODE" = full ]; then
+  printf 'cli:       %s\n' "$SPECTACULAR_CLI_DETAIL"
 else
-  printf 'cli:       ABSENT — read-only mode; governed execution unavailable\n'
+  printf 'cli:       %s; read-only mode\n' "$SPECTACULAR_CLI_DETAIL"
 fi
 
 printf '\nMISSIONS\n'

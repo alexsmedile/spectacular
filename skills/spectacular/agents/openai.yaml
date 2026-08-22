@@ -2,3 +2,5 @@ interface:
   display_name: "Spectacular"
   short_description: "Guide compact governed Missions through completion"
   default_prompt: "Use $spectacular to orient to this project and continue its compact Mission workflow."
+policy:
+  allow_implicit_invocation: true

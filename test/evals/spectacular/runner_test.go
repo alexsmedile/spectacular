@@ -57,7 +57,7 @@ func TestPairedRunnerRandomizesAndIsolatesArtifacts(t *testing.T) {
 	config := RunConfig{
 		Repo: repo, CatalogPath: catalogPath, SchemaPath: schemaPath, BaselineRef: baseline,
 		CandidateRef: candidate, Tier: "smoke", Seed: 7, Model: "fake",
-		Adapter: "testdata/fake-adapter.sh", OutputDir: output,
+		Adapter: "testdata/fake-adapter.sh", SpectacularCLI: os.Args[0], OutputDir: output,
 	}
 	report, err := RunPaired(config)
 	if err != nil {
@@ -65,6 +65,17 @@ func TestPairedRunnerRandomizesAndIsolatesArtifacts(t *testing.T) {
 	}
 	if len(report.Trials) != 2 || report.Trials[0].Order == report.Trials[1].Order {
 		t.Fatalf("trials=%+v", report.Trials)
+	}
+	manifestData, err := os.ReadFile(filepath.Join(output, "run-manifest.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest runManifest
+	if err := json.Unmarshal(manifestData, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if manifest.SpectacularCLI != config.SpectacularCLI || !strings.HasPrefix(manifest.SpectacularCLIDigest, "sha256:") {
+		t.Fatalf("pinned CLI not attributable in manifest: %+v", manifest)
 	}
 	for _, trial := range report.Trials {
 		if trial.Score.Verdict != "pass" {
@@ -121,6 +132,30 @@ printf '%s\n' '{"type":"spectacular.eval.usage","input_tokens":10,"output_tokens
 	writeTestFile(t, schemaPath, "{\"changed\":true}\n")
 	if _, err := RunPaired(config); err == nil || !strings.Contains(err.Error(), "manifest does not match") {
 		t.Fatalf("expected resume contamination refusal, got %v", err)
+	}
+}
+
+func TestStagePinnedCLIUsesCanonicalExecutableNameAndBytes(t *testing.T) {
+	source := filepath.Join(t.TempDir(), "candidate-cli")
+	want := []byte("pinned-cli-bytes")
+	if err := os.WriteFile(source, want, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	destination := t.TempDir()
+	if err := stagePinnedCLI(source, destination); err != nil {
+		t.Fatal(err)
+	}
+	staged := filepath.Join(destination, "spectacular")
+	got, err := os.ReadFile(staged)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(staged)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(want) || info.Mode()&0o111 == 0 {
+		t.Fatalf("staged bytes=%q mode=%v", got, info.Mode())
 	}
 }
 

@@ -212,6 +212,7 @@ func run(args []string) error {
 	seed := set.Int64("seed", 1, "pair randomization seed")
 	model := set.String("model", "", "model identifier")
 	adapter := set.String("adapter", "test/evals/spectacular/scripts/codex-adapter.sh", "adapter executable")
+	spectacularCLI := set.String("spectacular-cli", "", "absolute path to the repository-built Spectacular CLI pinned for every trial")
 	output := set.String("out", "", "new output directory")
 	allowHeldOut := set.Bool("allow-held-out", false, "explicitly authorize a frozen held-out evidence run")
 	readIsolation := set.String("read-isolation", "artifact-only", "artifact-only or os-enforced (external adapter attestation)")
@@ -229,7 +230,7 @@ func run(args []string) error {
 	report, err := bench.RunPaired(bench.RunConfig{
 		Repo: *repo, CatalogPath: *catalogPath, SchemaPath: *schemaPath,
 		BaselineRef: *baseline, BaselineMode: *baselineMode, CandidateRef: *candidate, CandidateMode: *candidateMode, Tier: *tier,
-		Repeats: *repeats, Seed: *seed, Model: *model, Adapter: *adapter, AdapterArgs: adapterArgs, OutputDir: *output, AllowHeldOut: *allowHeldOut, ReadIsolation: *readIsolation,
+		Repeats: *repeats, Seed: *seed, Model: *model, Adapter: *adapter, AdapterArgs: adapterArgs, SpectacularCLI: *spectacularCLI, OutputDir: *output, AllowHeldOut: *allowHeldOut, ReadIsolation: *readIsolation,
 		MaxCalls: *maxCalls, TrialTimeout: *trialTimeout, RequireCertifiedTelemetry: *requireCertifiedTelemetry,
 	})
 	if err != nil {

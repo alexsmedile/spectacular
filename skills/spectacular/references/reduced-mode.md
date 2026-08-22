@@ -49,7 +49,7 @@ install/install.sh install \
 spectacular --version
 ```
 
-See [docs/installation.md](../../../docs/installation.md) for full installation and platform troubleshooting.
+See the [installation guide](https://github.com/alexsmedile/spectacular/blob/main/docs/installation.md) for full installation and platform troubleshooting.
 
 ---
 
@@ -82,4 +82,4 @@ All bundled fallback scripts **read and report only**. None writes files, calcul
 
 ## Declared Manual-Bootstrap Exception
 
-If the project explicitly requires authoring or bootstrapping records by hand (e.g. self-development when the CLI cannot represent a new schema), follow [bootstrap.md](bootstrap.md). That exception requires explicit owner authorization and must never cite the legacy CLI as proof.
+If self-development needs to draft a future record shape that the current CLI cannot represent, follow [bootstrap.md](bootstrap.md). That exception requires explicit owner authorization, stays outside governed lifecycle transitions, and never cites the legacy CLI as proof.

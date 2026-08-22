@@ -110,12 +110,15 @@ go run ./test/evals/spectacular/cmd/bench static \
 
 ## Run an uncontaminated paired benchmark
 
-Both variants must resolve to commits. Use the same model and run pairs close together in time.
+Both variants must resolve to commits. Use the same model and run pairs close together in time. Build one attributable repository CLI after committing the candidate; the harness stages that exact binary for both variants and pins its SHA-256 digest in the run manifest.
 
 ```sh
+test/evals/spectacular/scripts/build-eval-cli.sh /private/tmp/spectacular-eval-cli
+
 go run ./test/evals/spectacular/cmd/bench run \
   --baseline 14158f9 \
   --candidate <candidate-commit> \
+  --spectacular-cli /private/tmp/spectacular-eval-cli \
   --tier smoke \
   --model <model-id> \
   --seed 1 \
@@ -123,6 +126,8 @@ go run ./test/evals/spectacular/cmd/bench run \
   --trial-timeout 10m \
   --out test/evals/spectacular/reports/smoke-<candidate-commit>
 ```
+
+`bench run` refuses an omitted, unreadable, or non-executable CLI path. A usable-CLI trial never inherits whichever `spectacular` happens to be installed globally; absent and incompatible cases derive their controlled mode from this pinned starting point.
 
 The Codex adapter runs ephemeral sessions with user configuration ignored, installs exactly one skill variant under the fixture's `.agents/skills/`, captures JSONL events, requires a structured result, sanitizes benchmark environment paths before model execution, and preserves each trial in a separate directory. It provides artifact separation, not an OS read sandbox. Such runs are automatically `inconclusive` for strict isolation. The shipped Codex, Claude, Antigravity, and OpenCode adapters are mechanically refused if relabeled `os-enforced`. Only a separate container/VM adapter may carry that declaration; it is pinned in the manifest and must be independently justified. The harness never materializes both variants into one workspace, and held-out runs refuse artifact-only isolation.
 

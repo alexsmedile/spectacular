@@ -53,12 +53,7 @@ When acting on an authorization, record who authorized and who performed. An ope
 
 ## 4. Settle Execution Mode at Activation
 
-**When to ask**: Settle owner involvement (Autopilot, Checkpoints, or HITL) **alongside the activation gate in the same breath**, never later as piecemeal homework:
-- **Restate checkpoints explicitly**: Name 3–5 concrete boundaries (e.g. "after O1 test harness passes", "before DB migration"). "Checkpoints" without a list is meaningless.
-- **Name the HITL moment and activity**: E.g., "before deleting `legacy/auth`, you verify the export token". If you cannot name the human action, it is a checkpoint, not HITL.
-- **Owner gates and stops fire in every mode**: Autopilot reduces status check-ins; it never removes authority boundaries or allows working past a stop.
-
-See [execute.md](execute.md) for the complete execution-mode table, checkpoint planning rules, and Run-body templates.
+When approaching the activation gate, route to [execute.md](execute.md) for the execution-mode table, checkpoint rules, and Run-body template. Settle owner involvement in the same activation exchange; do not ask piecemeal later.
 
 ---
 

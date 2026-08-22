@@ -129,9 +129,10 @@ spectacular mission check <ref> --json         # read-only; verify after
 generates identities, bindings, and activation atomically — you do not author the
 UUID or the fingerprint yourself.
 
-Under `manual-bootstrap`, build the same canonical shape directly and verify it
-with focused scripts — see [bootstrap.md](bootstrap.md). Never route the work
-through an incompatible legacy command sequence to make it look validated.
+Under `manual-bootstrap`, draft the future shape outside governed lifecycle
+transitions — see [bootstrap.md](bootstrap.md). Never create identities or
+fingerprints, or route through an incompatible legacy command sequence to make
+the draft look validated.
 
 When Spectacular develops itself, an active Mission keeps the schema and completion criteria frozen while active; the plan carries meaning, and tooling carries repeatability.
 

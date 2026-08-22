@@ -84,8 +84,8 @@ func TestReleasedSkillInstructsTheLaunchPreflight(t *testing.T) {
 			keywords: []string{".spectacular/PROJECT.md"},
 		},
 		{
-			behavior: "run the launch check read-only, so a launch never mutates the workspace",
-			keywords: []string{"read-only", "preflight"},
+			behavior: "run the mutating launch only after owner confirmation, then verify its output read-only",
+			keywords: []string{"mutating launch", "read-only check"},
 		},
 	})
 }

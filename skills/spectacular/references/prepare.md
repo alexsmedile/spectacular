@@ -1,5 +1,7 @@
 # Explore, plan, and genesis
 
+Use this when: Orchestrator preparing Genesis, exploration, Proposal, or compact Mission preview.
+
 ## One-Shot Genesis (Zero-to-One Kickoff)
 
 When starting a project from scratch, or when receiving an initial PRD or prompt of intent:

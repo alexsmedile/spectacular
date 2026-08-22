@@ -12,4 +12,6 @@ Compact routing only. Read canonical sources for authority; [catalog.md](catalog
 
 ## Current work
 
-No active Mission is recorded. Prepare a bounded Mission before consequential work.
+| Mission | Outcome | Source |
+|---|---|---|
+| `M14` | Build the Spectacular effectiveness benchmark suite | `.spectacular/missions/M14-build-the-spectacular-effectiveness-benchmark-suite/M14-build-the-spectacular-effectiveness-benchmark-suite.md` |

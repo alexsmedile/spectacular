@@ -1,5 +1,7 @@
 # Audit
 
+Use this when: Reviewer or bounded auditor conducting retrospective claim or proof challenges using FROST.
+
 Audit one named claim, or one bounded scope. That is the default — do not widen it
 without being asked.
 

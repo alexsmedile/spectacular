@@ -1,5 +1,7 @@
 # Handoff and Autopilot
 
+Use this when: Orchestrator packaging delegation, Handoff context contracts, or Autopilot charters.
+
 ## Abstract Model Profiles
 
 Spectacular is runtime-agnostic. Different host harnesses expose different model knobs (e.g. Antigravity subagent models, Claude Code model flags, Goose droids, OpenAI model tiers). To optimize both reasoning depth and token cost/latency, Missions, Objectives, and Handoffs declare abstract **Model Profiles**:

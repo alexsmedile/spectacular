@@ -1,5 +1,7 @@
 # Review and complete
 
+Use this when: Primary operator or reviewer assessing claims, collecting Evidence, coordinating review, or completing a Mission.
+
 ## Assess each claim
 
 Check every completion claim against its frozen pass boundary using the FROST

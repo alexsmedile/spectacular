@@ -9,6 +9,7 @@
 | `M12/RV1` | Review | Independent review of M12 | `.spectacular/missions/M12-make-a-handoff-a-record-and-a-record-path-one-system/reviews/RV1-independent-review-of-m12.md` |
 | `M13` | Mission | Modernize CI/CD pipeline, security scanning, and release automation | `.spectacular/missions/M13-modernize-ci-cd-pipeline-security-scanning-and-release-automation/M13-modernize-ci-cd-pipeline-security-scanning-and-release-automation.md` |
 | `M13/RV1` | Review | Independent review of M13 CI/CD pipeline and release automation | `.spectacular/missions/M13-modernize-ci-cd-pipeline-security-scanning-and-release-automation/reviews/RV1-independent-review-of-m13-ci-cd-pipeline-and-release-automation.md` |
+| `M14` | Mission | Build the Spectacular effectiveness benchmark suite | `.spectacular/missions/M14-build-the-spectacular-effectiveness-benchmark-suite/M14-build-the-spectacular-effectiveness-benchmark-suite.md` |
 | `M2` | Mission | Implement answer-key governed autonomy | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/M2-implement-answer-key-governed-autonomy.md` |
 | `M2/D1-znlkfe` | Decision | Activate the v2.1 governed-autonomy Mission | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/decisions/D1-znlkfe.md` |
 | `M2/O1` | Objective | Preparation compiles and freezes minimal completion criteria with explicit readiness diagnostics. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O1-preparation-compiles-and-freezes-minimal-completion-criteria-with-explicit-readiness-diagnostics.md` |

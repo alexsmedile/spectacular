@@ -1,5 +1,23 @@
 # Start and resume
 
+Use this when: Orchestrator or primary operator activating, resuming, or executing a Mission; detailed Git isolation.
+
+## Read-Only Preflight Checklist
+
+Run one read-only preflight before governed execution:
+- **Workspace & Mission**: Confirm `.spectacular/PROJECT.md` and which Mission is selected.
+- **Git State**: Branch, worktrees (`git worktree list`), clean tree, fresh against upstream/default, release state.
+- **Bindings**: Contract fingerprint and baseline commit binding.
+- **Identity**: Owner, activation time, activation fingerprint.
+- **Validation Mode**: Supported CLI mechanics vs. declared `manual-bootstrap`.
+- **Execution State**: Current active Objective and Run.
+- **Blockers**: Upstream dependencies, unresolved Gaps, active stops.
+
+### Report in Three Lines:
+1. **Plain outcome**: Current project direction, selected Mission, and lifecycle status.
+2. **Technical evidence**: Git branch/worktree, commit SHA, Contract fingerprint, validation mode.
+3. **Next action**: Exactly one safe next action, or one owner gate.
+
 ## Start
 
 Start only an owner-confirmed Mission. Before activating, confirm all of it:

@@ -1,5 +1,7 @@
 # Genesis and Kickoff Reference Examples
 
+Use this when: Orchestrator authoring Core Anchors, bootstrap Missions, or Campaign diagrams during Genesis.
+
 Concrete, production-grade examples for launching projects with zero file bloat.
 
 ---

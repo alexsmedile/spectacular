@@ -1,6 +1,6 @@
 # Manual bootstrap
 
-Load this only when the Mission declares `manual-bootstrap` as its validation mode.
+Use this when: Operator with explicitly approved manual-bootstrap authority editing canonical records without CLI.
 
 In that mode the CLI cannot mutate or validate the Mission. Treat it as out of
 service. Edit the canonical Markdown directly and verify the result yourself.

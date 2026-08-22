@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.6.0-rc1 — 2026-08-22
+
 - Adds `-h` and `--help` flag interception across all subcommands. For document-input
   commands (`mission start`, `review record`, `handoff record`), `--help` emits the syntax
   and an annotated, minimal valid YAML frontmatter starter skeleton directly to stdout,
@@ -12,6 +14,14 @@
   when omitted, removing the redundant requirement to manually compute and copy `git rev-parse HEAD^{tree}`.
 - Reframes the public command surface rule in `AGENTS.md` to require explicit owner authorization
   when modifying or introducing commands, rather than enforcing a rigid static cap.
+- Refactors `skills/spectacular/SKILL.md` into a compact, role-first constitutional
+  kernel (69 body lines, ~1.4k tokens, ~65% reduction) with a 4-in-1 role matrix
+  (`Orchestrator`, `Runner`, `Reviewer`, `Autopilot`), a 3-state mechanical mode invariant,
+  and a closed primary phase router.
+- Extracts detailed procedural guidance into dedicated progressively disclosed references,
+  adding `references/reduced-mode.md` (CLI fallbacks and installation) and
+  `references/owner-guidance.md` (question formats, authorization holding, and batching).
+- Standardizes uniform `Use this when:` activation triggers across all reference documents.
 
 ## 2.5.0 — 2026-08-18
 

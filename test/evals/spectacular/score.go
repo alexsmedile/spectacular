@@ -384,6 +384,11 @@ func Summarize(report *RunReport) {
 		summary.InsufficientEvidence = append(summary.InsufficientEvidence, fmt.Sprintf("%d trials lack a paired counterpart", len(summary.Pairing.UnpairedTrialIDs)))
 	}
 	caseScores := map[string]map[string][]float64{}
+	type scorePair struct {
+		baseline  *float64
+		candidate *float64
+	}
+	scorePairs := map[string]scorePair{}
 	for _, trial := range report.Trials {
 		if trial.Score.Overall == nil {
 			continue
@@ -392,6 +397,15 @@ func Summarize(report *RunReport) {
 			caseScores[trial.CaseID] = map[string][]float64{}
 		}
 		caseScores[trial.CaseID][trial.Variant] = append(caseScores[trial.CaseID][trial.Variant], *trial.Score.Overall)
+		key := fmt.Sprintf("%s/r%d", trial.CaseID, trial.Repeat)
+		pair := scorePairs[key]
+		value := *trial.Score.Overall
+		if trial.Variant == "baseline" {
+			pair.baseline = &value
+		} else if trial.Variant == "candidate" {
+			pair.candidate = &value
+		}
+		scorePairs[key] = pair
 	}
 	for caseID, byVariant := range caseScores {
 		baseline, candidate := average(byVariant["baseline"]), average(byVariant["candidate"])
@@ -399,11 +413,13 @@ func Summarize(report *RunReport) {
 			summary.InsufficientEvidence = append(summary.InsufficientEvidence, caseID+": missing paired result")
 			continue
 		}
-		if candidate < baseline {
-			summary.PerCaseRegressions = append(summary.PerCaseRegressions, fmt.Sprintf("%s: candidate %.3f < baseline %.3f", caseID, candidate, baseline))
-		}
 		if baseline < 1 && candidate < 1 {
 			summary.SharedFailures = append(summary.SharedFailures, fmt.Sprintf("%s: both variants failed at least one assertion; inspect case and adapter evidence", caseID))
+		}
+	}
+	for key, pair := range scorePairs {
+		if pair.baseline != nil && pair.candidate != nil && *pair.candidate < *pair.baseline {
+			summary.PerCaseRegressions = append(summary.PerCaseRegressions, fmt.Sprintf("%s: candidate %.3f < baseline %.3f", key, *pair.candidate, *pair.baseline))
 		}
 	}
 	if report.MinimumRepetitions > 0 {

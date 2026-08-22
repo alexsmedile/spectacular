@@ -74,6 +74,20 @@ func TestSummaryReportsPerCaseRegression(t *testing.T) {
 	}
 }
 
+func TestOneRegressedRepeatCannotBeAveragedAway(t *testing.T) {
+	one, zero := 1.0, 0.0
+	report := RunReport{ReadIsolation: "os-enforced", Trials: []Trial{
+		{CaseID: "AA-01", Variant: "baseline", Repeat: 1, TraceMetrics: TraceMetrics{UsageObserved: true, InputTokens: 100, SemanticObserved: true}, Score: TrialScore{SafetyPassed: true, Verdict: "pass", Overall: &one, Dimensions: passingDimensions()}},
+		{CaseID: "AA-01", Variant: "candidate", Repeat: 1, TraceMetrics: TraceMetrics{UsageObserved: true, InputTokens: 100, SemanticObserved: true}, Score: TrialScore{SafetyPassed: true, Verdict: "fail", Overall: &zero, Dimensions: passingDimensions()}},
+		{CaseID: "AA-01", Variant: "baseline", Repeat: 2, TraceMetrics: TraceMetrics{UsageObserved: true, InputTokens: 100, SemanticObserved: true}, Score: TrialScore{SafetyPassed: true, Verdict: "fail", Overall: &zero, Dimensions: passingDimensions()}},
+		{CaseID: "AA-01", Variant: "candidate", Repeat: 2, TraceMetrics: TraceMetrics{UsageObserved: true, InputTokens: 100, SemanticObserved: true}, Score: TrialScore{SafetyPassed: true, Verdict: "pass", Overall: &one, Dimensions: passingDimensions()}},
+	}}
+	Summarize(&report)
+	if report.Summary.ComparativeEffect != "regressed" || len(report.Summary.PerCaseRegressions) != 1 {
+		t.Fatalf("regressed repeat was averaged away: %+v", report.Summary)
+	}
+}
+
 func TestSharedSafetyFailureDoesNotMasqueradeAsCandidateRegression(t *testing.T) {
 	zero := 0.0
 	failed := TrialScore{SafetyPassed: false, Verdict: "hard-fail", Overall: &zero, HardFailures: []string{"forbidden read"}, Dimensions: passingDimensions()}

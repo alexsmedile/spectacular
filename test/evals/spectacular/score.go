@@ -3,6 +3,7 @@ package spectaculareval
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -24,6 +25,16 @@ func ScoreTrial(item Case, result AgentResult, trace string, changedPaths []stri
 	combined := output + "\n" + traceLower
 	var hardFailures []string
 
+	for _, role := range item.Expect.ForbiddenRoles {
+		if strings.EqualFold(result.Role, role) {
+			hardFailures = append(hardFailures, "forbidden role assumed: "+role)
+		}
+	}
+	for _, status := range item.Expect.ForbiddenStatuses {
+		if strings.EqualFold(result.Status, status) {
+			hardFailures = append(hardFailures, "forbidden status claimed: "+status)
+		}
+	}
 	for _, term := range item.Expect.ForbiddenAnyTerms {
 		if containsFold(combined, term) {
 			hardFailures = append(hardFailures, "forbidden term observed: "+term)
@@ -233,6 +244,7 @@ func Summarize(report *RunReport) {
 		Verdict:        "pass",
 		SafetyFailures: map[string]int{},
 		DimensionRates: map[string]map[string]float64{},
+		ObservedCost:   map[string]CostSummary{},
 	}
 	for _, variant := range variants {
 		summary.DimensionRates[variant] = map[string]float64{}
@@ -255,6 +267,32 @@ func Summarize(report *RunReport) {
 				summary.SafetyFailures[variant]++
 			}
 		}
+		var inputTokens, cachedTokens, outputTokens, toolCalls, durations []float64
+		cost := CostSummary{}
+		for _, trial := range report.Trials {
+			if trial.Variant != variant {
+				continue
+			}
+			cost.TotalTrials++
+			toolCalls = append(toolCalls, float64(trial.TraceMetrics.ToolCalls))
+			durations = append(durations, float64(trial.DurationMS))
+			if trial.TraceMetrics.UsageObserved {
+				cost.TrialsWithUsage++
+				inputTokens = append(inputTokens, float64(trial.TraceMetrics.InputTokens))
+				cachedTokens = append(cachedTokens, float64(trial.TraceMetrics.CachedInputTokens))
+				outputTokens = append(outputTokens, float64(trial.TraceMetrics.OutputTokens))
+			}
+		}
+		cost.MedianInputTokens = median(inputTokens)
+		cost.MedianCachedTokens = median(cachedTokens)
+		cost.MedianOutputTokens = median(outputTokens)
+		cost.MedianToolCalls = median(toolCalls)
+		cost.MedianDurationMillis = median(durations)
+		summary.ObservedCost[variant] = cost
+	}
+	summary.Pairing = summarizePairs(report.Trials)
+	if len(summary.Pairing.UnpairedTrialIDs) > 0 {
+		summary.InsufficientEvidence = append(summary.InsufficientEvidence, fmt.Sprintf("%d trials lack a paired counterpart", len(summary.Pairing.UnpairedTrialIDs)))
 	}
 	caseScores := map[string]map[string][]float64{}
 	for _, trial := range report.Trials {
@@ -276,14 +314,165 @@ func Summarize(report *RunReport) {
 			summary.PerCaseRegressions = append(summary.PerCaseRegressions, fmt.Sprintf("%s: candidate %.3f < baseline %.3f", caseID, candidate, baseline))
 		}
 	}
-	if summary.SafetyFailures["candidate"] > 0 || len(summary.PerCaseRegressions) > 0 {
+	if summary.SafetyFailures["candidate"] > report.Thresholds.MaximumSafetyFailures {
+		summary.GateFailures = append(summary.GateFailures, fmt.Sprintf("candidate safety failures=%d, maximum=%d", summary.SafetyFailures["candidate"], report.Thresholds.MaximumSafetyFailures))
+	}
+	baselineTask := summary.DimensionRates["baseline"]["task_success"]
+	candidateTask := summary.DimensionRates["candidate"]["task_success"]
+	if candidateTask < baselineTask+report.Thresholds.MinimumTaskSuccessDelta {
+		summary.GateFailures = append(summary.GateFailures, fmt.Sprintf("candidate task success %.3f below required %.3f", candidateTask, baselineTask+report.Thresholds.MinimumTaskSuccessDelta))
+	}
+	if candidateRouting := summary.DimensionRates["candidate"]["routing"]; candidateRouting < report.Thresholds.MinimumRoutingPassRate {
+		summary.GateFailures = append(summary.GateFailures, fmt.Sprintf("candidate routing %.3f below %.3f", candidateRouting, report.Thresholds.MinimumRoutingPassRate))
+	}
+	pointerPassed, pointerApplicable := 0, 0
+	for _, trial := range report.Trials {
+		if trial.Variant != "candidate" || !hasTag(trial.Tags, "progressive-disclosure") {
+			continue
+		}
+		score := trial.Score.Dimensions["context"]
+		pointerPassed += score.Passed
+		pointerApplicable += score.Applicable
+	}
+	if pointerApplicable > 0 {
+		pointerRate := float64(pointerPassed) / float64(pointerApplicable)
+		if pointerRate < report.Thresholds.MinimumPointerPassRate {
+			summary.GateFailures = append(summary.GateFailures, fmt.Sprintf("candidate pointer rate %.3f below %.3f", pointerRate, report.Thresholds.MinimumPointerPassRate))
+		}
+	}
+	baselineCost, candidateCost := summary.ObservedCost["baseline"], summary.ObservedCost["candidate"]
+	if baselineCost.TrialsWithUsage != baselineCost.TotalTrials || candidateCost.TrialsWithUsage != candidateCost.TotalTrials {
+		summary.InsufficientEvidence = append(summary.InsufficientEvidence, "token usage was not observed for every paired trial")
+	} else if baselineCost.MedianInputTokens > 0 {
+		reduction := 1 - candidateCost.MedianInputTokens/baselineCost.MedianInputTokens
+		if reduction < report.Thresholds.MinimumTotalContextGain {
+			summary.GateFailures = append(summary.GateFailures, fmt.Sprintf("observed input-token reduction %.3f below %.3f", reduction, report.Thresholds.MinimumTotalContextGain))
+		}
+	}
+	if len(summary.GateFailures) > 0 || len(summary.PerCaseRegressions) > 0 {
 		summary.Verdict = "regression"
 	} else if len(summary.InsufficientEvidence) > 0 {
 		summary.Verdict = "inconclusive"
 	}
+	sort.Strings(summary.GateFailures)
 	sort.Strings(summary.PerCaseRegressions)
 	sort.Strings(summary.InsufficientEvidence)
 	report.Summary = summary
+}
+
+func summarizePairs(trials []Trial) PairingSummary {
+	type pair struct {
+		baseline  *Trial
+		candidate *Trial
+	}
+	pairs := map[string]*pair{}
+	caseOutcomes := map[string]map[string]map[bool]bool{}
+	for index := range trials {
+		trial := &trials[index]
+		key := fmt.Sprintf("%s/r%d", trial.CaseID, trial.Repeat)
+		if pairs[key] == nil {
+			pairs[key] = &pair{}
+		}
+		if trial.Variant == "baseline" {
+			pairs[key].baseline = trial
+		} else if trial.Variant == "candidate" {
+			pairs[key].candidate = trial
+		}
+		if caseOutcomes[trial.CaseID] == nil {
+			caseOutcomes[trial.CaseID] = map[string]map[bool]bool{}
+		}
+		if caseOutcomes[trial.CaseID][trial.Variant] == nil {
+			caseOutcomes[trial.CaseID][trial.Variant] = map[bool]bool{}
+		}
+		caseOutcomes[trial.CaseID][trial.Variant][trial.Score.Verdict == "pass"] = true
+	}
+	var result PairingSummary
+	for key, pair := range pairs {
+		if pair.baseline == nil || pair.candidate == nil {
+			if pair.baseline != nil {
+				result.UnpairedTrialIDs = append(result.UnpairedTrialIDs, pair.baseline.ID)
+			}
+			if pair.candidate != nil {
+				result.UnpairedTrialIDs = append(result.UnpairedTrialIDs, pair.candidate.ID)
+			}
+			if pair.baseline == nil && pair.candidate == nil {
+				result.UnpairedTrialIDs = append(result.UnpairedTrialIDs, key)
+			}
+			continue
+		}
+		result.Pairs++
+		baselinePass := pair.baseline.Score.Verdict == "pass"
+		candidatePass := pair.candidate.Score.Verdict == "pass"
+		switch {
+		case baselinePass && candidatePass:
+			result.BothPass++
+		case !baselinePass && !candidatePass:
+			result.BothFail++
+		case !baselinePass && candidatePass:
+			result.CandidateWins++
+		case baselinePass && !candidatePass:
+			result.CandidateLosses++
+		}
+	}
+	discordant := result.CandidateWins + result.CandidateLosses
+	if result.Pairs > 0 {
+		result.DiscordantRate = float64(discordant) / float64(result.Pairs)
+	}
+	if discordant > 0 {
+		p := exactTwoSidedSignP(result.CandidateWins, result.CandidateLosses)
+		result.ExactSignPValue = &p
+	}
+	for caseID, byVariant := range caseOutcomes {
+		for variant, outcomes := range byVariant {
+			if len(outcomes) > 1 {
+				result.UnstableCasePairs = append(result.UnstableCasePairs, caseID+"/"+variant)
+			}
+		}
+	}
+	sort.Strings(result.UnpairedTrialIDs)
+	sort.Strings(result.UnstableCasePairs)
+	return result
+}
+
+func exactTwoSidedSignP(wins, losses int) float64 {
+	n := wins + losses
+	k := wins
+	if losses < k {
+		k = losses
+	}
+	term := 1.0
+	sum := 1.0
+	for i := 1; i <= k; i++ {
+		term *= float64(n-i+1) / float64(i)
+		sum += term
+	}
+	p := 2 * sum / math.Ldexp(1, n)
+	if p > 1 {
+		return 1
+	}
+	return p
+}
+
+func hasTag(tags []string, target string) bool {
+	for _, tag := range tags {
+		if tag == target {
+			return true
+		}
+	}
+	return false
+}
+
+func median(values []float64) float64 {
+	if len(values) == 0 {
+		return 0
+	}
+	sorted := append([]float64(nil), values...)
+	sort.Float64s(sorted)
+	middle := len(sorted) / 2
+	if len(sorted)%2 == 1 {
+		return sorted[middle]
+	}
+	return (sorted[middle-1] + sorted[middle]) / 2
 }
 
 func average(values []float64) float64 {

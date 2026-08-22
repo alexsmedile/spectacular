@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- Adds a test-only Spectacular effectiveness benchmark under `test/evals/spectacular/`
+  with immutable old-versus-new package materialization, randomized isolated pairs,
+  safety-first scoring, observed token/tool costs, paired-noise statistics,
+  resumable trial manifests, 23 behavior and trigger cases (including adversarial
+  authority and prompt-injection cases), held-out variants, grader mutation tests,
+  and JSON plus Markdown reports.
+
 ## 2.6.0-rc1 — 2026-08-22
 
 - Adds `-h` and `--help` flag interception across all subcommands. For document-input
@@ -15,7 +22,7 @@
 - Reframes the public command surface rule in `AGENTS.md` to require explicit owner authorization
   when modifying or introducing commands, rather than enforcing a rigid static cap.
 - Refactors `skills/spectacular/SKILL.md` into a compact, role-first constitutional
-  kernel (69 body lines, ~1.4k tokens, ~65% reduction) with a 4-in-1 role matrix
+  kernel (83 body lines, 62% fewer words) with a 4-in-1 role matrix
   (`Orchestrator`, `Runner`, `Reviewer`, `Autopilot`), a 3-state mechanical mode invariant,
   and a closed primary phase router.
 - Extracts detailed procedural guidance into dedicated progressively disclosed references,

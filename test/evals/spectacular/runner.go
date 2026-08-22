@@ -1,6 +1,7 @@
 package spectaculareval
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,18 +16,18 @@ import (
 )
 
 type RunConfig struct {
-	Repo          string
-	CatalogPath   string
-	SchemaPath    string
-	BaselineRef   string
-	CandidateRef  string
-	Tier          string
-	Repeats       int
-	Seed          int64
-	Model         string
-	Adapter       string
-	AdapterArgs   []string
-	OutputDir     string
+	Repo         string
+	CatalogPath  string
+	SchemaPath   string
+	BaselineRef  string
+	CandidateRef string
+	Tier         string
+	Repeats      int
+	Seed         int64
+	Model        string
+	Adapter      string
+	AdapterArgs  []string
+	OutputDir    string
 }
 
 type trialSpec struct {
@@ -37,7 +38,51 @@ type trialSpec struct {
 	Order    int
 }
 
+type runManifest struct {
+	SchemaVersion   string            `json:"schema_version"`
+	BaselineRef     string            `json:"baseline_ref"`
+	BaselineCommit  string            `json:"baseline_commit"`
+	CandidateRef    string            `json:"candidate_ref"`
+	CandidateCommit string            `json:"candidate_commit"`
+	CatalogDigest   string            `json:"catalog_digest"`
+	SchemaDigest    string            `json:"result_schema_digest"`
+	Adapter         string            `json:"adapter"`
+	AdapterDigest   string            `json:"adapter_digest"`
+	AdapterArgs     []string          `json:"adapter_args,omitempty"`
+	Model           string            `json:"model"`
+	Tier            string            `json:"tier"`
+	Seed            int64             `json:"seed"`
+	Planned         []string          `json:"planned"`
+	Completed       map[string]string `json:"completed"`
+}
+
 func RunPaired(config RunConfig) (RunReport, error) {
+	var err error
+	config.Repo, err = absolutePath(config.Repo)
+	if err != nil {
+		return RunReport{}, fmt.Errorf("resolve repository path: %w", err)
+	}
+	config.CatalogPath, err = absolutePath(config.CatalogPath)
+	if err != nil {
+		return RunReport{}, fmt.Errorf("resolve catalog path: %w", err)
+	}
+	config.SchemaPath, err = absolutePath(config.SchemaPath)
+	if err != nil {
+		return RunReport{}, fmt.Errorf("resolve result schema path: %w", err)
+	}
+	adapterPath, err := exec.LookPath(config.Adapter)
+	if err != nil {
+		return RunReport{}, fmt.Errorf("resolve adapter executable: %w", err)
+	}
+	config.Adapter, err = absolutePath(adapterPath)
+	if err != nil {
+		return RunReport{}, fmt.Errorf("resolve adapter path: %w", err)
+	}
+	for label, path := range map[string]string{"result schema": config.SchemaPath, "adapter": config.Adapter} {
+		if info, statErr := os.Stat(path); statErr != nil || info.IsDir() {
+			return RunReport{}, fmt.Errorf("%s is not a readable file: %s", label, path)
+		}
+	}
 	catalog, err := LoadCatalog(config.CatalogPath)
 	if err != nil {
 		return RunReport{}, err
@@ -63,9 +108,6 @@ func RunPaired(config RunConfig) (RunReport, error) {
 	if err != nil {
 		return RunReport{}, err
 	}
-	if err := prepareOutputDirectory(config.OutputDir); err != nil {
-		return RunReport{}, err
-	}
 	seed := config.Seed
 	if seed == 0 {
 		seed = 1
@@ -87,6 +129,11 @@ func RunPaired(config RunConfig) (RunReport, error) {
 			}
 		}
 	}
+	commits := map[string]string{"baseline": baselineCommit, "candidate": candidateCommit}
+	manifest, err := openRunManifest(config, seed, specs, commits)
+	if err != nil {
+		return RunReport{}, err
+	}
 	report := RunReport{
 		SchemaVersion: "spectacular.skill-run-report.v1",
 		BaselineRef:   config.BaselineRef,
@@ -94,21 +141,45 @@ func RunPaired(config RunConfig) (RunReport, error) {
 		Model:         config.Model,
 		Tier:          config.Tier,
 		Seed:          seed,
+		Thresholds:    catalog.Thresholds,
 		Limitations: []string{
 			"File-read metrics combine structured self-report with observable adapter traces; an adapter that omits tool events lowers confidence.",
 			"The harness isolates artifacts and exposes only one skill variant per trial; OS-level read isolation remains the adapter's responsibility.",
 		},
 	}
-	commits := map[string]string{"baseline": baselineCommit, "candidate": candidateCommit}
 	for _, spec := range specs {
+		id := trialID(spec)
+		if relative, ok := manifest.Completed[id]; ok {
+			trial, loadErr := loadTrial(filepath.Join(config.OutputDir, filepath.FromSlash(relative)))
+			if loadErr != nil {
+				return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
+			}
+			report.Trials = append(report.Trials, trial)
+			continue
+		}
 		trial, runErr := runOne(config, spec, commits[spec.Variant])
 		if runErr != nil {
 			return RunReport{}, fmt.Errorf("run %s/%s repeat %d: %w", spec.Case.ID, spec.Variant, spec.Repeat, runErr)
 		}
 		report.Trials = append(report.Trials, trial)
+		relative := filepath.ToSlash(filepath.Join("trials", trial.ID, "trial.json"))
+		if err := writeJSON(filepath.Join(config.OutputDir, filepath.FromSlash(relative)), trial); err != nil {
+			return RunReport{}, err
+		}
+		manifest.Completed[trial.ID] = relative
+		if err := writeRunManifest(config.OutputDir, manifest); err != nil {
+			return RunReport{}, err
+		}
 	}
 	Summarize(&report)
 	return report, nil
+}
+
+func absolutePath(path string) (string, error) {
+	if filepath.IsAbs(path) {
+		return filepath.Clean(path), nil
+	}
+	return filepath.Abs(path)
 }
 
 func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
@@ -123,7 +194,7 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 		return Trial{}, fmt.Errorf("copy fixture: %w", err)
 	}
 	skillRoot := filepath.Join(workspace, ".agents", "skills", "spectacular")
-	if _, err := MaterializeSkill(config.Repo, spec.Revision, skillRoot); err != nil {
+	if _, err := MaterializeSkill(config.Repo, commit, skillRoot); err != nil {
 		return Trial{}, err
 	}
 	if err := initializeFixtureGit(workspace); err != nil {
@@ -188,21 +259,21 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 		return Trial{}, err
 	}
 	changed := ChangedPaths(before, after)
-	id := fmt.Sprintf("%s-r%02d-%s", strings.ToLower(spec.Case.ID), spec.Repeat, spec.Variant)
+	id := trialID(spec)
 	destination := filepath.Join(config.OutputDir, "trials", id)
 	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
 		return Trial{}, err
 	}
-	if err := os.Rename(temporary, destination); err != nil {
+	if err := CopyTree(temporary, destination); err != nil {
 		return Trial{}, fmt.Errorf("persist trial artifacts: %w", err)
 	}
-	// The deferred cleanup now targets a path that no longer exists.
 	relativeTrace := filepath.ToSlash(filepath.Join("trials", id, "trace.jsonl"))
 	relativeResult := filepath.ToSlash(filepath.Join("trials", id, "result.json"))
 	relativeWorkspace := filepath.ToSlash(filepath.Join("trials", id, "workspace"))
 	trial := Trial{
 		ID:            id,
 		CaseID:        spec.Case.ID,
+		Tags:          append([]string(nil), spec.Case.Tags...),
 		Variant:       spec.Variant,
 		Revision:      spec.Revision,
 		Commit:        commit,
@@ -214,6 +285,7 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 		ExitCode:      exitCode,
 		Result:        result,
 		ChangedPaths:  changed,
+		TraceMetrics:  ParseTraceMetrics(string(traceData)),
 		TracePath:     relativeTrace,
 		ResultPath:    relativeResult,
 		WorkspacePath: relativeWorkspace,
@@ -241,6 +313,103 @@ func prepareOutputDirectory(path string) error {
 		return err
 	}
 	return os.MkdirAll(path, 0o755)
+}
+
+func trialID(spec trialSpec) string {
+	return fmt.Sprintf("%s-r%02d-%s", strings.ToLower(spec.Case.ID), spec.Repeat, spec.Variant)
+}
+
+func openRunManifest(config RunConfig, seed int64, specs []trialSpec, commits map[string]string) (runManifest, error) {
+	if strings.TrimSpace(config.OutputDir) == "" {
+		return runManifest{}, errors.New("output directory is required")
+	}
+	if err := os.MkdirAll(config.OutputDir, 0o755); err != nil {
+		return runManifest{}, err
+	}
+	path := filepath.Join(config.OutputDir, "run-manifest.json")
+	planned := make([]string, len(specs))
+	for index, spec := range specs {
+		planned[index] = trialID(spec)
+	}
+	catalogDigest, err := fileDigest(config.CatalogPath)
+	if err != nil {
+		return runManifest{}, err
+	}
+	schemaDigest, err := fileDigest(config.SchemaPath)
+	if err != nil {
+		return runManifest{}, err
+	}
+	adapterDigest, err := fileDigest(config.Adapter)
+	if err != nil {
+		return runManifest{}, err
+	}
+	data, err := os.ReadFile(path)
+	if err == nil {
+		var manifest runManifest
+		if json.Unmarshal(data, &manifest) != nil {
+			return runManifest{}, errors.New("existing run manifest is invalid")
+		}
+		if manifest.SchemaVersion != "spectacular.skill-run-manifest.v1" || manifest.BaselineRef != config.BaselineRef || manifest.BaselineCommit != commits["baseline"] || manifest.CandidateRef != config.CandidateRef || manifest.CandidateCommit != commits["candidate"] || manifest.CatalogDigest != catalogDigest || manifest.SchemaDigest != schemaDigest || manifest.Adapter != config.Adapter || manifest.AdapterDigest != adapterDigest || strings.Join(manifest.AdapterArgs, "\x00") != strings.Join(config.AdapterArgs, "\x00") || manifest.Model != config.Model || manifest.Tier != config.Tier || manifest.Seed != seed || strings.Join(manifest.Planned, "\n") != strings.Join(planned, "\n") {
+			return runManifest{}, errors.New("existing run manifest does not match requested comparison")
+		}
+		if manifest.Completed == nil {
+			manifest.Completed = map[string]string{}
+		}
+		return manifest, nil
+	}
+	if !os.IsNotExist(err) {
+		return runManifest{}, err
+	}
+	entries, readErr := os.ReadDir(config.OutputDir)
+	if readErr != nil {
+		return runManifest{}, readErr
+	}
+	if len(entries) > 0 {
+		return runManifest{}, fmt.Errorf("output directory has no resumable manifest: %s", config.OutputDir)
+	}
+	manifest := runManifest{
+		SchemaVersion: "spectacular.skill-run-manifest.v1",
+		BaselineRef:   config.BaselineRef, BaselineCommit: commits["baseline"],
+		CandidateRef: config.CandidateRef, CandidateCommit: commits["candidate"],
+		CatalogDigest: catalogDigest, SchemaDigest: schemaDigest,
+		Adapter: config.Adapter, AdapterDigest: adapterDigest, AdapterArgs: append([]string(nil), config.AdapterArgs...),
+		Model: config.Model, Tier: config.Tier, Seed: seed, Planned: planned,
+		Completed: map[string]string{},
+	}
+	if err := writeRunManifest(config.OutputDir, manifest); err != nil {
+		return runManifest{}, err
+	}
+	return manifest, nil
+}
+
+func fileDigest(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("digest %s: %w", path, err)
+	}
+	digest := sha256.Sum256(data)
+	return fmt.Sprintf("sha256:%x", digest[:]), nil
+}
+
+func writeRunManifest(directory string, manifest runManifest) error {
+	path := filepath.Join(directory, "run-manifest.json")
+	temporary := path + ".tmp"
+	if err := writeJSON(temporary, manifest); err != nil {
+		return err
+	}
+	return os.Rename(temporary, path)
+}
+
+func loadTrial(path string) (Trial, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return Trial{}, err
+	}
+	var trial Trial
+	if err := json.Unmarshal(data, &trial); err != nil {
+		return Trial{}, err
+	}
+	return trial, nil
 }
 
 func initializeFixtureGit(workspace string) error {

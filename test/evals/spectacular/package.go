@@ -45,8 +45,14 @@ func MaterializeSkill(repo, revision, destination string) (string, error) {
 		if nextErr != nil {
 			return "", fmt.Errorf("read skill archive: %w", nextErr)
 		}
+		if header.Typeflag == tar.TypeXGlobalHeader || header.Typeflag == tar.TypeXHeader {
+			continue
+		}
 		clean := filepath.Clean(header.Name)
 		prefix := filepath.Join("skills", "spectacular")
+		if header.Typeflag == tar.TypeDir && strings.HasPrefix(prefix, clean+string(filepath.Separator)) {
+			continue
+		}
 		if clean != prefix && !strings.HasPrefix(clean, prefix+string(filepath.Separator)) {
 			return "", fmt.Errorf("archive path escaped skill root: %s", header.Name)
 		}
@@ -175,6 +181,7 @@ func InspectPackage(label, revision, commit, root string) (PackageStats, error) 
 		}
 	}
 	stats.ValidationFindings = append(stats.ValidationFindings, validateMarkdownLinks(root)...)
+	stats.ValidationFindings = append(stats.ValidationFindings, validateReferenceReachability(root)...)
 	sort.Strings(stats.ValidationFindings)
 	return stats, nil
 }
@@ -189,9 +196,11 @@ func ComparePackages(baseline, candidate PackageStats) StaticComparison {
 	for _, route := range primaryRoutes {
 		delta.RouteWordReduction[route] = reduction(baseline.PrimaryRouteWords[route], candidate.PrimaryRouteWords[route])
 	}
-	verdict := "pass"
+	verdict := "improved"
 	if len(candidate.ValidationFindings) > len(baseline.ValidationFindings) || delta.KernelWordReduction < 0 {
 		verdict = "regression"
+	} else if len(candidate.ValidationFindings) > 0 {
+		verdict = "improved-with-findings"
 	}
 	return StaticComparison{
 		SchemaVersion: "spectacular.skill-static-comparison.v1",
@@ -204,6 +213,21 @@ func ComparePackages(baseline, candidate PackageStats) StaticComparison {
 			"Static validation does not establish task success, authority compliance, or invocation accuracy.",
 		},
 	}
+}
+
+// ApplyStaticThresholds turns the measurement contract into deterministic
+// static gates. It does not promote a static comparison to a behavioral pass.
+func ApplyStaticThresholds(report *StaticComparison, thresholds Thresholds) {
+	if thresholds.MaximumKernelBodyLines > 0 && report.Candidate.KernelBodyLines > thresholds.MaximumKernelBodyLines {
+		report.GateFailures = append(report.GateFailures, fmt.Sprintf("candidate kernel body lines=%d, maximum=%d", report.Candidate.KernelBodyLines, thresholds.MaximumKernelBodyLines))
+	}
+	if report.Delta.KernelWordReduction < thresholds.MinimumInitialContextGain {
+		report.GateFailures = append(report.GateFailures, fmt.Sprintf("kernel word reduction %.3f below %.3f", report.Delta.KernelWordReduction, thresholds.MinimumInitialContextGain))
+	}
+	if len(report.GateFailures) > 0 {
+		report.Verdict = "regression"
+	}
+	sort.Strings(report.GateFailures)
 }
 
 func reduction(before, after int) float64 {
@@ -271,6 +295,50 @@ func validateMarkdownLinks(root string) []string {
 			if _, statErr := os.Stat(resolved); statErr != nil {
 				findings = append(findings, fmt.Sprintf("broken link %s -> %s", path, match[1]))
 			}
+		}
+		return nil
+	})
+	return findings
+}
+
+func validateReferenceReachability(root string) []string {
+	root = filepath.Clean(root)
+	queue := []string{filepath.Join(root, "SKILL.md")}
+	seen := map[string]bool{}
+	for len(queue) > 0 {
+		path := queue[0]
+		queue = queue[1:]
+		if seen[path] {
+			continue
+		}
+		seen[path] = true
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		for _, match := range markdownLink.FindAllStringSubmatch(string(data), -1) {
+			target := strings.SplitN(match[1], "#", 2)[0]
+			if target == "" || strings.Contains(target, "://") {
+				continue
+			}
+			resolved := filepath.Clean(filepath.Join(filepath.Dir(path), filepath.FromSlash(target)))
+			if filepath.Ext(resolved) != ".md" || !strings.HasPrefix(resolved, root+string(filepath.Separator)) {
+				continue
+			}
+			if _, err := os.Stat(resolved); err == nil {
+				queue = append(queue, resolved)
+			}
+		}
+	}
+	var findings []string
+	references := filepath.Join(root, "references")
+	_ = filepath.WalkDir(references, func(path string, entry os.DirEntry, err error) error {
+		if err != nil || entry.IsDir() || filepath.Ext(path) != ".md" {
+			return nil
+		}
+		if !seen[path] {
+			relative, _ := filepath.Rel(root, path)
+			findings = append(findings, "orphan reference unreachable from SKILL.md: "+filepath.ToSlash(relative))
 		}
 		return nil
 	})

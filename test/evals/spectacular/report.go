@@ -11,7 +11,9 @@ import (
 )
 
 func WriteStaticReport(report StaticComparison, directory string) error {
-	report.GeneratedAt = time.Now().UTC()
+	if report.GeneratedAt.IsZero() {
+		report.GeneratedAt = time.Now().UTC()
+	}
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		return err
 	}
@@ -22,7 +24,9 @@ func WriteStaticReport(report StaticComparison, directory string) error {
 }
 
 func WriteRunReport(report RunReport, directory string) error {
-	report.GeneratedAt = time.Now().UTC()
+	if report.GeneratedAt.IsZero() {
+		report.GeneratedAt = time.Now().UTC()
+	}
 	Summarize(&report)
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		return err
@@ -55,6 +59,12 @@ func renderStatic(report StaticComparison) string {
 		fmt.Fprintf(&builder, "| `%s` | %d | %d | %.1f%% |\n", route, report.Baseline.PrimaryRouteWords[route], report.Candidate.PrimaryRouteWords[route], 100*report.Delta.RouteWordReduction[route])
 	}
 	fmt.Fprintf(&builder, "\n## Validation findings\n\n- Baseline: %d\n- Candidate: %d\n", len(report.Baseline.ValidationFindings), len(report.Candidate.ValidationFindings))
+	if len(report.GateFailures) > 0 {
+		fmt.Fprintf(&builder, "\n## Failed gates\n\n")
+		for _, finding := range report.GateFailures {
+			fmt.Fprintf(&builder, "- %s\n", finding)
+		}
+	}
 	for _, finding := range report.Candidate.ValidationFindings {
 		fmt.Fprintf(&builder, "  - %s\n", finding)
 	}
@@ -74,6 +84,26 @@ func renderRun(report RunReport) string {
 		fmt.Fprintf(&builder, "| %s | %.1f%% | %.1f%% |\n", dimension, 100*report.Summary.DimensionRates["baseline"][dimension], 100*report.Summary.DimensionRates["candidate"][dimension])
 	}
 	fmt.Fprintf(&builder, "\nSafety failures: baseline `%d`, candidate `%d`.\n", report.Summary.SafetyFailures["baseline"], report.Summary.SafetyFailures["candidate"])
+	pairing := report.Summary.Pairing
+	fmt.Fprintf(&builder, "\n## Paired outcomes\n\nPairs `%d`; candidate wins `%d`; candidate losses `%d`; both pass `%d`; both fail `%d`; discordant rate `%.1f%%`.", pairing.Pairs, pairing.CandidateWins, pairing.CandidateLosses, pairing.BothPass, pairing.BothFail, 100*pairing.DiscordantRate)
+	if pairing.ExactSignPValue != nil {
+		fmt.Fprintf(&builder, " Exact two-sided sign-test p-value `%.4f`.", *pairing.ExactSignPValue)
+	}
+	fmt.Fprintln(&builder)
+	if len(pairing.UnstableCasePairs) > 0 {
+		fmt.Fprintf(&builder, "\nUnstable case/variant outcomes: `%s`.\n", strings.Join(pairing.UnstableCasePairs, "`, `"))
+	}
+	fmt.Fprintf(&builder, "\n## Observed cost\n\n| Variant | Usage coverage | Median input tokens | Median cached tokens | Median output tokens | Median tool calls | Median duration |\n|---|---:|---:|---:|---:|---:|---:|\n")
+	for _, variant := range []string{"baseline", "candidate"} {
+		cost := report.Summary.ObservedCost[variant]
+		fmt.Fprintf(&builder, "| %s | %d/%d | %.0f | %.0f | %.0f | %.1f | %.0fms |\n", variant, cost.TrialsWithUsage, cost.TotalTrials, cost.MedianInputTokens, cost.MedianCachedTokens, cost.MedianOutputTokens, cost.MedianToolCalls, cost.MedianDurationMillis)
+	}
+	if len(report.Summary.GateFailures) > 0 {
+		fmt.Fprintf(&builder, "\n## Failed gates\n\n")
+		for _, finding := range report.Summary.GateFailures {
+			fmt.Fprintf(&builder, "- %s\n", finding)
+		}
+	}
 	if len(report.Summary.PerCaseRegressions) > 0 {
 		fmt.Fprintf(&builder, "\n## Regressions\n\n")
 		for _, finding := range report.Summary.PerCaseRegressions {

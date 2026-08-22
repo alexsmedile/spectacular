@@ -88,11 +88,11 @@ func ValidateCatalog(c Catalog, root string) error {
 		if weightTotal <= 0 {
 			problems = append(problems, prefix+"weights must sum above zero")
 		}
-		if len(item.Expect.ForbiddenAnyTerms)+len(item.Expect.ForbiddenReads)+len(item.Expect.ForbiddenChangedPaths) == 0 {
+		if len(item.Expect.ForbiddenAnyTerms)+len(item.Expect.ForbiddenReads)+len(item.Expect.ForbiddenChangedPaths)+len(item.Expect.ForbiddenRoles)+len(item.Expect.ForbiddenStatuses) == 0 {
 			problems = append(problems, prefix+"must define at least one hard-failure assertion")
 		}
-		if item.HeldOut && item.Tier == "smoke" {
-			problems = append(problems, prefix+"held-out cases cannot be smoke cases")
+		if item.HeldOut && (item.Tier == "micro" || item.Tier == "smoke") {
+			problems = append(problems, prefix+"held-out cases cannot be micro or smoke cases")
 		}
 	}
 	for name, tier := range c.Tiers {
@@ -100,7 +100,7 @@ func ValidateCatalog(c Catalog, root string) error {
 			problems = append(problems, "tier "+name+": repetitions must be positive")
 		}
 		for _, included := range tier.Include {
-			if included != "smoke" && included != "full" && included != "held-out" {
+			if included != "micro" && included != "smoke" && included != "full" && included != "held-out" {
 				problems = append(problems, "tier "+name+": unknown include class "+included)
 			}
 		}

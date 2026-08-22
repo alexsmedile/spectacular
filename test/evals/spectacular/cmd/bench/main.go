@@ -19,6 +19,8 @@ func main() {
 	switch os.Args[1] {
 	case "validate":
 		err = validate(os.Args[2:])
+	case "plan":
+		err = plan(os.Args[2:])
 	case "static":
 		err = static(os.Args[2:])
 	case "run":
@@ -34,7 +36,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: go run ./test/evals/spectacular/cmd/bench <validate|static|run> [flags]")
+	fmt.Fprintln(os.Stderr, "usage: go run ./test/evals/spectacular/cmd/bench <validate|plan|static|run> [flags]")
 }
 
 func validate(args []string) error {
@@ -62,9 +64,52 @@ func validate(args []string) error {
 	return nil
 }
 
+func plan(args []string) error {
+	set := flag.NewFlagSet("plan", flag.ContinueOnError)
+	catalogPath := set.String("catalog", "test/evals/spectacular/evals.json", "benchmark catalog")
+	tier := set.String("tier", "micro", "micro, smoke, full, or held-out")
+	repeats := set.Int("repeats", 0, "override tier repetitions")
+	if err := set.Parse(args); err != nil {
+		return err
+	}
+	catalog, err := bench.LoadCatalog(*catalogPath)
+	if err != nil {
+		return err
+	}
+	cases, defaultRepeats, err := bench.CasesForTier(catalog, *tier)
+	if err != nil {
+		return err
+	}
+	if *repeats == 0 {
+		*repeats = defaultRepeats
+	}
+	if *repeats < 1 {
+		return fmt.Errorf("repeats must be positive")
+	}
+	behavior, trigger, heldOut := 0, 0, 0
+	ids := make([]string, 0, len(cases))
+	for _, item := range cases {
+		ids = append(ids, item.ID)
+		if item.Kind == "behavior" {
+			behavior++
+		} else {
+			trigger++
+		}
+		if item.HeldOut {
+			heldOut++
+		}
+	}
+	modelCalls := len(cases) * *repeats * 2
+	fmt.Printf("tier %s: %d cases x %d repetitions x 2 variants = %d model calls\n", *tier, len(cases), *repeats, modelCalls)
+	fmt.Printf("composition: %d behavior, %d trigger, %d held-out\n", behavior, trigger, heldOut)
+	fmt.Printf("cases: %v\n", ids)
+	return nil
+}
+
 func static(args []string) error {
 	set := flag.NewFlagSet("static", flag.ContinueOnError)
 	repo := set.String("repo", ".", "Git repository")
+	catalogPath := set.String("catalog", "test/evals/spectacular/evals.json", "benchmark measurement contract")
 	baselineRef := set.String("baseline", "14158f9", "immutable baseline revision")
 	candidateRef := set.String("candidate", "", "immutable candidate revision")
 	candidateDir := set.String("candidate-dir", "", "candidate skill directory for provisional static inspection")
@@ -107,6 +152,11 @@ func static(args []string) error {
 		}
 	}
 	report := bench.ComparePackages(baseline, candidate)
+	catalog, err := bench.LoadCatalog(*catalogPath)
+	if err != nil {
+		return err
+	}
+	bench.ApplyStaticThresholds(&report, catalog.Thresholds)
 	report.GeneratedAt = time.Now().UTC()
 	if *candidateDir != "" {
 		report.Verdict = "provisional"
@@ -126,7 +176,7 @@ func run(args []string) error {
 	schemaPath := set.String("schema", "test/evals/spectacular/agent-result.schema.json", "agent result schema")
 	baseline := set.String("baseline", "14158f9", "immutable baseline revision")
 	candidate := set.String("candidate", "", "immutable candidate revision")
-	tier := set.String("tier", "smoke", "smoke, full, or held-out")
+	tier := set.String("tier", "smoke", "micro, smoke, full, or held-out")
 	repeats := set.Int("repeats", 0, "override tier repetitions")
 	seed := set.Int64("seed", 1, "pair randomization seed")
 	model := set.String("model", "", "model identifier")

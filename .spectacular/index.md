@@ -12,6 +12,4 @@ Compact routing only. Read canonical sources for authority; [catalog.md](catalog
 
 ## Current work
 
-| Mission | Outcome | Source |
-|---|---|---|
-| `M19` | Enforce disjoint write reservations and Handoff validation | `.spectacular/missions/M19-enforce-disjoint-write-reservations-and-handoff-validation/M19-enforce-disjoint-write-reservations-and-handoff-validation.md` |
+No active Mission is recorded. Prepare a bounded Mission before consequential work.

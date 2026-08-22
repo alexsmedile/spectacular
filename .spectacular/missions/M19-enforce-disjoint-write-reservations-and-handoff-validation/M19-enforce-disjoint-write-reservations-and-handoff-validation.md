@@ -2,9 +2,9 @@
 type: Mission
 id: 01a02bdf-17a0-7514-a626-51ac67c5be6a
 title: Enforce disjoint write reservations and Handoff validation
-status: active
+status: completed
 created: "2026-08-22T23:49:28Z"
-updated: "2026-08-22T23:52:49Z"
+updated: "2026-08-22T23:52:57Z"
 activation:
     at: "2026-08-22T23:49:28Z"
     by: Alex
@@ -40,6 +40,12 @@ completion:
     - claim: passive-git-state-inspection
       pass_boundary: Spectacular verifies clean Git branch state and rejects execution during active rebase/merge conflicts without mutating Git or deleting worktrees.
       proof_requirement: Unit fixtures with clean, dirty, and conflicting Git states assert typed refusal without executing destructive Git side effects.
+completion_record:
+    at: "2026-08-22T23:52:57Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 061f4acf6dd769d4471ba613d53c15c3bc9dd9b5
 contract:
     fingerprint: sha256:62cc4645130cdade0ae4e5a25b32ae00e8ed3e4df74860c70fae1b91c7968339
     ref: Contract:01a00aae-8921-7b27-96a9-1a4c175e7dc6
@@ -82,7 +88,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-22T23:49:28Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - internal/missionbundle

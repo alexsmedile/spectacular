@@ -4,7 +4,7 @@ id: 01a02bdf-17a0-7514-a626-51ac67c5be6a
 title: Enforce disjoint write reservations and Handoff validation
 status: active
 created: "2026-08-22T23:49:28Z"
-updated: "2026-08-22T23:52:38Z"
+updated: "2026-08-22T23:52:49Z"
 activation:
     at: "2026-08-22T23:49:28Z"
     by: Alex
@@ -70,6 +70,11 @@ owner: Alex
 ref: M19
 repair_budget: 2
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m19-disjoint-write-reservations-and-dependency-locks.md
+      id: 01a02be1-1b40-7796-9699-ecff63f5892b
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a02bdf-17a0-7515-a902-bc090cf28f8c

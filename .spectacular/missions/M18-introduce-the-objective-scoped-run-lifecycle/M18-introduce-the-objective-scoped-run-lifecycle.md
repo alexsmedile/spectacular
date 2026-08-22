@@ -2,9 +2,9 @@
 type: Mission
 id: 01a02ba9-cf00-7f30-a440-60e4d88ec2dc
 title: Introduce the Objective-scoped Run lifecycle
-status: active
+status: completed
 created: "2026-08-22T22:52:28Z"
-updated: "2026-08-22T22:56:18Z"
+updated: "2026-08-22T22:56:32Z"
 activation:
     at: "2026-08-22T22:52:28Z"
     by: Alex
@@ -42,6 +42,12 @@ completion:
     - claim: authorized-surface-17
       pass_boundary: The CLI registry, mechanical interface, generated schemas, and CC-missioncli contract accurately reflect exactly 17 registered commands through the addition of run transition.
       proof_requirement: Registry-derived tests assert exact 17-command count, and CC-missioncli is version-bumped (v4 -> v5).
+completion_record:
+    at: "2026-08-22T22:56:32Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 5e5edbffc3f2675a053fa1d35624d65edaaf3a7a
 contract:
     fingerprint: sha256:aa2f59e740e9526bacef1dd9999127861836460e5f2f96b5fe05bc86a458ee1a
     ref: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
@@ -73,6 +79,11 @@ owner: Alex
 ref: M18
 repair_budget: 2
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m18-objective-scoped-run-lifecycle-and-transitions.md
+      id: 01a02bac-ebe0-7338-9d7b-10e60445582c
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a02ba9-cf00-78cd-92b8-013767d2695e
@@ -80,7 +91,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-22T22:52:28Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - cmd/spectacular/

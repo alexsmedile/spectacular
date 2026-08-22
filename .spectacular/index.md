@@ -12,6 +12,4 @@ Compact routing only. Read canonical sources for authority; [catalog.md](catalog
 
 ## Current work
 
-| Mission | Outcome | Source |
-|---|---|---|
-| `M18` | Introduce the Objective-scoped Run lifecycle | `.spectacular/missions/M18-introduce-the-objective-scoped-run-lifecycle/M18-introduce-the-objective-scoped-run-lifecycle.md` |
+No active Mission is recorded. Prepare a bounded Mission before consequential work.

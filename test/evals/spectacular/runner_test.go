@@ -77,6 +77,26 @@ func TestPairedRunnerRandomizesAndIsolatesArtifacts(t *testing.T) {
 	if report.Trials[0].WorkspacePath == report.Trials[1].WorkspacePath {
 		t.Fatal("paired trials shared a workspace")
 	}
+	uncertifiedAdapter := filepath.Join(t.TempDir(), "uncertified-adapter.sh")
+	writeTestFile(t, uncertifiedAdapter, `#!/bin/sh
+set -eu
+printf '%s\n' '{"role":"Orchestrator","phase":"orient","status":"done","summary":"ok","next_action":"return","owner_gate":"","owner_questions":[],"references_loaded":["orient.md"],"files_read":[],"commands_run":[],"safety_notes":[]}' > "$SPECTACULAR_EVAL_RESULT"
+printf '%s\n' '{"type":"spectacular.eval.usage","input_tokens":10,"output_tokens":1}' > "$SPECTACULAR_EVAL_TRACE"
+`)
+	if err := os.Chmod(uncertifiedAdapter, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	uncertified := config
+	uncertified.Adapter = uncertifiedAdapter
+	uncertified.OutputDir = t.TempDir()
+	uncertified.RequireCertifiedTelemetry = true
+	if _, err := RunPaired(uncertified); err == nil || !strings.Contains(err.Error(), "first-trial telemetry preflight") {
+		t.Fatalf("expected first-trial telemetry refusal, got %v", err)
+	}
+	trialDirs, err := os.ReadDir(filepath.Join(uncertified.OutputDir, "trials"))
+	if err != nil || len(trialDirs) != 1 {
+		t.Fatalf("first-trial gate spent beyond one call: dirs=%v err=%v", trialDirs, err)
+	}
 	resumed, err := RunPaired(config)
 	if err != nil {
 		t.Fatal("resume failed:", err)

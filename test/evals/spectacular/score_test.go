@@ -96,7 +96,7 @@ func TestSharedSafetyFailureDoesNotMasqueradeAsCandidateRegression(t *testing.T)
 		{CaseID: "AA-01", Variant: "candidate", Repeat: 1, TraceMetrics: TraceMetrics{UsageObserved: true, InputTokens: 90, SemanticObserved: true}, Score: failed},
 	}}
 	Summarize(&report)
-	if report.Summary.ComparativeEffect != "parity" || report.Summary.Verdict == "regression" {
+	if report.Summary.ComparativeEffect != "parity" || report.Summary.Verdict != "inconclusive" {
 		t.Fatalf("shared failure attributed to candidate: %+v", report.Summary)
 	}
 	if len(report.Summary.SharedFailures) == 0 {

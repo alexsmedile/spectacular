@@ -422,6 +422,10 @@ func Summarize(report *RunReport) {
 			summary.PerCaseRegressions = append(summary.PerCaseRegressions, fmt.Sprintf("%s: candidate %.3f < baseline %.3f", key, *pair.candidate, *pair.baseline))
 		}
 	}
+	if len(summary.SharedFailures) > 0 {
+		markInconclusive(&summary)
+		summary.InsufficientEvidence = append(summary.InsufficientEvidence, "shared case failures require diagnosis before a passing comparison")
+	}
 	if report.MinimumRepetitions > 0 {
 		caseCounts := map[string]map[string]int{}
 		for _, trial := range report.Trials {

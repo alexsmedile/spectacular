@@ -64,6 +64,10 @@ func TestMaterializeSkillUsesImmutableCommitAndCompletePackage(t *testing.T) {
 	runGit(t, repo, "config", "user.email", "eval@example.invalid")
 	writeTestFile(t, filepath.Join(repo, "skills", "spectacular", "SKILL.md"), "---\nname: spectacular\n---\n# Old\n")
 	writeTestFile(t, filepath.Join(repo, "skills", "spectacular", "references", "orient.md"), "# Orient\n")
+	writeTestFile(t, filepath.Join(repo, "skills", "spectacular", "scripts", "doctor.sh"), "#!/bin/sh\nexit 0\n")
+	if err := os.Chmod(filepath.Join(repo, "skills", "spectacular", "scripts", "doctor.sh"), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	runGit(t, repo, "add", ".")
 	runGit(t, repo, "commit", "-qm", "baseline")
 	baseline := strings.TrimSpace(runGit(t, repo, "rev-parse", "HEAD"))
@@ -84,6 +88,9 @@ func TestMaterializeSkillUsesImmutableCommitAndCompletePackage(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(destination, "references", "orient.md")); err != nil {
 		t.Fatal("complete package reference missing:", err)
+	}
+	if info, err := os.Stat(filepath.Join(destination, "scripts", "doctor.sh")); err != nil || info.Mode().Perm() != 0o755 {
+		t.Fatalf("executable mode was not preserved: mode=%v err=%v", info, err)
 	}
 }
 

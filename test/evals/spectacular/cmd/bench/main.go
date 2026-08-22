@@ -182,6 +182,8 @@ func run(args []string) error {
 	model := set.String("model", "", "model identifier")
 	adapter := set.String("adapter", "test/evals/spectacular/scripts/codex-adapter.sh", "adapter executable")
 	output := set.String("out", "", "new output directory")
+	allowHeldOut := set.Bool("allow-held-out", false, "explicitly authorize a frozen held-out evidence run")
+	readIsolation := set.String("read-isolation", "artifact-only", "artifact-only or os-enforced (external adapter attestation)")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -191,7 +193,7 @@ func run(args []string) error {
 	report, err := bench.RunPaired(bench.RunConfig{
 		Repo: *repo, CatalogPath: *catalogPath, SchemaPath: *schemaPath,
 		BaselineRef: *baseline, CandidateRef: *candidate, Tier: *tier,
-		Repeats: *repeats, Seed: *seed, Model: *model, Adapter: *adapter, OutputDir: *output,
+		Repeats: *repeats, Seed: *seed, Model: *model, Adapter: *adapter, OutputDir: *output, AllowHeldOut: *allowHeldOut, ReadIsolation: *readIsolation,
 	})
 	if err != nil {
 		return err

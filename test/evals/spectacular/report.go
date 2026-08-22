@@ -78,7 +78,7 @@ func renderStatic(report StaticComparison) string {
 func renderRun(report RunReport) string {
 	var builder strings.Builder
 	fmt.Fprintf(&builder, "# Spectacular paired behavior benchmark\n\n")
-	fmt.Fprintf(&builder, "Verdict: **%s**  \nBaseline: `%s`  \nCandidate: `%s`  \nModel: `%s`  \nTier: `%s`\n\n", report.Summary.Verdict, report.BaselineRef, report.CandidateRef, report.Model, report.Tier)
+	fmt.Fprintf(&builder, "Verdict: **%s**<br>\nBaseline: `%s`<br>\nCandidate: `%s`<br>\nModel: `%s`<br>\nRead isolation: `%s`<br>\nTier: `%s`<br>\nMinimum repetitions: `%d`\n\n", report.Summary.Verdict, report.BaselineRef, report.CandidateRef, report.Model, report.ReadIsolation, report.Tier, report.MinimumRepetitions)
 	fmt.Fprintf(&builder, "## Dimension rates\n\n| Dimension | Baseline | Candidate |\n|---|---:|---:|\n")
 	for _, dimension := range Dimensions {
 		fmt.Fprintf(&builder, "| %s | %.1f%% | %.1f%% |\n", dimension, 100*report.Summary.DimensionRates["baseline"][dimension], 100*report.Summary.DimensionRates["candidate"][dimension])
@@ -116,7 +116,7 @@ func renderRun(report RunReport) string {
 			fmt.Fprintf(&builder, "- %s\n", finding)
 		}
 	}
-	fmt.Fprintf(&builder, "\n## Trials\n\n| Case | Variant | Repeat | Verdict | Overall | Duration |\n|---|---|---:|---|---:|---:|\n")
+	fmt.Fprintf(&builder, "\n## Trials\n\n| Trial | Case | Variant | Repeat | Verdict | Overall | Duration | Raw artifacts |\n|---|---|---|---:|---|---:|---:|---|\n")
 	trials := append([]Trial(nil), report.Trials...)
 	sort.Slice(trials, func(i, j int) bool { return trials[i].ID < trials[j].ID })
 	for _, trial := range trials {
@@ -124,7 +124,8 @@ func renderRun(report RunReport) string {
 		if trial.Score.Overall != nil {
 			overall = fmt.Sprintf("%.3f", *trial.Score.Overall)
 		}
-		fmt.Fprintf(&builder, "| %s | %s | %d | %s | %s | %dms |\n", trial.CaseID, trial.Variant, trial.Repeat, trial.Score.Verdict, overall, trial.DurationMS)
+		artifacts := fmt.Sprintf("[result](%s) · [trace](%s) · [workspace](%s)", trial.ResultPath, trial.TracePath, trial.WorkspacePath)
+		fmt.Fprintf(&builder, "| %s | %s | %s | %d | %s | %s | %dms | %s |\n", trial.ID, trial.CaseID, trial.Variant, trial.Repeat, trial.Score.Verdict, overall, trial.DurationMS, artifacts)
 	}
 	if len(report.Limitations) > 0 {
 		fmt.Fprintf(&builder, "\n## Limits\n\n")

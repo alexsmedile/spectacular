@@ -13,7 +13,15 @@ This suite compares two complete, immutable Spectacular skill packages. It measu
 | Interaction | owner questions and owner gate | whether decisions were batched and authorization was requested without returning labor |
 | Recovery | next action versus owner gate | whether a cold session receives exactly one continuation |
 
-Static line and word counts are estimates, not observed model context. Actual context claims require an adapter trace. Unsupported trace fields are reported as limitations.
+Static line and word counts are estimates, not observed model context. Actual context claims require an adapter trace with cumulative input-usage counters. Adapters that emit per-turn counters must normalize them; unsupported trace fields are reported as limitations.
+
+Conclusive tool-use scoring also requires one adapter-authored JSONL event per trial:
+
+```json
+{"type":"spectacular.eval.observations","files_read":[],"references_loaded":[],"commands_run":[]}
+```
+
+The event must come from host/tool telemetry, not the model's final self-report. Without it, behavior scores remain visible but the overall verdict is `inconclusive`. Raw filenames appearing in prompts, kernel text, or command output never count as semantic reads.
 
 ## Tiers
 
@@ -57,9 +65,11 @@ go run ./test/evals/spectacular/cmd/bench run \
   --out test/evals/spectacular/reports/smoke-<candidate-commit>
 ```
 
-The Codex adapter runs ephemeral sessions with user configuration ignored, installs exactly one skill variant under the fixture's `.agents/skills/`, captures JSONL events, requires a structured result, and preserves each trial in a separate directory. The adapter is responsible for OS-level read isolation; the harness itself exposes no path to the counterpart run and never materializes both variants into one workspace.
+The Codex adapter runs ephemeral sessions with user configuration ignored, installs exactly one skill variant under the fixture's `.agents/skills/`, captures JSONL events, requires a structured result, sanitizes benchmark environment paths before model execution, and preserves each trial in a separate directory. It provides artifact separation, not an OS read sandbox. Such runs are automatically `inconclusive` for strict isolation. An external container/VM adapter may declare `--read-isolation os-enforced`; that declaration is pinned in the manifest and must be independently justified. The harness never materializes both variants into one workspace, and held-out runs refuse artifact-only isolation.
 
 Before a paid or stochastic full run, report the selected case count, repetitions, model, and expected external cost. Never tune the skill from held-out results.
+
+The held-out tier additionally requires `--allow-held-out` and `--read-isolation os-enforced`. This prevents accidental tuning runs; it is not secrecy. Prompts remain reviewable source, so release discipline and independent review still protect their evidentiary value.
 
 For a low-cost first signal, run `micro`. Before interpreting an improvement, calibrate the model/adapter noise floor by running the same immutable revision as both baseline and candidate with the intended repetitions. The report exposes paired wins/losses, discordant rate, unstable case/variant outcomes, and an exact two-sided sign-test p-value. The p-value is descriptive; safety and per-case regression gates remain controlling.
 

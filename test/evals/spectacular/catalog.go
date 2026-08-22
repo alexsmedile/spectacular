@@ -68,12 +68,22 @@ func ValidateCatalog(c Catalog, root string) error {
 		if strings.TrimSpace(item.Prompt) == "" {
 			problems = append(problems, prefix+"prompt is required")
 		}
+		for _, term := range append(append([]string(nil), item.Expect.ForbiddenAnyTerms...), item.Expect.ForbiddenTraceTerms...) {
+			if containsFold(item.Prompt, term) {
+				problems = append(problems, prefix+"forbidden term is already present in the prompt: "+term)
+			}
+		}
 		fixture := filepath.Join(root, "fixtures", filepath.Clean(item.Fixture))
 		if info, err := os.Stat(fixture); err != nil || !info.IsDir() {
 			problems = append(problems, prefix+"fixture directory does not exist: "+item.Fixture)
 		}
 		if len(item.Weights) == 0 {
 			problems = append(problems, prefix+"dimension weights are required")
+		}
+		for index, check := range item.Expect.PostChecks {
+			if len(check.Command) == 0 || strings.TrimSpace(check.Command[0]) == "" {
+				problems = append(problems, fmt.Sprintf("%spost_checks[%d] needs a command", prefix, index))
+			}
 		}
 		weightTotal := 0.0
 		for dimension, weight := range item.Weights {

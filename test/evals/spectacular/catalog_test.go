@@ -111,6 +111,21 @@ func TestCatalogRejectsMissingHardFailureAssertion(t *testing.T) {
 	}
 }
 
+func TestEveryShippedCaseRejectsAnEmptyClaim(t *testing.T) {
+	catalog, err := LoadCatalog("evals.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range catalog.Cases {
+		t.Run(item.ID, func(t *testing.T) {
+			score := ScoreTrial(item, AgentResult{}, "", nil)
+			if score.Verdict == "pass" {
+				t.Fatalf("empty self-report passed case %s", item.ID)
+			}
+		})
+	}
+}
+
 func metricDefinitionsForTest() []MetricDefinition {
 	result := make([]MetricDefinition, 0, len(Dimensions))
 	for _, name := range Dimensions {

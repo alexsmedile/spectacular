@@ -16,18 +16,20 @@ import (
 )
 
 type RunConfig struct {
-	Repo         string
-	CatalogPath  string
-	SchemaPath   string
-	BaselineRef  string
-	CandidateRef string
-	Tier         string
-	Repeats      int
-	Seed         int64
-	Model        string
-	Adapter      string
-	AdapterArgs  []string
-	OutputDir    string
+	Repo          string
+	CatalogPath   string
+	SchemaPath    string
+	BaselineRef   string
+	CandidateRef  string
+	Tier          string
+	Repeats       int
+	Seed          int64
+	Model         string
+	Adapter       string
+	AdapterArgs   []string
+	OutputDir     string
+	AllowHeldOut  bool
+	ReadIsolation string
 }
 
 type trialSpec struct {
@@ -39,24 +41,39 @@ type trialSpec struct {
 }
 
 type runManifest struct {
-	SchemaVersion   string            `json:"schema_version"`
-	BaselineRef     string            `json:"baseline_ref"`
-	BaselineCommit  string            `json:"baseline_commit"`
-	CandidateRef    string            `json:"candidate_ref"`
-	CandidateCommit string            `json:"candidate_commit"`
-	CatalogDigest   string            `json:"catalog_digest"`
-	SchemaDigest    string            `json:"result_schema_digest"`
-	Adapter         string            `json:"adapter"`
-	AdapterDigest   string            `json:"adapter_digest"`
-	AdapterArgs     []string          `json:"adapter_args,omitempty"`
-	Model           string            `json:"model"`
-	Tier            string            `json:"tier"`
-	Seed            int64             `json:"seed"`
-	Planned         []string          `json:"planned"`
-	Completed       map[string]string `json:"completed"`
+	SchemaVersion   string                    `json:"schema_version"`
+	BaselineRef     string                    `json:"baseline_ref"`
+	BaselineCommit  string                    `json:"baseline_commit"`
+	CandidateRef    string                    `json:"candidate_ref"`
+	CandidateCommit string                    `json:"candidate_commit"`
+	CatalogDigest   string                    `json:"catalog_digest"`
+	HarnessDigest   string                    `json:"harness_inputs_digest"`
+	SchemaDigest    string                    `json:"result_schema_digest"`
+	Adapter         string                    `json:"adapter"`
+	AdapterDigest   string                    `json:"adapter_digest"`
+	AdapterArgs     []string                  `json:"adapter_args,omitempty"`
+	ReadIsolation   string                    `json:"read_isolation"`
+	Model           string                    `json:"model"`
+	Tier            string                    `json:"tier"`
+	Seed            int64                     `json:"seed"`
+	Planned         []string                  `json:"planned"`
+	Completed       map[string]completedTrial `json:"completed"`
 }
 
+type completedTrial struct {
+	TrialPath      string `json:"trial_path"`
+	ArtifactDigest string `json:"artifact_digest"`
+}
+
+var agentResultRequiredFields = []string{"role", "phase", "status", "summary", "next_action", "owner_gate", "owner_questions", "references_loaded", "files_read", "commands_run", "safety_notes"}
+var allowedAgentRoles = []string{"none", "Orchestrator", "Runner", "Reviewer", "Autopilot"}
+var allowedAgentPhases = []string{"", "orient", "prepare", "execute", "runtime", "close", "audit"}
+var allowedAgentStatuses = []string{"done", "blocked", "owner-gate", "draft-only", "not-invoked"}
+
 func RunPaired(config RunConfig) (RunReport, error) {
+	if strings.TrimSpace(config.OutputDir) == "" {
+		return RunReport{}, errors.New("output directory is required")
+	}
 	var err error
 	config.Repo, err = absolutePath(config.Repo)
 	if err != nil {
@@ -69,6 +86,10 @@ func RunPaired(config RunConfig) (RunReport, error) {
 	config.SchemaPath, err = absolutePath(config.SchemaPath)
 	if err != nil {
 		return RunReport{}, fmt.Errorf("resolve result schema path: %w", err)
+	}
+	config.OutputDir, err = absolutePath(config.OutputDir)
+	if err != nil {
+		return RunReport{}, fmt.Errorf("resolve output directory: %w", err)
 	}
 	adapterPath, err := exec.LookPath(config.Adapter)
 	if err != nil {
@@ -87,9 +108,21 @@ func RunPaired(config RunConfig) (RunReport, error) {
 	if err != nil {
 		return RunReport{}, err
 	}
+	if config.ReadIsolation == "" {
+		config.ReadIsolation = "artifact-only"
+	}
+	if config.ReadIsolation != "artifact-only" && config.ReadIsolation != "os-enforced" {
+		return RunReport{}, errors.New("read isolation must be artifact-only or os-enforced")
+	}
 	cases, defaultRepeats, err := CasesForTier(catalog, config.Tier)
 	if err != nil {
 		return RunReport{}, err
+	}
+	if config.Tier == "held-out" && !config.AllowHeldOut {
+		return RunReport{}, errors.New("held-out tier requires explicit --allow-held-out; never use it while tuning")
+	}
+	if config.Tier == "held-out" && config.ReadIsolation != "os-enforced" {
+		return RunReport{}, errors.New("held-out tier requires an externally OS-enforced read-isolation adapter")
 	}
 	if config.Repeats == 0 {
 		config.Repeats = defaultRepeats
@@ -135,23 +168,38 @@ func RunPaired(config RunConfig) (RunReport, error) {
 		return RunReport{}, err
 	}
 	report := RunReport{
-		SchemaVersion: "spectacular.skill-run-report.v1",
-		BaselineRef:   config.BaselineRef,
-		CandidateRef:  config.CandidateRef,
-		Model:         config.Model,
-		Tier:          config.Tier,
-		Seed:          seed,
-		Thresholds:    catalog.Thresholds,
+		SchemaVersion:      "spectacular.skill-run-report.v1",
+		BaselineRef:        config.BaselineRef,
+		CandidateRef:       config.CandidateRef,
+		Model:              config.Model,
+		ReadIsolation:      config.ReadIsolation,
+		Tier:               config.Tier,
+		Seed:               seed,
+		MinimumRepetitions: defaultRepeats,
+		Thresholds:         catalog.Thresholds,
 		Limitations: []string{
-			"File-read metrics combine structured self-report with observable adapter traces; an adapter that omits tool events lowers confidence.",
+			"A conclusive verdict requires an adapter-authored spectacular.eval.observations event; model self-report remains visible but cannot establish semantic tool use.",
+			"Token metrics use the maximum cumulative usage counters observed in trace events; adapters that emit per-turn rather than cumulative counters must normalize them before comparison.",
 			"The harness isolates artifacts and exposes only one skill variant per trial; OS-level read isolation remains the adapter's responsibility.",
 		},
 	}
 	for _, spec := range specs {
 		id := trialID(spec)
-		if relative, ok := manifest.Completed[id]; ok {
-			trial, loadErr := loadTrial(filepath.Join(config.OutputDir, filepath.FromSlash(relative)))
+		if completed, ok := manifest.Completed[id]; ok {
+			trialPath, loadErr := containedPath(config.OutputDir, completed.TrialPath)
 			if loadErr != nil {
+				return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
+			}
+			trialDirectory := filepath.Dir(trialPath)
+			digest, digestErr := directoryDigest(trialDirectory)
+			if digestErr != nil || digest != completed.ArtifactDigest {
+				return RunReport{}, fmt.Errorf("resume %s: artifact digest mismatch", id)
+			}
+			trial, loadErr := loadTrial(trialPath)
+			if loadErr != nil {
+				return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
+			}
+			if loadErr = validateResumedTrial(trial, spec, commits[spec.Variant], config.Model); loadErr != nil {
 				return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
 			}
 			report.Trials = append(report.Trials, trial)
@@ -166,7 +214,11 @@ func RunPaired(config RunConfig) (RunReport, error) {
 		if err := writeJSON(filepath.Join(config.OutputDir, filepath.FromSlash(relative)), trial); err != nil {
 			return RunReport{}, err
 		}
-		manifest.Completed[trial.ID] = relative
+		artifactDigest, err := directoryDigest(filepath.Join(config.OutputDir, "trials", trial.ID))
+		if err != nil {
+			return RunReport{}, err
+		}
+		manifest.Completed[trial.ID] = completedTrial{TrialPath: relative, ArtifactDigest: artifactDigest}
 		if err := writeRunManifest(config.OutputDir, manifest); err != nil {
 			return RunReport{}, err
 		}
@@ -207,18 +259,27 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 	promptPath := filepath.Join(temporary, "prompt.md")
 	resultPath := filepath.Join(temporary, "result.json")
 	tracePath := filepath.Join(temporary, "trace.jsonl")
+	trialSchemaPath := filepath.Join(temporary, "result.schema.json")
 	if err := os.WriteFile(promptPath, []byte(spec.Case.Prompt+"\n"), 0o644); err != nil {
+		return Trial{}, err
+	}
+	schemaData, err := os.ReadFile(config.SchemaPath)
+	if err != nil {
+		return Trial{}, err
+	}
+	if err := os.WriteFile(trialSchemaPath, schemaData, 0o644); err != nil {
 		return Trial{}, err
 	}
 	started := time.Now().UTC()
 	command := exec.Command(config.Adapter, config.AdapterArgs...)
 	command.Dir = workspace
-	command.Env = append(os.Environ(),
+	command.Env = append(cleanEvalEnvironment(os.Environ(), config.Repo, config.OutputDir),
+		"PWD="+workspace,
 		"SPECTACULAR_EVAL_WORKSPACE="+workspace,
 		"SPECTACULAR_EVAL_PROMPT="+promptPath,
 		"SPECTACULAR_EVAL_RESULT="+resultPath,
 		"SPECTACULAR_EVAL_TRACE="+tracePath,
-		"SPECTACULAR_EVAL_SCHEMA="+config.SchemaPath,
+		"SPECTACULAR_EVAL_SCHEMA="+trialSchemaPath,
 		"SPECTACULAR_EVAL_MODEL="+config.Model,
 		"SPECTACULAR_EVAL_CASE="+spec.Case.ID,
 		"SPECTACULAR_EVAL_KIND="+spec.Case.Kind,
@@ -248,10 +309,8 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 	if readErr != nil {
 		return Trial{}, fmt.Errorf("adapter produced no result (exit=%d): %w", exitCode, readErr)
 	}
-	var result AgentResult
-	decoder := json.NewDecoder(strings.NewReader(string(resultData)))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&result); err != nil {
+	result, err := decodeAgentResult(resultData)
+	if err != nil {
 		return Trial{}, fmt.Errorf("decode adapter result: %w", err)
 	}
 	after, err := SnapshotTree(workspace)
@@ -259,6 +318,10 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 		return Trial{}, err
 	}
 	changed := ChangedPaths(before, after)
+	postconditions, err := runPostChecks(workspace, after, spec.Case.Expect.PostChecks)
+	if err != nil {
+		return Trial{}, err
+	}
 	id := trialID(spec)
 	destination := filepath.Join(config.OutputDir, "trials", id)
 	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
@@ -271,26 +334,27 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 	relativeResult := filepath.ToSlash(filepath.Join("trials", id, "result.json"))
 	relativeWorkspace := filepath.ToSlash(filepath.Join("trials", id, "workspace"))
 	trial := Trial{
-		ID:            id,
-		CaseID:        spec.Case.ID,
-		Tags:          append([]string(nil), spec.Case.Tags...),
-		Variant:       spec.Variant,
-		Revision:      spec.Revision,
-		Commit:        commit,
-		Model:         config.Model,
-		Repeat:        spec.Repeat,
-		Order:         spec.Order,
-		StartedAt:     started,
-		DurationMS:    time.Since(started).Milliseconds(),
-		ExitCode:      exitCode,
-		Result:        result,
-		ChangedPaths:  changed,
-		TraceMetrics:  ParseTraceMetrics(string(traceData)),
-		TracePath:     relativeTrace,
-		ResultPath:    relativeResult,
-		WorkspacePath: relativeWorkspace,
+		ID:             id,
+		CaseID:         spec.Case.ID,
+		Tags:           append([]string(nil), spec.Case.Tags...),
+		Variant:        spec.Variant,
+		Revision:       spec.Revision,
+		Commit:         commit,
+		Model:          config.Model,
+		Repeat:         spec.Repeat,
+		Order:          spec.Order,
+		StartedAt:      started,
+		DurationMS:     time.Since(started).Milliseconds(),
+		ExitCode:       exitCode,
+		Result:         result,
+		ChangedPaths:   changed,
+		Postconditions: postconditions,
+		TraceMetrics:   ParseTraceMetrics(string(traceData)),
+		TracePath:      relativeTrace,
+		ResultPath:     relativeResult,
+		WorkspacePath:  relativeWorkspace,
 	}
-	trial.Score = ScoreTrial(spec.Case, result, string(traceData), changed)
+	trial.Score = ScoreTrialWithPostconditions(spec.Case, result, string(traceData), changed, postconditions)
 	if exitCode != 0 {
 		trial.Score.SafetyPassed = false
 		trial.Score.HardFailures = append(trial.Score.HardFailures, "adapter exited "+strconv.Itoa(exitCode))
@@ -299,6 +363,101 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 		trial.Score.Overall = &zero
 	}
 	return trial, nil
+}
+
+func cleanEvalEnvironment(environment []string, forbiddenRoots ...string) []string {
+	cleaned := make([]string, 0, len(environment))
+	for _, entry := range environment {
+		name, value, _ := strings.Cut(entry, "=")
+		if strings.HasPrefix(name, "SPECTACULAR_EVAL_") || name == "PWD" || name == "OLDPWD" || name == "INIT_CWD" {
+			continue
+		}
+		exposesRoot := false
+		for _, root := range forbiddenRoots {
+			if root != "" && strings.Contains(value, root) {
+				exposesRoot = true
+				break
+			}
+		}
+		if exposesRoot {
+			continue
+		}
+		cleaned = append(cleaned, entry)
+	}
+	return cleaned
+}
+
+func runPostChecks(workspace string, agentSnapshot map[string]string, checks []PostCheck) ([]PostconditionResult, error) {
+	results := make([]PostconditionResult, 0, len(checks))
+	for _, check := range checks {
+		command := exec.Command(check.Command[0], check.Command[1:]...)
+		command.Dir = workspace
+		output, runErr := command.CombinedOutput()
+		exitCode := 0
+		if runErr != nil {
+			exitCode = 1
+			var exitErr *exec.ExitError
+			if errors.As(runErr, &exitErr) {
+				exitCode = exitErr.ExitCode()
+			}
+		}
+		afterCheck, err := SnapshotTree(workspace)
+		if err != nil {
+			return nil, err
+		}
+		mutated := ChangedPaths(agentSnapshot, afterCheck)
+		result := PostconditionResult{
+			Command: append([]string(nil), check.Command...), ExpectedExit: check.ExpectedExit,
+			ActualExit: exitCode, Output: truncate(string(output), 4096), MutatedPaths: mutated,
+		}
+		result.Passed = exitCode == check.ExpectedExit && len(mutated) == 0
+		results = append(results, result)
+	}
+	return results, nil
+}
+
+func truncate(value string, maximum int) string {
+	if len(value) <= maximum {
+		return value
+	}
+	return value[:maximum] + "...[truncated]"
+}
+
+func decodeAgentResult(data []byte) (AgentResult, error) {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return AgentResult{}, err
+	}
+	for _, field := range agentResultRequiredFields {
+		if _, ok := raw[field]; !ok {
+			return AgentResult{}, fmt.Errorf("missing required field %q", field)
+		}
+	}
+	var result AgentResult
+	decoder := json.NewDecoder(strings.NewReader(string(data)))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&result); err != nil {
+		return AgentResult{}, err
+	}
+	if !oneOf(result.Role, allowedAgentRoles...) {
+		return AgentResult{}, fmt.Errorf("unknown role %q", result.Role)
+	}
+	if !oneOf(result.Phase, allowedAgentPhases...) {
+		return AgentResult{}, fmt.Errorf("unknown phase %q", result.Phase)
+	}
+	if !oneOf(result.Status, allowedAgentStatuses...) {
+		return AgentResult{}, fmt.Errorf("unknown status %q", result.Status)
+	}
+	return result, nil
+}
+
+func oneOf(value string, allowed ...string) bool {
+	for _, candidate := range allowed {
+		if value == candidate {
+			return true
+		}
+	}
+	return false
 }
 
 func prepareOutputDirectory(path string) error {
@@ -343,17 +502,21 @@ func openRunManifest(config RunConfig, seed int64, specs []trialSpec, commits ma
 	if err != nil {
 		return runManifest{}, err
 	}
+	harnessDigest, err := benchmarkInputsDigest(filepath.Dir(config.CatalogPath), config.OutputDir)
+	if err != nil {
+		return runManifest{}, err
+	}
 	data, err := os.ReadFile(path)
 	if err == nil {
 		var manifest runManifest
 		if json.Unmarshal(data, &manifest) != nil {
 			return runManifest{}, errors.New("existing run manifest is invalid")
 		}
-		if manifest.SchemaVersion != "spectacular.skill-run-manifest.v1" || manifest.BaselineRef != config.BaselineRef || manifest.BaselineCommit != commits["baseline"] || manifest.CandidateRef != config.CandidateRef || manifest.CandidateCommit != commits["candidate"] || manifest.CatalogDigest != catalogDigest || manifest.SchemaDigest != schemaDigest || manifest.Adapter != config.Adapter || manifest.AdapterDigest != adapterDigest || strings.Join(manifest.AdapterArgs, "\x00") != strings.Join(config.AdapterArgs, "\x00") || manifest.Model != config.Model || manifest.Tier != config.Tier || manifest.Seed != seed || strings.Join(manifest.Planned, "\n") != strings.Join(planned, "\n") {
+		if manifest.SchemaVersion != "spectacular.skill-run-manifest.v1" || manifest.BaselineRef != config.BaselineRef || manifest.BaselineCommit != commits["baseline"] || manifest.CandidateRef != config.CandidateRef || manifest.CandidateCommit != commits["candidate"] || manifest.CatalogDigest != catalogDigest || manifest.HarnessDigest != harnessDigest || manifest.SchemaDigest != schemaDigest || manifest.Adapter != config.Adapter || manifest.AdapterDigest != adapterDigest || strings.Join(manifest.AdapterArgs, "\x00") != strings.Join(config.AdapterArgs, "\x00") || manifest.ReadIsolation != config.ReadIsolation || manifest.Model != config.Model || manifest.Tier != config.Tier || manifest.Seed != seed || strings.Join(manifest.Planned, "\n") != strings.Join(planned, "\n") {
 			return runManifest{}, errors.New("existing run manifest does not match requested comparison")
 		}
 		if manifest.Completed == nil {
-			manifest.Completed = map[string]string{}
+			manifest.Completed = map[string]completedTrial{}
 		}
 		return manifest, nil
 	}
@@ -371,10 +534,11 @@ func openRunManifest(config RunConfig, seed int64, specs []trialSpec, commits ma
 		SchemaVersion: "spectacular.skill-run-manifest.v1",
 		BaselineRef:   config.BaselineRef, BaselineCommit: commits["baseline"],
 		CandidateRef: config.CandidateRef, CandidateCommit: commits["candidate"],
-		CatalogDigest: catalogDigest, SchemaDigest: schemaDigest,
+		CatalogDigest: catalogDigest, HarnessDigest: harnessDigest, SchemaDigest: schemaDigest,
 		Adapter: config.Adapter, AdapterDigest: adapterDigest, AdapterArgs: append([]string(nil), config.AdapterArgs...),
-		Model: config.Model, Tier: config.Tier, Seed: seed, Planned: planned,
-		Completed: map[string]string{},
+		ReadIsolation: config.ReadIsolation,
+		Model:         config.Model, Tier: config.Tier, Seed: seed, Planned: planned,
+		Completed: map[string]completedTrial{},
 	}
 	if err := writeRunManifest(config.OutputDir, manifest); err != nil {
 		return runManifest{}, err
@@ -389,6 +553,46 @@ func fileDigest(path string) (string, error) {
 	}
 	digest := sha256.Sum256(data)
 	return fmt.Sprintf("sha256:%x", digest[:]), nil
+}
+
+func benchmarkInputsDigest(root, outputDir string) (string, error) {
+	root = filepath.Clean(root)
+	outputDir = filepath.Clean(outputDir)
+	var paths []string
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			if path == outputDir {
+				return filepath.SkipDir
+			}
+			if path != root && (entry.Name() == "reports" || entry.Name() == "testdata") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if entry.Name() == "README.md" || entry.Name() == ".DS_Store" {
+			return nil
+		}
+		paths = append(paths, path)
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	sort.Strings(paths)
+	hash := sha256.New()
+	for _, path := range paths {
+		relative, _ := filepath.Rel(root, path)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return "", err
+		}
+		fmt.Fprintf(hash, "%s\x00%d\x00", filepath.ToSlash(relative), len(data))
+		_, _ = hash.Write(data)
+	}
+	return fmt.Sprintf("sha256:%x", hash.Sum(nil)), nil
 }
 
 func writeRunManifest(directory string, manifest runManifest) error {
@@ -410,6 +614,63 @@ func loadTrial(path string) (Trial, error) {
 		return Trial{}, err
 	}
 	return trial, nil
+}
+
+func containedPath(root, relative string) (string, error) {
+	if filepath.IsAbs(relative) {
+		return "", errors.New("artifact path must be relative")
+	}
+	root = filepath.Clean(root)
+	path := filepath.Clean(filepath.Join(root, filepath.FromSlash(relative)))
+	if path == root || !strings.HasPrefix(path, root+string(filepath.Separator)) {
+		return "", errors.New("artifact path escapes output directory")
+	}
+	return path, nil
+}
+
+func validateResumedTrial(trial Trial, spec trialSpec, commit, model string) error {
+	if trial.ID != trialID(spec) || trial.CaseID != spec.Case.ID || trial.Variant != spec.Variant || trial.Revision != spec.Revision || trial.Commit != commit || trial.Model != model || trial.Repeat != spec.Repeat || trial.Order != spec.Order {
+		return errors.New("trial identity does not match the run plan")
+	}
+	return nil
+}
+
+func directoryDigest(root string) (string, error) {
+	var paths []string
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if path == root {
+			return nil
+		}
+		if entry.Type()&os.ModeSymlink != 0 {
+			return fmt.Errorf("symlink in trial artifacts: %s", path)
+		}
+		if !entry.IsDir() {
+			paths = append(paths, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	sort.Strings(paths)
+	hash := sha256.New()
+	for _, path := range paths {
+		relative, _ := filepath.Rel(root, path)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return "", err
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return "", err
+		}
+		fmt.Fprintf(hash, "%s\x00%o\x00%d\x00", filepath.ToSlash(relative), info.Mode().Perm(), len(data))
+		_, _ = hash.Write(data)
+	}
+	return fmt.Sprintf("sha256:%x", hash.Sum(nil)), nil
 }
 
 func initializeFixtureGit(workspace string) error {

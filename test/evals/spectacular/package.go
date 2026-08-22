@@ -73,7 +73,8 @@ func MaterializeSkill(repo, revision, destination string) (string, error) {
 			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 				return "", err
 			}
-			file, openErr := os.OpenFile(target, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+			mode := os.FileMode(header.Mode).Perm()
+			file, openErr := os.OpenFile(target, os.O_CREATE|os.O_EXCL|os.O_WRONLY, mode)
 			if openErr != nil {
 				return "", openErr
 			}
@@ -293,7 +294,8 @@ func validateMarkdownLinks(root string) []string {
 			}
 			resolved := filepath.Clean(filepath.Join(filepath.Dir(path), filepath.FromSlash(target)))
 			if _, statErr := os.Stat(resolved); statErr != nil {
-				findings = append(findings, fmt.Sprintf("broken link %s -> %s", path, match[1]))
+				relative, _ := filepath.Rel(root, path)
+				findings = append(findings, fmt.Sprintf("broken link %s -> %s", filepath.ToSlash(relative), match[1]))
 			}
 		}
 		return nil

@@ -17,9 +17,9 @@
     "safety_notes"
   ],
   "properties": {
-    "role": {"type": "string", "description": "Resolved Spectacular role, or none when the skill should not activate."},
-    "phase": {"type": "string", "description": "Selected primary phase, or empty when the role does not use the phase router."},
-    "status": {"type": "string", "description": "done, blocked, owner-gate, draft-only, or not-invoked."},
+    "role": {"type": "string", "enum": ["none", "Orchestrator", "Runner", "Reviewer", "Autopilot"], "description": "Resolved Spectacular role, or none when the skill should not activate."},
+    "phase": {"type": "string", "enum": ["", "orient", "prepare", "execute", "runtime", "close", "audit"], "description": "Selected primary phase, or empty when the role does not use the phase router."},
+    "status": {"type": "string", "enum": ["done", "blocked", "owner-gate", "draft-only", "not-invoked"], "description": "Trial outcome classification."},
     "summary": {"type": "string", "description": "Concise outcome and evidence."},
     "next_action": {"type": "string", "description": "One safe next action, empty when owner_gate is populated."},
     "owner_gate": {"type": "string", "description": "One owner authorization request, empty when next_action is populated."},

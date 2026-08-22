@@ -51,22 +51,38 @@ type Case struct {
 }
 
 type Expectation struct {
-	Role                  string   `json:"role,omitempty"`
-	ForbiddenRoles        []string `json:"forbidden_roles,omitempty"`
-	Phase                 string   `json:"phase,omitempty"`
-	Status                string   `json:"status,omitempty"`
-	ForbiddenStatuses     []string `json:"forbidden_statuses,omitempty"`
-	RequiredOutputTerms   []string `json:"required_output_terms,omitempty"`
-	ForbiddenAnyTerms     []string `json:"forbidden_any_terms,omitempty"`
-	RequiredTraceTerms    []string `json:"required_trace_terms,omitempty"`
-	ForbiddenTraceTerms   []string `json:"forbidden_trace_terms,omitempty"`
-	ExpectedReferences    []string `json:"expected_references,omitempty"`
-	ForbiddenReads        []string `json:"forbidden_reads,omitempty"`
-	AllowedChangedPaths   []string `json:"allowed_changed_paths,omitempty"`
-	ForbiddenChangedPaths []string `json:"forbidden_changed_paths,omitempty"`
-	MaximumOwnerQuestions *int     `json:"maximum_owner_questions,omitempty"`
-	ExactlyOnePrimaryRef  bool     `json:"exactly_one_primary_reference,omitempty"`
-	RequireSingleReturn   bool     `json:"require_single_return,omitempty"`
+	Role                  string      `json:"role,omitempty"`
+	ForbiddenRoles        []string    `json:"forbidden_roles,omitempty"`
+	Phase                 string      `json:"phase,omitempty"`
+	Status                string      `json:"status,omitempty"`
+	ForbiddenStatuses     []string    `json:"forbidden_statuses,omitempty"`
+	RequiredOutputTerms   []string    `json:"required_output_terms,omitempty"`
+	RequiredCommands      []string    `json:"required_commands,omitempty"`
+	ForbiddenAnyTerms     []string    `json:"forbidden_any_terms,omitempty"`
+	RequiredTraceTerms    []string    `json:"required_trace_terms,omitempty"`
+	ForbiddenTraceTerms   []string    `json:"forbidden_trace_terms,omitempty"`
+	ExpectedReferences    []string    `json:"expected_references,omitempty"`
+	ForbiddenReads        []string    `json:"forbidden_reads,omitempty"`
+	AllowedChangedPaths   []string    `json:"allowed_changed_paths,omitempty"`
+	ForbiddenChangedPaths []string    `json:"forbidden_changed_paths,omitempty"`
+	MaximumOwnerQuestions *int        `json:"maximum_owner_questions,omitempty"`
+	ExactlyOnePrimaryRef  bool        `json:"exactly_one_primary_reference,omitempty"`
+	RequireSingleReturn   bool        `json:"require_single_return,omitempty"`
+	PostChecks            []PostCheck `json:"post_checks,omitempty"`
+}
+
+type PostCheck struct {
+	Command      []string `json:"command"`
+	ExpectedExit int      `json:"expected_exit"`
+}
+
+type PostconditionResult struct {
+	Command      []string `json:"command"`
+	ExpectedExit int      `json:"expected_exit"`
+	ActualExit   int      `json:"actual_exit"`
+	Output       string   `json:"output,omitempty"`
+	MutatedPaths []string `json:"mutated_paths,omitempty"`
+	Passed       bool     `json:"passed"`
 }
 
 type AgentResult struct {
@@ -99,34 +115,40 @@ type TrialScore struct {
 }
 
 type Trial struct {
-	ID            string       `json:"id"`
-	CaseID        string       `json:"case_id"`
-	Tags          []string     `json:"tags,omitempty"`
-	Variant       string       `json:"variant"`
-	Revision      string       `json:"revision"`
-	Commit        string       `json:"commit"`
-	Model         string       `json:"model"`
-	Repeat        int          `json:"repeat"`
-	Order         int          `json:"order"`
-	StartedAt     time.Time    `json:"started_at"`
-	DurationMS    int64        `json:"duration_ms"`
-	ExitCode      int          `json:"exit_code"`
-	Result        AgentResult  `json:"result"`
-	ChangedPaths  []string     `json:"changed_paths"`
-	TraceMetrics  TraceMetrics `json:"trace_metrics"`
-	TracePath     string       `json:"trace_path"`
-	ResultPath    string       `json:"result_path"`
-	WorkspacePath string       `json:"workspace_path"`
-	Score         TrialScore   `json:"score"`
+	ID             string                `json:"id"`
+	CaseID         string                `json:"case_id"`
+	Tags           []string              `json:"tags,omitempty"`
+	Variant        string                `json:"variant"`
+	Revision       string                `json:"revision"`
+	Commit         string                `json:"commit"`
+	Model          string                `json:"model"`
+	Repeat         int                   `json:"repeat"`
+	Order          int                   `json:"order"`
+	StartedAt      time.Time             `json:"started_at"`
+	DurationMS     int64                 `json:"duration_ms"`
+	ExitCode       int                   `json:"exit_code"`
+	Result         AgentResult           `json:"result"`
+	ChangedPaths   []string              `json:"changed_paths"`
+	Postconditions []PostconditionResult `json:"postconditions,omitempty"`
+	TraceMetrics   TraceMetrics          `json:"trace_metrics"`
+	TracePath      string                `json:"trace_path"`
+	ResultPath     string                `json:"result_path"`
+	WorkspacePath  string                `json:"workspace_path"`
+	Score          TrialScore            `json:"score"`
 }
 
 type TraceMetrics struct {
-	UsageObserved     bool `json:"usage_observed"`
-	InputTokens       int  `json:"input_tokens"`
-	CachedInputTokens int  `json:"cached_input_tokens"`
-	OutputTokens      int  `json:"output_tokens"`
-	ToolCalls         int  `json:"tool_calls"`
-	Events            int  `json:"events"`
+	UsageObserved      bool     `json:"usage_observed"`
+	InputTokens        int      `json:"input_tokens"`
+	CachedInputTokens  int      `json:"cached_input_tokens"`
+	OutputTokens       int      `json:"output_tokens"`
+	ToolCalls          int      `json:"tool_calls"`
+	Events             int      `json:"events"`
+	SemanticEvents     int      `json:"semantic_events"`
+	SemanticObserved   bool     `json:"semantic_observed"`
+	ObservedFiles      []string `json:"observed_files,omitempty"`
+	ObservedReferences []string `json:"observed_references,omitempty"`
+	ObservedCommands   []string `json:"observed_commands,omitempty"`
 }
 
 type PackageStats struct {
@@ -163,17 +185,19 @@ type StaticDelta struct {
 }
 
 type RunReport struct {
-	SchemaVersion string     `json:"schema_version"`
-	GeneratedAt   time.Time  `json:"generated_at"`
-	BaselineRef   string     `json:"baseline_ref"`
-	CandidateRef  string     `json:"candidate_ref"`
-	Model         string     `json:"model"`
-	Tier          string     `json:"tier"`
-	Seed          int64      `json:"seed"`
-	Thresholds    Thresholds `json:"thresholds"`
-	Trials        []Trial    `json:"trials"`
-	Summary       RunSummary `json:"summary"`
-	Limitations   []string   `json:"limitations,omitempty"`
+	SchemaVersion      string     `json:"schema_version"`
+	GeneratedAt        time.Time  `json:"generated_at"`
+	BaselineRef        string     `json:"baseline_ref"`
+	CandidateRef       string     `json:"candidate_ref"`
+	Model              string     `json:"model"`
+	ReadIsolation      string     `json:"read_isolation"`
+	Tier               string     `json:"tier"`
+	Seed               int64      `json:"seed"`
+	MinimumRepetitions int        `json:"minimum_repetitions"`
+	Thresholds         Thresholds `json:"thresholds"`
+	Trials             []Trial    `json:"trials"`
+	Summary            RunSummary `json:"summary"`
+	Limitations        []string   `json:"limitations,omitempty"`
 }
 
 type RunSummary struct {

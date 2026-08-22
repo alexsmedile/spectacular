@@ -12,6 +12,4 @@ Compact routing only. Read canonical sources for authority; [catalog.md](catalog
 
 ## Current work
 
-| Mission | Outcome | Source |
-|---|---|---|
-| `M16` | Build and benchmark the bounded charter engine | `.spectacular/missions/M16-build-and-benchmark-the-bounded-charter-engine/M16-build-and-benchmark-the-bounded-charter-engine.md` |
+No active Mission is recorded. Prepare a bounded Mission before consequential work.

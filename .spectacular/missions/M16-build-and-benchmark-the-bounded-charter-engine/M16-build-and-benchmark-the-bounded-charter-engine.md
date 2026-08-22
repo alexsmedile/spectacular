@@ -2,9 +2,9 @@
 type: Mission
 id: 01a02b9d-8290-7ec3-8098-be9bcd2e11dd
 title: Build and benchmark the bounded charter engine
-status: active
+status: completed
 created: "2026-08-22T22:36:31Z"
-updated: "2026-08-22T22:40:22Z"
+updated: "2026-08-22T22:40:37Z"
 activation:
     at: "2026-08-22T22:36:31Z"
     by: Alex
@@ -42,6 +42,12 @@ completion:
     - claim: context-reduction-benchmark-proven
       pass_boundary: Paired benchmark run against M14 fixtures demonstrates at least 40% reduction in total context ingestion with zero regression in safety, routing, task success, or decision fidelity.
       proof_requirement: Benchmark report outputs paired telemetry with envelope, source, and diagnostic token breakdowns and zero regression status.
+completion_record:
+    at: "2026-08-22T22:40:37Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: b6d4bf72a70e2d5edf9447ca21bfa1fca6f04171
 contract:
     fingerprint: sha256:332adfc32551aba44a790add44aa6db92ed86bafe08799269641657cd9e1db52
     ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -73,6 +79,11 @@ owner: Alex
 ref: M16
 repair_budget: 2
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m16-charter-compiler-and-effectiveness-benchmark-proof.md
+      id: 01a02b9e-5198-782f-b057-902764cc31c4
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a02b9d-8290-77aa-a1c3-85b2d5e6c94c
@@ -80,7 +91,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-22T22:36:31Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - internal/charter/

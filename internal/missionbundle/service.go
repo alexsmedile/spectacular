@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -365,48 +366,78 @@ func (s Service) Run(ref string) (Run, *Bundle, error) {
 	return Run{}, nil, domain.NewRefusal(domain.RefusalRecordNotFound, "ref", "Run does not exist in Mission", nil)
 }
 
-func (s Service) StartRun(missionRef, title string) (Result, error) {
+func (s Service) StartRun(targetRef, title string) (Result, error) {
 	locked, unlock, err := s.beginMutation()
 	if err != nil {
 		return Result{}, err
 	}
 	defer unlock()
-	return locked.startRun(missionRef, title)
+	return locked.startRun(targetRef, title)
 }
 
-func (s Service) startRun(missionRef, title string) (Result, error) {
+func (s Service) startRun(targetRef, title string) (Result, error) {
+	parts := strings.Split(targetRef, "/")
+	missionRef := parts[0]
+	targetObjective := ""
+	if len(parts) > 1 {
+		targetObjective = parts[1]
+	}
+
 	bundle, err := Load(s.Workspace, missionRef)
 	if err != nil {
 		return Result{}, err
 	}
-	if bundle.Legacy || bundle.Status != "active" || strings.TrimSpace(title) == "" {
-		return Result{}, invalid("run", "new Run requires an active compact Mission and title")
+	if bundle.Legacy || bundle.Status != "active" {
+		return Result{}, invalid("run", "new Run requires an active compact Mission")
+	}
+	if strings.TrimSpace(title) == "" {
+		if targetObjective != "" {
+			title = "Run for " + targetObjective
+		} else {
+			return Result{}, invalid("run", "new Run requires an active compact Mission and title")
+		}
 	}
 	if _, err := Validate(s.Workspace, bundle); err != nil {
 		return Result{}, err
 	}
+
+	if targetObjective != "" {
+		objFound := false
+		for _, obj := range bundle.Objectives {
+			if obj.Ref == targetObjective || obj.ID == targetObjective {
+				objFound = true
+				break
+			}
+		}
+		if !objFound {
+			return Result{}, invalid("objective", fmt.Sprintf("objective %s not found in mission %s", targetObjective, missionRef))
+		}
+		for _, r := range allRuns(bundle) {
+			if (r.CurrentObjective == targetObjective || r.Objective == targetObjective) && (r.Status == "active" || r.Status == "paused" || r.Status == "blocked" || r.Status == "awaiting-review") {
+				return Result{}, domain.NewRefusal(domain.RefusalCollision, "objective", fmt.Sprintf("objective %s already has an active run reserving it (%s in state %s)", targetObjective, r.Ref, r.Status), nil)
+			}
+		}
+	}
+
 	runs := allRuns(bundle)
-	if len(runs) == 0 {
+	if len(runs) == 0 && targetObjective == "" {
 		return Result{}, invalid("run", "Mission has no current Run")
 	}
-	last := runs[len(runs)-1]
-	if last.Status == "active" && last.Title == title {
-		path := bundle.Path
-		if last.File != "" {
-			path = filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), last.File))
-		}
-		return Result{Operation: "run.start", Ref: bundle.Ref + "/" + last.Ref, Path: path}, nil
-	}
-	for _, run := range runs {
-		if run.Status == "active" || run.Status == "awaiting-review" {
-			// Starting a new execution boundary closes the preceding one.
+	if len(runs) > 0 {
+		last := runs[len(runs)-1]
+		if last.Status == "active" && last.Title == title {
+			path := bundle.Path
+			if last.File != "" {
+				path = filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), last.File))
+			}
+			return Result{Operation: "run.start", Ref: bundle.Ref + "/" + last.Ref, Path: path}, nil
 		}
 	}
 	docs := []*workspace.Document{}
 	paths := map[domain.ID]string{bundle.document.Record.ID: bundle.Path}
 	pointers := make([]Run, 0, len(runs)+1)
 	for _, run := range runs {
-		if run.Status != "completed" {
+		if run.Status != "completed" && run.Status != "stopped" {
 			run.Status = "completed"
 		}
 		if run.File == "" {
@@ -416,7 +447,7 @@ func (s Service) startRun(missionRef, title string) (Result, error) {
 			}
 			docs = append(docs, doc)
 			paths[doc.Record.ID] = path
-			run = Run{Ref: run.Ref, ID: run.ID, File: strings.TrimPrefix(path, filepath.ToSlash(filepath.Dir(bundle.Path))+"/")}
+			run = Run{Ref: run.Ref, ID: run.ID, File: strings.TrimPrefix(path, filepath.ToSlash(filepath.Dir(bundle.Path))+"/"), Status: run.Status}
 		} else {
 			absolute, pathErr := containedFile(filepath.Dir(bundle.entry.Absolute), run.File)
 			if pathErr != nil {
@@ -426,10 +457,10 @@ func (s Service) startRun(missionRef, title string) (Result, error) {
 			if readErr != nil {
 				return Result{}, readErr
 			}
-			doc.Record.Status = stringPtr("completed")
+			doc.Record.Status = stringPtr(run.Status)
 			docs = append(docs, doc)
 			paths[doc.Record.ID] = filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), run.File))
-			run = Run{Ref: run.Ref, ID: run.ID, File: run.File}
+			run = Run{Ref: run.Ref, ID: run.ID, File: run.File, Status: run.Status}
 		}
 		pointers = append(pointers, run)
 	}
@@ -438,18 +469,21 @@ func (s Service) startRun(missionRef, title string) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	current := nextObjective(bundle.Objectives)
+	current := targetObjective
 	if current == "" {
+		current = nextObjective(bundle.Objectives)
+	}
+	if current == "" && len(bundle.Objectives) > 0 {
 		current = bundle.Objectives[len(bundle.Objectives)-1].Ref
 	}
-	next := Run{Ref: nextRef, ID: nextID.String(), Title: title, Status: "active", Operator: bundle.Owner, StartedAt: s.now(), CurrentObjective: current}
+	next := Run{Ref: nextRef, ID: nextID.String(), Title: title, Status: "active", Operator: bundle.Owner, StartedAt: s.now(), CurrentObjective: current, Objective: current}
 	doc, nextPath, err := runDocument(bundle, next, title)
 	if err != nil {
 		return Result{}, err
 	}
 	docs = append(docs, doc)
 	paths[doc.Record.ID] = nextPath
-	pointers = append(pointers, Run{Ref: next.Ref, ID: next.ID, File: strings.TrimPrefix(nextPath, filepath.ToSlash(filepath.Dir(bundle.Path))+"/")})
+	pointers = append(pointers, Run{Ref: next.Ref, ID: next.ID, File: strings.TrimPrefix(nextPath, filepath.ToSlash(filepath.Dir(bundle.Path))+"/"), Status: "active"})
 	workspace.Delete(bundle.document, "run")
 	workspace.SetValue(bundle.document, "runs", pointers)
 	bundle.document.Record.Updated = stringPtr(s.now())

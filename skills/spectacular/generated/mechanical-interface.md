@@ -15,7 +15,8 @@ Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1
 | `spectacular objective promote` | `<mission-ref>/<objective-ref> [--json]` | `spectacular.objective.promote.v2` | `mutating` |
 | `spectacular objective finish` | `<mission-ref>/<objective-ref> [--json]` | `spectacular.objective.finish.v2` | `mutating` |
 | `spectacular run show` | `<mission-ref>/<run-ref> [--json]` | `spectacular.run.show.v2` | `read-only` |
-| `spectacular run start` | `<mission-ref> --title <title> [--json]` | `spectacular.run.start.v2` | `mutating` |
+| `spectacular run start` | `<mission-ref>[/<objective-ref>] --title <title> [--json]` | `spectacular.run.start.v2` | `mutating` |
+| `spectacular run transition` | `<target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>] [--json]` | `spectacular.run.transition.v2` | `mutating` |
 | `spectacular review record` | `<mission-ref> <review.md|-> [--json]` | `spectacular.review.record.v2` | `mutating` |
 | `spectacular handoff record` | `<mission-ref> <handoff.md|-> --by <sender> [--json]` | `spectacular.handoff.record.v2` | `mutating` |
 | `spectacular mission complete` | `<ref> --by <owner> [--json]` | `spectacular.mission.complete.v2` | `mutating` |

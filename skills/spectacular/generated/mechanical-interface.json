@@ -52,8 +52,14 @@
     },
     {
       "command": "spectacular run start",
-      "arguments": "<mission-ref> --title <title> [--json]",
+      "arguments": "<mission-ref>[/<objective-ref>] --title <title> [--json]",
       "schema": "spectacular.run.start.v2",
+      "effect": "mutating"
+    },
+    {
+      "command": "spectacular run transition",
+      "arguments": "<target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>] [--json]",
+      "schema": "spectacular.run.transition.v2",
       "effect": "mutating"
     },
     {

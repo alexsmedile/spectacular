@@ -16,18 +16,18 @@ import (
 )
 
 func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
-	// Sixteen commands. M17 authorized charter and atomic decide.
+	// Seventeen commands. M18 authorized run transition.
 	want := []string{
 		"mission start", "mission show", "mission check", "objective show", "objective promote",
-		"objective finish", "run show", "run start", "review record", "handoff record",
+		"objective finish", "run show", "run start", "run transition", "review record", "handoff record",
 		"mission complete", "proposal check", "campaign check", "contract amend",
 		"charter", "decide",
 	}
 	if len(Registry) != len(want) {
 		t.Fatalf("registry has %d commands, want %d", len(Registry), len(want))
 	}
-	if len(want) != 16 {
-		t.Fatalf("the public surface is %d commands; owner authorized charter and decide as 15 and 16", len(want))
+	if len(want) != 17 {
+		t.Fatalf("the public surface is %d commands; owner authorized run transition as 17", len(want))
 	}
 	for i, spec := range Registry {
 		if got := strings.Join(spec.Words, " "); got != want[i] {

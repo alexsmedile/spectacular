@@ -7,7 +7,7 @@ status: current
 owner: Alex
 created: "2026-08-16T10:31:30Z"
 updated: "2026-08-16T10:38:58Z"
-contract_version: "4"
+contract_version: "5"
 
 purpose: Supply deterministic Mission mechanics where exact repeated enforcement saves LLM work, tokens, and recovery cost.
 outcome: The plan supplies meaning, the CLI supplies invariants, and both operate one canonical compact Mission bundle without duplicate vocabularies or ceremony.
@@ -48,7 +48,8 @@ command_surface:
   - objective promote <mission-ref>/<objective-ref>
   - objective finish <mission-ref>/<objective-ref>
   - run show <mission-ref>/<run-ref>
-  - run start <mission-ref> --title <title>
+  - run start <mission-ref>[/<objective-ref>] --title <title>
+  - run transition <target-ref> --to <state> --by <actor> --reason <text>
   - review record <mission-ref> <review.md|->
   - handoff record <mission-ref> <handoff.md|-> --by <sender>
   - mission complete <ref> --by <owner>

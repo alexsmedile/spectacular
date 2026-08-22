@@ -36,6 +36,7 @@ const (
 	twoByOption
 	amendOptions
 	atLeastOne
+	transitionOptions
 )
 
 type operation uint8
@@ -49,6 +50,7 @@ const (
 	opObjectiveFinish
 	opRunShow
 	opRunStart
+	opRunTransition
 	opReviewRecord
 	opHandoffRecord
 	opMissionComplete
@@ -176,13 +178,23 @@ stops: [scope-drift]
 	},
 	{
 		Words:         []string{"run", "start"},
-		Arguments:     "<mission-ref> --title <title> [--json]",
+		Arguments:     "<mission-ref>[/<objective-ref>] --title <title> [--json]",
 		ArgumentShape: titleOption,
 		JSONSchema:    "spectacular.run.start.v2",
 		Effect:        Mutating,
 		Operation:     opRunStart,
-		Description:   "Starts a new execution Run under an active Mission.",
+		Description:   "Starts a new execution Run under an active Mission or Objective.",
 		OutputType:    "Run",
+	},
+	{
+		Words:         []string{"run", "transition"},
+		Arguments:     "<target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>] [--json]",
+		ArgumentShape: transitionOptions,
+		JSONSchema:    "spectacular.run.transition.v2",
+		Effect:        Mutating,
+		Operation:     opRunTransition,
+		Description:   "Transitions an active, paused, or blocked Run to a new state with mandatory attribution.",
+		OutputType:    "TransitionResult",
 	},
 	{
 		Words:         []string{"review", "record"},
@@ -509,6 +521,16 @@ func (r Runner) Run(args []string) int {
 			break
 		}
 		value, err = service.RecordDecision(inputPath(r.Cwd, rest[0]), stdin)
+	case opRunTransition:
+		targetRef := rest[0]
+		toState := rest[2]
+		actor := rest[4]
+		reason := rest[6]
+		nextAction := ""
+		if len(rest) == 9 {
+			nextAction = rest[8]
+		}
+		value, err = service.TransitionRun(targetRef, toState, actor, reason, nextAction)
 	}
 	if err != nil {
 		return r.refuse(jsonMode, invoked, err)
@@ -569,6 +591,16 @@ func validateArguments(spec Spec, args []string) string {
 	case atLeastOne:
 		if len(args) < 1 || args[0] == "" {
 			return "requires at least one argument"
+		}
+	case transitionOptions:
+		if len(args) < 7 || args[0] == "" || args[1] != "--to" || args[2] == "" || args[3] != "--by" || args[4] == "" || args[5] != "--reason" || args[6] == "" {
+			return "requires <target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>]"
+		}
+		if len(args) == 9 && (args[7] != "--next-action" || args[8] == "") {
+			return "requires [--next-action <action>]"
+		}
+		if len(args) != 7 && len(args) != 9 {
+			return "requires <target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>]"
 		}
 	default:
 		return "command registry has an invalid argument shape"
@@ -794,6 +826,11 @@ func renderHuman(writer io.Writer, value any) {
 		if len(item.Unblocked) > 0 {
 			fmt.Fprintf(writer, "Unblocked objectives: %s\n", strings.Join(item.Unblocked, ", "))
 		}
+		for _, changed := range item.Changed {
+			fmt.Fprintf(writer, "  updated: %s\n", changed)
+		}
+	case missionbundle.TransitionResult:
+		fmt.Fprintf(writer, "Transitioned run %s (%s -> %s)\nBy: %s\nReason: %s\nPath: %s\n", item.Ref, item.From, item.To, item.By, item.Reason, item.Path)
 		for _, changed := range item.Changed {
 			fmt.Fprintf(writer, "  updated: %s\n", changed)
 		}

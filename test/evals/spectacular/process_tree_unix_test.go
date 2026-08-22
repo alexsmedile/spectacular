@@ -4,9 +4,7 @@ package spectaculareval
 
 import (
 	"context"
-	"errors"
 	"os/exec"
-	"syscall"
 	"testing"
 	"time"
 )
@@ -25,7 +23,11 @@ func TestTrialCancellationKillsAdapterProcessGroup(t *testing.T) {
 	if command.Process == nil {
 		t.Fatal("adapter process never started")
 	}
-	if err := syscall.Kill(-command.Process.Pid, 0); !errors.Is(err, syscall.ESRCH) {
-		t.Fatalf("adapter process group survived cancellation: %v", err)
+	alive, checkErr := processGroupHasLiveMember(command.Process.Pid)
+	if checkErr != nil {
+		t.Fatalf("inspect adapter process group: %v", checkErr)
+	}
+	if alive {
+		t.Fatal("adapter process group retained a live member after cancellation")
 	}
 }

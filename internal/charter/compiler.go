@@ -83,36 +83,14 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 	}
 
 	// 2. Resolve Sources in Strict Declaration Order: Bound Contract -> Mission sources -> Objective sources -> extraSources
-	rawSourceRefs := make([]string, 0, 4+len(targetObj.Sources)+len(extraSources))
-	if bundle.Contract.Ref != "" {
-		rawSourceRefs = append(rawSourceRefs, bundle.Contract.Ref)
-	}
-
-	// Check Mission frontmatter for optional `sources:`
+	// Check Mission frontmatter for optional `sources:`.
+	var missionSources []string
 	if missionDoc := missionEntry.Document; missionDoc != nil {
-		if missionSources, err := workspace.Strings(missionDoc, "sources", false); err == nil && len(missionSources) > 0 {
-			rawSourceRefs = append(rawSourceRefs, missionSources...)
+		if sources, err := workspace.Strings(missionDoc, "sources", false); err == nil {
+			missionSources = sources
 		}
 	}
-
-	// Add Objective-level sources
-	if len(targetObj.Sources) > 0 {
-		rawSourceRefs = append(rawSourceRefs, targetObj.Sources...)
-	}
-
-	// Add invocation sources
-	rawSourceRefs = append(rawSourceRefs, extraSources...)
-
-	// Deduplicate preserving order
-	seenSources := make(map[string]bool)
-	orderedSources := make([]string, 0, len(rawSourceRefs))
-	for _, s := range rawSourceRefs {
-		s = strings.TrimSpace(s)
-		if s != "" && !seenSources[s] {
-			seenSources[s] = true
-			orderedSources = append(orderedSources, s)
-		}
-	}
+	orderedSources := declaredSourceRefs(bundle.Contract.Ref, missionSources, targetObj.Sources, extraSources)
 
 	// 3. Build Layer 2: Owner Steering & Layer 3: Perimeter
 	var boundSources []BoundSource

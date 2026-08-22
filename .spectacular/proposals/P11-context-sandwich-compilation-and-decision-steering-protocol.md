@@ -139,10 +139,13 @@ An asynchronous background Runner can **only** start when all four gates pass:
 │ • All upstream Objectives marked DONE with Evidence receipt │
 ├─────────────────────────────────────────────────────────────┤
 │ GATE 3: Bounded Charter Compiled (Context Sandwich)         │
-│ • Scope, 2-4 target files, and pass_boundary frozen         │
+│ • Scope, 2-4 target files, manifest allowance & pass_bound  │
 ├─────────────────────────────────────────────────────────────┤
 │ GATE 4: Clean Physical Isolation                            │
-│ • Separate Git worktree allocated on a dedicated branch     │
+│ • Separate Git worktree allocated on a unique branch path   │
+├─────────────────────────────────────────────────────────────┤
+│ GATE 5: Zero Open Decision Collision                        │
+│ • No active Open: decision intersects target file perimeter │
 └─────────────────────────────────────────────────────────────┘
                              │
                              ▼
@@ -151,32 +154,36 @@ An asynchronous background Runner can **only** start when all four gates pass:
 
 #### Mechanical Enforcement Layers
 1. **Typed CLI Gatekeeper (`spectacular mission check`)**: Rejects execution attempts if declared dependencies, Git baseline, or contract bindings are unmet (`exit_status: 3`, zero mutation).
-2. **Physical Git Isolation (`git worktree add`)**: Workers run in detached working directories (`../<repo>-<purpose>`), eliminating concurrent file mutation and branch-lock hazards on `main`.
-3. **Evidence-Bound Handoff**: A worker cannot self-assert completion; it must emit a machine-verifiable Evidence record with exit code `0` against its failable proof requirement before downstream charters unblock.
+2. **Physical Git Isolation (`git worktree add`)**: Workers run in uniquely named detached working directories (`../<repo>-<mission>-<objective>-<hash>`), eliminating concurrent file mutation and branch-lock hazards on `main`.
+3. **Merge Queue & Post-Merge Verification**: Evidence `exit 0` is verified against the runner tree, serialized into a merge queue for `feat/M<N>`, and immediately re-verified with a post-merge pass-boundary check before Evidence receipt is finalized.
+4. **Evidence-Bound Handoff**: A worker cannot self-assert completion; it must emit a machine-verifiable Evidence record with exit code `0` against its failable proof requirement before downstream charters unblock.
 
 ### 7. Anatomy of a Good Ephemeral Run vs. Circuit-Breaker Stop Gaps
 
 #### Qualities of a Good Ephemeral Run
-- **Tight File Perimeter**: Targets only 2–4 designated files (e.g. `internal/db/schema.go`, `schema_test.go`).
+- **Tight File Perimeter**: Targets only 2–4 designated files (e.g. `internal/db/schema.go`, `schema_test.go`), with authorized manifest/lockfile exemption (`go.mod`, `package.json`).
 - **Failable Verification Target**: Passes a deterministic test command (`exit 0`).
-- **Self-Contained Context**: Operates entirely within its ~1.2k token Context Sandwich without needing out-of-band queries.
-- **Auto-Pruning Lifecycle**: Worktree is automatically deleted (`git worktree remove`) immediately upon Evidence verification and merge.
+- **Self-Contained Context**: Operates entirely within its compiled Context Sandwich without needing out-of-band queries.
+- **Auto-Pruning on Happy Path**: Worktree is automatically pruned (`git worktree remove`) immediately upon post-merge Evidence verification.
 
-#### Automated Stop Gaps (Circuit Breakers)
-When execution deviates from the happy path, four automated stop gaps freeze background work safely:
+#### Automated Stop Gaps & Quarantine Safety
+When execution deviates from the happy path, automated stop gaps freeze background work safely:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ 🛑 AUTOMATED STOP GAPS (Circuit Breakers)                   │
+│ 🛑 AUTOMATED STOP GAPS & QUARANTINE POLICIES                │
 ├─────────────────────────────────────────────────────────────┤
 │ 1. Two-Strike Test Failure                                  │
-│    • 2 failed repair attempts ──► Freeze & ask owner fork.  │
+│    • 2 failed repairs ──► Quarantine to wip/ ref & ask owner│
 │ 2. Scope Escape Lock                                        │
-│    • Edits outside permitted files ──► Revert & reject.     │
-│ 3. Time / Turn Ceiling                                      │
-│    • >15 min elapsed or >10 turns ──► SIGTERM worker.       │
+│    • Edits outside permitted files/manifests ──► Revert.    │
+│ 3. Heartbeat Watchdog & Cost Ceiling                        │
+│    • >15 min wall-clock or token ceiling ──► SIGTERM & reap │
 │ 4. Merge Conflict Interceptor                               │
-│    • Branch merge conflict ──► Preserve worktree & prompt.  │
+│    • Branch merge conflict ──► Quarantine worktree & prompt.│
+│ 5. Strict Quarantine Policy (No Silent --force)             │
+│    • Dirty/failed trees are committed to wip/ ref, NEVER    │
+│      destroyed with git worktree remove --force.            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -295,21 +302,21 @@ To eliminate annoying, low-IQ grilling (e.g. asking obvious table-stakes questio
 ```
 
 #### Class 1: Assumption Baseline (Table Stakes / The "Pushback Card")
-- **Definition**: Obvious security baselines, standard HTTP status codes, sane defaults.
-- **Rule**: Never ask as an open question. Present as a consolidated statement:
-  *"I am proceeding with these baseline assumptions: (1) Argon2id password hashing, (2) Photos scoped to `user_id` with 403 on foreign access. Any pushback before I start?"*
-- **Action**: Zero effort required from owner (silence or `Proceed` locks all assumptions).
+- **Definition**: Strictly non-architectural hygiene (standard HTTP error envelopes, kebab-case URLs, standard lint formatting).
+- **Hard Anti-Laundering Boundary**: Agents are strictly forbidden from placing auth schemes (e.g. JWT vs Sessions), hashing algorithms (Argon2id vs bcrypt), data-isolation boundaries (tenant column vs RLS), or financial/billing logic into Class 1. All such choices are **strictly Class 2 Structural Forks**.
+- **Rule**: Present as a consolidated hygiene statement (*"I am proceeding with standard JSON error responses `{error, message}` and UTC timestamp formatting. Any pushback before I start?"*).
+- **Execution Safety**: When async dispatch is armed, Pushback Cards must be confirmed before any background worker executes on their assumptions. Silence is measured against a quiescent state, never in-flight mutations.
 
 #### Class 2: Structural Architectural Forks (Foundational Bones)
-- **Definition**: Irreversible choices that are expensive to rewrite later (multi-tenancy isolation, sync engine, queue delivery guarantees).
-- **Rule**: Frame as a concise **4-Part Decision Card** with technical basis and recommended default.
+- **Definition**: Irreversible choices that are expensive to rewrite later (multi-tenancy isolation, auth algorithms, sync engine, queue delivery guarantees, adding 3rd-party dependencies).
+- **Rule**: Frame as a concise **4-Part Decision Card** with technical basis, explicit trade-offs, and recommended default. Requires explicit owner selection (`A`, `B`, `C`, or custom guidance) before any worker is chartered.
 
 #### Class 3: Taste & Ergonomics (Look, Feel & Developer Experience)
 - **Definition**: Visual styling, layout density, CLI verbosity, API payload ergonomics.
 - **Rule**: Present as a **Tracer Fragment / Visual Preview Comparison** (3 visual specimens to pick between).
 
 #### Class 4: Operational Invariants (Real-World Constraints)
-- **Definition**: Infrastructure limits, deployment target (Single VPS vs Serverless vs AWS), budget.
+- **Definition**: Infrastructure limits, deployment target (Single VPS vs Serverless vs AWS), budget ceilings.
 - **Rule**: Clear constraint lock card before infrastructure provisioning begins.
 
 ### 12. Quality Assurance, Zero-Regression CI/CD & Verification Architecture

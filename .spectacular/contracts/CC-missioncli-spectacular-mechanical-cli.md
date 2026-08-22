@@ -7,7 +7,7 @@ status: current
 owner: Alex
 created: "2026-08-16T10:31:30Z"
 updated: "2026-08-16T10:38:58Z"
-contract_version: "2"
+contract_version: "3"
 
 purpose: Supply deterministic Mission mechanics where exact repeated enforcement saves LLM work, tokens, and recovery cost.
 outcome: The plan supplies meaning, the CLI supplies invariants, and both operate one canonical compact Mission bundle without duplicate vocabularies or ceremony.
@@ -24,6 +24,7 @@ does_not_provide:
 required_behavior:
   - Decode one typed Mission bundle shared by discovery, validation, projections, and mutations.
   - Treat `MISSION.md` as the bundle entry point and resolve inline or promoted Objectives and Runs to one logical representation.
+  - Support optional ordered typed `sources:` references in Mission and Objective frontmatter as frozen semantic retrieval input.
   - Let Mission plans supply semantic fields while mechanics generate UUIDv7 identities, refs, timestamps, Contract fingerprints, Git baseline, activation, retry identity, and canonical paths.
   - Accept a Mission plan from Markdown file or stdin for routine start; do not require a parallel JSON authoring vocabulary.
   - Treat that plan as command input, not a required persisted Proposal or a second canonical artifact.
@@ -43,14 +44,16 @@ command_surface:
   - mission start <plan.md|->
   - mission show <ref>
   - mission check <ref>
-  - objective show <ref>
-  - objective promote <ref>
-  - objective finish <ref>
-  - run show <ref>
+  - objective show <mission-ref>/<objective-ref>
+  - objective promote <mission-ref>/<objective-ref>
+  - objective finish <mission-ref>/<objective-ref>
+  - run show <mission-ref>/<run-ref>
   - run start <mission-ref> --title <title>
   - review record <mission-ref> <review.md|->
+  - handoff record <mission-ref> <handoff.md|-> --by <sender>
   - mission complete <ref> --by <owner>
   - proposal check <ref>
+  - campaign check <campaign-path>
   - contract amend <contract-ref> --gap <gap-ref> --by <owner>
 
 mandatory_validation:

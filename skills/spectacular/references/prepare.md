@@ -94,10 +94,19 @@ Compare only approaches that genuinely differ and are outcome-sized. Weigh each 
 
 Record one verdict: `sufficient | needs-evidence | needs-decision`.
 
-Then grill only what is still unresolved — criteria, scope, dependencies, risks,
-or blocking Gaps. Do not re-interview settled ground.
+### Upfront Architectural Grilling vs. Progressive Horizon Detailing
+- **Upfront Architectural Grilling**: Settle foundational architectural choices that span multiple blocks (e.g. B1 through B7) early at the Campaign/Decision level. Ask focused decision questions before freezing execution blocks.
+- **Progressive Horizon Detailing**: Detail **only** the active or immediate next Mission block. Downstream blocks (B2–B7) remain lightweight 2–3 line summary cards. Do not waste tokens writing premature, detailed claim matrices for far-future blocks.
 
 ## Freeze a compact Mission preview
+
+### Plan Style & Authoring Invariants
+1. **Anti-Paper Prose**: Write in direct, plain, imperative English. Strictly forbid academic paper style, meta-governance throat-clearing, or decorative preamble.
+2. **Atomic Single-Invariant Claims**: One claim = **one** observable invariant + **one** verifiable proof check. Never combine multiple distinct features or subsystems into a single compound claim.
+3. **Mandatory Actionable Deliverables in Body**: Every Mission body must include a `## Key Deliverables & Actions` section listing:
+   - Exact files to modify or create.
+   - Concrete invariants or diffs to apply.
+   - Exact verification commands to run.
 
 Frontmatter:
 
@@ -124,9 +133,9 @@ Frontmatter:
 
 Markdown body:
 
-- origin and rationale
-- the detailed execution plan
-- conditional bootstrap and review notes
+- `## Purpose & Scope`: Concise 2-3 sentence overview.
+- `## Key Deliverables & Actions`: Direct file-by-file action checklist.
+- origin and rationale, if non-obvious.
 
 A claim is the part most often written too vaguely. It needs a boundary that can
 fail, and a proof that names the test:
@@ -150,6 +159,15 @@ what would demonstrate it. "Works correctly" is neither.
 - **Reproducible scratch fixtures**: A small verification script in `scratch/` testing exact input/output pairs.
 - **Structural / Schema checks**: `spectacular mission check <ref>` validates cleanly; `markdownlint` passes; internal links resolve.
 - The invariant is simply that the proof is **failable, objective, and attributable**—never mere self-assertion.
+
+## Contract Updates: Amend vs. Version Bump
+
+Updating a Contract follows two explicit paths:
+
+| Update Kind | When to Use | Action |
+|---|---|---|
+| **Path A: Amend** | Closing a declared Gap or updating editorial frontmatter | Run `spectacular contract amend <contract-ref> --gap <gap-ref> --by <owner>`. Does not bump `contract_version`. |
+| **Path B: Version Bump** | Changing behavioral invariants, command surfaces, or schema | In an authorized Mission, edit `.spectacular/contracts/<file>.md`, increment `contract_version: "N" -> "N+1"`, and check with `spectacular mission check`. Past missions stay frozen to their old version SHA. |
 
 Present the preview **once**, in chat. Owner confirmation freezes the semantic
 envelope.

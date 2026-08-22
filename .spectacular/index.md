@@ -12,4 +12,6 @@ Compact routing only. Read canonical sources for authority; [catalog.md](catalog
 
 ## Current work
 
-No active Mission is recorded. Prepare a bounded Mission before consequential work.
+| Mission | Outcome | Source |
+|---|---|---|
+| `M15` | Reconcile P11 governance and Contract baselines | `.spectacular/missions/M15-reconcile-p11-governance-and-contract-baselines/M15-reconcile-p11-governance-and-contract-baselines.md` |

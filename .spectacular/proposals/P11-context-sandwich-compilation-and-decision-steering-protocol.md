@@ -126,9 +126,9 @@ sequenceDiagram
 - **Zero Human Idle Time**: While workers build and test confirmed slices in the background, the owner and Orchestrator continue live prompting to clarify and resolve the *next* tranche of decisions.
 - **Continuous Handoff & Chain Assembly**: Completed worker evidence receipts seamlessly feed into the inputs of newly unblocked downstream charters.
 
-### 6. Async Execution Entry Gates & Mechanical Enforcement
+### 6. Asynchronous Execution Entry Gates & Mechanical Enforcement
 
-An asynchronous background Runner can **only** start when all four gates pass:
+An asynchronous background Runner can **only** start when all five gates pass:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -308,15 +308,15 @@ To eliminate annoying, low-IQ grilling (e.g. asking obvious table-stakes questio
 - **Execution Safety**: When async dispatch is armed, Pushback Cards must be confirmed before any background worker executes on their assumptions. Silence is measured against a quiescent state, never in-flight mutations.
 
 #### Class 2: Structural Architectural Forks (Foundational Bones)
-- **Definition**: Irreversible choices that are expensive to rewrite later (multi-tenancy isolation, auth algorithms, sync engine, queue delivery guarantees, adding 3rd-party dependencies).
-- **Rule**: Frame as a concise **4-Part Decision Card** with technical basis, explicit trade-offs, and recommended default. Requires explicit owner selection (`A`, `B`, `C`, or custom guidance) before any worker is chartered.
+- **Definition**: Irreversible choices that are expensive to rewrite later (multi-tenancy isolation, sync engine, queue delivery guarantees).
+- **Rule**: Frame as a concise **4-Part Decision Card** with technical basis and recommended default.
 
 #### Class 3: Taste & Ergonomics (Look, Feel & Developer Experience)
 - **Definition**: Visual styling, layout density, CLI verbosity, API payload ergonomics.
 - **Rule**: Present as a **Tracer Fragment / Visual Preview Comparison** (3 visual specimens to pick between).
 
 #### Class 4: Operational Invariants (Real-World Constraints)
-- **Definition**: Infrastructure limits, deployment target (Single VPS vs Serverless vs AWS), budget ceilings.
+- **Definition**: Infrastructure limits, deployment target (Single VPS vs Serverless vs AWS), budget.
 - **Rule**: Clear constraint lock card before infrastructure provisioning begins.
 
 ### 12. Quality Assurance, Zero-Regression CI/CD & Verification Architecture

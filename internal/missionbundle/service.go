@@ -383,6 +383,9 @@ func (s Service) startRun(targetRef, title string) (Result, error) {
 		targetObjective = parts[1]
 	}
 
+	if err := CheckPassiveGitState(s.Workspace.Root); err != nil {
+		return Result{}, err
+	}
 	bundle, err := Load(s.Workspace, missionRef)
 	if err != nil {
 		return Result{}, err
@@ -402,19 +405,29 @@ func (s Service) startRun(targetRef, title string) (Result, error) {
 	}
 
 	if targetObjective != "" {
-		objFound := false
-		for _, obj := range bundle.Objectives {
-			if obj.Ref == targetObjective || obj.ID == targetObjective {
-				objFound = true
+		var currentObj *Objective
+		for i := range bundle.Objectives {
+			if bundle.Objectives[i].Ref == targetObjective || bundle.Objectives[i].ID == targetObjective {
+				currentObj = &bundle.Objectives[i]
 				break
 			}
 		}
-		if !objFound {
+		if currentObj == nil {
 			return Result{}, invalid("objective", fmt.Sprintf("objective %s not found in mission %s", targetObjective, missionRef))
 		}
 		for _, r := range allRuns(bundle) {
 			if (r.CurrentObjective == targetObjective || r.Objective == targetObjective) && (r.Status == "active" || r.Status == "paused" || r.Status == "blocked" || r.Status == "awaiting-review") {
 				return Result{}, domain.NewRefusal(domain.RefusalCollision, "objective", fmt.Sprintf("objective %s already has an active run reserving it (%s in state %s)", targetObjective, r.Ref, r.Status), nil)
+			}
+		}
+		// Upstream dependency locking
+		if len(currentObj.After) > 0 {
+			for _, depRef := range currentObj.After {
+				for _, r := range allRuns(bundle) {
+					if (r.CurrentObjective == depRef || r.Objective == depRef) && (r.Status == "blocked" || r.Status == "stopped") {
+						return Result{}, domain.NewRefusal(domain.RefusalCollision, "dependency", fmt.Sprintf("cannot start run on %s: upstream dependency %s is in state %s; resolve blocker with owner Decision first", targetObjective, depRef, r.Status), nil)
+					}
+				}
 			}
 		}
 	}
@@ -602,6 +615,9 @@ func (s Service) RecordHandoff(missionRef, path, sender string, stdin []byte) (R
 }
 
 func (s Service) recordHandoff(missionRef, path, sender string, stdin []byte) (Result, error) {
+	if err := CheckPassiveGitState(s.Workspace.Root); err != nil {
+		return Result{}, err
+	}
 	bundle, err := Load(s.Workspace, missionRef)
 	if err != nil {
 		return Result{}, err
@@ -710,8 +726,25 @@ func (s Service) recordHandoff(missionRef, path, sender string, stdin []byte) (R
 	workspace.SetStrings(doc, "assumed", *draft.Assumed)
 	workspace.SetStrings(doc, "stops", draft.Stops)
 	workspace.SetStrings(doc, "returns", draft.Returns)
+	if err := ValidateWritePaths(draft.Writes); err != nil {
+		return Result{}, err
+	}
+	for _, existingPointer := range bundle.Handoffs {
+		if existingPointer.Document != nil && existingPointer.Document.Supersedes == "" && existingPointer.Document.Ref != draft.Supersedes {
+			for _, ew := range existingPointer.Document.Writes {
+				for _, dw := range draft.Writes {
+					if PathsOverlap(dw, ew) {
+						return Result{}, domain.NewRefusal(domain.RefusalInvalidScope, "writes", fmt.Sprintf("cannot reserve write path %q: overlaps with active Handoff %s reservation %q", dw, existingPointer.Ref, ew), nil)
+					}
+				}
+			}
+		}
+	}
 	if draft.Supersedes != "" {
 		workspace.SetString(doc, "supersedes", draft.Supersedes)
+	}
+	if len(draft.Writes) > 0 {
+		workspace.SetStrings(doc, "writes", draft.Writes)
 	}
 	handoffPath, relative, err := s.missionRecordPath(bundle, doc, ref)
 	if err != nil {

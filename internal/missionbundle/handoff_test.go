@@ -270,6 +270,54 @@ func TestNoValidatorScoresAssertedOrAssumedContent(t *testing.T) {
 	}
 }
 
+func TestValidateWritePaths(t *testing.T) {
+	valid := []string{"cmd/spectacular/main.go", "internal/charter/", "docs/architecture.md"}
+	if err := ValidateWritePaths(valid); err != nil {
+		t.Fatalf("expected valid paths to pass, got: %v", err)
+	}
+
+	t.Run("empty path refuses", func(t *testing.T) {
+		err := ValidateWritePaths([]string{"cmd/spectacular", ""})
+		requireRefusal(t, err, domain.RefusalInvalidScope, "writes")
+	})
+
+	t.Run("absolute path refuses", func(t *testing.T) {
+		err := ValidateWritePaths([]string{"/etc/passwd"})
+		requireRefusal(t, err, domain.RefusalPathEscape, "writes")
+	})
+
+	t.Run("parent traversal refuses", func(t *testing.T) {
+		err := ValidateWritePaths([]string{"../secret.txt"})
+		requireRefusal(t, err, domain.RefusalPathEscape, "writes")
+	})
+
+	t.Run("wildcard refuses", func(t *testing.T) {
+		err := ValidateWritePaths([]string{"internal/*.go"})
+		requireRefusal(t, err, domain.RefusalInvalidScope, "writes")
+	})
+}
+
+func TestPathsOverlap(t *testing.T) {
+	tests := []struct {
+		p1, p2 string
+		want   bool
+	}{
+		{"cmd/spectacular", "cmd/spectacular", true},
+		{"internal/charter", "internal/charter/tokenizer", true},
+		{"internal/charter/tokenizer", "internal/charter", true},
+		{"internal/charter/", "internal/charter/compiler.go", true},
+		{"internal/charter", "internal/discovery", false},
+		{"cmd/spectacular", "cmd/assemble-release", false},
+		{"docs/a.md", "docs/b.md", false},
+	}
+	for _, tt := range tests {
+		got := PathsOverlap(tt.p1, tt.p2)
+		if got != tt.want {
+			t.Errorf("PathsOverlap(%q, %q) = %v, want %v", tt.p1, tt.p2, got, tt.want)
+		}
+	}
+}
+
 func requireRefusal(t *testing.T, err error, code domain.RefusalCode, field string) {
 	t.Helper()
 	if err == nil {

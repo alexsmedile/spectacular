@@ -68,6 +68,7 @@ type Handoff struct {
 	Task     string         `json:"task"`
 	Asserted []string       `json:"asserted"`
 	Assumed  []string       `json:"assumed"`
+	Writes   []string       `json:"writes,omitempty"`
 	Stops    []string       `json:"stops"`
 	Returns  []string       `json:"returns"`
 	// Supersedes names the Handoff this one corrects, empty when it corrects
@@ -107,6 +108,7 @@ func decodeHandoff(doc *workspace.Document, path string) (*Handoff, error) {
 	h.Mission, _ = workspace.String(doc, "mission", false)
 	h.Task, _ = workspace.String(doc, "task", false)
 	h.Supersedes, _ = workspace.String(doc, "supersedes", false)
+	h.Writes, _ = workspace.Strings(doc, "writes", false)
 	if err := workspace.DecodeValue(doc, "reviewed", &h.Reviewed); err != nil {
 		return nil, err
 	}
@@ -209,9 +211,47 @@ type HandoffDraft struct {
 	// schema draws on disk. A sender who omits asserted: is told to state it.
 	Asserted   *[]string `yaml:"asserted"`
 	Assumed    *[]string `yaml:"assumed"`
+	Writes     []string  `yaml:"writes,omitempty"`
 	Stops      []string  `yaml:"stops"`
 	Returns    []string  `yaml:"returns"`
 	Supersedes string    `yaml:"supersedes"`
+}
+
+// ValidateWritePaths ensures all write reservation paths are clean relative paths without escapes or wildcards.
+func ValidateWritePaths(paths []string) error {
+	for _, p := range paths {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			return domain.NewRefusal(domain.RefusalInvalidScope, "writes", "write reservation path must not be empty", nil)
+		}
+		if filepath.IsAbs(p) || strings.HasPrefix(p, "/") || strings.HasPrefix(p, "\\") {
+			return domain.NewRefusal(domain.RefusalPathEscape, "writes", "write reservation path must be repository-relative: "+p, nil)
+		}
+		clean := filepath.ToSlash(filepath.Clean(p))
+		if clean == ".." || strings.HasPrefix(clean, "../") {
+			return domain.NewRefusal(domain.RefusalPathEscape, "writes", "write reservation cannot traverse outside repository root: "+p, nil)
+		}
+		if strings.ContainsAny(p, "*?[]") {
+			return domain.NewRefusal(domain.RefusalInvalidScope, "writes", "write reservation must be an exact file or directory, wildcards are forbidden: "+p, nil)
+		}
+	}
+	return nil
+}
+
+// PathsOverlap checks if two repository-relative paths overlap (exact match or parent-child directory relationship).
+func PathsOverlap(p1, p2 string) bool {
+	c1 := strings.TrimSuffix(filepath.ToSlash(filepath.Clean(p1)), "/")
+	c2 := strings.TrimSuffix(filepath.ToSlash(filepath.Clean(p2)), "/")
+	if c1 == c2 {
+		return true
+	}
+	if strings.HasPrefix(c2, c1+"/") {
+		return true
+	}
+	if strings.HasPrefix(c1, c2+"/") {
+		return true
+	}
+	return false
 }
 
 // validateHandoffContent enforces the schema of one Handoff against the Mission
@@ -242,6 +282,9 @@ func validateHandoffContent(h *Handoff, b *Bundle) error {
 	}
 	if len(h.Returns) == 0 {
 		return invalid("handoff.returns", "a Handoff must state what the receiver returns")
+	}
+	if err := ValidateWritePaths(h.Writes); err != nil {
+		return err
 	}
 	// asserted is what the sender claims to have verified. An empty asserted list
 	// is a Handoff that verified nothing, which is a real thing to send but not a

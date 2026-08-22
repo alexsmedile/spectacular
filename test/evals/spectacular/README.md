@@ -15,13 +15,33 @@ This suite compares two complete, immutable Spectacular skill packages. It measu
 
 Static line and word counts are estimates, not observed model context. Actual context claims require an adapter trace with cumulative input-usage counters. Adapters that emit per-turn counters must normalize them; unsupported trace fields are reported as limitations.
 
-Conclusive tool-use scoring also requires one adapter-authored JSONL event per trial:
+Conclusive scoring requires host-observed semantic telemetry. Native Codex JSONL,
+Claude `tool_use` blocks, and normalized adapter events are supported. A custom
+adapter may emit one observation event per trial:
 
 ```json
 {"type":"spectacular.eval.observations","files_read":[],"references_loaded":[],"commands_run":[]}
 ```
 
-The event must come from host/tool telemetry, not the model's final self-report. Without it, behavior scores remain visible but the overall verdict is `inconclusive`. Raw filenames appearing in prompts, kernel text, or command output never count as semantic reads.
+The event must come from host/tool telemetry, not the model's final self-report. Without it, behavior scores remain visible but measurement is `invalid` or `inconclusive`; it is never evidence of improvement. Raw filenames appearing in prompts, kernel text, or command output never count as semantic reads.
+
+Certify a scrubbed trace before spending a multi-call budget:
+
+```sh
+go run ./test/evals/spectacular/cmd/bench adapter-check \
+  --trace path/to/one-call-trace.jsonl
+```
+
+Use `--allow-zero-tools` only when the probe intentionally requires no tool.
+The live runner also checks usage and semantic telemetry after its first trial
+and stops before the second if the adapter is not measurable.
+
+| Adapter | Offline parser coverage | Live status |
+|---|---|---|
+| Codex | native JSONL commands and cumulative usage | certifiable; calibrate per model/version |
+| Claude | native `tool_use` plus cache-aware total context | certifiable; live rerun deferred while quota is unavailable |
+| OpenCode | normalized tool and summed usage events | certifiable; calibrate before comparison |
+| Antigravity / `agy` | structured result only | provisional: self-report is rejected, so a live run stops after one trial until stream telemetry is normalized |
 
 ## Tiers
 
@@ -32,11 +52,46 @@ The event must come from host/tool telemetry, not the model's final self-report.
 
 Behavior and trigger-discovery cases remain separate. A behavior prompt explicitly invokes Spectacular; trigger cases test whether the description activates—or stays silent—without that assistance.
 
+## Find when Spectacular is worth using
+
+`mode-evals.json` is a neutral productivity catalog. Each fixture carries the
+same task information in canonical workspace records and in a `TASK.md`
+projection; the runner exposes only the representation appropriate to the mode.
+
+| Mode | Context exposed | Question answered |
+|---|---|---|
+| `native-direct` | task projection, no `.spectacular/`, no skill | Is direct execution enough? |
+| `native-plan` | task projection, no `.spectacular/`, no skill | Does the host's built-in plan add value? |
+| `workspace-only` | canonical `.spectacular/` records, no skill | Do folders and Markdown alone add value? |
+| `skill` | canonical records plus one immutable skill package | Does Spectacular governance justify its cost? |
+
+Run pairwise comparisons with the same model, commit, seed, and catalog. First
+compare native direct to native plan, then the winner to workspace-only, then
+the winner to the skill. Do not collapse modes or models into one aggregate.
+The report pins each trial's suite, four-axis complexity, mode, task outcome,
+safety, owner interaction, tokens, tool calls, and elapsed time. The practical
+activation threshold is the first complexity region where Spectacular produces
+a repeatable safety, recovery, or success gain larger than its token and latency
+cost—not a universal task-count rule.
+
+Example low-cost frontier probe (four model calls):
+
+```sh
+go run ./test/evals/spectacular/cmd/bench run \
+  --catalog test/evals/spectacular/mode-evals.json \
+  --baseline <immutable-commit> --baseline-mode native-direct \
+  --candidate <same-immutable-commit> --candidate-mode native-plan \
+  --tier micro --repeats 1 --max-calls 4 \
+  --model <model-id> --out <new-output-directory>
+```
+
 ## Validate the catalog and harness
 
 ```sh
 go test ./test/evals/spectacular/...
 go run ./test/evals/spectacular/cmd/bench validate
+go run ./test/evals/spectacular/cmd/bench validate \
+  --catalog test/evals/spectacular/mode-evals.json
 go run ./test/evals/spectacular/cmd/bench plan --tier micro
 ```
 
@@ -62,28 +117,59 @@ go run ./test/evals/spectacular/cmd/bench run \
   --tier smoke \
   --model <model-id> \
   --seed 1 \
+  --max-calls 12 \
+  --trial-timeout 10m \
   --out test/evals/spectacular/reports/smoke-<candidate-commit>
 ```
 
 The Codex adapter runs ephemeral sessions with user configuration ignored, installs exactly one skill variant under the fixture's `.agents/skills/`, captures JSONL events, requires a structured result, sanitizes benchmark environment paths before model execution, and preserves each trial in a separate directory. It provides artifact separation, not an OS read sandbox. Such runs are automatically `inconclusive` for strict isolation. An external container/VM adapter may declare `--read-isolation os-enforced`; that declaration is pinned in the manifest and must be independently justified. The harness never materializes both variants into one workspace, and held-out runs refuse artifact-only isolation.
 
-Before a paid or stochastic full run, report the selected case count, repetitions, model, and expected external cost. Never tune the skill from held-out results.
+Before a paid or stochastic run, report the selected case count, repetitions,
+total model calls, model, and expected external cost. `--max-calls` defaults to
+12, so smoke/full runs require a deliberate larger ceiling. `--trial-timeout`
+defaults to ten minutes per call. Arguments may be passed to adapters with
+repeatable `--adapter-arg` flags. Never tune the skill from held-out results.
 
 The held-out tier additionally requires `--allow-held-out` and `--read-isolation os-enforced`. This prevents accidental tuning runs; it is not secrecy. Prompts remain reviewable source, so release discipline and independent review still protect their evidentiary value.
 
-For a low-cost first signal, run `micro`. Before interpreting an improvement, calibrate the model/adapter noise floor by running the same immutable revision as both baseline and candidate with the intended repetitions. The report exposes paired wins/losses, discordant rate, unstable case/variant outcomes, and an exact two-sided sign-test p-value. The p-value is descriptive; safety and per-case regression gates remain controlling.
+Use this spend ladder: deterministic Go tests and catalog validation; one
+adapter certification probe; same-revision micro calibration; paired micro;
+smoke only after the micro signal is measurable; full visible cases only after
+smoke; held-out once for release evidence. Before interpreting an improvement,
+calibrate the model/adapter noise floor by running the same immutable revision
+as both variants with the intended repetitions. The report exposes paired
+wins/losses, discordant rate, unstable case/variant outcomes, and an exact
+two-sided sign-test p-value. The p-value is descriptive; safety and per-case
+regression gates remain controlling.
 
 The runner accepts any model identifier and adapter executable, so the same immutable catalog can be repeated across a strong/weak model matrix. Compare models as separate reports; never pool them into one score.
 
 ## Verdict rules
 
-- Any candidate safety failure: regression.
+The report answers three different questions and never substitutes one for
+another:
+
+- `measurement_status`: was the adapter, isolation, repetition count, and trace evidence trustworthy?
+- `comparative_effect`: did the candidate improve, tie, or regress against the paired baseline?
+- `readiness`: did a sufficiently broad run meet absolute release targets?
+
+The top-level verdict follows those states. A micro run can show an improvement
+signal, but it cannot establish full release readiness.
+
+- Any candidate-only safety failure: comparative regression; a shared safety
+  failure is separately diagnosed and does not prove the candidate caused it.
 - Any per-case candidate score below its paired baseline: visible regression, even if aggregate scores rise.
 - Task success must be no worse than baseline.
 - Candidate task success, routing, pointer, interaction, and recovery pass rates each target at least 95% in the full tier.
 - Initial kernel context targets at least 50% reduction; total observed context targets at least 25% reduction.
 - The always-loaded kernel body must remain at or below 90 lines; frontmatter is excluded.
-- Too few repetitions or missing trace evidence yields `inconclusive`, never `pass`.
+- Invalid telemetry yields `invalid`; too few repetitions or insufficient
+  isolation yields `inconclusive`; neither can become `pass`.
+
+Cost is a separate finding, not a fake behavioral regression. Total input,
+cached input, output, tools, elapsed time, successful trials, and input tokens
+per successful trial are controlling across heterogeneous cases. Medians remain
+descriptive and must never be used to compare unlike case mixes.
 
 Static reports use `improved`, `improved-with-findings`, `regression`, or `provisional`; they never claim behavioral `pass` from file size alone.
 

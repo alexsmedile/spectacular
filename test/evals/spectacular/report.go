@@ -78,7 +78,7 @@ func renderStatic(report StaticComparison) string {
 func renderRun(report RunReport) string {
 	var builder strings.Builder
 	fmt.Fprintf(&builder, "# Spectacular paired behavior benchmark\n\n")
-	fmt.Fprintf(&builder, "Verdict: **%s**<br>\nBaseline: `%s`<br>\nCandidate: `%s`<br>\nModel: `%s`<br>\nRead isolation: `%s`<br>\nTier: `%s`<br>\nMinimum repetitions: `%d`\n\n", report.Summary.Verdict, report.BaselineRef, report.CandidateRef, report.Model, report.ReadIsolation, report.Tier, report.MinimumRepetitions)
+	fmt.Fprintf(&builder, "Verdict: **%s**<br>\nMeasurement: **%s**<br>\nComparative effect: **%s**<br>\nReadiness: **%s**<br>\nBaseline: `%s` (`%s`)<br>\nCandidate: `%s` (`%s`)<br>\nModel: `%s`<br>\nRead isolation: `%s`<br>\nTier: `%s`<br>\nMinimum repetitions: `%d`\n\n", report.Summary.Verdict, report.Summary.MeasurementStatus, report.Summary.ComparativeEffect, report.Summary.Readiness, report.BaselineRef, report.BaselineMode, report.CandidateRef, report.CandidateMode, report.Model, report.ReadIsolation, report.Tier, report.MinimumRepetitions)
 	fmt.Fprintf(&builder, "## Dimension rates\n\n| Dimension | Baseline | Candidate |\n|---|---:|---:|\n")
 	for _, dimension := range Dimensions {
 		fmt.Fprintf(&builder, "| %s | %.1f%% | %.1f%% |\n", dimension, 100*report.Summary.DimensionRates["baseline"][dimension], 100*report.Summary.DimensionRates["candidate"][dimension])
@@ -93,10 +93,16 @@ func renderRun(report RunReport) string {
 	if len(pairing.UnstableCasePairs) > 0 {
 		fmt.Fprintf(&builder, "\nUnstable case/variant outcomes: `%s`.\n", strings.Join(pairing.UnstableCasePairs, "`, `"))
 	}
-	fmt.Fprintf(&builder, "\n## Observed cost\n\n| Variant | Usage coverage | Median input tokens | Median cached tokens | Median output tokens | Median tool calls | Median duration |\n|---|---:|---:|---:|---:|---:|---:|\n")
+	fmt.Fprintf(&builder, "\n## Observed cost\n\nTotals are controlling across heterogeneous cases; medians remain descriptive only.\n\n| Variant | Usage | Total input | Total cached | Total output | Total tools | Total duration | Input / success |\n|---|---:|---:|---:|---:|---:|---:|---:|\n")
 	for _, variant := range []string{"baseline", "candidate"} {
 		cost := report.Summary.ObservedCost[variant]
-		fmt.Fprintf(&builder, "| %s | %d/%d | %.0f | %.0f | %.0f | %.1f | %.0fms |\n", variant, cost.TrialsWithUsage, cost.TotalTrials, cost.MedianInputTokens, cost.MedianCachedTokens, cost.MedianOutputTokens, cost.MedianToolCalls, cost.MedianDurationMillis)
+		fmt.Fprintf(&builder, "| %s | %d/%d | %d | %d | %d | %d | %dms | %.0f |\n", variant, cost.TrialsWithUsage, cost.TotalTrials, cost.TotalInputTokens, cost.TotalCachedTokens, cost.TotalOutputTokens, cost.TotalToolCalls, cost.TotalDurationMillis, cost.TokensPerSuccess)
+	}
+	if len(report.Summary.CostFindings) > 0 {
+		fmt.Fprintf(&builder, "\n### Cost findings\n\n")
+		for _, finding := range report.Summary.CostFindings {
+			fmt.Fprintf(&builder, "- %s\n", finding)
+		}
 	}
 	if len(report.Summary.GateFailures) > 0 {
 		fmt.Fprintf(&builder, "\n## Failed gates\n\n")
@@ -110,13 +116,19 @@ func renderRun(report RunReport) string {
 			fmt.Fprintf(&builder, "- %s\n", finding)
 		}
 	}
+	if len(report.Summary.SharedFailures) > 0 {
+		fmt.Fprintf(&builder, "\n## Shared failures to diagnose\n\n")
+		for _, finding := range report.Summary.SharedFailures {
+			fmt.Fprintf(&builder, "- %s\n", finding)
+		}
+	}
 	if len(report.Summary.InsufficientEvidence) > 0 {
 		fmt.Fprintf(&builder, "\n## Insufficient evidence\n\n")
 		for _, finding := range report.Summary.InsufficientEvidence {
 			fmt.Fprintf(&builder, "- %s\n", finding)
 		}
 	}
-	fmt.Fprintf(&builder, "\n## Trials\n\n| Trial | Case | Variant | Repeat | Verdict | Overall | Duration | Raw artifacts |\n|---|---|---|---:|---|---:|---:|---|\n")
+	fmt.Fprintf(&builder, "\n## Trials\n\n| Trial | Case | Suite | Complexity | Variant / mode | Repeat | Verdict | Overall | Duration | Raw artifacts |\n|---|---|---|---:|---|---:|---|---:|---:|---|\n")
 	trials := append([]Trial(nil), report.Trials...)
 	sort.Slice(trials, func(i, j int) bool { return trials[i].ID < trials[j].ID })
 	for _, trial := range trials {
@@ -125,7 +137,14 @@ func renderRun(report RunReport) string {
 			overall = fmt.Sprintf("%.3f", *trial.Score.Overall)
 		}
 		artifacts := fmt.Sprintf("[result](%s) · [trace](%s) · [workspace](%s)", trial.ResultPath, trial.TracePath, trial.WorkspacePath)
-		fmt.Fprintf(&builder, "| %s | %s | %s | %d | %s | %s | %dms | %s |\n", trial.ID, trial.CaseID, trial.Variant, trial.Repeat, trial.Score.Verdict, overall, trial.DurationMS, artifacts)
+		mode := trial.Mode
+		if mode == "" {
+			mode = report.BaselineMode
+			if trial.Variant == "candidate" {
+				mode = report.CandidateMode
+			}
+		}
+		fmt.Fprintf(&builder, "| %s | %s | %s | %d | %s / %s | %d | %s | %s | %dms | %s |\n", trial.ID, trial.CaseID, trial.Suite, trial.Complexity.Total(), trial.Variant, mode, trial.Repeat, trial.Score.Verdict, overall, trial.DurationMS, artifacts)
 	}
 	if len(report.Limitations) > 0 {
 		fmt.Fprintf(&builder, "\n## Limits\n\n")

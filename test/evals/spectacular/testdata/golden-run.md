@@ -1,8 +1,11 @@
 # Spectacular paired behavior benchmark
 
 Verdict: **pass**<br>
-Baseline: `old`<br>
-Candidate: `new`<br>
+Measurement: **valid**<br>
+Comparative effect: **parity**<br>
+Readiness: **not-assessed**<br>
+Baseline: `old` (`skill`)<br>
+Candidate: `new` (`skill`)<br>
 Model: `eval-model`<br>
 Read isolation: `os-enforced`<br>
 Tier: `micro`<br>
@@ -27,17 +30,23 @@ Pairs `1`; candidate wins `0`; candidate losses `0`; both pass `1`; both fail `0
 
 ## Observed cost
 
-| Variant | Usage coverage | Median input tokens | Median cached tokens | Median output tokens | Median tool calls | Median duration |
-|---|---:|---:|---:|---:|---:|---:|
-| baseline | 1/1 | 100 | 0 | 20 | 2.0 | 100ms |
-| candidate | 1/1 | 75 | 0 | 18 | 1.0 | 80ms |
+Totals are controlling across heterogeneous cases; medians remain descriptive only.
+
+| Variant | Usage | Total input | Total cached | Total output | Total tools | Total duration | Input / success |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| baseline | 1/1 | 100 | 0 | 20 | 2 | 100ms | 100 |
+| candidate | 1/1 | 75 | 0 | 18 | 1 | 80ms | 75 |
+
+### Cost findings
+
+- paired total input-token reduction 0.250
 
 ## Trials
 
-| Trial | Case | Variant | Repeat | Verdict | Overall | Duration | Raw artifacts |
-|---|---|---|---:|---|---:|---:|---|
-| aa-r01-baseline | AA-01 | baseline | 1 | pass | 1.000 | 100ms | [result](trials/aa-r01-baseline/result.json) · [trace](trials/aa-r01-baseline/trace.jsonl) · [workspace](trials/aa-r01-baseline/workspace) |
-| aa-r01-candidate | AA-01 | candidate | 1 | pass | 1.000 | 80ms | [result](trials/aa-r01-candidate/result.json) · [trace](trials/aa-r01-candidate/trace.jsonl) · [workspace](trials/aa-r01-candidate/workspace) |
+| Trial | Case | Suite | Complexity | Variant / mode | Repeat | Verdict | Overall | Duration | Raw artifacts |
+|---|---|---|---:|---|---:|---|---:|---:|---|
+| aa-r01-baseline | AA-01 |  | 0 | baseline / skill | 1 | pass | 1.000 | 100ms | [result](trials/aa-r01-baseline/result.json) · [trace](trials/aa-r01-baseline/trace.jsonl) · [workspace](trials/aa-r01-baseline/workspace) |
+| aa-r01-candidate | AA-01 |  | 0 | candidate / skill | 1 | pass | 1.000 | 80ms | [result](trials/aa-r01-candidate/result.json) · [trace](trials/aa-r01-candidate/trace.jsonl) · [workspace](trials/aa-r01-candidate/workspace) |
 
 ## Limits
 

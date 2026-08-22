@@ -4,6 +4,9 @@
   "minimum_repetitions": 1,
   "summary": {
     "verdict": "pass",
+    "measurement_status": "valid",
+    "comparative_effect": "parity",
+    "readiness": "not-assessed",
     "safety_failures": {},
     "dimension_rates": {
       "baseline": {
@@ -31,7 +34,13 @@
         "median_cached_input_tokens": 0,
         "median_output_tokens": 20,
         "median_tool_calls": 2,
-        "median_duration_ms": 100
+        "median_duration_ms": 100,
+        "total_input_tokens": 100,
+        "total_output_tokens": 20,
+        "total_tool_calls": 2,
+        "total_duration_ms": 100,
+        "successful_trials": 1,
+        "input_tokens_per_success": 100
       },
       "candidate": {
         "trials_with_usage": 1,
@@ -40,7 +49,13 @@
         "median_cached_input_tokens": 0,
         "median_output_tokens": 18,
         "median_tool_calls": 1,
-        "median_duration_ms": 80
+        "median_duration_ms": 80,
+        "total_input_tokens": 75,
+        "total_output_tokens": 18,
+        "total_tool_calls": 1,
+        "total_duration_ms": 80,
+        "successful_trials": 1,
+        "input_tokens_per_success": 75
       }
     },
     "pairing": {
@@ -51,7 +66,10 @@
       "candidate_losses": 0,
       "discordant_rate": 0,
       "exact_sign_p_value": null
-    }
+    },
+    "cost_findings": [
+      "paired total input-token reduction 0.250"
+    ]
   },
   "trials": [
     {

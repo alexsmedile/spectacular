@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -19,6 +20,8 @@ func main() {
 	switch os.Args[1] {
 	case "validate":
 		err = validate(os.Args[2:])
+	case "adapter-check":
+		err = adapterCheck(os.Args[2:])
 	case "plan":
 		err = plan(os.Args[2:])
 	case "static":
@@ -36,7 +39,33 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: go run ./test/evals/spectacular/cmd/bench <validate|plan|static|run> [flags]")
+	fmt.Fprintln(os.Stderr, "usage: go run ./test/evals/spectacular/cmd/bench <validate|adapter-check|plan|static|run> [flags]")
+}
+
+func adapterCheck(args []string) error {
+	set := flag.NewFlagSet("adapter-check", flag.ContinueOnError)
+	tracePath := set.String("trace", "", "captured raw or normalized adapter trace")
+	allowZeroTools := set.Bool("allow-zero-tools", false, "permit a certified trace with no tool calls")
+	if err := set.Parse(args); err != nil {
+		return err
+	}
+	if *tracePath == "" {
+		return fmt.Errorf("trace is required")
+	}
+	data, err := os.ReadFile(*tracePath)
+	if err != nil {
+		return err
+	}
+	result := bench.CertifyTrace(string(data), !*allowZeroTools)
+	encoded, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(encoded))
+	if !result.Valid {
+		return fmt.Errorf("adapter trace is not certified")
+	}
+	return nil
 }
 
 func validate(args []string) error {
@@ -175,7 +204,9 @@ func run(args []string) error {
 	catalogPath := set.String("catalog", "test/evals/spectacular/evals.json", "benchmark catalog")
 	schemaPath := set.String("schema", "test/evals/spectacular/agent-result.schema.json", "agent result schema")
 	baseline := set.String("baseline", "14158f9", "immutable baseline revision")
+	baselineMode := set.String("baseline-mode", "skill", "skill, workspace-only, native-direct, or native-plan")
 	candidate := set.String("candidate", "", "immutable candidate revision")
+	candidateMode := set.String("candidate-mode", "skill", "skill, workspace-only, native-direct, or native-plan")
 	tier := set.String("tier", "smoke", "micro, smoke, full, or held-out")
 	repeats := set.Int("repeats", 0, "override tier repetitions")
 	seed := set.Int64("seed", 1, "pair randomization seed")
@@ -184,6 +215,11 @@ func run(args []string) error {
 	output := set.String("out", "", "new output directory")
 	allowHeldOut := set.Bool("allow-held-out", false, "explicitly authorize a frozen held-out evidence run")
 	readIsolation := set.String("read-isolation", "artifact-only", "artifact-only or os-enforced (external adapter attestation)")
+	maxCalls := set.Int("max-calls", 12, "refuse runs requiring more model calls; set deliberately for larger tiers")
+	trialTimeout := set.Duration("trial-timeout", 10*time.Minute, "maximum duration for one model trial; zero disables")
+	requireCertifiedTelemetry := set.Bool("require-certified-telemetry", true, "stop after the first trial unless usage and host semantic telemetry are observed")
+	var adapterArgs stringListFlag
+	set.Var(&adapterArgs, "adapter-arg", "argument forwarded to the adapter; repeatable")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -192,8 +228,9 @@ func run(args []string) error {
 	}
 	report, err := bench.RunPaired(bench.RunConfig{
 		Repo: *repo, CatalogPath: *catalogPath, SchemaPath: *schemaPath,
-		BaselineRef: *baseline, CandidateRef: *candidate, Tier: *tier,
-		Repeats: *repeats, Seed: *seed, Model: *model, Adapter: *adapter, OutputDir: *output, AllowHeldOut: *allowHeldOut, ReadIsolation: *readIsolation,
+		BaselineRef: *baseline, BaselineMode: *baselineMode, CandidateRef: *candidate, CandidateMode: *candidateMode, Tier: *tier,
+		Repeats: *repeats, Seed: *seed, Model: *model, Adapter: *adapter, AdapterArgs: adapterArgs, OutputDir: *output, AllowHeldOut: *allowHeldOut, ReadIsolation: *readIsolation,
+		MaxCalls: *maxCalls, TrialTimeout: *trialTimeout, RequireCertifiedTelemetry: *requireCertifiedTelemetry,
 	})
 	if err != nil {
 		return err
@@ -202,5 +239,14 @@ func run(args []string) error {
 		return err
 	}
 	fmt.Printf("paired benchmark: %s (%s)\n", report.Summary.Verdict, filepath.Join(*output, "report.md"))
+	return nil
+}
+
+type stringListFlag []string
+
+func (values *stringListFlag) String() string { return fmt.Sprint([]string(*values)) }
+
+func (values *stringListFlag) Set(value string) error {
+	*values = append(*values, value)
 	return nil
 }

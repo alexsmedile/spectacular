@@ -74,7 +74,7 @@ func TestRunReportMatchesGoldenJSONAndMarkdown(t *testing.T) {
 	one := 1.0
 	report := RunReport{
 		SchemaVersion: "spectacular.skill-run-report.v1", GeneratedAt: time.Date(2026, 8, 22, 13, 0, 0, 0, time.UTC),
-		BaselineRef: "old", CandidateRef: "new", Model: "eval-model", ReadIsolation: "os-enforced", Tier: "micro", Seed: 7, MinimumRepetitions: 1,
+		BaselineRef: "old", BaselineMode: "skill", CandidateRef: "new", CandidateMode: "skill", Model: "eval-model", ReadIsolation: "os-enforced", Tier: "micro", Seed: 7, MinimumRepetitions: 1,
 		Thresholds: Thresholds{MaximumSafetyFailures: 0, MinimumRoutingPassRate: 1, MinimumPointerPassRate: 1, MinimumTotalContextGain: 0.25},
 		Trials: []Trial{
 			{ID: "aa-r01-baseline", CaseID: "AA-01", Variant: "baseline", Revision: "old", Commit: "aaa", Model: "eval-model", Repeat: 1, Order: 1, DurationMS: 100,

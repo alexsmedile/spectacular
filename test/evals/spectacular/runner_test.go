@@ -110,6 +110,40 @@ func TestRunnerRefusesMutableRevision(t *testing.T) {
 	}
 }
 
+func TestFailedTrialArtifactsSurviveAdapterFailure(t *testing.T) {
+	output := t.TempDir()
+	temporary := t.TempDir()
+	writeTestFile(t, filepath.Join(temporary, "trace.jsonl"), "adapter stderr\n")
+	err := persistFailedTrial(output, "aa-r01-baseline", temporary, os.ErrInvalid)
+	if err == nil || !strings.Contains(err.Error(), "artifacts preserved at") {
+		t.Fatalf("error=%v", err)
+	}
+	matches, globErr := filepath.Glob(filepath.Join(output, "failed-trials", "aa-r01-baseline-*", "trace.jsonl"))
+	if globErr != nil || len(matches) != 1 {
+		t.Fatalf("matches=%v err=%v", matches, globErr)
+	}
+	if _, statErr := os.Stat(filepath.Join(filepath.Dir(matches[0]), "failure.txt")); statErr != nil {
+		t.Fatal(statErr)
+	}
+}
+
+func TestRunSafetyControlsRefuseExcessCallsAndUncertifiedTelemetry(t *testing.T) {
+	if err := validateCallBudget(13, 12); err == nil || !strings.Contains(err.Error(), "13 model calls") {
+		t.Fatalf("expected call-budget refusal, got %v", err)
+	}
+	if err := validateCallBudget(12, 12); err != nil {
+		t.Fatal(err)
+	}
+	trial := Trial{TraceMetrics: TraceMetrics{UsageObserved: true}}
+	if err := requireCertifiedTrial(trial); err == nil || !strings.Contains(err.Error(), "semantic host telemetry") {
+		t.Fatalf("expected semantic telemetry refusal, got %v", err)
+	}
+	trial.TraceMetrics.SemanticObserved = true
+	if err := requireCertifiedTrial(trial); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestDecodeAgentResultEnforcesAdapterContract(t *testing.T) {
 	valid := `{"role":"Runner","phase":"","status":"done","summary":"ok","next_action":"return","owner_gate":"","owner_questions":[],"references_loaded":[],"files_read":[],"commands_run":[],"safety_notes":[]}`
 	if _, err := decodeAgentResult([]byte(valid)); err != nil {
@@ -163,6 +197,37 @@ func TestCleanEvalEnvironmentRemovesRepositoryPathLeaks(t *testing.T) {
 	joined := strings.Join(cleaned, "\n")
 	if joined != "PATH=/usr/bin\nSAFE=value" {
 		t.Fatalf("cleaned=%q", joined)
+	}
+}
+
+func TestControlModesExposeEquivalentInformationWithoutInstallingSkill(t *testing.T) {
+	workspace := t.TempDir()
+	writeTestFile(t, filepath.Join(workspace, "TASK.md"), "neutral task\n")
+	writeTestFile(t, filepath.Join(workspace, ".spectacular", "PROJECT.md"), "canonical task\n")
+	if err := prepareVariantWorkspace(RunConfig{}, workspace, "native-direct", ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(workspace, ".spectacular")); !os.IsNotExist(err) {
+		t.Fatalf("native control retained governance workspace: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(workspace, "TASK.md")); err != nil {
+		t.Fatal(err)
+	}
+
+	workspace = t.TempDir()
+	writeTestFile(t, filepath.Join(workspace, "TASK.md"), "neutral task\n")
+	writeTestFile(t, filepath.Join(workspace, ".spectacular", "PROJECT.md"), "canonical task\n")
+	if err := prepareVariantWorkspace(RunConfig{}, workspace, "workspace-only", ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(workspace, "TASK.md")); !os.IsNotExist(err) {
+		t.Fatalf("workspace-only control retained neutral projection: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(workspace, ".spectacular", "PROJECT.md")); err != nil {
+		t.Fatal(err)
+	}
+	if prompt := variantPrompt("native-plan", "do work"); !strings.Contains(prompt, "built-in planning") || strings.Contains(prompt, "$spectacular") {
+		t.Fatalf("prompt=%q", prompt)
 	}
 }
 

@@ -51,6 +51,24 @@ func TestShippedCatalogIsComplete(t *testing.T) {
 	}
 }
 
+func TestModeCatalogPinsEquivalentControlInputsAndComplexity(t *testing.T) {
+	catalog, err := LoadCatalog("mode-evals.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(catalog.Cases) != 6 {
+		t.Fatalf("cases=%d want 6", len(catalog.Cases))
+	}
+	for _, item := range catalog.Cases {
+		if suiteForCase(item) != "productivity" || strings.TrimSpace(item.Intent) == "" {
+			t.Fatalf("case %s lacks productivity intent", item.ID)
+		}
+		if item.ID != "MX-00" && item.Complexity.Total() == 0 {
+			t.Fatalf("case %s lacks a complexity signal", item.ID)
+		}
+	}
+}
+
 func TestFixtureCanariesRemainDiscriminating(t *testing.T) {
 	canaryPattern := regexp.MustCompile(`[A-Z]+-CANARY-[A-Z0-9]+`)
 	found := map[string]string{}
@@ -126,6 +144,48 @@ func TestEveryShippedCaseRejectsAnEmptyClaim(t *testing.T) {
 				t.Fatalf("empty self-report passed case %s", item.ID)
 			}
 		})
+	}
+}
+
+func TestEveryShippedCaseHasAReachableGoldResult(t *testing.T) {
+	for _, catalogName := range []string{"evals.json", "mode-evals.json"} {
+		catalog, err := LoadCatalog(catalogName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, item := range catalog.Cases {
+			t.Run(catalogName+"/"+item.ID, func(t *testing.T) {
+				role := item.Expect.Role
+				if role == "" {
+					role = "none"
+				}
+				status := item.Expect.Status
+				if status == "" {
+					status = "done"
+				}
+				result := AgentResult{
+					Role: role, Phase: item.Expect.Phase, Status: status,
+					Summary:    strings.Join(append([]string{"gold result"}, item.Expect.RequiredOutputTerms...), " "),
+					NextAction: "continue", ReferencesLoaded: append([]string(nil), item.Expect.ExpectedReferences...),
+					CommandsRun: append([]string(nil), item.Expect.RequiredCommands...),
+				}
+				if item.Expect.ExactlyOnePrimaryRef && len(result.ReferencesLoaded) == 0 && item.Expect.Phase != "" {
+					result.ReferencesLoaded = []string{item.Expect.Phase + ".md"}
+				}
+				if item.Expect.OwnerGateRequired || status == "owner-gate" {
+					result.NextAction = ""
+					result.OwnerGate = "owner authorization required"
+				}
+				postconditions := make([]PostconditionResult, len(item.Expect.PostChecks))
+				for index, check := range item.Expect.PostChecks {
+					postconditions[index] = PostconditionResult{Command: check.Command, ExpectedExit: check.ExpectedExit, ActualExit: check.ExpectedExit, Passed: true}
+				}
+				score := ScoreTrialWithPostconditions(item, result, strings.Join(item.Expect.RequiredTraceTerms, "\n"), nil, postconditions)
+				if score.Verdict != "pass" {
+					t.Fatalf("case has no reachable gold result: %+v", score)
+				}
+			})
+		}
 	}
 }
 

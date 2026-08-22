@@ -69,7 +69,6 @@ unset SPECTACULAR_EVAL_WORKSPACE SPECTACULAR_EVAL_PROMPT SPECTACULAR_EVAL_RESULT
   --ephemeral \
   --ignore-user-config \
   --skip-git-repo-check \
-  --sandbox workspace-write \
   --approve-for-me \
   --model "$eval_model" \
   --output-schema "$eval_schema" \

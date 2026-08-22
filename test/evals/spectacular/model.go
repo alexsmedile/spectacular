@@ -43,14 +43,24 @@ type MetricDefinition struct {
 type Case struct {
 	ID          string             `json:"id"`
 	Kind        string             `json:"kind"`
+	Suite       string             `json:"suite,omitempty"`
 	Tier        string             `json:"tier"`
 	HeldOut     bool               `json:"held_out"`
 	Fixture     string             `json:"fixture"`
 	Prompt      string             `json:"prompt"`
+	Intent      string             `json:"intent,omitempty"`
+	Complexity  Complexity         `json:"complexity,omitempty"`
 	Tags        []string           `json:"tags"`
 	Environment map[string]string  `json:"environment,omitempty"`
 	Expect      Expectation        `json:"expect"`
 	Weights     map[string]float64 `json:"weights"`
+}
+
+type Complexity struct {
+	Scope       int `json:"scope,omitempty"`
+	Ambiguity   int `json:"ambiguity,omitempty"`
+	Consequence int `json:"consequence,omitempty"`
+	Continuity  int `json:"continuity,omitempty"`
 }
 
 type Expectation struct {
@@ -69,6 +79,7 @@ type Expectation struct {
 	AllowedChangedPaths   []string    `json:"allowed_changed_paths,omitempty"`
 	ForbiddenChangedPaths []string    `json:"forbidden_changed_paths,omitempty"`
 	MaximumOwnerQuestions *int        `json:"maximum_owner_questions,omitempty"`
+	OwnerGateRequired     bool        `json:"owner_gate_required,omitempty"`
 	ExactlyOnePrimaryRef  bool        `json:"exactly_one_primary_reference,omitempty"`
 	RequireSingleReturn   bool        `json:"require_single_return,omitempty"`
 	PostChecks            []PostCheck `json:"post_checks,omitempty"`
@@ -120,6 +131,9 @@ type TrialScore struct {
 type Trial struct {
 	ID             string                `json:"id"`
 	CaseID         string                `json:"case_id"`
+	Suite          string                `json:"suite,omitempty"`
+	Complexity     Complexity            `json:"complexity,omitempty"`
+	Mode           string                `json:"mode,omitempty"`
 	Tags           []string              `json:"tags,omitempty"`
 	Variant        string                `json:"variant"`
 	Revision       string                `json:"revision"`
@@ -138,6 +152,10 @@ type Trial struct {
 	ResultPath     string                `json:"result_path"`
 	WorkspacePath  string                `json:"workspace_path"`
 	Score          TrialScore            `json:"score"`
+}
+
+func (complexity Complexity) Total() int {
+	return complexity.Scope + complexity.Ambiguity + complexity.Consequence + complexity.Continuity
 }
 
 type TraceMetrics struct {
@@ -191,7 +209,9 @@ type RunReport struct {
 	SchemaVersion      string     `json:"schema_version"`
 	GeneratedAt        time.Time  `json:"generated_at"`
 	BaselineRef        string     `json:"baseline_ref"`
+	BaselineMode       string     `json:"baseline_mode"`
 	CandidateRef       string     `json:"candidate_ref"`
+	CandidateMode      string     `json:"candidate_mode"`
 	Model              string     `json:"model"`
 	ReadIsolation      string     `json:"read_isolation"`
 	Tier               string     `json:"tier"`
@@ -205,11 +225,16 @@ type RunReport struct {
 
 type RunSummary struct {
 	Verdict              string                        `json:"verdict"`
+	MeasurementStatus    string                        `json:"measurement_status,omitempty"`
+	ComparativeEffect    string                        `json:"comparative_effect,omitempty"`
+	Readiness            string                        `json:"readiness,omitempty"`
 	SafetyFailures       map[string]int                `json:"safety_failures"`
 	DimensionRates       map[string]map[string]float64 `json:"dimension_rates"`
 	ObservedCost         map[string]CostSummary        `json:"observed_cost"`
 	Pairing              PairingSummary                `json:"pairing"`
 	GateFailures         []string                      `json:"gate_failures,omitempty"`
+	CostFindings         []string                      `json:"cost_findings,omitempty"`
+	SharedFailures       []string                      `json:"shared_failures,omitempty"`
 	PerCaseRegressions   []string                      `json:"per_case_regressions,omitempty"`
 	InsufficientEvidence []string                      `json:"insufficient_evidence,omitempty"`
 }
@@ -234,4 +259,11 @@ type CostSummary struct {
 	MedianOutputTokens   float64 `json:"median_output_tokens"`
 	MedianToolCalls      float64 `json:"median_tool_calls"`
 	MedianDurationMillis float64 `json:"median_duration_ms"`
+	TotalInputTokens     int     `json:"total_input_tokens,omitempty"`
+	TotalCachedTokens    int     `json:"total_cached_tokens,omitempty"`
+	TotalOutputTokens    int     `json:"total_output_tokens,omitempty"`
+	TotalToolCalls       int     `json:"total_tool_calls,omitempty"`
+	TotalDurationMillis  int64   `json:"total_duration_ms,omitempty"`
+	SuccessfulTrials     int     `json:"successful_trials,omitempty"`
+	TokensPerSuccess     float64 `json:"input_tokens_per_success,omitempty"`
 }

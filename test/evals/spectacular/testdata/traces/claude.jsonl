@@ -1,0 +1,2 @@
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","name":"Read","input":{"file_path":".agents/skills/spectacular/references/runtime.md"}},{"type":"tool_use","name":"Bash","input":{"command":"sh tests/check.sh"}}]}}
+{"type":"result","usage":{"input_tokens":18,"cache_creation_input_tokens":1000,"cache_read_input_tokens":3200,"output_tokens":420}}

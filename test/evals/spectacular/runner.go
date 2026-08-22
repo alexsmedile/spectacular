@@ -1,6 +1,7 @@
 package spectaculareval
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -16,20 +17,25 @@ import (
 )
 
 type RunConfig struct {
-	Repo          string
-	CatalogPath   string
-	SchemaPath    string
-	BaselineRef   string
-	CandidateRef  string
-	Tier          string
-	Repeats       int
-	Seed          int64
-	Model         string
-	Adapter       string
-	AdapterArgs   []string
-	OutputDir     string
-	AllowHeldOut  bool
-	ReadIsolation string
+	Repo                      string
+	CatalogPath               string
+	SchemaPath                string
+	BaselineRef               string
+	BaselineMode              string
+	CandidateRef              string
+	CandidateMode             string
+	Tier                      string
+	Repeats                   int
+	Seed                      int64
+	Model                     string
+	Adapter                   string
+	AdapterArgs               []string
+	OutputDir                 string
+	AllowHeldOut              bool
+	ReadIsolation             string
+	MaxCalls                  int
+	TrialTimeout              time.Duration
+	RequireCertifiedTelemetry bool
 }
 
 type trialSpec struct {
@@ -41,23 +47,27 @@ type trialSpec struct {
 }
 
 type runManifest struct {
-	SchemaVersion   string                    `json:"schema_version"`
-	BaselineRef     string                    `json:"baseline_ref"`
-	BaselineCommit  string                    `json:"baseline_commit"`
-	CandidateRef    string                    `json:"candidate_ref"`
-	CandidateCommit string                    `json:"candidate_commit"`
-	CatalogDigest   string                    `json:"catalog_digest"`
-	HarnessDigest   string                    `json:"harness_inputs_digest"`
-	SchemaDigest    string                    `json:"result_schema_digest"`
-	Adapter         string                    `json:"adapter"`
-	AdapterDigest   string                    `json:"adapter_digest"`
-	AdapterArgs     []string                  `json:"adapter_args,omitempty"`
-	ReadIsolation   string                    `json:"read_isolation"`
-	Model           string                    `json:"model"`
-	Tier            string                    `json:"tier"`
-	Seed            int64                     `json:"seed"`
-	Planned         []string                  `json:"planned"`
-	Completed       map[string]completedTrial `json:"completed"`
+	SchemaVersion             string                    `json:"schema_version"`
+	BaselineRef               string                    `json:"baseline_ref"`
+	BaselineMode              string                    `json:"baseline_mode"`
+	BaselineCommit            string                    `json:"baseline_commit"`
+	CandidateRef              string                    `json:"candidate_ref"`
+	CandidateMode             string                    `json:"candidate_mode"`
+	CandidateCommit           string                    `json:"candidate_commit"`
+	CatalogDigest             string                    `json:"catalog_digest"`
+	HarnessDigest             string                    `json:"harness_inputs_digest"`
+	SchemaDigest              string                    `json:"result_schema_digest"`
+	Adapter                   string                    `json:"adapter"`
+	AdapterDigest             string                    `json:"adapter_digest"`
+	AdapterArgs               []string                  `json:"adapter_args,omitempty"`
+	ReadIsolation             string                    `json:"read_isolation"`
+	TrialTimeoutMS            int64                     `json:"trial_timeout_ms"`
+	RequireCertifiedTelemetry bool                      `json:"require_certified_telemetry"`
+	Model                     string                    `json:"model"`
+	Tier                      string                    `json:"tier"`
+	Seed                      int64                     `json:"seed"`
+	Planned                   []string                  `json:"planned"`
+	Completed                 map[string]completedTrial `json:"completed"`
 }
 
 type completedTrial struct {
@@ -69,6 +79,7 @@ var agentResultRequiredFields = []string{"role", "phase", "status", "summary", "
 var allowedAgentRoles = []string{"none", "Orchestrator", "Runner", "Reviewer", "Autopilot"}
 var allowedAgentPhases = []string{"", "orient", "prepare", "execute", "runtime", "close", "audit"}
 var allowedAgentStatuses = []string{"done", "blocked", "owner-gate", "draft-only", "not-invoked"}
+var allowedVariantModes = []string{"skill", "workspace-only", "native-direct", "native-plan"}
 
 func RunPaired(config RunConfig) (RunReport, error) {
 	if strings.TrimSpace(config.OutputDir) == "" {
@@ -111,6 +122,15 @@ func RunPaired(config RunConfig) (RunReport, error) {
 	if config.ReadIsolation == "" {
 		config.ReadIsolation = "artifact-only"
 	}
+	if config.BaselineMode == "" {
+		config.BaselineMode = "skill"
+	}
+	if config.CandidateMode == "" {
+		config.CandidateMode = "skill"
+	}
+	if !oneOf(config.BaselineMode, allowedVariantModes...) || !oneOf(config.CandidateMode, allowedVariantModes...) {
+		return RunReport{}, fmt.Errorf("variant modes must be one of %v", allowedVariantModes)
+	}
 	if config.ReadIsolation != "artifact-only" && config.ReadIsolation != "os-enforced" {
 		return RunReport{}, errors.New("read isolation must be artifact-only or os-enforced")
 	}
@@ -129,6 +149,13 @@ func RunPaired(config RunConfig) (RunReport, error) {
 	}
 	if config.Repeats < 1 {
 		return RunReport{}, errors.New("repeats must be positive")
+	}
+	plannedCalls := len(cases) * config.Repeats * 2
+	if err := validateCallBudget(plannedCalls, config.MaxCalls); err != nil {
+		return RunReport{}, err
+	}
+	if config.TrialTimeout < 0 {
+		return RunReport{}, errors.New("trial timeout cannot be negative")
 	}
 	if config.Model == "" || config.Adapter == "" {
 		return RunReport{}, errors.New("model and adapter are required")
@@ -170,7 +197,9 @@ func RunPaired(config RunConfig) (RunReport, error) {
 	report := RunReport{
 		SchemaVersion:      "spectacular.skill-run-report.v1",
 		BaselineRef:        config.BaselineRef,
+		BaselineMode:       config.BaselineMode,
 		CandidateRef:       config.CandidateRef,
+		CandidateMode:      config.CandidateMode,
 		Model:              config.Model,
 		ReadIsolation:      config.ReadIsolation,
 		Tier:               config.Tier,
@@ -199,10 +228,19 @@ func RunPaired(config RunConfig) (RunReport, error) {
 			if loadErr != nil {
 				return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
 			}
-			if loadErr = validateResumedTrial(trial, spec, commits[spec.Variant], config.Model); loadErr != nil {
+			mode := config.BaselineMode
+			if spec.Variant == "candidate" {
+				mode = config.CandidateMode
+			}
+			if loadErr = validateResumedTrial(trial, spec, commits[spec.Variant], config.Model, mode); loadErr != nil {
 				return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
 			}
 			report.Trials = append(report.Trials, trial)
+			if config.RequireCertifiedTelemetry && len(report.Trials) == 1 {
+				if err := requireCertifiedTrial(trial); err != nil {
+					return RunReport{}, fmt.Errorf("first-trial telemetry preflight: %w", err)
+				}
+			}
 			continue
 		}
 		trial, runErr := runOne(config, spec, commits[spec.Variant])
@@ -222,6 +260,11 @@ func RunPaired(config RunConfig) (RunReport, error) {
 		if err := writeRunManifest(config.OutputDir, manifest); err != nil {
 			return RunReport{}, err
 		}
+		if config.RequireCertifiedTelemetry && len(report.Trials) == 1 {
+			if err := requireCertifiedTrial(trial); err != nil {
+				return RunReport{}, fmt.Errorf("first-trial telemetry preflight: %w; correct the adapter, then start a new output directory", err)
+			}
+		}
 	}
 	Summarize(&report)
 	return report, nil
@@ -235,6 +278,7 @@ func absolutePath(path string) (string, error) {
 }
 
 func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
+	id := trialID(spec)
 	temporary, err := os.MkdirTemp("", "spectacular-eval-trial-")
 	if err != nil {
 		return Trial{}, err
@@ -245,8 +289,11 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 	if err := CopyTree(fixtureRoot, workspace); err != nil {
 		return Trial{}, fmt.Errorf("copy fixture: %w", err)
 	}
-	skillRoot := filepath.Join(workspace, ".agents", "skills", "spectacular")
-	if _, err := MaterializeSkill(config.Repo, commit, skillRoot); err != nil {
+	mode := config.BaselineMode
+	if spec.Variant == "candidate" {
+		mode = config.CandidateMode
+	}
+	if err := prepareVariantWorkspace(config, workspace, mode, commit); err != nil {
 		return Trial{}, err
 	}
 	if err := initializeFixtureGit(workspace); err != nil {
@@ -260,7 +307,8 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 	resultPath := filepath.Join(temporary, "result.json")
 	tracePath := filepath.Join(temporary, "trace.jsonl")
 	trialSchemaPath := filepath.Join(temporary, "result.schema.json")
-	if err := os.WriteFile(promptPath, []byte(spec.Case.Prompt+"\n"), 0o644); err != nil {
+	prompt := variantPrompt(mode, spec.Case.Prompt)
+	if err := os.WriteFile(promptPath, []byte(prompt+"\n"), 0o644); err != nil {
 		return Trial{}, err
 	}
 	schemaData, err := os.ReadFile(config.SchemaPath)
@@ -271,7 +319,17 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 		return Trial{}, err
 	}
 	started := time.Now().UTC()
-	command := exec.Command(config.Adapter, config.AdapterArgs...)
+	commandContext := context.Background()
+	var cancel context.CancelFunc
+	if config.TrialTimeout > 0 {
+		ctx, stop := context.WithTimeout(commandContext, config.TrialTimeout)
+		commandContext = ctx
+		cancel = stop
+	}
+	command := exec.CommandContext(commandContext, config.Adapter, config.AdapterArgs...)
+	if cancel != nil {
+		defer cancel()
+	}
 	command.Dir = workspace
 	command.Env = append(cleanEvalEnvironment(os.Environ(), config.Repo, config.OutputDir),
 		"PWD="+workspace,
@@ -304,14 +362,19 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 		_, _ = file.Write(append([]byte("\nADAPTER_STDERR\n"), output...))
 		_ = file.Close()
 	}
+	if errors.Is(commandContext.Err(), context.DeadlineExceeded) {
+		cause := fmt.Errorf("adapter exceeded trial timeout %s", config.TrialTimeout)
+		return Trial{}, persistFailedTrial(config.OutputDir, id, temporary, cause)
+	}
 	traceData, _ := os.ReadFile(tracePath)
 	resultData, readErr := os.ReadFile(resultPath)
 	if readErr != nil {
-		return Trial{}, fmt.Errorf("adapter produced no result (exit=%d): %w", exitCode, readErr)
+		cause := fmt.Errorf("adapter produced no result (exit=%d): %w", exitCode, readErr)
+		return Trial{}, persistFailedTrial(config.OutputDir, id, temporary, cause)
 	}
 	result, err := decodeAgentResult(resultData)
 	if err != nil {
-		return Trial{}, fmt.Errorf("decode adapter result: %w", err)
+		return Trial{}, persistFailedTrial(config.OutputDir, id, temporary, fmt.Errorf("decode adapter result: %w", err))
 	}
 	after, err := SnapshotTree(workspace)
 	if err != nil {
@@ -322,7 +385,6 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 	if err != nil {
 		return Trial{}, err
 	}
-	id := trialID(spec)
 	destination := filepath.Join(config.OutputDir, "trials", id)
 	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
 		return Trial{}, err
@@ -336,6 +398,9 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 	trial := Trial{
 		ID:             id,
 		CaseID:         spec.Case.ID,
+		Suite:          suiteForCase(spec.Case),
+		Complexity:     spec.Case.Complexity,
+		Mode:           mode,
 		Tags:           append([]string(nil), spec.Case.Tags...),
 		Variant:        spec.Variant,
 		Revision:       spec.Revision,
@@ -363,6 +428,76 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 		trial.Score.Overall = &zero
 	}
 	return trial, nil
+}
+
+func requireCertifiedTrial(trial Trial) error {
+	var findings []string
+	if !trial.TraceMetrics.UsageObserved {
+		findings = append(findings, "usage telemetry missing")
+	}
+	if !trial.TraceMetrics.SemanticObserved {
+		findings = append(findings, "semantic host telemetry missing or self-reported only")
+	}
+	if len(findings) > 0 {
+		return errors.New(strings.Join(findings, "; "))
+	}
+	return nil
+}
+
+func validateCallBudget(planned, maximum int) error {
+	if maximum > 0 && planned > maximum {
+		return fmt.Errorf("planned run requires %d model calls, exceeding --max-calls %d", planned, maximum)
+	}
+	return nil
+}
+
+func prepareVariantWorkspace(config RunConfig, workspace, mode, commit string) error {
+	switch mode {
+	case "skill":
+		skillRoot := filepath.Join(workspace, ".agents", "skills", "spectacular")
+		if _, err := MaterializeSkill(config.Repo, commit, skillRoot); err != nil {
+			return err
+		}
+		_ = os.Remove(filepath.Join(workspace, "TASK.md"))
+	case "workspace-only":
+		_ = os.Remove(filepath.Join(workspace, "TASK.md"))
+	case "native-direct", "native-plan":
+		governanceRoot := filepath.Join(workspace, ".spectacular")
+		if !strings.HasPrefix(governanceRoot, filepath.Clean(workspace)+string(os.PathSeparator)) {
+			return errors.New("refuse unsafe native-control workspace transform")
+		}
+		if err := os.RemoveAll(governanceRoot); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func variantPrompt(mode, prompt string) string {
+	switch mode {
+	case "workspace-only":
+		return "Use the canonical Markdown workspace records and folders directly. No Spectacular skill is installed; do not claim that it is.\n\n" + prompt
+	case "native-direct":
+		return "Use the host's normal direct execution behavior. Do not invoke or emulate Spectacular.\n\n" + prompt
+	case "native-plan":
+		return "Use the host's built-in planning behavior before execution. Do not invoke or emulate Spectacular.\n\n" + prompt
+	default:
+		return prompt
+	}
+}
+
+func persistFailedTrial(outputDir, id, temporary string, cause error) error {
+	destination := filepath.Join(outputDir, "failed-trials", fmt.Sprintf("%s-%d", id, time.Now().UTC().UnixNano()))
+	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
+		return fmt.Errorf("%w; preserve failed trial: %v", cause, err)
+	}
+	if err := CopyTree(temporary, destination); err != nil {
+		return fmt.Errorf("%w; preserve failed trial: %v", cause, err)
+	}
+	if err := os.WriteFile(filepath.Join(destination, "failure.txt"), []byte(cause.Error()+"\n"), 0o644); err != nil {
+		return fmt.Errorf("%w; preserve failed trial: %v", cause, err)
+	}
+	return fmt.Errorf("%w; artifacts preserved at %s", cause, destination)
 }
 
 func cleanEvalEnvironment(environment []string, forbiddenRoots ...string) []string {
@@ -512,7 +647,7 @@ func openRunManifest(config RunConfig, seed int64, specs []trialSpec, commits ma
 		if json.Unmarshal(data, &manifest) != nil {
 			return runManifest{}, errors.New("existing run manifest is invalid")
 		}
-		if manifest.SchemaVersion != "spectacular.skill-run-manifest.v1" || manifest.BaselineRef != config.BaselineRef || manifest.BaselineCommit != commits["baseline"] || manifest.CandidateRef != config.CandidateRef || manifest.CandidateCommit != commits["candidate"] || manifest.CatalogDigest != catalogDigest || manifest.HarnessDigest != harnessDigest || manifest.SchemaDigest != schemaDigest || manifest.Adapter != config.Adapter || manifest.AdapterDigest != adapterDigest || strings.Join(manifest.AdapterArgs, "\x00") != strings.Join(config.AdapterArgs, "\x00") || manifest.ReadIsolation != config.ReadIsolation || manifest.Model != config.Model || manifest.Tier != config.Tier || manifest.Seed != seed || strings.Join(manifest.Planned, "\n") != strings.Join(planned, "\n") {
+		if manifest.SchemaVersion != "spectacular.skill-run-manifest.v1" || manifest.BaselineRef != config.BaselineRef || manifest.BaselineMode != config.BaselineMode || manifest.BaselineCommit != commits["baseline"] || manifest.CandidateRef != config.CandidateRef || manifest.CandidateMode != config.CandidateMode || manifest.CandidateCommit != commits["candidate"] || manifest.CatalogDigest != catalogDigest || manifest.HarnessDigest != harnessDigest || manifest.SchemaDigest != schemaDigest || manifest.Adapter != config.Adapter || manifest.AdapterDigest != adapterDigest || strings.Join(manifest.AdapterArgs, "\x00") != strings.Join(config.AdapterArgs, "\x00") || manifest.ReadIsolation != config.ReadIsolation || manifest.TrialTimeoutMS != config.TrialTimeout.Milliseconds() || manifest.RequireCertifiedTelemetry != config.RequireCertifiedTelemetry || manifest.Model != config.Model || manifest.Tier != config.Tier || manifest.Seed != seed || strings.Join(manifest.Planned, "\n") != strings.Join(planned, "\n") {
 			return runManifest{}, errors.New("existing run manifest does not match requested comparison")
 		}
 		if manifest.Completed == nil {
@@ -532,12 +667,13 @@ func openRunManifest(config RunConfig, seed int64, specs []trialSpec, commits ma
 	}
 	manifest := runManifest{
 		SchemaVersion: "spectacular.skill-run-manifest.v1",
-		BaselineRef:   config.BaselineRef, BaselineCommit: commits["baseline"],
-		CandidateRef: config.CandidateRef, CandidateCommit: commits["candidate"],
+		BaselineRef:   config.BaselineRef, BaselineMode: config.BaselineMode, BaselineCommit: commits["baseline"],
+		CandidateRef: config.CandidateRef, CandidateMode: config.CandidateMode, CandidateCommit: commits["candidate"],
 		CatalogDigest: catalogDigest, HarnessDigest: harnessDigest, SchemaDigest: schemaDigest,
 		Adapter: config.Adapter, AdapterDigest: adapterDigest, AdapterArgs: append([]string(nil), config.AdapterArgs...),
-		ReadIsolation: config.ReadIsolation,
-		Model:         config.Model, Tier: config.Tier, Seed: seed, Planned: planned,
+		ReadIsolation:  config.ReadIsolation,
+		TrialTimeoutMS: config.TrialTimeout.Milliseconds(), RequireCertifiedTelemetry: config.RequireCertifiedTelemetry,
+		Model: config.Model, Tier: config.Tier, Seed: seed, Planned: planned,
 		Completed: map[string]completedTrial{},
 	}
 	if err := writeRunManifest(config.OutputDir, manifest); err != nil {
@@ -628,8 +764,8 @@ func containedPath(root, relative string) (string, error) {
 	return path, nil
 }
 
-func validateResumedTrial(trial Trial, spec trialSpec, commit, model string) error {
-	if trial.ID != trialID(spec) || trial.CaseID != spec.Case.ID || trial.Variant != spec.Variant || trial.Revision != spec.Revision || trial.Commit != commit || trial.Model != model || trial.Repeat != spec.Repeat || trial.Order != spec.Order {
+func validateResumedTrial(trial Trial, spec trialSpec, commit, model, mode string) error {
+	if trial.ID != trialID(spec) || trial.CaseID != spec.Case.ID || trial.Suite != suiteForCase(spec.Case) || trial.Complexity != spec.Case.Complexity || trial.Mode != mode || trial.Variant != spec.Variant || trial.Revision != spec.Revision || trial.Commit != commit || trial.Model != model || trial.Repeat != spec.Repeat || trial.Order != spec.Order {
 		return errors.New("trial identity does not match the run plan")
 	}
 	return nil
@@ -675,7 +811,7 @@ func directoryDigest(root string) (string, error) {
 
 func initializeFixtureGit(workspace string) error {
 	commands := [][]string{
-		{"init", "-q"},
+		{"init", "-q", "-b", "main"},
 		{"config", "user.name", "Spectacular Eval"},
 		{"config", "user.email", "eval@example.invalid"},
 		{"add", "."},

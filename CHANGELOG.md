@@ -8,6 +8,12 @@
   resumable trial manifests, 23 behavior and trigger cases (including adversarial
   authority and prompt-injection cases), held-out variants, grader mutation tests,
   and JSON plus Markdown reports.
+- Hardens that benchmark with native Codex and Claude trace normalization,
+  offline adapter certification fixtures, self-report rejection, failed-trial and
+  resume integrity, explicit measurement/comparison/readiness verdicts, total
+  cost-per-success reporting, model-call and per-trial budget guards, and a
+  six-case productivity frontier comparing native direct, native planning,
+  canonical Markdown workspace, and full Spectacular modes.
 
 ## 2.6.0-rc1 — 2026-08-22
 

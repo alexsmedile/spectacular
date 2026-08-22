@@ -46,6 +46,12 @@ func ValidateTransition(from, to string) error {
 }
 
 func (s Service) TransitionRun(targetRef, toState, actor, reason, nextAction string) (TransitionResult, error) {
+	if strings.TrimSpace(actor) == "" {
+		return TransitionResult{}, domain.NewRefusal(domain.RefusalMissingRequiredField, "by", "actor identity is required for run transition", nil)
+	}
+	if strings.TrimSpace(reason) == "" {
+		return TransitionResult{}, domain.NewRefusal(domain.RefusalMissingRequiredField, "reason", "transition reason is required", nil)
+	}
 	locked, unlock, err := s.beginMutation()
 	if err != nil {
 		return TransitionResult{}, err
@@ -55,13 +61,6 @@ func (s Service) TransitionRun(targetRef, toState, actor, reason, nextAction str
 }
 
 func (s Service) transitionRun(targetRef, toState, actor, reason, nextAction string) (TransitionResult, error) {
-	if strings.TrimSpace(actor) == "" {
-		return TransitionResult{}, domain.NewRefusal(domain.RefusalMissingRequiredField, "by", "actor identity is required for run transition", nil)
-	}
-	if strings.TrimSpace(reason) == "" {
-		return TransitionResult{}, domain.NewRefusal(domain.RefusalMissingRequiredField, "reason", "transition reason is required", nil)
-	}
-
 	parts := strings.Split(targetRef, "/")
 	missionRef := parts[0]
 	runRef := ""

@@ -100,10 +100,12 @@ Record one verdict: `sufficient | needs-evidence | needs-decision`.
 
 ## Freeze a compact Mission preview
 
-### Plan Style & Authoring Invariants
-1. **Anti-Paper Prose**: Write in direct, plain, imperative English. Strictly forbid academic paper style, meta-governance throat-clearing, or decorative preamble.
-2. **Atomic Single-Invariant Claims**: One claim = **one** observable invariant + **one** verifiable proof check. Never combine multiple distinct features or subsystems into a single compound claim.
-3. **Mandatory Actionable Deliverables in Body**: Every Mission body must include a `## Key Deliverables & Actions` section listing:
+### Plan Style & Authoring Invariants (The Hub-and-Spoke Model)
+1. **User Superpower at the Center (The Hub)**: Never write missions as dry backend task tickets. Lead with the **user-observable superpower** unlocked (the "Why" and concrete benefit).
+2. **Pillars as Supporting Nodes (The Spokes)**: Structure technical claims as the 3–4 distinct pillars that support the central superpower (e.g. Compiler Pillar, Budget Pillar, Proof Pillar).
+3. **Anti-Paper Prose**: Write in direct, plain, imperative English. Strictly forbid academic paper style, meta-governance throat-clearing, or decorative preamble.
+4. **Atomic Single-Invariant Claims**: One claim = **one** observable invariant + **one** verifiable proof check. Never combine multiple distinct features or subsystems into a single compound claim.
+5. **Mandatory Actionable Deliverables in Body**: Every Mission body must include a `## Key Deliverables & Actions` section listing:
    - Exact files to modify or create.
    - Concrete invariants or diffs to apply.
    - Exact verification commands to run.

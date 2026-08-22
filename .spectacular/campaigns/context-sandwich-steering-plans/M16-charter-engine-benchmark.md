@@ -4,43 +4,83 @@ title: Build and benchmark the bounded charter engine
 owner: Alex
 contract:
   ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
-outcome: Spectacular has an internal read-only compiler that retrieves only declared governance sources for one Objective and proves material context savings without weakening behavior.
+outcome: Unlock sub-1,200 token agent execution that cuts context costs by >=40% and stops prompt escapes by building the internal read-only Context-Sandwich compiler and proving it against the M14 benchmark suite.
 review: independent
 completion:
-  - claim: deterministic-charter-engine
-    pass_boundary: The internal compiler retrieves the bound Contract, then typed refs in Mission and Objective sources lists in declaration order with duplicate removal, then explicit invocation-added refs; it follows no prose link, recursive citation, or semantic guess and performs no canonical write.
-    proof_requirement: Table and golden fixtures cover ordering, duplicate removal, missing and malformed refs, conflicting refs, explicit additions, source attribution, byte-stable identical inputs, forbidden traversal, no whole-ledger body scan, and byte-identical canonical state.
-  - claim: bounded-governance-envelope
-    pass_boundary: spectacular-charter-tokenizer.v1 counts byte-exact valid UTF-8 with its bundled o200k_base data and published digest; safe compaction returns normally at at most 1200 tokens, warns from 1201 through 1400, strongly recommends a split and requires explicit Orchestrator approval from 1401 through 1440, and refuses above 1440 without omitting authority, stops, claims, proof, or writable scope.
-    proof_requirement: Cross-platform tokenizer goldens, digest and invalid-UTF-8 tests, plus boundary fixtures at 1200, 1201, 1400, 1401, 1440, and 1441 assert exact count, disposition, and preserved frozen fields; compaction fixtures prove only derived summaries are shortened.
-  - claim: measured-context-economy
-    pass_boundary: Against M14's immutable paired baseline, total context ingestion falls by at least 40 percent with no regression in safety, task success, recovery, routing, or Decision fidelity; envelope, named-source, and repair tokens are reported separately.
-    proof_requirement: Trials pin M14 reviewed commit 3a5bab29ed1941a9d2b9873e63324a5bbf29620d and recorded baseline 14158f92aaa78e1a90f0231afdc52a04f3cca6c3, plus identical model, seed, case set, pair order policy, and repetition policy; missing, contaminated, or regressing telemetry returns INCONCLUSIVE or REGRESSION, never pass.
+  - claim: explicit-source-compiler-implemented
+    pass_boundary: The internal compiler assembles a 3-layer charter from the bound Contract, Mission/Objective sources, and explicit invocation refs in order without semantic inference or canonical writes.
+    proof_requirement: Unit and golden tests verify exact source ordering, duplicate deduplication, missing ref handling, and read-only behavior.
+
+  - claim: charter-tokenizer-and-thresholds-enforced
+    pass_boundary: Bundled o200k_base UTF-8 tokenizer counts tokens byte-exactly and enforces standard thresholds (<=1200 pass, 1201-1400 warn, 1401-1440 split notice, >1440 refusal).
+    proof_requirement: Tokenizer test suite and boundary test fixtures at 1200, 1201, 1400, 1401, 1440, and 1441 assert exact count and disposition codes.
+
+  - claim: safe-compaction-rules-verified
+    pass_boundary: When token limits are approached, safe compaction shortens derived summaries and rationale while strictly preserving claims, authority, stops, and writable perimeters.
+    proof_requirement: Compaction fixtures prove frozen fields remain byte-intact while descriptive prose is compacted.
+
+  - claim: context-reduction-benchmark-proven
+    pass_boundary: Paired benchmark run against M14 fixtures demonstrates at least 40% reduction in total context ingestion with zero regression in safety, routing, task success, or decision fidelity.
+    proof_requirement: Benchmark report outputs paired telemetry with envelope, source, and diagnostic token breakdowns and zero regression status.
+
 objectives:
-  - outcome: Define and implement explicit source traversal and the three-layer internal compiler.
-    claims: [deterministic-charter-engine]
-  - outcome: Implement safe compaction and the owner-set token dispositions.
-    claims: [bounded-governance-envelope]
-  - outcome: Extend the immutable M14 harness and run the paired proof gate.
-    claims: [measured-context-economy]
+  - outcome: Implement the internal 3-layer charter compiler and source traversal engine (Compiler Pillar).
+    claims: [explicit-source-compiler-implemented]
+  - outcome: Implement the o200k_base tokenizer and safe compaction threshold engine (Budget Pillar).
+    claims: [charter-tokenizer-and-thresholds-enforced, safe-compaction-rules-verified]
+  - outcome: Run the paired effectiveness benchmark and prove >=40% context savings (Proof Pillar).
+    claims: [context-reduction-benchmark-proven]
+
 authority:
   operator: [inspect, edit-in-scope, choose-reversible-implementation, run-checks, generate-derived-files, bounded-repair, commit-local]
   requires_owner: [activate-mission, change-outcome-or-completion, expand-scope, push, merge, release, irreversible-change]
 scope:
-  mechanical: [internal/runtime, internal/missionbundle, test/evals/spectacular, test]
-  semantic: [read-only Objective charter compilation, explicit source retrieval, context-economy benchmark]
+  mechanical:
+    - internal/charter/
+    - internal/missionbundle/
+    - test/evals/spectacular/
+  semantic:
+    - Read-only 3-layer charter compilation
+    - o200k_base token counting and threshold enforcement
+    - Context reduction and safety benchmark proof
 repair_budget: 2
-dependencies: [M15 accepted; M14 benchmark fixtures remain immutable]
+dependencies: [M15 completed with independent review]
 gaps: []
-stops: [public-command-change, canonical-charter-write, semantic-source-inference, context-reduction-below-40-percent, behavioral-regression, benchmark-contamination]
+stops:
+  - public-command-change
+  - canonical-charter-write
+  - semantic-source-inference
+  - context-reduction-below-40-percent
+  - behavioral-regression
 ---
 
-# Mission
+# Mission: Build and Benchmark the Bounded Charter Engine
 
-> **Future Mission sketch.** Preserve as design input. Do not activate, maintain,
-> validate, or review as a final plan until M15 closes and the Orchestrator
-> re-prepares this block from current Evidence.
+## User Superpower (The Hub)
+Subagents receive a razor-sharp, sub-1,200 token context envelope containing 100% of the truth they need and 0% of the noise. This eliminates whole-workspace prompt dumping, cuts LLM execution token costs by $\ge 40\%$, and prevents hallucinated scope escapes outside declared target files.
 
-Build the engine behind a private boundary first. This Mission adds neither
-`charter` nor `decide`. Its Evidence determines whether public exposure is allowed.
-The charter remains temporary retrieval output, not the complete frozen Handoff.
+## Technical Pillars (The Spokes)
+1. **Compiler Pillar (`internal/charter/`)**: Assembles Layer 1 (Frozen Truth) + Layer 2 (Steering & Decisions) + Layer 3 (Perimeter).
+2. **Budget Pillar (`internal/charter/tokenizer/`)**: Bundles byte-exact `o200k_base` counting and enforces the 1200 / 1400 / 1440 token gates with safe compaction.
+3. **Proof Pillar (`test/evals/spectacular/`)**: Benchmarks the compiler against M14 fixtures to prove $\ge 40\%$ context reduction with zero behavioral regression.
+
+## Key Deliverables & Actions
+
+### 1. 3-Layer Charter Compiler Package (`internal/charter/`)
+- Build the core compiler function `Compile(workspace, missionRef, objectiveRef, extraSources) -> (*Charter, error)`.
+- Retrieve sources in strict order: Bound Contract $\to$ Mission `sources:` $\to$ Objective `sources:` $\to$ invocation refs.
+- Ensure read-only execution: compiling a charter makes zero canonical disk writes.
+
+### 2. Tokenizer & Compaction Engine (`internal/charter/tokenizer/`)
+- Embed `o200k_base` BPE merge table and vocabulary.
+- Implement token counting:
+  - $\le 1{,}200$ tokens: `Pass`
+  - $1{,}201–1{,}400$ tokens: `Warn` + safe compaction
+  - $1{,}401–1{,}440$ tokens: `SplitRecommended`
+  - $> 1{,}440$ tokens: `Refusal`
+- Implement safe compaction to condense Decision rationale while preserving all claims, authority, and file perimeters byte-exact.
+
+### 3. Effectiveness Benchmark Runner (`test/evals/spectacular/`)
+- Add paired benchmark cases evaluating full workspace scan vs. compiled context charter.
+- Assert $\ge 40\%$ total context ingestion reduction.
+- Assert zero regression across task success, routing pass rate, safety checks, and recovery.

@@ -189,8 +189,17 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 		return nil, fmt.Errorf("charter compiler: count tokens: %w", err)
 	}
 
-	// Safe Compaction if over 1,200 tokens
-	if tokenCount > tokenizer.MaxTargetTokens {
+	targetCap := ws.Config.TokenBudgets.Charter.Target
+	if targetCap == 0 {
+		targetCap = tokenizer.MaxTargetTokens
+	}
+	hardCeiling := ws.Config.TokenBudgets.Charter.HardCap
+	if hardCeiling == 0 {
+		hardCeiling = tokenizer.HardCeilingTokens
+	}
+
+	// Safe Compaction if over target budget
+	if tokenCount > targetCap {
 		c.applySafeCompaction()
 		rendered = c.RenderMarkdown()
 		tokenCount, _ = tokenizer.Count(rendered)
@@ -200,8 +209,8 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 	disp, _ := tokenizer.EvaluateDisposition(tokenCount)
 	c.Disposition = disp
 
-	if tokenCount > tokenizer.HardCeilingTokens {
-		return nil, domain.NewRefusal(domain.RefusalInvalidScope, "tokens", fmt.Sprintf("charter token count %d exceeds hard refusal ceiling %d even after compaction; objective split required", tokenCount, tokenizer.HardCeilingTokens), nil)
+	if tokenCount > hardCeiling {
+		return nil, domain.NewRefusal(domain.RefusalInvalidScope, "tokens", fmt.Sprintf("charter token count %d exceeds hard refusal ceiling %d even after compaction; objective split required", tokenCount, hardCeiling), nil)
 	}
 
 	return c, nil

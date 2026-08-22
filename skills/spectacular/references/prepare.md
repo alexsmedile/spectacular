@@ -97,17 +97,26 @@ Record one verdict: `sufficient | needs-evidence | needs-decision`.
 ### Upfront Architectural Grilling vs. Progressive Horizon Detailing
 - **Upfront Architectural Grilling**: Settle foundational architectural choices that span multiple blocks (e.g. B1 through B7) early at the Campaign/Decision level. Ask focused decision questions before freezing execution blocks.
 - **Progressive Horizon Detailing**:
-  > *"Fully detail the active/next mission; keep downstream ones as 2–3 line sketches. Small missions should stay direct and lean. Simpler straightforward tasks can run with no mission if user approves or asks for."*
-  - Detail **only** the active or immediate next Mission block. Downstream blocks remain lightweight 2–3 line sketches. Do not waste tokens writing premature claim matrices for future blocks.
+  > *"Fully detail the active/next mission; keep downstream ones as drafts / sketches. Small missions should stay direct and lean. Simpler straightforward tasks can run with no mission if user approves or asks for."*
+  - Detail **only** the active or immediate next Mission block. Downstream blocks remain lightweight draft sketches without premature claim matrices.
+  - Token budgets from `.spectacular/config.yaml` govern document sizing:
+    - **Active Mission**: 400 – 900 tokens (upper limit: 1,200 tokens).
+    - **Draft / Sketch Mission**: 100 – 300 tokens.
+    - **Decision**: 150 – 400 tokens.
+    - **Context Charter**: $\le 1{,}200$ tokens (hard cap: 1,440 tokens).
 
 ## Freeze a compact Mission preview
 
-### Plan Style & Authoring Guidance
+### Plan Style & Authoring Guidance (Lossless Compression)
 1. **User Superpower at the Center**: Lead with what the developer or user gets (the concrete superpower and observable benefit).
 2. **Lean & Direct for Small Missions**: Small, single-objective missions should stay direct, lean, and free of artificial ceremony. Avoid filler diagrams or forced multi-pillar structures on routine tasks.
 3. **Hub-and-Spoke for Complex Milestones (Recommended)**: For large, multi-objective campaign blocks, structuring claims as distinct technical pillars (e.g. Compiler, Budget, Proof) clarifies the architectural nodes.
-4. **Anti-Paper Prose**: Write in direct, plain, imperative English. Strictly forbid academic paper style, meta-governance throat-clearing, or decorative preamble.
-5. **Atomic Single-Invariant Claims**: One claim = **one** observable invariant + **one** verifiable proof check. Never combine multiple distinct subsystems into a single compound claim.
+4. **Lossless Information Compression**:
+   - **Process Chains**: Use arrows over verbose narrative (`B1 → B2 → B3`, `active → paused | blocked → completed`).
+   - **Matrix Tuples**: Use compact key-value lists for scope and stops (`mechanical: [cmd/, internal/]`, `stops: [rewrite]`).
+   - **Canonical Pointers**: Reference records by identifier (`Contract:019f...`, `D21`) rather than duplicating text.
+   - **BLUF**: Bottom Line Up Front — strip conversational preamble and state verifiable outcomes directly.
+5. **Atomic Single-Invariant Claims**: One claim = **one** observable invariant + **one** verifiable proof check.
 6. **Key Deliverables in Body**: Include a direct action checklist of target files and verification commands.
 
 Frontmatter:

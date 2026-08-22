@@ -26,6 +26,21 @@ stay in their own providers.
 | Objective / Run | Inline while simple; promoted to a file only when independently useful (`O<N>-<slug>.md`, `R<N>-<slug>.md`) |
 | Evidence / review | Earned proof and assessment; neither silently changes success criteria |
 
+## Role-aware context
+
+Model profiles select capability; role contracts select context and authority.
+Do not give every agent the whole workspace by default.
+
+| Role | Default read set | Do not load by default |
+|---|---|---|
+| Orchestrator | Guide, relevant Anchors, Campaign when planning, Mission/Proposal | unrelated Mission history |
+| Runner | assigned Objective, current Run, Handoff, exact named inputs | Campaigns, other Missions, archive, workspace catalog |
+| Reviewer | frozen Mission claims, reviewed commit, Evidence, review criteria | implementation rationale not needed to assess a claim |
+| Autopilot receiver | charter, active Objective/Run, explicitly permitted sources | Campaign as a work selector; unrelated records |
+
+When a Runner lacks information, it reads its named sources and returns a
+precise context request to the Orchestrator. It does not scan the workspace.
+
 ## Start every workflow
 
 0. **Confirm the mechanical layer is present.** Run `spectacular --version`

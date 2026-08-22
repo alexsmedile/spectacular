@@ -114,6 +114,20 @@ The Run-body note names the trigger, what was reviewed, the result, and the
 next action. It supports a cold resume without creating a new record for every
 ordinary progress check.
 
+### Roles use bounded context
+
+An Orchestrator uses Anchors and Campaign maps to plan. A Runner uses its
+assigned Objective, current Run, Handoff, and explicitly named inputs. A
+Reviewer uses frozen claims, the reviewed commit, Evidence, and review criteria.
+An Autopilot receiver uses only its charter and allowed sources.
+
+An independent Runner Handoff includes a short **Runner context contract** in
+its body: `Read`, `Do not load`, and `If blocked`. If the contract does not
+answer a needed question, the Runner requests one named authoritative source
+from the Orchestrator rather than scanning the workspace. This preserves both
+token efficiency and the boundary between roadmap context and execution
+authority.
+
 ## Prove: Evidence, Reviews, Handoffs
 
 Proof is a record, not a message.

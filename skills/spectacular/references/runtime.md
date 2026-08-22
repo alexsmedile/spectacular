@@ -56,6 +56,36 @@ identity. The file then carries the exact:
 Accountability stays with the Mission owner. A host task or thread is only a
 destination pointer — it owns nothing.
 
+### Add a Runner context contract
+
+Every independent Runner Handoff carries this compact section in its Markdown
+body. It is guidance, not a new schema field: use judgment to keep the read set
+small and exact.
+
+```md
+## Runner context contract
+
+Read:
+- `M15/O2`
+- `M15/R1`
+- `internal/auth/...`
+- `STACK.md`
+
+Do not load:
+- Campaigns
+- other Missions
+- archive
+- workspace catalog
+
+If blocked:
+- Ask the Orchestrator for one named authoritative source.
+```
+
+A Runner follows this contract instead of scanning the workspace. A Campaign's
+current block is roadmap context for an Orchestrator, never an assignment to a
+Runner. If a Mission body explicitly cites a Campaign, read only the cited
+context and only when it is relevant to the assigned work.
+
 ## Record the delegation as a Handoff
 
 ```bash

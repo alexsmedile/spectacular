@@ -122,6 +122,11 @@ performs deterministic validation and record transitions. External providers
 remain their own authority: Spectacular never assumes permission to publish,
 deploy, message, or mutate them.
 
+Agents use role-scoped context: Orchestrators plan from Anchors and optional
+Campaign maps; Runners read only their Objective, Run, Handoff, and named
+inputs; Reviewers assess frozen claims and evidence. A Runner requests a named
+source when blocked rather than loading the whole workspace.
+
 ## Quick start
 
 ### Install the CLI

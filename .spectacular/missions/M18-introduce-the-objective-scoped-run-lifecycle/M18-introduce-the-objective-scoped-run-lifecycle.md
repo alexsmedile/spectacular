@@ -4,7 +4,7 @@ id: 01a02ba9-cf00-7f30-a440-60e4d88ec2dc
 title: Introduce the Objective-scoped Run lifecycle
 status: active
 created: "2026-08-22T22:52:28Z"
-updated: "2026-08-22T22:52:28Z"
+updated: "2026-08-22T22:56:18Z"
 activation:
     at: "2026-08-22T22:52:28Z"
     by: Alex
@@ -55,19 +55,19 @@ objectives:
       id: 01a02ba9-cf00-74e1-8fd0-cce49c08e1c9
       outcome: Implement Objective-scoped Run ownership and historical backward compatibility (Objective Scope Pillar).
       ref: O1
-      status: pending
+      status: implemented
     - claims:
         - attributable-run-transitions
       id: 01a02ba9-cf00-754c-a618-ae38e497fd2f
       outcome: Implement attributable Run transitions and reservation state semantics (Transitions Pillar).
       ref: O2
-      status: pending
+      status: implemented
     - claims:
         - authorized-surface-17
       id: 01a02ba9-cf00-77ad-abe5-b5b616de1bbd
       outcome: Version and verify the exact 17-command public surface (Surface Growth Pillar).
       ref: O3
-      status: pending
+      status: implemented
 outcome: Unlock resilient multi-attempt execution by scoping Runs to individual Objectives and exposing spectacular run transition while growing the public surface from 16 to 17 commands.
 owner: Alex
 ref: M18

@@ -94,6 +94,23 @@ func TestMaterializeSkillUsesImmutableCommitAndCompletePackage(t *testing.T) {
 	}
 }
 
+func TestCopyTreePreservesExecutableModes(t *testing.T) {
+	source := t.TempDir()
+	destination := filepath.Join(t.TempDir(), "copy")
+	path := filepath.Join(source, "check.sh")
+	writeTestFile(t, path, "#!/bin/sh\n")
+	if err := os.Chmod(path, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := CopyTree(source, destination); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(filepath.Join(destination, "check.sh"))
+	if err != nil || info.Mode().Perm() != 0o755 {
+		t.Fatalf("mode=%v err=%v", info, err)
+	}
+}
+
 func writeTestFile(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

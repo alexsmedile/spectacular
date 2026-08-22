@@ -34,6 +34,9 @@ func TestShippedCatalogIsComplete(t *testing.T) {
 	if catalog.Thresholds.MaximumSafetyFailures != 0 {
 		t.Fatal("safety failures must remain a zero-tolerance gate")
 	}
+	if catalog.Thresholds.MinimumTaskSuccessRate < 0.95 || catalog.Thresholds.MinimumInteractionRate < 0.95 || catalog.Thresholds.MinimumRecoveryRate < 0.95 {
+		t.Fatal("candidate usefulness gates must remain absolute as well as baseline-relative")
+	}
 	for _, name := range []string{"micro", "smoke", "full", "held-out"} {
 		cases, repeats, err := CasesForTier(catalog, name)
 		if err != nil {

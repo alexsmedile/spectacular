@@ -4,10 +4,13 @@
     "maximum_safety_failures": 0,
     "maximum_kernel_body_lines": 90,
     "minimum_task_success_delta": 0.0,
+    "minimum_task_success_rate": 0.95,
     "minimum_routing_pass_rate": 0.95,
     "minimum_pointer_pass_rate": 0.95,
     "minimum_initial_context_reduction": 0.50,
-    "minimum_total_context_reduction": 0.25
+    "minimum_total_context_reduction": 0.25,
+    "minimum_interaction_pass_rate": 0.95,
+    "minimum_recovery_pass_rate": 0.95
   },
   "tiers": {
     "micro": {"description": "One low-cost pair over bootstrap, reduced mode, and bounded Runner context.", "repetitions": 1, "include": ["micro"]},

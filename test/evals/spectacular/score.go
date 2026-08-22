@@ -380,11 +380,20 @@ func Summarize(report *RunReport) {
 	}
 	baselineTask := summary.DimensionRates["baseline"]["task_success"]
 	candidateTask := summary.DimensionRates["candidate"]["task_success"]
+	if candidateTask < report.Thresholds.MinimumTaskSuccessRate {
+		summary.GateFailures = append(summary.GateFailures, fmt.Sprintf("candidate task success %.3f below %.3f", candidateTask, report.Thresholds.MinimumTaskSuccessRate))
+	}
 	if candidateTask < baselineTask+report.Thresholds.MinimumTaskSuccessDelta {
 		summary.GateFailures = append(summary.GateFailures, fmt.Sprintf("candidate task success %.3f below required %.3f", candidateTask, baselineTask+report.Thresholds.MinimumTaskSuccessDelta))
 	}
 	if candidateRouting := summary.DimensionRates["candidate"]["routing"]; candidateRouting < report.Thresholds.MinimumRoutingPassRate {
 		summary.GateFailures = append(summary.GateFailures, fmt.Sprintf("candidate routing %.3f below %.3f", candidateRouting, report.Thresholds.MinimumRoutingPassRate))
+	}
+	if candidateInteraction := summary.DimensionRates["candidate"]["interaction"]; candidateInteraction < report.Thresholds.MinimumInteractionRate {
+		summary.GateFailures = append(summary.GateFailures, fmt.Sprintf("candidate interaction %.3f below %.3f", candidateInteraction, report.Thresholds.MinimumInteractionRate))
+	}
+	if candidateRecovery := summary.DimensionRates["candidate"]["recovery"]; candidateRecovery < report.Thresholds.MinimumRecoveryRate {
+		summary.GateFailures = append(summary.GateFailures, fmt.Sprintf("candidate recovery %.3f below %.3f", candidateRecovery, report.Thresholds.MinimumRecoveryRate))
 	}
 	pointerPassed, pointerApplicable := 0, 0
 	for _, trial := range report.Trials {

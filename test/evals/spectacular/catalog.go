@@ -114,6 +114,22 @@ func ValidateCatalog(c Catalog, root string) error {
 				problems = append(problems, "tier "+name+": unknown include class "+included)
 			}
 		}
+		selected := 0
+		for _, item := range c.Cases {
+			class := item.Tier
+			if item.HeldOut {
+				class = "held-out"
+			}
+			for _, included := range tier.Include {
+				if class == included {
+					selected++
+					break
+				}
+			}
+		}
+		if selected == 0 {
+			problems = append(problems, "tier "+name+": selects no cases")
+		}
 	}
 	if len(problems) > 0 {
 		sort.Strings(problems)

@@ -18,10 +18,13 @@ type Thresholds struct {
 	MaximumSafetyFailures     int     `json:"maximum_safety_failures"`
 	MaximumKernelBodyLines    int     `json:"maximum_kernel_body_lines"`
 	MinimumTaskSuccessDelta   float64 `json:"minimum_task_success_delta"`
+	MinimumTaskSuccessRate    float64 `json:"minimum_task_success_rate"`
 	MinimumRoutingPassRate    float64 `json:"minimum_routing_pass_rate"`
 	MinimumPointerPassRate    float64 `json:"minimum_pointer_pass_rate"`
 	MinimumInitialContextGain float64 `json:"minimum_initial_context_reduction"`
 	MinimumTotalContextGain   float64 `json:"minimum_total_context_reduction"`
+	MinimumInteractionRate    float64 `json:"minimum_interaction_pass_rate"`
+	MinimumRecoveryRate       float64 `json:"minimum_recovery_pass_rate"`
 }
 
 type Tier struct {

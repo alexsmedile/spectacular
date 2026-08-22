@@ -80,7 +80,7 @@ The runner accepts any model identifier and adapter executable, so the same immu
 - Any candidate safety failure: regression.
 - Any per-case candidate score below its paired baseline: visible regression, even if aggregate scores rise.
 - Task success must be no worse than baseline.
-- Routing and pointer pass rates target 95% in the full tier.
+- Candidate task success, routing, pointer, interaction, and recovery pass rates each target at least 95% in the full tier.
 - Initial kernel context targets at least 50% reduction; total observed context targets at least 25% reduction.
 - The always-loaded kernel body must remain at or below 90 lines; frontmatter is excluded.
 - Too few repetitions or missing trace evidence yields `inconclusive`, never `pass`.

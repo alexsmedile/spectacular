@@ -113,12 +113,17 @@ func (s Service) recordDecision(path string, stdin []byte) (DecisionResult, erro
 		body = "# " + draft.Title + "\n\n## Rationale\n" + draft.Rationale + "\n"
 	}
 
+	actor := draft.Actor
+	if actor == "" {
+		actor = "Alex"
+	}
+
 	doc := &workspace.Document{
 		Record: domain.Record{
 			Type:      domain.Decision,
 			ID:        domainID,
 			Title:     stringPtr(draft.Title),
-			CreatedBy: stringPtr(draft.Actor),
+			CreatedBy: stringPtr(actor),
 			Created:   stringPtr(now),
 			Updated:   stringPtr(now),
 		},
@@ -127,7 +132,7 @@ func (s Service) recordDecision(path string, stdin []byte) (DecisionResult, erro
 	}
 
 	workspace.SetString(doc, "ref", ref)
-	workspace.SetString(doc, "actor", draft.Actor)
+	workspace.SetString(doc, "actor", actor)
 	workspace.SetString(doc, "actor_role", draft.ActorRole)
 	workspace.SetString(doc, "question", draft.Question)
 	workspace.SetString(doc, "disposition", draft.Disposition)

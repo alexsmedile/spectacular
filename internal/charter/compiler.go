@@ -83,7 +83,7 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 	}
 
 	// 2. Resolve Sources in Strict Declaration Order: Bound Contract -> Mission sources -> Objective sources -> extraSources
-	rawSourceRefs := make([]string, 0, 4+len(extraSources))
+	rawSourceRefs := make([]string, 0, 4+len(targetObj.Sources)+len(extraSources))
 	if bundle.Contract.Ref != "" {
 		rawSourceRefs = append(rawSourceRefs, bundle.Contract.Ref)
 	}
@@ -93,6 +93,11 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 		if missionSources, err := workspace.Strings(missionDoc, "sources", false); err == nil && len(missionSources) > 0 {
 			rawSourceRefs = append(rawSourceRefs, missionSources...)
 		}
+	}
+
+	// Add Objective-level sources
+	if len(targetObj.Sources) > 0 {
+		rawSourceRefs = append(rawSourceRefs, targetObj.Sources...)
 	}
 
 	// Add invocation sources
@@ -117,7 +122,7 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 	for _, sRef := range orderedSources {
 		entry, fingerprint, found := resolveSource(ws, sRef)
 		if !found || entry.Document == nil {
-			continue
+			return nil, domain.NewRefusal(domain.RefusalRecordNotFound, sRef, fmt.Sprintf("declared charter source %q could not be resolved", sRef), nil)
 		}
 
 		doc := entry.Document
@@ -194,6 +199,10 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 	c.TokenCount = tokenCount
 	disp, _ := tokenizer.EvaluateDisposition(tokenCount)
 	c.Disposition = disp
+
+	if tokenCount > tokenizer.HardCeilingTokens {
+		return nil, domain.NewRefusal(domain.RefusalInvalidScope, "tokens", fmt.Sprintf("charter token count %d exceeds hard refusal ceiling %d even after compaction; objective split required", tokenCount, tokenizer.HardCeilingTokens), nil)
+	}
 
 	return c, nil
 }

@@ -11,11 +11,12 @@ import (
 )
 
 const (
-	Version          = "spectacular-charter-tokenizer.v1"
-	VocabularyModel  = "o200k_base"
-	MaxTargetTokens  = 1200
-	MaxWarningTokens = 1400
-	MaxCeilingTokens = 1440
+	Version           = "spectacular-charter-tokenizer.v1"
+	VocabularyModel   = "o200k_base"
+	MaxTargetTokens   = 1200
+	MaxWarningTokens  = 1400
+	MaxCeilingTokens  = 1440
+	HardCeilingTokens = 1440
 )
 
 type Disposition string

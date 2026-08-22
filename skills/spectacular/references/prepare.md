@@ -96,19 +96,19 @@ Record one verdict: `sufficient | needs-evidence | needs-decision`.
 
 ### Upfront Architectural Grilling vs. Progressive Horizon Detailing
 - **Upfront Architectural Grilling**: Settle foundational architectural choices that span multiple blocks (e.g. B1 through B7) early at the Campaign/Decision level. Ask focused decision questions before freezing execution blocks.
-- **Progressive Horizon Detailing**: Detail **only** the active or immediate next Mission block. Downstream blocks (B2–B7) remain lightweight 2–3 line summary cards. Do not waste tokens writing premature, detailed claim matrices for far-future blocks.
+- **Progressive Horizon Detailing**:
+  > *"Fully detail the active/next mission; keep downstream ones as 2–3 line sketches. Small missions should stay direct and lean. Simpler straightforward tasks can run with no mission if user approves or asks for."*
+  - Detail **only** the active or immediate next Mission block. Downstream blocks remain lightweight 2–3 line sketches. Do not waste tokens writing premature claim matrices for future blocks.
 
 ## Freeze a compact Mission preview
 
-### Plan Style & Authoring Invariants (The Hub-and-Spoke Model)
-1. **User Superpower at the Center (The Hub)**: Never write missions as dry backend task tickets. Lead with the **user-observable superpower** unlocked (the "Why" and concrete benefit).
-2. **Pillars as Supporting Nodes (The Spokes)**: Structure technical claims as the 3–4 distinct pillars that support the central superpower (e.g. Compiler Pillar, Budget Pillar, Proof Pillar).
-3. **Anti-Paper Prose**: Write in direct, plain, imperative English. Strictly forbid academic paper style, meta-governance throat-clearing, or decorative preamble.
-4. **Atomic Single-Invariant Claims**: One claim = **one** observable invariant + **one** verifiable proof check. Never combine multiple distinct features or subsystems into a single compound claim.
-5. **Mandatory Actionable Deliverables in Body**: Every Mission body must include a `## Key Deliverables & Actions` section listing:
-   - Exact files to modify or create.
-   - Concrete invariants or diffs to apply.
-   - Exact verification commands to run.
+### Plan Style & Authoring Guidance
+1. **User Superpower at the Center**: Lead with what the developer or user gets (the concrete superpower and observable benefit).
+2. **Lean & Direct for Small Missions**: Small, single-objective missions should stay direct, lean, and free of artificial ceremony. Avoid filler diagrams or forced multi-pillar structures on routine tasks.
+3. **Hub-and-Spoke for Complex Milestones (Recommended)**: For large, multi-objective campaign blocks, structuring claims as distinct technical pillars (e.g. Compiler, Budget, Proof) clarifies the architectural nodes.
+4. **Anti-Paper Prose**: Write in direct, plain, imperative English. Strictly forbid academic paper style, meta-governance throat-clearing, or decorative preamble.
+5. **Atomic Single-Invariant Claims**: One claim = **one** observable invariant + **one** verifiable proof check. Never combine multiple distinct subsystems into a single compound claim.
+6. **Key Deliverables in Body**: Include a direct action checklist of target files and verification commands.
 
 Frontmatter:
 
@@ -124,7 +124,7 @@ Frontmatter:
   Also choose it when the work is disputed. Otherwise `automatic` is honest, and
   `clustered` fits several small related claims. A reviewer who did not implement
   the scope is what makes it independent — see [close.md](close.md).
-- Objectives, with dependencies and claim coverage
+- Objectives, with dependencies, claim coverage, and optional `sources:` references
 - initial Run and operator, authority, mechanical and semantic scope
 - budgets, dependencies, Gaps, stops, recovery
 - `resolves_gaps:` when the Mission closes a Gap on its bound Contract, as `gap`

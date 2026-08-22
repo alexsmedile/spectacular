@@ -106,6 +106,7 @@ type Objective struct {
 	Ref            string   `yaml:"ref" json:"ref"`
 	ID             string   `yaml:"id" json:"id"`
 	Source         string   `yaml:"-" json:"source,omitempty"`
+	Sources        []string `yaml:"sources,omitempty" json:"sources,omitempty"`
 	Outcome        string   `yaml:"outcome,omitempty" json:"outcome,omitempty"`
 	Status         string   `yaml:"status,omitempty" json:"status,omitempty"`
 	After          []string `yaml:"after,omitempty" json:"after,omitempty"`

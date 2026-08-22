@@ -281,6 +281,7 @@ case "$mode" in
     ;;
   all)
     static_checks
+    acceptance_checks
     check race go test -race -count=1 ./...
     release_checks
     ;;

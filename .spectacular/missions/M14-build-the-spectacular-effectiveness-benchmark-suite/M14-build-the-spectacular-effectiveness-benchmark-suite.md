@@ -4,7 +4,7 @@ id: 01a028e9-c0b8-77dc-9dd3-9ff0b46cedca
 title: Build the Spectacular effectiveness benchmark suite
 status: active
 created: "2026-08-22T12:01:56Z"
-updated: "2026-08-22T13:01:13Z"
+updated: "2026-08-22T14:29:56Z"
 activation:
     at: "2026-08-22T12:01:56Z"
     by: Alex
@@ -68,6 +68,10 @@ reviews:
     - file: reviews/RV1-independent-review-of-the-spectacular-effectiveness-benchmark-suite.md
       id: 01a02959-5720-7e5e-a08f-76084b80dbd1
       ref: RV1
+      verdict: pass
+    - file: reviews/RV2-independent-review-of-hardened-benchmark-validity-and-mode-frontier.md
+      id: 01a02959-5720-755d-88e4-1fcda80d0a07
+      ref: RV2
       verdict: pass
 run:
     current_objective: O1

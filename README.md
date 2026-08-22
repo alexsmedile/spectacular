@@ -25,6 +25,10 @@ claim, and a handoff from a transfer of accountability.
 The result is not a longer chat history. It is a shared record of the work and
 one justified next action.
 
+Markdown is canonical. Folders provide navigable, scoped context. Agents follow
+source pointers and read only the records needed for the current decision or
+action; chat history and generated views are conveniences, not authority.
+
 ## See it in action
 
 ```text
@@ -176,12 +180,13 @@ From a project containing an explicit v2 `.spectacular/` workspace, inspect
 the starting context:
 
 ```sh
-/absolute/prefix/bin/spectacular workspace context project --event @Orient --json
+cat .spectacular/index.md
+/absolute/prefix/bin/spectacular mission show M<N> --json  # when the guide names an active Mission
 ```
 
 Then open your agent and use the Spectacular workflow to orient, explore, or
-prepare a Mission. The agent follows source pointers from the compiled context
-rather than treating the projection as the canonical record.
+prepare a Mission. The guide is compact routing only; the agent follows its
+pointers to canonical records rather than treating a projection as authority.
 
 ## What it is—and is not
 
@@ -213,6 +218,27 @@ Autopilot is explicit and non-default. It can perform only actions inside its
 Mission envelope; it expires, stops at its chartered conditions, and returns a
 bounded result. It never transfers Mission accountability.
 
+### Adopt structure as work earns it
+
+Spectacular does not require a full multi-stage process for every task. Start
+small and promote structure only when the work needs it:
+
+| Level | Shape |
+| --- | --- |
+| Orient | Read Anchors and answer a question; no Mission is needed. |
+| Bounded task | One compact Mission, inline Objective, one Run, and focused checks. |
+| Build | Earned Objectives, dependency edges, Evidence, and review. |
+| Delegated build | Promoted Objectives, recorded Handoffs, and isolated worktrees. |
+| Autopilot | An explicit charter bound to a Mission fingerprint, with limits, checks, stops, expiry, and a return path. |
+
+Folder-native workflows remain useful at every level. Spectacular supplies the
+accountability layer when frozen scope, evidence, review, handoffs, or
+owner-gated effects become necessary.
+
+Campaigns are optional, durable planning maps above Missions. They sequence
+roadmap blocks and candidate Missions but grant no execution authority; see
+`.spectacular/campaigns/`.
+
 ## The workspace
 
 ### Canonical v2 workspace layout
@@ -226,6 +252,7 @@ Spectacular v2 stores a compact, clean set of canonical Markdown documents under
 ├── PRODUCT.md           # Product Anchor
 ├── STACK.md             # Technology stack Anchor
 ├── GUARDRAILS.md        # Standing constraints on agent authority
+├── campaigns/           # Optional strategic roadmap maps; non-governing
 ├── contracts/           # Accepted specifications, each with its Gaps and amendment history
 ├── missions/            # Bounded execution plans, one bundle per Mission
 │   └── M12-<slug>/
@@ -236,7 +263,8 @@ Spectacular v2 stores a compact, clean set of canonical Markdown documents under
 ├── proposals/           # Open explorations only (P5, P8, P10, ...)
 ├── decisions/           # Durable decision records (D1 ... D11)
 ├── archive/             # Retired records: completed Missions, absorbed Proposals
-└── index.md             # Generated, non-authoritative workspace index
+├── index.md             # Generated compact routing guide; non-authoritative
+└── catalog.md           # Generated complete record inventory; non-authoritative
 ```
 
 Every governed record is named by its own reference, so a file is identifiable

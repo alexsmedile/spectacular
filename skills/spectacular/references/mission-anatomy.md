@@ -121,6 +121,23 @@ Start with one file: `<mission-dir>/<mission-ref>-<slug>.md` (e.g. `.spectacular
 When you split, keep the same UUID and ref, and leave one pointer where the inline
 detail was. The root Mission record stays the index. Do not add a Mission-local `index.md`.
 
+## Checkpoints
+
+Plan optional checkpoints in the Run body when a Run needs a named progress,
+verification, or resume gate. A checkpoint itself does not grant authority or
+require human review. When it produces a decision, observation, verdict, or
+handoff, create the corresponding Decision, Evidence, Review/Assessment, or
+Handoff record and link it from the Run-body note. See
+[execute.md](execute.md) for the routing table and template.
+
+## Campaign context
+
+When a Mission comes from a Campaign, cite the Campaign file and block in the
+Mission body's origin or rationale. This context is non-binding: Campaigns are
+mutable roadmap maps under `.spectacular/campaigns/`, while the Mission's frozen
+outcome, scope, authority, and completion claims remain authoritative. Do not
+add a Campaign binding to Mission frontmatter.
+
 ## Anchor anatomy & modular contracts
 
 ### Core Triad (Required at Kickoff)

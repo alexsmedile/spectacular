@@ -11,6 +11,8 @@ import (
 
 func TestPlanBuildsReadableScopedMissionBundle(t *testing.T) {
 	mission := document(t, domain.Mission, "019fe381-5d61-7223-b362-03a5f99a7b02", "Restore human operability")
+	status := "active"
+	mission.Record.Status = &status
 	missionRef := "Mission:" + mission.Record.ID.String()
 	objective := document(t, domain.Objective, "019fe381-5d61-7223-b362-03a5f99a7b03", "Implement readable workspace")
 	workspace.SetString(objective, "mission", missionRef)
@@ -50,8 +52,12 @@ func TestPlanBuildsReadableScopedMissionBundle(t *testing.T) {
 		t.Fatal(err)
 	}
 	root := string(indexes[".spectacular/index.md"])
-	if !strings.Contains(root, "non-authoritative") || !strings.Contains(root, "`M1/R1/C1`") {
-		t.Fatalf("index lacks projection boundary or scoped ref:\n%s", root)
+	if !strings.Contains(root, "non-authoritative") || !strings.Contains(root, "`M1`") || strings.Contains(root, "`M1/R1/C1`") {
+		t.Fatalf("guide is not compact or lacks the active Mission:\n%s", root)
+	}
+	catalog := string(indexes[".spectacular/catalog.md"])
+	if !strings.Contains(catalog, "`M1/R1/C1`") {
+		t.Fatalf("catalog lacks the complete scoped inventory:\n%s", catalog)
 	}
 }
 

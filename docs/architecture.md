@@ -1,11 +1,12 @@
 # Architecture
 
-Spectacular is four surfaces that do not overlap. Most of its design follows
+Spectacular is five surfaces that do not overlap. Most of its design follows
 from keeping them separate.
 
 | Surface | Audience | What it is |
 |---|---|---|
 | `.spectacular/` | governance | The records: Missions, Proposals, Decisions, Evidence |
+| `.spectacular/campaigns/` | planning | Optional durable roadmap maps; excluded from the record graph and CLI lifecycle |
 | `skills/` | agents at runtime | Executable guidance the CLI and Skill load |
 | `cmd/` + `internal/` | the machine | A typed CLI that validates and mutates records atomically |
 | `docs/` | humans | What you are reading |
@@ -40,6 +41,17 @@ Gap, and Mission-local Decisions.
 
 That split is why archiving a Mission archives its whole bundle: an Evidence
 record separated from its Mission is not evidence of anything.
+
+## Campaigns are plans, not records
+
+A Campaign is an optional Markdown planning map in `.spectacular/campaigns/`.
+It can sequence independent roadmap blocks and link candidate or active
+Missions, but it grants no authority and is intentionally excluded from typed
+CLI validation, identities, fingerprints, and lifecycle transitions. Campaigns
+are mutable; a Mission's frozen envelope remains the execution authority.
+
+A Mission may cite Campaign context in its Markdown body. Do not bind a Mission
+to a Campaign in frozen frontmatter: roadmap edits must not create Mission drift.
 
 ## The mechanical interface
 

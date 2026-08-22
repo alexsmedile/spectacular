@@ -63,6 +63,37 @@ an irreversible effect, or working past a stop.
 If the mode was never settled, default to checkpoints at Objective boundaries and
 say that you are doing so.
 
+### Plan checkpoints as flexible Run-body gates
+
+A checkpoint is a planned place to review progress, run a check, collect a
+decision, or decide whether to resume. It is optional, lives in the Run body,
+and is not automatically a human-review gate or a durable authority record.
+
+Plan only the checkpoints that alter how the Run proceeds. Use this routing
+table when one produces a durable result:
+
+| Checkpoint result | Record to create or update |
+| --- | --- |
+| owner choice or changed direction | Decision |
+| observation, command output, or test result | Evidence |
+| verdict on implementation or claims | Review or Assessment |
+| transfer to another operator or runtime | Handoff |
+| ordinary progress check with none of the above | Run-body note only |
+
+Use a compact body shape:
+
+```md
+### Checkpoint: after O2 integration
+- Trigger: focused integration checks complete.
+- Reviewed: <what changed and which checks ran>.
+- Result: <continue, repair, stop, or owner gate>.
+- Next: <one action or linked durable record>.
+```
+
+Checkpoint records under `runs/.../checkpoints/` remain available for historical
+or advanced workspace layouts. Normal v2 execution does not create one for an
+ordinary check-in.
+
 Two things that are not activation authority:
 
 - A Proposal is optional input. Mission start never creates one.

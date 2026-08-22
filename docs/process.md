@@ -13,6 +13,27 @@ a change was made under.
 
 If a Mission is too big, the answer is a smaller Mission, not a parallel one.
 
+## Intake and probes
+
+Unbounded ideas, requests, and experiments do not need a Mission. Keep them in
+an issue tracker, `TODO.md`, or `scratch/`; these are mutable intake surfaces,
+not governed records. A probe may test a hypothesis in `scratch/` or on a
+disposable branch when it is time-boxed, reversible, and has no provider,
+destructive, production-data, or acceptance effect.
+
+Promote the result when it becomes durable work: use a Proposal for a
+consequential unresolved choice, or a compact Mission when the work has a
+bounded outcome and needs authority, evidence, or review. Do not run an
+unbounded intake queue on Autopilot.
+
+## Campaigns: optional roadmap maps
+
+A Campaign is one Markdown file in `.spectacular/campaigns/` for a genuinely
+independent strategic arc. It maps 4–10 roadmap blocks, their dependencies,
+candidate or active Missions, and an exit condition. It is a planning map, not
+an automation queue or execution authority. Campaigns are optional: use one
+only when several Missions need a shared roadmap.
+
 ## Explore: the Proposal and Starter Inputs
 
 When starting a project or capability, an initial PRD or starter input (e.g. `./PRD.md`, `scratch/PRD.tmp.md`, or output from the `write-prd` skill) serves as an ephemeral launchpad. Spectacular's One-Shot Genesis distills its 8 foundational dimensions losslessly into the Core Triad (`PROJECT.md`, `STACK.md`, `ARCHITECTURE.md`), On-Demand Anchors, and the `M1-bootstrap` Mission plan.
@@ -62,6 +83,28 @@ behind implementation.
 
 `mission check` reports per-claim drift at any point: which claims are repaired,
 how stale the evidence is, and where the next flag is.
+
+### Checkpoints are planned Run-body gates
+
+A checkpoint is an optional, planned point in a Run for reviewing progress,
+running a check, collecting a decision, or choosing whether to resume. It is
+not automatically a human-review gate and does not carry authority by itself.
+Record the planned checkpoints in the Run body at activation, then update the
+same section as the Run progresses.
+
+Use the durable record that matches what happened at a checkpoint:
+
+| If the checkpoint produces… | Record it as… |
+| --- | --- |
+| an owner choice or changed direction | a Decision |
+| an observation or test result | Evidence |
+| a verdict on the work | Review or Assessment |
+| a transfer to another operator or runtime | Handoff |
+| none of the above | a concise Run-body checkpoint note |
+
+The Run-body note names the trigger, what was reviewed, the result, and the
+next action. It supports a cold resume without creating a new record for every
+ordinary progress check.
 
 ## Prove: Evidence, Reviews, Handoffs
 

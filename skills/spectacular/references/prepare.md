@@ -39,7 +39,7 @@ Each Campaign Block is an essential 4-field card (or diagram node), not a separa
 - **Status & Mapping**: `PLANNED` | `IN PROGRESS -> M<N>` | `CLOSED (M<N>)`.
 
 ### Division of Responsibility:
-- **Campaign / Block (Fluid Overview)**: Macro-capabilities, unblocking dependencies, fluid future blocks. Lives inline in chat/preview or as a 15-line `## Active Campaign` section in `.spectacular/PROJECT.md` (no extra files).
+- **Campaign / Block (Fluid Overview)**: Macro-capabilities, unblocking dependencies, fluid future blocks. Lives in one optional Markdown file per independent arc under `.spectacular/campaigns/`; it never belongs in the stable `PROJECT.md` Anchor and grants no execution authority.
 - **Mission (Frozen Execution)**: Atomic, frozen envelope with UUIDv7 identity, SHA-256 fingerprint, exact Git baseline, and strict verifiable claims (`pass_boundary` & `proof_requirement`).
 
 ### Block-to-Mission Mapping:

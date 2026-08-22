@@ -18,7 +18,7 @@ stay in their own providers.
 |---|---|
 | Anchor | Accepted project truth. Core Triad: `PROJECT.md` (root scope/boundaries), `STACK.md` (tools/runtimes), `ARCHITECTURE.md` (layers/components). On-Demand: `VOCABULARY.md`, `SECURITY.md`, `GUARDRAILS.md`, `PRODUCT.md` |
 | PRD / Starter Input | Ephemeral kickoff input; digested into Core Anchors and `M1-bootstrap` claims, never kept as eternal context bloat |
-| Campaign | Strategic roadmap arc (synonyms: *Initiative*, *Milestone Arc*, *Flight Plan*, *Theme*); 4–10 topological Campaign Blocks visualized via Mermaid (ASCII fallback) |
+| Campaign | Optional durable roadmap map in `.spectacular/campaigns/` (synonyms: *Initiative*, *Milestone Arc*, *Flight Plan*, *Theme*); 4–10 topological Campaign Blocks visualized via Mermaid (ASCII fallback), never execution authority |
 | Proposal | Optional, mutable exploration in chat, an issue, or a Spectacular file |
 | Mission | Frozen execution plan and primary entry point in `M<N>-<slug>.md` |
 | Contract / specification | Modular, composable capability specifications (`CC-<module>`); edit as ordinary Mission work |

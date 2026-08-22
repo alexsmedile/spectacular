@@ -22,3 +22,5 @@ Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1
 | `spectacular proposal check` | `<ref> [--json]` | `spectacular.proposal.check.v2` | `read-only` |
 | `spectacular campaign check` | `<path> [--json]` | `spectacular.campaign.check.v2` | `read-only` |
 | `spectacular contract amend` | `<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]` | `spectacular.contract.amend.v2` | `mutating` |
+| `spectacular charter` | `<mission-ref>/<objective-ref> [sources...] [--json]` | `spectacular.charter.show.v2` | `read-only` |
+| `spectacular decide` | `<decision.md|-> [--json]` | `spectacular.decision.record.v2` | `mutating` |

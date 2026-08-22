@@ -16,18 +16,18 @@ import (
 )
 
 func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
-	// Fourteen commands. M12 authorized the thirteenth, `handoff record`; the
-	// owner separately authorized the fourteenth, read-only `campaign check`.
+	// Sixteen commands. M17 authorized charter and atomic decide.
 	want := []string{
 		"mission start", "mission show", "mission check", "objective show", "objective promote",
 		"objective finish", "run show", "run start", "review record", "handoff record",
 		"mission complete", "proposal check", "campaign check", "contract amend",
+		"charter", "decide",
 	}
 	if len(Registry) != len(want) {
 		t.Fatalf("registry has %d commands, want %d", len(Registry), len(want))
 	}
-	if len(want) != 14 {
-		t.Fatalf("the public surface is %d commands; owner authorized campaign check as fourteen", len(want))
+	if len(want) != 16 {
+		t.Fatalf("the public surface is %d commands; owner authorized charter and decide as 15 and 16", len(want))
 	}
 	for i, spec := range Registry {
 		if got := strings.Join(spec.Words, " "); got != want[i] {
@@ -698,3 +698,31 @@ func TestHelpAndSchemaFlags(t *testing.T) {
 		}
 	})
 }
+
+func TestCharterAndDecideCLI(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("charter command human and json", func(t *testing.T) {
+		outHuman := run(t, root, nil, 0, "charter", "M17/O1")
+		if !strings.Contains(outHuman, "FROZEN TRUTH") || !strings.Contains(outHuman, "Tokens:") {
+			t.Fatalf("expected charter markdown output, got:\n%s", outHuman)
+		}
+
+		outJSON := run(t, root, nil, 0, "charter", "M17/O1", "--json")
+		if !strings.Contains(outJSON, `"schema_version":"spectacular.charter.show.v2"`) || !strings.Contains(outJSON, `"token_count"`) {
+			t.Fatalf("expected charter json envelope, got:\n%s", outJSON)
+		}
+	})
+
+	t.Run("decide command help", func(t *testing.T) {
+		outHelp := run(t, root, nil, 0, "decide", "--help")
+		if !strings.Contains(outHelp, "type: DecisionDraft") || !strings.Contains(outHelp, "spectacular decide") {
+			t.Fatalf("expected decide help template, got:\n%s", outHelp)
+		}
+	})
+}
+
+

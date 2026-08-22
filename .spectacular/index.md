@@ -12,4 +12,6 @@ Compact routing only. Read canonical sources for authority; [catalog.md](catalog
 
 ## Current work
 
-No active Mission is recorded. Prepare a bounded Mission before consequential work.
+| Mission | Outcome | Source |
+|---|---|---|
+| `M17` | Expose charter and atomic Decision recording | `.spectacular/missions/M17-expose-charter-and-atomic-decision-recording/M17-expose-charter-and-atomic-decision-recording.md` |

@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/alexsmedile/spectacular/v2/internal/campaign"
+	"github.com/alexsmedile/spectacular/v2/internal/charter"
+	"github.com/alexsmedile/spectacular/v2/internal/charter/tokenizer"
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/governance"
@@ -33,6 +35,7 @@ const (
 	byOption
 	twoByOption
 	amendOptions
+	atLeastOne
 )
 
 type operation uint8
@@ -52,6 +55,8 @@ const (
 	opProposalCheck
 	opCampaignCheck
 	opContractAmend
+	opCharter
+	opDecide
 )
 
 type Spec struct {
@@ -286,6 +291,44 @@ returns: [<returns>]
 		Description:   "Amends a Contract Gap resolution with owner authorization.",
 		OutputType:    "Amendment",
 	},
+	{
+		Words:         []string{"charter"},
+		Arguments:     "<mission-ref>/<objective-ref> [sources...] [--json]",
+		ArgumentShape: atLeastOne,
+		JSONSchema:    "spectacular.charter.show.v2",
+		Effect:        ReadOnly,
+		Operation:     opCharter,
+		Description:   "Compiles and displays a 3-layer Context Sandwich charter for an Objective.",
+		OutputType:    "Charter",
+	},
+	{
+		Words:         []string{"decide"},
+		Arguments:     "<decision.md|-> [--json]",
+		ArgumentShape: one,
+		JSONSchema:    "spectacular.decision.record.v2",
+		Effect:        Mutating,
+		Operation:     opDecide,
+		Description:   "Atomically validates and records an architectural Decision package.",
+		InputType:     "DecisionDraft",
+		OutputType:    "DecisionResult",
+		Template: `---
+type: DecisionDraft
+title: <title>
+actor: <actor>
+actor_role: owner
+question: <question>
+disposition: <disposition>
+rationale: <rationale>
+alternatives: []
+scope: [v2]
+targets: []
+supersedes: ""
+---
+# <title>
+
+<Detailed decision context and impact>
+`,
+	},
 }
 
 type Runner struct {
@@ -447,6 +490,25 @@ func (r Runner) Run(args []string) int {
 		value, err = campaign.Validate(ws, rest[0])
 	case opContractAmend:
 		value, err = service.AmendContract(rest[0], rest[2], rest[4], override, dryRun)
+	case opCharter:
+		targetRef := rest[0]
+		var extraSources []string
+		if len(rest) > 1 {
+			extraSources = rest[1:]
+		}
+		parts := strings.Split(targetRef, "/")
+		if len(parts) != 2 {
+			err = domain.NewRefusal(domain.RefusalInvalidReference, targetRef, "expected <mission-ref>/<objective-ref> (e.g. M17/O1)", nil)
+			break
+		}
+		value, err = charter.Compile(ws, parts[0], parts[1], extraSources)
+	case opDecide:
+		stdin, readErr := r.stdinIfNeeded(rest[0])
+		if readErr != nil {
+			err = readErr
+			break
+		}
+		value, err = service.RecordDecision(inputPath(r.Cwd, rest[0]), stdin)
 	}
 	if err != nil {
 		return r.refuse(jsonMode, invoked, err)
@@ -503,6 +565,10 @@ func validateArguments(spec Spec, args []string) string {
 	case amendOptions:
 		if len(args) != 5 || args[0] == "" || args[1] != "--gap" || args[2] == "" || args[3] != "--by" || args[4] == "" {
 			return "requires <contract-ref> --gap <gap-ref> --by <owner>"
+		}
+	case atLeastOne:
+		if len(args) < 1 || args[0] == "" {
+			return "requires at least one argument"
 		}
 	default:
 		return "command registry has an invalid argument shape"
@@ -716,6 +782,21 @@ func renderHuman(writer io.Writer, value any) {
 		fmt.Fprintf(writer, "%s — %s (%s)\n", item.Ref, item.Title, item.Status)
 	case missionbundle.Result:
 		fmt.Fprintf(writer, "%s %s\nPath: %s\n", item.Operation, item.Ref, item.Path)
+	case *charter.Charter:
+		fmt.Fprint(writer, item.RenderMarkdown())
+		fmt.Fprintln(writer, "\n---")
+		fmt.Fprintf(writer, "Tokens: %d (%s, %s)\n", item.TokenCount, item.Disposition, tokenizer.Version)
+		if item.Compacted {
+			fmt.Fprintln(writer, "Safe compaction applied to stay within token budget.")
+		}
+	case missionbundle.DecisionResult:
+		fmt.Fprintf(writer, "Recorded decision %s (%s)\nPath: %s\n", item.Ref, item.ID, item.Path)
+		if len(item.Unblocked) > 0 {
+			fmt.Fprintf(writer, "Unblocked objectives: %s\n", strings.Join(item.Unblocked, ", "))
+		}
+		for _, changed := range item.Changed {
+			fmt.Fprintf(writer, "  updated: %s\n", changed)
+		}
 	default:
 		data, _ := json.MarshalIndent(value, "", "  ")
 		fmt.Fprintln(writer, string(data))

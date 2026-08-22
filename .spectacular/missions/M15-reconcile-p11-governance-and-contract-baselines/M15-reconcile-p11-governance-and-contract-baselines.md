@@ -2,9 +2,9 @@
 type: Mission
 id: 01a02b83-14f0-7fde-bdb3-1154b0b7c188
 title: Reconcile P11 governance and Contract baselines
-status: active
+status: completed
 created: "2026-08-22T22:26:03Z"
-updated: "2026-08-22T22:26:33Z"
+updated: "2026-08-22T22:26:49Z"
 activation:
     at: "2026-08-22T22:26:03Z"
     by: Alex
@@ -43,6 +43,12 @@ completion:
     - claim: progressive-planning-codified
       pass_boundary: Skill guidance (prepare.md) and evals enforce detailing only the active/next block while keeping downstream blocks as high-level sketches.
       proof_requirement: Test fixture confirms Orchestrator prepares single-block previews without expanding or freezing downstream drafts.
+completion_record:
+    at: "2026-08-22T22:26:49Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 42840c8ea10a8b8a8a393eb57358277de9e4065e
 contract:
     fingerprint: sha256:aa2f59e740e9526bacef1dd9999127861836460e5f2f96b5fe05bc86a458ee1a
     ref: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
@@ -75,6 +81,11 @@ owner: Alex
 ref: M15
 repair_budget: 2
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m15-governance-and-contract-baseline-reconciliation.md
+      id: 01a02b94-bc78-717a-8270-a90c59e1fbf1
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a02b83-14f0-7e6d-81bd-e8506cae8d79
@@ -82,7 +93,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-22T22:26:03Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - .spectacular/contracts/

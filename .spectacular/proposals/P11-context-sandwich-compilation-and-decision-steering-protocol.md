@@ -6,7 +6,7 @@ title: Context-sandwich compilation and decision steering protocol
 status: draft
 created_by: Alex
 created: "2026-08-22T15:51:00Z"
-updated: "2026-08-22T17:25:00Z"
+updated: "2026-08-22T16:54:04Z"
 scope:
     - v2
 target_contract: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
@@ -14,444 +14,255 @@ target_contract: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
 
 # Context-sandwich compilation and decision steering protocol
 
-Exploration for a possible Campaign (M15–M17). Nothing here is frozen — this Proposal carries no execution authority and binds only when a Mission plan freezes its claims.
+Exploration for the M15-M17 campaign. This Proposal is mutable and grants no
+execution authority. The owner-resolved boundaries below become binding only when
+an approved Mission freezes them.
 
-## The problem in one line
+**Preparation verdict: `sufficient`.** The outcome, responsibility boundaries,
+command-surface change, proof threshold, and Mission slices are settled. M15 still
+must prove the claimed context reduction before either new command can ship.
 
-Software development with autonomous AI agents oscillates between context starvation (where agents wander and hallucinate) and context bloat (where dumping dozens of files into context wastes tokens, causes attention dilution, and slows execution).
+## Problem
 
-## Core Insights & Proposed Capabilities
+Delegated agents are commonly given either too little context to act correctly or
+so much repository context that cost and attention rise while scope discipline
+falls. Owner choices also remain trapped in chat, so later workers re-ask settled
+questions or act from incomplete memory.
 
-### 1. The Context-Sandwich Compilation Protocol
-A deterministic, machine-compiled 3-layer envelope assembled per Objective or delegated worker:
+Spectacular needs a compact, decision-aware charter for one Objective at a time.
+It must improve context efficiency without becoming a Git wrapper, an autonomous
+scheduler, or a second source of authority.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. FROZEN TRUTH (Top Slice)                                 │
-│    • PROJECT.md scope + architectural boundary invariants   │
-│    • Active Mission claim & pass boundary (O<N>)            │
-├─────────────────────────────────────────────────────────────┤
-│ 2. OWNER STEERING & PREVIOUS DECISIONS (Filling)            │
-│    • Relevant Decisions (.spectacular/decisions/)           │
-│    • Resolved Gaps & explicit non-goals                     │
-├─────────────────────────────────────────────────────────────┤
-│ 3. PERMITTED SOURCES & BOUNDARIES (Bottom Slice)            │
-│    • Exact 2-4 source files to read/edit                    │
-│    • Explicit STOP triggers & verification command          │
-└─────────────────────────────────────────────────────────────┘
-```
+## Settled boundaries
 
-- **Compile on Demand**: Instead of agents reading entire directory trees, the system compiles a minimal charter (`~1,200` tokens base) tailored strictly to the active task.
-- **Strict Read Containment**: Delegated agents (Runners) receive only the compiled sandwich and are forbidden from scanning global context.
-- **Progressive Drop-Order Hierarchy (Token Overflow Policy)**:
-  When compiled content exceeds the baseline budget, the compiler prunes in strict deterministic order:
-  1. *Tier 1 Pruning (Bottom Slice)*: Compress AST/source signatures (strip non-exported symbols and internal method bodies; keep exported signatures and exact file paths).
-  2. *Tier 2 Pruning (Middle Slice)*: Truncate Decision rationale prose (retain only `ref:`, `disposition:`, and `supersedes:`).
-  3. *Tier 3 Pruning (Middle Slice)*: Condense project non-goals to single-line summaries.
-  4. *Immutable Floor (Never Pruned)*: The Top Slice (`PROJECT.md` core scope, active Objective claim, and deterministic shell `pass_boundary`) is immutable. If the floor alone exceeds budget, the compiler emits a hard refusal (`charter_envelope_overflow`).
-- **Elastic Repair Window & Diagnostic Burst**:
-  - *Turn 1 (Execution)*: Strict `~1,200` token budget.
-  - *Turn 2 (Bounded Repair)*: Expands dynamically up to `~3,500` tokens solely to ingest compiler stderr and test failure stack traces.
-- **Lightweight Triage Subagent Pre-Processing**:
-  When diagnostic output exceeds 50 lines or third-party APIs are large, an ephemeral fast subagent (e.g. `flash_lite`) pre-distills the crash log into a 5-line failure digest and extracts only the invoked function signatures before feeding the primary Runner's sandwich.
+### Authority and lifecycle
 
-### 2. High-Velocity Decision Steering (`spectacular decide`)
-- **Structured 4-Part Forks**: Whenever an ambiguity, risk, or fork arises, the agent presents a compact card: (1) Plain outcome · (2) Technical basis · (3) Options (`action -> consequence`) · (4) Recommended default & why.
-- **Atomic Record & Immediate Unblock**: An owner answer (e.g. `"Option A"`) writes a durable record `.spectacular/decisions/D<N>-<slug>.md` via the CLI and unblocks the waiting Run.
-- **Governed Ledger Mechanics**:
-  - *Monotonic ID Allocation*: The CLI deterministically assigns the next monotonic `D<N>` counter.
-  - *Verbatim Capture & Digest*: The raw owner response string is captured alongside its SHA-256 hash.
-  - *Supersession Lineage (`supersedes: D<M>`)*: When an owner revises a prior choice (e.g., changing JWT expiry from 15m to 30m), the new record explicitly carries `supersedes: D<M>`, updating the active ledger without corrupting historical lineage.
-- **Zero-Re-Ask Invariant**: Prior active Decisions automatically propagate into downstream worker charters. Settled topics are never re-queried.
+- Repository-changing background work requires an active Mission. Before
+  activation, agents may research or build disposable prototypes, but they may
+  not produce mergeable governed implementation.
+- One Orchestrator session is bounded to one Mission. Several Missions may be
+  active in separate integration worktrees when their declared order and active
+  writable perimeters permit it.
+- A Mission owns multiple Objectives. A Run is one execution attempt for one
+  Objective; sequential Runs preserve retries and recovery without changing the
+  Objective. Runs on distinct eligible Objectives may execute concurrently.
+- The Orchestrator plans concurrency from dependencies, writable perimeters, and
+  available capacity. There is no numeric concurrency ceiling. A Run never
+  selects its own parallel work or spawns another agent.
+- Agents are external execution destinations, not canonical governance objects.
+  Spectacular preserves the Objective, Run, frozen Handoff, and returned Evidence.
 
-### 3. Progressive Fidelity for Greenfield Kickoff & The Dynamic Clarity Assessment
+### Git boundary
 
-The number of clarifying questions asked during kickoff is **never a fixed quota**. It scales dynamically with the clarity and completeness of the owner's initial prompt or PRD:
+- Native Git commands create and switch branches and worktrees before
+  `mission start`. The command only inspects Git state and refuses unless the tree
+  is clean, the branch is non-default, and no merge, rebase, or similar operation
+  is interrupted.
+- Each concurrently active Mission uses an integration branch/worktree. Objective
+  branches/worktrees start from that Mission branch and merge back into it.
+- Spectacular records and verifies isolation; it never creates, stashes, checks
+  out, merges, deletes, or otherwise wraps Git operations.
+- After a Run or Objective is merged and tested, the Orchestrator may propose
+  removing its clean worktree. The owner confirms every cleanup. Final branch and
+  remaining worktree cleanup is a Mission-closure responsibility.
+- Dirty, unmerged, or unverifiable state is never proposed for cleanup. Forced
+  worktree removal is forbidden.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. HIGH-FIDELITY SPEC / CRISP PRD (Zero-Question Fast Path) │
-│    • Schema, endpoints, and stack are stated.               │
-│    ──► 0 questions asked; immediate Flight Plan emitted.    │
-├─────────────────────────────────────────────────────────────┤
-│ 2. MODERATE FIDELITY (1 Targeted Structural Fork)           │
-│    • Outcome is clear, but 1 architectural boundary open.   │
-│    ──► 1 focused 4-part trade-off card.                     │
-├─────────────────────────────────────────────────────────────┤
-│ 3. RAW BRAIN DUMP / HIGH AMBIGUITY (Dynamic Sizing)         │
-│    • Core boundaries unstated; multi-path possibilities.    │
-│    ──► 1 Assumption Baseline card + 1-2 Structural Forks.   │
-└─────────────────────────────────────────────────────────────┘
-```
+This boundary supersedes D15's automatic allocation and D16's automatic pruning
+while preserving their safety outcomes: governed work does not execute directly
+on `main`, and cleanup occurs only after integration is proved.
 
-#### The 3-Anchor Minimal Clarity Threshold
-To evaluate whether incoming prompt/PRD content is sufficient to take the Zero-Question Fast Path, the Orchestrator checks for three mechanical anchors:
-1. **North-Star Outcome**: 1-sentence user-observable behavior + explicit non-goals (fingerprint-matched against prompt).
-2. **Mechanical Boundary**: Input data shape $\to$ Transformation $\to$ Output shape + chosen stack.
-3. **Pass Boundary**: 1 deterministic, failable verification command (`exit 0`). To prevent gaming, the command is executed once pre-activation expecting a failing exit code before the fast path is confirmed.
+### Charter size and file perimeter
 
-### 4. Objective-Bound Evidence Verification
-- Verification is anchored to objective proof requirements (`pass_boundary` & `proof_requirement`), decoupling success from manual inspection of raw code diffs.
-- The owner reviews the 3-line Evidence receipt, not hundreds of lines of boilerplate.
+- The compiled governance envelope targets roughly 1,200 tokens. That budget
+  covers frozen truth, selected Decisions, paths, stops, and proof commands. It
+  does not include full source bodies or diagnostic output.
+- From 1,201 through 1,400 tokens, compilation warns and returns judgment to the
+  Orchestrator after attempting safe compaction. From 1,401 through 1,440 it emits
+  a strong split recommendation and requires explicit Orchestrator approval.
+  Above 1,440 tokens it refuses.
+- A delegated slice normally edits two to four named files. This is a slicing
+  default, not a universal limit. A larger coherent perimeter is allowed when the
+  Orchestrator states why splitting would reduce correctness or coherence.
+- Read-only sources and conditional manifest/lockfile allowances are listed
+  separately from writable files.
+- A Handoff carries a machine-readable `writes:` perimeter. Repository-relative
+  file paths authorize exact files; a trailing `/` authorizes that directory
+  subtree, including files created during scaffolding. Globs and `..` are
+  forbidden. Renames require both source and destination to be in scope.
+- The declared writable perimeter is hard. Editing outside it stops the Run and
+  preserves the work for review. Expansion requires an Orchestrator-approved new
+  Handoff because recorded Handoffs are frozen.
+- Repair may add a bounded diagnostic allowance of roughly 3,500 tokens without
+  expanding semantic scope or writable files.
 
-### 5. Pipelined "Live Prompting to Build" & Asynchronous Dispatch
-Decouple the human steering / decision loop from the background worker execution loop:
+### Decision selection and recording
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Owner as 👤 Human Owner
-    participant Orch as 🧠 Orchestrator (Main Session)
-    participant Engine as ⚙️ Spectacular Engine
-    participant RunnerA as 🤖 Runner A (Worktree O1)
-    participant RunnerB as 🤖 Runner B (Worktree O2)
+- A quick live sweep of Decision frontmatter lets the Orchestrator select relevant
+  choices by meaning. The charter compiler receives the selected refs and then
+  behaves deterministically. No persistent preflight cache is required.
+- The charter cites selected sources compactly, for example
+  `Sources: [D12, D13]`. It never dumps the full Decision ledger.
+- Durable Decisions cover architecture, security, data, dependencies, public
+  interfaces, operational constraints, durable UX/API choices, and revisions of
+  earlier Decisions. Routine implementation details and unchallenged hygiene
+  assumptions do not enter the ledger.
+- `spectacular decide` accepts a complete Decision package drafted by the
+  Orchestrator from a file or stdin. It validates and records the package
+  atomically, assigns identity and ref, and refreshes generated indexes.
+- `decide` reports newly eligible work only when an Objective explicitly names
+  the recorded Decision as its blocker. Otherwise the Orchestrator reevaluates
+  eligibility. The command never infers eligibility by meaning or changes Run
+  state.
 
-    Note over Owner,Orch: 1. LIVE STEERING & DISPATCH TRACK
-    Owner->>Orch: "Build Auth with SQLite migrations & JWT tokens"
-    Orch->>Engine: Evaluate Slicing (D13 Light Gate)
-    Engine-->>Orch: Decomposed into [O1: SQLite Schema] & [O2: JWT Logic]
+### Proof and steering
 
-    Note over Orch,RunnerA: 2. ASYNC BACKGROUND DISPATCH (O1)
-    Orch->>Engine: Compile Charter M1/O1 (Context Sandwich ~1.2k tokens)
-    Orch->>RunnerA: Dispatch in Worktree `../repo-M1-O1` (D12, D15)
+- Every Mission records a baseline observation before activation. Fail-first is
+  required only when the claimed change should make an existing behavior move
+  from failing to passing. Performance, documentation, cleanup, and observational
+  work record an appropriate non-failing baseline instead.
+- `A`, `B`, and `C` select visible options. `M` combines explicitly named parts of
+  visible options. Natural-language answers always remain valid.
+- `G` asks the Orchestrator to prepare the next fidelity stage. `F` asks it to
+  present final verification and any required authorization.
+- Letters apply only to the visible card that defines them. `G` and `F` never
+  silently authorize scope growth, Git mutation, deletion, provider effects, or
+  spending.
 
-    Note over Owner,Orch: 3. CONCURRENT STEERING (Zero Human Idle Time)
-    par Live Prompting Continues
-        Orch->>Owner: 4-Part Fork: "What should JWT token expiry be?"
-        Owner->>Orch: "15m access, 7d refresh"
-        Orch->>Engine: Atomically write Decision D<N>
-    and Autonomous Background Execution
-        RunnerA->>RunnerA: Write migrations & run `go test -race ./internal/db/...`
-        RunnerA->>Engine: Emit Verifiable Evidence Receipt (exit: 0)
-    end
+### Live discovery boundary
 
-    Note over Engine,RunnerB: 4. EVIDENCE VERIFICATION & CHAIN HANDOFF
-    Engine->>Engine: Verify Evidence & Merge Branch into `feat/M1`
-    Engine->>RunnerA: Prune Worktree `../repo-M1-O1` (D16)
+A live frontmatter sweep provides the same correctness and retrieval capability
+as D14's persistent cache without invalidation state or stale authority risk.
+Caching adds no unique behavior, so P11 supersedes D14 and does not implement a
+persistent cache. A later Mission may reconsider a disposable optimization only
+after benchmarks demonstrate a material scale, latency, or token bottleneck.
 
-    Note over Orch,RunnerB: 5. DISPATCH UNBLOCKED DOWNSTREAM SLICE (O2)
-    Orch->>Engine: Compile Charter M1/O2 (Injects O1 Evidence + D<N> Expiry)
-    Orch->>RunnerB: Dispatch in Worktree `../repo-M1-O2`
-    RunnerB->>RunnerB: Build JWT logic with zero re-asking
-```
+## Compiled charter
 
-- **Immediate Dispatch on Confirmed Slices**: The moment an Objective's pass boundary and scope are confirmed, the Orchestrator compiles its Context Sandwich and dispatches a background Runner in an isolated Git worktree (`git worktree add`).
-- **Orchestrator-Managed Dispatch & Single-Threaded Default**:
-  - *Zero-Subagent Baseline*: Simple, linear, or single-file tasks execute directly in-session by the Orchestrator without spawning background subagents.
-  - *Single Commander Invariant*: Only the top-level Orchestrator evaluates slicing and manages dispatch. Ephemeral Runners are strictly forbidden from spawning child subagents.
-  - *Hard Concurrency Ceiling*: Asynchronous dispatch is capped at $\le 3$ active background worktrees to prevent host machine saturation.
-- **Disjoint Perimeter Partitioning**: Concurrently dispatched Objectives **must have disjoint file perimeters**. If two candidate slices touch overlapping files, they are topologically sequenced rather than dispatched concurrently.
-- **Zero Human Idle Time**: While workers build and test confirmed slices in the background, the owner and Orchestrator continue live prompting to clarify and resolve the *next* tranche of decisions.
-
-### 6. Asynchronous Execution Entry Gates & Mechanical Enforcement
-
-An asynchronous background Runner can **only** start when all five gates pass:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ GATE 1: Owner Authorization                                 │
-│ • Mission activated (M<N>) OR explicit Objective approval   │
-├─────────────────────────────────────────────────────────────┤
-│ GATE 2: Dependency Unblocked (Topological Clearance)        │
-│ • All upstream Objectives marked DONE with Evidence receipt │
-├─────────────────────────────────────────────────────────────┤
-│ GATE 3: Bounded Charter Compiled (Context Sandwich)         │
-│ • Scope, 2-4 target files, manifest allowance & pass_bound  │
-├─────────────────────────────────────────────────────────────┤
-│ GATE 4: Clean Physical Isolation & Disjoint Perimeter       │
-│ • Separate Git worktree on unique branch; no file overlap   │
-├─────────────────────────────────────────────────────────────┤
-│ GATE 5: Zero Open Decision Collision                        │
-│ • No active Open: decision intersects target file perimeter │
-└─────────────────────────────────────────────────────────────┘
-                             │
-                             ▼
-               [ASYNC RUNNER LAUNCHED]
-```
-
-#### Mechanical Enforcement Layers
-1. **Typed CLI Gatekeeper (`spectacular mission check`)**: Rejects execution attempts if declared dependencies, Git baseline, or contract bindings are unmet (`exit_status: 3`, zero mutation).
-2. **Physical Git Isolation (`git worktree add`)**: Workers run in uniquely named detached working directories (`../<repo>-<mission>-<objective>-<hash>`), eliminating concurrent file mutation and branch-lock hazards on `main`.
-3. **Merge Queue & Post-Merge Verification**: Evidence `exit 0` is verified against the runner tree, serialized into a merge queue for `feat/M<N>`, and immediately re-verified with a post-merge pass-boundary check before Evidence receipt is finalized.
-4. **Evidence-Bound Handoff**: A worker cannot self-assert completion; it must emit a machine-verifiable Evidence record with exit code `0` against its failable proof requirement before downstream charters unblock.
-
-### 7. Anatomy of a Good Ephemeral Run vs. Circuit-Breaker Stop Gaps
-
-#### Qualities of a Good Ephemeral Run
-- **Tight File Perimeter**: Targets only 2–4 designated files (e.g. `internal/db/schema.go`, `schema_test.go`), with authorized manifest/lockfile exemption (`go.mod`, `package.json`).
-- **Failable Verification Target**: Passes a deterministic test command (`exit 0`).
-- **Self-Contained Context**: Operates entirely within its compiled Context Sandwich without needing out-of-band queries.
-- **Auto-Pruning on Happy Path**: Worktree is automatically pruned (`git worktree remove`) immediately upon post-merge Evidence verification.
-
-#### Automated Stop Gaps & Uniform Quarantine-Always Policy
-When execution deviates from the happy path, automated stop gaps freeze background work safely without data loss:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 🛑 AUTOMATED STOP GAPS & UNIFORM QUARANTINE POLICIES        │
-├─────────────────────────────────────────────────────────────┤
-│ 1. Two-Strike Test Failure                                  │
-│    • 2 failed repairs ──► Quarantine to wip/ ref & prompt.  │
-│ 2. Scope Escape Lock                                        │
-│    • Edits outside permitted files ──► Quarantine to wip/   │
-│      ref, reset worktree to base SHA, and alert owner.      │
-│ 3. Heartbeat Watchdog & Cost Ceiling                        │
-│    • >15 min wall-clock or token cap ──► SIGTERM ──► 10s    │
-│      grace ──► Commit dirty tree to wip/ ref ──► Reap/prune.│
-│ 4. Merge Conflict Interceptor                               │
-│    • Branch merge conflict ──► Quarantine worktree & prompt.│
-│ 5. Strict Zero-Data-Loss Invariant                          │
-│    • Dirty/failed trees are ALWAYS committed to wip/ refs.  │
-│      NEVER destroyed with git worktree remove --force.      │
-└─────────────────────────────────────────────────────────────┘
-```
-
-- **Campaign-Level Breakers**:
-  - *Owner-Retry Budget*: Maximum 2 retries per Objective before forcing structural re-plan.
-  - *Parallel Dispatch Ceiling*: Hard cap of $\le 3$ concurrent active worktrees to prevent local disk and CPU thrashing.
-
-### 8. Continuous Human Feedback & Interactive Steering
-
-When software building requires interactive guidance (UI/UX layout, API ergonomics, or business logic calibration), the system engages **Interactive Steering with Checkpoints**:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Owner as 👤 Human Owner
-    participant Orch as 🧠 Orchestrator (Steering Session)
-    participant Runner as 🤖 Ephemeral Worker (Worktree)
-
-    Note over Owner,Orch: 1. DISPATCH WITH CHECKPOINT
-    Owner->>Orch: "Build the analytics dashboard UI"
-    Orch->>Runner: Launch with Checkpoint Flag (`--checkpoint=visual-review`)
-
-    Note over Runner,Orch: 2. RAPID PROTOTYPE IN WORKTREE
-    Runner->>Runner: Write layout & compile local component
-    Runner->>Orch: Emit Preview Artifact & Diff Receipt
-
-    Note over Orch,Owner: 3. HUMAN FEEDBACK LOOP (Turn-by-Turn)
-    Orch->>Owner: Present Visual Preview / Interactive Card
-    Owner->>Orch: "Make chart 2-column and add dark mode toggle"
-
-    Note over Orch,Runner: 4. INSTANT DELTA REFINEMENT
-    Orch->>Runner: Forward delta instructions into active worktree
-    Runner->>Runner: Apply edits & refresh preview (<5s inner loop)
-    Runner-->>Owner: Render updated preview
-
-    Note over Owner,Orch: 5. FINAL APPROVAL & MERGE
-    Owner->>Orch: "Approved!"
-    Orch->>Orch: Verify Evidence, Merge into branch, Prune worktree
-```
-
-#### Core Principles for Continuous Feedback
-1. **Clean Steering Surface**: The owner never wades through raw console chatter or dirty working trees; the Orchestrator renders high-level artifacts and decision cards.
-2. **Delta-Only Ingestion**: Feedback prompts compile into focused delta charters applied directly to the active worktree without resetting context.
-3. **Durable Capture with Quiescence**: Reusable owner guidance is committed as Decisions (`.spectacular/decisions/`) only at explicit checkpoint quiescence points, preventing conversational noise from polluting the permanent record.
-
-### 9. Unified Decision Ledger & Single-Keystroke Steering Grammar
-
-To align UI/UX iterative proposal loops (e.g. `matrix-proposal-loop`) with full-stack engine execution, Spectacular adopts a standardized **Decision Ledger State Invariant**:
+The charter is a read-only retrieval helper that compiles a three-layer governance
+envelope for one Objective. It helps the Orchestrator write the complete Handoff;
+it is not itself the assignment and is not stored as a canonical record.
 
 ```text
-Locked:  [SQLite Schema, JWT Auth, 15m Expiry]
-Open:    [Role-Based Access Control Model]
-Level:   3 (Worktree Slice Execution)
-Lineage: root → D12 → D13 → O1
+1. FROZEN TRUTH
+   Project boundaries; active Mission and Objective; claim and proof boundary
+
+2. OWNER STEERING
+   AI-selected Decision refs and exact selected content; resolved Gaps; non-goals
+
+3. EXECUTION PERIMETER
+   Writable and read-only paths; allowed actions; stops; verification command
 ```
 
-#### The 5-Level Software Fidelity Ladder
-| Level | Scope | Typical Artifact / Evidence |
-|---|---|---|
-| **1. Intent** | Raw prompt, constraints, non-goals | 1-line outcome & non-goals |
-| **2. Triad & Flight Plan** | Core anchors & campaign breakdown | `PROJECT.md`, `STACK.md`, `ARCHITECTURE.md` |
-| **3. Slice Execution** | Focused feature in isolated worktree | Unit/integration test pass (`exit 0`) |
-| **4. Subsystem Integration** | Multi-slice composition & API routes | End-to-end acceptance receipt |
-| **5. Production Release** | Trunk merge, version alignment | Release gate verification & tag |
+The compiler prunes only derived detail:
 
-#### Rapid 1-Key Steering Transitions
-- `[A] / [B] / [C]`: Select named option from a 4-part decision card $\to$ locks choice and advances lineage.
-- `[M] Merge`: Combine selected parts of multiple options into a hybrid decision.
-- `[G] Grow`: Advance confirmed slice to the next fidelity level.
-- `[F] Finalize`: Verify Evidence, merge branch, and auto-prune worktree.
+1. compress source summaries while retaining exact paths and required signatures;
+2. shorten Decision rationale while retaining ref, disposition, and lineage;
+3. condense repeated non-goal explanation;
+4. never prune the Mission/Objective claim, proof boundary, authority, stops, or
+   writable perimeter.
 
-*(Note: The Fidelity Ladder and 1-key grammar reside in `skills/spectacular/references/runtime.md` and `references/steering.md` to preserve `SKILL.md ≤ 90` line limit).*
+If safe compaction cannot meet the staged 1,200/1,400/1,440 boundaries,
+compilation warns, requests judgment, or refuses as specified above. It never
+emits an incomplete authority envelope. A broad but coherent Objective may split
+into sequential Runs; independently provable outcomes split into Objectives.
 
-### 10. High-Density Architectural Steering & Anti-Abdication Invariant
+## Dispatch and recovery
 
-Fast steering must **never** mean abdicating foundational architectural control to an AI agent. The objective is not "fewer decisions", but **maximum decision density per second of owner attention**.
+An asynchronous Run is eligible only when all of these are true:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 🔀 DENSE 4-PART ARCHITECTURAL CARD EXAMPLE                  │
-├─────────────────────────────────────────────────────────────┤
-│ 1. THE CONCRETE PROBLEM:                                    │
-│    When a user changes their password, how do we revoke     │
-│    active JWTs across devices?                              │
-├─────────────────────────────────────────────────────────────┤
-│ 2. TECHNICAL OPTIONS:                                       │
-│    [A] Redis Denylist (Fastest lookup, adds Redis infra)    │
-│    [B] `token_version` column on User in SQLite             │
-│        (Zero infra, forces DB read on each auth check)      │
-│    [C] Short 5m JWTs + Refresh Token Rotation in SQLite     │
-│        (Recommended: balances DB load & immediate revoke)   │
-├─────────────────────────────────────────────────────────────┤
-│ 3. CONCRETE TRADE-OFF:                                      │
-│    Option C means revocation takes max 5m, but avoids Redis.│
-└─────────────────────────────────────────────────────────────┘
-```
+1. its Mission is active;
+2. upstream Objectives have accepted Evidence;
+3. its bounded charter has compiled and a frozen Handoff names the Mission,
+   Objective, Run, selected sources, and writable perimeter;
+4. native Git isolation exists and its `writes:` perimeter is disjoint from every
+   reserving Handoff across active Missions;
+5. no open owner decision intersects its scope.
 
-#### The Anti-Abdication Rules:
-1. **Zero Silent Assumptions**: Agents are strictly forbidden from making unprompted architectural, security, or data-model choices. Every fork must surface as a structured decision card.
-2. **Dense Option Framing**: The Orchestrator frames the exact technical problem, trade-offs, and failure modes so the owner can make deep structural calls in seconds.
-3. **Custom Modification Allowed**: The owner can always override or tailor the choice (e.g. `"C, but make refresh tokens expire in 14 days"`).
-4. **Permanent Audit Trail**: Every choice is permanently committed to `.spectacular/decisions/`—the owner remains the Chief Architect, while autonomous background runners execute the construction.
+The Orchestrator may continue owner steering while eligible Runs work. It may
+dispatch another Objective only when high-level planning already proves dependency
+clearance and disjoint files. Missions may remain active despite potential future
+overlap; only conflicting active Handoffs block dispatch.
 
-### 11. The 4-Class Decision Classification Model
+Run states are `active`, `paused`, `blocked`, `awaiting-review`, `completed`, and
+`stopped`. Active, paused, blocked, and awaiting-review Runs retain their writable
+reservation. Completed and stopped Runs release it. Errors never select a state
+automatically: the Orchestrator records the reason and next action, and asks the
+owner when recovery changes scope, abandons work, or creates collision risk.
 
-To eliminate annoying, low-IQ grilling (e.g. asking obvious table-stakes questions like *"Should users have passwords?"*), decisions are strictly partitioned into four presentation classes:
+Evidence may cover one Run, one Objective, a cluster of Objectives, or the final
+Mission. It names every Mission, Objective, Run, Handoff, and claim it answers.
+The Handoff is never edited; a corrected or changed assignment is a new Handoff.
+A completed Run means its execution ended successfully, not that proof has been
+accepted. `objective finish` requires no reserving Run and at least one completed
+Run; its claims may remain visibly unproven until their frozen Evidence or Review
+gate. Small work does not earn a separate Evidence document merely for ceremony.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. ASSUMPTION BASELINE (Table Stakes) ──► Statement Card    │
-│    "I'm assuming X, Y, Z. Any pushback?" (Silent if none)   │
-├─────────────────────────────────────────────────────────────┤
-│ 2. STRUCTURAL FORK (Architecture/Data) ──► 4-Part Card      │
-│    [A] / [B] / [C] finite architectural trade-offs          │
-├─────────────────────────────────────────────────────────────┤
-│ 3. TASTE & ERGONOMICS (UX/Styling/API) ──► Tracer / Visual  │
-│    [A] Dense list vs [B] Card grid vs [C] Minimal canvas    │
-├─────────────────────────────────────────────────────────────┤
-│ 4. OPERATIONAL INVARIANT (Auth/Infra) ──► Policy Card       │
-│    Hard operational constraints (Budget, SLO, Deploy target)│
-└─────────────────────────────────────────────────────────────┘
-```
+Normal `after:` dependencies wait for implemented work. An optional
+`after_proof:` edge waits for the proof level frozen by the Mission plan. This
+allows low-risk work to continue toward a clustered or final gate while preventing
+risk-sensitive downstream work from consuming an unproved result.
 
-#### Class 1: Assumption Baseline (Table Stakes / The "Pushback Card")
-- **Definition**: Strictly non-architectural hygiene (standard HTTP error envelopes, kebab-case URLs, standard lint formatting).
-- **Hard Anti-Laundering Boundary**: Agents are strictly forbidden from placing auth schemes (e.g. JWT vs Sessions), hashing algorithms (Argon2id vs bcrypt), data-isolation boundaries (tenant column vs RLS), or financial/billing logic into Class 1. All such choices are **strictly Class 2 Structural Forks**.
-- **Rule**: Present as a consolidated hygiene statement (*"I am proceeding with standard JSON error responses `{error, message}` and UTC timestamp formatting. Any pushback before I start?"*).
-- **Execution Safety**: When async dispatch is armed, Pushback Cards must be confirmed before any background worker executes on their assumptions. Silence is measured against a quiescent state, never in-flight mutations.
+## Mechanical interface
 
-#### Class 2: Structural Architectural Forks (Foundational Bones)
-- **Definition**: Irreversible choices that are expensive to rewrite later (multi-tenancy isolation, sync engine, queue delivery guarantees).
-- **Rule**: Frame as a concise **4-Part Decision Card** with technical basis and recommended default.
+The campaign may grow the public surface from 14 to 18 commands:
 
-#### Class 3: Taste & Ergonomics (Look, Feel & Developer Experience)
-- **Definition**: Visual styling, layout density, CLI verbosity, API payload ergonomics.
-- **Rule**: Present as a **Tracer Fragment / Visual Preview Comparison** (3 visual specimens to pick between).
+- `spectacular charter <mission-ref>/<objective-ref>`: read-only compilation and
+  deterministic receipt for a selected Decision-ref set and declared perimeter.
+- `spectacular decide <decision.md|->`: atomic durable Decision recording with
+  owner wording, digest, targets, and optional supersession.
+- `spectacular run transition <mission-ref>/<run-ref> --to <state> --reason
+  <text> [--next-action <text>]`: atomic, attributable Run-state transition.
+- `spectacular evidence record <mission-ref> <evidence.md|->`: atomic Evidence
+  recording for one Run, one Objective, a cluster, or a Mission-final gate.
 
-#### Class 4: Operational Invariants (Real-World Constraints)
-- **Definition**: Infrastructure limits, deployment target (Single VPS vs Serverless vs AWS), budget.
-- **Rule**: Clear constraint lock card before infrastructure provisioning begins.
+The existing `run start` signature changes from `<mission-ref>` to
+`<mission-ref>/<objective-ref>` and refuses when that Objective already has a
+reserving Run. No new canonical noun is introduced. Observable Contract and Run
+model behavior changes through Contract version bumps, not amendments.
 
-### 12. Quality Assurance, Zero-Regression CI/CD & Verification Architecture
+## Proof strategy
 
-To ensure background workers produce high-quality code without silent regressions, Spectacular replaces agent self-reporting with a **4-Layer Defense-in-Depth Verification Architecture**:
+M14's paired benchmark harness is the release gate for this campaign.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ LAYER 1: Paired Behavioral CI/CD Benchmark Suite            │
-│ • Prevents agent degradation & evaluates models/skills     │
-├─────────────────────────────────────────────────────────────┤
-│ LAYER 2: Deterministic Machine Gates (Pass Boundaries)      │
-│ • Local failable test commands (`exit 0`) per Objective     │
-├─────────────────────────────────────────────────────────────┤
-│ LAYER 3: Ephemeral Checkpoint Reviews (HITL Quality Gates)  │
-│ • 3-line evidence cards + visual artifacts for human eyes   │
-├─────────────────────────────────────────────────────────────┤
-│ LAYER 4: Mechanical Preflight & Release Gates (`verify.sh`) │
-│ • Multi-tier repo verification before trunk merge / release │
-└─────────────────────────────────────────────────────────────┘
+- M15 must demonstrate at least 40% lower total context ingestion than the
+  full-scan baseline while preserving task success, safety, recovery, and decision
+  fidelity.
+- Measurements separate governance-envelope tokens, named source tokens, and
+  repair diagnostics so the 1,200-token target cannot hide cost elsewhere.
+- M16 must prove refusal-before-effect for every dispatch gate and zero data loss
+  for every stop path.
+- M17 may promote a numeric default into a hard boundary only when paired fixtures
+  demonstrate a reliable safety boundary without rejecting coherent work.
+- Every campaign Mission receives independent review because it changes public
+  interfaces, authority routing, multi-worktree behavior, or benchmark policy.
+
+## Campaign roadmap
+
+```text
+M15  Compile bounded, decision-aware charters
+     Add `charter` and `decide` only after the >=40% paired proof passes
+  |
+  v
+M16  Dispatch isolated Objectives safely
+     Validate gates, native-Git isolation, quarantine, merge readiness, cleanup
+  |
+  v
+M17  Calibrate scope and anti-slop guardrails
+     Enforce true authority boundaries; benchmark numeric defaults before hardening
 ```
 
-#### Layer 1: Paired Behavioral CI/CD Benchmark Suite
-- **Location**: [`test/evals/spectacular/`](test/evals/spectacular/)
-- **Mechanism**: Paired A/B execution comparing candidate commits against immutable baselines.
-- **6 Quality Dimensions**: Evaluates Safety (0 violations), Routing Accuracy, Context Token Reduction, Task Success, Interaction Noise (0 question grilling), and Error Recovery.
-- **Gate Enforcement**: Automatically yields a `Verdict: REGRESSION` and halts release if candidate performance drops below baseline.
+P10's preparation-judgment checkpoint remains a separate Mission candidate. It
+does not block M15, and P11 does not absorb it into the worker runtime.
 
-#### Layer 2: Deterministic Machine Gates (Pass Boundaries)
-- **Failable Verification Target**: Every Objective requires an executable proof command (e.g. `go test -race ./internal/...` or `pytest`).
-- **Cryptographic Evidence Record**: Passing runs generate an attributable `.spectacular/missions/<M>/evidence/E<N>-<slug>.md` record capturing the exact command, exit code `0`, output digest, and Git tree SHA.
-- **Topological Locking**: Downstream charters remain mechanically locked until upstream Evidence is cryptographically verified.
+## Non-goals
 
-#### Layer 3: Ephemeral Checkpoint Reviews (HITL Quality Gates)
-- **3-Line Evidence Cards**: Human reviews high-level proof summaries (Claim, Test Pass Count, Scope Leaks), completely eliminating the need to review 500-line code diffs.
-- **Visual Artifact Previews**: UI/UX slices emit browser preview mockups for 1-turn human taste calibration before final merge.
-
-#### Layer 4: Multi-Tier Repository Verification (`test/verify.sh`)
-- Tiered verification before trunk integration:
-  - **Tier 0/1 (`preflight`)**: Sub-second static syntax and contract drift receipt.
-  - **Tier 2 (`quick`)**: Unit tests across all packages.
-  - **Tier 3 (`acceptance`)**: End-to-end integration fixtures.
-  - **Tier 4 (`all`)**: Full race-detector test suite and multi-platform compilation gate.
-
-### 13. Anti-Slop, Anti-Bloat & Minimal Complexity Invariants
-
-To prevent autonomous AI workers from generating bloated boilerplate, premature abstractions, and dependency sprawl, Spectacular enforces five strict anti-slop mechanical invariants:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. PERIMETER CONSTRICTION (Max 2-4 Files per Slice)         │
-│    • Workers are mechanically bound to chartered files.     │
-├─────────────────────────────────────────────────────────────┤
-│ 2. YAGNI & NON-GOALS INJECTION (Context Sandwich)           │
-│    • Explicitly forbids abstract factories, unneeded infra. │
-├─────────────────────────────────────────────────────────────┤
-│ 3. ZERO-DEPENDENCY DEFAULT (Standard Library First)         │
-│    • New 3rd-party packages require a Class 2 Decision Card.│
-├─────────────────────────────────────────────────────────────┤
-│ 4. "EARN YOUR ABSTRACTION" (Inline Until Promoted)          │
-│    • 1 usage = Inline. 2 usages = Duplicate. 3 = Abstract. │
-├─────────────────────────────────────────────────────────────┤
-│ 5. STATIC LINE & TOKEN BUDGET CEILINGS                      │
-│    • Strict line caps on skills (<=90) & charters (~1.2k tok)│
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### Rule 1: Tight File Perimeter Constriction
-- Charters restrict file modifications to 2–4 designated paths.
-- Creating or editing files outside the chartered perimeter triggers an automatic `refusal: scope_escape` and rejects the Evidence receipt.
-
-#### Rule 2: Explicit Non-Goals in Charters
-- Every compiled Context Sandwich injects an unambiguous `NON-GOALS` block (e.g. *"Do not add generic factory interfaces; do not install external logging/config frameworks; use Go stdlib `log/slog`"*).
-
-#### Rule 3: Standard Library Default & Dependency Lock
-- Background workers must use the language standard library by default.
-- Introducing a new third-party dependency in `go.mod`, `package.json`, or `requirements.txt` is treated as a Class 2 Structural Fork requiring explicit owner authorization.
-
-#### Rule 4: "Earn Your Abstraction" (Inline-First Rule)
-- No multi-layered wrapper hierarchies (`Controller -> Service -> Manager -> Repository -> DAO -> Entity`).
-- Code begins inline in simple handlers. Shared abstractions are permitted only when a third distinct call site requires it.
-
-#### Rule 5: Static Line & Token Ceilings
-- Skills maintain strict line ceilings (`SKILL.md` body $\le 90$ lines).
-- Worker charters are token-budgeted at ~1,200 tokens baseline with progressive drop order and elastic repair expansion.
-
-## Sequencing Campaign Roadmap (per D13 Slice Coherence)
-
-Per [D13](file:///Users/alex/vault/data/skills_db/spectacular/.spectacular/decisions/D13-preparation-judgment-gate.md), P11 is decomposed into a sequenced 3-stage Campaign rather than a single monolithic Mission:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. MISSION M15: Context-Sandwich Compilation & Decide CLI   │
-│    • `spectacular charter` compiler with drop-order triage  │
-│    • `spectacular decide` CLI verb with `supersedes:` line  │
-│    • Surface growth accounting: 14 ──► 16 commands          │
-├─────────────────────────────────────────────────────────────┤
-│ 2. MISSION M16: Pipelined Worktree Engine & Quarantine Safety│
-│    • Worktree allocator with disjoint perimeters            │
-│    • 5-gate mechanical dispatch checker                     │
-│    • Uniform quarantine-always breaker & serialized merge Q │
-├─────────────────────────────────────────────────────────────┤
-│ 3. MISSION M17: Anti-Slop Enforcement & Benchmark Gating    │
-│    • 2-4 file perimeter locks & stdlib dependency guard     │
-│    • Paired behavioral eval gate in test/evals/spectacular/ │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Non-Goals
-- Do not introduce runtime complexity or external SaaS daemons.
-- Do not replace human owner authority over outcomes, architecture, or scope.
-- Do not make decision records mandatory for trivial implementation details (e.g. local variable naming).
-- Do not allow concurrent workers to edit overlapping files in a shared worktree or across concurrent worktrees.
+- No external scheduler, daemon, SaaS dependency, or hidden background service.
+- No automatic Git branch creation, checkout, merge, push, or deletion by the
+  Spectacular CLI.
+- No concurrent reserving Runs on the same Objective or overlapping writable
+  perimeter.
+- No whole-workspace scan by a delegated Runner.
+- No mandatory Decision record for trivial implementation details.
+- No fixed file, line, or token proxy treated as proof of quality.
+- No shortcut letter that carries unstated authority.

@@ -17,7 +17,11 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `D14-preflight-discovery-caching` | Decision | Enable fast-path session preflight caching bounded by Git tree SHA | `.spectacular/decisions/D14-preflight-discovery-caching.md` |
 | `D15-branch-guardrail-at-activation` | Decision | Enforce automatic branch and worktree guardrails at Mission activation | `.spectacular/decisions/D15-branch-guardrail-at-activation.md` |
 | `D16-auto-prune-merged-worktrees` | Decision | Prune background execution worktrees automatically upon Evidence merge | `.spectacular/decisions/D16-auto-prune-merged-worktrees.md` |
+| `D17-objective-scoped-runs-and-concurrency` | Decision | Scope Runs to Objectives and govern concurrency by reservations | `.spectacular/decisions/D17-objective-scoped-runs-and-concurrency.md` |
+| `D18-inspect-native-git-at-mission-start` | Decision | Inspect native Git state at Mission start without owning Git effects | `.spectacular/decisions/D18-inspect-native-git-at-mission-start.md` |
+| `D19-confirm-cleanup-at-mission-closure` | Decision | Propose verified Git cleanup and confirm it at Mission closure | `.spectacular/decisions/D19-confirm-cleanup-at-mission-closure.md` |
 | `D2-435ztz` | Decision | Authorize the v2.1 governed-autonomy Mission | `.spectacular/decisions/D2-435ztz.md` |
+| `D20-use-live-charter-retrieval-without-a-persistent-cache` | Decision | Compile charters from live governance without a persistent cache | `.spectacular/decisions/D20-use-live-charter-retrieval-without-a-persistent-cache.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |

@@ -12,6 +12,11 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `D1-rnkfzw` | Decision | Authorize the v2.1 governed-autonomy Proposal | `.spectacular/decisions/D1-rnkfzw.md` |
 | `D10-repoint` | Decision | Re-point only the live Mission; a completed Mission keeps the binding it agreed to | `.spectacular/decisions/D10-repoint.md` |
 | `D11-proposal-retirement` | Decision | Retire an absorbed Proposal to the archive with a stated resolver | `.spectacular/decisions/D11-proposal-retirement.md` |
+| `D12-isolation-and-context-compilation` | Decision | Adopt Git worktree isolation and bounded context-sandwich compilation for async execution | `.spectacular/decisions/D12-isolation-and-context-compilation.md` |
+| `D13-preparation-judgment-gate` | Decision | Adopt light gate for Mission design sufficiency and slice coherence | `.spectacular/decisions/D13-preparation-judgment-gate.md` |
+| `D14-preflight-discovery-caching` | Decision | Enable fast-path session preflight caching bounded by Git tree SHA | `.spectacular/decisions/D14-preflight-discovery-caching.md` |
+| `D15-branch-guardrail-at-activation` | Decision | Enforce automatic branch and worktree guardrails at Mission activation | `.spectacular/decisions/D15-branch-guardrail-at-activation.md` |
+| `D16-auto-prune-merged-worktrees` | Decision | Prune background execution worktrees automatically upon Evidence merge | `.spectacular/decisions/D16-auto-prune-merged-worktrees.md` |
 | `D2-435ztz` | Decision | Authorize the v2.1 governed-autonomy Mission | `.spectacular/decisions/D2-435ztz.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
@@ -76,6 +81,7 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `M9/RV1` | Review | Independent review of M9 v1 surface removal, next-action review integration, working-tree accounting, and gap sweep | `.spectacular/missions/M9-remove-dead-v1-surface-and-close-the-deferred-cleanup-ask/reviews/RV1-independent-review-of-m9-v1-surface-removal-next-action-review-integration-working-tree-accounting-and-gap-sweep.md` |
 | `P1` | Proposal | Repair v2 human operability | `.spectacular/proposals/P1-human-operability.md` |
 | `P10` | Proposal | Preparation judgment checkpoint | `.spectacular/proposals/P10-preparation-judgment-checkpoint.md` |
+| `P11` | Proposal | Context-sandwich compilation and decision steering protocol | `.spectacular/proposals/P11-context-sandwich-compilation-and-decision-steering-protocol.md` |
 | `P2` | Proposal | Add answer-key governed autonomy | `.spectacular/proposals/P2-add-answer-key-governed-autonomy.md` |
 | `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |
 | `P4` | Proposal | Make Spectacular control operations lean | `.spectacular/proposals/P4-make-spectacular-control-operations-lean.md` |

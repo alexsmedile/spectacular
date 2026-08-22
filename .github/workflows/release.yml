@@ -38,4 +38,4 @@ jobs:
             dist/*
           generate_release_notes: true
           draft: false
-          prerelease: false
+          prerelease: ${{ contains(github.ref_name, '-') }}

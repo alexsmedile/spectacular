@@ -2,9 +2,9 @@
 type: Mission
 id: 01a028e9-c0b8-77dc-9dd3-9ff0b46cedca
 title: Build the Spectacular effectiveness benchmark suite
-status: active
+status: completed
 created: "2026-08-22T12:01:56Z"
-updated: "2026-08-22T14:29:56Z"
+updated: "2026-08-22T15:20:27Z"
 activation:
     at: "2026-08-22T12:01:56Z"
     by: Alex
@@ -44,6 +44,12 @@ completion:
     - claim: attributable-results
       pass_boundary: Static, smoke, and full tiers emit human-readable Markdown plus machine-readable JSON containing raw trial references, pass rates, safety failures, context and interaction costs, variance, limitations, and an explicit old-versus-new verdict.
       proof_requirement: Golden report fixtures and scorer tests assert deterministic JSON and Markdown output, baseline-relative host-check handling, per-case regression visibility, and clear inconclusive results when repetitions or trace data are insufficient.
+completion_record:
+    at: "2026-08-22T15:20:27Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV2
+    reviewed_commit: 3a5bab29ed1941a9d2b9873e63324a5bbf29620d
 contract:
     fingerprint: sha256:aa2f59e740e9526bacef1dd9999127861836460e5f2f96b5fe05bc86a458ee1a
     ref: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
@@ -58,7 +64,7 @@ objectives:
       id: 01a028e9-c0b8-7666-baa6-b5255fd8159d
       outcome: Design, implement, validate, and document the complete Spectacular effectiveness evaluation harness and its initial case catalog.
       ref: O1
-      status: pending
+      status: implemented
 outcome: Spectacular skill revisions can be compared reproducibly against an immutable baseline using safety-first behavioral measures, objective context and interaction costs, and evidence-backed reports.
 owner: Alex
 ref: M14
@@ -80,7 +86,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-22T12:01:56Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - test/evals/spectacular

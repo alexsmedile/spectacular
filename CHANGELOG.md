@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 2.6.0-rc1 — 2026-08-22
+
 - Adds a test-only Spectacular effectiveness benchmark under `test/evals/spectacular/`
   with immutable old-versus-new package materialization, randomized isolated pairs,
   safety-first scoring, observed token/tool costs, paired-noise statistics,
@@ -14,8 +16,6 @@
   cost-per-success reporting, model-call and per-trial budget guards, and a
   six-case productivity frontier comparing native direct, native planning,
   canonical Markdown workspace, and full Spectacular modes.
-
-## 2.6.0-rc1 — 2026-08-22
 
 - Adds `-h` and `--help` flag interception across all subcommands. For document-input
   commands (`mission start`, `review record`, `handoff record`), `--help` emits the syntax

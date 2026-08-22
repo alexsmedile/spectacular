@@ -61,6 +61,18 @@ func ReadDecisionDraft(path string, stdin []byte) (DecisionDraft, string, error)
 	if strings.TrimSpace(draft.Disposition) == "" {
 		return DecisionDraft{}, "", invalid("disposition", "Decision disposition is required")
 	}
+	validDispositions := map[string]bool{
+		"accepted":   true,
+		"rejected":   true,
+		"deferred":   true,
+		"superseded": true,
+	}
+	if !validDispositions[draft.Disposition] {
+		return DecisionDraft{}, "", invalid("disposition", fmt.Sprintf("invalid disposition %q; must be accepted, rejected, deferred, or superseded", draft.Disposition))
+	}
+	if strings.TrimSpace(draft.Rationale) == "" {
+		return DecisionDraft{}, "", invalid("rationale", "Decision rationale is required")
+	}
 	draft.Body = body
 	return draft, string(data), nil
 }
@@ -80,6 +92,47 @@ func (s Service) recordDecision(path string, stdin []byte) (DecisionResult, erro
 	draft, _, err := ReadDecisionDraft(path, stdin)
 	if err != nil {
 		return DecisionResult{}, err
+	}
+
+	// 1. Validate supersession target if declared
+	if draft.Supersedes != "" {
+		found := false
+		for _, entry := range s.Workspace.Entries {
+			base := strings.TrimSuffix(filepath.Base(entry.Path), ".md")
+			if base == draft.Supersedes || strings.HasPrefix(base, draft.Supersedes+"-") {
+				found = true
+				break
+			}
+			if docRef, _, _ := workspace.Ref(entry.Document); docRef == draft.Supersedes {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return DecisionResult{}, domain.NewRefusal(domain.RefusalRecordNotFound, "supersedes", fmt.Sprintf("superseded decision %q not found in workspace", draft.Supersedes), nil)
+		}
+	}
+
+	// 2. Retry convergence: if exact identical decision already exists, return existing receipt
+	for _, entry := range s.Workspace.Entries {
+		if entry.Document != nil && entry.Document.Record.Type == domain.Decision {
+			docTitle := ""
+			if entry.Document.Record.Title != nil {
+				docTitle = *entry.Document.Record.Title
+			}
+			docDisp, _ := workspace.String(entry.Document, "disposition", false)
+			docRat, _ := workspace.String(entry.Document, "rationale", false)
+			if docTitle == draft.Title && docDisp == draft.Disposition && strings.TrimSpace(docRat) == strings.TrimSpace(draft.Rationale) {
+				ref, _, _ := workspace.Ref(entry.Document)
+				return DecisionResult{
+					Operation: "decision.record",
+					Ref:       ref,
+					ID:        entry.Document.Record.ID.String(),
+					Path:      entry.Path,
+					Changed:   nil,
+				}, nil
+			}
+		}
 	}
 
 	maxN := 0

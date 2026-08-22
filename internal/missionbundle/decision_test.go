@@ -38,6 +38,7 @@ func TestReadDecisionDraft_ValidationErrors(t *testing.T) {
 type: SomethingElse
 title: Test
 disposition: accepted
+rationale: Some rationale
 ---
 `
 	_, _, err := ReadDecisionDraft("-", []byte(invalidType))
@@ -48,6 +49,7 @@ disposition: accepted
 	missingTitle := `---
 type: DecisionDraft
 disposition: accepted
+rationale: Some rationale
 ---
 `
 	_, _, err = ReadDecisionDraft("-", []byte(missingTitle))
@@ -58,10 +60,34 @@ disposition: accepted
 	missingDisposition := `---
 type: DecisionDraft
 title: Test
+rationale: Some rationale
 ---
 `
 	_, _, err = ReadDecisionDraft("-", []byte(missingDisposition))
 	if err == nil || !strings.Contains(err.Error(), "disposition is required") {
 		t.Fatalf("expected error for missing disposition, got: %v", err)
+	}
+
+	invalidDisposition := `---
+type: DecisionDraft
+title: Test
+disposition: invalid_choice
+rationale: Some rationale
+---
+`
+	_, _, err = ReadDecisionDraft("-", []byte(invalidDisposition))
+	if err == nil || !strings.Contains(err.Error(), "invalid disposition") {
+		t.Fatalf("expected error for invalid disposition, got: %v", err)
+	}
+
+	missingRationale := `---
+type: DecisionDraft
+title: Test
+disposition: accepted
+---
+`
+	_, _, err = ReadDecisionDraft("-", []byte(missingRationale))
+	if err == nil || !strings.Contains(err.Error(), "rationale is required") {
+		t.Fatalf("expected error for missing rationale, got: %v", err)
 	}
 }

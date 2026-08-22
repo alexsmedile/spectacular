@@ -724,5 +724,3 @@ func TestCharterAndDecideCLI(t *testing.T) {
 		}
 	})
 }
-
-

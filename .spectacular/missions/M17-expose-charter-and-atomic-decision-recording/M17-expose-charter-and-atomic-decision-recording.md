@@ -4,7 +4,7 @@ id: 01a02ba2-1a58-7c60-85e0-09bac27b5cb2
 title: Expose charter and atomic Decision recording
 status: active
 created: "2026-08-22T22:45:36Z"
-updated: "2026-08-22T22:45:36Z"
+updated: "2026-08-22T22:48:50Z"
 activation:
     at: "2026-08-22T22:45:36Z"
     by: Alex
@@ -54,20 +54,20 @@ objectives:
       id: 01a02ba2-1a58-79e5-a934-e259d968db62
       outcome: Expose the read-only charter command with budget receipts (Charter Pillar).
       ref: O1
-      status: pending
+      status: implemented
     - claims:
         - atomic-decision-recording
         - explicit-eligibility-reporting
       id: 01a02ba2-1a58-71ea-98e2-4219cd7ef06f
       outcome: Implement atomic Decision recording and explicit blocker reporting (Decide Pillar).
       ref: O2
-      status: pending
+      status: implemented
     - claims:
         - authorized-surface-16
       id: 01a02ba2-1a58-76f6-a147-1e800184d80a
       outcome: Version and verify the exact 16-command public surface (Surface Growth Pillar).
       ref: O3
-      status: pending
+      status: implemented
 outcome: Unlock instant CLI prompt generation and zero-ceremony atomic Decision recording by exposing spectacular charter and spectacular decide while growing the public surface from 14 to 16 commands.
 owner: Alex
 ref: M17

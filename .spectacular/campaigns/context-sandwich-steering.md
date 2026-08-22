@@ -53,6 +53,8 @@ sketches: preserve them as input, but do not keep them synchronized, validate th
 or review them as final plans. Re-prepare only the next block after its predecessor's
 Evidence is accepted.
 
+Plan inputs: [context-sandwich-steering-plans](context-sandwich-steering-plans/README.md).
+
 <!-- spectacular:campaign-mermaid:start -->
 ```mermaid
 flowchart LR

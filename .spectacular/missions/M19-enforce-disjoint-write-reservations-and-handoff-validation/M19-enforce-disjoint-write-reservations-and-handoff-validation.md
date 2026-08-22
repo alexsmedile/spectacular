@@ -4,7 +4,7 @@ id: 01a02bdf-17a0-7514-a626-51ac67c5be6a
 title: Enforce disjoint write reservations and Handoff validation
 status: active
 created: "2026-08-22T23:49:28Z"
-updated: "2026-08-22T23:49:28Z"
+updated: "2026-08-22T23:52:38Z"
 activation:
     at: "2026-08-22T23:49:28Z"
     by: Alex
@@ -52,19 +52,19 @@ objectives:
       id: 01a02bdf-17a0-7b0a-bc29-3f0949c43547
       outcome: Validate and enforce disjoint writable path reservations across Handoffs.
       ref: O1
-      status: pending
+      status: implemented
     - claims:
         - dependency-locked-runs
       id: 01a02bdf-17a0-7891-bf4d-ae7b82a67bab
       outcome: Enforce upstream dependency locks on Objective Run starts.
       ref: O2
-      status: pending
+      status: implemented
     - claims:
         - passive-git-state-inspection
       id: 01a02bdf-17a0-73f0-aa04-60750538f0b8
       outcome: Verify passive Git sanity without destructive side effects.
       ref: O3
-      status: pending
+      status: implemented
 outcome: Orchestrators can safely parallelize Objectives because Handoffs enforce exact disjoint writable path reservations and upstream dependency locks.
 owner: Alex
 ref: M19

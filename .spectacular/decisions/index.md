@@ -6,6 +6,11 @@
 | `D1-rnkfzw` | Decision | Authorize the v2.1 governed-autonomy Proposal | `.spectacular/decisions/D1-rnkfzw.md` |
 | `D10-repoint` | Decision | Re-point only the live Mission; a completed Mission keeps the binding it agreed to | `.spectacular/decisions/D10-repoint.md` |
 | `D11-proposal-retirement` | Decision | Retire an absorbed Proposal to the archive with a stated resolver | `.spectacular/decisions/D11-proposal-retirement.md` |
+| `D12-isolation-and-context-compilation` | Decision | Adopt Git worktree isolation and bounded context-sandwich compilation for async execution | `.spectacular/decisions/D12-isolation-and-context-compilation.md` |
+| `D13-preparation-judgment-gate` | Decision | Adopt light gate for Mission design sufficiency and slice coherence | `.spectacular/decisions/D13-preparation-judgment-gate.md` |
+| `D14-preflight-discovery-caching` | Decision | Enable fast-path session preflight caching bounded by Git tree SHA | `.spectacular/decisions/D14-preflight-discovery-caching.md` |
+| `D15-branch-guardrail-at-activation` | Decision | Enforce automatic branch and worktree guardrails at Mission activation | `.spectacular/decisions/D15-branch-guardrail-at-activation.md` |
+| `D16-auto-prune-merged-worktrees` | Decision | Prune background execution worktrees automatically upon Evidence merge | `.spectacular/decisions/D16-auto-prune-merged-worktrees.md` |
 | `D2-435ztz` | Decision | Authorize the v2.1 governed-autonomy Mission | `.spectacular/decisions/D2-435ztz.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |

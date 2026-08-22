@@ -24,15 +24,21 @@ For live templates and layouts, see [genesis-examples.md](genesis-examples.md) o
 
 ## Campaign Planning (Mini-Roadmaps & Campaign Blocks)
 
-A **Campaign** (synonyms: *Initiative*, *Milestone Arc*, *Flight Plan*, *Theme*) organizes 4–10 macro-concepts into a topological dependency sequence before freezing individual Missions. It is a high-level overview, not a heavy ceremonial document.
+A **Campaign** (synonyms: *Initiative*, *Milestone Arc*, *Flight Plan*, *Theme*) organizes macro-concepts into a topological dependency sequence before freezing individual Missions. Aim for 4–10 blocks: fewer may not need a Campaign, while substantially more usually deserves separate arcs. It is a high-level overview, not a heavy ceremonial document.
 
-### What a Campaign Declares:
+Campaign checks are an orchestration/planning operation. A Mission worker follows
+the Mission, Objective, and Run it was assigned; it reads a Campaign only when
+the Mission body explicitly cites it for non-binding strategic context.
+
+### Useful Campaign content
+
+Use judgment; these are lightweight guidance, not a schema or validation gate:
 1. **Strategic Goal**: The overarching milestone outcome (e.g. *Launch Background Job Engine from zero to production*).
 2. **Topological Map**: A dependency flow diagram (Mermaid primary, ASCII fallback) showing logical unblocking order.
 3. **Exit Condition**: The observable milestone state certifying the campaign is achieved.
 
-### What a Campaign Block Declares (The 4 Fields):
-Each Campaign Block is an essential 4-field card (or diagram node), not a separate file:
+### Useful Campaign Block fields
+Each Campaign Block is usually a compact card (or diagram node), not a separate file:
 - **Title / Theme**: Named macro-capability (e.g. `Block 2: Ingestion HTTP API`).
 - **Capability Unlocked**: What the system will observably do when this block closes.
 - **Prerequisites**: Upstream blocks that must be closed first.
@@ -47,9 +53,13 @@ Each Campaign Block is an essential 4-field card (or diagram node), not a separa
 - Multiple small adjacent blocks can be closed by a single cohesive Mission.
 - Downstream blocks remain fluid until upstream proof and evidence are earned.
 
-### Visual Presentation:
-- **Mermaid Flowchart (Primary)**: Rendered in chat and markdown using `flowchart LR` or `flowchart TD` with block status (`CLOSED`, `IN PROGRESS`, `PLANNED`).
-- **ASCII Diagram (Fallback)**: Compact plain-text layout for CLI and terminal logs.
+### Visual presentation
+
+Prefer a Mermaid flowchart when a Campaign has multiple dependencies; use
+compact Markdown or ASCII only when it is clearer. The visual is a planning
+projection, not authority. When the Campaign uses the documented frontmatter
+map, run `spectacular campaign check <path>` to validate the current block and
+order, then render the Mermaid projection.
 
 ## Explore
 

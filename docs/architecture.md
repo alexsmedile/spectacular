@@ -55,7 +55,7 @@ to a Campaign in frozen frontmatter: roadmap edits must not create Mission drift
 
 ## The mechanical interface
 
-The CLI is thirteen commands, generated into a catalog at
+The CLI is fourteen commands, generated into a catalog at
 [`mechanical-interface.md`](../skills/spectacular/generated/mechanical-interface.md).
 The catalog is generated from the command registry, so it cannot drift from what
 the binary does. When a document and the generated interface disagree, the
@@ -67,8 +67,8 @@ this by injecting a fault at every write boundary and asserting the workspace is
 unchanged.
 
 Adding a command requires owner authorization. The count is reported, not
-defended — a fourteenth command the owner authorized is correct, and a
-thirteenth nobody asked for is not.
+defended — a fifteenth command the owner authorizes is correct, and a fourteenth
+nobody asked for is not.
 
 ## What the machine does and does not do
 

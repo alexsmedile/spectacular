@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alexsmedile/spectacular/v2/internal/campaign"
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/governance"
@@ -49,6 +50,7 @@ const (
 	opHandoffRecord
 	opMissionComplete
 	opProposalCheck
+	opCampaignCheck
 	opContractAmend
 )
 
@@ -265,6 +267,16 @@ returns: [<returns>]
 		OutputType:    "ProposalCheck",
 	},
 	{
+		Words:         []string{"campaign", "check"},
+		Arguments:     "<path> [--json]",
+		ArgumentShape: one,
+		JSONSchema:    "spectacular.campaign.check.v2",
+		Effect:        ReadOnly,
+		Operation:     opCampaignCheck,
+		Description:   "Validates a Campaign block map and renders its ordered Mermaid projection.",
+		OutputType:    "CampaignCheck",
+	},
+	{
 		Words:         []string{"contract", "amend"},
 		Arguments:     "<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]",
 		ArgumentShape: amendOptions,
@@ -431,6 +443,8 @@ func (r Runner) Run(args []string) int {
 		value, err = service.Complete(rest[0], rest[2])
 	case opProposalCheck:
 		value, err = missionbundle.ValidateProposal(ws, rest[0])
+	case opCampaignCheck:
+		value, err = campaign.Validate(ws, rest[0])
 	case opContractAmend:
 		value, err = service.AmendContract(rest[0], rest[2], rest[4], override, dryRun)
 	}
@@ -595,6 +609,31 @@ func renderHuman(writer io.Writer, value any) {
 		for _, notice := range item.Notices {
 			fmt.Fprintf(writer, "notice: %s\n", notice)
 		}
+	case campaign.Check:
+		fmt.Fprintf(writer, "Campaign: %s\n", item.Title)
+		if item.StrategicGoal != "" {
+			fmt.Fprintf(writer, "Outcome: %s\n", item.StrategicGoal)
+		}
+		fmt.Fprintf(writer, "CURRENT CAMPAIGN BLOCK: %s — %s\n", item.CurrentBlock.Ref, item.CurrentBlock.Title)
+		if len(item.CurrentBlock.Missions) > 0 {
+			fmt.Fprintf(writer, "LINKED MISSIONS: %s\n", strings.Join(item.CurrentBlock.Missions, ", "))
+		}
+		if len(item.Next) > 0 {
+			next := make([]string, 0, len(item.Next))
+			for _, block := range item.Next {
+				next = append(next, block.Ref+" — "+block.Title)
+			}
+			fmt.Fprintf(writer, "NEXT MAP BLOCKS: %s\n", strings.Join(next, ", "))
+		}
+		if item.ExitCondition != "" {
+			fmt.Fprintf(writer, "Exit: %s\n", item.ExitCondition)
+		}
+		fmt.Fprintln(writer, "ORDER")
+		for index, block := range item.Order {
+			fmt.Fprintf(writer, "  %d. %s\n", index+1, block)
+		}
+		fmt.Fprintln(writer, "MERMAID")
+		fmt.Fprint(writer, item.Mermaid)
 	case missionbundle.Amendment:
 		verb := "amended"
 		switch {

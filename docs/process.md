@@ -29,10 +29,18 @@ unbounded intake queue on Autopilot.
 ## Campaigns: optional roadmap maps
 
 A Campaign is one Markdown file in `.spectacular/campaigns/` for a genuinely
-independent strategic arc. It maps 4–10 roadmap blocks, their dependencies,
-candidate or active Missions, and an exit condition. It is a planning map, not
-an automation queue or execution authority. Campaigns are optional: use one
-only when several Missions need a shared roadmap.
+independent strategic arc. Aim for 4–10 roadmap blocks with their dependencies,
+candidate or active Missions, and an exit condition; split an unwieldy map into
+separate arcs. It is a planning map, not an automation queue or execution
+authority. Campaigns are optional: use one only when several Missions need a
+shared roadmap. Prefer a Mermaid dependency view when it makes order clearer.
+`spectacular campaign check <path>` is read-only: it validates the optional
+frontmatter map, resolves named Mission refs, detects cycles, and emits the
+ordered Mermaid projection.
+
+Campaign checking is an orchestration/planning action. Its `current` field is a
+global map position, not a worker assignment; Mission workers normally follow
+their Mission, Objective, and Run without loading a Campaign.
 
 ## Explore: the Proposal and Starter Inputs
 

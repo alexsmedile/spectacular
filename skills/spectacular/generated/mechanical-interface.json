@@ -81,6 +81,12 @@
       "effect": "read-only"
     },
     {
+      "command": "spectacular campaign check",
+      "arguments": "<path> [--json]",
+      "schema": "spectacular.campaign.check.v2",
+      "effect": "read-only"
+    },
+    {
       "command": "spectacular contract amend",
       "arguments": "<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]",
       "schema": "spectacular.contract.amend.v2",

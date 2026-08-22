@@ -237,7 +237,9 @@ owner-gated effects become necessary.
 
 Campaigns are optional, durable planning maps above Missions. They sequence
 roadmap blocks and candidate Missions but grant no execution authority; see
-`.spectacular/campaigns/`.
+`.spectacular/campaigns/`. When a Campaign uses the optional frontmatter map,
+`spectacular campaign check <path>` validates its order and renders a Mermaid
+projection without changing any record.
 
 ## The workspace
 

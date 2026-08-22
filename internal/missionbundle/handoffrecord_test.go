@@ -392,4 +392,3 @@ func TestHandoffRecordAutoDerivesTreeWhenOmitted(t *testing.T) {
 	}
 	_ = result
 }
-

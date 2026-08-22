@@ -151,7 +151,7 @@ Establish the modular foundation with strict test harnesses and zero technical d
 
 ## 4. Campaign Planning Example (Mini-Roadmap)
 
-### Visual Flowchart (Mermaid Primary)
+### Visual Flowchart Example (Mermaid)
 ```mermaid
 flowchart TD
     classDef closed fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
@@ -173,11 +173,10 @@ flowchart TD
     end
 ```
 
-### CLI Terminal Output (ASCII Fallback)
+### Text Representation Example (ASCII)
 ```text
 Campaign: Zero-to-Launch Job Platform
 [Block 1: Harness & Core Entities] (CLOSED -> M1)
   ├──> [Block 2: Ingestion HTTP API] (IN PROGRESS -> M2) ──┐
   └──> [Block 3: Worker Dispatcher]  (PLANNED) ────────────┴──> [Block 4: Dead-Letter] (PLANNED) ──> [Block 5: Observability] (PLANNED)
 ```
-

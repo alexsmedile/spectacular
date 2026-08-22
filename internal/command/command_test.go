@@ -16,20 +16,18 @@ import (
 )
 
 func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
-	// Thirteen commands. M12 authorized the thirteenth, `handoff record`, by
-	// freezing the count in its completion claim before the work began. The number
-	// is stated here rather than defended: the list is the assertion, and a
-	// fourteenth arriving without that authorization fails this test.
+	// Fourteen commands. M12 authorized the thirteenth, `handoff record`; the
+	// owner separately authorized the fourteenth, read-only `campaign check`.
 	want := []string{
 		"mission start", "mission show", "mission check", "objective show", "objective promote",
 		"objective finish", "run show", "run start", "review record", "handoff record",
-		"mission complete", "proposal check", "contract amend",
+		"mission complete", "proposal check", "campaign check", "contract amend",
 	}
 	if len(Registry) != len(want) {
 		t.Fatalf("registry has %d commands, want %d", len(Registry), len(want))
 	}
-	if len(want) != 13 {
-		t.Fatalf("the public surface is %d commands; M12 authorized thirteen", len(want))
+	if len(want) != 14 {
+		t.Fatalf("the public surface is %d commands; owner authorized campaign check as fourteen", len(want))
 	}
 	for i, spec := range Registry {
 		if got := strings.Join(spec.Words, " "); got != want[i] {
@@ -204,6 +202,67 @@ func TestSelfHostedCompactMissionsUseSharedCheck(t *testing.T) {
 	legacy := run(t, root, nil, 0, "mission", "show", "M2", "--json")
 	if !strings.Contains(legacy, `"legacy":true`) {
 		t.Fatalf("legacy Mission did not use read-only shared decoder: %s", legacy)
+	}
+}
+
+func TestCampaignCheckRendersOrderedProjection(t *testing.T) {
+	root, _ := fixture(t)
+	campaigns := filepath.Join(root, ".spectacular", "campaigns")
+	if err := os.MkdirAll(campaigns, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(campaigns, "launch.md")
+	write(t, path, `---
+campaign_schema: spectacular.campaign.v1
+title: Launch readiness
+focus: Ship a safe release path.
+current: B2
+exit_condition: The release path is proven.
+blocks:
+  - ref: B1
+    title: CI foundation
+    state: complete
+    after: []
+    missions: []
+  - ref: B2
+    title: Release hardening
+    state: active
+    after: [B1]
+    missions: []
+---
+# Campaign: Launch readiness
+`)
+	output := run(t, root, nil, 0, "campaign", "check", ".spectacular/campaigns/launch.md", "--json")
+	for _, want := range []string{`"schema_version":"spectacular.campaign.check.v2"`, `"current":"B2"`, `"order":["B1","B2"]`, `"mermaid":"flowchart LR`} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("campaign check lacks %q:\n%s", want, output)
+		}
+	}
+	human := run(t, root, nil, 0, "campaign", "check", ".spectacular/campaigns/launch.md")
+	if !strings.Contains(human, "CURRENT CAMPAIGN BLOCK: B2 — Release hardening") || !strings.Contains(human, "ORDER") || !strings.Contains(human, "MERMAID") {
+		t.Fatalf("human campaign projection=%s", human)
+	}
+	write(t, path, `---
+campaign_schema: spectacular.campaign.v1
+title: Cycle
+focus: Demonstrate a cycle.
+current: B1
+exit_condition: Never.
+blocks:
+  - ref: B1
+    title: First
+    state: planned
+    after: [B2]
+  - ref: B2
+    title: Second
+    state: planned
+    after: [B1]
+---
+# Campaign: Cycle
+`)
+	cycle := run(t, root, nil, 3, "campaign", "check", ".spectacular/campaigns/launch.md", "--json")
+	if !strings.Contains(cycle, "contains a cycle") {
+		t.Fatalf("cycle refusal=%s", cycle)
 	}
 }
 
@@ -639,4 +698,3 @@ func TestHelpAndSchemaFlags(t *testing.T) {
 		}
 	})
 }
-

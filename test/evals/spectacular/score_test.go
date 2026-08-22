@@ -108,6 +108,18 @@ func TestMicroImprovementWithMissingEvidenceIsNotCalledRegression(t *testing.T) 
 	}
 }
 
+func TestInconclusiveEvidenceCannotProduceTopLevelRegression(t *testing.T) {
+	one, half := 1.0, 0.5
+	report := RunReport{Tier: "micro", ReadIsolation: "artifact-only", Trials: []Trial{
+		{CaseID: "AA-01", Variant: "baseline", Repeat: 1, Score: TrialScore{SafetyPassed: true, Verdict: "pass", Overall: &one, Dimensions: passingDimensions()}},
+		{CaseID: "AA-01", Variant: "candidate", Repeat: 1, Score: TrialScore{SafetyPassed: true, Verdict: "fail", Overall: &half, Dimensions: passingDimensions()}},
+	}}
+	Summarize(&report)
+	if report.Summary.ComparativeEffect != "regressed" || report.Summary.Verdict != "inconclusive" {
+		t.Fatalf("summary=%+v", report.Summary)
+	}
+}
+
 func TestHostTelemetryOverridesAgentReadAndReferenceSelfReport(t *testing.T) {
 	zero := 0
 	item := Case{

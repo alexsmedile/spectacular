@@ -246,8 +246,19 @@ func TestControlModesExposeEquivalentInformationWithoutInstallingSkill(t *testin
 	if _, err := os.Stat(filepath.Join(workspace, ".spectacular", "PROJECT.md")); err != nil {
 		t.Fatal(err)
 	}
-	if prompt := variantPrompt("native-plan", "do work"); !strings.Contains(prompt, "built-in planning") || strings.Contains(prompt, "$spectacular") {
-		t.Fatalf("prompt=%q", prompt)
+	if oneOf("native-plan", allowedVariantModes...) {
+		t.Fatal("prompt-only native-plan must not be advertised as an attributable control")
+	}
+}
+
+func TestKnownArtifactOnlyAdaptersCannotClaimOSEnforcement(t *testing.T) {
+	for _, name := range []string{"codex-adapter.sh", "claude-adapter.sh", "agy-adapter.sh", "opencode-adapter.sh"} {
+		if err := validateAdapterIsolation(filepath.Join("scripts", name), "os-enforced"); err == nil {
+			t.Fatalf("%s was relabeled os-enforced", name)
+		}
+	}
+	if err := validateAdapterIsolation("external-container-adapter", "os-enforced"); err != nil {
+		t.Fatal(err)
 	}
 }
 

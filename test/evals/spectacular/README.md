@@ -61,13 +61,15 @@ projection; the runner exposes only the representation appropriate to the mode.
 | Mode | Context exposed | Question answered |
 |---|---|---|
 | `native-direct` | task projection, no `.spectacular/`, no skill | Is direct execution enough? |
-| `native-plan` | task projection, no `.spectacular/`, no skill | Does the host's built-in plan add value? |
 | `workspace-only` | canonical `.spectacular/` records, no skill | Do folders and Markdown alone add value? |
 | `skill` | canonical records plus one immutable skill package | Does Spectacular governance justify its cost? |
 
 Run pairwise comparisons with the same model, commit, seed, and catalog. First
-compare native direct to native plan, then the winner to workspace-only, then
-the winner to the skill. Do not collapse modes or models into one aggregate.
+compare native direct to workspace-only, then the winner to the skill. Do not
+collapse modes or models into one aggregate. A prompt that merely asks a host
+to plan is not an attributable built-in-plan control. `native-plan` remains
+deferred until an adapter can mechanically invoke and trace a real
+plan/approve/execute sequence.
 The report pins each trial's suite, four-axis complexity, mode, task outcome,
 safety, owner interaction, tokens, tool calls, and elapsed time. The practical
 activation threshold is the first complexity region where Spectacular produces
@@ -80,7 +82,7 @@ Example low-cost frontier probe (four model calls):
 go run ./test/evals/spectacular/cmd/bench run \
   --catalog test/evals/spectacular/mode-evals.json \
   --baseline <immutable-commit> --baseline-mode native-direct \
-  --candidate <same-immutable-commit> --candidate-mode native-plan \
+  --candidate <same-immutable-commit> --candidate-mode workspace-only \
   --tier micro --repeats 1 --max-calls 4 \
   --model <model-id> --out <new-output-directory>
 ```
@@ -122,13 +124,16 @@ go run ./test/evals/spectacular/cmd/bench run \
   --out test/evals/spectacular/reports/smoke-<candidate-commit>
 ```
 
-The Codex adapter runs ephemeral sessions with user configuration ignored, installs exactly one skill variant under the fixture's `.agents/skills/`, captures JSONL events, requires a structured result, sanitizes benchmark environment paths before model execution, and preserves each trial in a separate directory. It provides artifact separation, not an OS read sandbox. Such runs are automatically `inconclusive` for strict isolation. An external container/VM adapter may declare `--read-isolation os-enforced`; that declaration is pinned in the manifest and must be independently justified. The harness never materializes both variants into one workspace, and held-out runs refuse artifact-only isolation.
+The Codex adapter runs ephemeral sessions with user configuration ignored, installs exactly one skill variant under the fixture's `.agents/skills/`, captures JSONL events, requires a structured result, sanitizes benchmark environment paths before model execution, and preserves each trial in a separate directory. It provides artifact separation, not an OS read sandbox. Such runs are automatically `inconclusive` for strict isolation. The shipped Codex, Claude, Antigravity, and OpenCode adapters are mechanically refused if relabeled `os-enforced`. Only a separate container/VM adapter may carry that declaration; it is pinned in the manifest and must be independently justified. The harness never materializes both variants into one workspace, and held-out runs refuse artifact-only isolation.
 
 Before a paid or stochastic run, report the selected case count, repetitions,
 total model calls, model, and expected external cost. `--max-calls` defaults to
 12, so smoke/full runs require a deliberate larger ceiling. `--trial-timeout`
-defaults to ten minutes per call. Arguments may be passed to adapters with
-repeatable `--adapter-arg` flags. Never tune the skill from held-out results.
+defaults to ten minutes per call. On Darwin and Linux the runner cancels the
+adapter's process group and closes inherited pipes after a one-second grace;
+other hosts receive direct-process cancellation and must record that limitation.
+Arguments may be passed to adapters with repeatable `--adapter-arg` flags.
+Never tune the skill from held-out results.
 
 The held-out tier additionally requires `--allow-held-out` and `--read-isolation os-enforced`. This prevents accidental tuning runs; it is not secrecy. Prompts remain reviewable source, so release discipline and independent review still protect their evidentiary value.
 
@@ -153,8 +158,10 @@ another:
 - `comparative_effect`: did the candidate improve, tie, or regress against the paired baseline?
 - `readiness`: did a sufficiently broad run meet absolute release targets?
 
-The top-level verdict follows those states. A micro run can show an improvement
-signal, but it cannot establish full release readiness.
+The top-level verdict follows those states. `invalid` and `inconclusive`
+measurement take precedence over comparative direction; a micro run can expose
+a provisional improvement or regression signal, but it cannot establish a
+conclusive verdict or full release readiness without valid evidence.
 
 - Any candidate-only safety failure: comparative regression; a shared safety
   failure is separately diagnosed and does not prove the candidate caused it.

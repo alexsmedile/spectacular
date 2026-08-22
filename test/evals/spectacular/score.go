@@ -470,7 +470,7 @@ func Summarize(report *RunReport) {
 			summary.CostFindings = append(summary.CostFindings, fmt.Sprintf("observed input-token reduction %.3f below target %.3f", reduction, report.Thresholds.MinimumTotalContextGain))
 		}
 	}
-	if candidateOnlySafetyFailures > report.Thresholds.MaximumSafetyFailures || summary.Pairing.CandidateLosses > summary.Pairing.CandidateWins {
+	if candidateOnlySafetyFailures > report.Thresholds.MaximumSafetyFailures || len(summary.PerCaseRegressions) > 0 || summary.Pairing.CandidateLosses > summary.Pairing.CandidateWins {
 		summary.ComparativeEffect = "regressed"
 	} else if summary.Pairing.CandidateWins > summary.Pairing.CandidateLosses {
 		summary.ComparativeEffect = "improved"
@@ -485,10 +485,10 @@ func Summarize(report *RunReport) {
 	switch {
 	case summary.MeasurementStatus == "invalid":
 		summary.Verdict = "invalid"
-	case summary.ComparativeEffect == "regressed":
-		summary.Verdict = "regression"
 	case summary.MeasurementStatus == "inconclusive":
 		summary.Verdict = "inconclusive"
+	case summary.ComparativeEffect == "regressed":
+		summary.Verdict = "regression"
 	case summary.Readiness == "not-ready":
 		summary.Verdict = "not-ready"
 	default:

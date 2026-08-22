@@ -79,7 +79,7 @@ var agentResultRequiredFields = []string{"role", "phase", "status", "summary", "
 var allowedAgentRoles = []string{"none", "Orchestrator", "Runner", "Reviewer", "Autopilot"}
 var allowedAgentPhases = []string{"", "orient", "prepare", "execute", "runtime", "close", "audit"}
 var allowedAgentStatuses = []string{"done", "blocked", "owner-gate", "draft-only", "not-invoked"}
-var allowedVariantModes = []string{"skill", "workspace-only", "native-direct", "native-plan"}
+var allowedVariantModes = []string{"skill", "workspace-only", "native-direct"}
 
 func RunPaired(config RunConfig) (RunReport, error) {
 	if strings.TrimSpace(config.OutputDir) == "" {
@@ -133,6 +133,9 @@ func RunPaired(config RunConfig) (RunReport, error) {
 	}
 	if config.ReadIsolation != "artifact-only" && config.ReadIsolation != "os-enforced" {
 		return RunReport{}, errors.New("read isolation must be artifact-only or os-enforced")
+	}
+	if err := validateAdapterIsolation(config.Adapter, config.ReadIsolation); err != nil {
+		return RunReport{}, err
 	}
 	cases, defaultRepeats, err := CasesForTier(catalog, config.Tier)
 	if err != nil {
@@ -327,6 +330,10 @@ func runOne(config RunConfig, spec trialSpec, commit string) (Trial, error) {
 		cancel = stop
 	}
 	command := exec.CommandContext(commandContext, config.Adapter, config.AdapterArgs...)
+	configureProcessTree(command)
+	if config.TrialTimeout > 0 {
+		command.WaitDelay = time.Second
+	}
 	if cancel != nil {
 		defer cancel()
 	}
@@ -461,7 +468,7 @@ func prepareVariantWorkspace(config RunConfig, workspace, mode, commit string) e
 		_ = os.Remove(filepath.Join(workspace, "TASK.md"))
 	case "workspace-only":
 		_ = os.Remove(filepath.Join(workspace, "TASK.md"))
-	case "native-direct", "native-plan":
+	case "native-direct":
 		governanceRoot := filepath.Join(workspace, ".spectacular")
 		if !strings.HasPrefix(governanceRoot, filepath.Clean(workspace)+string(os.PathSeparator)) {
 			return errors.New("refuse unsafe native-control workspace transform")
@@ -479,11 +486,22 @@ func variantPrompt(mode, prompt string) string {
 		return "Use the canonical Markdown workspace records and folders directly. No Spectacular skill is installed; do not claim that it is.\n\n" + prompt
 	case "native-direct":
 		return "Use the host's normal direct execution behavior. Do not invoke or emulate Spectacular.\n\n" + prompt
-	case "native-plan":
-		return "Use the host's built-in planning behavior before execution. Do not invoke or emulate Spectacular.\n\n" + prompt
 	default:
 		return prompt
 	}
+}
+
+func validateAdapterIsolation(adapter, isolation string) error {
+	if isolation != "os-enforced" {
+		return nil
+	}
+	name := filepath.Base(adapter)
+	for _, artifactOnly := range []string{"codex-adapter.sh", "claude-adapter.sh", "agy-adapter.sh", "opencode-adapter.sh"} {
+		if name == artifactOnly {
+			return fmt.Errorf("adapter %s declares artifact-only isolation and cannot be relabeled os-enforced", name)
+		}
+	}
+	return nil
 }
 
 func persistFailedTrial(outputDir, id, temporary string, cause error) error {

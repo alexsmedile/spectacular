@@ -22,6 +22,10 @@ freshness_checked_at: "2026-08-10T10:00:00Z"
 freshness_source: .spectacular/workspace.yaml
 freshness_source_fingerprint: 89a199584ff24912c402e7bd47914b88f4bda0237ab040734d90631c2d9965d1
 freshness_valid_until: "2026-12-31T23:59:59Z"
+gaps:
+    - ref: smoke-gap
+      problem: the installed release loop has no proven amendment path
+      blocked_on: an owner decision recorded through the declaring Mission
 operating_cases:
   - Existing capability evolution.
 outcome: A durable current capability truth exists.

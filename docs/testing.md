@@ -33,9 +33,11 @@ runner drives lives under `test/`:
 
 ```text
 test/
-├── verify.sh          # the runner: quick | acceptance | release | all
+├── verify.sh          # the runner: preflight | quick | acceptance | release | all
 ├── acceptance/        # CLI acceptance suite, built binary against fixtures
+├── evals/             # skill-behaviour benchmark, not part of the release gate
 └── release.sh         # distribution gate: build, checksums, install, recovery
+cmd/release-smoke/     # drives an installed binary through the governed lifecycle
 testdata/              # shared fixtures (Go treats this name specially)
 ```
 
@@ -46,12 +48,34 @@ from the root.
 ## Canonical runner
 
 ```sh
+bash test/verify.sh preflight
 bash test/verify.sh quick
 bash test/verify.sh acceptance
 bash test/verify.sh release
 bash test/verify.sh all
 ```
 
+`preflight` is a read-only, sub-second sanity gate. It emits a
+`spectacular.preflight-receipt.v1` receipt and fails fast, so a heavier tier is
+never spent on a workspace that is already broken.
+
 `all` is the pre-release gate. It runs static checks, package tests, the real
 binary acceptance suite, race detection, installation tests, and reproducible
 release proof.
+
+## The installed-binary lifecycle proof
+
+`cmd/release-smoke` is the only place a released binary is driven through the
+governed lifecycle as a user would drive it: separate processes, a disposable
+workspace, and a fixture contract. The `release` and `all` tiers run it.
+
+It exists because unit coverage cannot see the boundary a user meets first. A
+command whose flags parse, whose validation passes, and whose typed result says
+success can still write nothing, or write to the wrong path. Every mutating step
+here therefore asserts that the record it reported actually landed on disk.
+
+The order of the steps is a claim in itself. A run goes terminal when the last
+objective finishes, so run transitions are exercised while the run is still
+live; `contract amend` runs while the Mission that declared the Gap is live,
+which is the one exemption an owner actually uses. Reordering the steps to make
+the driver read more neatly will fail against those rules, correctly.

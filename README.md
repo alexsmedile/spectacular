@@ -155,7 +155,7 @@ install/install.sh install \
   --version "$VERSION"
 ```
 
-Set `VERSION` to the release you downloaded, e.g. `2.7.1`. `--source` is the
+Set `VERSION` to the release you downloaded, e.g. `2.7.2`. `--source` is the
 directory that **contains** the archive, not an unpacked
 tree — the installer verifies the checksum and extracts it itself. This places
 the native binary at `$HOME/.local/bin/spectacular`, already on `PATH` on most

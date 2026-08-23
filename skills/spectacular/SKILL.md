@@ -2,7 +2,7 @@
 name: spectacular
 description: Guide work only when the user explicitly invokes `$spectacular` or `/spectacular`, or when operating inside a canonical `.spectacular/` workspace. Route Orchestrator work through orient, prepare/explore/plan/start, execute/resume, runtime handoff/autopilot, close/review/complete, and audit. Do not invoke for generic planning, ordinary code review, Git operations, project-status questions, or short tasks outside a Spectacular workspace.
 metadata:
-  version: "2.7.1"
+  version: "2.7.2"
 ---
 
 # Spectacular

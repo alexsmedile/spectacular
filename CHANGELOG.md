@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.7.1 — 2026-08-24
+## 2.7.2 — 2026-08-24
 
 ### Fixed
 
@@ -14,6 +14,8 @@
   than queueing — and all six `GOOS/GOARCH` targets compile, so the
   cross-platform acceptance matrix exercises behaviour instead of failing on
   compilation (`mutation-lock-is-unix-only`).
+
+## 2.7.1 — 2026-08-24
 
 ### Added
 

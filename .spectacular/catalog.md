@@ -68,6 +68,7 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `M2/O3` | Objective | Objective dependencies and Handoffs support cohesive, disjoint runner claim scopes and explicit returns. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O3-objective-dependencies-and-handoffs-support-cohesive-disjoint-runner-claim-scopes-and-explicit-returns.md` |
 | `M2/O4` | Objective | Autopilot resource limits disclose hard, observed, or unsupported enforcement and reject false hard guarantees. | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/objectives/O4-autopilot-resource-limits-disclose-hard-observed-or-unsupported-enforcement-and-reject-false-hard-guarantees.md` |
 | `M2/R1` | Run | Initial governed Run | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/runs/R1-initial-governed-run/R1-initial-governed-run.md` |
+| `M20` | Mission | Record basic clustered Evidence | `.spectacular/missions/M20-record-basic-clustered-evidence/M20-record-basic-clustered-evidence.md` |
 | `M3` | Mission | Make Spectacular launch and execution lean | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/M3-make-spectacular-launch-and-execution-lean.md` |
 | `M3/D1-deldrh` | Decision | Activate the Spectacular efficiency Mission | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/decisions/D1-deldrh.md` |
 | `M3/E1-npnuyp` | Evidence | Lean launch and question contract proof | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E1-npnuyp.md` |

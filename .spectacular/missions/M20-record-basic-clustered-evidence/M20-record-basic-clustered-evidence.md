@@ -4,7 +4,7 @@ id: 01a02cfe-c428-76b7-8e06-f485642347cb
 title: Record basic clustered Evidence
 status: active
 created: "2026-08-23T05:01:35Z"
-updated: "2026-08-23T05:01:35Z"
+updated: "2026-08-23T05:07:51Z"
 activation:
     at: "2026-08-23T05:01:35Z"
     by: Alex
@@ -52,19 +52,19 @@ objectives:
       id: 01a02cfe-c428-7603-a188-62c3b564f2b8
       outcome: Implement atomic clustered Evidence recording.
       ref: O1
-      status: pending
+      status: implemented
     - claims:
         - completed-is-not-proved
       id: 01a02cfe-c428-7eb1-880a-d4a069ad9792
       outcome: Preserve completed-vs-proved lifecycle boundary.
       ref: O2
-      status: pending
+      status: implemented
     - claims:
         - authorized-surface-18
       id: 01a02cfe-c428-741a-8632-d6e7451ea82e
       outcome: Version CLI Contract and expose 18-command surface.
       ref: O3
-      status: pending
+      status: implemented
 outcome: Attributable Evidence packages cover Runs, Objectives, or clusters without per-run paperwork.
 owner: Alex
 ref: M20

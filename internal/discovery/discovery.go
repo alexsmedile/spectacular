@@ -200,12 +200,12 @@ func load(root, marker string) (*Workspace, error) {
 					return filepath.SkipDir
 				}
 			}
-			if d.IsDir() && (d.Name() == "history" || d.Name() == "transactions" || d.Name() == "campaigns") {
+			if d.IsDir() && (d.Name() == "history" || d.Name() == "transactions" || d.Name() == "campaigns" || d.Name() == "atlas") {
 				return filepath.SkipDir
 			}
 			// Generated indexes are committed navigation aids, never canonical
 			// records. They must be rebuildable and must not enter authority.
-			// Campaigns are durable but non-governing planning documents. They are
+			// Campaigns and Atlases are durable but non-governing planning documents. They are
 			// intentionally outside the typed record graph and CLI lifecycle.
 			// Amendment logs are append-only provenance beside a Contract: they
 			// record how it changed rather than stating anything it agreed, so they

@@ -6,6 +6,7 @@ clear what people read, what agents follow, and what the CLI can change.
 | Surface | Audience | What it is |
 |---|---|---|
 | `.spectacular/` | governance | The records: Missions, Proposals, Decisions, Evidence |
+| `.spectacular/atlas/` | planning | Optional outcome and system maps; explanatory, mutable, and non-authoritative |
 | `.spectacular/campaigns/` | planning | Optional durable roadmap maps; excluded from the record graph and CLI lifecycle |
 | `skills/` | agents at runtime | Executable guidance the CLI and Skill load |
 | `cmd/` + `internal/` | the machine | A typed CLI that validates and mutates records atomically |
@@ -49,6 +50,22 @@ are mutable; a Mission's frozen envelope remains the execution authority.
 
 A Mission may cite Campaign context in its Markdown body. Do not bind a Mission
 to a Campaign in frozen frontmatter: roadmap edits must not create Mission drift.
+
+## Atlases connect value to structure
+
+An Atlas is an optional Markdown map for a coherent product-value slice. Its
+outcome board shows the actor, journey steps, desired result, and success
+signal. Its system board shows the capabilities, ownership boundaries,
+dependencies, risks, and proof that make the result possible.
+
+```text
+desired future → journey step → capability → architecture boundary → proof
+                              ↘ Campaign block → Mission
+```
+
+An Atlas makes this chain legible, but it is not a second source of execution
+authority. Campaigns sequence potential work; Contracts state accepted behavior;
+Missions freeze and authorize one implementation slice.
 
 ## The mechanical interface
 

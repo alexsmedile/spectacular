@@ -16,6 +16,7 @@ The project root is intentionally small:
 ├── ARCHITECTURE.md
 ├── STACK.md
 ├── GUARDRAILS.md
+├── atlas/
 ├── campaigns/
 ├── index.md
 ├── catalog.md
@@ -41,6 +42,11 @@ canonical or loaded as authority.
 `campaigns/` holds optional, durable Markdown roadmap maps. Campaigns are
 planning documents, not governed records: the CLI excludes them from the typed
 record graph, and they grant no execution authority.
+
+`atlas/` holds optional, mutable Markdown maps for coherent product-value
+slices. An Atlas links user journeys and outcomes to capabilities and technical
+boundaries. It explains why a Campaign block exists; it does not sequence work,
+grant authority, or bind a Mission.
 
 **Anchor naming rule**: Single-word uppercase filenames (`<NOUN>.md`) are reserved exclusively for Project Anchors and workspace landmark files (`README.md`, `AGENTS.md`, `HUMAN-WORKSPACE-CONTRACT.md`). All governed records carry their scoped prefix in their filename. The same shape is used by untracked local working files such as `TODO.md` and `FEEDBACKS.md`; a record that needs to rely on one quotes what it needs, because the file is not published alongside the record.
 

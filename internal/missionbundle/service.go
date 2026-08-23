@@ -1379,4 +1379,3 @@ func isDependencyUnblockedByDecision(ws *discovery.Workspace, missionRef, depRef
 	}
 	return false
 }
-

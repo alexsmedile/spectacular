@@ -20,7 +20,7 @@ When starting a project from scratch, or when receiving an initial PRD or prompt
 
 2. **Adopt Strong Defaults (Zero Grilling)**: Do not stall kickoff with multi-question interviews. Choose sane, production-grade defaults for toolchain and architecture; prompt only on irreversible semantic forks.
 
-3. **Prove coverage, then preview**: Before presenting anything for approval, make a source-to-destination coverage pass: map every one of the eight dimensions to a Core/earned Anchor or an `M1-bootstrap` claim, or mark it as an explicit open Gap. Only when all eight are accounted for, show the Core Triad summary and `M1-bootstrap` plan once. On owner confirmation ("Yes" / "Proceed"), write the Core Anchors and activate `M1` with `spectacular mission start`.
+3. **Prove coverage, then preview**: Before presenting anything for approval, make a source-to-destination coverage pass: map every one of the eight dimensions to a Core/earned Anchor or an `M1-bootstrap` claim, or mark it as an explicit open Gap. When a product has several meaningful journeys or non-trivial architecture connections, build two linked, compact Atlas boards in `.spectacular/atlas/<value-slice>.md`: an **Outcome Board** (actors, journey steps, desired outcomes, success signals) and a **System Board** (capabilities, boundaries, dependencies, risks, and proof). Connect them through named capabilities; do not create a separate graph database or a second authority system. Only when all eight dimensions—and, when used, the Atlas boards—are accounted for, show the Core Triad summary and `M1-bootstrap` plan once. On owner confirmation ("Yes" / "Proceed"), write the Core Anchors and activate `M1` with `spectacular mission start`.
 
 For live templates and layouts, see [genesis-examples.md](genesis-examples.md) or run `spectacular mission start --help` to emit the exact `MissionPlan` YAML frontmatter template directly to stdout.
 
@@ -45,6 +45,7 @@ Each Campaign Block is usually a compact card (or diagram node), not a separate 
 - **Capability Unlocked**: What the system will observably do when this block closes.
 - **Prerequisites**: Upstream blocks that must be closed first.
 - **Status & Mapping**: `PLANNED` | `IN PROGRESS -> M<N>` | `CLOSED (M<N>)`.
+- **Value Trace**: `advances: [<journey-step>]` or `enables: [<capability-or-system-concern>]`. Enabling work names its eventual user or business consequence rather than fabricating a journey step.
 
 ### Division of Responsibility:
 - **Campaign / Block (Fluid Overview)**: Macro-capabilities, unblocking dependencies, fluid future blocks. Lives in one optional Markdown file per independent arc under `.spectacular/campaigns/`; it never belongs in the stable `PROJECT.md` Anchor and grants no execution authority.
@@ -54,6 +55,9 @@ Each Campaign Block is usually a compact card (or diagram node), not a separate 
 - One Campaign Block can resolve into one or more Missions upon execution (e.g. *Stripe Engine* $\to$ `M2-stripe-webhook` + `M3-subscription-lifecycle`).
 - Multiple small adjacent blocks can be closed by a single cohesive Mission.
 - Downstream blocks remain fluid until upstream proof and evidence are earned.
+- Every Block must carry a Value Trace to an Atlas journey step or an explicitly
+  named enabling concern. This keeps the founder view live without granting it
+  execution authority.
 
 ### Visual presentation
 

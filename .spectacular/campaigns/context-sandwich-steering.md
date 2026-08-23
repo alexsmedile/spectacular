@@ -2,6 +2,7 @@
 campaign_schema: spectacular.campaign.v1
 title: Decision-aware bounded execution
 focus: Give each delegated Objective compact authority, safe isolation, and measured execution boundaries without making Spectacular a Git wrapper.
+atlas: ../atlas/decision-aware-bounded-execution.md
 current: B7
 exit_condition: Decision-aware charters reduce total context ingestion by at least 40%, isolated Objective execution preserves authority and data under every stop path, clustered Evidence is fresh and attributable, and only measured deterministic guardrails ship without regression.
 blocks:
@@ -9,36 +10,43 @@ blocks:
     title: Governance and Contract baseline
     state: complete
     after: []
+    enables: [recoverable-governed-execution]
     missions: [M15]
   - ref: B2
     title: Charter engine and benchmark
     state: complete
     after: [B1]
+    enables: [compact-safe-agent-context]
     missions: [M16]
   - ref: B3
     title: Charter and Decision command surface
     state: complete
     after: [B2]
+    enables: [operator-visible-decision-control]
     missions: [M17]
   - ref: B4
     title: Objective-scoped Run lifecycle
     state: complete
     after: [B3]
+    enables: [attributable-task-execution]
     missions: [M18]
   - ref: B5
     title: Isolated Handoff dispatch
     state: complete
     after: [B4]
+    enables: [safe-independent-delegation]
     missions: [M19]
   - ref: B6
     title: Basic clustered Evidence
     state: complete
     after: [B5]
+    enables: [trustworthy-completion-evidence]
     missions: [M20]
   - ref: B7
     title: Measured scope hardening
     state: complete
     after: [B6]
+    enables: [predictable-scope-safety]
     missions: [M21]
 ---
 
@@ -81,6 +89,9 @@ baseline, reconcile stale Contract command counts, and freeze the Contract-versi
 transition map, reference tokenizer, and Run transition table. No product
 implementation or public command changes.
 
+Consequence: an owner or cold operator can find the governing agreement before
+acting, rather than reconstructing it from session history.
+
 ## B2 — Candidate M16: Build and benchmark the charter engine
 
 Implement the internal read-only compiler using the bound Contract, explicit
@@ -88,11 +99,17 @@ Mission/Objective `sources:`, and invocation-added sources. Enforce the settled
 1,200/1,400/1,440 behavior and prove at least 40% lower total context ingestion
 against pinned M14 fixtures with zero behavioral regression. No public command.
 
+Consequence: a delegated operator gets only the context needed to act safely,
+without paying for an unbounded workspace read.
+
 ## B3 — Candidate M17: Expose charter and Decision recording
 
 Expose `charter` and atomic `decide` only after M16 proof. Decision recording
 updates the Decision record and all generated indexes as one recoverable operation,
 reports only explicitly unblocked work, and never mutates Run state. Surface: 14→16.
+
+Consequence: owners can make and later inspect consequential choices without
+silently changing execution state.
 
 ## B4 — Candidate M18: Introduce the Objective-scoped Run lifecycle
 
@@ -100,12 +117,18 @@ Version the Run Contract, make `run start` Objective-scoped, and add explicit
 attributable `run transition`. Prove old completed Missions still decode under
 their frozen bindings. Surface: 16→17.
 
+Consequence: operators can see which attempt owns work and what transition is
+allowed, making execution state understandable after a handoff.
+
 ## B5 — Candidate M19: Dispatch frozen Handoffs in native-Git isolation
 
 Enforce exact-file or trailing-directory `writes:` reservations across active
 Missions. Spectacular inspects native Git state but creates, switches, merges, and
 deletes nothing. Cleanup remains an Orchestrator proposal requiring owner consent.
 Retire P8 only after its isolation question is fully answered and shipped.
+
+Consequence: independently delegated operators do not overwrite one another or
+mistake a shared workspace for isolated authority.
 
 ## B6 — Candidate M20: Record basic clustered Evidence
 
@@ -115,6 +138,9 @@ and limitations without letting Evidence certify itself. Proof-sensitive dispatc
 remains an explicit frozen Handoff condition managed by the Orchestrator. No second
 dependency graph or concurrent timeline is added. Surface: 17→18.
 
+Consequence: reviewers can tell what was observed, on which commit, and whether
+the completion claim is trustworthy.
+
 ## B7 — Candidate M21: Measure and harden scope guardrails
 
 Use paired fixtures to distinguish actual authority escape, dependency drift, and
@@ -123,6 +149,9 @@ deterministic rules with no benign-fixture rejection; zero new rules is acceptab
 Two-to-four files remains guidance, coherent larger directory perimeters remain
 possible, and subjective quality stays with the Orchestrator. The existing
 `concurrent-run-timelines` Gap remains open until real demand earns that feature.
+
+Consequence: owners receive guardrails that catch genuine authority escapes
+without blocking safe, ordinary work.
 
 ## Contract transition map
 

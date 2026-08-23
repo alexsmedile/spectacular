@@ -106,7 +106,40 @@ direction: Unambiguous naming definitions for domain entities and lifecycle stat
 
 ---
 
-## 3. Kickoff Mission: `M1-bootstrap/M1-bootstrap.md`
+## 3. Optional Atlas: `.spectacular/atlas/job-recovery.md`
+
+Use an Atlas when several user journeys or system boundaries need a shared map.
+It explains a value slice; it does not authorize work.
+
+````md
+---
+atlas_schema: spectacular.atlas.v1
+title: Job recovery
+---
+
+# Atlas: Job recovery
+
+## Outcome board
+
+| Actor | Journey step | Desired outcome | Success signal |
+| --- | --- | --- | --- |
+| Operator | Recover a failed job | Resume with one safe next action | The retry state and owner gate are visible |
+
+## System board
+
+| Capability | Connection | Boundary | Proof |
+| --- | --- | --- | --- |
+| Recoverable job execution | serves `Recover a failed job` | Job state machine + retry store | Restart integration test |
+
+```mermaid
+flowchart LR
+  J[Recover a failed job] --> C[Recoverable job execution]
+  C -->|implemented_by| B[State machine and retry store]
+  C -->|proved_by| E[Restart integration test]
+```
+````
+
+## 4. Kickoff Mission: `M1-bootstrap/M1-bootstrap.md`
 
 ```yaml
 ---
@@ -151,7 +184,7 @@ Establish the modular foundation with strict test harnesses and zero technical d
 
 ---
 
-## 4. Campaign Planning Example (Mini-Roadmap)
+## 5. Campaign Planning Example (Mini-Roadmap)
 
 ### Visual Flowchart Example (Mermaid)
 ```mermaid

@@ -4,7 +4,7 @@ id: 01a02cfe-c428-76b7-8e06-f485642347cb
 title: Record basic clustered Evidence
 status: active
 created: "2026-08-23T05:01:35Z"
-updated: "2026-08-23T05:07:51Z"
+updated: "2026-08-23T05:08:00Z"
 activation:
     at: "2026-08-23T05:01:35Z"
     by: Alex
@@ -70,6 +70,11 @@ owner: Alex
 ref: M20
 repair_budget: 2
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m20-basic-clustered-evidence-recording-and-surface-18.md
+      id: 01a02cfe-db98-7553-9b85-e961e71e573c
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a02cfe-c428-7777-9213-a172688bfb87

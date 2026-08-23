@@ -18,6 +18,12 @@ When something fails, repair with the narrowest action justified by a new
 hypothesis, new Evidence, or a materially smaller fix. Every repair consumes the
 repair budget.
 
+### Diff-Level Traceability Test
+
+Every modified line in the reviewed commit must support a frozen claim, its required proof, or the minimal implementation needed to satisfy it:
+- **Zero Drive-By Edits**: Changes not required by that work—unrelated reformatting, drive-by refactoring, cosmetic comment churn, adjacent file tidy-ups—are recorded as findings, never repaired silently during review.
+- **Observe ≠ Act**: Reviewers identify defects and record findings or Gaps. A Reviewer never modifies code on the spot to "fix" what they observe.
+
 ## Persist Evidence when it is earned
 
 Write an Evidence file when the claim:

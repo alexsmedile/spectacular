@@ -94,16 +94,44 @@ Compare only approaches that genuinely differ and are outcome-sized. Weigh each 
 
 Record one verdict: `sufficient | needs-evidence | needs-decision`.
 
+### Simplicity First & The 7-Rung Reuse Ladder
+
+When designing the implementation for a frozen claim, prefer the smallest coherent solution. Climb the reuse ladder from top to bottom before writing custom logic:
+
+1. **Does this need to exist?** $\to$ If no, skip (YAGNI).
+2. **Already in this codebase?** $\to$ Reuse existing helpers and types; do not invent parallel abstractions.
+3. **Standard library does it?** $\to$ Use the stdlib directly.
+4. **Native platform / runtime feature?** $\to$ Use native capability.
+5. **Installed dependency does it?** $\to$ Use existing packages; avoid adding dependencies.
+6. **One clear line?** $\to$ Write the inline expression directly.
+7. **Only then**: The minimal coherent custom implementation that satisfies the claim.
+
+#### Non-Negotiable Preserve-List
+Simplicity must never compromise integrity. Never simplify away:
+- Strict input validation and sanitization.
+- Attributable error handling, propagation, and structured diagnostics.
+- Security boundaries, cryptographic parameters, auth checks, and safe defaults.
+- Data integrity, transaction boundaries, and rollback protections.
+
 ### Upfront Architectural Grilling vs. Progressive Horizon Detailing
 - **Upfront Architectural Grilling**: Settle foundational architectural choices that span multiple blocks (e.g. B1 through B7) early at the Campaign/Decision level. Ask focused decision questions before freezing execution blocks.
 - **Progressive Horizon Detailing**:
-  > *"Fully detail the active/next mission; keep downstream ones as drafts / sketches. Small missions should stay direct and lean. Simpler straightforward tasks can run with no mission if user approves or asks for."*
+  > *"Fully detail the active/next mission; keep downstream ones as drafts / sketches. Small missions should stay direct and lean."*
   - Detail **only** the active or immediate next Mission block. Downstream blocks remain lightweight draft sketches without premature claim matrices.
   - Token budgets from `.spectacular/config.yaml` govern document sizing:
     - **Active Mission**: 400 – 900 tokens (upper limit: 1,200 tokens).
     - **Draft / Sketch Mission**: 100 – 300 tokens.
     - **Decision**: 150 – 400 tokens.
     - **Context Charter**: $\le 1{,}200$ tokens (hard cap: 1,440 tokens).
+
+## No-Mission Lane (Lightweight Direct Fixes)
+
+Micro-tasks do not need the ceremony of a frozen Mission envelope when:
+- The task is a single-file edit, typo fix, documentation pass, or localized config tweak.
+- The owner explicitly requests or approves direct execution.
+- Scope touches $\le 1$ domain with no semantic ambiguity or architectural risk.
+
+**Protocol**: State the intended action, confirm approval, execute directly, and perform only the verification warranted by the project's instructions. Escalate to a formal Mission immediately if scope touches multiple files, alters shared interfaces, or encounters a non-trivial failure.
 
 ## Freeze a compact Mission preview
 

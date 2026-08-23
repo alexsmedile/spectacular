@@ -86,6 +86,15 @@ current block is roadmap context for an Orchestrator, never an assignment to a
 Runner. If a Mission body explicitly cites a Campaign, read only the cited
 context and only when it is relevant to the assigned work.
 
+### Worker Execution Invariant (Charter Appendix)
+Append this execution invariant to compiled Runner handoffs:
+```text
+INVARIANT: Implement the smallest coherent change that satisfies the assigned claims.
+Check existing codebase utilities before authoring new abstractions.
+Preserve validation, error handling, and security guards.
+Touch only assigned mechanical scope; report unrelated defects without editing them.
+```
+
 ## Record the delegation as a Handoff
 
 ```bash

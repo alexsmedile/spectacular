@@ -72,6 +72,7 @@ Load a supporting reference only when the primary reference explicitly triggers 
 
 - **Owner only**: Outcome, completion criteria, semantic scope, review independence, forbidden-effects.
 - **Operator freely**: Reversible attempts, checks, and bounded repairs inside the Mission.
+- **Smallest sensible change**: Inside authorized scope, implement only what the frozen claim needs. Do not add abstractions, configuration, refactors, or cleanup unless the claim requires them.
 - **Return to owner**: Scope expansion, irreversible/provider effects, exhausted repairs, stops.
 - **Proof separation**: Evidence, deterministic checks, independent review, owner acceptance, and completion are separate layers. A passing check proves only its specific observation.
 
@@ -80,6 +81,7 @@ Load a supporting reference only when the primary reference explicitly triggers 
 - **Ask only when open**: Semantic forks, boundaries, authority, risks, irreversible effects, contract conflicts.
 - **Four-part question formula**: (1) Plain outcome · (2) Technical basis · (3) Options (`action -> consequence`) · (4) Recommended default & why.
 - **Authorization, not labor**: Request permission to act; hold the keyboard (see [owner-guidance.md](references/owner-guidance.md)).
+- **Report, don't widen (Observe ≠ Act)**: If you notice unrelated problems or defects mid-execution, report them to the owner or Orchestrator. Do not edit them or fold them into the current Mission.
 - **Batch gates**: Check prior decisions first; approvals carry forward within the active phase; batch related approvals once.
 - **State boundary once**: State constraints once, act on them, and use compact 3-part refusals.
 

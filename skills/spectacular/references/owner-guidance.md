@@ -11,7 +11,11 @@ Ask only when at least one of these is genuinely open:
 - **Material risk / irreversible effect**: Destructive operations, data migrations, or external integrations.
 - **Contract conflict**: Incompatibility with frozen capability specifications or upstream truth.
 
-Do not run an interview when the Mission or project Anchors already answer the question. Turn silent product assumptions into explicit choices or Gaps. Carry accepted defaults forward.
+Do not run an interview when the Mission or project Anchors already answer the question. Carry accepted defaults forward.
+
+### Assumption Calibration (Zero-Friction Progress)
+- **Material / Semantic Assumptions**: If a choice affects user-visible behavior, public APIs, architectural boundaries, risk profile, or the completion claim, stop and present a four-part question or Gap.
+- **Reversible Implementation Choices**: For low-level, reversible implementation choices strictly within authorized scope, choose the simplest path, state the assumption clearly in the handoff or Run body notes, and continue executing without interrupting the owner.
 
 ---
 

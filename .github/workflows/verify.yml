@@ -72,10 +72,31 @@ jobs:
       - name: Run Acceptance Tests
         run: bash test/verify.sh acceptance
 
+  cross-platform-acceptance:
+    name: Cross-Platform Acceptance (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: static-checks
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.6'
+          cache: true
+      - name: Download Modules
+        run: go mod download
+      - name: Run Acceptance Fixtures
+        run: go test -count=1 ./test/acceptance
+
   release-proof:
     name: Cross-Platform Reproducibility & Staging Proof
     runs-on: ubuntu-latest
-    needs: [unit-and-race, acceptance]
+    needs: [unit-and-race, acceptance, cross-platform-acceptance]
     steps:
       - uses: actions/checkout@v4
         with:

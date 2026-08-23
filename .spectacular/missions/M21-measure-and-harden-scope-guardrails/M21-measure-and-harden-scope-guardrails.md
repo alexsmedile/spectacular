@@ -4,7 +4,7 @@ id: 01a02d0c-06b0-787d-9b76-746f51789420
 title: Measure and harden scope guardrails
 status: active
 created: "2026-08-23T05:16:06Z"
-updated: "2026-08-23T05:17:46Z"
+updated: "2026-08-23T05:17:56Z"
 activation:
     at: "2026-08-23T05:16:06Z"
     by: Alex
@@ -70,6 +70,11 @@ owner: Alex
 ref: M21
 repair_budget: 2
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m21-measured-scope-hardening-and-final-campaign-regression.md
+      id: 01a02d0c-25f0-7bd1-8817-ebffcdca61fe
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a02d0c-06b0-7ece-b571-b2cfd0e371d4

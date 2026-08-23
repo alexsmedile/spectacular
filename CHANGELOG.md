@@ -1,6 +1,19 @@
 # Changelog
 
-## [Unreleased]
+## 2.6.0 — 2026-08-23
+
+### Added
+
+- Skill guidance for simpler execution: the seven-rung reuse ladder with a
+  non-negotiable preserve-list when planning Mission work (`prepare.md`), a
+  diff-level traceability test that records drive-by edits as findings instead
+  of repairing them (`close.md`), and a no-mission lane for owner-approved
+  micro-tasks (`prepare.md`).
+
+### Changed
+
+- Rewrote the main guides in plainer language, with a clearer focus on what a
+  user needs to do and why.
 
 ## 2.6.0-rc1 — 2026-08-22
 

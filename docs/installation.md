@@ -1,16 +1,15 @@
 # Installation
 
-Spectacular ships as **two halves that install and update separately**:
+Spectacular has **two parts that install and update separately**:
 
 | Half | What it is | Where it travels |
 |---|---|---|
 | **Skill** | `skills/spectacular/` — the method, the routing, the guidance | Every host that reads the plugin manifests |
 | **CLI** | `spectacular` — validation, fingerprints, atomic writes | Installed from a verified release directory |
 
-The Skill alone is a supported, reduced mode: you can read records, learn the
-method, and draft a Mission plan. Governed execution — starting, promoting,
-completing, amending, recording — needs the CLI, because those produce freeze
-points and transactional writes.
+With the Skill alone, you can read records, learn the method, and draft a
+Mission plan. You need the CLI to start, update, or complete a Mission because
+it safely writes and checks those records.
 
 Check what you have:
 

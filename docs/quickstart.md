@@ -1,8 +1,7 @@
 # Quickstart
 
-This walks through one full Mission: from an idea, to an activated plan, to a
-completed record you can hand to the next agent. It takes about fifteen minutes
-and leaves a workspace you can keep using.
+This walks through one Mission: from an idea, to an approved plan, to a record
+the next agent can pick up. It takes about fifteen minutes.
 
 You need the `spectacular` CLI on your PATH and a project that is a git
 repository. See [Installation](#installation) below if you do not have the CLI
@@ -10,17 +9,17 @@ yet.
 
 ## The shape of the work
 
-Spectacular runs **one bounded Mission at a time**. A Mission is frozen at an
-activation gate, executed against that frozen text, and completed by the owner —
-never by the agent. Everything else exists to make that loop safe.
+Spectacular runs one bounded Mission at a time. A Mission says what work is
+allowed and what success looks like. Once you start it, that agreement is
+locked. The agent does the work; you decide when it is complete.
 
 ```text
 idea ──▶ Proposal ──▶ Mission (frozen at activation) ──▶ Run ──▶ Review ──▶ owner completes
           optional        the agreement                  the work    proof     the gate
 ```
 
-A Proposal is optional exploration. A Mission is the agreement. A Run is the
-attempt. Only the owner closes the loop.
+A Proposal is an optional place to explore. A Mission is the agreement. A Run
+is one attempt to do the work. Only you close the loop.
 
 ## 1. Orient before doing anything
 
@@ -49,17 +48,16 @@ Skip it when the work is small and the approach is settled.
 
 ## 3. Freeze a Mission and activate it
 
-A Mission plan is a Markdown file with typed frontmatter: an outcome, a stop
-condition, and the claims that must hold. Activation freezes it:
+A Mission plan is a Markdown file that names the goal, the limits, and what
+must be true at the end. Starting it locks that agreement:
 
 ```sh
 spectacular mission start plan.md
 ```
 
-This is the gate. What the Mission says at this moment is what it is judged
-against later — the text is fingerprinted, and the fingerprint is recorded. An
-activated Mission is not edited to match what happened; if the agreement turns
-out to be wrong, it is amended deliberately through `contract amend`.
+What the Mission says now is what it is judged against later. Spectacular saves
+a fingerprint of that text. Do not edit a live Mission to match what happened;
+if the agreement is wrong, update it deliberately with `contract amend`.
 
 **Branch before you activate.** A Mission that runs on `main` destroys the review
 and isolation boundary it depends on.

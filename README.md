@@ -1,9 +1,9 @@
 ![Spectacular](docs/diagrams/banner.svg)
 
-# Spectacular — See, Steer, and Ship AI Work.
+# Spectacular — Keep AI work clear after the chat ends.
 
-AI work that outlives the chat: a governed workspace for exploring ideas,
-setting missions, recording evidence, and carrying the next safe action forward.
+Spectacular gives you and your AI agent a shared place to record the goal, the
+boundaries, the work done, and the next safe step.
 
 *Agents build. Humans decide.*
 
@@ -13,21 +13,20 @@ setting missions, recording evidence, and carrying the next safe action forward.
 
 ## The problem
 
-An AI agent can make fast progress in a single conversation. The work starts to
-drift when the conversation ends: the next agent has to reconstruct the goal,
-what was approved, what changed, which evidence still counts, and whether it
-may act at all.
+An AI agent can make fast progress in one conversation. The trouble starts when
+the conversation ends. The next agent has to work out the goal, what you
+approved, what changed, and what it is allowed to do.
 
-Spectacular gives that work a durable, inspectable home. It separates an idea
-from an accepted decision, a Mission from an unbounded request, evidence from a
-claim, and a handoff from a transfer of accountability.
+Spectacular keeps those answers in version-controlled Markdown files. It keeps
+an idea separate from an approved decision, a bounded piece of work separate
+from an open-ended request, and test results separate from your decision to
+call the work done.
 
 The result is not a longer chat history. It is a shared record of the work and
 one justified next action.
 
-Markdown is canonical. Folders provide navigable, scoped context. Agents follow
-source pointers and read only the records needed for the current decision or
-action; chat history and generated views are conveniences, not authority.
+Agents follow links to the few records they need for the current task. Chat
+history and generated views are useful, but the files are the source of truth.
 
 ## See it in action
 
@@ -63,30 +62,17 @@ authority, risk, or irreversible effects.
 | Instead of relying on… | Spectacular keeps… |
 | --- | --- |
 | A chat's fading context | A project **Anchor**: direction, boundaries, constraints, and current truth |
-| A vague request | A bounded **Mission** with Objectives, scope, authority, budget, stops, and a completion boundary |
-| “The agent said it worked” | Attributable **Evidence**, freshness, and an **Assessment** |
-| A lost terminal or replacement agent | A scoped **Handoff** with a recovery point and return destination |
-| A guess about what to do next | One compiled, safe continuation—or a specific owner gate |
+| A vague request | A **Mission** that says what is in scope, what to avoid, and how to know it is done |
+| “The agent said it worked” | **Evidence** you can inspect, plus an **Assessment** |
+| A lost terminal or replacement agent | A **Handoff** that says where to restart and what to do next |
+| A guess about what to do next | One safe next step—or one decision for you |
 
-## Token Economy & Progressive Disclosure
+## Keep context small
 
-Modern LLMs boast 1M+ token context windows, but reasoning quality degrades well before the limit:
-
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│               THE "1M CONTEXT WINDOW" REALITY TRAP                      │
-│                                                                         │
-│  ├── 0 – 50k:      PEAK ATTENTION CONCENTRATION (100% Needle-in-Haystack) │
-│  ├── 50k – 150k:   Codebase Ingestion + Tool Calls + Test Output        │
-│  ├── 150k – 400k:  Subtle Instruction Drift / "Lost in the Middle"       │
-│  └── 400k – 1M+:   REGRESSION FRONTIER (Dropped constraints & latency)  │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-Spectacular treats tokens as a precious budget:
-1. **The 3-Layer Context Sandwich (`spectacular charter`)**: Compiles project truth, owner steering, and write perimeters into a strict **$\le 1{,}200$ token prompt envelope**, leaving 99%+ of the model's attention window free for code reading, AST analysis, and test execution.
-2. **Lean Active Missions (400 – 900 tokens)**: Core mission files remain compact and focused on single-invariant claims and verifiable deliverables.
-3. **Reference Attachments (`references/` & `sources: [...]`)**: Detailed schemas, extensive API fragments, and data fixtures live in auxiliary reference files rather than bloating the primary mission plan. Agents load them progressively only when working on the specific objective that needs them.
+Giving an agent every project file can make it lose track of the task.
+Spectacular gives each role only the records it needs. A Runner gets its
+assigned work, boundaries, and named inputs; it asks for a specific source when
+blocked instead of reading the whole workspace.
 
 > [!NOTE]
 > A passing check, a generated view, a handoff, or an archive is not acceptance
@@ -95,25 +81,28 @@ Spectacular treats tokens as a precious budget:
 
 ## The Core Model: Human + Agent Collaboration
 
-Spectacular is designed around a strict division of responsibilities:
+Spectacular splits responsibilities clearly:
 
-> - **The Go binary** handles invariants, hashes, transitions, and JSON projections.
-> - **The Skill** handles judgment, planning, problem-solving, and human interactions.
-> - **The filesystem (Canonical Markdown)** remains human-readable without running proprietary daemons or databases.
+> - **The CLI** checks rules and safely updates records.
+> - **The Skill** helps an agent plan, work, and ask the right questions.
+> - **The files** stay readable in Git; there is no separate database to run.
 
 ![The Spectacular Division of Labor](docs/diagrams/division-of-labor.svg)
 
-### Translating Intent into Verified Execution
+### Turning a request into checked work
 
-We do not attempt to 100% schemify or machine-check every piece of context. Frontmatter is kept minimal for the fundamental verifiable boundaries (identities, fingerprints, completion boundaries, dependencies), while rich Markdown prose carries the rationale, design intent, and nuance.
+The CLI checks the parts a computer can check: identities, fingerprints,
+dependencies, and completion boundaries. Markdown explains the why and the
+trade-offs that need human judgment.
 
 ![Spectacular Human + Agent Collaboration Model](docs/diagrams/architecture.svg)
 
-The primary role of the **Skill** is to turn the user's request into an agentificable plan through two primary instruments:
-- **Contract (`contracts/`)**: The accepted specification and product behavior agreement.
-- **Mission (`missions/`)**: The frozen action plan, execution boundaries, failable completion claims, and run state.
+The skill helps turn your request into two useful records:
 
-Git branching, worktrees, and execution flow are managed by the Skill orchestrator, while the CLI mechanically catches drift and prevents errors.
+- **Contract (`contracts/`)**: what the product should do.
+- **Mission (`missions/`)**: the approved work, its limits, and how to tell it is done.
+
+The skill manages the work flow; the CLI checks the records and prevents invalid updates.
 
 ## How it works
 
@@ -125,7 +114,7 @@ Explore / propose
   │  turn an idea into an explicit, reviewable change (Proposal)
   ▼
 Prepare a Mission
-  │  bind scope, authority, failable completion claims, and stop conditions
+  │  agree what the work includes, what to avoid, and what success means
   ▼
 Execute
   │  work within the approved envelope on a dedicated branch; checkpoint safely
@@ -134,13 +123,12 @@ Assess & Review
   │  inspect earned evidence, run tree gates, and execute independent review
   ▼
 Complete
-     reconcile truth, close atomically with owner attribution (--by <owner>)
+     record your decision to close the Mission
 ```
 
-The human-guided skill makes judgments and presents decisions. The native CLI
-performs deterministic validation and record transitions. External providers
-remain their own authority: Spectacular never assumes permission to publish,
-deploy, message, or mutate them.
+The skill makes recommendations and asks for decisions. The CLI checks and
+updates records. Spectacular never assumes it may publish, deploy, send a
+message, or change an external service.
 
 Agents use role-scoped context: Orchestrators plan from Anchors and optional
 Campaign maps; Runners read only their Objective, Run, Handoff, and named
@@ -167,7 +155,8 @@ install/install.sh install \
   --version "$VERSION"
 ```
 
-`--source` is the directory that **contains** the archive, not an unpacked
+Set `VERSION` to the release you downloaded, e.g. `2.6.0`. `--source` is the
+directory that **contains** the archive, not an unpacked
 tree — the installer verifies the checksum and extracts it itself. This places
 the native binary at `$HOME/.local/bin/spectacular`, already on `PATH` on most
 systems. Use `--runtime codex` for a Codex-targeted release.
@@ -183,23 +172,26 @@ Spectacular adapts to the tools available in the host repository:
 
 | Tier | Runtime | Capabilities |
 |---|---|---|
-| **Tier 1: Native CLI** | Compiled binary (`spectacular`) | Full mechanical engine: sub-10ms DAG derivations, schema validation, atomic transitions, and JSON projections. |
-| **Tier 2: Node Fallback** | Node.js (`skills/spectacular/scripts/check.mjs`, `show.mjs`) | Reads, checks, and displays records in environments or CI runners without a native Go binary. |
-| **Tier 3: Shell Fallback** | POSIX Shell (`orient.sh`, `where.sh`, `doctor.sh`) | Minimal read-only preflight and inspection for restricted container environments. |
+| **CLI** | `spectacular` | Starts and updates Missions, while checking the records are valid. |
+| **Node fallback** | Node.js helpers | Reads, checks, and shows records when the CLI is unavailable. |
+| **Shell fallback** | Shell helpers | Read-only status and record lookup in limited environments. |
 
 ### Install the skill
 
 For development from this checkout, `skills/spectacular/` is the skill source
-of truth. In a Codex or Claude conversation at this repository root, run:
+of truth. From the repository root, link it into your agent's skill
+directories:
 
-```text
-/skizl sym init
+```sh
+mkdir -p .claude/skills .agents/skills
+ln -s ../../skills/spectacular .claude/skills/spectacular
+ln -s ../../skills/spectacular .agents/skills/spectacular
 ```
 
-This creates portable relative links from `.claude/skills/spectacular` and
-`.agents/skills/spectacular` to `skills/spectacular/`; it does **not** install
-the CLI. For a release installation, register the runtime-specific plugin
-directory shipped under `plugins/spectacular/` with the target runtime.
+This makes both `.claude/skills/spectacular` and `.agents/skills/spectacular`
+point at `skills/spectacular/`; it does **not** install the CLI. For a release
+installation, register the runtime-specific plugin directory shipped in the
+release archive under `plugins/spectacular/` with the target runtime.
 
 From a project containing an explicit v2 `.spectacular/` workspace, inspect
 the starting context:
@@ -215,8 +207,8 @@ pointers to canonical records rather than treating a projection as authority.
 
 ## What it is—and is not
 
-Spectacular is a canonical, pointer-first workspace and an agent skill for
-governed work that crosses sessions, runtimes, and handoffs.
+Spectacular is a workspace and agent skill for work that needs to survive new
+chats, new agents, or a handoff.
 
 It is not:
 
@@ -270,7 +262,8 @@ projection without changing any record.
 
 ### Canonical v2 workspace layout
 
-Spectacular v2 stores a compact, clean set of canonical Markdown documents under `.spectacular/`. Each document contains minimal, typed YAML frontmatter for machine-verifiable integrity (identities, hashes, claim boundaries, bindings) and rich Markdown prose for human and agent understanding.
+Spectacular stores its working files under `.spectacular/`. Each file has a
+small YAML section the CLI checks and Markdown that explains the work.
 
 ```text
 .spectacular/
@@ -299,7 +292,8 @@ without its parent directory. A record that is finished does not disappear: a
 completed Mission and an absorbed Proposal move to `archive/` carrying the Decision
 that authorized the move and a fingerprint of what was archived.
 
-The CLI validates the record graph, fingerprints the sources, and emits projections with pointers back to the authoritative records. There is no opaque database or proprietary daemon—just git-versioned Markdown.
+The CLI checks how the records fit together and points back to the source files.
+There is no hidden database—just Markdown in Git.
 
 ## For—and not for
 

@@ -1,7 +1,7 @@
 # Architecture
 
-Spectacular is five surfaces that do not overlap. Most of its design follows
-from keeping them separate.
+Spectacular keeps five kinds of information in separate places. That makes it
+clear what people read, what agents follow, and what the CLI can change.
 
 | Surface | Audience | What it is |
 |---|---|---|
@@ -11,17 +11,14 @@ from keeping them separate.
 | `cmd/` + `internal/` | the machine | A typed CLI that validates and mutates records atomically |
 | `docs/` | humans | What you are reading |
 
-## Why records, not a database
+## Why files, not a database
 
-Every governed record is git-versioned Markdown with typed YAML frontmatter.
-There is no daemon and no opaque store. The frontmatter carries what a machine
-must check — identities (UUIDv7), fingerprints (SHA-256), claim boundaries,
-bindings — and the prose carries what a human and an agent must understand.
+Every record is a Markdown file stored in Git. There is no separate service or
+hidden database. The small YAML section holds details the CLI checks; the prose
+explains the decision to people and agents.
 
-This is a deliberate trade. A database would be faster to query and impossible
-to read in a diff. Because the records are files, `git log -S <fingerprint>`
-recovers the exact text an agreement had when it was signed, and a reviewer can
-see a governance change in a pull request like any other change.
+Because the records are files, you can review a change in a pull request and
+recover the exact text that was approved at the time.
 
 ## The record types
 
@@ -55,7 +52,7 @@ to a Campaign in frozen frontmatter: roadmap edits must not create Mission drift
 
 ## The mechanical interface
 
-The CLI is seventeen commands, generated into a catalog at
+The CLI command reference is generated into
 [`mechanical-interface.md`](../skills/spectacular/generated/mechanical-interface.md).
 The catalog is generated from the command registry, so it cannot drift from what
 the binary does. When a document and the generated interface disagree, the
@@ -66,17 +63,13 @@ transaction: it either fully applies or fully rolls back. The test suite proves
 this by injecting a fault at every write boundary and asserting the workspace is
 unchanged.
 
-Adding a command requires owner authorization. The count is reported, not
-defended — an eighteenth command the owner authorizes is correct, and a seventeenth
-nobody asked for is not.
+Adding or changing a command requires owner approval.
 
-## Token budget architecture & context compilation
+## Give each agent only what it needs
 
-Spectacular is designed around strict context window economics. While modern LLMs accept large context windows, reasoning quality and instruction adherence degrade significantly well before theoretical limits.
-
-1. **The Context Sandwich (`spectacular charter`)**: Rather than feeding raw multi-file governance directories to worker agents, Spectacular compiles a 3-layer execution envelope (Frozen Truth, Owner Steering, and Execution Perimeter) capped at $\le 1{,}200$ tokens (`o200k_base`).
-2. **Workspace Configuration (`.spectacular/config.yaml`)**: Project-level token budgets and defaults are declared in `config.yaml`, enabling teams to tune target and warning envelopes cleanly without polluting project mission vision.
-3. **Reference Attachments (`references/` & `sources: [...]`)**: Complex data structures, large schemas, and extensive test fixtures live in modular reference files. Core missions remain lean (400–900 tokens), referencing attachments on-demand rather than inlining monolithic blocks.
+Agents should not have to read the entire workspace to do one task. Spectacular
+gives workers a short handoff with the approved work, allowed files, and named
+sources. Larger details stay in linked files until they are needed.
 
 ## What the machine does and does not do
 

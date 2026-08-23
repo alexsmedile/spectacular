@@ -15,7 +15,7 @@ func TestDoctorRequiresExactCLICompatibility(t *testing.T) {
 		version string
 		want    string
 	}{
-		{name: "compatible", version: "2.6.0-rc1", want: "full — read, draft, and governed execution"},
+		{name: "compatible", version: "2.6.0", want: "full — read, draft, and governed execution"},
 		{name: "incompatible", version: "2.5.0", want: "reduced — read, explain, and draft only"},
 	} {
 		t.Run(test.name, func(t *testing.T) {

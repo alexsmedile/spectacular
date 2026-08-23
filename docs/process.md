@@ -1,25 +1,21 @@
 # Process
 
-How work moves through Spectacular, and why each gate exists.
+How a piece of work moves through Spectacular.
 
 ![The Mission lifecycle](diagrams/lifecycle.svg)
 
 ## One Mission at a time
 
-Spectacular deliberately permits exactly one live Mission. This is a constraint,
-not a limitation to be worked around. A second concurrent Mission would mean two
-frozen agreements competing over the same workspace, and no way to say which one
-a change was made under.
+Spectacular keeps one live Mission in a workspace. That means every change has
+one clear purpose and one set of limits.
 
 If a Mission is too big, the answer is a smaller Mission, not a parallel one.
 
 ## Intake and probes
 
-Unbounded ideas, requests, and experiments do not need a Mission. Keep them in
-an issue tracker, `TODO.md`, or `scratch/`; these are mutable intake surfaces,
-not governed records. A probe may test a hypothesis in `scratch/` or on a
-disposable branch when it is time-boxed, reversible, and has no provider,
-destructive, production-data, or acceptance effect.
+Ideas and small experiments do not need a Mission. Keep them in an issue,
+`TODO.md`, or `scratch/`. A quick test is fine when it is time-boxed,
+reversible, and does not touch external services, production data, or a release.
 
 Promote the result when it becomes durable work: use a Proposal for a
 consequential unresolved choice, or a compact Mission when the work has a
@@ -44,7 +40,9 @@ their Mission, Objective, and Run without loading a Campaign.
 
 ## Explore: the Proposal and Starter Inputs
 
-When starting a project or capability, an initial PRD or starter input (e.g. `./PRD.md`, `scratch/PRD.tmp.md`, or output from the `write-prd` skill) serves as an ephemeral launchpad. Spectacular's One-Shot Genesis distills its 8 foundational dimensions losslessly into the Core Triad (`PROJECT.md`, `STACK.md`, `ARCHITECTURE.md`), On-Demand Anchors, and the `M1-bootstrap` Mission plan.
+When starting a project, use a short product brief or starter document. The
+setup step turns it into the project files that describe the product, technical
+stack, architecture, and first Mission.
 
 A Proposal is optional. Write one when the approach is genuinely unclear and you
 want to argue with it before committing.
@@ -76,7 +74,9 @@ review and isolation boundary it depends on before it starts.
 
 A Run is one bounded attempt at the frozen Mission.
 
-Missions, Objectives, and Handoffs declare abstract **Model Profiles** (`reasoning` for orchestrators/audits, `fast-code` for worker implementation sweeps, `strict-verifier` for adversarial review), allowing skills to dispatch the right model tier on any host harness.
+Missions and handoffs can name the kind of model work they need: careful
+planning, fast implementation, or strict review. The host chooses the matching
+model when it can.
 
 Objectives are **earned, not planned**. Expand one when the work is real, rather
 than enumerating a full tree upfront that will be wrong by the second Objective.
@@ -130,7 +130,7 @@ authority.
 
 ## Prove: Evidence, Reviews, Handoffs
 
-Proof is a record, not a message.
+Keep proof in records, not chat messages.
 
 A **Review** carries a verdict. An **Assessment** carries a judgment. **Evidence**
 carries what was observed. None of them is a claim that something works — they

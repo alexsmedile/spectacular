@@ -63,6 +63,16 @@ projection, not authority. When the Campaign uses the documented frontmatter
 map, run `spectacular campaign check <path>` to validate the current block and
 order, then render the Mermaid projection.
 
+## No-mission lane
+
+Micro-tasks need no Mission when the owner approves: single-file edits, typo
+fixes, doc passes, localized config tweaks — one domain, no semantic ambiguity,
+no architectural risk. State the intended action, get the approval, apply the
+reuse ladder anyway, do it directly, verify with the STACK.md baseline command.
+Escalate to a Mission when scope grows past that, alters a shared interface, or
+hits a non-trivial failure. The Git side is the quick-patch exception in
+[execute.md](execute.md).
+
 ## Explore
 
 A Proposal is optional. Use one only when the exploration deserves a durable home
@@ -112,6 +122,9 @@ Simplicity must never compromise integrity. Never simplify away:
 - Attributable error handling, propagation, and structured diagnostics.
 - Security boundaries, cryptographic parameters, auth checks, and safe defaults.
 - Data integrity, transaction boundaries, and rollback protections.
+- Accessibility guarantees.
+
+After freezing, scope cuts return to the owner.
 
 ### Upfront Architectural Grilling vs. Progressive Horizon Detailing
 - **Upfront Architectural Grilling**: Settle foundational architectural choices that span multiple blocks (e.g. B1 through B7) early at the Campaign/Decision level. Ask focused decision questions before freezing execution blocks.
@@ -123,15 +136,6 @@ Simplicity must never compromise integrity. Never simplify away:
     - **Draft / Sketch Mission**: 100 – 300 tokens.
     - **Decision**: 150 – 400 tokens.
     - **Context Charter**: $\le 1{,}200$ tokens (hard cap: 1,440 tokens).
-
-## No-Mission Lane (Lightweight Direct Fixes)
-
-Micro-tasks do not need the ceremony of a frozen Mission envelope when:
-- The task is a single-file edit, typo fix, documentation pass, or localized config tweak.
-- The owner explicitly requests or approves direct execution.
-- Scope touches $\le 1$ domain with no semantic ambiguity or architectural risk.
-
-**Protocol**: State the intended action, confirm approval, execute directly, and perform only the verification warranted by the project's instructions. Escalate to a formal Mission immediately if scope touches multiple files, alters shared interfaces, or encounters a non-trivial failure.
 
 ## Freeze a compact Mission preview
 

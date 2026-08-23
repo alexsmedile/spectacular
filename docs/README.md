@@ -1,6 +1,6 @@
 # Spectacular documentation
 
-Product documentation for humans. For contributor rules see
+Product documentation for people using Spectacular. For contributor rules see
 [`AGENTS.md`](../AGENTS.md); for the agent-facing runtime guidance see
 [`skills/spectacular/SKILL.md`](../skills/spectacular/SKILL.md).
 
@@ -13,10 +13,9 @@ Product documentation for humans. For contributor rules see
 
 ## Concepts
 
-- **[Architecture](architecture.md)** — the four surfaces, the thirteen record
-  types, and why the CLI deliberately decides nothing.
-- **[Process](process.md)** — the Mission lifecycle and the gates that hold it:
-  activation, review, completion.
+- **[Architecture](architecture.md)** — where Spectacular keeps its files and
+  what the CLI does.
+- **[Process](process.md)** — how a piece of work moves from idea to completion.
 
 ## Reference
 
@@ -37,5 +36,5 @@ Product documentation for humans. For contributor rules see
 
 ---
 
-Nothing in `docs/` is authoritative for behavior. It explains; the generated
-interface and the records define.
+These pages explain the product. The generated command reference and your
+workspace records define the exact behavior.

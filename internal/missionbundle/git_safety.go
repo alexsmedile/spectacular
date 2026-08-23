@@ -3,22 +3,45 @@ package missionbundle
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 )
 
+// resolveGitDir locates the effective .git directory for a repository root,
+// resolving linked worktree pointers when .git is a file.
+func resolveGitDir(root string) (string, error) {
+	gitPath := filepath.Join(root, ".git")
+	info, err := os.Stat(gitPath)
+	if err != nil {
+		return "", err
+	}
+	if info.IsDir() {
+		return gitPath, nil
+	}
+	// Linked worktree .git file containing "gitdir: <path>"
+	data, err := os.ReadFile(gitPath)
+	if err != nil {
+		return "", err
+	}
+	content := strings.TrimSpace(string(data))
+	if strings.HasPrefix(content, "gitdir:") {
+		dir := strings.TrimSpace(strings.TrimPrefix(content, "gitdir:"))
+		if !filepath.IsAbs(dir) {
+			dir = filepath.Join(root, dir)
+		}
+		return filepath.Clean(dir), nil
+	}
+	return gitPath, nil
+}
+
 // CheckPassiveGitState verifies that the repository working tree is not in the middle
 // of an unresolved merge, rebase, or cherry-pick conflict.
-// It never mutates the repository, creates branches, stashes changes, or deletes worktrees.
+// It resolves linked worktrees and never mutates Git state or deletes worktrees.
 func CheckPassiveGitState(root string) error {
-	gitDir := filepath.Join(root, ".git")
-	info, err := os.Stat(gitDir)
+	gitDir, err := resolveGitDir(root)
 	if err != nil {
 		// Not a git repo or inaccessible; do not block non-git tests
-		return nil
-	}
-	if !info.IsDir() {
-		// Possibly a worktree pointer file .git -> resolve directory
 		return nil
 	}
 

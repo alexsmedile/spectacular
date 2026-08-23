@@ -4,7 +4,7 @@ id: 01a02e74-f908-7f50-b05b-7127633d6595
 title: Repair Context Sandwich steering invariants
 status: active
 created: "2026-08-23T11:50:27Z"
-updated: "2026-08-23T11:50:27Z"
+updated: "2026-08-23T11:53:18Z"
 activation:
     at: "2026-08-23T11:50:27Z"
     by: Alex
@@ -52,19 +52,19 @@ objectives:
       id: 01a02e74-f908-7b42-b5b3-420a425829b9
       outcome: Repair Handoff reservation chains, Decision unblocks, and linked-worktree Git safety.
       ref: O1
-      status: pending
+      status: implemented
     - claims:
         - m20-evidence-target-integrity
       id: 01a02e74-f908-7558-bedb-f46320f9812e
       outcome: Enforce strict target reference validation on Evidence packages.
       ref: O2
-      status: pending
+      status: implemented
     - claims:
         - m21-pinned-benchmark-matrix
       id: 01a02e74-f908-76c5-b0df-caf6e4a94fe6
       outcome: Anchor scope hardening and context benchmarks in pinned immutable fixtures.
       ref: O3
-      status: pending
+      status: implemented
 outcome: Repair proof and behavior gaps across Handoff reservations, Decision unblocks, worktrees, Evidence targets, and pinned fixtures.
 owner: Alex
 ref: M22

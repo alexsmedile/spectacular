@@ -19,6 +19,7 @@ Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1
 | `spectacular run transition` | `<target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>] [--json]` | `spectacular.run.transition.v2` | `mutating` |
 | `spectacular review record` | `<mission-ref> <review.md|-> [--json]` | `spectacular.review.record.v2` | `mutating` |
 | `spectacular handoff record` | `<mission-ref> <handoff.md|-> --by <sender> [--json]` | `spectacular.handoff.record.v2` | `mutating` |
+| `spectacular evidence record` | `<mission-ref> <evidence.md|-> [--json]` | `spectacular.evidence.record.v2` | `mutating` |
 | `spectacular mission complete` | `<ref> --by <owner> [--json]` | `spectacular.mission.complete.v2` | `mutating` |
 | `spectacular proposal check` | `<ref> [--json]` | `spectacular.proposal.check.v2` | `read-only` |
 | `spectacular campaign check` | `<path> [--json]` | `spectacular.campaign.check.v2` | `read-only` |

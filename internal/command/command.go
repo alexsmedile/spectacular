@@ -53,6 +53,7 @@ const (
 	opRunTransition
 	opReviewRecord
 	opHandoffRecord
+	opEvidenceRecord
 	opMissionComplete
 	opProposalCheck
 	opCampaignCheck
@@ -261,6 +262,35 @@ returns: [<returns>]
 # Handoff
 
 <Handoff context and receiver instructions>
+`,
+	},
+	{
+		Words:         []string{"evidence", "record"},
+		Arguments:     "<mission-ref> <evidence.md|-> [--json]",
+		ArgumentShape: two,
+		JSONSchema:    "spectacular.evidence.record.v2",
+		Effect:        Mutating,
+		Operation:     opEvidenceRecord,
+		Description:   "Records an attributable Evidence package covering Objectives, Runs, or claims on a Mission.",
+		InputType:     "EvidenceDraft",
+		OutputType:    "Evidence",
+		Template: `---
+type: EvidenceDraft
+title: <title>
+actor: <actor-name>
+commit: <commit-sha>
+# tree: optional (auto-derived from commit if omitted)
+objectives: [<objective-refs>]
+runs: [<run-refs>]
+claims: [<claim-names>]
+checks:
+  - name: <check-name>
+    result: pass
+limitations: []
+---
+# Evidence
+
+<Attributable test output and proof observations>
 `,
 	},
 	{
@@ -494,6 +524,13 @@ func (r Runner) Run(args []string) int {
 			break
 		}
 		value, err = service.RecordHandoff(rest[0], inputPath(r.Cwd, rest[1]), rest[3], stdin)
+	case opEvidenceRecord:
+		stdin, readErr := r.stdinIfNeeded(rest[1])
+		if readErr != nil {
+			err = readErr
+			break
+		}
+		value, err = service.RecordEvidence(rest[0], inputPath(r.Cwd, rest[1]), stdin)
 	case opMissionComplete:
 		value, err = service.Complete(rest[0], rest[2])
 	case opProposalCheck:

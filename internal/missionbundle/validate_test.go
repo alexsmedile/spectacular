@@ -20,7 +20,7 @@ import (
 func TestSchemaRegistryOwnsEveryMandatoryValidation(t *testing.T) {
 	want := []string{
 		"activation-fingerprint", "authority-vocabulary", "baseline-binding", "completion-claim-coverage",
-		"contract-binding", "contract-version", "fallback-fingerprint-coverage",
+		"contract-binding", "contract-version", "evidence-integrity", "fallback-fingerprint-coverage",
 		"handoff-integrity", "interface-dependency-frozen-target",
 		"mechanical-scope", "mission-order-activation", "mission-order-integrity",
 		"objective-dependency-dag", "reference-integrity", "request-coverage",

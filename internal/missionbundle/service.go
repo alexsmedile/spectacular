@@ -1184,3 +1184,118 @@ func splitInput(data []byte) ([]byte, string, error) {
 }
 
 func stringPtr(value string) *string { return &value }
+
+func (s Service) RecordEvidence(missionRef, path string, stdin []byte) (Result, error) {
+	locked, unlock, err := s.beginMutation()
+	if err != nil {
+		return Result{}, err
+	}
+	defer unlock()
+	return locked.recordEvidence(missionRef, path, stdin)
+}
+
+func (s Service) recordEvidence(missionRef, path string, stdin []byte) (Result, error) {
+	if err := CheckPassiveGitState(s.Workspace.Root); err != nil {
+		return Result{}, err
+	}
+	bundle, err := Load(s.Workspace, missionRef)
+	if err != nil {
+		return Result{}, err
+	}
+	if bundle.Legacy || bundle.Status != "active" {
+		return Result{}, invalid("mission", "evidence recording requires an active compact Mission")
+	}
+	if _, err := Validate(s.Workspace, bundle); err != nil {
+		return Result{}, err
+	}
+	data, err := readInput(path, stdin)
+	if err != nil {
+		return Result{}, err
+	}
+	frontmatter, body, err := splitInput(data)
+	if err != nil {
+		return Result{}, err
+	}
+	var draft EvidenceDraft
+	if err := yaml.Unmarshal(frontmatter, &draft); err != nil {
+		return Result{}, invalidCause("input", "decode EvidenceDraft frontmatter", err)
+	}
+	if draft.Type != "EvidenceDraft" || draft.Title == "" || draft.Actor == "" {
+		return Result{}, invalid("evidence", "requires type EvidenceDraft, title, and actor")
+	}
+	if !commitPattern.MatchString(draft.Commit) {
+		return Result{}, invalid("evidence.commit", "evidence must bind an exact commit")
+	}
+	if draft.Tree == "" {
+		resolvedTree, err := resolveCommitTree(s.Workspace.Root, draft.Commit)
+		if err != nil {
+			return Result{}, domain.NewStateRefusal(domain.RefusalInvalidKnownField, "evidence.commit", "evidence commit does not exist in this repository", "existing exact commit", draft.Commit, "record exact committed tree", err)
+		}
+		draft.Tree = resolvedTree
+	} else if !commitPattern.MatchString(draft.Tree) {
+		return Result{}, invalid("evidence.tree", "evidence must bind an exact tree")
+	}
+	if err := verifyReviewedGit(s.Workspace.Root, draft.Commit, draft.Tree, "evidence"); err != nil {
+		return Result{}, err
+	}
+
+	key := "evidence.record:" + bundle.ID + ":" + draft.Commit + ":" + draft.Title
+	id, err := stableID(bundle.Activation.At, key)
+	if err != nil {
+		return Result{}, err
+	}
+	for _, existing := range bundle.Evidence {
+		if existing.ID == id.String() {
+			return Result{
+				Operation: "evidence.record",
+				Ref:       bundle.Ref + "/" + existing.Ref,
+				Path:      filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), existing.File)),
+			}, nil
+		}
+	}
+
+	ref := "E" + strconv.Itoa(len(bundle.Evidence)+1)
+	now := s.now()
+	doc := &workspace.Document{
+		Record:  domain.Record{Type: domain.Evidence, ID: id, Title: stringPtr(draft.Title), Created: stringPtr(now)},
+		Unknown: map[string]*yaml.Node{}, Body: body,
+	}
+	workspace.SetString(doc, "ref", ref)
+	workspace.SetString(doc, "mission", bundle.Ref)
+	workspace.SetString(doc, "actor", draft.Actor)
+	workspace.SetString(doc, "commit", draft.Commit)
+	workspace.SetString(doc, "tree", draft.Tree)
+	if len(draft.Objectives) > 0 {
+		workspace.SetStrings(doc, "objectives", draft.Objectives)
+	}
+	if len(draft.Runs) > 0 {
+		workspace.SetStrings(doc, "runs", draft.Runs)
+	}
+	if len(draft.Claims) > 0 {
+		workspace.SetStrings(doc, "claims", draft.Claims)
+	}
+	if len(draft.Checks) > 0 {
+		workspace.SetValue(doc, "checks", draft.Checks)
+	}
+	if len(draft.Limitations) > 0 {
+		workspace.SetStrings(doc, "limitations", draft.Limitations)
+	}
+	evidencePath, relative, err := s.missionRecordPath(bundle, doc, ref)
+	if err != nil {
+		return Result{}, err
+	}
+
+	candidate, err := decodeEvidence(doc, evidencePath)
+	if err != nil {
+		return Result{}, err
+	}
+	if err := validateEvidenceContent(candidate, bundle); err != nil {
+		return Result{}, err
+	}
+
+	bundle.Evidence = append(bundle.Evidence, EvidencePointer{Ref: ref, ID: id.String(), File: relative})
+	workspace.SetValue(bundle.document, "evidence", bundle.Evidence)
+	bundle.document.Record.Updated = stringPtr(now)
+	paths := map[domain.ID]string{bundle.document.Record.ID: bundle.Path, id: evidencePath}
+	return s.apply("evidence.record:"+bundle.ID+":"+id.String(), []*workspace.Document{bundle.document, doc}, paths, "evidence.record", bundle.Ref+"/"+ref, evidencePath)
+}

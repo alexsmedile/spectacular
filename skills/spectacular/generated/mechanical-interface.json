@@ -75,6 +75,12 @@
       "effect": "mutating"
     },
     {
+      "command": "spectacular evidence record",
+      "arguments": "<mission-ref> <evidence.md|-> [--json]",
+      "schema": "spectacular.evidence.record.v2",
+      "effect": "mutating"
+    },
+    {
       "command": "spectacular mission complete",
       "arguments": "<ref> --by <owner> [--json]",
       "schema": "spectacular.mission.complete.v2",

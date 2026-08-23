@@ -31,6 +31,7 @@
 | `M2/R1` | Run | Initial governed Run | `.spectacular/missions/M2-implement-answer-key-governed-autonomy/runs/R1-initial-governed-run/R1-initial-governed-run.md` |
 | `M20` | Mission | Record basic clustered Evidence | `.spectacular/missions/M20-record-basic-clustered-evidence/M20-record-basic-clustered-evidence.md` |
 | `M20/RV1` | Review | Independent review of M20 basic clustered evidence recording and surface-18 | `.spectacular/missions/M20-record-basic-clustered-evidence/reviews/RV1-independent-review-of-m20-basic-clustered-evidence-recording-and-surface-18.md` |
+| `M21` | Mission | Measure and harden scope guardrails | `.spectacular/missions/M21-measure-and-harden-scope-guardrails/M21-measure-and-harden-scope-guardrails.md` |
 | `M3` | Mission | Make Spectacular launch and execution lean | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/M3-make-spectacular-launch-and-execution-lean.md` |
 | `M3/D1-deldrh` | Decision | Activate the Spectacular efficiency Mission | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/decisions/D1-deldrh.md` |
 | `M3/E1-npnuyp` | Evidence | Lean launch and question contract proof | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E1-npnuyp.md` |

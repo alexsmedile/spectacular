@@ -12,4 +12,6 @@ Compact routing only. Read canonical sources for authority; [catalog.md](catalog
 
 ## Current work
 
-No active Mission is recorded. Prepare a bounded Mission before consequential work.
+| Mission | Outcome | Source |
+|---|---|---|
+| `M21` | Measure and harden scope guardrails | `.spectacular/missions/M21-measure-and-harden-scope-guardrails/M21-measure-and-harden-scope-guardrails.md` |

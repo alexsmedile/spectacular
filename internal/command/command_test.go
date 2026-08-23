@@ -213,7 +213,8 @@ func TestCampaignCheckRendersOrderedProjection(t *testing.T) {
 	}
 	path := filepath.Join(campaigns, "launch.md")
 	write(t, path, `---
-campaign_schema: spectacular.campaign.v1
+type: Campaign
+schema: spectacular.campaign.v2
 title: Launch readiness
 focus: Ship a safe release path.
 current: B2
@@ -243,7 +244,8 @@ blocks:
 		t.Fatalf("human campaign projection=%s", human)
 	}
 	write(t, path, `---
-campaign_schema: spectacular.campaign.v1
+type: Campaign
+schema: spectacular.campaign.v2
 title: Cycle
 focus: Demonstrate a cycle.
 current: B1
@@ -723,4 +725,93 @@ func TestCharterAndDecideCLI(t *testing.T) {
 			t.Fatalf("expected decide help template, got:\n%s", outHelp)
 		}
 	})
+}
+
+// TestSchemaTemplatesSatisfyTheirOwnValidator fills every published input template
+// with plausible values and feeds it back to the command that emitted it.
+//
+// This is the round trip that three shipped template bugs slipped through: a
+// Campaign template naming `depends_on:` where the parser reads `after:`, the same
+// template omitting the required `state:`, and a Proposal template marking the
+// required `target_contract` optional. Each was invisible to a test that only
+// asserted --schema returns something, because YAML drops unknown keys in silence.
+// A template is an authoring interface; an agent that follows it must land on a
+// document the validator accepts.
+func TestSchemaTemplatesSatisfyTheirOwnValidator(t *testing.T) {
+	placeholders := strings.NewReplacer(
+		"<title>", "Round trip fixture",
+		"<first block title>", "Foundation",
+		"<second block title>", "Hardening",
+		"<what this campaign is steering toward>", "Prove the template validates.",
+		"<observable condition that ends the campaign>", "The template round trips.",
+		"<owner>", "Alex",
+		"<uuidv7>", "01a02faa-ed22-736d-94a0-e1596184921f",
+		"P<N>", "P99",
+		"Contract:<uuidv7>", "Contract:019fe381-5d61-7223-b362-03a5f99a7b10",
+		"<RFC3339>", "2026-08-23T12:00:00Z",
+	)
+
+	for _, testCase := range []struct {
+		name     string
+		words    []string
+		filename string
+		check    func(t *testing.T, root, path string)
+	}{
+		{
+			name:     "campaign",
+			words:    []string{"campaign", "check"},
+			filename: filepath.Join(".spectacular", "campaigns", "round-trip.md"),
+			check: func(t *testing.T, root, path string) {
+				// Validation passing is not enough. YAML drops an unknown key in
+				// silence, so a template naming the wrong field for dependencies
+				// still validates while every edge disappears. Assert the parsed
+				// projection carries the semantics the template claimed.
+				output := run(t, root, nil, 0, "campaign", "check", filepath.ToSlash(path), "--json")
+				if !strings.Contains(output, `"after":["B1"]`) {
+					t.Fatalf("template dependency edge did not survive parsing; the key it names is not the key the parser reads:\n%s", output)
+				}
+			},
+		},
+		{
+			name:     "proposal",
+			words:    []string{"proposal", "check"},
+			filename: filepath.Join(".spectacular", "proposals", "P99-round-trip.md"),
+			check: func(t *testing.T, root, path string) {
+				run(t, root, nil, 0, "proposal", "check", "P99", "--json")
+			},
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			root, _ := fixture(t)
+			var spec *Spec
+			for i := range Registry {
+				if strings.Join(Registry[i].Words, " ") == strings.Join(testCase.words, " ") {
+					spec = &Registry[i]
+					break
+				}
+			}
+			if spec == nil {
+				t.Fatalf("no spec for %v", testCase.words)
+			}
+			if spec.Template == "" {
+				t.Fatalf("%v publishes no template", testCase.words)
+			}
+			path := filepath.Join(root, testCase.filename)
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			document := placeholders.Replace(spec.Template)
+			// A template that still carries an unresolved placeholder cannot be
+			// round tripped, and silently substituting one would hide that.
+			if strings.Contains(document, "<") && strings.Contains(document, ">") {
+				for _, line := range strings.Split(document, "\n") {
+					if strings.Contains(line, "<") && strings.Contains(line, ">") && !strings.HasPrefix(strings.TrimSpace(line), "#") {
+						t.Fatalf("template line has no placeholder substitution: %q", line)
+					}
+				}
+			}
+			write(t, path, document)
+			testCase.check(t, root, testCase.filename)
+		})
+	}
 }

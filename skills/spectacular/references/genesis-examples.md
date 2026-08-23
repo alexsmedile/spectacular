@@ -113,7 +113,7 @@ It explains a value slice; it does not authorize work.
 
 ````md
 ---
-atlas_schema: spectacular.atlas.v1
+type: Atlas
 title: Job recovery
 ---
 

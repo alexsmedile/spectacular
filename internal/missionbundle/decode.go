@@ -109,6 +109,9 @@ func decode(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, error) {
 	if _, err = decodeOptional(doc, "handoffs", &b.Handoffs); err != nil {
 		return nil, err
 	}
+	if _, err = decodeOptional(doc, "evidence", &b.Evidence); err != nil {
+		return nil, err
+	}
 	if _, err = decodeOptional(doc, "completion_record", &b.CompletionRecord); err != nil {
 		return nil, err
 	}
@@ -122,6 +125,9 @@ func decode(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, error) {
 		return nil, err
 	}
 	if err := resolveReviews(ws, b); err != nil {
+		return nil, err
+	}
+	if err := resolveEvidence(ws, b); err != nil {
 		return nil, err
 	}
 	return b, nil
@@ -404,4 +410,35 @@ func scopedRef(raw string) (string, string, error) {
 		return "", "", domain.NewRefusal(domain.RefusalInvalidReference, "ref", "expected <mission-ref>/<local-ref>", nil)
 	}
 	return mission, child, nil
+}
+
+func resolveEvidence(ws *discovery.Workspace, b *Bundle) error {
+	_ = ws
+	if len(b.Evidence) == 0 {
+		return nil
+	}
+	base := filepath.Dir(b.entry.Absolute)
+	for i := range b.Evidence {
+		pointer := &b.Evidence[i]
+		path, err := containedFile(base, pointer.File)
+		if err != nil {
+			return err
+		}
+		doc, err := workspace.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if doc.Record.Type != domain.Evidence || doc.Record.ID.String() != pointer.ID {
+			return domain.NewRefusal(domain.RefusalTargetTypeMismatch, "evidence.file", "Evidence identity or type does not match its pointer", nil)
+		}
+		resolved, err := decodeEvidence(doc, pointer.File)
+		if err != nil {
+			return err
+		}
+		if resolved.Ref != pointer.Ref {
+			return domain.NewRefusal(domain.RefusalInvalidReference, "evidence.file", "Evidence ref does not match its pointer", nil)
+		}
+		pointer.Document = resolved
+	}
+	return nil
 }

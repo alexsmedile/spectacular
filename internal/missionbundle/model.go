@@ -249,6 +249,7 @@ type Bundle struct {
 	AfterMission     []string          `json:"after_mission,omitempty"`
 	Reviews          []ReviewPointer   `json:"reviews,omitempty"`
 	Handoffs         []HandoffPointer  `json:"handoffs,omitempty"`
+	Evidence         []EvidencePointer `json:"evidence,omitempty"`
 	CompletionRecord *CompletionRecord `json:"completion_record,omitempty"`
 	Path             string            `json:"path"`
 	Legacy           bool              `json:"legacy"`

@@ -135,6 +135,15 @@ gaps:
       matrix added in 7404291 runs windows-latest against it, so the job fails on compilation
       rather than on behavior. The lock itself is correct and load-bearing: it is what makes a
       concurrent mutation refuse instead of interleaving.
+    resolution: >-
+        Closed in 2.7.2. The kernel call is split behind lockFile/unlockFile: service_unix.go
+        keeps syscall.Flock with LOCK_EX and LOCK_NB, and service_windows.go uses
+        windows.LockFileEx with LOCKFILE_EXCLUSIVE_LOCK and LOCKFILE_FAIL_IMMEDIATELY.
+        FAIL_IMMEDIATELY is the counterpart of LOCK_NB, so a concurrent mutation still refuses
+        at once rather than queueing and then applying, and both platforms release the lock when
+        the handle closes. All six GOOS and GOARCH targets compile, so the cross-platform
+        acceptance matrix exercises behaviour instead of failing on compilation. Release
+        artifacts remain the four Unix targets.
 ---
 # Spectacular mechanical Mission CLI
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- `contract amend` refused to close a Gap recorded with only a `problem:`
+  statement, because the rewrite replaces an existing `blocked_on:` key and
+  could not add one. The only way forward was to hand-edit a bound Contract to
+  insert a placeholder, which is exactly what an amendment exists to prevent.
+  A Gap with no `blocked_on:` now has its `resolution:` appended to the entry it
+  names, aligned with its sibling keys, leaving neighbouring Gaps and every
+  scalar body byte-identical.
+- Closed `mutation-lock-is-unix-only` on the mechanical CLI Contract through
+  that path. The Gap's problem statement survives with a stated resolution, as
+  a closed Gap should.
+
 ## 2.7.2 — 2026-08-24
 
 ### Fixed

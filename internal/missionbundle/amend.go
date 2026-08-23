@@ -158,9 +158,6 @@ func (s Service) amendContract(contractRef, gapRef, owner, override string, dryR
 			"Gap "+gapRef+" already carries a different resolution", target.Resolution, resolution,
 			"reconcile the two resolutions with the owner before amending", nil)
 	}
-	if target.BlockedOn == "" {
-		return Amendment{}, invalid("gap", "Gap "+gapRef+" carries neither blocked_on nor resolution")
-	}
 
 	amended, err := rewriteGap(string(original), gapRef, resolution)
 	if err != nil {
@@ -343,6 +340,9 @@ func rewriteGap(contract, gapRef, resolution string) (string, error) {
 	// splices the resolution into the middle of someone's sentence while leaving
 	// the real key untouched.
 	scalarIndent := -1
+	// end tracks the exclusive end of this Gap entry, so a Gap with no blocked_on
+	// can have a resolution appended in place rather than refused.
+	end := len(lines)
 	for i := start + 1; i < len(lines); i++ {
 		trimmed := strings.TrimSpace(lines[i])
 		indentOf := len(lines[i]) - len(strings.TrimLeft(lines[i], " "))
@@ -355,6 +355,7 @@ func rewriteGap(contract, gapRef, resolution string) (string, error) {
 			scalarIndent = -1
 		}
 		if strings.HasPrefix(trimmed, "- ") || (trimmed != "" && !strings.HasPrefix(lines[i], " ")) {
+			end = i
 			break // next Gap entry, or the end of the block
 		}
 		match := blockedOnLine.FindStringSubmatch(lines[i])
@@ -368,11 +369,11 @@ func rewriteGap(contract, gapRef, resolution string) (string, error) {
 			continue
 		}
 		indent := match[1]
-		end := i + 1
-		for end < len(lines) {
-			next := lines[end]
+		stop := i + 1
+		for stop < len(lines) {
+			next := lines[stop]
 			if strings.TrimSpace(next) == "" || len(next)-len(strings.TrimLeft(next, " ")) > len(indent) {
-				end++
+				stop++
 				continue
 			}
 			break
@@ -383,10 +384,43 @@ func rewriteGap(contract, gapRef, resolution string) (string, error) {
 		}
 		rewritten := append([]string{}, lines[:i]...)
 		rewritten = append(rewritten, replacement...)
-		rewritten = append(rewritten, lines[end:]...)
+		rewritten = append(rewritten, lines[stop:]...)
 		return strings.Join(rewritten, "\n"), nil
 	}
-	return "", invalid("gap", "Gap "+gapRef+" carries no blocked_on to rewrite")
+	// A Gap recorded with only a problem statement has no blocked_on to rewrite.
+	// Appending the resolution at the end of its entry closes it through the same
+	// reviewed path rather than forcing an owner to hand-edit a bound Contract to
+	// add a placeholder key first. The insert point is the end of the entry found
+	// by the walk above, so a following Gap and the rest of the block are
+	// untouched.
+	indent := gapEntryIndent(lines, start)
+	replacement := []string{indent + "resolution: >-"}
+	replacement = append(replacement, foldText(resolution, indent+"    ", 96)...)
+	rewritten := append([]string{}, lines[:end]...)
+	rewritten = append(rewritten, replacement...)
+	rewritten = append(rewritten, lines[end:]...)
+	return strings.Join(rewritten, "\n"), nil
+}
+
+// gapEntryIndent reports the indent shared by the keys of a Gap entry, taken from
+// the first key under the `- ref:` line so an appended key aligns with its
+// siblings rather than with the sequence dash.
+func gapEntryIndent(lines []string, start int) string {
+	for i := start + 1; i < len(lines); i++ {
+		trimmed := strings.TrimSpace(lines[i])
+		if trimmed == "" {
+			continue
+		}
+		if strings.HasPrefix(trimmed, "- ") || !strings.HasPrefix(lines[i], " ") {
+			break
+		}
+		if strings.Contains(trimmed, ":") {
+			return lines[i][:len(lines[i])-len(strings.TrimLeft(lines[i], " "))]
+		}
+	}
+	// The entry carries no key beyond `- ref:`; align one level inside the dash.
+	dash := lines[start][:len(lines[start])-len(strings.TrimLeft(lines[start], " "))]
+	return dash + "  "
 }
 
 // foldText wraps prose into a YAML block scalar body. Long single-line values are

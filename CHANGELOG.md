@@ -2,6 +2,19 @@
 
 ## 2.7.1 — 2026-08-24
 
+### Fixed
+
+- The exclusive mutation lock called `syscall.Flock`, whose symbols do not exist
+  on Windows, so `internal/missionbundle` did not compile there and every
+  mutating command was unavailable. The kernel call is now split behind
+  `lockFile`/`unlockFile`: `service_unix.go` keeps `LOCK_EX|LOCK_NB` and
+  `service_windows.go` uses `LockFileEx` with
+  `LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY`. Immediate-refusal
+  semantics are identical on both platforms — a second mutation refuses rather
+  than queueing — and all six `GOOS/GOARCH` targets compile, so the
+  cross-platform acceptance matrix exercises behaviour instead of failing on
+  compilation (`mutation-lock-is-unix-only`).
+
 ### Added
 
 - `.spectacular/VOCABULARY.md` is an earned Anchor holding the canonical domain

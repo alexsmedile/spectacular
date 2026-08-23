@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
@@ -943,6 +942,11 @@ func (s Service) beginMutation() (Service, func(), error) {
 	return s, unlock, nil
 }
 
+// acquireMutationLock takes the workspace-wide exclusive lock that makes a
+// concurrent mutation refuse instead of interleaving. The lock itself is
+// load-bearing; only the kernel call that takes it is platform-specific, so
+// lockFile and unlockFile are supplied by service_unix.go and
+// service_windows.go.
 func acquireMutationLock(root string) (func(), error) {
 	directory := filepath.Join(root, ".spectacular", "transactions")
 	if err := os.MkdirAll(directory, 0o755); err != nil {
@@ -952,12 +956,12 @@ func acquireMutationLock(root string) (func(), error) {
 	if err != nil {
 		return nil, invalidCause("transactions", "open mutation lock", err)
 	}
-	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+	if err := lockFile(file); err != nil {
 		file.Close()
 		return nil, domain.NewStateRefusal(domain.RefusalCollision, "transactions", "another Mission mutation is in progress", "exclusive mutation lock", "busy", "wait for the active command to finish, reload the Mission, and retry", err)
 	}
 	return func() {
-		_ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+		_ = unlockFile(file)
 		_ = file.Close()
 	}, nil
 }

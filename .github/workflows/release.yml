@@ -24,6 +24,9 @@ jobs:
           go-version: '1.26.x'
           cache: true
 
+      - name: Download Modules
+        run: go mod download
+
       - name: Run Full Verification Suite
         run: bash test/verify.sh all
 

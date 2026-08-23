@@ -126,6 +126,15 @@ gaps:
         `contract:` block because it is smaller and turns a silent corruption into a stated
         problem in a mechanism that rewrites records the owner is not reading. Anchoring remains
         available later if the refusal proves noisy.
+  - ref: mutation-lock-is-unix-only
+    problem: >-
+      The exclusive mutation lock calls syscall.Flock with LOCK_EX, LOCK_NB, and LOCK_UN
+      (internal/missionbundle/service.go:955). Those symbols do not exist on Windows, so the
+      package does not compile there and every mutating command is unavailable. The Contract
+      states a mechanical CLI without naming a platform, and the cross-platform acceptance
+      matrix added in 7404291 runs windows-latest against it, so the job fails on compilation
+      rather than on behavior. The lock itself is correct and load-bearing: it is what makes a
+      concurrent mutation refuse instead of interleaving.
 ---
 # Spectacular mechanical Mission CLI
 

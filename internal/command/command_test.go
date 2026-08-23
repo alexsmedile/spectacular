@@ -213,7 +213,8 @@ func TestCampaignCheckRendersOrderedProjection(t *testing.T) {
 	}
 	path := filepath.Join(campaigns, "launch.md")
 	write(t, path, `---
-campaign_schema: spectacular.campaign.v1
+type: Campaign
+schema: spectacular.campaign.v2
 title: Launch readiness
 focus: Ship a safe release path.
 current: B2
@@ -243,7 +244,8 @@ blocks:
 		t.Fatalf("human campaign projection=%s", human)
 	}
 	write(t, path, `---
-campaign_schema: spectacular.campaign.v1
+type: Campaign
+schema: spectacular.campaign.v2
 title: Cycle
 focus: Demonstrate a cycle.
 current: B1

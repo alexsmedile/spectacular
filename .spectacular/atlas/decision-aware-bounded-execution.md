@@ -1,5 +1,6 @@
 ---
-atlas_schema: spectacular.atlas.v1
+type: Atlas
+schema: spectacular.atlas.v1
 title: Decision-aware bounded execution
 ---
 

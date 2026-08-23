@@ -10,6 +10,7 @@ updated: "2026-08-23T17:28:46Z"
 scope:
     - v2
 target_contract: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
+atlas: ../atlas/decision-aware-bounded-execution.md
 ---
 
 # Owner interaction design for decision presentation and anti-slop execution

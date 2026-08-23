@@ -311,7 +311,27 @@ limitations: []
 		Effect:        ReadOnly,
 		Operation:     opProposalCheck,
 		Description:   "Validates a Proposal document.",
+		InputType:     "Proposal",
 		OutputType:    "ProposalCheck",
+		Template: `---
+type: Proposal
+id: <uuidv7>
+ref: P<N>
+title: <title>
+status: draft
+created_by: <owner>
+created: "<RFC3339>"
+updated: "<RFC3339>"
+scope: [v2]
+# target_contract: optional Contract this explores against
+# atlas: optional ../atlas/<map>.md attachment
+---
+# <title>
+
+Exploration for a possible Mission. Nothing here is frozen — this Proposal
+carries no execution authority and binds only when a Mission plan freezes its
+claims.
+`,
 	},
 	{
 		Words:         []string{"campaign", "check"},
@@ -321,7 +341,27 @@ limitations: []
 		Effect:        ReadOnly,
 		Operation:     opCampaignCheck,
 		Description:   "Validates a Campaign block map and renders its ordered Mermaid projection.",
+		InputType:     "Campaign",
 		OutputType:    "CampaignCheck",
+		Template: `---
+type: Campaign
+schema: spectacular.campaign.v2
+title: <title>
+focus: <what this campaign is steering toward>
+current: B<N>
+exit_condition: <observable condition that ends the campaign>
+# atlas: optional ../atlas/<map>.md attachment
+blocks:
+    - ref: B1
+      title: <title>
+      outcome: <observable outcome>
+      depends_on: []
+---
+# <title>
+
+Campaigns are non-governing planning documents. They are skip-listed in
+discovery and grant no authority.
+`,
 	},
 	{
 		Words:         []string{"contract", "amend"},

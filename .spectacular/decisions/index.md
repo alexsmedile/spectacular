@@ -18,6 +18,7 @@
 | `D20-use-live-charter-retrieval-without-a-persistent-cache` | Decision | Compile charters from live governance without a persistent cache | `.spectacular/decisions/D20-use-live-charter-retrieval-without-a-persistent-cache.md` |
 | `D21-context-sandwich-execution-gates` | Decision | Preserve proof gates while staging the context-sandwich command surface | `.spectacular/decisions/D21-context-sandwich-execution-gates.md` |
 | `D22-accepted` | Decision | Run transition state machine and charter tokenizer specification | `.spectacular/decisions/D22-accepted.md` |
+| `D23-accepted` | Decision | Identify workspace entities with type and version them with schema | `.spectacular/decisions/D23-accepted.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |

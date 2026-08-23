@@ -1,5 +1,6 @@
 ---
-campaign_schema: spectacular.campaign.v1
+type: Campaign
+schema: spectacular.campaign.v2
 title: Decision-aware bounded execution
 focus: Give each delegated Objective compact authority, safe isolation, and measured execution boundaries without making Spectacular a Git wrapper.
 atlas: ../atlas/decision-aware-bounded-execution.md

@@ -2,7 +2,24 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Workspace entities identify themselves with `type:` and version their rules
+  with `schema:`, replacing the combined `atlas_schema:` and `campaign_schema:`
+  keys. Non-governance is a property of discovery skip-listing, not of hiding an
+  entity's type. The Campaign schema moves to `spectacular.campaign.v2`; there is
+  no compatibility reader (`D23-accepted`).
+- `spectacular proposal check --schema` and `spectacular campaign check --schema`
+  now return the frontmatter template an agent should write, alongside the output
+  schema they already reported.
+
 ### Added
+
+- `.spectacular/raw/` is the unstructured sketchpad stage: gitignored,
+  skip-listed in discovery, no frontmatter and no entity. A stray note there can
+  never refuse a command.
+- Proposals and Contracts accept an optional `atlas:` attachment pointing at the
+  top-view map they stand on, matching what Campaigns already do.
 
 - `cmd/release-smoke` now drives six mutating commands that no end-to-end test
   reached before: `evidence record`, `handoff record`, `run transition`,

@@ -24,6 +24,7 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `D20-use-live-charter-retrieval-without-a-persistent-cache` | Decision | Compile charters from live governance without a persistent cache | `.spectacular/decisions/D20-use-live-charter-retrieval-without-a-persistent-cache.md` |
 | `D21-context-sandwich-execution-gates` | Decision | Preserve proof gates while staging the context-sandwich command surface | `.spectacular/decisions/D21-context-sandwich-execution-gates.md` |
 | `D22-accepted` | Decision | Run transition state machine and charter tokenizer specification | `.spectacular/decisions/D22-accepted.md` |
+| `D23-accepted` | Decision | Identify workspace entities with type and version them with schema | `.spectacular/decisions/D23-accepted.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |
@@ -104,6 +105,7 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `P1` | Proposal | Repair v2 human operability | `.spectacular/proposals/P1-human-operability.md` |
 | `P10` | Proposal | Preparation judgment checkpoint | `.spectacular/proposals/P10-preparation-judgment-checkpoint.md` |
 | `P11` | Proposal | Context-sandwich compilation and decision steering protocol | `.spectacular/proposals/P11-context-sandwich-compilation-and-decision-steering-protocol.md` |
+| `P12` | Proposal | Owner interaction design for decision presentation and anti-slop execution | `.spectacular/proposals/P12-owner-interaction-design.md` |
 | `P2` | Proposal | Add answer-key governed autonomy | `.spectacular/proposals/P2-add-answer-key-governed-autonomy.md` |
 | `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |
 | `P4` | Proposal | Make Spectacular control operations lean | `.spectacular/proposals/P4-make-spectacular-control-operations-lean.md` |

@@ -200,13 +200,15 @@ func load(root, marker string) (*Workspace, error) {
 					return filepath.SkipDir
 				}
 			}
-			if d.IsDir() && (d.Name() == "history" || d.Name() == "transactions" || d.Name() == "campaigns" || d.Name() == "atlas") {
+			if d.IsDir() && (d.Name() == "history" || d.Name() == "transactions" || d.Name() == "campaigns" || d.Name() == "atlas" || d.Name() == "raw") {
 				return filepath.SkipDir
 			}
 			// Generated indexes are committed navigation aids, never canonical
 			// records. They must be rebuildable and must not enter authority.
 			// Campaigns and Atlases are durable but non-governing planning documents. They are
-			// intentionally outside the typed record graph and CLI lifecycle.
+			// intentionally outside the typed record graph and CLI lifecycle. raw/ is
+			// unstructured thinking: gitignored, carrying no frontmatter and naming no
+			// entity, so a stray note there can never refuse a command.
 			// Amendment logs are append-only provenance beside a Contract: they
 			// record how it changed rather than stating anything it agreed, so they
 			// carry no record identity and must not enter authority either.

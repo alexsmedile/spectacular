@@ -36,12 +36,13 @@ type Check struct {
 }
 
 type manifest struct {
-	CampaignSchema string  `yaml:"campaign_schema"`
-	Title          string  `yaml:"title"`
-	Focus          string  `yaml:"focus"`
-	Current        string  `yaml:"current"`
-	ExitCondition  string  `yaml:"exit_condition"`
-	Blocks         []Block `yaml:"blocks"`
+	Type          string  `yaml:"type"`
+	Schema        string  `yaml:"schema"`
+	Title         string  `yaml:"title"`
+	Focus         string  `yaml:"focus"`
+	Current       string  `yaml:"current"`
+	ExitCondition string  `yaml:"exit_condition"`
+	Blocks        []Block `yaml:"blocks"`
 }
 
 // Validate reads one Campaign planning document. Campaigns remain free-form
@@ -102,8 +103,13 @@ func parse(text string) (Check, error) {
 	if err := yaml.Unmarshal([]byte(frontmatter), &source); err != nil {
 		return Check{}, fmt.Errorf("decode Campaign frontmatter: %w", err)
 	}
-	if source.CampaignSchema != "spectacular.campaign.v1" {
-		return Check{}, fmt.Errorf("campaign_schema must be spectacular.campaign.v1")
+	// type: names the entity, schema: versions the rules that validate it. They are
+	// two facts, so they are two fields (D23-accepted).
+	if source.Type != "Campaign" {
+		return Check{}, fmt.Errorf("type must be Campaign")
+	}
+	if source.Schema != "spectacular.campaign.v2" {
+		return Check{}, fmt.Errorf("schema must be spectacular.campaign.v2")
 	}
 	if source.Title == "" || source.Focus == "" || source.Current == "" || source.ExitCondition == "" {
 		return Check{}, fmt.Errorf("Campaign frontmatter requires title, focus, current, and exit_condition")

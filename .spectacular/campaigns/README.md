@@ -14,7 +14,8 @@ for every project or use one as an unattended automation queue.
 
 ```md
 ---
-campaign_schema: spectacular.campaign.v1
+type: Campaign
+schema: spectacular.campaign.v2
 title: Launch readiness
 focus: Establish a safe release path.
 atlas: ../atlas/release-confidence.md

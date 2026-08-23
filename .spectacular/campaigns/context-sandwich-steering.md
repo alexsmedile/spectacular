@@ -2,44 +2,44 @@
 campaign_schema: spectacular.campaign.v1
 title: Decision-aware bounded execution
 focus: Give each delegated Objective compact authority, safe isolation, and measured execution boundaries without making Spectacular a Git wrapper.
-current: B1
+current: B7
 exit_condition: Decision-aware charters reduce total context ingestion by at least 40%, isolated Objective execution preserves authority and data under every stop path, clustered Evidence is fresh and attributable, and only measured deterministic guardrails ship without regression.
 blocks:
   - ref: B1
     title: Governance and Contract baseline
-    state: planned
+    state: complete
     after: []
-    missions: []
+    missions: [M15]
   - ref: B2
     title: Charter engine and benchmark
-    state: planned
+    state: complete
     after: [B1]
-    missions: []
+    missions: [M16]
   - ref: B3
     title: Charter and Decision command surface
-    state: planned
+    state: complete
     after: [B2]
-    missions: []
+    missions: [M17]
   - ref: B4
     title: Objective-scoped Run lifecycle
-    state: planned
+    state: complete
     after: [B3]
-    missions: []
+    missions: [M18]
   - ref: B5
     title: Isolated Handoff dispatch
-    state: planned
+    state: complete
     after: [B4]
-    missions: []
+    missions: [M19]
   - ref: B6
     title: Basic clustered Evidence
-    state: planned
+    state: complete
     after: [B5]
-    missions: []
+    missions: [M20]
   - ref: B7
     title: Measured scope hardening
-    state: planned
+    state: complete
     after: [B6]
-    missions: []
+    missions: [M21]
 ---
 
 # Campaign: Decision-aware bounded execution
@@ -58,13 +58,13 @@ Plan inputs: [context-sandwich-steering-plans](context-sandwich-steering-plans/R
 <!-- spectacular:campaign-mermaid:start -->
 ```mermaid
 flowchart LR
-  B1["Governance and Contract baseline\nplanned"]
-  B2["Charter engine and benchmark\nplanned"]
-  B3["Charter and Decision command surface\nplanned"]
-  B4["Objective-scoped Run lifecycle\nplanned"]
-  B5["Isolated Handoff dispatch\nplanned"]
-  B6["Basic clustered Evidence\nplanned"]
-  B7["Measured scope hardening\nplanned"]
+  B1["Governance and Contract baseline\ncomplete"]
+  B2["Charter engine and benchmark\ncomplete"]
+  B3["Charter and Decision command surface\ncomplete"]
+  B4["Objective-scoped Run lifecycle\ncomplete"]
+  B5["Isolated Handoff dispatch\ncomplete"]
+  B6["Basic clustered Evidence\ncomplete"]
+  B7["Measured scope hardening\ncomplete"]
   B1 --> B2
   B2 --> B3
   B3 --> B4

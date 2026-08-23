@@ -62,10 +62,10 @@ func TestM22_RepairedSteeringInvariants(t *testing.T) {
 			Ref: "M20",
 			ID:  "019fe381-5d61-7223-b362-03a5f99a7b10",
 			Objectives: []missionbundle.Objective{
-				{Ref: "O1", Title: "First objective"},
+				{Ref: "O1", Outcome: "First objective"},
 			},
-			Completion: []missionbundle.CompletionClaim{
-				{Claim: "valid-claim"},
+			Completion: []missionbundle.Criterion{
+				{Claim: "valid-claim", PassBoundary: "pass", ProofRequirement: "proof"},
 			},
 		}
 
@@ -101,26 +101,29 @@ func TestM22_RepairedSteeringInvariants(t *testing.T) {
 	})
 
 	t.Run("claim: m21-pinned-benchmark-matrix - static context savings proof", func(t *testing.T) {
-		// Test charter compression against pinned fixture
-		projectAnchor := "# Project Anchor\n\nFull project overview with 50 architecture rules and background notes."
-		missionContent := "# Active Mission\n\nComprehensive mission details and execution specifications."
-		charterDraft := charter.Draft{
-			MissionRef: "M22",
-			ObjectiveRef: "O1",
-			Goal: "Benchmark verification",
-			Sources: []charter.SourceFile{
-				{Path: "PROJECT.md", Content: projectAnchor},
-				{Path: "MISSION.md", Content: missionContent},
-			},
+		root, err := filepath.Abs(filepath.Join("..", ".."))
+		if err != nil {
+			t.Fatal(err)
 		}
-		compiled, err := charter.Compile(charterDraft, discovery.DefaultConfig())
+		ws, err := discovery.Open(root)
+		if err != nil {
+			t.Fatalf("discovery.Open failed: %v", err)
+		}
+
+		compiled, err := charter.Compile(ws, "M16", "O1", []string{"D12-isolation-and-context-compilation"})
 		if err != nil {
 			t.Fatalf("failed to compile charter: %v", err)
 		}
-		tok, _ := tokenizer.For("o200k_base")
-		compiledTokens := tok.Count(compiled.Markdown)
-		if compiledTokens > 1440 {
-			t.Fatalf("compiled charter tokens %d exceeded ceiling 1440", compiledTokens)
+		rendered := compiled.RenderMarkdown()
+		if !strings.Contains(rendered, "## 1. FROZEN TRUTH") {
+			t.Fatal("expected rendered charter to contain FROZEN TRUTH")
+		}
+		count, err := tokenizer.Count(rendered)
+		if err != nil {
+			t.Fatalf("tokenizer.Count failed: %v", err)
+		}
+		if count > tokenizer.HardCeilingTokens {
+			t.Fatalf("compiled charter tokens %d exceeded ceiling %d", count, tokenizer.HardCeilingTokens)
 		}
 	})
 }

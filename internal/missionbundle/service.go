@@ -425,7 +425,9 @@ func (s Service) startRun(targetRef, title string) (Result, error) {
 			for _, depRef := range currentObj.After {
 				for _, r := range allRuns(bundle) {
 					if (r.CurrentObjective == depRef || r.Objective == depRef) && (r.Status == "blocked" || r.Status == "stopped") {
-						return Result{}, domain.NewRefusal(domain.RefusalCollision, "dependency", fmt.Sprintf("cannot start run on %s: upstream dependency %s is in state %s; resolve blocker with owner Decision first", targetObjective, depRef, r.Status), nil)
+						if !isDependencyUnblockedByDecision(s.Workspace, bundle.Ref, depRef, r.Ref, targetObjective) {
+							return Result{}, domain.NewRefusal(domain.RefusalCollision, "dependency", fmt.Sprintf("cannot start run on %s: upstream dependency %s is in state %s; resolve blocker with owner Decision first", targetObjective, depRef, r.Status), nil)
+						}
 					}
 				}
 			}
@@ -729,14 +731,14 @@ func (s Service) recordHandoff(missionRef, path, sender string, stdin []byte) (R
 	if err := ValidateWritePaths(draft.Writes); err != nil {
 		return Result{}, err
 	}
-	for _, existingPointer := range bundle.Handoffs {
-		if existingPointer.Document != nil && existingPointer.Document.Supersedes == "" && existingPointer.Document.Ref != draft.Supersedes {
-			for _, ew := range existingPointer.Document.Writes {
-				for _, dw := range draft.Writes {
-					if PathsOverlap(dw, ew) {
-						return Result{}, domain.NewRefusal(domain.RefusalInvalidScope, "writes", fmt.Sprintf("cannot reserve write path %q: overlaps with active Handoff %s reservation %q", dw, existingPointer.Ref, ew), nil)
-					}
-				}
+	activeRes, err := collectActiveWriteReservations(s.Workspace, bundle, draft.Supersedes)
+	if err != nil {
+		return Result{}, err
+	}
+	for _, res := range activeRes {
+		for _, dw := range draft.Writes {
+			if PathsOverlap(dw, res.path) {
+				return Result{}, domain.NewRefusal(domain.RefusalInvalidScope, "writes", fmt.Sprintf("cannot reserve write path %q: overlaps with active Handoff %s/%s reservation %q", dw, res.missionRef, res.handoffRef, res.path), nil)
 			}
 		}
 	}
@@ -1298,4 +1300,82 @@ func (s Service) recordEvidence(missionRef, path string, stdin []byte) (Result, 
 	bundle.document.Record.Updated = stringPtr(now)
 	paths := map[domain.ID]string{bundle.document.Record.ID: bundle.Path, id: evidencePath}
 	return s.apply("evidence.record:"+bundle.ID+":"+id.String(), []*workspace.Document{bundle.document, doc}, paths, "evidence.record", bundle.Ref+"/"+ref, evidencePath)
+}
+
+type activeReservation struct {
+	missionRef string
+	handoffRef string
+	path       string
+}
+
+func collectActiveWriteReservations(ws *discovery.Workspace, currentBundle *Bundle, draftSupersedes string) ([]activeReservation, error) {
+	var reservations []activeReservation
+	if ws == nil {
+		return reservations, nil
+	}
+	for _, entry := range ws.OfType(domain.Mission) {
+		b, err := Load(ws, entry.Path)
+		if err != nil || b == nil || b.Status != "active" {
+			continue
+		}
+		// Track superseded handoffs in this bundle
+		superseded := make(map[string]bool)
+		if b.Ref == currentBundle.Ref && draftSupersedes != "" {
+			superseded[draftSupersedes] = true
+		}
+		for _, hPtr := range b.Handoffs {
+			if hPtr.Document != nil && hPtr.Document.Supersedes != "" {
+				superseded[hPtr.Document.Supersedes] = true
+			}
+		}
+		for _, hPtr := range b.Handoffs {
+			if superseded[hPtr.Ref] {
+				continue
+			}
+			if hPtr.Document != nil {
+				for _, w := range hPtr.Document.Writes {
+					reservations = append(reservations, activeReservation{
+						missionRef: b.Ref,
+						handoffRef: hPtr.Ref,
+						path:       w,
+					})
+				}
+			}
+		}
+	}
+	return reservations, nil
+}
+
+func isDependencyUnblockedByDecision(ws *discovery.Workspace, missionRef, depRef, depRunRef, targetObjRef string) bool {
+	if ws == nil {
+		return false
+	}
+	for _, entry := range ws.OfType(domain.Decision) {
+		doc := entry.Document
+		if doc == nil {
+			continue
+		}
+		status := ""
+		if doc.Record.Status != nil {
+			status = *doc.Record.Status
+		}
+		disp, _ := workspace.String(doc, "disposition", false)
+		if status != "accepted" && disp != "accepted" {
+			continue
+		}
+		targets, _ := workspace.Strings(doc, "targets", false)
+		unblocked, _ := workspace.Strings(doc, "unblocked", false)
+		scope, _ := workspace.Strings(doc, "scope", false)
+		allRefs := append(targets, unblocked...)
+		allRefs = append(allRefs, scope...)
+		fullDepObj := missionRef + "/" + depRef
+		fullDepRun := missionRef + "/" + depRunRef
+		fullTargetObj := missionRef + "/" + targetObjRef
+		for _, ref := range allRefs {
+			if ref == depRef || ref == depRunRef || ref == fullDepObj || ref == fullDepRun || ref == targetObjRef || ref == fullTargetObj {
+				return true
+			}
+		}
+	}
+	return false
 }

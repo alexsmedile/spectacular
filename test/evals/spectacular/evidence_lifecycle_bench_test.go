@@ -32,12 +32,12 @@ func TestM20_ClusteredEvidenceAndSurface18(t *testing.T) {
 
 	t.Run("claim: atomic-clustered-evidence", func(t *testing.T) {
 		e := &missionbundle.Evidence{
-			Ref:     "E1",
-			Title:   "Attributable evidence for O1 and O2",
-			Mission: "M20",
-			Actor:   "Alex",
-			Commit:  "0123456789abcdef0123456789abcdef01234567",
-			Tree:    "0123456789abcdef0123456789abcdef01234567",
+			Ref:        "E1",
+			Title:      "Attributable evidence for O1 and O2",
+			Mission:    "M20",
+			Actor:      "Alex",
+			Commit:     "0123456789abcdef0123456789abcdef01234567",
+			Tree:       "0123456789abcdef0123456789abcdef01234567",
 			Objectives: []string{"O1", "O2"},
 			Checks: []missionbundle.EvidenceCheck{
 				{Name: "test-suite", Result: "pass"},

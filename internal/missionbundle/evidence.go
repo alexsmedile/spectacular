@@ -1,6 +1,7 @@
 package missionbundle
 
 import (
+	"fmt"
 	"path/filepath"
 	"regexp"
 
@@ -110,7 +111,55 @@ func validateEvidenceContent(e *Evidence, b *Bundle) error {
 	if len(e.Claims) == 0 && len(e.Objectives) == 0 && len(e.Runs) == 0 {
 		return invalid("evidence.coverage", "an Evidence package must cover at least one Claim, Objective, or Run")
 	}
+
+	// Validate Objectives exist on the parent Mission
+	for _, objRef := range e.Objectives {
+		found := false
+		for _, obj := range b.Objectives {
+			if obj.Ref == objRef || obj.ID == objRef || b.Ref+"/"+obj.Ref == objRef {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return domain.NewRefusal(domain.RefusalInvalidReference, "evidence.objectives", fmt.Sprintf("objective %q not found on Mission %s", objRef, b.Ref), nil)
+		}
+	}
+
+	// Validate Runs exist on the parent Mission
+	for _, runRef := range e.Runs {
+		found := false
+		for _, r := range allRuns(b) {
+			if r.Ref == runRef || r.ID == runRef || b.Ref+"/"+r.Ref == runRef {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return domain.NewRefusal(domain.RefusalInvalidReference, "evidence.runs", fmt.Sprintf("run %q not found on Mission %s", runRef, b.Ref), nil)
+		}
+	}
+
+	// Validate Claims exist on the parent Mission
+	for _, claimName := range e.Claims {
+		found := false
+		for _, c := range b.Completion {
+			if c.Claim == claimName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return domain.NewRefusal(domain.RefusalInvalidReference, "evidence.claims", fmt.Sprintf("completion claim %q not found on Mission %s", claimName, b.Ref), nil)
+		}
+	}
+
 	return nil
+}
+
+// ValidateEvidenceDirect validates an Evidence document directly against a parent Bundle.
+func ValidateEvidenceDirect(e *Evidence, b *Bundle) error {
+	return validateEvidenceContent(e, b)
 }
 
 // validateEvidence checks every Evidence package pointed to by a Mission bundle.

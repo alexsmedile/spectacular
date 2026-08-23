@@ -11,10 +11,10 @@ import (
 )
 
 type MissionStats struct {
-	Ref        string
-	Path       string
-	PlanTokens int
-	TotalFiles int
+	Ref         string
+	Path        string
+	PlanTokens  int
+	TotalFiles  int
 	TotalTokens int
 }
 

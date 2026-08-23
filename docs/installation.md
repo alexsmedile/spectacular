@@ -79,13 +79,15 @@ install failed — `validate` is the check that answers it.
 
 ## Install the CLI
 
-Download the archive for your platform from the
-[latest release](https://github.com/alexsmedile/spectacular/releases/latest),
-verify it, and install from the unpacked directory:
+The installer never reaches the network: it takes a local directory that already
+holds the release archive, verifies the checksum, and extracts it. It does not
+fetch a binary, require Go on your machine, or publish anything on your behalf,
+so piping it from a URL refuses — there is no download step to trigger. Download
+first, then install from that directory:
 
 ```sh
 # 1. download the archive and SHA256SUMS for your platform
-VERSION=2.5.0
+VERSION=2.7.2
 PLATFORM=darwin-arm64          # or darwin-amd64, linux-amd64, linux-arm64
 BASE=https://github.com/alexsmedile/spectacular/releases/download/v$VERSION
 
@@ -113,10 +115,6 @@ not an unpacked tree. The installer re-verifies the checksum, inspects the
 archive inventory, extracts to a staging area, and checks that the binary,
 generated interface, Skill, and runtime manifest all report the same version
 before anything is placed. Unpacking it yourself first is not a step.
-
-The installer works from a **locally verified release directory**. It does not
-fetch a binary itself, require Go on your machine, or publish anything on your
-behalf — verification is a step you perform and can inspect.
 
 `--prefix` must be an absolute path, and cannot be `/` or your home directory
 itself. `$HOME/.local` is the usual choice: the binary lands at
@@ -158,8 +156,12 @@ The two halves update independently.
 claude plugin marketplace update spectacular
 claude plugin update spectacular@spectacular   # restart to apply
 
-# Codex — name the marketplace explicitly
+# Codex — refresh the snapshot, then re-add to install it.
+# There is no `codex plugin update`; upgrading the marketplace moves the
+# snapshot without touching the installed plugin, so the `add` is what
+# actually lands the new version.
 codex plugin marketplace upgrade spectacular
+codex plugin add spectacular@spectacular
 
 # npx skills
 npx skills add alexsmedile/spectacular

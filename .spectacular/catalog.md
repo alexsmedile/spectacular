@@ -26,6 +26,9 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `D22-accepted` | Decision | Run transition state machine and charter tokenizer specification | `.spectacular/decisions/D22-accepted.md` |
 | `D23-accepted` | Decision | Identify workspace entities with type and version them with schema | `.spectacular/decisions/D23-accepted.md` |
 | `D24-accepted` | Decision | A schema field means Spectacular mechanically governs the frontmatter | `.spectacular/decisions/D24-accepted.md` |
+| `D25-accepted` | Decision | Make VOCABULARY.md the canonical domain ontology Anchor | `.spectacular/decisions/D25-accepted.md` |
+| `D26-accepted` | Decision | Use Atlas domain maps as non-governing visual projections | `.spectacular/decisions/D26-accepted.md` |
+| `D27-accepted` | Decision | Make ontology impact explicit in planning without adding a Mission field | `.spectacular/decisions/D27-accepted.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |
@@ -107,6 +110,7 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `P10` | Proposal | Preparation judgment checkpoint | `.spectacular/proposals/P10-preparation-judgment-checkpoint.md` |
 | `P11` | Proposal | Context-sandwich compilation and decision steering protocol | `.spectacular/proposals/P11-context-sandwich-compilation-and-decision-steering-protocol.md` |
 | `P12` | Proposal | Owner interaction design for decision presentation and anti-slop execution | `.spectacular/proposals/P12-owner-interaction-design.md` |
+| `P13` | Proposal | Ontology anchors and visual domain maps | `.spectacular/proposals/P13-ontology-anchors-and-visual-domain-maps.md` |
 | `P2` | Proposal | Add answer-key governed autonomy | `.spectacular/proposals/P2-add-answer-key-governed-autonomy.md` |
 | `P3` | Proposal | Reduce Spectacular launch and execution waste | `.spectacular/proposals/P3-reduce-spectacular-launch-and-execution-waste.md` |
 | `P4` | Proposal | Make Spectacular control operations lean | `.spectacular/proposals/P4-make-spectacular-control-operations-lean.md` |
@@ -118,3 +122,4 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `PRODUCT` | Anchor | Product direction | `.spectacular/PRODUCT.md` |
 | `PROJECT` | Anchor | Spectacular v2 | `.spectacular/PROJECT.md` |
 | `STACK` | Anchor | Stack | `.spectacular/STACK.md` |
+| `VOCABULARY` | Anchor | Domain ontology and ubiquitous language | `.spectacular/VOCABULARY.md` |

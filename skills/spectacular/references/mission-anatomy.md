@@ -160,9 +160,10 @@ add a Campaign binding to Mission frontmatter.
 
 ### On-Demand Anchors (Earned only)
 Specialized anchors emerge only when domain or operational complexity exceeds inline thresholds:
-- `VOCABULARY.md`: Project ubiquitous language and core entity state machines.
-  * *Threshold*: If <= 3-4 simple entities, keep inline in `PROJECT.md`.
-  * *Earned triggers*: (1) Synonym collision / naming ambiguity (e.g. `User` vs `Account`, `Job` vs `Task`); (2) Non-trivial state machine invariants (e.g. `DRAFT` -> `ACTIVE` -> `REVIEW`); (3) Bespoke non-standard concepts (e.g. `Anchor`, `Gap`, `Handoff`); (4) Multi-contract shared models.
+- `VOCABULARY.md`: Canonical domain ontology and ubiquitous language. Its glossary index is alphabetical; for the detailed section skeleton, see the body shape in [genesis-examples.md](genesis-examples.md).
+  * *Threshold*: If <= 3-4 simple entities with no ambiguous terms or shared rules, keep them inline in `PROJECT.md`.
+  * *Earned triggers*: (1) Synonym collision / naming ambiguity (e.g. `User` vs `Account`, `Job` vs `Task`); (2) Non-trivial state machine invariants (e.g. `DRAFT` -> `ACTIVE` -> `REVIEW`); (3) Relationships, permissions, or actions that span several concepts; (4) Bespoke non-standard concepts (e.g. `Anchor`, `Gap`, `Handoff`); (5) Multi-contract shared models.
+  * *Visual companion*: `atlas/domain-overview.md` is a non-governing projection. Relationships are labelled edges; use `1`, `0..1`, `1..*`, and `0..*` only when cardinality matters.
 - `SECURITY.md`: Project-specific isolation, multi-tenancy, secrets, or compliance rules (only if non-standard).
 - `GUARDRAILS.md`: Custom AI operational rules (only upon explicit owner request; defaults suffice).
 - `PRODUCT.md`: Dedicated commercial/marketing models (only if distinct from repository engineering).

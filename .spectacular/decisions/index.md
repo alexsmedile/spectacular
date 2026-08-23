@@ -20,6 +20,9 @@
 | `D22-accepted` | Decision | Run transition state machine and charter tokenizer specification | `.spectacular/decisions/D22-accepted.md` |
 | `D23-accepted` | Decision | Identify workspace entities with type and version them with schema | `.spectacular/decisions/D23-accepted.md` |
 | `D24-accepted` | Decision | A schema field means Spectacular mechanically governs the frontmatter | `.spectacular/decisions/D24-accepted.md` |
+| `D25-accepted` | Decision | Make VOCABULARY.md the canonical domain ontology Anchor | `.spectacular/decisions/D25-accepted.md` |
+| `D26-accepted` | Decision | Use Atlas domain maps as non-governing visual projections | `.spectacular/decisions/D26-accepted.md` |
+| `D27-accepted` | Decision | Make ontology impact explicit in planning without adding a Mission field | `.spectacular/decisions/D27-accepted.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |

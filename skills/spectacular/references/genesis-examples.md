@@ -84,24 +84,45 @@ Component layout and dependency directions for DB, Server, and API layers.
 
 ## 2. On-Demand Anchor Example
 
-### `.spectacular/VOCABULARY.md` (Ubiquitous Language)
-```yaml
----
-type: Anchor
-id: 019fe381-5d61-7223-b362-03a5f99a7b18
-human_ref: VOCABULARY
-title: Ubiquitous Language
-direction: Unambiguous naming definitions for domain entities and lifecycle states.
----
+### `.spectacular/VOCABULARY.md` (Domain Ontology and Ubiquitous Language)
 
-# Vocabulary
+This is a body shape, not a frontmatter template. Follow the existing project
+Anchor envelope for an earned `VOCABULARY.md`; no command currently emits or
+validates an Anchor template.
+
+```md
+
+# Domain ontology and ubiquitous language
+
+## Glossary index
 
 | Term | Definition | Invariants / Restrictions |
 |---|---|---|
-| **Job** | An atomic unit of background work. | States: `PENDING` -> `RUNNING` -> `COMPLETED` \| `FAILED`. |
-| **Worker** | A concurrent execution routine consuming jobs. | Must handle SIGTERM gracefully within a 5-second deadline. |
-| **Payload** | Immutable JSON parameters passed to a Job. | Max size 64KB; validated on ingest. |
 | **Attempt** | A single execution attempt of a Job. | Increments sequentially; triggers exponential backoff on error. |
+| **Job** | An atomic unit of background work. | States: `PENDING` -> `RUNNING` -> `COMPLETED` \| `FAILED`. |
+| **Payload** | Immutable JSON parameters passed to a Job. | Max size 64KB; validated on ingest. |
+| **Worker** | A concurrent execution routine consuming jobs. | Must handle SIGTERM gracefully within a 5-second deadline. |
+
+Keep this index alphabetical. Put the detailed model below, grouped by bounded
+context rather than alphabetically:
+
+## Bounded contexts
+
+## Objects
+
+## Relationships
+
+| Relationship | Meaning | Context |
+| --- | --- | --- |
+| Job `1` `contains` `1..*` Attempt | Job owns its execution attempts; an Attempt belongs to one Job. | Execution tracking |
+
+## Actions and events
+
+## Invariants and policies
+
+## Implementation mappings
+
+## Semantic gaps and change history
 ```
 
 ---

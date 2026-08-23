@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.7.1 — 2026-08-24
+
+### Added
+
+- `.spectacular/VOCABULARY.md` is an earned Anchor holding the canonical domain
+  ontology and ubiquitous language: an alphabetical glossary index, then bounded
+  contexts, objects, relationships with cardinality and ownership, actions and
+  events, invariants and policies, implementation mappings, and semantic gaps
+  (`D25-accepted`).
+- `.spectacular/atlas/domain-overview.md` is the visual projection of that
+  ontology. It renders bounded contexts as clusters using a fixed node legend;
+  relationships are labelled edges, never nodes. The Atlas grants no authority
+  and the Vocabulary wins if the two disagree (`D26-accepted`).
+- Genesis and Mission guidance now formulate domain nouns before implementation
+  verbs and make ontology impact explicit in a Mission body — as guidance, not a
+  new frontmatter field, validator, or claim of mechanical enforcement
+  (`D27-accepted`, `P13`).
+
+### Changed
+
+- A documented cardinality is not an enforced invariant unless its
+  implementation mapping names a schema, code rule, API contract, or test.
+
 ## 2.7.0 — 2026-08-24
 
 ### Changed

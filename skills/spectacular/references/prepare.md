@@ -12,7 +12,7 @@ When starting a project from scratch, or when receiving an initial PRD or prompt
      * `.spectacular/STACK.md`: What with (Languages, runtimes, database, libraries, baseline test command).
      * `.spectacular/ARCHITECTURE.md`: How (Directory layout, layers, component boundaries between DB, Server, API, and Domain).
    - **On-Demand Anchors (Earned only)**:
-     * `.spectacular/VOCABULARY.md`: Defined terms and ubiquitous language, only when domain ontology or state machines are rich.
+     * `.spectacular/VOCABULARY.md`: Canonical domain ontology and ubiquitous language, earned when concepts, state machines, relationships, or policies are rich. Start with an alphabetical glossary; for the section skeleton that follows it, see [genesis-examples.md](genesis-examples.md).
      * `.spectacular/SECURITY.md`: Non-standard compliance, isolation, or secret rules, only if project-specific.
      * `.spectacular/GUARDRAILS.md`: Custom AI operational rules, only upon explicit owner request.
      * `.spectacular/PRODUCT.md`: User personas, target market, and user journeys, only if separated from repository engineering.
@@ -20,7 +20,15 @@ When starting a project from scratch, or when receiving an initial PRD or prompt
 
 2. **Adopt Strong Defaults (Zero Grilling)**: Do not stall kickoff with multi-question interviews. Choose sane, production-grade defaults for toolchain and architecture; prompt only on irreversible semantic forks.
 
-3. **Prove coverage, then preview**: Before presenting anything for approval, make a source-to-destination coverage pass: map every one of the eight dimensions to a Core/earned Anchor or an `M1-bootstrap` claim, or mark it as an explicit open Gap. When a product has several meaningful journeys or non-trivial architecture connections, build two linked, compact Atlas boards in `.spectacular/atlas/<value-slice>.md`: an **Outcome Board** (actors, journey steps, desired outcomes, success signals) and a **System Board** (capabilities, boundaries, dependencies, risks, and proof). Connect them through named capabilities; do not create a separate graph database or a second authority system. Only when all eight dimensions—and, when used, the Atlas boards—are accounted for, show the Core Triad summary and `M1-bootstrap` plan once. On owner confirmation ("Yes" / "Proceed"), write the Core Anchors and activate `M1` with `spectacular mission start`.
+3. **Prove coverage, then preview**: Before presenting anything for approval, make a source-to-destination coverage pass: map every one of the eight dimensions to a Core/earned Anchor or an `M1-bootstrap` claim, or mark it as an explicit open Gap. When the domain is non-trivial, formulate nouns before verbs in `VOCABULARY.md` and create `atlas/domain-overview.md` as its visual projection. Add compact value-slice Atlas boards as each becomes warranted:
+
+   | Board | Contents | Add when |
+   |---|---|---|
+   | Outcome | actors, journey steps, desired outcomes, success signals | the product has several meaningful journeys |
+   | System | capabilities, boundaries, dependencies, risks, proof | architecture connections are non-trivial |
+   | Domain | objects, actions, events, policies, labelled relationships | an earned `VOCABULARY.md` exists |
+
+   Connect them through named capabilities; do not create a separate graph database or a second authority system. Only when all eight dimensions—and, when used, the Vocabulary and Atlas boards—are accounted for, show the Core Triad summary and `M1-bootstrap` plan once. On owner confirmation ("Yes" / "Proceed"), write the Core Anchors and activate `M1` with `spectacular mission start`.
 
 For live templates and layouts, see [genesis-examples.md](genesis-examples.md) or run `spectacular mission start --help` to emit the exact `MissionPlan` YAML frontmatter template directly to stdout.
 
@@ -183,6 +191,11 @@ Markdown body:
 - `## Purpose & Scope`: Concise 2-3 sentence overview.
 - `## Key Deliverables & Actions`: Direct file-by-file action checklist.
 - origin and rationale, if non-obvious.
+- ontology impact: name affected Vocabulary concepts and cite the existing
+  `VOCABULARY` Anchor in `sources:` or the Mission body (updating the relevant
+  Domain Atlas too, or explaining why no map is needed); otherwise state
+  `Ontology impact: none` with a short reason. This is workflow guidance, not a
+  new frontmatter field or a claim of mechanical enforcement.
 
 A claim is the part most often written too vaguely. It needs a boundary that can
 fail, and a proof that names the test:

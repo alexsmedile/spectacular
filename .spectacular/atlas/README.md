@@ -47,14 +47,18 @@ Use one lowercase, hyphenated file per slice:
 
 Do not number Atlas files. They are navigable maps, not a lifecycle queue.
 
-## Two connected boards
+## Connected boards
 
-Every Atlas carries two views of the same slice:
+An Atlas may carry two or three complementary boards for a slice:
 
 - **Outcome board** — the user, their journey, the desired outcome, and the
   observable success signal.
 - **System board** — the capabilities, ownership boundaries, dependencies,
   relevant modules or interfaces, technical risks, and proof.
+- **Domain board** — when an earned `VOCABULARY.md` exists, the bounded
+  contexts, objects, actions, events, policies, and relationships that define
+  the project model. The Vocabulary remains canonical; this board is its visual
+  projection.
 
 The shared middle is a capability. Keep the connection explicit:
 
@@ -69,7 +73,7 @@ flowchart LR
 
 ## Relationship vocabulary
 
-Use only the smallest useful labels:
+For **Outcome and System boards**, use only the smallest useful labels:
 
 | Label | Meaning |
 | --- | --- |
@@ -80,8 +84,33 @@ Use only the smallest useful labels:
 | `proved_by` | evidence or a check supports a stated claim |
 | `at_risk_from` | a risk can undermine an outcome or capability |
 
-Do not invent a separate ontology, graph database, or generic record system.
+Do not invent a second ontology, graph database, or generic record system.
 Plain nouns and labelled connections are enough while the map remains human-led.
+
+## Domain-map notation
+
+Use the following node types only when a Domain board needs them:
+
+| Node type | Meaning |
+| --- | --- |
+| Bounded Context | A Mermaid subgraph where a term has one intended meaning. |
+| Actor | A person, organisation, or agent that participates. |
+| Entity | A thing with identity and lifecycle. |
+| Value Object | A defined value without independent identity. |
+| Action | A meaningful permitted operation. |
+| Event | A fact that occurred. |
+| Policy / Invariant | A rule that governs state or action. |
+| External System | A dependency outside the project domain. |
+
+Relationships are edges, never nodes. Use the smallest useful label from
+`owns`, `contains`, `belongs_to`, `has`, `references`, `requests`, `performs`,
+`emits`, `transitions_to`, `governed_by`, `reads_from`, and `writes_to`. Add
+UML/ER multiplicity only where it clarifies a rule: `1` means exactly one,
+`0..1` optional, `1..*` one or more, and `0..*` zero or more. Put the
+multiplicity at the appropriate end of the edge.
+
+Do not mix every API, table, UI surface, and test into the Domain board. Those
+belong in the Vocabulary's implementation mappings or in a focused Atlas slice.
 
 ## Suggested shape
 
@@ -117,6 +146,20 @@ flowchart LR
   C[Safe cold recovery] -->|implemented_by| B[Mission and Handoff boundaries]
   A[Explicit authority] -->|enables| C
   C -->|proved_by| E[Cold-resume acceptance]
+```
+
+## Domain board (optional)
+
+```mermaid
+flowchart LR
+  subgraph Recovery[Task recovery]
+    Operator[Actor: Operator]
+    Mission[Entity: Mission]
+    Handoff[Entity: Handoff]
+  end
+
+  Operator -->|requests| Mission
+  Mission -->|has 0..*| Handoff
 ```
 
 ## Links and open questions

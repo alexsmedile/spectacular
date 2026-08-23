@@ -5,7 +5,7 @@ filesystem before any projection or JSON is generated. UUIDv7 remains the
 durable identity and SHA-256 remains the exact-revision fingerprint; neither
 is the primary navigation label.
 
-## Project anchors
+## Workspace layout
 
 The project root is intentionally small:
 
@@ -15,6 +15,7 @@ The project root is intentionally small:
 ├── PRODUCT.md
 ├── ARCHITECTURE.md
 ├── STACK.md
+├── VOCABULARY.md
 ├── GUARDRAILS.md
 ├── atlas/
 ├── campaigns/
@@ -34,6 +35,11 @@ The project root is intentionally small:
 
 `PROJECT.md` is the project Anchor. `PRODUCT.md`, `ARCHITECTURE.md`, and
 `STACK.md` are authoritative project Anchors for their named questions.
+`VOCABULARY.md` is an earned Anchor: the canonical domain ontology and
+ubiquitous language when concepts, state, relationships, or rules no longer fit
+clearly in `PROJECT.md`. Its glossary is alphabetical; its detailed model is
+grouped by bounded context. A linked domain Atlas is a readable projection, not
+a second authority.
 `GUARDRAILS.md` is owner-authored guidance selected by the runtime. `index.md`
 is a deterministic, committed, non-authoritative routing guide. `catalog.md` is
 the corresponding complete, non-authoritative record inventory. Neither is

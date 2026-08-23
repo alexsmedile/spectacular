@@ -323,8 +323,8 @@ created_by: <owner>
 created: "<RFC3339>"
 updated: "<RFC3339>"
 scope: [v2]
-# target_contract: optional Contract this explores against
-# atlas: optional ../atlas/<map>.md attachment
+target_contract: Contract:<uuidv7>
+# atlas: optional ../atlas/<map>.md attachment; recorded, not resolved
 ---
 # <title>
 
@@ -348,14 +348,20 @@ type: Campaign
 schema: spectacular.campaign.v2
 title: <title>
 focus: <what this campaign is steering toward>
-current: B<N>
+current: B2
 exit_condition: <observable condition that ends the campaign>
-# atlas: optional ../atlas/<map>.md attachment
+# atlas: optional ../atlas/<map>.md attachment; recorded, not resolved
 blocks:
     - ref: B1
-      title: <title>
-      outcome: <observable outcome>
-      depends_on: []
+      title: <first block title>
+      state: complete
+      after: []
+      missions: []
+    - ref: B2
+      title: <second block title>
+      state: active
+      after: [B1]
+      missions: []
 ---
 # <title>
 

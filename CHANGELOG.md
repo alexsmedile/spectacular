@@ -11,7 +11,13 @@
   no compatibility reader (`D23-accepted`).
 - `spectacular proposal check --schema` and `spectacular campaign check --schema`
   now return the frontmatter template an agent should write, alongside the output
-  schema they already reported.
+  schema they already reported. Every published template is round tripped through
+  the validator that emitted it, so a template can no longer name a field the
+  parser does not read.
+- A `schema:` field states that Spectacular governs the document and its
+  frontmatter is under mechanical check; a document no command validates does not
+  carry one. `type:` stays universal. An Atlas therefore declares `type:` alone
+  (`D24-accepted`, amending `D23-accepted`).
 
 ### Added
 

@@ -1,6 +1,5 @@
 ---
 type: Atlas
-schema: spectacular.atlas.v1
 title: Atlas guide
 ---
 
@@ -17,10 +16,11 @@ exists, as the place where a shape becomes legible. Later as an attachment: a
 Proposal or a Contract points at the Atlas that explains the ground it stands on.
 
 An Atlas is canonical Markdown for its own explanation. Its frontmatter names the
-entity (`type: Atlas`) and the schema that would validate it, but no CLI command
-does — an Atlas has nothing mechanical to check. It is skip-listed in discovery,
-which is what makes it non-governing; the `type:` field is identity, not
-authority. An Atlas does not grant authority or create Mission drift. Contracts
+entity (`type: Atlas`) and stops there. It carries no `schema:`, because a
+`schema:` states that Spectacular governs the document, and no command validates
+an Atlas. Claiming a schema nobody enforces would invite tooling to rely on a
+guarantee that does not exist. It is skip-listed in discovery, which is what
+makes it non-governing; the `type:` field is identity, not authority. An Atlas does not grant authority or create Mission drift. Contracts
 and Missions remain the places where behavior is agreed and implementation is
 authorized.
 
@@ -88,7 +88,6 @@ Plain nouns and labelled connections are enough while the map remains human-led.
 ````md
 ---
 type: Atlas
-schema: spectacular.atlas.v1
 title: Task recovery
 ---
 

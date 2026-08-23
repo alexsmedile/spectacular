@@ -83,6 +83,50 @@ to a project-level collection only when it genuinely applies across Missions.
 Archival moves the complete Mission bundle to `archive/missions/` as one
 recoverable transaction.
 
+## What `type:` and `schema:` promise
+
+Every document in the workspace that is a thing you can name declares `type:`.
+It answers what the document is — `Mission`, `Proposal`, `Decision`, `Contract`,
+`Campaign`, `Atlas` — so a reader or an agent can route without opening it.
+
+Some documents also declare `schema:`. That field is a claim with a consequence:
+
+> **Spectacular governs this document, and its frontmatter is under mechanical
+> check.**
+
+A document carries `schema:` when a command validates it and refuses on drift. A
+document that no command validates does not carry one, because a schema nobody
+enforces invites tooling to rely on a guarantee that does not exist.
+
+### The check reaches the frontmatter, not the body
+
+Mechanical enforcement covers frontmatter: required fields, permitted
+vocabularies, reference shapes, ordering. That is the part a machine can decide,
+and where a refusal is always fair.
+
+The body is not mechanically enforced. Prose is where a document explains itself,
+and a validator that graded prose would either be wrong or would flatten the
+writing into a form. The body is the part an agent reads, judges, and writes.
+
+This leaves a real gap: a record can carry valid frontmatter above a body that
+contradicts it, and nothing refuses. A body check may later *sniff* for that
+drift and warn. A warning is the honest register for a judgment a machine cannot
+make cleanly — and it must stay a warning, because a false refusal on prose would
+make the record unwritable.
+
+### Where each document sits
+
+| Document | `type:` | `schema:` | Validated by |
+|---|---|---|---|
+| Mission, Proposal, Decision, Contract, Evidence, Handoff, Review | yes | — | the record type itself |
+| Campaign | yes | `spectacular.campaign.v2` | `campaign check` |
+| Atlas | yes | — | nothing; it is a map, not a record |
+| `raw/` | — | — | nothing; it names no entity |
+
+Governed records are identified through their typed record rather than a
+`schema:` string. A Campaign is not a typed record, so it declares its schema
+explicitly.
+
 ## Interface rule
 
 Human output leads with readable reference, outcome, state, current Objective,

@@ -12,6 +12,4 @@ Compact routing only. Read canonical sources for authority; [catalog.md](catalog
 
 ## Current work
 
-| Mission | Outcome | Source |
-|---|---|---|
-| `M22` | Repair Context Sandwich steering invariants | `.spectacular/missions/M22-repair-context-sandwich-steering-invariants/M22-repair-context-sandwich-steering-invariants.md` |
+No active Mission is recorded. Prepare a bounded Mission before consequential work.

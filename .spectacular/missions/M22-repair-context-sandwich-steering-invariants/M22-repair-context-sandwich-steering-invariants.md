@@ -2,9 +2,9 @@
 type: Mission
 id: 01a02e74-f908-7f50-b05b-7127633d6595
 title: Repair Context Sandwich steering invariants
-status: active
+status: completed
 created: "2026-08-23T11:50:27Z"
-updated: "2026-08-23T11:53:35Z"
+updated: "2026-08-23T11:53:41Z"
 activation:
     at: "2026-08-23T11:50:27Z"
     by: Alex
@@ -40,6 +40,12 @@ completion:
     - claim: m21-pinned-benchmark-matrix
       pass_boundary: Scope hardening and context savings benchmarks execute against immutable pinned fixtures rather than live repo files with zero false rejections.
       proof_requirement: Pinned fixture tests prove ≥40% context savings and 100% discriminating scope protection across scaffolding, renames, and broad directories.
+completion_record:
+    at: "2026-08-23T11:53:41Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 33f8268d3c4ab37e9679c609ebf733d05683ec76
 contract:
     fingerprint: sha256:cb380518f027c697e5d2a22f5a4c6ca5f2cab8e996db5718b3ef8b4cbf72c1d4
     ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -82,7 +88,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-23T11:50:27Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - internal/missionbundle

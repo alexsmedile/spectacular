@@ -34,6 +34,7 @@
 | `M21` | Mission | Measure and harden scope guardrails | `.spectacular/missions/M21-measure-and-harden-scope-guardrails/M21-measure-and-harden-scope-guardrails.md` |
 | `M21/RV1` | Review | Independent review of M21 measured scope hardening and final campaign regression | `.spectacular/missions/M21-measure-and-harden-scope-guardrails/reviews/RV1-independent-review-of-m21-measured-scope-hardening-and-final-campaign-regression.md` |
 | `M22` | Mission | Repair Context Sandwich steering invariants | `.spectacular/missions/M22-repair-context-sandwich-steering-invariants/M22-repair-context-sandwich-steering-invariants.md` |
+| `M22/RV1` | Review | Independent review of M22 repaired Context Sandwich steering invariants | `.spectacular/missions/M22-repair-context-sandwich-steering-invariants/reviews/RV1-independent-review-of-m22-repaired-context-sandwich-steering-invariants.md` |
 | `M3` | Mission | Make Spectacular launch and execution lean | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/M3-make-spectacular-launch-and-execution-lean.md` |
 | `M3/D1-deldrh` | Decision | Activate the Spectacular efficiency Mission | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/decisions/D1-deldrh.md` |
 | `M3/E1-npnuyp` | Evidence | Lean launch and question contract proof | `.spectacular/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E1-npnuyp.md` |

@@ -4,7 +4,7 @@ id: 01a02e74-f908-7f50-b05b-7127633d6595
 title: Repair Context Sandwich steering invariants
 status: active
 created: "2026-08-23T11:50:27Z"
-updated: "2026-08-23T11:53:18Z"
+updated: "2026-08-23T11:53:35Z"
 activation:
     at: "2026-08-23T11:50:27Z"
     by: Alex
@@ -70,6 +70,11 @@ owner: Alex
 ref: M22
 repair_budget: 2
 review: independent
+reviews:
+    - file: reviews/RV1-independent-review-of-m22-repaired-context-sandwich-steering-invariants.md
+      id: 01a02e75-2fb8-72bb-948e-6a6d07a2c21b
+      ref: RV1
+      verdict: pass
 run:
     current_objective: O1
     id: 01a02e74-f908-7977-ba97-7ebf55ebb89d

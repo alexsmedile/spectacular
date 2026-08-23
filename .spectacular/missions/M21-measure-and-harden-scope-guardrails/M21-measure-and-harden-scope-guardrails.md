@@ -4,7 +4,7 @@ id: 01a02d0c-06b0-787d-9b76-746f51789420
 title: Measure and harden scope guardrails
 status: active
 created: "2026-08-23T05:16:06Z"
-updated: "2026-08-23T05:16:06Z"
+updated: "2026-08-23T05:17:46Z"
 activation:
     at: "2026-08-23T05:16:06Z"
     by: Alex
@@ -52,19 +52,19 @@ objectives:
       id: 01a02d0c-06b0-7a80-9d05-a0b35ae714d2
       outcome: Evaluate candidate scope guardrails against real escapes and coherent work.
       ref: O1
-      status: pending
+      status: implemented
     - claims:
         - coherent-broad-perimeters
       id: 01a02d0c-06b0-7791-bd8e-1b25822634c8
       outcome: Preserve justified broad perimeters and avoid brittle numeric limits.
       ref: O2
-      status: pending
+      status: implemented
     - claims:
         - final-campaign-regression
       id: 01a02d0c-06b0-77d3-8a70-ac60d4cc7fee
       outcome: Run final campaign regression and benchmark suite.
       ref: O3
-      status: pending
+      status: implemented
 outcome: Measure scope guardrails against paired fixtures, promote only deterministic zero-false-positive checks, and verify whole-campaign regression.
 owner: Alex
 ref: M21

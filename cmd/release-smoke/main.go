@@ -79,13 +79,16 @@ objectives:
     claims: [installed-loop]
 authority:
   operator: [inspect, edit-in-scope, choose-reversible-implementation, run-checks, generate-derived-files, bounded-repair, commit-local]
-  requires_owner: [activate-mission, change-outcome-or-completion, expand-scope, push, merge, release, irreversible-change, destructive-data, secret-change]
+  requires_owner: [activate-mission, change-outcome-or-completion, expand-scope, push, merge, release, irreversible-change, destructive-data, secret-change, amend-contract]
 scope:
   mechanical: [.spectacular/]
   semantic: [Installed compact lifecycle proof.]
 repair_budget: 1
 dependencies: []
 gaps: []
+resolves_gaps:
+    - gap: smoke-gap
+      resolution: The installed release loop now proves the amendment path end to end.
 stops: [scope-drift]
 ---
 # Mission
@@ -100,10 +103,16 @@ Exercise the installed binary.
 	if _, err := r.command("objective", "promote", missionRef+"/O1", "--json"); err != nil {
 		return err
 	}
+	if err := r.exerciseRunTransitions(missionRef); err != nil {
+		return err
+	}
 	if _, err := r.command("objective", "finish", missionRef+"/O1", "--json"); err != nil {
 		return err
 	}
 	if _, err := r.command("run", "start", missionRef, "--title", "Cold completion run", "--json"); err != nil {
+		return err
+	}
+	if err := r.exerciseMutatingSurface(missionRef); err != nil {
 		return err
 	}
 	checked, err := r.command("mission", "check", missionRef, "--json")
@@ -239,4 +248,149 @@ func copyFixture(source, destination string) error {
 func fatal(err error) {
 	fmt.Fprintln(os.Stderr, err)
 	os.Exit(1)
+}
+
+// exerciseMutatingSurface drives the mutating commands the compact loop does not
+// reach on its own. Each one writes into the workspace, so an installed binary
+// that parses its flags but writes the wrong path, or writes nothing, fails here
+// rather than in a user's repository. The commands run in dependency order:
+// evidence and handoff attach to the live Mission, the run transition moves the
+// run it already started, the decision stands alone, and the amendment closes the
+// Gap this Mission declared at activation.
+func (r runner) exerciseMutatingSurface(missionRef string) error {
+	commit, err := r.git("rev-parse", "HEAD")
+	if err != nil {
+		return err
+	}
+	tree, err := r.git("rev-parse", "HEAD^{tree}")
+	if err != nil {
+		return err
+	}
+
+	evidence := `---
+type: EvidenceDraft
+title: Installed loop proof for O1
+actor: release-smoke-operator
+commit: ` + commit + `
+tree: ` + tree + `
+objectives: [O1]
+claims: [installed-loop]
+checks:
+  - name: release-smoke
+    result: pass
+limitations: []
+---
+# Evidence Details
+
+The installed binary completed the compact loop.
+`
+	recordedEvidence, err := r.commandInput(evidence, "evidence", "record", missionRef, "-", "--json")
+	if err != nil {
+		return err
+	}
+	if err := r.requireWrittenRecord(recordedEvidence, "evidence record"); err != nil {
+		return err
+	}
+
+	handoff := `---
+type: HandoffDraft
+title: Hand the installed loop to a second operator
+reviewed:
+    commit: ` + commit + `
+    tree: ` + tree + `
+sender:
+    actor: release-smoke-operator
+    relation_to_receiver: operator
+task: Confirm the installed loop from a separate session.
+asserted:
+    - the installed binary completed the compact loop
+assumed:
+    - the disposable workspace is representative
+stops:
+    - scope would grow beyond the installed loop
+returns:
+    - the typed result of the confirming run
+---
+# Handoff
+
+Continue from the recorded evidence.
+`
+	recordedHandoff, err := r.commandInput(handoff, "handoff", "record", missionRef, "-", "--by", "release-smoke-operator", "--json")
+	if err != nil {
+		return err
+	}
+	if err := r.requireWrittenRecord(recordedHandoff, "handoff record"); err != nil {
+		return err
+	}
+
+	decision := `---
+type: DecisionDraft
+title: Prove the installed decision path
+actor: release-owner
+actor_role: owner
+question: Does the installed binary record a Decision atomically?
+disposition: accepted
+rationale: The release gate must not ship a Decision path that only unit tests have run.
+scope: [v2]
+---
+# Prove the installed decision path
+
+Recorded by the installed binary during the release smoke.
+`
+	recordedDecision, err := r.commandInput(decision, "decide", "-", "--json")
+	if err != nil {
+		return err
+	}
+	if err := r.requireWrittenRecord(recordedDecision, "decide"); err != nil {
+		return err
+	}
+
+	// The amendment closes the Gap this Mission declared at activation. It is the
+	// one command whose refusal rules depend on which Mission is live, so running
+	// it here — with the declaring Mission live — proves the exemption path an
+	// owner actually uses.
+	amended, err := r.command("contract", "amend", contractRef, "--gap", "smoke-gap", "--by", "release-owner", "--json")
+	if err != nil {
+		return err
+	}
+	if amended.Data["gap"] != "smoke-gap" {
+		return fmt.Errorf("contract amend did not report the closed Gap: %#v", amended.Data)
+	}
+	return nil
+}
+
+// requireWrittenRecord asserts a mutating command reported a path and that the
+// path exists. A command that returns a typed success without leaving a record on
+// disk is the failure this whole exercise exists to catch.
+func (r runner) requireWrittenRecord(result envelope, label string) error {
+	path := stringField(result, "path")
+	if path == "" {
+		return fmt.Errorf("%s returned no path: %#v", label, result.Data)
+	}
+	if _, err := os.Stat(filepath.Join(r.workspace, filepath.FromSlash(path))); err != nil {
+		return fmt.Errorf("%s reported %q but nothing is on disk: %w", label, path, err)
+	}
+	return nil
+}
+
+// exerciseRunTransitions moves the Mission's first run through the transition
+// table while it is still live. It runs before the objective finishes, because
+// finishing the last objective drives the run terminal and a terminal run refuses
+// every transition — the installed binary is right to refuse, so the proof has to
+// happen while there is still a live run to move.
+func (r runner) exerciseRunTransitions(missionRef string) error {
+	if _, err := r.command("run", "transition", missionRef+"/R1", "--to", "paused",
+		"--by", "release-smoke-operator", "--reason", "Prove the installed transition path.", "--json"); err != nil {
+		return err
+	}
+	resumed, err := r.command("run", "transition", missionRef+"/R1", "--to", "active",
+		"--by", "release-smoke-operator", "--reason", "Resume for completion.",
+		"--next-action", "Finish the objective.", "--json")
+	if err != nil {
+		return err
+	}
+	if state, _ := resumed.Data["to"].(string); state != "active" {
+		return fmt.Errorf("run transition reported state %q, want active: %#v", state, resumed.Data)
+	}
+	return nil
 }

@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `cmd/release-smoke` now drives six mutating commands that no end-to-end test
+  reached before: `evidence record`, `handoff record`, `run transition`,
+  `decide`, and `contract amend`, alongside the compact Mission loop it already
+  covered. Each mutating step asserts that the record it reported is on disk, so
+  a command that returns a typed success without writing anything fails the
+  release gate rather than a user's repository.
+- The `scenario-b-c` fixture contract carries an open Gap so the amendment path
+  can be exercised through the declaring-Mission exemption rather than bypassed.
+
 ## 2.6.0 — 2026-08-23
 
 ### Added

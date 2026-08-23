@@ -32,6 +32,23 @@ reading of intent. When proposing a new command, state the rationale, the curren
 and proposed command count, and wait for owner approval. `proposal create` stays
 forbidden.
 
+Every workspace document that names an entity declares `type:`. A `schema:` field is
+a narrower claim: Spectacular governs this document and its frontmatter is under
+mechanical check. Add `schema:` only when a command validates the document and
+refuses on drift — a schema nobody enforces invites tooling to rely on a guarantee
+that does not exist. An Atlas therefore carries `type:` alone. Mechanical checking
+reaches the frontmatter; the body is not enforced and a body check may only warn.
+See `D24-accepted`, which amends `D23-accepted`.
+
+Never hand-write a frontmatter template into documentation or a test. A published
+template is retrieved from `--schema` and is round tripped through the validator
+that emitted it. A template that names a field the parser does not read produces a
+document that validates while its meaning silently disappears.
+
+`.spectacular/raw/` is gitignored and skip-listed. Nothing there is an entity and
+nothing cites it. Never write a governed record, Proposal, or Decision into `raw/`:
+it would never appear in review and never be committed.
+
 A Contract is amended through `contract amend`, never by editing a bound Contract by
 hand. An amendment may reach the `gaps:` block and editorial frontmatter only;
 changing a field that states what was agreed is a `contract_version:` bump instead.

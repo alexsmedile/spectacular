@@ -6,6 +6,7 @@ clear what people read, what agents follow, and what the CLI can change.
 | Surface | Audience | What it is |
 |---|---|---|
 | `.spectacular/` | governance | The records: Missions, Proposals, Decisions, Evidence |
+| `.spectacular/raw/` | thinking | Unstructured sketchpad; gitignored, skip-listed, no frontmatter and no entity |
 | `.spectacular/atlas/` | planning | Optional outcome and system maps; explanatory, mutable, and non-authoritative |
 | `.spectacular/campaigns/` | planning | Optional durable roadmap maps; excluded from the record graph and CLI lifecycle |
 | `skills/` | agents at runtime | Executable guidance the CLI and Skill load |

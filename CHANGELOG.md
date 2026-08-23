@@ -21,12 +21,15 @@
 
 ### Added
 
+- `.spectacular/atlas/` holds Atlas planning maps: top-view projections of a user
+  journey or business system, used at the thinking-init stage and later attached
+  to a Proposal or Contract. An Atlas is skip-listed in discovery, grants no
+  authority, and no command validates it.
 - `.spectacular/raw/` is the unstructured sketchpad stage: gitignored,
   skip-listed in discovery, no frontmatter and no entity. A stray note there can
   never refuse a command.
 - Proposals and Contracts accept an optional `atlas:` attachment pointing at the
   top-view map they stand on, matching what Campaigns already do.
-
 - `cmd/release-smoke` now drives six mutating commands that no end-to-end test
   reached before: `evidence record`, `handoff record`, `run transition`,
   `decide`, and `contract amend`, alongside the compact Mission loop it already
@@ -35,6 +38,13 @@
   release gate rather than a user's repository.
 - The `scenario-b-c` fixture contract carries an open Gap so the amendment path
   can be exercised through the declaring-Mission exemption rather than bypassed.
+
+### Fixed
+
+- The doctor compatibility test read a hardcoded version rather than `VERSION`,
+  so it passed until a release bumped the version and then failed inside the
+  release workflow itself. The release manifest bumper does not edit Go test
+  files, so nothing caught it earlier.
 
 ## 2.6.0 — 2026-08-23
 

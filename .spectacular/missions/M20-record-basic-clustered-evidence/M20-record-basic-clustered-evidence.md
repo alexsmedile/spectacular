@@ -2,9 +2,9 @@
 type: Mission
 id: 01a02cfe-c428-76b7-8e06-f485642347cb
 title: Record basic clustered Evidence
-status: active
+status: completed
 created: "2026-08-23T05:01:35Z"
-updated: "2026-08-23T05:08:00Z"
+updated: "2026-08-23T05:08:06Z"
 activation:
     at: "2026-08-23T05:01:35Z"
     by: Alex
@@ -40,6 +40,12 @@ completion:
     - claim: authorized-surface-18
       pass_boundary: CC-missioncli, catalogs, and CLI registry expose exactly 18 commands through evidence record with rollback safety.
       proof_requirement: Registry assertions verify exactly 18 commands; git diff proves CC-projsurf remains unchanged.
+completion_record:
+    at: "2026-08-23T05:08:06Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 57ce75bf2516fc55c313c1c937a681b5568bab8d
 contract:
     fingerprint: sha256:aa2f59e740e9526bacef1dd9999127861836460e5f2f96b5fe05bc86a458ee1a
     ref: Contract:019fe381-5d61-7223-b362-03a5f99a7b10
@@ -82,7 +88,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-23T05:01:35Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - cmd/spectacular

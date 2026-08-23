@@ -12,6 +12,4 @@ Compact routing only. Read canonical sources for authority; [catalog.md](catalog
 
 ## Current work
 
-| Mission | Outcome | Source |
-|---|---|---|
-| `M20` | Record basic clustered Evidence | `.spectacular/missions/M20-record-basic-clustered-evidence/M20-record-basic-clustered-evidence.md` |
+No active Mission is recorded. Prepare a bounded Mission before consequential work.

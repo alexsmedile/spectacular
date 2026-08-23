@@ -2,9 +2,9 @@
 type: Mission
 id: 01a02d0c-06b0-787d-9b76-746f51789420
 title: Measure and harden scope guardrails
-status: active
+status: completed
 created: "2026-08-23T05:16:06Z"
-updated: "2026-08-23T05:17:56Z"
+updated: "2026-08-23T05:18:02Z"
 activation:
     at: "2026-08-23T05:16:06Z"
     by: Alex
@@ -40,6 +40,12 @@ completion:
     - claim: final-campaign-regression
       pass_boundary: The 18-command surface retains context savings (≥40%) and all M15-M20 guarantees with zero behavioral regression.
       proof_requirement: Full verification suite and benchmark tests prove context savings, tokenizer parity, and command surface integrity.
+completion_record:
+    at: "2026-08-23T05:18:02Z"
+    authorization: owner supplied --by after schema checks
+    by: Alex
+    review: RV1
+    reviewed_commit: 15397a5433d32cb078675ebe35aeb599ff211686
 contract:
     fingerprint: sha256:cb380518f027c697e5d2a22f5a4c6ca5f2cab8e996db5718b3ef8b4cbf72c1d4
     ref: Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
@@ -82,7 +88,7 @@ run:
     ref: R1
     repairs: 0
     started_at: "2026-08-23T05:16:06Z"
-    status: active
+    status: completed
 scope:
     mechanical:
         - internal/runtime

@@ -45,3 +45,6 @@ FEEDBACKS.md
 # snippet. No schema, no naming rules, no entity — and skip-listed in discovery
 # so a stray note can never refuse a command. Nothing in the repository cites it.
 .spectacular/raw/
+
+# Local-only: backups, snapshots, scratch — never committed
+_local/

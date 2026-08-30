@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.8.2 — 2026-08-30
+
+### Changed
+
+- `.spectacular/missions/index.md` filters out subordinate bundle records (Objectives,
+  Runs, Evidence, Handoffs, Reviews) to present a clean discovery table of top-level
+  Missions only.
+- Fully qualify subordinate `Evidence`, `Handoff`, and `Checkpoint` references with
+  their parent Mission scope (`M<N>/...`) in `.spectacular/catalog.md`.
+
 ## 2.8.1 — 2026-08-30
 
 ### Fixed

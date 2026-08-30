@@ -4,15 +4,6 @@
 | Ref | Type | Title | Source |
 |---|---|---|---|
 | `M1` | Mission | Restore human-operable workspace | `.spectacular/archive/missions/M1-human-operability/M1-human-operability.md` |
-| `M1/A1-nolpc6` | Assessment | RC.2 human-operability assessment | `.spectacular/archive/missions/M1-human-operability/assessments/A1-nolpc6.md` |
-| `M1/D1-t5to5d` | Decision | Continue the bounded human-operability repair | `.spectacular/archive/missions/M1-human-operability/decisions/D1-t5to5d.md` |
-| `M1/D2-ds7nnm` | Decision | Accept the verified RC.2 candidate | `.spectacular/archive/missions/M1-human-operability/decisions/D2-ds7nnm.md` |
-| `M1/D3-fl3qcg` | Decision | Archive the completed RC.2 Mission | `.spectacular/archive/missions/M1-human-operability/decisions/D3-fl3qcg.md` |
-| `M1/E1-t2lylz` | Evidence | Human-operability implementation proof | `.spectacular/archive/missions/M1-human-operability/evidence/E1-t2lylz.md` |
-| `M1/G1-3sk7lb` | Gap | Owner disposition on the human-operable RC.2 candidate | `.spectacular/archive/missions/M1-human-operability/gaps/G1-3sk7lb.md` |
-| `M1/O1` | Objective | Implement readable workspace and interface | `.spectacular/archive/missions/M1-human-operability/objectives/O1-implement-readable-workspace.md` |
-| `M1/R1` | Run | Implement human workspace layout | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/R1-implement-layout.md` |
-| `M1/R1/C1` | Checkpoint | Human-operability candidate ready for owner review | `.spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-in-progress.md` |
 | `M10` | Mission | Make a resolved Gap closable and a declared check real | `.spectacular/archive/missions/M10-superseded-by-d9/M10-superseded-by-d9.md` |
 | `P6` | Proposal | Condense projection surfaces | `.spectacular/archive/proposals/P6-condense-projection-surfaces.md` |
 | `P7` | Proposal | Amend a signed record without breaking it | `.spectacular/archive/proposals/P7-amend-a-signed-record-without-breaking-it.md` |

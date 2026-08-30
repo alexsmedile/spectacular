@@ -65,7 +65,14 @@ func Indexes(existing []discovery.Entry, pending []*workspace.Document, paths ma
 		if top == "PROJECT.md" || top == "PRODUCT.md" || top == "ARCHITECTURE.md" || top == "STACK.md" {
 			continue
 		}
-		groups[filepath.ToSlash(filepath.Join(".spectacular", top, "index.md"))] = append(groups[filepath.ToSlash(filepath.Join(".spectacular", top, "index.md"))], item)
+		if top == "missions" && item.Noun != string(domain.Mission) {
+			continue
+		}
+		if top == "archive" && item.Noun != string(domain.Mission) && item.Noun != string(domain.Proposal) {
+			continue
+		}
+		indexPath := filepath.ToSlash(filepath.Join(".spectacular", top, "index.md"))
+		groups[indexPath] = append(groups[indexPath], item)
 	}
 
 	out := map[string][]byte{}
@@ -96,7 +103,7 @@ func row(doc *workspace.Document, path string) indexRow {
 		ref = string(doc.Record.Type) + ":" + doc.Record.ID.String()
 	} else if !strings.Contains(ref, "/") {
 		switch doc.Record.Type {
-		case domain.Objective, domain.Run, domain.Review:
+		case domain.Objective, domain.Run, domain.Review, domain.Evidence, domain.Handoff, domain.Checkpoint:
 			if mission, _ := workspace.String(doc, "mission", false); strings.HasPrefix(mission, "M") && !strings.Contains(mission, ":") {
 				ref = mission + "/" + ref
 			}

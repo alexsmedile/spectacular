@@ -937,6 +937,28 @@ stops: [scope-drift]
 	if !strings.Contains(evOut, `"operation":"evidence.record"`) {
 		t.Fatalf("evidence record --from failed: %s", evOut)
 	}
+
+	// Evidence record from stdin
+	commit := git(t, root, "rev-parse", "HEAD")
+	tree := git(t, root, "rev-parse", "HEAD^{tree}")
+	evStdinDraft := `---
+type: EvidenceDraft
+title: Test stdin evidence
+actor: Alex
+commit: ` + commit + `
+tree: ` + tree + `
+claims: [smoke]
+checks:
+  - name: test-check
+    result: pass
+---
+# Evidence
+Verified via stdin.
+`
+	evStdinOut := run(t, root, []byte(evStdinDraft), 0, "evidence", "record", "M1", "-", "--json")
+	if !strings.Contains(evStdinOut, `"operation":"evidence.record"`) {
+		t.Fatalf("evidence record from stdin failed: %s", evStdinOut)
+	}
 }
 
 func TestCampaignValidateDerivesLiveState(t *testing.T) {

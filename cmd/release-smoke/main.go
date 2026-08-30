@@ -95,7 +95,7 @@ stops: [scope-drift]
 
 Exercise the installed binary.
 `
-	started, err := r.commandInput(plan, "mission", "start", "-", "--json")
+	started, err := r.commandInput(plan, "mission", "start", "-", "--create-branch", "--json")
 	if err != nil {
 		return err
 	}

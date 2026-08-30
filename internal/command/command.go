@@ -678,7 +678,7 @@ func (r Runner) Run(args []string) int {
 			break
 		}
 		var absTarget string
-		if targetPath != "" && targetPath != "-" {
+		if targetPath != "" {
 			absTarget = inputPath(r.Cwd, targetPath)
 		}
 		var absFrom string

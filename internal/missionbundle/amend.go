@@ -323,7 +323,7 @@ func (s Service) repointBoundMissions(contractRef, fingerprint string) ([]string
 // rewriteGap replaces one Gap's blocked_on with resolution, in place, leaving every
 // other byte of the Contract untouched.
 func rewriteGap(contract, gapRef, resolution string) (string, error) {
-	lines := strings.Split(contract, "\n")
+	lines := strings.Split(strings.ReplaceAll(contract, "\r\n", "\n"), "\n")
 	start := -1
 	for i, line := range lines {
 		if strings.TrimSpace(line) == "- ref: "+gapRef || strings.TrimSpace(line) == "ref: "+gapRef {
@@ -518,10 +518,11 @@ func topLevelBlocks(record string) (map[string]string, error) {
 }
 
 func splitRecord(record string) (string, string, string, error) {
-	if !strings.HasPrefix(record, "---\n") {
+	normalized := strings.ReplaceAll(record, "\r\n", "\n")
+	if !strings.HasPrefix(normalized, "---\n") {
 		return "", "", "", invalid("contract", "record does not open with YAML frontmatter")
 	}
-	rest := record[4:]
+	rest := normalized[4:]
 	end := strings.Index(rest, "\n---\n")
 	if end < 0 {
 		return "", "", "", invalid("contract", "record frontmatter is unterminated")

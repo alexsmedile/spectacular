@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.8.1 — 2026-08-30
+
+### Fixed
+
+- `spectacular evidence record <ref> -` preserves the standard input indicator (`-`)
+  rather than clearing the draft target path, allowing evidence drafts to be piped
+  via stdin.
+- `cmd/release-smoke` activates Missions with `--create-branch`, aligning acceptance
+  smoke tests with the activation branch guardrails (D15).
+
 ## 2.8.0 — 2026-08-30
 
 ### Added

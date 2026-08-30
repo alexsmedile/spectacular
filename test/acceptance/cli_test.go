@@ -35,6 +35,10 @@ func TestMain(m *testing.M) {
 	version, _ := os.ReadFile(filepath.Join(repoRoot, "VERSION"))
 	cliBinary = filepath.Join(buildRoot, "spectacular")
 	smokeBinary = filepath.Join(buildRoot, "release-smoke")
+	if runtime.GOOS == "windows" {
+		cliBinary += ".exe"
+		smokeBinary += ".exe"
+	}
 	ldflags := "-X github.com/alexsmedile/spectacular/v2/internal/buildinfo.Version=" + strings.TrimSpace(string(version)) + " -X github.com/alexsmedile/spectacular/v2/internal/buildinfo.Commit=acceptance"
 	if output, buildErr := build("-trimpath", "-buildvcs=false", "-ldflags", ldflags, "-o", cliBinary, "./cmd/spectacular"); buildErr != nil {
 		fmt.Fprintln(os.Stderr, string(output))

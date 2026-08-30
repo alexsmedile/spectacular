@@ -28,11 +28,27 @@ Thirteen types, in two groups.
 
 **Top-level** — they exist independently:
 
-- **Contract** — an accepted specification. Amended through `contract amend`,
-  never by hand.
-- **Mission** — a bounded, frozen agreement about one piece of work.
-- **Proposal** — optional, mutable exploration. Carries no authority.
-- **Decision** — a durable record of a choice and its reasoning.
+- **Proposal (`P<N>`)** — *"What could we do?"* Optional, mutable exploration. Carries no authority; the cheapest place to be wrong during brainstorming.
+- **Decision (`D<N>`)** — *"Which path did we choose?"* Durable, immutable record of an owner choice and its rationale. Recorded atomically via `spectacular decide`.
+- **Contract (`CC-<name>`)** — *"What does the system guarantee right now?"* Living, versioned specification of observable capabilities and invariants.
+- **Mission (`M<N>`)** — *"What are we building and proving right now?"* Bounded, frozen agreement with execution authority, exact git baseline, and failable proof.
+
+### The 4 Governance Primitives
+
+| Primitive | Core Question | Lifecycle State | Authority Level | Location |
+|---|---|---|---|---|
+| **Proposal (`P<N>`)** | *"What could we do?"* | **Mutable & Exploratory** | **Zero Authority** (ideas, draft specs, open questions) | `.spectacular/proposals/` |
+| **Decision (`D<N>`)** | *"Which path did we choose?"* | **Immutable & Permanent** | **Attributable Ruling** (owner choice, rationale, trade-offs) | `.spectacular/decisions/` |
+| **Contract (`CC-<name>`)** | *"What does the system guarantee right now?"* | **Living Truth** (versioned) | **Governing Specification** (system invariants, behaviors, gaps) | `.spectacular/contracts/` |
+| **Mission (`M<N>`)** | *"What are we building and proving right now?"* | **Frozen Execution Envelope** | **Execution Authority** (atomic claims, proof, reviews) | `.spectacular/missions/` |
+
+```mermaid
+flowchart LR
+    P["💡 Proposal (P1)<br><i>Brainstorm & draft specs</i>"] --> D["⚖️ Decision (D1)<br><i>Owner locks key choices</i>"]
+    D --> C["📜 Contract (CC-auth)<br><i>Incorporate living invariants</i>"]
+    C --> M["🚀 Mission (M1)<br><i>Execute code & verify proof</i>"]
+    M --> E["✅ Evidence & Archive<br><i>Mission complete, Proposal retired</i>"]
+```
 
 **Mission-scoped** — they live inside a Mission bundle and have no meaning
 outside it: Objective, Run, Checkpoint, Evidence, Assessment, Review, Handoff,

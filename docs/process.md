@@ -44,6 +44,28 @@ When starting a project, use a short product brief or starter document. The
 setup step turns it into the project files that describe the product, technical
 stack, architecture, and first Mission.
 
+### How Spectacular Disambiguates "Specs"
+
+Because "spec" is an overloaded term, Spectacular routes specification work based on the maturity and intent of the request:
+
+```mermaid
+flowchart TD
+    A["Request: 'Let's write/update specs for X'"] --> B{What stage is the spec in?}
+    B -->|"1. Brainstorming / Exploring / Unresolved"| C["<b>Proposal</b><br><code>.spectacular/proposals/P&lt;N&gt;-&lt;slug&gt;.md</code><br><i>Mutable draft, open questions, alternatives</i>"]
+    B -->|"2. Accepted Subsystem Behavior"| D["<b>Capability Contract</b><br><code>.spectacular/contracts/CC-&lt;name&gt;.md</code><br><i>Observable invariants, inputs/outputs, gaps</i>"]
+    B -->|"3. High-Level System Scope"| E["<b>Project Anchors</b><br><code>.spectacular/PROJECT.md</code> & <code>ARCHITECTURE.md</code><br><i>System boundaries, directory layers, tech stack</i>"]
+    B -->|"4. Ready to Execute & Prove"| F["<b>Mission</b><br><code>.spectacular/missions/M&lt;N&gt;/</code><br><i>Frozen verifiable claims & proof requirements</i>"]
+```
+
+### Iterating on Specs During Brainstorming
+
+When you and an agent brainstorm in chat:
+1. **Iterate Freely in a Proposal**: Draft the candidate specification in `.spectacular/proposals/P<N>-<slug>.md`. Proposals are completely mutable and carry no execution authority—you can rewrite, expand, or pivot the spec across dozens of chat turns without causing contract drift or validation failures.
+2. **Lock Key Trade-offs with Decisions**: When an architectural or policy fork is settled, record it via `spectacular decide` (`D<N>`) to capture the immutable rationale.
+3. **Promote to Living Truth**: When the specification is finalized, incorporate the observable invariants into a Capability Contract (`.spectacular/contracts/CC-<name>.md`) or Project Anchor (`PROJECT.md` / `ARCHITECTURE.md`).
+4. **Retire the Proposal**: Mark the Proposal `status: accepted` with `resolved_by:` and move it to `.spectacular/archive/proposals/`.
+5. **Execute via Mission**: Launch a frozen Mission (`spectacular mission start`) with verifiable claims and proof requirements.
+
 A Proposal is optional. Write one when the approach is genuinely unclear and you
 want to argue with it before committing.
 
@@ -54,7 +76,7 @@ the point. It is the cheapest place to be wrong.
 When a Proposal's work ships, it is **retired**: it names the Mission that
 absorbed it in `resolved_by:` and moves to `.spectacular/archive/proposals/`. A
 Proposal is absorbed when the question it asked was answered, not when most of it
-was.
+was. See `D11-proposal-retirement`.
 
 ## Prepare and freeze: the Mission
 

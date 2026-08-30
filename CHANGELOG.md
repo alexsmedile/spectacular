@@ -1,6 +1,36 @@
 # Changelog
 
-## [Unreleased]
+## 2.8.0 — 2026-08-30
+
+### Added
+
+- `spectacular contract create <ref> [--title <title>]` scaffolds a new typed
+  Contract with UUIDv7 identity, timestamps, and layout.
+- `spectacular mission list [--status <status>] [--json]` (Command #22) provides
+  a read-only tabular or JSON overview of all discovered Missions, their status,
+  current holder, and next action without directory browsing.
+- `spectacular mission amend-scope <ref> --add <paths> --by <owner> [--reason <text>] [--dry-run]`
+  allows owner-authorized expansion of the mechanical scope boundary, with
+  `--dry-run` to preview fingerprint changes before mutation.
+- `spectacular mission close <ref> --by <owner>` finishes all in-flight objectives
+  and marks an automatic-review Mission completed in a single command.
+- `spectacular mission start` includes branch guardrails (`--create-branch` to auto-scaffold
+  `feat/<ref>-<slug>`, `--allow-main` to override) and refuses in-place activation on `main`/`master`.
+- `spectacular evidence record <ref> --from <test-output.json>` automatically derives
+  verifiable test checks, commit hashes, and tree hashes from structured test receipts.
+- `spectacular campaign check` dynamically computes and projects `live_state`
+  (`planned`, `active`, `complete`, `blocked`) from linked Mission states.
+- `spectacular run start <mission-ref>/<objective-ref>` automatically promotes inline
+  objectives into standalone objective documents in the same transaction.
+
+### Changed
+
+- `resolveContract` and `validateContract` accept human-friendly contract references
+  (`CC-*`) interchangeably with canonical UUIDv7 identifiers.
+- `validateScope` validates git working tree modifications against the frozen mechanical
+  scope envelope on active Mission branches.
+- `mission show` accurately derives `NEXT: close mission (ready for completion)` for
+  `review: automatic` missions once all objectives are implemented.
 
 ### Fixed
 

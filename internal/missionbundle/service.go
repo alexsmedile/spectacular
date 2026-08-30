@@ -1000,7 +1000,7 @@ func (s Service) amendScope(ref string, addPaths []string, owner, reason string,
 	}
 	for _, p := range addPaths {
 		clean := strings.TrimSuffix(p, "/")
-		if clean == "" || filepath.IsAbs(clean) || filepath.Clean(clean) != clean || strings.HasPrefix(clean, ".."+string(filepath.Separator)) || strings.Contains(clean, "\\") {
+		if clean == "" || filepath.IsAbs(clean) || filepath.ToSlash(filepath.Clean(clean)) != clean || strings.HasPrefix(clean, "../") || strings.Contains(clean, "\\") {
 			return Result{}, invalid("scope.mechanical", "paths must be canonical workspace-relative paths: "+p)
 		}
 		if !seen[clean] {

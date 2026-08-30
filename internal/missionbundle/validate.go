@@ -629,7 +629,7 @@ func validateScope(ws *discovery.Workspace, b *Bundle) error {
 	}
 	for _, path := range b.Scope.Mechanical {
 		clean := strings.TrimSuffix(path, "/")
-		if clean == "" || filepath.IsAbs(clean) || filepath.Clean(clean) != clean || strings.HasPrefix(clean, ".."+string(filepath.Separator)) || strings.Contains(clean, "\\") {
+		if clean == "" || filepath.IsAbs(clean) || filepath.ToSlash(filepath.Clean(clean)) != clean || strings.HasPrefix(clean, "../") || strings.Contains(clean, "\\") {
 			return invalid("scope.mechanical", "paths must be canonical workspace-relative paths")
 		}
 	}

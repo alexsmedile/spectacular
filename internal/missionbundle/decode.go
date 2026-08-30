@@ -379,12 +379,12 @@ func compactRef(doc *workspace.Document) (string, error) {
 }
 
 func containedFile(base, relative string) (string, error) {
-	if relative == "" || filepath.IsAbs(relative) || filepath.Clean(relative) != relative || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+	if relative == "" || filepath.IsAbs(relative) || filepath.ToSlash(filepath.Clean(relative)) != relative || strings.HasPrefix(relative, "../") || strings.Contains(relative, "\\") {
 		return "", domain.NewRefusal(domain.RefusalPathEscape, "file", "bundle pointer must be a canonical relative path", nil)
 	}
-	path := filepath.Join(base, relative)
+	path := filepath.Join(base, filepath.FromSlash(relative))
 	rel, err := filepath.Rel(base, path)
-	if err != nil || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", domain.NewRefusal(domain.RefusalPathEscape, "file", "bundle pointer escapes its Mission", err)
 	}
 	return path, nil

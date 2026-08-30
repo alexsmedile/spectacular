@@ -305,14 +305,14 @@ func safeTarget(root, relative string) (string, error) {
 	if filepath.IsAbs(relative) {
 		return "", domain.NewRefusal(domain.RefusalPathEscape, relative, "transaction target must remain workspace-relative", nil)
 	}
-	if relative == "" || filepath.Clean(relative) != relative || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+	if relative == "" || filepath.ToSlash(filepath.Clean(relative)) != relative || strings.HasPrefix(relative, "../") || strings.Contains(relative, "\\") {
 		return "", domain.NewRefusal(domain.RefusalInvalidWorkspacePath, relative, "transaction target must be canonical and workspace-relative", nil)
 	}
 	return effectPath(root, relative, "")
 }
 
 func effectPath(root, relative, scope string) (string, error) {
-	if relative == "" || filepath.IsAbs(relative) || filepath.Clean(relative) != relative || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+	if relative == "" || filepath.IsAbs(relative) || filepath.ToSlash(filepath.Clean(relative)) != relative || strings.HasPrefix(relative, "../") || strings.Contains(relative, "\\") {
 		return "", domain.NewRefusal(domain.RefusalInvalidWorkspacePath, relative, "effect path must be canonical and workspace-relative", nil)
 	}
 	rootAbs, err := filepath.Abs(root)
@@ -324,12 +324,12 @@ func effectPath(root, relative, scope string) (string, error) {
 		return "", domain.NewRefusal(domain.RefusalPathEscape, root, "resolve canonical workspace root", err)
 	}
 	if scope != "" {
-		cleanScope := filepath.Clean(scope)
-		if relative != cleanScope && !strings.HasPrefix(relative, cleanScope+string(filepath.Separator)) {
+		cleanScope := filepath.ToSlash(filepath.Clean(scope))
+		if relative != cleanScope && !strings.HasPrefix(relative, cleanScope+"/") {
 			return "", domain.NewRefusal(domain.RefusalPathEscape, relative, "effect path escapes required transaction scope", nil)
 		}
 	}
-	target := filepath.Join(rootReal, relative)
+	target := filepath.Join(rootReal, filepath.FromSlash(relative))
 	ancestor := filepath.Dir(target)
 	for {
 		if _, statErr := os.Lstat(ancestor); statErr == nil {

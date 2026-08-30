@@ -13,8 +13,10 @@ import (
 type Flag string
 
 const (
-	// FlagUnproven means no review has returned a verdict for the claim.
+	// FlagUnproven means no review or evidence has returned a verdict for the claim.
 	FlagUnproven Flag = "unproven"
+	// FlagAwaitingReview means evidence is present for the claim but an independent review verdict has not been recorded yet.
+	FlagAwaitingReview Flag = "awaiting-review"
 	// FlagFailed means a review returned a verdict other than pass.
 	FlagFailed Flag = "failed"
 	// FlagStaleReview means the review that covered the claim was bound to an
@@ -81,6 +83,15 @@ func (b *Bundle) Drift() []ClaimDrift {
 		}
 	}
 
+	evidencedClaims := map[string]bool{}
+	for _, pointer := range b.Evidence {
+		if pointer.Document != nil {
+			for _, c := range pointer.Document.Claims {
+				evidencedClaims[c] = true
+			}
+		}
+	}
+
 	repairs, budget := 0, b.RepairBudget
 	if b.Run != nil {
 		repairs = b.Run.Repairs
@@ -95,7 +106,11 @@ func (b *Bundle) Drift() []ClaimDrift {
 		}
 		switch verdict, reviewed := verdicts[criterion.Claim]; {
 		case !reviewed:
-			item.Flags = append(item.Flags, FlagUnproven)
+			if evidencedClaims[criterion.Claim] {
+				item.Flags = append(item.Flags, FlagAwaitingReview)
+			} else {
+				item.Flags = append(item.Flags, FlagUnproven)
+			}
 		case verdict != "pass":
 			item.Flags = append(item.Flags, FlagFailed)
 		}

@@ -352,11 +352,13 @@ func TestSupersedesChainResolvesToTheNewestHandoff(t *testing.T) {
 // binds a different tree.
 func writeFixtureCommit(t *testing.T, root string, n int) {
 	t.Helper()
-	path := filepath.Join(root, "chain.txt")
+	dir := filepath.Join(root, "internal", "missionbundle")
+	_ = os.MkdirAll(dir, 0o755)
+	path := filepath.Join(dir, "chain.txt")
 	if err := os.WriteFile(path, []byte(strings.Repeat("x", n+1)), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	commandOutput(t, root, "git", "add", "chain.txt")
+	commandOutput(t, root, "git", "add", "internal/missionbundle/chain.txt")
 	commandOutput(t, root, "git", "commit", "-qm", "chain link")
 }
 

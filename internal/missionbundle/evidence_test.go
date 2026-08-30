@@ -43,6 +43,7 @@ scope:
   mechanical: [internal/]
   semantic: [testing]
 repair_budget: 1
+allow_main: true
 dependencies: []
 gaps: []
 stops: [data-loss]
@@ -80,7 +81,7 @@ limitations: []
 # Evidence Details
 Test suite execution succeeded with 0 errors.
 `
-	evResult, err := s.RecordEvidence(res.Ref, "-", []byte(evidenceDraft))
+	evResult, err := s.RecordEvidence(res.Ref, "-", []byte(evidenceDraft), "")
 	if err != nil {
 		t.Fatalf("failed to record evidence: %v", err)
 	}
@@ -90,7 +91,7 @@ Test suite execution succeeded with 0 errors.
 	}
 
 	// Idempotent retry convergence
-	retryResult, err := s.RecordEvidence(res.Ref, "-", []byte(evidenceDraft))
+	retryResult, err := s.RecordEvidence(res.Ref, "-", []byte(evidenceDraft), "")
 	if err != nil {
 		t.Fatalf("retry failed: %v", err)
 	}
@@ -130,7 +131,7 @@ tree: 0123456789abcdef0123456789abcdef01234567
 ---
 # Body
 `
-	_, err := s.RecordEvidence("M1", "-", []byte(invalidDraft))
+	_, err := s.RecordEvidence("M1", "-", []byte(invalidDraft), "")
 	if err == nil {
 		t.Fatal("expected refusal for missing actor/mission, got none")
 	}

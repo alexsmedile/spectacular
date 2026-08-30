@@ -134,7 +134,7 @@ func (b *Bundle) Derive() State {
 	// Completion is owner-gated, so the holder follows the action. Deriving this
 	// from the same condition keeps the two lines from disagreeing.
 	if state.Status == "active" && state.Done == len(b.Objectives) && len(b.Objectives) > 0 &&
-		!(state.Budget > 0 && state.Repairs >= state.Budget) && hasCurrentPassingReview(b) {
+		!(state.Budget > 0 && state.Repairs >= state.Budget) && (b.Review == "automatic" || hasCurrentPassingReview(b)) {
 		state.Holder = "owner"
 	}
 	return state
@@ -205,7 +205,7 @@ func nextAction(b *Bundle, state State) string {
 	case state.Budget > 0 && state.Repairs >= state.Budget:
 		return "repair budget is exhausted; the owner decides whether to continue"
 	case state.Done == len(b.Objectives) && len(b.Objectives) > 0:
-		if hasCurrentPassingReview(b) {
+		if b.Review == "automatic" || hasCurrentPassingReview(b) {
 			return "every Objective is implemented and reviewed; the owner completes the Mission"
 		}
 		return "every Objective is implemented; record a review"

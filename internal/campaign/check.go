@@ -19,6 +19,7 @@ type Block struct {
 	DependsOn []string `yaml:"after,omitempty" json:"after,omitempty"`
 	Missions  []string `yaml:"missions,omitempty" json:"missions,omitempty"`
 	State     string   `yaml:"state" json:"state"`
+	LiveState string   `yaml:"live_state,omitempty" json:"live_state,omitempty"`
 }
 
 type Check struct {
@@ -61,10 +62,49 @@ func Validate(ws *discovery.Workspace, input string) (Check, error) {
 	if err != nil {
 		return Check{}, domain.NewRefusal(domain.RefusalInvalidKnownField, input, err.Error(), nil)
 	}
-	for _, block := range check.Blocks {
-		for _, ref := range block.Missions {
-			if _, err := ws.Lookup(ref, domain.Mission); err != nil {
-				return Check{}, domain.NewRefusal(domain.RefusalTargetNotFound, ref, "Campaign block "+block.Title+" names no Mission", err)
+	for i := range check.Blocks {
+		block := &check.Blocks[i]
+		if len(block.Missions) > 0 && ws != nil {
+			allCompleted := true
+			hasActive := false
+			hasBlocked := false
+			for _, ref := range block.Missions {
+				entry, err := ws.Lookup(ref, domain.Mission)
+				if err != nil {
+					return Check{}, domain.NewRefusal(domain.RefusalTargetNotFound, ref, "Campaign block "+block.Title+" names no Mission", err)
+				}
+				status := ""
+				if entry.Document.Record.Status != nil {
+					status = *entry.Document.Record.Status
+				}
+				if status != "completed" {
+					allCompleted = false
+				}
+				if status == "active" {
+					hasActive = true
+				}
+				if status == "blocked" {
+					hasBlocked = true
+				}
+			}
+			if allCompleted {
+				block.LiveState = "complete"
+			} else if hasActive {
+				block.LiveState = "active"
+			} else if hasBlocked {
+				block.LiveState = "blocked"
+			} else {
+				block.LiveState = "planned"
+			}
+		} else {
+			block.LiveState = block.State
+		}
+	}
+	if check.Current != "" {
+		for _, b := range check.Blocks {
+			if b.Ref == check.Current {
+				check.CurrentBlock = b
+				break
 			}
 		}
 	}

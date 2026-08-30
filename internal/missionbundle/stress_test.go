@@ -438,6 +438,7 @@ func stressPlan() (Plan, []byte) {
 			Semantic:   []string{"Mutation safety."},
 		},
 		RepairBudget: 1,
+		AllowMain:    true,
 		Dependencies: []string{},
 		Gaps:         []string{},
 		Stops:        []string{"A transition can partially write."},
@@ -635,4 +636,409 @@ func gitOutput(t *testing.T, root string, args ...string) string {
 		t.Fatalf("git %v: %v", args, err)
 	}
 	return strings.TrimSpace(string(output))
+}
+
+func TestCreateContractScaffoldsValidContract(t *testing.T) {
+	root := missionServiceFixture(t)
+	service := openMissionService(t, root)
+
+	res, err := service.CreateContract("CC-sample-feature", "Sample Feature Contract", "Alex")
+	if err != nil {
+		t.Fatalf("CreateContract failed: %v", err)
+	}
+
+	if res.Operation != "contract.create" {
+		t.Fatalf("Operation=%q want contract.create", res.Operation)
+	}
+	if !strings.HasPrefix(res.Ref, "CC-") {
+		t.Fatalf("Ref=%q want prefix CC-", res.Ref)
+	}
+
+	// Reopen workspace and lookup the contract
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatalf("discovery.Open failed: %v", err)
+	}
+	entry, err := ws.Lookup(res.Ref, domain.Contract)
+	if err != nil {
+		t.Fatalf("ws.Lookup failed for created contract: %v", err)
+	}
+	if entry.Document.Record.Type != domain.Contract {
+		t.Fatalf("Record.Type=%v want Contract", entry.Document.Record.Type)
+	}
+	if *entry.Document.Record.Title != "Sample Feature Contract" {
+		t.Fatalf("Title=%q want 'Sample Feature Contract'", *entry.Document.Record.Title)
+	}
+}
+
+func TestResolveContractAndValidateAcceptsHumanRefs(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	binding, err := resolveContract(ws, "CC-missioncli")
+	if err != nil {
+		t.Fatalf("resolveContract failed for CC-missioncli: %v", err)
+	}
+	if !strings.HasPrefix(binding.Ref, "Contract:") {
+		t.Fatalf("binding.Ref=%q want prefix Contract:", binding.Ref)
+	}
+	if !strings.HasPrefix(binding.Fingerprint, "sha256:") {
+		t.Fatalf("binding.Fingerprint=%q want sha256:", binding.Fingerprint)
+	}
+
+	bundle, err := Load(ws, "M11")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Test that validateContract succeeds with human ref as well
+	cloned := cloneBundle(t, bundle)
+	cloned.Contract.Ref = "CC-missioncli"
+	if err := validateContract(ws, cloned); err != nil {
+		t.Fatalf("validateContract with human ref failed: %v", err)
+	}
+}
+
+func TestAmendScopeExpandsMechanicalEnvelope(t *testing.T) {
+	root := missionServiceFixture(t)
+	service := openMissionService(t, root)
+
+	plan, raw := stressPlan()
+	plan.Title = "Scope expansion test"
+	started, err := service.Start(plan, raw)
+	if err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+
+	// Test dryRun first
+	dryRes, err := service.AmendScope(started.Ref, []string{"Harbor/MenuBar.swift", "HarborKit/"}, "Alex", "discovering menu bar dependency", true)
+	if err != nil {
+		t.Fatalf("AmendScope dry-run failed: %v", err)
+	}
+	if dryRes.Fingerprint == "" {
+		t.Fatalf("dry-run did not emit new fingerprint")
+	}
+
+	res, err := service.AmendScope(started.Ref, []string{"Harbor/MenuBar.swift", "HarborKit/"}, "Alex", "discovering menu bar dependency", false)
+	if err != nil {
+		t.Fatalf("AmendScope failed: %v", err)
+	}
+	if res.Operation != "mission.amend_scope" {
+		t.Fatalf("Operation=%q want mission.amend_scope", res.Operation)
+	}
+
+	// Reopen and verify amended bundle
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle, err := Load(ws, started.Ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	hasMenuBar := false
+	for _, p := range bundle.Scope.Mechanical {
+		if p == "Harbor/MenuBar.swift" {
+			hasMenuBar = true
+		}
+	}
+	if !hasMenuBar {
+		t.Fatalf("Scope.Mechanical=%v does not contain Harbor/MenuBar.swift", bundle.Scope.Mechanical)
+	}
+
+	// Verify bundle passes validation
+	if _, err := Validate(ws, bundle); err != nil {
+		t.Fatalf("Validate failed on amended bundle: %v", err)
+	}
+}
+
+func TestAutoPromoteObjectiveOnStartRun(t *testing.T) {
+	root := missionServiceFixture(t)
+	service := openMissionService(t, root)
+
+	plan, raw := stressPlan()
+	plan.Title = "Auto promote test"
+	started, err := service.Start(plan, raw)
+	if err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+
+	// Start run for objective O2 (which starts as inline)
+	runRes, err := service.StartRun(started.Ref+"/O2", "Work on O2")
+	if err != nil {
+		t.Fatalf("StartRun failed: %v", err)
+	}
+	if runRes.Operation != "run.start" {
+		t.Fatalf("Operation=%q want run.start", runRes.Operation)
+	}
+
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle, err := Load(ws, started.Ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bundle.Objectives[1].File == "" {
+		t.Fatalf("bundle.Objectives[1].File is empty, want auto-promoted file path")
+	}
+	if !strings.HasPrefix(bundle.Objectives[1].File, "objectives/O2-") {
+		t.Fatalf("bundle.Objectives[1].File=%q want prefix objectives/O2-", bundle.Objectives[1].File)
+	}
+}
+
+func TestCloseMissionFinishesObjectivesAndCompletes(t *testing.T) {
+	root := missionServiceFixture(t)
+	service := openMissionService(t, root)
+
+	plan, raw := stressPlan()
+	plan.Title = "Close mission test"
+	plan.Review = "automatic"
+	started, err := service.Start(plan, raw)
+	if err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+
+	// Execute close mission
+	res, err := service.CloseMission(started.Ref, "Test owner")
+	if err != nil {
+		t.Fatalf("CloseMission failed: %v", err)
+	}
+	if res.Operation != "mission.complete" {
+		t.Fatalf("Operation=%q want mission.complete", res.Operation)
+	}
+
+	// Verify final state
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle, err := Load(ws, started.Ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bundle.Status != "completed" {
+		t.Fatalf("bundle.Status=%q want completed", bundle.Status)
+	}
+	for _, obj := range bundle.Objectives {
+		if obj.Status != "implemented" {
+			t.Fatalf("Objective %s status=%q want implemented", obj.Ref, obj.Status)
+		}
+	}
+}
+
+func TestDriftFlagsAwaitingReviewWhenEvidenceRecorded(t *testing.T) {
+	evidenceDoc := &Evidence{
+		Claims: []string{"alpha"},
+		Checks: []EvidenceCheck{{Name: "unit-tests", Result: "pass"}},
+	}
+
+	bundle := &Bundle{
+		Completion: []Criterion{criterion("alpha"), criterion("beta")},
+		Objectives: []Objective{
+			{Ref: "O1", Status: "implemented", Claims: []string{"alpha", "beta"}},
+		},
+		Evidence: []EvidencePointer{
+			{Ref: "E1", Document: evidenceDoc},
+		},
+	}
+
+	drift := bundle.Drift()
+	alphaFlags := flagsFor(drift, "alpha")
+	betaFlags := flagsFor(drift, "beta")
+
+	hasAwaitingReview := false
+	for _, f := range alphaFlags {
+		if f == FlagAwaitingReview {
+			hasAwaitingReview = true
+		}
+	}
+	if !hasAwaitingReview {
+		t.Fatalf("alphaFlags=%v want FlagAwaitingReview", alphaFlags)
+	}
+
+	hasUnproven := false
+	for _, f := range betaFlags {
+		if f == FlagUnproven {
+			hasUnproven = true
+		}
+	}
+	if !hasUnproven {
+		t.Fatalf("betaFlags=%v want FlagUnproven", betaFlags)
+	}
+}
+
+func TestValidateScopeDetectsChangedFilesOutsideScope(t *testing.T) {
+	root := missionServiceFixture(t)
+	service := openMissionService(t, root)
+
+	plan, raw := stressPlan()
+	plan.Title = "Scope violation test"
+	plan.Scope.Mechanical = []string{"internal/missionbundle/"}
+	started, err := service.Start(plan, raw)
+	if err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+
+	// Modify a file outside mechanical scope in the git tree
+	unscopedFile := filepath.Join(root, "outside.txt")
+	if err := os.WriteFile(unscopedFile, []byte("unscoped change"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	commandOutput(t, root, "git", "add", "outside.txt")
+	commandOutput(t, root, "git", "commit", "-qm", "unscoped commit")
+
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle, err := Load(ws, started.Ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = validateScope(ws, bundle)
+	if err == nil {
+		t.Fatalf("validateScope must refuse when file is modified outside mechanical scope")
+	}
+	refusal, ok := err.(*domain.Refusal)
+	if !ok || refusal.Code != domain.RefusalInvalidKnownField {
+		t.Fatalf("err=%v want RefusalInvalidKnownField", err)
+	}
+	if !strings.Contains(refusal.Detail, "outside.txt") {
+		t.Fatalf("refusal.Detail=%q want mention of outside.txt", refusal.Detail)
+	}
+}
+
+func TestBranchGuardrailRefusesMainWithoutOverride(t *testing.T) {
+	root := missionServiceFixture(t)
+	service := openMissionService(t, root)
+
+	plan, raw := stressPlan()
+	plan.Title = "Branch refusal test"
+	plan.AllowMain = false
+	plan.CreateBranch = false
+
+	_, err := service.Start(plan, raw)
+	if err == nil {
+		t.Fatalf("Start on main without AllowMain or CreateBranch must fail")
+	}
+	refusal, ok := err.(*domain.Refusal)
+	if !ok || refusal.Code != domain.RefusalInvalidKnownField {
+		t.Fatalf("err=%v want RefusalInvalidKnownField", err)
+	}
+}
+
+func TestBranchGuardrailCreatesBranch(t *testing.T) {
+	root := missionServiceFixture(t)
+	service := openMissionService(t, root)
+
+	plan, raw := stressPlan()
+	plan.Title = "Branch creation test"
+	plan.AllowMain = false
+	plan.CreateBranch = true
+
+	started, err := service.Start(plan, raw)
+	if err != nil {
+		t.Fatalf("Start with CreateBranch failed: %v", err)
+	}
+
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle, err := Load(ws, started.Ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(bundle.Baseline.Branch, "feat/") {
+		t.Fatalf("bundle.Baseline.Branch=%q want prefix feat/", bundle.Baseline.Branch)
+	}
+}
+
+func TestListMissionsReturnsSummaries(t *testing.T) {
+	root := missionServiceFixture(t)
+	service := openMissionService(t, root)
+
+	plan, raw := stressPlan()
+	plan.Title = "List summary test"
+	started, err := service.Start(plan, raw)
+	if err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+
+	res, err := service.ListMissions("")
+	if err != nil {
+		t.Fatalf("ListMissions failed: %v", err)
+	}
+	if len(res.Missions) == 0 {
+		t.Fatalf("ListMissions returned 0 missions")
+	}
+	found := false
+	for _, m := range res.Missions {
+		if m.Ref == started.Ref {
+			found = true
+			if m.Status != "active" {
+				t.Fatalf("mission status=%q want active", m.Status)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("ListMissions did not include started mission %s", started.Ref)
+	}
+}
+
+func TestRecordEvidenceFromStructuredTestOutput(t *testing.T) {
+	root := missionServiceFixture(t)
+	service := openMissionService(t, root)
+
+	plan, raw := stressPlan()
+	plan.Title = "Evidence from test"
+	started, err := service.Start(plan, raw)
+	if err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+
+	// Write mock test json output
+	testJSON := filepath.Join(root, "test-output.json")
+	mockJSON := `{"Time":"2026-08-30T10:00:00Z","Action":"pass","Test":"TestFeatureUnit"}
+{"Time":"2026-08-30T10:00:01Z","Action":"pass","Test":"TestFeatureIntegration"}
+`
+	if err := os.WriteFile(testJSON, []byte(mockJSON), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := service.RecordEvidence(started.Ref, "", nil, testJSON)
+	if err != nil {
+		t.Fatalf("RecordEvidence with --from failed: %v", err)
+	}
+	if res.Operation != "evidence.record" {
+		t.Fatalf("Operation=%q want evidence.record", res.Operation)
+	}
+
+	ws, err := discovery.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle, err := Load(ws, started.Ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(bundle.Evidence) == 0 {
+		t.Fatalf("Evidence list empty")
+	}
+	evDoc := bundle.Evidence[len(bundle.Evidence)-1].Document
+	if evDoc == nil {
+		t.Fatalf("Evidence Document is nil")
+	}
+	if len(evDoc.Checks) != 2 {
+		t.Fatalf("Evidence checks count=%d want 2", len(evDoc.Checks))
+	}
 }

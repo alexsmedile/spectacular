@@ -162,16 +162,12 @@ func validateReferences(_ *discovery.Workspace, b *Bundle) error {
 }
 
 func validateContract(ws *discovery.Workspace, b *Bundle) error {
-	typed, err := domain.ParseReference(b.Contract.Ref)
-	if err != nil || typed.Type != domain.Contract {
-		return invalidCause("contract.ref", "must be an exact Contract:<UUIDv7> reference", err)
+	entry, err := ws.Lookup(b.Contract.Ref, domain.Contract)
+	if err != nil {
+		return invalidCause("contract.ref", "must be a valid Contract reference (e.g. Contract:<UUIDv7> or CC-*)", err)
 	}
 	if !shaPattern.MatchString(b.Contract.Fingerprint) {
 		return invalid("contract.fingerprint", "must be sha256:<64 lowercase hex>")
-	}
-	entry, err := ws.Lookup(b.Contract.Ref, domain.Contract)
-	if err != nil {
-		return err
 	}
 	data, err := os.ReadFile(entry.Absolute)
 	if err != nil {
@@ -627,7 +623,7 @@ func validateAuthority(_ *discovery.Workspace, b *Bundle) error {
 	return nil
 }
 
-func validateScope(_ *discovery.Workspace, b *Bundle) error {
+func validateScope(ws *discovery.Workspace, b *Bundle) error {
 	if len(b.Scope.Mechanical) == 0 || len(b.Scope.Semantic) == 0 {
 		return invalid("scope", "mechanical and semantic scope are required")
 	}
@@ -642,7 +638,56 @@ func validateScope(_ *discovery.Workspace, b *Bundle) error {
 			return invalid("scope.semantic", "items must be non-empty")
 		}
 	}
+	if ws != nil && b.Baseline != nil && b.Baseline.Commit != "" && b.Status == "active" {
+		branchCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+		branchCmd.Dir = ws.Root
+		if branchOut, err := branchCmd.Output(); err == nil {
+			currentBranch := strings.TrimSpace(string(branchOut))
+			if currentBranch == b.Baseline.Branch {
+				if err := validateChangedFilesScope(ws.Root, b.Baseline.Commit, b.Scope.Mechanical); err != nil {
+					return err
+				}
+			}
+		}
+	}
 	return nil
+}
+
+func validateChangedFilesScope(root, baselineCommit string, allowed []string) error {
+	cmd := exec.Command("git", "diff", "--name-only", baselineCommit)
+	cmd.Dir = root
+	out, err := cmd.Output()
+	if err != nil {
+		return nil
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	for _, line := range lines {
+		path := strings.TrimSpace(filepath.ToSlash(line))
+		if path == "" || strings.HasPrefix(path, ".spectacular/") {
+			continue
+		}
+		if !fileInScope(path, allowed) {
+			return domain.NewStateRefusal(domain.RefusalInvalidKnownField, "scope.mechanical", "file modified outside frozen mechanical scope: "+path, strings.Join(allowed, ", "), path, "amend the mission mechanical scope using 'spectacular mission amend-scope' or revert the change", nil)
+		}
+	}
+	return nil
+}
+
+func fileInScope(path string, allowed []string) bool {
+	for _, pat := range allowed {
+		pat = filepath.ToSlash(pat)
+		if pat == "." || pat == "./" {
+			return true
+		}
+		cleanPat := strings.TrimSuffix(pat, "/")
+		if path == cleanPat || strings.HasPrefix(path, cleanPat+"/") {
+			return true
+		}
+		if match, _ := filepath.Match(pat, path); match {
+			return true
+		}
+	}
+	return false
 }
 
 func validateLayout(ws *discovery.Workspace, b *Bundle) error {

@@ -16,18 +16,18 @@ import (
 )
 
 func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
-	// Eighteen commands. M20 authorized evidence record.
+	// Twenty-two commands. Owner authorized mission list.
 	want := []string{
-		"mission start", "mission show", "mission check", "objective show", "objective promote",
+		"mission start", "mission list", "mission show", "mission check", "mission amend-scope", "mission close", "objective show", "objective promote",
 		"objective finish", "run show", "run start", "run transition", "review record", "handoff record",
-		"evidence record", "mission complete", "proposal check", "campaign check", "contract amend",
+		"evidence record", "mission complete", "proposal check", "campaign check", "contract amend", "contract create",
 		"charter", "decide",
 	}
 	if len(Registry) != len(want) {
 		t.Fatalf("registry has %d commands, want %d", len(Registry), len(want))
 	}
-	if len(want) != 18 {
-		t.Fatalf("the public surface is %d commands; owner authorized evidence record as 18", len(want))
+	if len(want) != 22 {
+		t.Fatalf("the public surface is %d commands; owner authorized 22", len(want))
 	}
 	for i, spec := range Registry {
 		if got := strings.Join(spec.Words, " "); got != want[i] {
@@ -292,6 +292,7 @@ scope:
   mechanical: [internal/]
   semantic: [Compact lifecycle behavior.]
 repair_budget: 1
+allow_main: true
 dependencies: []
 gaps: []
 stops: [scope-drift]
@@ -530,6 +531,7 @@ scope:
   mechanical: [internal/]
   semantic: [Representation equivalence.]
 repair_budget: 1
+allow_main: true
 dependencies: []
 gaps: []
 stops: [scope-drift]
@@ -813,5 +815,157 @@ func TestSchemaTemplatesSatisfyTheirOwnValidator(t *testing.T) {
 			write(t, path, document)
 			testCase.check(t, root, testCase.filename)
 		})
+	}
+}
+
+func TestContractCreateCLI(t *testing.T) {
+	root, _ := fixture(t)
+	out := run(t, root, nil, 0, "contract", "create", "CC-analytics-pipeline", "--title", "Analytics Pipeline", "--json")
+	if !strings.Contains(out, `"operation":"contract.create"`) || !strings.Contains(out, `"ref":"CC-analytics-pipeline"`) {
+		t.Fatalf("contract create --json output=%s", out)
+	}
+}
+
+func TestMissionAmendScopeAndCloseCLI(t *testing.T) {
+	root, contractRef := fixture(t)
+	plan := `---
+type: MissionPlan
+title: Command execution mission
+owner: Alex
+contract:
+  ref: ` + contractRef + `
+outcome: Test amend-scope and close.
+review: automatic
+completion:
+  - claim: smoke
+    pass_boundary: Tests pass.
+    proof_requirement: Verified.
+objectives:
+  - outcome: Run smoke test
+    claims: [smoke]
+authority:
+  operator: [inspect, edit-in-scope, choose-reversible-implementation, run-checks, generate-derived-files, bounded-repair, commit-local]
+  requires_owner: [activate-mission, change-outcome-or-completion, expand-scope, push, merge, release, irreversible-change, destructive-data, secret-change]
+scope:
+  mechanical: [internal/]
+  semantic: [Testing amend-scope.]
+repair_budget: 1
+allow_main: true
+dependencies: []
+gaps: []
+stops: [scope-drift]
+---
+# Description
+`
+	startOut := run(t, root, []byte(plan), 0, "mission", "start", "-", "--json")
+	if !strings.Contains(startOut, `"operation":"mission.start"`) {
+		t.Fatalf("mission start failed: %s", startOut)
+	}
+
+	// Amend scope with dry-run
+	dryOut := run(t, root, nil, 0, "mission", "amend-scope", "M1", "--add", "Harbor/MenuBar.swift", "--by", "Alex", "--reason", "found menu bar dependency", "--dry-run", "--json")
+	if !strings.Contains(dryOut, `"operation":"mission.amend_scope"`) || !strings.Contains(dryOut, `"fingerprint"`) {
+		t.Fatalf("mission amend-scope dry-run failed: %s", dryOut)
+	}
+
+	// Amend scope real
+	amendOut := run(t, root, nil, 0, "mission", "amend-scope", "M1", "--add", "Harbor/MenuBar.swift", "--by", "Alex", "--reason", "found menu bar dependency", "--json")
+	if !strings.Contains(amendOut, `"operation":"mission.amend_scope"`) {
+		t.Fatalf("mission amend-scope failed: %s", amendOut)
+	}
+
+	// Close mission
+	closeOut := run(t, root, nil, 0, "mission", "close", "M1", "--by", "Alex", "--json")
+	if !strings.Contains(closeOut, `"operation":"mission.complete"`) {
+		t.Fatalf("mission close failed: %s", closeOut)
+	}
+}
+
+func TestMissionListAndBranchAndEvidenceCLI(t *testing.T) {
+	root, contractRef := fixture(t)
+	plan := `---
+type: MissionPlan
+title: List and branch test
+owner: Alex
+contract:
+  ref: ` + contractRef + `
+outcome: Test mission list and branch guardrails.
+review: automatic
+completion:
+  - claim: smoke
+    pass_boundary: Tests pass.
+    proof_requirement: Verified.
+objectives:
+  - outcome: Run smoke test
+    claims: [smoke]
+authority:
+  operator: [inspect, edit-in-scope, choose-reversible-implementation, run-checks, generate-derived-files, bounded-repair, commit-local]
+  requires_owner: [activate-mission, change-outcome-or-completion, expand-scope, push, merge, release, irreversible-change, destructive-data, secret-change]
+scope:
+  mechanical: [internal/]
+  semantic: [Testing branch.]
+repair_budget: 1
+dependencies: []
+gaps: []
+stops: [scope-drift]
+---
+# Description
+`
+	// Start with --create-branch
+	startOut := run(t, root, []byte(plan), 0, "mission", "start", "-", "--create-branch", "--json")
+	if !strings.Contains(startOut, `"operation":"mission.start"`) {
+		t.Fatalf("mission start --create-branch failed: %s", startOut)
+	}
+
+	// Mission list json
+	listOut := run(t, root, nil, 0, "mission", "list", "--json")
+	if !strings.Contains(listOut, `"schema_version":"spectacular.mission.list.v2"`) || !strings.Contains(listOut, `"ref":"M1"`) {
+		t.Fatalf("mission list --json failed: %s", listOut)
+	}
+
+	// Mission list human
+	humanList := run(t, root, nil, 0, "mission", "list")
+	if !strings.Contains(humanList, "REF") || !strings.Contains(humanList, "M1") {
+		t.Fatalf("mission list human failed: %s", humanList)
+	}
+
+	// Evidence record from test output
+	testJSON := filepath.Join(root, "test-output.json")
+	write(t, testJSON, `{"Time":"2026-08-30T10:00:00Z","Action":"pass","Test":"TestFeature"}
+`)
+	evOut := run(t, root, nil, 0, "evidence", "record", "M1", "--from", testJSON, "--json")
+	if !strings.Contains(evOut, `"operation":"evidence.record"`) {
+		t.Fatalf("evidence record --from failed: %s", evOut)
+	}
+}
+
+func TestCampaignValidateDerivesLiveState(t *testing.T) {
+	root, _ := fixture(t)
+	campDir := filepath.Join(root, ".spectacular", "campaigns")
+	if err := os.MkdirAll(campDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	campaignDoc := `---
+type: Campaign
+schema: spectacular.campaign.v2
+title: Test Campaign
+focus: Test focus
+current: B1
+exit_condition: All complete
+blocks:
+  - ref: B1
+    title: Phase 1
+    state: planned
+---
+# Campaign Details
+`
+	campFile := filepath.Join(campDir, "test-campaign.md")
+	write(t, campFile, campaignDoc)
+
+	// Campaign check
+	campOut := run(t, root, nil, 0, "campaign", "check", campFile, "--json")
+	if !strings.Contains(campOut, `"live_state":"planned"`) || !strings.Contains(campOut, `"title":"Test Campaign"`) {
+		t.Fatalf("campaign check failed: %s", campOut)
 	}
 }

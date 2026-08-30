@@ -10,9 +10,15 @@
   "commands": [
     {
       "command": "spectacular mission start",
-      "arguments": "<plan.md|-> [--json]",
+      "arguments": "<plan.md|-> [--allow-main] [--create-branch] [--json]",
       "schema": "spectacular.mission.start.v2",
       "effect": "mutating"
+    },
+    {
+      "command": "spectacular mission list",
+      "arguments": "[--status <status>] [--json]",
+      "schema": "spectacular.mission.list.v2",
+      "effect": "read-only"
     },
     {
       "command": "spectacular mission show",
@@ -25,6 +31,18 @@
       "arguments": "<ref> [--json]",
       "schema": "spectacular.mission.check.v2",
       "effect": "read-only"
+    },
+    {
+      "command": "spectacular mission amend-scope",
+      "arguments": "<ref> --add <paths> --by <owner> [--reason <text>] [--dry-run] [--json]",
+      "schema": "spectacular.mission.amend_scope.v2",
+      "effect": "mutating"
+    },
+    {
+      "command": "spectacular mission close",
+      "arguments": "<ref> --by <owner> [--json]",
+      "schema": "spectacular.mission.close.v2",
+      "effect": "mutating"
     },
     {
       "command": "spectacular objective show",
@@ -76,7 +94,7 @@
     },
     {
       "command": "spectacular evidence record",
-      "arguments": "<mission-ref> <evidence.md|-> [--json]",
+      "arguments": "<mission-ref> [draft.md|-] [--from <test-output>] [--json]",
       "schema": "spectacular.evidence.record.v2",
       "effect": "mutating"
     },
@@ -102,6 +120,12 @@
       "command": "spectacular contract amend",
       "arguments": "<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]",
       "schema": "spectacular.contract.amend.v2",
+      "effect": "mutating"
+    },
+    {
+      "command": "spectacular contract create",
+      "arguments": "<ref> [--title <title>] [--json]",
+      "schema": "spectacular.contract.create.v2",
       "effect": "mutating"
     },
     {

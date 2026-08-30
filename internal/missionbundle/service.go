@@ -1,9 +1,11 @@
 package missionbundle
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -50,6 +52,8 @@ type Plan struct {
 	// completion, with the resolution text it will write. Frozen at activation so
 	// the authority to amend a Contract cannot be acquired afterwards.
 	ResolvesGaps []ResolvedGap `yaml:"resolves_gaps,omitempty"`
+	AllowMain    bool          `yaml:"allow_main,omitempty"`
+	CreateBranch bool          `yaml:"create_branch,omitempty"`
 	Body         string        `yaml:"-"`
 }
 
@@ -127,11 +131,24 @@ func (s Service) start(plan Plan, raw []byte) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
+	missionRef := nextMissionRef(s.Workspace)
+	if (branch == "main" || branch == "master") && !plan.AllowMain {
+		if plan.CreateBranch {
+			featBranch := "feat/" + missionRef + "-" + humanlayout.Slug(plan.Title)
+			cmd := exec.Command("git", "checkout", "-b", featBranch)
+			cmd.Dir = s.Workspace.Root
+			if out, err := cmd.CombinedOutput(); err != nil {
+				return Result{}, domain.NewStateRefusal(domain.RefusalInvalidKnownField, "baseline.branch", "failed to create feature branch: "+string(out), "clean feature branch", branch, "check git status and create branch manually", err)
+			}
+			branch = featBranch
+		} else {
+			return Result{}, domain.NewStateRefusal(domain.RefusalInvalidKnownField, "baseline.branch", "activating directly on "+branch+" is prohibited without a dedicated feature branch", "feature branch (e.g. feat/"+missionRef+"-"+humanlayout.Slug(plan.Title)+")", branch, "checkout a feature branch ('git checkout -b <branch>') or supply --create-branch / --allow-main", nil)
+		}
+	}
 	missionID, err := stableID(baselineAt, startKey+":mission")
 	if err != nil {
 		return Result{}, err
 	}
-	missionRef := nextMissionRef(s.Workspace)
 	now := s.now()
 	objectives := make([]Objective, len(plan.Objectives))
 	for i, source := range plan.Objectives {
@@ -403,6 +420,9 @@ func (s Service) startRun(targetRef, title string) (Result, error) {
 		return Result{}, err
 	}
 
+	docs := []*workspace.Document{}
+	paths := map[domain.ID]string{bundle.document.Record.ID: bundle.Path}
+
 	if targetObjective != "" {
 		var currentObj *Objective
 		for i := range bundle.Objectives {
@@ -431,6 +451,30 @@ func (s Service) startRun(targetRef, title string) (Result, error) {
 				}
 			}
 		}
+		if currentObj.File == "" {
+			objID, _ := domain.ParseID(currentObj.ID)
+			objDoc := &workspace.Document{
+				Record:  domain.Record{Type: domain.Objective, ID: objID, Title: stringPtr(currentObj.Outcome), Status: stringPtr(currentObj.Status)},
+				Unknown: map[string]*yaml.Node{},
+				Body:    "# Objective\n\n" + currentObj.Outcome + "\n",
+			}
+			workspace.SetString(objDoc, "ref", currentObj.Ref)
+			workspace.SetString(objDoc, "mission", bundle.Ref)
+			workspace.SetString(objDoc, "outcome", currentObj.Outcome)
+			workspace.SetStrings(objDoc, "after", currentObj.After)
+			workspace.SetStrings(objDoc, "claims", currentObj.Claims)
+			objRelative := filepath.ToSlash(filepath.Join("objectives", currentObj.Ref+"-"+humanlayout.Slug(currentObj.Outcome)+".md"))
+			currentObj.File = objRelative
+			for i := range bundle.Objectives {
+				if bundle.Objectives[i].Ref == currentObj.Ref {
+					bundle.Objectives[i].File = objRelative
+				}
+			}
+			workspace.SetValue(bundle.document, "objectives", bundle.Objectives)
+			objPath := filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), objRelative))
+			docs = append(docs, objDoc)
+			paths[objID] = objPath
+		}
 	}
 
 	runs := allRuns(bundle)
@@ -447,8 +491,6 @@ func (s Service) startRun(targetRef, title string) (Result, error) {
 			return Result{Operation: "run.start", Ref: bundle.Ref + "/" + last.Ref, Path: path}, nil
 		}
 	}
-	docs := []*workspace.Document{}
-	paths := map[domain.ID]string{bundle.document.Record.ID: bundle.Path}
 	pointers := make([]Run, 0, len(runs)+1)
 	for _, run := range runs {
 		if run.Status != "completed" && run.Status != "stopped" {
@@ -858,6 +900,232 @@ func (s Service) complete(missionRef, owner string) (Result, error) {
 	return s.apply("mission.complete:"+bundle.ID+":"+now, docs, paths, "mission.complete", bundle.Ref, bundle.Path)
 }
 
+func (s Service) CreateContract(ref, title, owner string) (Result, error) {
+	locked, unlock, err := s.beginMutation()
+	if err != nil {
+		return Result{}, err
+	}
+	defer unlock()
+	return locked.createContract(ref, title, owner)
+}
+
+func (s Service) createContract(ref, title, owner string) (Result, error) {
+	ref = strings.TrimSpace(ref)
+	if ref == "" {
+		return Result{}, invalid("ref", "contract ref is required (e.g. CC-my-feature)")
+	}
+	if !strings.HasPrefix(ref, "CC-") {
+		ref = "CC-" + ref
+	}
+	if title == "" {
+		title = strings.TrimPrefix(ref, "CC-")
+	}
+	if owner == "" {
+		owner = s.Workspace.Config.Defaults.Operator
+		if owner == "" {
+			owner = "Alex"
+		}
+	}
+	now := s.now()
+	contractID, err := domain.NewID()
+	if err != nil {
+		return Result{}, err
+	}
+	slug := humanlayout.Slug(title)
+	fileName := ref + "-" + slug + ".md"
+	relPath := filepath.ToSlash(filepath.Join(".spectacular", "contracts", fileName))
+
+	doc := &workspace.Document{
+		Record: domain.Record{
+			Type:    domain.Contract,
+			ID:      contractID,
+			Title:   stringPtr(title),
+			Status:  stringPtr("current"),
+			Created: stringPtr(now),
+			Updated: stringPtr(now),
+		},
+		Unknown: map[string]*yaml.Node{},
+		Body:    "# " + title + "\n\n" + "## Overview\n\n" + title + " contract specification.\n",
+	}
+	workspace.SetString(doc, "ref", ref)
+	workspace.SetString(doc, "owner", owner)
+	workspace.SetString(doc, "contract_version", "1")
+	workspace.SetString(doc, "purpose", title)
+	workspace.SetString(doc, "outcome", title)
+	workspace.SetStrings(doc, "applies_when", []string{"Work on " + title + " begins."})
+	workspace.SetStrings(doc, "does_not_apply_when", []string{})
+	workspace.SetStrings(doc, "does_not_provide", []string{})
+	workspace.SetStrings(doc, "required_behavior", []string{})
+	workspace.SetStrings(doc, "command_surface", []string{})
+	workspace.SetStrings(doc, "mandatory_validation", []string{})
+
+	paths := map[domain.ID]string{contractID: relPath}
+	return s.apply("contract.create:"+contractID.String(), []*workspace.Document{doc}, paths, "contract.create", ref, relPath)
+}
+
+func (s Service) AmendScope(ref string, addPaths []string, owner, reason string, dryRun bool) (Result, error) {
+	if !dryRun {
+		locked, unlock, err := s.beginMutation()
+		if err != nil {
+			return Result{}, err
+		}
+		defer unlock()
+		return locked.amendScope(ref, addPaths, owner, reason, false)
+	}
+	fresh, err := discovery.Open(s.Workspace.Root)
+	if err != nil {
+		return Result{}, err
+	}
+	s.Workspace = fresh
+	return s.amendScope(ref, addPaths, owner, reason, true)
+}
+
+func (s Service) amendScope(ref string, addPaths []string, owner, reason string, dryRun bool) (Result, error) {
+	if strings.TrimSpace(owner) == "" {
+		return Result{}, invalid("by", "an amendment requires the owner who authorizes it")
+	}
+	bundle, err := Load(s.Workspace, ref)
+	if err != nil {
+		return Result{}, err
+	}
+	if bundle.Legacy {
+		return Result{}, invalid("mission", "legacy Mission is read-only")
+	}
+	if len(addPaths) == 0 {
+		return Result{}, invalid("add", "at least one path must be specified to add to mechanical scope")
+	}
+	seen := map[string]bool{}
+	for _, p := range bundle.Scope.Mechanical {
+		seen[strings.TrimSuffix(p, "/")] = true
+	}
+	for _, p := range addPaths {
+		clean := strings.TrimSuffix(p, "/")
+		if clean == "" || filepath.IsAbs(clean) || filepath.Clean(clean) != clean || strings.HasPrefix(clean, ".."+string(filepath.Separator)) || strings.Contains(clean, "\\") {
+			return Result{}, invalid("scope.mechanical", "paths must be canonical workspace-relative paths: "+p)
+		}
+		if !seen[clean] {
+			bundle.Scope.Mechanical = append(bundle.Scope.Mechanical, p)
+			seen[clean] = true
+		}
+	}
+	newFP, err := FrozenFingerprint(bundle)
+	if err != nil {
+		return Result{}, err
+	}
+	if dryRun {
+		return Result{Operation: "mission.amend_scope", Ref: bundle.Ref, Path: bundle.Path, Fingerprint: newFP}, nil
+	}
+	if bundle.Activation != nil {
+		bundle.Activation.Fingerprint = newFP
+		workspace.SetValue(bundle.document, "activation", bundle.Activation)
+	}
+	workspace.SetValue(bundle.document, "scope", bundle.Scope)
+	if strings.TrimSpace(reason) != "" {
+		workspace.SetString(bundle.document, "scope_amendment_reason", reason)
+	}
+	bundle.document.Record.Updated = stringPtr(s.now())
+
+	paths := map[domain.ID]string{bundle.document.Record.ID: bundle.Path}
+	return s.apply("mission.amend_scope:"+bundle.ID+":"+newFP, []*workspace.Document{bundle.document}, paths, "mission.amend_scope", bundle.Ref, bundle.Path)
+}
+
+func (s Service) CloseMission(missionRef, owner string) (Result, error) {
+	locked, unlock, err := s.beginMutation()
+	if err != nil {
+		return Result{}, err
+	}
+	defer unlock()
+	return locked.closeMission(missionRef, owner)
+}
+
+func (s Service) closeMission(missionRef, owner string) (Result, error) {
+	bundle, err := Load(s.Workspace, missionRef)
+	if err != nil {
+		return Result{}, err
+	}
+	if !bundle.Legacy && bundle.Status == "completed" && owner == bundle.Owner {
+		return Result{Operation: "mission.complete", Ref: bundle.Ref, Path: bundle.Path}, nil
+	}
+	if bundle.Legacy || bundle.Status != "active" || owner != bundle.Owner {
+		return Result{}, domain.NewStateRefusal(domain.RefusalUnauthorized, "by", "close requires the active compact Mission owner", bundle.Owner, owner, "ask the named owner to confirm closeout", nil)
+	}
+	now := s.now()
+	var docs []*workspace.Document
+	paths := map[domain.ID]string{bundle.document.Record.ID: bundle.Path}
+
+	for i := range bundle.Objectives {
+		if bundle.Objectives[i].Status != "implemented" {
+			bundle.Objectives[i].Status = "implemented"
+			if bundle.Objectives[i].File != "" {
+				objDoc, objErr := s.Workspace.Lookup(bundle.Objectives[i].ID, domain.Objective)
+				if objErr == nil {
+					objDoc.Document.Record.Status = stringPtr("implemented")
+					objDoc.Document.Record.Updated = stringPtr(now)
+					docs = append(docs, objDoc.Document)
+					paths[objDoc.Document.Record.ID] = objDoc.Path
+				}
+			}
+		}
+	}
+	workspace.SetValue(bundle.document, "objectives", bundle.Objectives)
+
+	if bundle.Review != "automatic" && len(bundle.Reviews) == 0 {
+		return Result{}, invalid("reviews", "record the required review before Mission completion")
+	}
+	if err := s.assertDeclaredGapsClosed(bundle); err != nil {
+		return Result{}, err
+	}
+
+	bundle.document.Record.Status = stringPtr("completed")
+	bundle.document.Record.Updated = stringPtr(now)
+	bundle.Status = "completed"
+	bundle.Updated = now
+
+	if bundle.Run != nil {
+		bundle.Run.Status = "completed"
+		workspace.SetValue(bundle.document, "run", bundle.Run)
+	} else {
+		pointers := make([]Run, len(bundle.Runs))
+		copy(pointers, bundle.Runs)
+		for i := range bundle.Runs {
+			if bundle.Runs[i].File == "" {
+				pointers[i].Status = "completed"
+				bundle.Runs[i].Status = "completed"
+				continue
+			}
+			absolute, _ := containedFile(filepath.Dir(bundle.entry.Absolute), bundle.Runs[i].File)
+			doc, readErr := workspace.ReadFile(absolute)
+			if readErr != nil {
+				return Result{}, readErr
+			}
+			doc.Record.Status = stringPtr("completed")
+			docs = append(docs, doc)
+			paths[doc.Record.ID] = filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), bundle.Runs[i].File))
+			pointers[i] = Run{Ref: bundle.Runs[i].Ref, ID: bundle.Runs[i].ID, File: bundle.Runs[i].File}
+			bundle.Runs[i].Status = "completed"
+		}
+		workspace.SetValue(bundle.document, "runs", pointers)
+	}
+
+	reviewRef := ""
+	reviewedCommit := ""
+	if len(bundle.Reviews) > 0 {
+		reviewRef = bundle.Reviews[len(bundle.Reviews)-1].Ref
+		if resolved := bundle.Reviews[len(bundle.Reviews)-1].Document; resolved != nil {
+			reviewedCommit = resolved.Reviewed.Commit
+		}
+	}
+	record := CompletionRecord{By: owner, At: now, Authorization: "owner supplied --by after schema checks", ReviewedCommit: reviewedCommit, Review: reviewRef}
+	workspace.SetValue(bundle.document, "completion_record", record)
+	bundle.CompletionRecord = &record
+
+	if _, err := Validate(s.Workspace, bundle); err != nil {
+		return Result{}, err
+	}
+	docs = append(docs, bundle.document)
+	return s.apply("mission.close:"+bundle.ID+":"+now, docs, paths, "mission.complete", bundle.Ref, bundle.Path)
+}
+
 func (s Service) apply(key string, docs []*workspace.Document, paths map[domain.ID]string, operation, ref, primaryPath string) (Result, error) {
 	for _, doc := range docs {
 		known := false
@@ -909,6 +1177,10 @@ func (s Service) apply(key string, docs []*workspace.Document, paths map[domain.
 	}
 	sort.Strings(indexPaths)
 	for _, path := range indexPaths {
+		existingData, readErr := os.ReadFile(filepath.Join(s.Workspace.Root, filepath.FromSlash(path)))
+		if readErr == nil && bytes.Equal(existingData, indexes[path]) {
+			continue
+		}
 		changes = append(changes, governance.FileChange{Path: path, Data: indexes[path], Mode: 0o644})
 	}
 	apply := s.ApplyTransaction
@@ -982,20 +1254,17 @@ func validatePlan(plan Plan) error {
 }
 
 func resolveContract(ws *discovery.Workspace, ref string) (Binding, error) {
-	typed, err := domain.ParseReference(ref)
-	if err != nil || typed.Type != domain.Contract {
-		return Binding{}, invalidCause("contract.ref", "must be Contract:<UUIDv7>", err)
-	}
 	entry, err := ws.Lookup(ref, domain.Contract)
 	if err != nil {
-		return Binding{}, err
+		return Binding{}, invalidCause("contract.ref", "must be a valid Contract reference (e.g. CC-* or Contract:<UUIDv7>)", err)
 	}
 	data, err := os.ReadFile(entry.Absolute)
 	if err != nil {
 		return Binding{}, err
 	}
 	digest := sha256.Sum256(data)
-	return Binding{Ref: ref, Fingerprint: "sha256:" + hex.EncodeToString(digest[:])}, nil
+	canonicalRef := string(domain.Contract) + ":" + entry.Document.Record.ID.String()
+	return Binding{Ref: canonicalRef, Fingerprint: "sha256:" + hex.EncodeToString(digest[:])}, nil
 }
 
 func nextMissionRef(ws *discovery.Workspace) string {
@@ -1191,16 +1460,16 @@ func splitInput(data []byte) ([]byte, string, error) {
 
 func stringPtr(value string) *string { return &value }
 
-func (s Service) RecordEvidence(missionRef, path string, stdin []byte) (Result, error) {
+func (s Service) RecordEvidence(missionRef, path string, stdin []byte, fromPath string) (Result, error) {
 	locked, unlock, err := s.beginMutation()
 	if err != nil {
 		return Result{}, err
 	}
 	defer unlock()
-	return locked.recordEvidence(missionRef, path, stdin)
+	return locked.recordEvidence(missionRef, path, stdin, fromPath)
 }
 
-func (s Service) recordEvidence(missionRef, path string, stdin []byte) (Result, error) {
+func (s Service) recordEvidence(missionRef, path string, stdin []byte, fromPath string) (Result, error) {
 	if err := CheckPassiveGitState(s.Workspace.Root); err != nil {
 		return Result{}, err
 	}
@@ -1214,17 +1483,54 @@ func (s Service) recordEvidence(missionRef, path string, stdin []byte) (Result, 
 	if _, err := Validate(s.Workspace, bundle); err != nil {
 		return Result{}, err
 	}
-	data, err := readInput(path, stdin)
-	if err != nil {
-		return Result{}, err
-	}
-	frontmatter, body, err := splitInput(data)
-	if err != nil {
-		return Result{}, err
-	}
+
 	var draft EvidenceDraft
-	if err := yaml.Unmarshal(frontmatter, &draft); err != nil {
-		return Result{}, invalidCause("input", "decode EvidenceDraft frontmatter", err)
+	body := ""
+
+	if fromPath != "" && (path == "" || path == "-") && len(stdin) == 0 {
+		fromData, readErr := os.ReadFile(fromPath)
+		if readErr != nil {
+			return Result{}, domain.NewRefusal(domain.RefusalInvalidWorkspacePath, fromPath, "read test output file", readErr)
+		}
+		commit, tree, gitErr := currentGitCommitAndTree(s.Workspace.Root)
+		if gitErr != nil {
+			return Result{}, gitErr
+		}
+		var claims []string
+		for _, c := range bundle.Completion {
+			claims = append(claims, c.Claim)
+		}
+		checks := parseChecksFromTestOutput(fromData)
+		draft = EvidenceDraft{
+			Type:   "EvidenceDraft",
+			Title:  "Automated test verification from " + filepath.Base(fromPath),
+			Actor:  bundle.Owner,
+			Commit: commit,
+			Tree:   tree,
+			Claims: claims,
+			Checks: checks,
+		}
+		body = "# Verification\n\nDerived from `" + filepath.Base(fromPath) + "`.\n"
+	} else {
+		data, readErr := readInput(path, stdin)
+		if readErr != nil {
+			return Result{}, readErr
+		}
+		frontmatter, parsedBody, splitErr := splitInput(data)
+		if splitErr != nil {
+			return Result{}, splitErr
+		}
+		body = parsedBody
+		if err := yaml.Unmarshal(frontmatter, &draft); err != nil {
+			return Result{}, invalidCause("input", "decode EvidenceDraft frontmatter", err)
+		}
+		if fromPath != "" {
+			fromData, readErr := os.ReadFile(fromPath)
+			if readErr == nil {
+				parsedChecks := parseChecksFromTestOutput(fromData)
+				draft.Checks = append(draft.Checks, parsedChecks...)
+			}
+		}
 	}
 	if draft.Type != "EvidenceDraft" || draft.Title == "" || draft.Actor == "" {
 		return Result{}, invalid("evidence", "requires type EvidenceDraft, title, and actor")
@@ -1382,4 +1688,120 @@ func isDependencyUnblockedByDecision(ws *discovery.Workspace, missionRef, depRef
 		}
 	}
 	return false
+}
+
+type MissionSummary struct {
+	Ref    string `json:"ref"`
+	Title  string `json:"title"`
+	Status string `json:"status"`
+	Holder string `json:"holder"`
+	Next   string `json:"next"`
+	Path   string `json:"path"`
+}
+
+type MissionListResult struct {
+	SchemaVersion string           `json:"schema_version"`
+	Missions      []MissionSummary `json:"missions"`
+}
+
+func (s Service) ListMissions(statusFilter string) (MissionListResult, error) {
+	if s.Workspace != nil {
+		if fresh, err := discovery.Open(s.Workspace.Root); err == nil {
+			s.Workspace = fresh
+		}
+	}
+	var results []MissionSummary
+	seen := map[string]bool{}
+	for _, entry := range s.Workspace.Entries {
+		if entry.Document.Record.Type != domain.Mission {
+			continue
+		}
+		human, _, err := workspace.Ref(entry.Document)
+		if err != nil || human == "" || seen[human] {
+			continue
+		}
+		seen[human] = true
+		bundle, err := Load(s.Workspace, human)
+		if err != nil {
+			continue
+		}
+		if statusFilter != "" && bundle.Status != statusFilter {
+			continue
+		}
+		derived := bundle.Derive()
+		title := bundle.Title
+		if title == "" && entry.Document.Record.Title != nil {
+			title = *entry.Document.Record.Title
+		}
+		results = append(results, MissionSummary{
+			Ref:    bundle.Ref,
+			Title:  title,
+			Status: bundle.Status,
+			Holder: derived.Holder,
+			Next:   derived.Next,
+			Path:   bundle.Path,
+		})
+	}
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Ref < results[j].Ref
+	})
+	return MissionListResult{
+		SchemaVersion: "spectacular.mission.list.v2",
+		Missions:      results,
+	}, nil
+}
+
+func parseChecksFromTestOutput(data []byte) []EvidenceCheck {
+	var checks []EvidenceCheck
+	content := string(data)
+	lines := strings.Split(content, "\n")
+	hasJSON := false
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var evt struct {
+			Action  string  `json:"Action"`
+			Test    string  `json:"Test"`
+			Elapsed float64 `json:"Elapsed"`
+		}
+		if err := json.Unmarshal([]byte(line), &evt); err == nil && evt.Action != "" && evt.Test != "" {
+			hasJSON = true
+			if evt.Action == "pass" || evt.Action == "fail" {
+				checks = append(checks, EvidenceCheck{
+					Name:   evt.Test,
+					Result: evt.Action,
+				})
+			}
+		}
+	}
+	if hasJSON && len(checks) > 0 {
+		return checks
+	}
+	result := "pass"
+	if strings.Contains(content, "FAIL") || strings.Contains(content, "failed") {
+		result = "fail"
+	}
+	return []EvidenceCheck{
+		{Name: "automated-tests", Result: result},
+	}
+}
+
+func currentGitCommitAndTree(root string) (string, string, error) {
+	cmd := exec.Command("git", "rev-parse", "HEAD")
+	cmd.Dir = root
+	out, err := cmd.Output()
+	if err != nil {
+		return "", "", domain.NewRefusal(domain.RefusalInvalidWorkspacePath, "git", "git rev-parse HEAD", err)
+	}
+	commit := strings.TrimSpace(string(out))
+	treeCmd := exec.Command("git", "rev-parse", "HEAD^{tree}")
+	treeCmd.Dir = root
+	treeOut, err := treeCmd.Output()
+	if err != nil {
+		return "", "", domain.NewRefusal(domain.RefusalInvalidWorkspacePath, "git", "git rev-parse HEAD^{tree}", err)
+	}
+	tree := strings.TrimSpace(string(treeOut))
+	return commit, tree, nil
 }

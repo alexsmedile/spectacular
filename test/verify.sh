@@ -170,7 +170,7 @@ preflight_tier1() {
       continue
     fi
     local verdict
-    verdict="$(printf '%s' "$out" | python3 -c '
+    verdict="$(printf '%s' "$out" | python3 -S -c '
 import json, sys
 try:
     doc = json.load(sys.stdin)
@@ -194,12 +194,12 @@ print("; ".join(problems))
 
 preflight_checks() {
   local started_ns finished_ns elapsed_ms status
-  started_ns="$(python3 -c 'import time; print(time.time_ns())')"
+  started_ns="$(python3 -S -c 'import time; print(time.time_ns())')"
 
   preflight_tier0
   preflight_tier1
 
-  finished_ns="$(python3 -c 'import time; print(time.time_ns())')"
+  finished_ns="$(python3 -S -c 'import time; print(time.time_ns())')"
   elapsed_ms=$(( (finished_ns - started_ns) / 1000000 ))
 
   if [[ ${#preflight_failures[@]} -eq 0 ]]; then

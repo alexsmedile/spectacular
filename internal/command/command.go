@@ -37,14 +37,22 @@ const (
 	amendOptions
 	atLeastOne
 	transitionOptions
+	contractCreateOptions
+	amendScopeOptions
+	optionalStatus
+	missionStartOptions
+	evidenceRecordOptions
 )
 
 type operation uint8
 
 const (
 	opMissionStart operation = iota + 1
+	opMissionList
 	opMissionShow
 	opMissionCheck
+	opMissionAmendScope
+	opMissionClose
 	opObjectiveShow
 	opObjectivePromote
 	opObjectiveFinish
@@ -58,6 +66,7 @@ const (
 	opProposalCheck
 	opCampaignCheck
 	opContractAmend
+	opContractCreate
 	opCharter
 	opDecide
 )
@@ -78,8 +87,8 @@ type Spec struct {
 var Registry = []Spec{
 	{
 		Words:         []string{"mission", "start"},
-		Arguments:     "<plan.md|-> [--json]",
-		ArgumentShape: one,
+		Arguments:     "<plan.md|-> [--allow-main] [--create-branch] [--json]",
+		ArgumentShape: missionStartOptions,
 		JSONSchema:    "spectacular.mission.start.v2",
 		Effect:        Mutating,
 		Operation:     opMissionStart,
@@ -118,6 +127,16 @@ stops: [scope-drift]
 `,
 	},
 	{
+		Words:         []string{"mission", "list"},
+		Arguments:     "[--status <status>] [--json]",
+		ArgumentShape: optionalStatus,
+		JSONSchema:    "spectacular.mission.list.v2",
+		Effect:        ReadOnly,
+		Operation:     opMissionList,
+		Description:   "Lists all discovered Missions with current status, holder, and next action.",
+		OutputType:    "MissionListResult",
+	},
+	{
 		Words:         []string{"mission", "show"},
 		Arguments:     "<ref> [--json]",
 		ArgumentShape: one,
@@ -136,6 +155,26 @@ stops: [scope-drift]
 		Operation:     opMissionCheck,
 		Description:   "Validates structural integrity, contract drift, and claim drift of a Mission.",
 		OutputType:    "Check",
+	},
+	{
+		Words:         []string{"mission", "amend-scope"},
+		Arguments:     "<ref> --add <paths> --by <owner> [--reason <text>] [--dry-run] [--json]",
+		ArgumentShape: amendScopeOptions,
+		JSONSchema:    "spectacular.mission.amend_scope.v2",
+		Effect:        Mutating,
+		Operation:     opMissionAmendScope,
+		Description:   "Amends the frozen mechanical scope envelope of an active Mission with owner authorization.",
+		OutputType:    "Result",
+	},
+	{
+		Words:         []string{"mission", "close"},
+		Arguments:     "<ref> --by <owner> [--json]",
+		ArgumentShape: byOption,
+		JSONSchema:    "spectacular.mission.close.v2",
+		Effect:        Mutating,
+		Operation:     opMissionClose,
+		Description:   "Performs atomic final verification, objective completion, and closeout of a Mission with owner sign-off.",
+		OutputType:    "Result",
 	},
 	{
 		Words:         []string{"objective", "show"},
@@ -266,8 +305,8 @@ returns: [<returns>]
 	},
 	{
 		Words:         []string{"evidence", "record"},
-		Arguments:     "<mission-ref> <evidence.md|-> [--json]",
-		ArgumentShape: two,
+		Arguments:     "<mission-ref> [draft.md|-] [--from <test-output>] [--json]",
+		ArgumentShape: evidenceRecordOptions,
 		JSONSchema:    "spectacular.evidence.record.v2",
 		Effect:        Mutating,
 		Operation:     opEvidenceRecord,
@@ -380,6 +419,16 @@ discovery and grant no authority.
 		OutputType:    "Amendment",
 	},
 	{
+		Words:         []string{"contract", "create"},
+		Arguments:     "<ref> [--title <title>] [--json]",
+		ArgumentShape: contractCreateOptions,
+		JSONSchema:    "spectacular.contract.create.v2",
+		Effect:        Mutating,
+		Operation:     opContractCreate,
+		Description:   "Scaffolds a new Contract document with generated UUIDv7 and valid schema.",
+		OutputType:    "Result",
+	},
+	{
 		Words:         []string{"charter"},
 		Arguments:     "<mission-ref>/<objective-ref> [sources...] [--json]",
 		ArgumentShape: atLeastOne,
@@ -467,9 +516,25 @@ func (r Runner) Run(args []string) int {
 	if duplicateDryRun {
 		return r.usage(jsonMode, invoked, "--dry-run may be supplied at most once")
 	}
+	allowMain, duplicateAllowMain := removeFlag(&args, "--allow-main")
+	if duplicateAllowMain {
+		return r.usage(jsonMode, invoked, "--allow-main may be supplied at most once")
+	}
+	createBranch, duplicateCreateBranch := removeFlag(&args, "--create-branch")
+	if duplicateCreateBranch {
+		return r.usage(jsonMode, invoked, "--create-branch may be supplied at most once")
+	}
 	override, _, badOverride := removeValueFlag(&args, "--resolution")
 	if badOverride {
 		return r.usage(jsonMode, invoked, "--resolution requires exactly one value")
+	}
+	fromFile, _, badFrom := removeValueFlag(&args, "--from")
+	if badFrom {
+		return r.usage(jsonMode, invoked, "--from requires exactly one value")
+	}
+	statusFilter, _, badStatus := removeValueFlag(&args, "--status")
+	if badStatus {
+		return r.usage(jsonMode, invoked, "--status requires exactly one value")
 	}
 
 	if len(args) == 0 {
@@ -503,8 +568,17 @@ func (r Runner) Run(args []string) int {
 	if timelineMode && spec.Operation != opMissionShow {
 		return r.commandUsage(jsonMode, invoked, spec, "--timeline applies to mission show")
 	}
-	if dryRun && spec.Operation != opContractAmend {
-		return r.commandUsage(jsonMode, invoked, spec, "--dry-run applies to contract amend")
+	if dryRun && spec.Operation != opContractAmend && spec.Operation != opMissionAmendScope {
+		return r.commandUsage(jsonMode, invoked, spec, "--dry-run applies to contract amend and mission amend-scope")
+	}
+	if (allowMain || createBranch) && spec.Operation != opMissionStart {
+		return r.commandUsage(jsonMode, invoked, spec, "--allow-main and --create-branch apply to mission start")
+	}
+	if fromFile != "" && spec.Operation != opEvidenceRecord {
+		return r.commandUsage(jsonMode, invoked, spec, "--from applies to evidence record")
+	}
+	if statusFilter != "" && spec.Operation != opMissionList {
+		return r.commandUsage(jsonMode, invoked, spec, "--status applies to mission list")
 	}
 	if override != "" && spec.Operation != opContractAmend {
 		return r.commandUsage(jsonMode, invoked, spec, "--resolution applies to contract amend")
@@ -535,13 +609,36 @@ func (r Runner) Run(args []string) int {
 		var plan missionbundle.Plan
 		var raw []byte
 		plan, raw, err = missionbundle.ReadPlan(path, stdin)
+		if allowMain {
+			plan.AllowMain = true
+		}
+		if createBranch {
+			plan.CreateBranch = true
+		}
 		if err == nil {
 			value, err = service.Start(plan, raw)
 		}
+	case opMissionList:
+		value, err = service.ListMissions(statusFilter)
 	case opMissionShow:
 		value, err = service.Show(rest[0])
 	case opMissionCheck:
 		value, err = service.Check(rest[0])
+	case opMissionAmendScope:
+		addPaths := strings.Split(rest[2], ",")
+		var cleaned []string
+		for _, p := range addPaths {
+			if t := strings.TrimSpace(p); t != "" {
+				cleaned = append(cleaned, t)
+			}
+		}
+		reason := ""
+		if len(rest) == 7 && rest[5] == "--reason" {
+			reason = rest[6]
+		}
+		value, err = service.AmendScope(rest[0], cleaned, rest[4], reason, dryRun)
+	case opMissionClose:
+		value, err = service.CloseMission(rest[0], rest[2])
 	case opObjectiveShow:
 		var objective missionbundle.Objective
 		objective, _, err = service.Objective(rest[0])
@@ -571,12 +668,24 @@ func (r Runner) Run(args []string) int {
 		}
 		value, err = service.RecordHandoff(rest[0], inputPath(r.Cwd, rest[1]), rest[3], stdin)
 	case opEvidenceRecord:
-		stdin, readErr := r.stdinIfNeeded(rest[1])
+		targetPath := ""
+		if len(rest) > 1 {
+			targetPath = rest[1]
+		}
+		stdin, readErr := r.stdinIfNeeded(targetPath)
 		if readErr != nil {
 			err = readErr
 			break
 		}
-		value, err = service.RecordEvidence(rest[0], inputPath(r.Cwd, rest[1]), stdin)
+		var absTarget string
+		if targetPath != "" && targetPath != "-" {
+			absTarget = inputPath(r.Cwd, targetPath)
+		}
+		var absFrom string
+		if fromFile != "" {
+			absFrom = inputPath(r.Cwd, fromFile)
+		}
+		value, err = service.RecordEvidence(rest[0], absTarget, stdin, absFrom)
 	case opMissionComplete:
 		value, err = service.Complete(rest[0], rest[2])
 	case opProposalCheck:
@@ -585,6 +694,12 @@ func (r Runner) Run(args []string) int {
 		value, err = campaign.Validate(ws, rest[0])
 	case opContractAmend:
 		value, err = service.AmendContract(rest[0], rest[2], rest[4], override, dryRun)
+	case opContractCreate:
+		title := ""
+		if len(rest) == 3 && rest[1] == "--title" {
+			title = rest[2]
+		}
+		value, err = service.CreateContract(rest[0], title, ws.Config.Defaults.Operator)
 	case opCharter:
 		targetRef := rest[0]
 		var extraSources []string
@@ -685,6 +800,40 @@ func validateArguments(spec Spec, args []string) string {
 		if len(args) != 7 && len(args) != 9 {
 			return "requires <target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>]"
 		}
+	case contractCreateOptions:
+		if len(args) == 1 {
+			if args[0] == "" {
+				return "requires <ref> [--title <title>]"
+			}
+		} else if len(args) == 3 {
+			if args[0] == "" || args[1] != "--title" || args[2] == "" {
+				return "requires <ref> [--title <title>]"
+			}
+		} else {
+			return "requires <ref> [--title <title>]"
+		}
+	case amendScopeOptions:
+		if len(args) != 5 && len(args) != 7 {
+			return "requires <ref> --add <paths> --by <owner> [--reason <text>]"
+		}
+		if args[0] == "" || args[1] != "--add" || args[2] == "" || args[3] != "--by" || args[4] == "" {
+			return "requires <ref> --add <paths> --by <owner> [--reason <text>]"
+		}
+		if len(args) == 7 && (args[5] != "--reason" || args[6] == "") {
+			return "requires [--reason <text>]"
+		}
+	case optionalStatus:
+		if len(args) != 0 {
+			return "takes no positional arguments"
+		}
+	case missionStartOptions:
+		if len(args) != 1 || args[0] == "" {
+			return "requires <plan.md|->"
+		}
+	case evidenceRecordOptions:
+		if len(args) < 1 || len(args) > 2 || args[0] == "" {
+			return "requires <mission-ref> [draft.md|-]"
+		}
 	default:
 		return "command registry has an invalid argument shape"
 	}
@@ -727,6 +876,23 @@ func terminalWidth() int {
 
 func renderHuman(writer io.Writer, value any) {
 	switch item := value.(type) {
+	case missionbundle.MissionListResult:
+		if len(item.Missions) == 0 {
+			fmt.Fprintln(writer, "No missions found.")
+			return
+		}
+		fmt.Fprintf(writer, "%-6s %-12s %-40s %-10s %s\n", "REF", "STATUS", "TITLE", "HOLDER", "NEXT")
+		for _, m := range item.Missions {
+			title := m.Title
+			if len(title) > 38 {
+				title = title[:35] + "..."
+			}
+			holder := m.Holder
+			if holder == "" {
+				holder = "-"
+			}
+			fmt.Fprintf(writer, "%-6s %-12s %-40s %-10s %s\n", m.Ref, m.Status, title, holder, m.Next)
+		}
 	case *missionbundle.Bundle:
 		state := item.Derive()
 		fmt.Fprintf(writer, "%s — %s\n", item.Ref, item.Title)

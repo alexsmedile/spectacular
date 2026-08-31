@@ -140,6 +140,23 @@ Simplicity must never compromise integrity. Never simplify away:
 
 After freezing, scope cuts return to the owner.
 
+### The Architectural Pattern Pass (No Wheel Reinvention)
+
+Before prompting an agent to draft custom code for a claim or component, execute an upfront **Pattern Pass** (D29) to prevent bespoke wheel reinvention ("AI slop"):
+
+1. **Track A: Fast Parametric Survey (Default)**:
+   - For routine problems, survey 2–3 standard library idioms, POSIX constructs, or existing codebase helpers in the host language (e.g. Go `io.Reader` pipelines, standard middleware chains, standard library tokenizers).
+   - Reject hand-rolled abstractions when standard language idioms suffice.
+2. **Track B: Subagent Research Dispatch (Novel / Complex Domains)**:
+   - When tackling an unfamiliar domain, complex protocol, or new subsystem, dispatch a transient `research` subagent to survey established open-source reference implementations, RFC standards, or battle-tested libraries (e.g. VS Code tree traversals, xterm.js ANSI parsers, HashiCorp HCL patterns).
+3. **The 3-Line Pattern Census**: Freeze the outcome into the Mission body's rationale:
+   ```markdown
+   ### Architectural Pattern Census
+   - **Candidate Patterns Evaluated**: (1) Bespoke regex state-machine, (2) Go standard `text/scanner` tokenizer, (3) `alecthomas/participle` AST parser.
+   - **Selected Reference Pattern**: Go standard `text/scanner` (zero external dependencies, proven re-entrancy).
+   - **Rejected Anti-Patterns**: Hand-rolled custom string-slicing parser (avoids reinventing edge-case state handling).
+   ```
+
 ### Upfront Architectural Grilling vs. Progressive Horizon Detailing
 - **Upfront Architectural Grilling**: Settle foundational architectural choices that span multiple blocks (e.g. B1 through B7) early at the Campaign/Decision level using **Tier 2 Numbered Batch Cards (`1. Question ➔ A, B, C (Recommended)`)** or **Tier 3 Trade-off Spectrums** (see [owner-guidance.md](owner-guidance.md)). Ask focused batch questions and record rulings atomically via `spectacular decide` before freezing execution blocks.
 - **Progressive Horizon Detailing**:

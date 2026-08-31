@@ -129,8 +129,14 @@ When running in a single-agent harness or utilizing a distinct external reasonin
 2. Verify every frozen claim, and every required Evidence or review:
    `spectacular mission check <ref> --json`.
 3. Confirm the applicable product and specification edits are in the same worktree.
-4. Present one owner gate, and stop. Do not proceed on your own reading of intent.
-5. After attributable owner confirmation, close it:
+4. **Pay the "Mistake Tax" (Guardrail Feedback Loop, D29)**:
+   If the Mission consumed repair budget, hit tricky regressions, or resolved non-trivial review findings:
+   - **Domain & Code Invariants** $\to$ Append permanent, categorized negative rules to `.spectacular/GUARDRAILS.md` (e.g. `@Concurrency`, `@Storage`, `@Validation`).
+   - **Host & Tooling Invariants** $\to$ Append operational instructions to `AGENTS.md` (e.g. command gates, test preconditions).
+   - **Architectural Trade-offs** $\to$ Record an atomic Decision via `spectacular decide` into `.spectacular/decisions/`.
+   - *Constraint*: Do NOT create ad-hoc `LEARNINGS.md` or `FIXES.md` files; route all learnings to these permanent homes.
+5. Present one owner gate, and stop. Do not proceed on your own reading of intent.
+6. After attributable owner confirmation, close it:
 
    ```bash
    spectacular objective finish <ref>/<objective> --json

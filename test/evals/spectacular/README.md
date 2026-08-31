@@ -41,7 +41,7 @@ and stops before the second if the adapter is not measurable.
 | Codex | native JSONL commands and cumulative usage | certifiable; calibrate per model/version |
 | Claude | native `tool_use` plus cache-aware total context | certifiable; live rerun deferred while quota is unavailable |
 | OpenCode | normalized tool and summed usage events | certifiable; calibrate before comparison |
-| Antigravity / `agy` | structured result only | provisional: self-report is rejected, so a live run stops after one trial until stream telemetry is normalized |
+| Antigravity / `agy` | normalized tool observations and token totals | certifiable; `scripts/agy-adapter.sh` emits normalized trace events |
 
 ## Tiers
 
@@ -63,6 +63,8 @@ projection; the runner exposes only the representation appropriate to the mode.
 | `native-direct` | task projection, no `.spectacular/`, no skill | Is direct execution enough? |
 | `workspace-only` | canonical `.spectacular/` records, no skill | Do folders and Markdown alone add value? |
 | `skill` | canonical records plus one immutable skill package | Does Spectacular governance justify its cost? |
+
+The catalog spans trivial status (`MX-00`), bounded one/multi-file repairs (`MX-01`, `MX-02`), authority boundaries (`MX-03`), cold recovery (`MX-04`), and full end-to-end App Genesis (`MX-06` Task CLI, `MX-07` Webhook server, `MX-08` Conflicting migration).
 
 Run pairwise comparisons with the same model, commit, seed, and catalog. First
 compare native direct to workspace-only, then the winner to the skill. Do not

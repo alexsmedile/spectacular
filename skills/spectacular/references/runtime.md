@@ -160,6 +160,7 @@ Append this execution invariant to compiled Runner handoffs:
 ```text
 INVARIANT: Implement the smallest coherent change that satisfies the assigned claims.
 Check existing codebase utilities before authoring new abstractions.
+Strictly adhere to canonical terms in VOCABULARY.md; never author or edit vocabulary anchors.
 Preserve validation, error handling, and security guards.
 Touch only assigned mechanical scope; report unrelated defects without editing them.
 ```

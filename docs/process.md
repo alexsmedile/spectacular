@@ -98,6 +98,12 @@ was. See `D11-proposal-retirement`.
 A Mission plan states an outcome, a stop condition, and the claims that must
 hold. Activation freezes it and fingerprints the text.
 
+### Upfront Alignment: Pattern Pass & Domain Vocabulary
+
+Before code is written or delegated to subagents:
+1. **The Architectural Pattern Pass (D29)**: The Orchestrator surveys standard library idioms, RFC specifications, and battle-tested open-source reference implementations (e.g. `xterm.js`, standard AST parsers) rather than generating bespoke abstractions from scratch. A 3-line Pattern Census is frozen into the Mission body.
+2. **Domain Ontology & Banned Synonyms (`VOCABULARY.md`)**: Ubiquitous language is maintained under single-writer authority (Owner/Orchestrator only). Explicit Banned Synonyms prevent LLMs across fresh context windows from drifting between ambiguous verbs and states.
+
 **What freezing means:** the Mission is judged against what it said at
 activation. It is not edited later to match what actually happened. If the
 agreement turns out to be wrong, that is a real event worth recording — amend it
@@ -197,6 +203,14 @@ spectacular mission complete M12 --by alex
 An agent cannot complete its own Mission. Completion refuses while a declared Gap
 is still open, so "we shipped it but this is still broken" cannot be recorded as
 success.
+
+### The "Mistake Tax" & Guardrail Feedback Loop (D29)
+When a Mission completes having consumed repair budgets, hit unexpected regressions, or resolved non-trivial review findings, the failure root cause is codified into permanent rules:
+- **Domain & System Invariants** $\to$ Appended directly to `.spectacular/GUARDRAILS.md`.
+- **Harness & Tooling Invariants** $\to$ Appended directly to `AGENTS.md`.
+- **Architectural Trade-offs** $\to$ Recorded as atomic Decisions (`.spectacular/decisions/`).
+
+Ad-hoc `LEARNINGS.md` or `FIXES.md` sprawl is forbidden, ensuring every lesson is routed to its single permanent home.
 
 A **Gap** is a stated limit rather than a defect. It is never closed by deleting
 it — the entry survives with a written resolution, so the reason something was

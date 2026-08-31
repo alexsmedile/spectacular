@@ -1,5 +1,25 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **Architectural Decision D29**: Formally codified the Banned Synonyms Invariant, Architectural Pattern Pass, and Post-Mission Guardrail Feedback Loop.
+- **Permitted Actions & Banned Synonyms Invariant**: Formalized domain ontology schema in `VOCABULARY.md` with explicit canonical actions, permitted entity states, and banned synonyms to eliminate LLM drift across fresh context windows.
+- **Architectural Pattern Pass & Pattern Census**: Added upfront 2-track pattern survey (Fast Parametric Survey vs Subagent Research Dispatch) in `prepare.md` to prevent bespoke wheel reinvention and freeze a 3-line Pattern Census in Mission rationales.
+- **Post-Mission "Mistake Tax" Feedback Loop**: Codified post-mission learning triage in `close.md` routing failure root causes into `.spectacular/GUARDRAILS.md` (domain invariants) or `AGENTS.md` (tooling rules) without creating redundant governance files.
+- **Single-Writer Vocabulary Authority**: Clarified in `mission-anatomy.md` and `runtime.md` that `VOCABULARY.md` is strictly single-writer (Owner/Orchestrator only) with worker subagents operating as read-only consumers.
+- **1-Claim Adversarial Hunter Pass**: Codified the Hunter review protocol in `skills/spectacular/references/close.md` for dedicated, read-only subagent falsification passes targeting single high-risk invariants (security, concurrency, migrations).
+- **Reachable Surface Filter**: Added structured `reachable_surface` (`cli`, `api`, `contract`, `none-phantom`) to `ReviewDraft` finding schema to immediately drop unreachable phantom hallucinations before consuming repair budgets.
+- **Failing-Test-First Rule Guidance**: Established workflow recommendation requiring authors to write and commit a failing deterministic regression test for accepted adversarial findings before implementing fixes and closing Missions.
+- **Productivity Genesis Eval Fixtures (MX-06..MX-08)**: Added 3 new full-tier benchmark fixtures (SQLite task CLI genesis, concurrent webhook retry service, and contradictory legacy schema migration) expanding benchmark catalog from 6 to 9 cases.
+
+### Changed
+
+- **Telemetry Normalization**: Updated `agy-adapter.sh` to emit certified observation, usage, and tool_call traces with normalized heuristic token counts, and documented telemetry normalization in `trace.go`.
+- **Ephemeral Port Allocation**: Updated `mode-c6` webhook eval fixture verifier to bind dynamic ephemeral ports preventing port collision during concurrent test runs.
+- **Cognitive Mode Stance**: Clarified that `mode:` represents prompt-level cognitive posture (defaulting to `leverage`) without requiring mechanical enforcement.
+
 ## 2.11.0 — 2026-08-31
 
 ### Added

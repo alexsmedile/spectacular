@@ -161,9 +161,12 @@ add a Campaign binding to Mission frontmatter.
 ### On-Demand Anchors (Earned only)
 Specialized anchors emerge only when domain or operational complexity exceeds inline thresholds:
 - `ROADMAP.md`: Macro-level product evolution and strategic multi-horizon themes. Decomposes into mid-term Campaigns as milestones enter active planning.
-- `VOCABULARY.md`: Canonical domain ontology and ubiquitous language. Its glossary index is alphabetical; for the detailed section skeleton, see the body shape in [genesis-examples.md](genesis-examples.md).
+- `VOCABULARY.md`: Canonical domain ontology and ubiquitous language (D25, D29). Its glossary index is alphabetical; for the detailed section skeleton, see the body shape in [genesis-examples.md](genesis-examples.md).
   * *Threshold*: If <= 3-4 simple entities with no ambiguous terms or shared rules, keep them inline in `PROJECT.md`.
   * *Earned triggers*: (1) Synonym collision / naming ambiguity (e.g. `User` vs `Account`, `Job` vs `Task`); (2) Non-trivial state machine invariants (e.g. `DRAFT` -> `ACTIVE` -> `REVIEW`); (3) Relationships, permissions, or actions that span several concepts; (4) Bespoke non-standard concepts (e.g. `Anchor`, `Gap`, `Handoff`); (5) Multi-contract shared models.
+  * *Ontology structure*: Must include an explicit **Permitted Actions & Banned Synonyms** table (`Canonical Action` vs `BANNED Synonyms`) and **Permitted Entity States** enumeration to eliminate LLM synonym drift and state-machine fragmentation across fresh context windows.
+  * *Writer Authority & Single-Writer Rule*: **Owner / Lead Orchestrator only.** Worker subagents are strictly read-only consumers and NEVER edit `VOCABULARY.md`.
+  * *When updated (3 Triggers)*: (1) **Genesis Kickoff** from PRD; (2) **Upfront in Planning** when a Mission declares `Ontology impact` (D27) *before* workers write code; (3) **Domain Refactoring** where `VOCABULARY.md` is updated first, then code is renamed to match.
   * *Visual companion*: `atlas/domain-overview.md` is a non-governing projection. Relationships are labelled edges; use `1`, `0..1`, `1..*`, and `0..*` only when cardinality matters.
 - `SECURITY.md`: Project-specific isolation, multi-tenancy, secrets, or compliance rules (only if non-standard).
 - `GUARDRAILS.md`: Custom AI operational rules (only upon explicit owner request; defaults suffice).

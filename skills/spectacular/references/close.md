@@ -33,9 +33,12 @@ Write a separate Evidence file (`spectacular evidence record`) **only** when the
 - involves disputed or non-deterministic behavior
 - touches high-risk security boundaries or migrations where raw output must survive long-term closure
 
-## Create a review record only when required
+## Create a review record only when required (Batched & Tiered Review Protocol)
 
-Earned only when the Mission explicitly declared `clustered` or `independent` review. Routine `automatic` code tasks need no review record.
+Review requirements scale with risk and milestone boundaries:
+- **Tier 1 (Routine / `mode: leverage`)**: Clean Git commit + passing test suite (`exit 0`) is the proof. No separate review record is created.
+- **Tier 2 (Batched Milestone Review)**: For multi-mission Campaigns (e.g. 3–5 related missions), batch adversarial inspection into a single summary review at the campaign milestone gate rather than generating per-task review files.
+- **Tier 3 (Dedicated / `mode: control`)**: High-stakes operations (auth, crypto, payments, zero-downtime DB migrations) require an immediate, dedicated independent review record.
 
 ```bash
 spectacular review record <mission-ref> <review.md|-> --json

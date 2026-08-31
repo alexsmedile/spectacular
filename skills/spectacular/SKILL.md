@@ -7,7 +7,7 @@ description: >-
   "flight plan", "autopilot", "supervised dispatch", "handoff", "mission check", or "complete mission".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or tasks outside Spectacular.
 metadata:
-  version: "2.10.0"
+  version: "2.11.0"
 ---
 
 # Spectacular
@@ -41,8 +41,18 @@ Spectacular is designed for fast, token-efficient autonomous execution with mini
 2. **Layer 2: Topological Flight Plan**: Multi-session roadmap in `.spectacular/campaigns/` (4–8 macro milestone blocks; unstarted blocks remain 4-line lightweight draft cards).
 3. **Layer 3: Single-File Execution Envelopes**: Compact, self-contained Mission files (`.spectacular/missions/M<N>-<slug>/M<N>-<slug>.md`, $\le 500$ tokens) with inline objectives, deliverable checklists, and fail-fast stop triggers.
 
-### Mission Layout Judgment Protocol (3-Tier Decision Matrix)
-Agents select the minimal sufficient layout tier before writing any mission:
+### 5 Foundational Anchors & System Surfaces
+Before code execution, missions ground themselves in five core anchors without introducing redundant governance files:
+1. **Boundaries & Non-Goals**: `PROJECT.md` (`boundaries:`, `constraints:`).
+2. **Vocabulary & Ontology**: `VOCABULARY.md` (canonical domain terms).
+3. **Invariants & Failure Modes**: `GUARDRAILS.md` & `AGENTS.md` (non-negotiable safety rules).
+4. **Data Structures & Schemas**: Project-specific types/schemas in the codebase (cited in `contracts/`).
+5. **State Machines & Lifecycles**: Non-governing Mermaid diagrams in `.spectacular/atlas/`.
+
+### Mission Layout & Dynamic Operating Dial
+Missions declare execution posture (`mode:`) and layout tier before writing:
+- **`mode: leverage` (Default)**: Routine features, bug fixes, refactors. Autonomous inner loop; test suite passing (`exit 0`) is primary proof.
+- **`mode: control`**: High-risk, auth, payments, DB migrations, or out-of-distribution tasks. Mandatory step-by-step gates and dedicated adversarial review.
 
 | Tier | When to Select | Structure |
 |---|---|---|
@@ -52,8 +62,8 @@ Agents select the minimal sufficient layout tier before writing any mission:
 
 **The Golden Rule**: Start Single-File. A sub-folder is earned only when a failable condition (external receipt, parallel worktree split, independent security review) explicitly demands it.
 
-### Zero Sub-Record Sprawl Policy
-Never create separate `checkpoints/`, `assessments/`, `runs/`, `handoffs/`, or multi-page manual evidence files for routine code tasks. The test suite passing (`exit 0`) and clean Git commit **is** the proof. Context flows across subagents and parallel sessions via lightweight prompts ($\le 300\text{--}500$ tokens) and thread links (`conversation://<id>`).
+### Zero Sub-Record Sprawl & Batched Reviews Policy
+Never create separate `checkpoints/`, `assessments/`, `runs/`, `handoffs/`, or multi-page manual evidence files for routine code tasks. The test suite passing (`exit 0`) and clean Git commit **is** the proof. For major milestones spanning 3–5 missions, batch adversarial reviews into a single summary review rather than generating per-task review files.
 
 | Surface | Responsibility |
 |---|---|
@@ -77,8 +87,9 @@ Invoke `spectacular --version --json` once at startup and require `spectacular.b
 | **Reviewer** | Review assignment | Review assignment → frozen claims → commit/tree → primary proof | Verdict & findings → Orchestrator |
 | **Autopilot** | Charter | Charter → Mission target → permitted sources | Chartered return destination |
 
-### Orchestration Taxonomy: Supervised Dispatch vs. Full Handoff
-- **Supervised Dispatch (90% Default)**: The Orchestrator retains active Mission ownership, dispatches a worker subagent with a $\le 300$-token charter, and waits reactively for completion (`worker_done`). The worker creates zero governance records; tests passing (`exit 0`) + Git commit is the proof.
+### Solo Execution vs. Supervised Dispatch
+- **Solo Execution (Orchestrator self-run)**: The Orchestrator carries out the mission directly, executing inner test-and-repair loops without subagent overhead.
+- **Supervised Dispatch (90% of multi-agent work)**: The Orchestrator retains active Mission ownership, dispatches a worker subagent with a $\le 300$-token charter, and waits reactively for completion (`worker_done`). The worker creates zero governance records; tests passing (`exit 0`) + Git commit is the proof.
 - **Full Ownership Handoff (10% Transfer)**: Permanent ownership transfer across distinct sessions, human operators, or different AI harnesses (e.g. Claude $\to$ Codex $\to$ Antigravity). Formally recorded via `spectacular handoff record`.
 
 ### The Escalation & Decision Gate Protocol
@@ -99,12 +110,19 @@ Invoke `spectacular --version --json` once at startup and require `spectacular.b
 - **Context boundary**: Runner reads only assigned inputs. Missing context produces one precise request to Orchestrator; no workspace scans. Campaigns are Orchestrator planning context, never worker selectors.
 - **Context Sandwich & Token Discipline**: Worker agents receive a compiled prompt envelope (`spectacular charter`) strictly bounded at $\le 1{,}200$ tokens (`o200k_base`), leaving 99%+ of the model attention window free for codebase AST and test logs. Check token sizes using `bash skills/spectacular/scripts/count-tokens.sh <file|->`.
 
-## 4. Preflight & Isolation
+## 4. Preflight, Isolation & Tiered Verification
 
 Evaluate branch and worktree isolation independently before mutation:
 - **Branch** separates history; branch before activation (`git checkout -b <mission-slug>`).
 - **Worktree** separates concurrent hands (`git worktree add`). Concurrent sessions require separate trees.
 - Quick-patch directly on `main` is an explicit, non-default owner exception.
+
+### Tiered Verification Matrix (Zero Duplicate Runs)
+Assign verification tiers strictly by role to prevent redundant execution:
+- **Tier 1 (Quick / Domain)**: Executed by **Worker** (or solo Orchestrator) on every inner-loop iteration (`verify.sh quick` or domain unit test).
+- **Tier 0 (Preflight / Lint)**: Executed by **Reviewer** (or automated pre-check) to verify syntax, AST boundaries, and contract drift without running heavy tests.
+- **Tier 2 (Acceptance)**: Executed by **Orchestrator** at milestone completion.
+- **Tier 3 (All / Release)**: Executed at the **Owner Gate** prior to final release or mission completion.
 
 ### Read-Only Preflight Contract
 Check workspace (`PROJECT.md`), Git (branch & worktrees), bindings, identity, and blockers. Report:

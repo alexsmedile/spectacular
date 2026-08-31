@@ -9,17 +9,16 @@ When starting a project from scratch, or when receiving an initial PRD or prompt
 1. **Scan for Intake Inputs & Scaffold Workspace**: Check for existing project kickoff documents in the project root or workspace (e.g. `./PRD.md`, `scratch/PRD.tmp.md`, intake notes, or output from `write-prd`). Treat any starter PRD as an ephemeral launchpad, not an eternal file. Initialize the Spectacular workspace safely:
    - Run `spectacular init` (or manually create `.spectacular/workspace.yaml` with `schema_version: spectacular.workspace.v1`, `record_roots: [.]`, `project_anchor: PROJECT.md`). `init` safely preserves any existing workspace files and directories without overwriting.
    - Account for the eight foundational dimensions: (1) owner and user-observable outcome, (2) scope boundaries and non-goals, (3) inputs, outputs, and core workflow, (4) stack, runtime, and dependency constraints, (5) architecture and component boundaries, (6) data, state, security, and privacy constraints, (7) acceptance criteria and failable proof, and (8) operations, failure recovery, and delivery constraints. Distill them losslessly into:
-   - **The Core Triad of Anchors**:
-     * `.spectacular/PROJECT.md`: What & Why (Core scope, system boundaries, and strict non-goals). Seeded by `spectacular init`.
-     * `.spectacular/STACK.md`: What with (Languages, runtimes, database, libraries, baseline test command).
-     * `.spectacular/ARCHITECTURE.md`: How (Directory layout, layers, component boundaries between DB, Server, API, and Domain).
-   - **On-Demand Anchors (Earned only)**:
-     * `.spectacular/ROADMAP.md`: Macro-level product evolution and strategic horizons (multi-quarter themes, linking to mid-term Campaigns).
-     * `.spectacular/VOCABULARY.md`: Canonical domain ontology and ubiquitous language, earned when concepts, state machines, relationships, or policies are rich. Start with an alphabetical glossary; for the section skeleton that follows it, see [genesis-examples.md](genesis-examples.md).
-     * `.spectacular/SECURITY.md`: Non-standard compliance, isolation, or secret rules, only if project-specific.
-     * `.spectacular/GUARDRAILS.md`: Custom AI operational rules, only upon explicit owner request.
-     * `.spectacular/PRODUCT.md`: User personas, target market, and user journeys, only if separated from repository engineering.
-   - **`M1-bootstrap` Mission Plan**: 2–4 executable claims with verifiable `pass_boundary` and `proof_requirement` directly derived from the PRD's measurable success criteria.
+    - **The 5 Foundational Anchors**:
+      * `1. Boundaries & Non-Goals`: `.spectacular/PROJECT.md` (What & Why; core scope, constraints, and non-goals).
+      * `2. Vocabulary & Ontology`: `.spectacular/VOCABULARY.md` (Canonical domain terms, ubiquitous language).
+      * `3. Invariants & Failure Modes`: `.spectacular/GUARDRAILS.md` & `AGENTS.md` (Non-negotiable safety and architectural rules).
+      * `4. Data Structures & Schemas`: Project-specific types/schemas in the codebase (cited in `contracts/`).
+      * `5. State Machines & Lifecycles`: Non-governing visual Mermaid diagrams in `.spectacular/atlas/`.
+    - **Dynamic Operating Dial (`mode:`)**:
+      * Declare `mode: leverage` (default autonomous execution) for familiar features/fixes.
+      * Declare `mode: control` for high-risk operations (auth, payments, DB cutovers, unfamiliar libraries) requiring explicit anchor diff reviews.
+    - **`M1-bootstrap` Mission Plan**: 2–4 executable claims with verifiable `pass_boundary` and `proof_requirement` directly derived from the PRD's measurable success criteria.
 
 2. **Adopt Strong Defaults (Zero Grilling)**: Do not stall kickoff with multi-question interviews. Choose sane, production-grade defaults for toolchain and architecture; prompt only on irreversible semantic forks.
 

@@ -16,6 +16,8 @@ mkdir -p "$go_cache"
 export GOCACHE="$go_cache"
 export GOPROXY=off
 export GOFLAGS=-mod=readonly
+unset VIRTUAL_ENV
+export PYTHONNOUSERSITE=1
 
 check() {
   label="$1"
@@ -91,7 +93,7 @@ preflight_fail() {
 }
 
 preflight_json_escape() {
-  printf '%s' "$1" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))'
+  printf '%s' "$1" | python3 -S -c 'import json,sys; print(json.dumps(sys.stdin.read()))'
 }
 
 # Tier 0: static syntax and tree sanity.

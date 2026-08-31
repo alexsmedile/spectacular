@@ -19,18 +19,48 @@ This Atlas projects the operational topology of Spectacular's **Lean 3-Layer Aut
 | **Independent Reviewer** | Verify high-stakes claims | Inspect diffs and primary evidence without modifying code | Reviewer returns clean FROST verdict (`pass`/`fail` + findings) |
 
 ```mermaid
-flowchart LR
-    A["💡 1. Bulk Ideate & Decide<br><i>`spectacular decide` (D1..DN)</i>"] --> B["🗺️ 2. Flight Plan Roadmap<br><i>.spectacular/campaigns/flight-plan.md</i>"]
-    B --> C["🚀 3. Single-File Mission<br><i>`spectacular mission start` (≤500t)</i>"]
-    C --> D["🤖 4. Supervised Subagent<br><i>Autopilot execution (≤300t charter)</i>"]
-    D --> E["✅ 5. Verified Gate & Close<br><i>Tests pass = Proof · Owner completes</i>"]
+flowchart TD
+    subgraph S1["1. Anchor & Spec (Control)"]
+        A1["🎯 Intent & PRD"] --> A2["🔒 5 Anchors: Types, Schemas, State Machines, Boundaries, Vocab"]
+        A2 --> A3["🚀 Single-File Mission M&lt;N&gt; (≤500t)<br><i>Set Dial: mode: leverage / mode: control</i>"]
+    end
+    subgraph S2["2. Budget & Dispatch (Leverage)"]
+        A3 --> B1["🥪 `spectacular charter` (≤1,200t Context Sandwich)"]
+        B1 --> B2["🤖 Solo Execution or Supervised Dispatch"]
+    end
+    subgraph S3["3. Execute & Self-Heal (Leverage + Safety)"]
+        B2 --> C1["⚡ Targeted Code Edits"]
+        C1 --> C2{"Tier 1: Quick Tests"}
+        C2 -->|Fails| C3["Self-Repair Loop (≤3 tries with error log)"]
+        C3 --> C1
+        C2 -->|Ambiguous Fork| C4["⚠️ Fail-Fast Escalation ➔ `spectacular decide`"]
+        C4 --> C1
+    end
+    subgraph S4["4. Audit & Close (Control)"]
+        C2 -->|Passes| D1["📋 Claim vs. Diff Verification"]
+        D1 --> D2["🔍 Tiered / Batched Adversarial Review"]
+        D2 --> D3["🏁 `spectacular mission complete`"]
+    end
 ```
 
 ---
 
 ## 2. System Board
 
-### A. The 3-Tier Layout Judgment Matrix
+### A. Tiered Verification Matrix (Zero Duplicate Runs)
+
+```mermaid
+flowchart LR
+    A["<b>Worker / Solo Loop</b><br>Inner code edits"] -->|Fast & local| T1["<b>Tier 1: Quick / Domain</b><br>Unit tests & syntax check (≤5s)"]
+    T1 -->|Green| B["<b>Reviewer / Pre-Check</b><br>Audit claims & diffs"]
+    B -->|Structural| T0["<b>Tier 0: Preflight / Lint</b><br>AST boundaries & contract drift"]
+    T0 -->|Milestones| T2["<b>Tier 2: Acceptance</b><br>Orchestrator e2e suite"]
+    T2 -->|Final Gate| T3["<b>Tier 3: All / Release</b><br>Owner release gate"]
+```
+
+---
+
+### B. The 3-Tier Layout Judgment Matrix
 
 ```mermaid
 flowchart TD

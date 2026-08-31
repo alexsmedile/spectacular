@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.11.0 — 2026-08-31
+
+### Added
+
+- **The 5 Foundational Anchors**: Formally standardized the grounding layers across `.spectacular/PROJECT.md` (Boundaries/Non-Goals), `VOCABULARY.md` (Domain Ontology), `GUARDRAILS.md` (Invariants/Failure Modes), codebase types/schemas (Data Contracts), and `atlas/` (State Machines/Lifecycles).
+- **Dynamic Operating Dial (`mode:`)**: Added explicit execution posture selection to Mission frontmatter (`mode: leverage` for high-autonomy routine tasks; `mode: control` for high-risk auth/payments/DB cutovers).
+- **Tiered Verification Matrix (Zero Duplicate Runs)**: Structured test tier execution strictly by agent role (Worker = Tier 1 Quick/Domain; Reviewer = Tier 0 Preflight/Lint; Orchestrator = Tier 2 Acceptance; Owner Gate = Tier 3 All).
+- **Batched & Tiered Adversarial Reviews**: Codified policy eliminating per-task review file sprawl by allowing multi-mission campaigns to batch reviews at milestone gates.
+- **Architectural Decision D28**: Atomically recorded immutable decision `D28-accepted` formalizing the operating levels, foundational anchors, and verification protocol.
+
 ## 2.10.0 — 2026-08-31
 
 ### Added

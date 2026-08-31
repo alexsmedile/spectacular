@@ -276,14 +276,16 @@ If both branches have already diverged on the same file, reconcile on the featur
 branch — `git merge main` there, resolve, verify — and only then move it onto
 `main`. Never resolve a content conflict directly on `main`.
 
-## Work in outcome-sized clusters
+## Work in outcome-sized clusters & Self-Healing Loop
 
 ```
-[claims + dependencies] -> [work] -> [focused checks] -> [boundary integration] -> [local commit]
+[claims + dependencies] -> [work] -> [focused checks] -> [self-repair (≤3 tries)] -> [boundary integration] -> [local commit]
 ```
 
-- Run one full repository and release gate after integration (e.g. host project test suite, or `bash test/verify.sh all` in this repo).
-  Do not repeat it per small edit.
-- Read detailed logs only when something fails.
-- Keep Git, secret, and distribution checks at the boundary where they apply:
-  commit, push, PR, or release.
+### Deterministic Self-Healing Loop (Worker or Solo Orchestrator)
+1. **Targeted Edit**: Implement only what the specific objective/claim requires.
+2. **Inner Test Loop**: Execute fast Tier 1 checks (`verify.sh quick` or domain unit tests).
+3. **Structured Error Feedback**: On test failure, extract only the failing assertion, file, and line number. Repair bounded logic (up to 3 tries).
+4. **Escalation Gate (No Guessing)**: If failure stems from an ambiguous design fork or boundary collision, halt immediately and escalate to `spectacular decide`.
+5. **Claim vs. Diff Verification**: Before committing or concluding a run, compare `git diff --stat` against the mission's declared deliverables and boundaries. Unaccounted modifications must be reverted or escalated.
+6. **Release & Milestone Gate**: Run broader Tier 2/3 gates (`verify.sh acceptance` or `all`) only at milestone or release boundaries, never per small edit.

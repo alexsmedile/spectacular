@@ -23,6 +23,7 @@
 | `D25-accepted` | Decision | Make VOCABULARY.md the canonical domain ontology Anchor | `.spectacular/decisions/D25-accepted.md` |
 | `D26-accepted` | Decision | Use Atlas domain maps as non-governing visual projections | `.spectacular/decisions/D26-accepted.md` |
 | `D27-accepted` | Decision | Make ontology impact explicit in planning without adding a Mission field | `.spectacular/decisions/D27-accepted.md` |
+| `D28-accepted` | Decision | Codify the Dynamic Operating Dial, 5 Foundational Anchors, and Tiered Verification Protocol | `.spectacular/decisions/D28-accepted.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |

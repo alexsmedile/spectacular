@@ -1072,3 +1072,189 @@ func TestInitAvoidsOverwritesOnExistingWorkspace(t *testing.T) {
 		t.Fatalf("PROJECT.md was overwritten! got: %s, want: %s", string(afterProj), customProj)
 	}
 }
+
+func TestDecideDirectFlagsAndListFiltering(t *testing.T) {
+	root, contractRef := fixture(t)
+
+	// 1. Test direct decision recording via flags
+	decideOut := run(t, root, nil, 0, "decide", "--title", "Direct Flag Decision", "--disposition", "accepted", "--rationale", "Testing direct flags without temp files", "--actor", "Alex", "--json")
+	if !strings.Contains(decideOut, `"operation":"decision.record"`) || !strings.Contains(decideOut, `"ref":"D1-direct-flag-decision"`) {
+		t.Fatalf("decide with direct flags failed: %s", decideOut)
+	}
+
+	// 1b. Test decision recording via stdin JSON payload
+	jsonStdin := []byte(`{"title":"Stdin JSON Decision","disposition":"accepted","rationale":"Testing stdin JSON without temp files","actor":"Alex"}`)
+	decideStdinOut := run(t, root, jsonStdin, 0, "decide", "-", "--json")
+	if !strings.Contains(decideStdinOut, `"operation":"decision.record"`) || !strings.Contains(decideStdinOut, `"ref":"D2-stdin-json-decision"`) {
+		t.Fatalf("decide with stdin JSON failed: %s", decideStdinOut)
+	}
+
+	// 1c. Test decision recording via inline JSON string
+	decideInlineOut := run(t, root, nil, 0, "decide", `{"title":"Inline JSON Decision","disposition":"accepted","rationale":"Testing inline JSON argument","actor":"Alex"}`, "--json")
+	if !strings.Contains(decideInlineOut, `"operation":"decision.record"`) || !strings.Contains(decideInlineOut, `"ref":"D3-inline-json-decision"`) {
+		t.Fatalf("decide with inline JSON failed: %s", decideInlineOut)
+	}
+
+	// Verify the decision file was written inside .spectacular/decisions/
+	decPath := filepath.Join(root, ".spectacular", "decisions", "D1-direct-flag-decision.md")
+	content, err := os.ReadFile(decPath)
+	if err != nil {
+		t.Fatalf("failed to read recorded decision file: %v", err)
+	}
+	if !strings.Contains(string(content), "Direct Flag Decision") || !strings.Contains(string(content), "Testing direct flags without temp files") {
+		t.Fatalf("unexpected decision file content: %s", string(content))
+	}
+
+	// 2. Test mission list active-first vs --all
+	plan := `---
+type: MissionPlan
+title: Test Mission Active List
+owner: Alex
+contract:
+  ref: ` + contractRef + `
+outcome: Test active mission list filtering.
+review: automatic
+completion:
+  - claim: smoke
+    pass_boundary: Smoke passes.
+    proof_requirement: Verified.
+objectives:
+  - outcome: Implement smoke
+    claims: [smoke]
+authority:
+  operator: [inspect, edit-in-scope, choose-reversible-implementation, run-checks, generate-derived-files, bounded-repair, commit-local]
+  requires_owner: [activate-mission, change-outcome-or-completion, expand-scope, push, merge, release, irreversible-change, destructive-data, secret-change]
+scope:
+  mechanical: [internal/]
+  semantic: [Testing mission list.]
+repair_budget: 1
+dependencies: []
+gaps: []
+stops: [scope-drift]
+---
+# Description
+`
+	_ = run(t, root, []byte(plan), 0, "mission", "start", "-", "--create-branch", "--json")
+
+	// Active list should show M1
+	activeList := run(t, root, nil, 0, "mission", "list", "--json")
+	if !strings.Contains(activeList, `"ref":"M1"`) {
+		t.Fatalf("mission list active view should show M1: %s", activeList)
+	}
+
+	// Finish objective & complete mission
+	_ = run(t, root, nil, 0, "objective", "finish", "M1/O1", "--json")
+	_ = run(t, root, nil, 0, "mission", "complete", "M1", "--by", "Alex", "--json")
+
+	// Now active list should NOT show completed M1
+	afterComplete := run(t, root, nil, 0, "mission", "list", "--json")
+	if strings.Contains(afterComplete, `"ref":"M1"`) {
+		t.Fatalf("mission list active view should NOT show completed M1: %s", afterComplete)
+	}
+
+	// But mission list --all SHOULD show M1
+	allList := run(t, root, nil, 0, "mission", "list", "--all", "--json")
+	if !strings.Contains(allList, `"ref":"M1"`) {
+		t.Fatalf("mission list --all should show completed M1: %s", allList)
+	}
+}
+
+func TestUnifiedJSONPayloadProtocol(t *testing.T) {
+	root, contractRef := fixture(t)
+
+	// 1. Mission start with JSON payload via --data
+	planJSON := `{
+		"type": "MissionPlan",
+		"title": "JSON Mission Start",
+		"owner": "Alex",
+		"contract": { "ref": "` + contractRef + `" },
+		"outcome": "Verify JSON protocol across commands",
+		"review": "automatic",
+		"completion": [
+			{ "claim": "json-protocol", "pass_boundary": "Passes", "proof_requirement": "Checked" }
+		],
+		"objectives": [
+			{ "outcome": "Test JSON commands", "claims": ["json-protocol"] }
+		],
+		"authority": {
+			"operator": ["inspect", "edit-in-scope", "choose-reversible-implementation", "run-checks", "generate-derived-files", "bounded-repair", "commit-local"],
+			"requires_owner": ["activate-mission", "change-outcome-or-completion", "expand-scope", "push", "merge", "release", "irreversible-change", "destructive-data", "secret-change"]
+		},
+		"scope": {
+			"mechanical": ["internal/"],
+			"semantic": ["Testing JSON commands"]
+		},
+		"repair_budget": 1,
+		"dependencies": [],
+		"gaps": [],
+		"stops": ["scope-drift"]
+	}`
+	startOut := run(t, root, nil, 0, "mission", "start", "--data", planJSON, "--create-branch", "--json")
+	if !strings.Contains(startOut, `"operation":"mission.start"`) || !strings.Contains(startOut, `"ref":"M1"`) {
+		t.Fatalf("mission start --data failed: %s", startOut)
+	}
+
+	// 2. Evidence record via --data
+	evJSON := `{
+		"type": "EvidenceDraft",
+		"title": "JSON Evidence Test",
+		"claims": ["json-protocol"]
+	}`
+	evOut := run(t, root, nil, 0, "evidence", "record", "M1", "--data", evJSON, "--json")
+	if !strings.Contains(evOut, `"operation":"evidence.record"`) {
+		t.Fatalf("evidence record --data failed: %s", evOut)
+	}
+
+	// 3. Handoff record via --data
+	hoJSON := `{
+		"type": "HandoffDraft",
+		"title": "JSON Handoff Test",
+		"task": "Perform automated review"
+	}`
+	hoOut := run(t, root, nil, 0, "handoff", "record", "M1", "--data", hoJSON, "--json")
+	if !strings.Contains(hoOut, `"operation":"handoff.record"`) {
+		t.Fatalf("handoff record --data failed: %s", hoOut)
+	}
+
+	// 4. Review record via --data
+	rvJSON := `{
+		"type": "ReviewDraft",
+		"title": "JSON Review Test",
+		"status": "passed",
+		"claims": [
+			{ "claim": "json-protocol", "verdict": "pass" }
+		]
+	}`
+	rvOut := run(t, root, nil, 0, "review", "record", "M1", "--data", rvJSON, "--json")
+	if !strings.Contains(rvOut, `"operation":"review.record"`) {
+		t.Fatalf("review record --data failed: %s", rvOut)
+	}
+
+	// 5. Run transition via --data
+	trJSON := `{
+		"target": "M1/R1",
+		"to": "paused",
+		"by": "Alex",
+		"reason": "testing transition json"
+	}`
+	trOut := run(t, root, nil, 0, "run", "transition", "M1/R1", "--data", trJSON, "--json")
+	if !strings.Contains(trOut, `"operation":"run.transition"`) {
+		t.Fatalf("run transition --data failed: %s", trOut)
+	}
+
+	// Transition back to active via inline JSON
+	trActiveJSON := `{"target":"M1/R1","to":"active","by":"Alex","reason":"resume work"}`
+	trActiveOut := run(t, root, nil, 0, "run", "transition", "M1/R1", trActiveJSON, "--json")
+	if !strings.Contains(trActiveOut, `"operation":"run.transition"`) {
+		t.Fatalf("run transition inline JSON failed: %s", trActiveOut)
+	}
+
+	// 6. Objective finish
+	_ = run(t, root, nil, 0, "objective", "finish", "M1/O1", "--json")
+
+	// 7. Mission complete without --by (auto-resolves default owner)
+	completeOut := run(t, root, nil, 0, "mission", "complete", "M1", "--json")
+	if !strings.Contains(completeOut, `"operation":"mission.complete"`) {
+		t.Fatalf("mission complete without --by failed: %s", completeOut)
+	}
+}

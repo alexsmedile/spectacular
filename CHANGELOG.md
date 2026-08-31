@@ -2,8 +2,14 @@
 
 ## [Unreleased]
 
+## 2.12.0 — 2026-09-01
+
 ### Added
 
+- **Unified 4-Channel Input Protocol across CLI**: Structured commands (`mission start`, `decide`, `review record`, `handoff record`, `evidence record`, `run transition`) now support piped stdin (`-`), direct inline JSON strings, `--data` / `--json-payload` flags, and direct CLI argument flags.
+- **Zero-Scratchpad In-Memory Recording**: Eliminated temp files in `/tmp` for decision, review, handoff, and evidence drafting with transparent in-memory validation and atomic commits.
+- **Active-First `mission list`**: `spectacular mission list` defaults to live/in-flight missions; added `--all` flag to query the complete historical ledger.
+- **Terminal State Recognition in Lifecycle Derivation**: `derive.go` now handles `resolved`, `superseded`, and `cancelled` missions as finished terminal states, resolving ghost operator assignments.
 - **Architectural Decision D29**: Formally codified the Banned Synonyms Invariant, Architectural Pattern Pass, and Post-Mission Guardrail Feedback Loop.
 - **Permitted Actions & Banned Synonyms Invariant**: Formalized domain ontology schema in `VOCABULARY.md` with explicit canonical actions, permitted entity states, and banned synonyms to eliminate LLM drift across fresh context windows.
 - **Architectural Pattern Pass & Pattern Census**: Added upfront 2-track pattern survey (Fast Parametric Survey vs Subagent Research Dispatch) in `prepare.md` to prevent bespoke wheel reinvention and freeze a 3-line Pattern Census in Mission rationales.

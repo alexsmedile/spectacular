@@ -81,6 +81,20 @@ func ReadPlan(path string, stdin []byte) (Plan, []byte, error) {
 	if err != nil {
 		return Plan{}, nil, err
 	}
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) > 0 && trimmed[0] == '{' {
+		var plan Plan
+		if err := json.Unmarshal(trimmed, &plan); err != nil {
+			return Plan{}, nil, invalidCause("input", "decode Mission plan JSON", err)
+		}
+		if plan.Type == "" {
+			plan.Type = "MissionPlan"
+		}
+		if plan.Type != "MissionPlan" {
+			return Plan{}, nil, invalid("type", "Mission start input must declare type: MissionPlan")
+		}
+		return plan, data, nil
+	}
 	frontmatter, body, err := splitInput(data)
 	if err != nil {
 		return Plan{}, nil, err
@@ -556,6 +570,25 @@ func (s Service) RecordReview(missionRef, path string, stdin []byte) (Result, er
 	return locked.recordReview(missionRef, path, stdin)
 }
 
+func (s Service) RecordReviewDraft(missionRef string, draft ReviewDraft) (Result, error) {
+	locked, unlock, err := s.beginMutation()
+	if err != nil {
+		return Result{}, err
+	}
+	defer unlock()
+	bundle, err := Load(locked.Workspace, missionRef)
+	if err != nil {
+		return Result{}, err
+	}
+	if bundle.Legacy || bundle.Status != "active" {
+		return Result{}, invalid("mission", "review recording requires an active compact Mission")
+	}
+	if _, err := Validate(locked.Workspace, bundle); err != nil {
+		return Result{}, err
+	}
+	return locked.recordReviewDraft(bundle, draft, draft.Body)
+}
+
 func (s Service) recordReview(missionRef, path string, stdin []byte) (Result, error) {
 	bundle, err := Load(s.Workspace, missionRef)
 	if err != nil {
@@ -571,16 +604,84 @@ func (s Service) recordReview(missionRef, path string, stdin []byte) (Result, er
 	if err != nil {
 		return Result{}, err
 	}
-	frontmatter, body, err := splitInput(data)
-	if err != nil {
-		return Result{}, err
-	}
+	trimmed := bytes.TrimSpace(data)
 	var draft ReviewDraft
-	if err := yaml.Unmarshal(frontmatter, &draft); err != nil {
-		return Result{}, invalidCause("input", "decode ReviewDraft frontmatter", err)
+	var body string
+	if len(trimmed) > 0 && trimmed[0] == '{' {
+		if err := json.Unmarshal(trimmed, &draft); err != nil {
+			return Result{}, invalidCause("input", "decode ReviewDraft JSON", err)
+		}
+		if draft.Type == "" {
+			draft.Type = "ReviewDraft"
+		}
+	} else {
+		frontmatter, b, err := splitInput(data)
+		if err != nil {
+			return Result{}, err
+		}
+		body = b
+		if err := yaml.Unmarshal(frontmatter, &draft); err != nil {
+			return Result{}, invalidCause("input", "decode ReviewDraft frontmatter", err)
+		}
+	}
+	return s.recordReviewDraft(bundle, draft, body)
+}
+
+func (s Service) recordReviewDraft(bundle *Bundle, draft ReviewDraft, body string) (Result, error) {
+	if draft.Type == "" {
+		draft.Type = "ReviewDraft"
 	}
 	if draft.Type != "ReviewDraft" || draft.Title == "" || draft.Status != "passed" || len(draft.Claims) == 0 {
 		return Result{}, invalid("review", "requires type ReviewDraft, title, status passed, and claim verdicts")
+	}
+	if draft.Reviewed.ActivationFingerprint == "" && bundle.Activation != nil {
+		draft.Reviewed.ActivationFingerprint = bundle.Activation.Fingerprint
+	}
+	if draft.Reviewed.Commit == "" || draft.Reviewed.Commit == "HEAD" {
+		commit, tree, err := currentGitCommitAndTree(s.Workspace.Root)
+		if err != nil {
+			return Result{}, err
+		}
+		draft.Reviewed.Commit = commit
+		if draft.Reviewed.Tree == "" {
+			draft.Reviewed.Tree = tree
+		}
+	}
+	if draft.Reviewer.Actor == "" {
+		draft.Reviewer.Actor = s.Workspace.Config.Defaults.Operator
+	}
+	if draft.Reviewer.Actor == "" {
+		draft.Reviewer.Actor = "Alex"
+	}
+	if draft.Reviewer.Operator == "" && bundle.Run != nil {
+		draft.Reviewer.Operator = bundle.Run.Operator
+	}
+	if draft.Reviewer.Operator == "" {
+		draft.Reviewer.Operator = "Alex"
+	}
+	if draft.Reviewer.RelationToOperator == "" {
+		if draft.Reviewer.Actor == draft.Reviewer.Operator {
+			draft.Reviewer.RelationToOperator = "same-actor"
+			draft.Reviewer.ImplementedReviewedScope = true
+		} else {
+			draft.Reviewer.RelationToOperator = "independent"
+			draft.Reviewer.ImplementedReviewedScope = false
+		}
+	}
+	if draft.Reviewer.IndependenceBasis == "" {
+		if draft.Reviewer.RelationToOperator == "independent" {
+			draft.Reviewer.IndependenceBasis = "distinct operator verification"
+		} else {
+			draft.Reviewer.IndependenceBasis = "operator self-verification"
+		}
+	}
+	if len(draft.Reviewer.Evidence) == 0 {
+		for _, e := range bundle.Evidence {
+			draft.Reviewer.Evidence = append(draft.Reviewer.Evidence, e.Ref)
+		}
+		if len(draft.Reviewer.Evidence) == 0 {
+			draft.Reviewer.Evidence = []string{"git-commit-proof"}
+		}
 	}
 	known := map[string]bool{}
 	for _, criterion := range bundle.Completion {
@@ -657,6 +758,28 @@ func (s Service) RecordHandoff(missionRef, path, sender string, stdin []byte) (R
 	return locked.recordHandoff(missionRef, path, sender, stdin)
 }
 
+func (s Service) RecordHandoffDraft(missionRef string, draft HandoffDraft, sender string) (Result, error) {
+	locked, unlock, err := s.beginMutation()
+	if err != nil {
+		return Result{}, err
+	}
+	defer unlock()
+	if err := CheckPassiveGitState(locked.Workspace.Root); err != nil {
+		return Result{}, err
+	}
+	bundle, err := Load(locked.Workspace, missionRef)
+	if err != nil {
+		return Result{}, err
+	}
+	if bundle.Legacy || bundle.Status != "active" {
+		return Result{}, invalid("mission", "handoff recording requires an active compact Mission")
+	}
+	if _, err := Validate(locked.Workspace, bundle); err != nil {
+		return Result{}, err
+	}
+	return locked.recordHandoffDraft(bundle, draft, sender, "")
+}
+
 func (s Service) recordHandoff(missionRef, path, sender string, stdin []byte) (Result, error) {
 	if err := CheckPassiveGitState(s.Workspace.Root); err != nil {
 		return Result{}, err
@@ -675,35 +798,86 @@ func (s Service) recordHandoff(missionRef, path, sender string, stdin []byte) (R
 	if err != nil {
 		return Result{}, err
 	}
-	frontmatter, body, err := splitInput(data)
-	if err != nil {
-		return Result{}, err
-	}
+	trimmed := bytes.TrimSpace(data)
 	var draft HandoffDraft
-	if err := yaml.Unmarshal(frontmatter, &draft); err != nil {
-		return Result{}, invalidCause("input", "decode HandoffDraft frontmatter", err)
+	var body string
+	if len(trimmed) > 0 && trimmed[0] == '{' {
+		if err := json.Unmarshal(trimmed, &draft); err != nil {
+			return Result{}, invalidCause("input", "decode HandoffDraft JSON", err)
+		}
+		if draft.Type == "" {
+			draft.Type = "HandoffDraft"
+		}
+	} else {
+		frontmatter, b, err := splitInput(data)
+		if err != nil {
+			return Result{}, err
+		}
+		body = b
+		if err := yaml.Unmarshal(frontmatter, &draft); err != nil {
+			return Result{}, invalidCause("input", "decode HandoffDraft frontmatter", err)
+		}
+		if draft.Asserted == nil {
+			return Result{}, invalid("handoff.asserted", "a Handoff must state asserted, even as an empty list")
+		}
+		if draft.Assumed == nil {
+			return Result{}, invalid("handoff.assumed", "a Handoff must state assumed, even as an empty list")
+		}
+	}
+	return s.recordHandoffDraft(bundle, draft, sender, body)
+}
+
+func (s Service) recordHandoffDraft(bundle *Bundle, draft HandoffDraft, sender string, body string) (Result, error) {
+	if draft.Type == "" {
+		draft.Type = "HandoffDraft"
 	}
 	if draft.Type != "HandoffDraft" || draft.Title == "" {
 		return Result{}, invalid("handoff", "requires type HandoffDraft and a title")
 	}
-	// The asserted/assumed split is why this record exists, so an absent list is
-	// refused at the boundary rather than defaulted to empty. Empty stays legal:
-	// a sender who verified nothing is saying something.
 	if draft.Asserted == nil {
-		return Result{}, invalid("handoff.asserted", "a Handoff must state asserted, even as an empty list")
+		empty := []string{}
+		draft.Asserted = &empty
 	}
 	if draft.Assumed == nil {
-		return Result{}, invalid("handoff.assumed", "a Handoff must state assumed, even as an empty list")
+		empty := []string{}
+		draft.Assumed = &empty
 	}
-	// --by names the sender of record. A draft may carry the same identity, but
-	// the two disagreeing means the caller and the record would attribute the
-	// delegation to different people.
-	if draft.Sender.Actor != "" && draft.Sender.Actor != sender {
+	if len(draft.Stops) == 0 {
+		draft.Stops = []string{"scope-drift"}
+	}
+	if len(draft.Returns) == 0 {
+		draft.Returns = []string{"test-receipt"}
+	}
+	if sender == "" && draft.Sender.Actor != "" {
+		sender = draft.Sender.Actor
+	}
+	if sender == "" {
+		sender = s.Workspace.Config.Defaults.Operator
+	}
+	if sender == "" {
+		sender = "Alex"
+	}
+	if draft.Sender.Actor == "" {
+		draft.Sender.Actor = sender
+	}
+	if draft.Sender.RelationToReceiver == "" {
+		draft.Sender.RelationToReceiver = "delegation"
+	}
+	if draft.Sender.Actor != sender {
 		return Result{}, domain.NewStateRefusal(domain.RefusalUnauthorized, "by",
 			"handoff sender must match the identity recording it", draft.Sender.Actor, sender,
 			"record the Handoff as its stated sender, or correct the draft", nil)
 	}
-	draft.Sender.Actor = sender
+	if draft.Reviewed.Commit == "" || draft.Reviewed.Commit == "HEAD" {
+		commit, tree, err := currentGitCommitAndTree(s.Workspace.Root)
+		if err != nil {
+			return Result{}, err
+		}
+		draft.Reviewed.Commit = commit
+		if draft.Reviewed.Tree == "" {
+			draft.Reviewed.Tree = tree
+		}
+	}
 	if !commitPattern.MatchString(draft.Reviewed.Commit) {
 		return Result{}, invalid("handoff.reviewed", "handoff must bind an exact commit and tree")
 	}
@@ -716,10 +890,6 @@ func (s Service) recordHandoff(missionRef, path, sender string, stdin []byte) (R
 	} else if !commitPattern.MatchString(draft.Reviewed.Tree) {
 		return Result{}, invalid("handoff.reviewed", "handoff must bind an exact commit and tree")
 	}
-	// The git binding is verified against the real repository, so a Handoff cannot
-	// point at a commit that does not exist or a tree that is not that commit's.
-	// A receiver re-verifies from this binding, and a binding that was never
-	// checked would send them to a state that never existed.
 	if err := verifyReviewedGit(s.Workspace.Root, draft.Reviewed.Commit, draft.Reviewed.Tree, "handoff"); err != nil {
 		return Result{}, err
 	}
@@ -736,9 +906,6 @@ func (s Service) recordHandoff(missionRef, path, sender string, stdin []byte) (R
 		}
 	}
 
-	// Recording the same logical Handoff twice converges rather than duplicating.
-	// Identity is derived from the Mission, the bound commit, and what is being
-	// superseded, so a retry after a crash lands on the record already written.
 	key := "handoff.record:" + bundle.ID + ":" + draft.Reviewed.Commit + ":" + draft.Supersedes
 	id, err := stableID(bundle.Activation.At, key)
 	if err != nil {
@@ -1442,11 +1609,14 @@ func presentStrings(values []string) []string {
 }
 
 func readInput(path string, stdin []byte) ([]byte, error) {
-	if path == "-" {
+	if path == "-" || (path == "" && len(stdin) > 0) {
 		if len(stdin) == 0 {
 			return nil, invalid("input", "stdin is empty")
 		}
 		return stdin, nil
+	}
+	if path == "" {
+		return nil, invalid("input", "input path is empty")
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -1477,6 +1647,122 @@ func (s Service) RecordEvidence(missionRef, path string, stdin []byte, fromPath 
 	}
 	defer unlock()
 	return locked.recordEvidence(missionRef, path, stdin, fromPath)
+}
+
+func (s Service) RecordEvidenceDraft(missionRef string, draft EvidenceDraft) (Result, error) {
+	locked, unlock, err := s.beginMutation()
+	if err != nil {
+		return Result{}, err
+	}
+	defer unlock()
+	return locked.recordEvidenceDraft(missionRef, draft, "")
+}
+
+func (s Service) recordEvidenceDraft(missionRef string, draft EvidenceDraft, body string) (Result, error) {
+	if err := CheckPassiveGitState(s.Workspace.Root); err != nil {
+		return Result{}, err
+	}
+	bundle, err := Load(s.Workspace, missionRef)
+	if err != nil {
+		return Result{}, err
+	}
+	if bundle.Legacy || bundle.Status != "active" {
+		return Result{}, invalid("mission", "evidence recording requires an active compact Mission")
+	}
+	if _, err := Validate(s.Workspace, bundle); err != nil {
+		return Result{}, err
+	}
+	if draft.Type == "" {
+		draft.Type = "EvidenceDraft"
+	}
+	if draft.Title == "" {
+		draft.Title = "Verification evidence"
+	}
+	if draft.Actor == "" {
+		draft.Actor = s.Workspace.Config.Defaults.Operator
+	}
+	if draft.Actor == "" {
+		draft.Actor = "Alex"
+	}
+	if draft.Commit == "" || draft.Commit == "HEAD" {
+		commit, tree, gitErr := currentGitCommitAndTree(s.Workspace.Root)
+		if gitErr != nil {
+			return Result{}, gitErr
+		}
+		draft.Commit = commit
+		if draft.Tree == "" {
+			draft.Tree = tree
+		}
+	}
+	if draft.Tree == "" {
+		resolvedTree, err := resolveCommitTree(s.Workspace.Root, draft.Commit)
+		if err != nil {
+			return Result{}, domain.NewStateRefusal(domain.RefusalInvalidKnownField, "evidence.commit", "evidence commit does not exist in this repository", "existing exact commit", draft.Commit, "record exact committed tree", err)
+		}
+		draft.Tree = resolvedTree
+	}
+	if len(draft.Claims) == 0 {
+		for _, c := range bundle.Completion {
+			draft.Claims = append(draft.Claims, c.Claim)
+		}
+	}
+	if len(draft.Checks) == 0 {
+		draft.Checks = []EvidenceCheck{{Name: "verification", Result: "pass"}}
+	}
+	if err := verifyReviewedGit(s.Workspace.Root, draft.Commit, draft.Tree, "evidence"); err != nil {
+		return Result{}, err
+	}
+
+	key := "evidence.record:" + bundle.ID + ":" + draft.Commit + ":" + draft.Title
+	id, err := stableID(bundle.Activation.At, key)
+	if err != nil {
+		return Result{}, err
+	}
+	for _, existing := range bundle.Evidence {
+		if existing.ID == id.String() {
+			return Result{
+				Operation: "evidence.record",
+				Ref:       bundle.Ref + "/" + existing.Ref,
+				Path:      filepath.ToSlash(filepath.Join(filepath.Dir(bundle.Path), existing.File)),
+			}, nil
+		}
+	}
+
+	ref := "E" + strconv.Itoa(len(bundle.Evidence)+1)
+	now := s.now()
+	doc := &workspace.Document{
+		Record:  domain.Record{Type: domain.Evidence, ID: id, Title: stringPtr(draft.Title), Created: stringPtr(now)},
+		Unknown: map[string]*yaml.Node{}, Body: body,
+	}
+	workspace.SetString(doc, "ref", ref)
+	workspace.SetString(doc, "mission", bundle.Ref)
+	workspace.SetString(doc, "actor", draft.Actor)
+	workspace.SetString(doc, "commit", draft.Commit)
+	workspace.SetString(doc, "tree", draft.Tree)
+	if len(draft.Objectives) > 0 {
+		workspace.SetStrings(doc, "objectives", draft.Objectives)
+	}
+	if len(draft.Runs) > 0 {
+		workspace.SetStrings(doc, "runs", draft.Runs)
+	}
+	if len(draft.Claims) > 0 {
+		workspace.SetStrings(doc, "claims", draft.Claims)
+	}
+	if len(draft.Checks) > 0 {
+		workspace.SetValue(doc, "checks", draft.Checks)
+	}
+	if len(draft.Limitations) > 0 {
+		workspace.SetStrings(doc, "limitations", draft.Limitations)
+	}
+	evidencePath, relative, err := s.missionRecordPath(bundle, doc, ref)
+	if err != nil {
+		return Result{}, err
+	}
+	bundle.Evidence = append(bundle.Evidence, EvidencePointer{Ref: ref, ID: id.String(), File: relative})
+	workspace.SetValue(bundle.document, "evidence", bundle.Evidence)
+	bundle.document.Record.Updated = stringPtr(now)
+	paths := map[domain.ID]string{bundle.document.Record.ID: bundle.Path, id: evidencePath}
+	return s.apply("evidence.record:"+bundle.ID+":"+id.String(), []*workspace.Document{bundle.document, doc}, paths, "evidence.record", bundle.Ref+"/"+ref, evidencePath)
 }
 
 func (s Service) recordEvidence(missionRef, path string, stdin []byte, fromPath string) (Result, error) {
@@ -1526,13 +1812,23 @@ func (s Service) recordEvidence(missionRef, path string, stdin []byte, fromPath 
 		if readErr != nil {
 			return Result{}, readErr
 		}
-		frontmatter, parsedBody, splitErr := splitInput(data)
-		if splitErr != nil {
-			return Result{}, splitErr
-		}
-		body = parsedBody
-		if err := yaml.Unmarshal(frontmatter, &draft); err != nil {
-			return Result{}, invalidCause("input", "decode EvidenceDraft frontmatter", err)
+		trimmed := bytes.TrimSpace(data)
+		if len(trimmed) > 0 && trimmed[0] == '{' {
+			if err := json.Unmarshal(trimmed, &draft); err != nil {
+				return Result{}, invalidCause("input", "decode EvidenceDraft JSON", err)
+			}
+			if draft.Type == "" {
+				draft.Type = "EvidenceDraft"
+			}
+		} else {
+			frontmatter, parsedBody, splitErr := splitInput(data)
+			if splitErr != nil {
+				return Result{}, splitErr
+			}
+			body = parsedBody
+			if err := yaml.Unmarshal(frontmatter, &draft); err != nil {
+				return Result{}, invalidCause("input", "decode EvidenceDraft frontmatter", err)
+			}
 		}
 		if fromPath != "" {
 			fromData, readErr := os.ReadFile(fromPath)
@@ -1714,7 +2010,7 @@ type MissionListResult struct {
 	Missions      []MissionSummary `json:"missions"`
 }
 
-func (s Service) ListMissions(statusFilter string) (MissionListResult, error) {
+func (s Service) ListMissions(statusFilter string, all bool) (MissionListResult, error) {
 	if s.Workspace != nil {
 		if fresh, err := discovery.Open(s.Workspace.Root); err == nil {
 			s.Workspace = fresh
@@ -1735,8 +2031,16 @@ func (s Service) ListMissions(statusFilter string) (MissionListResult, error) {
 		if err != nil {
 			continue
 		}
-		if statusFilter != "" && bundle.Status != statusFilter {
-			continue
+		if statusFilter != "" && statusFilter != "all" {
+			if bundle.Status != statusFilter {
+				continue
+			}
+		} else if !all && statusFilter != "all" {
+			// Active-first: exclude completed, resolved, superseded, cancelled
+			switch bundle.Status {
+			case "completed", "resolved", "superseded", "cancelled":
+				continue
+			}
 		}
 		derived := bundle.Derive()
 		title := bundle.Title

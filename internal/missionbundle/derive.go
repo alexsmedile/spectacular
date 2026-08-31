@@ -196,6 +196,12 @@ func nextAction(b *Bundle, state State) string {
 	switch {
 	case b.Status == "completed":
 		return "nothing; the Mission is complete"
+	case b.Status == "resolved":
+		return "nothing; the Mission is resolved"
+	case b.Status == "superseded":
+		return "nothing; the Mission is superseded"
+	case b.Status == "cancelled":
+		return "nothing; the Mission is cancelled"
 	case b.Status == "awaiting-review":
 		return "record a review covering every frozen completion claim"
 	case b.Run == nil:
@@ -257,7 +263,7 @@ func hasCurrentPassingReview(b *Bundle) bool {
 // owner-gated; ordinary Objective work is not.
 func holderFor(b *Bundle) string {
 	switch b.Status {
-	case "completed":
+	case "completed", "resolved", "superseded", "cancelled":
 		return "no one"
 	case "awaiting-review":
 		return "owner"

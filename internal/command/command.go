@@ -43,6 +43,7 @@ const (
 	missionStartOptions
 	evidenceRecordOptions
 	initOptions
+	decideOptions
 )
 
 type operation uint8
@@ -89,12 +90,12 @@ type Spec struct {
 var Registry = []Spec{
 	{
 		Words:         []string{"mission", "start"},
-		Arguments:     "<plan.md|-> [--allow-main] [--create-branch] [--json]",
+		Arguments:     "[<plan.md|->] [--data <json>] [--allow-main] [--create-branch] [--json]",
 		ArgumentShape: missionStartOptions,
 		JSONSchema:    "spectacular.mission.start.v2",
 		Effect:        Mutating,
 		Operation:     opMissionStart,
-		Description:   "Activates a new compact Mission from a valid MissionPlan markdown document or stdin.",
+		Description:   "Activates a new compact Mission from a valid MissionPlan markdown document, stdin, or JSON payload.",
 		InputType:     "MissionPlan",
 		OutputType:    "Mission",
 		Template: `---
@@ -130,7 +131,7 @@ stops: [scope-drift]
 	},
 	{
 		Words:         []string{"mission", "list"},
-		Arguments:     "[--status <status>] [--json]",
+		Arguments:     "[--all] [--status <status>] [--json]",
 		ArgumentShape: optionalStatus,
 		JSONSchema:    "spectacular.mission.list.v2",
 		Effect:        ReadOnly,
@@ -170,7 +171,7 @@ stops: [scope-drift]
 	},
 	{
 		Words:         []string{"mission", "close"},
-		Arguments:     "<ref> --by <owner> [--json]",
+		Arguments:     "<ref> [--by <owner>] [--json]",
 		ArgumentShape: byOption,
 		JSONSchema:    "spectacular.mission.close.v2",
 		Effect:        Mutating,
@@ -230,7 +231,7 @@ stops: [scope-drift]
 	},
 	{
 		Words:         []string{"run", "transition"},
-		Arguments:     "<target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>] [--json]",
+		Arguments:     "<target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>] [--data <json>] [--json]",
 		ArgumentShape: transitionOptions,
 		JSONSchema:    "spectacular.run.transition.v2",
 		Effect:        Mutating,
@@ -240,7 +241,7 @@ stops: [scope-drift]
 	},
 	{
 		Words:         []string{"review", "record"},
-		Arguments:     "<mission-ref> <review.md|-> [--json]",
+		Arguments:     "<mission-ref> [<review.md|->] [--data <json>] [--json]",
 		ArgumentShape: two,
 		JSONSchema:    "spectacular.review.record.v2",
 		Effect:        Mutating,
@@ -276,7 +277,7 @@ limitations: []
 	},
 	{
 		Words:         []string{"handoff", "record"},
-		Arguments:     "<mission-ref> <handoff.md|-> --by <sender> [--json]",
+		Arguments:     "<mission-ref> [<handoff.md|->] [--by <sender>] [--data <json>] [--json]",
 		ArgumentShape: twoByOption,
 		JSONSchema:    "spectacular.handoff.record.v2",
 		Effect:        Mutating,
@@ -307,7 +308,7 @@ returns: [<returns>]
 	},
 	{
 		Words:         []string{"evidence", "record"},
-		Arguments:     "<mission-ref> [draft.md|-] [--from <test-output>] [--json]",
+		Arguments:     "<mission-ref> [draft.md|-] [--from <test-output>] [--data <json>] [--json]",
 		ArgumentShape: evidenceRecordOptions,
 		JSONSchema:    "spectacular.evidence.record.v2",
 		Effect:        Mutating,
@@ -336,7 +337,7 @@ limitations: []
 	},
 	{
 		Words:         []string{"mission", "complete"},
-		Arguments:     "<ref> --by <owner> [--json]",
+		Arguments:     "<ref> [--by <owner>] [--json]",
 		ArgumentShape: byOption,
 		JSONSchema:    "spectacular.mission.complete.v2",
 		Effect:        Mutating,
@@ -442,8 +443,8 @@ discovery and grant no authority.
 	},
 	{
 		Words:         []string{"decide"},
-		Arguments:     "<decision.md|-> [--json]",
-		ArgumentShape: one,
+		Arguments:     "[<decision.md|->] [--title <title>] [--disposition <accepted|rejected|deferred|superseded>] [--rationale <rationale>] [--actor <name>] [--supersedes <ref>] [--json]",
+		ArgumentShape: decideOptions,
 		JSONSchema:    "spectacular.decision.record.v2",
 		Effect:        Mutating,
 		Operation:     opDecide,
@@ -540,6 +541,10 @@ func (r Runner) Run(args []string) int {
 	if badOverride {
 		return r.usage(jsonMode, invoked, "--resolution requires exactly one value")
 	}
+	allMissions, duplicateAll := removeFlag(&args, "--all")
+	if duplicateAll {
+		return r.usage(jsonMode, invoked, "--all may be supplied at most once")
+	}
 	fromFile, _, badFrom := removeValueFlag(&args, "--from")
 	if badFrom {
 		return r.usage(jsonMode, invoked, "--from requires exactly one value")
@@ -551,6 +556,17 @@ func (r Runner) Run(args []string) int {
 	nameOpt, _, badName := removeValueFlag(&args, "--name")
 	if badName {
 		return r.usage(jsonMode, invoked, "--name requires exactly one value")
+	}
+	dataPayload, _, badData := removeValueFlag(&args, "--data")
+	if badData {
+		return r.usage(jsonMode, invoked, "--data requires exactly one value")
+	}
+	jsonPayloadOpt, _, badJSONPayload := removeValueFlag(&args, "--json-payload")
+	if badJSONPayload {
+		return r.usage(jsonMode, invoked, "--json-payload requires exactly one value")
+	}
+	if dataPayload == "" {
+		dataPayload = jsonPayloadOpt
 	}
 
 	if len(args) == 0 {
@@ -589,6 +605,9 @@ func (r Runner) Run(args []string) int {
 	}
 	if (allowMain || createBranch) && spec.Operation != opMissionStart {
 		return r.commandUsage(jsonMode, invoked, spec, "--allow-main and --create-branch apply to mission start")
+	}
+	if allMissions && spec.Operation != opMissionList {
+		return r.commandUsage(jsonMode, invoked, spec, "--all applies to mission list")
 	}
 	if fromFile != "" && spec.Operation != opEvidenceRecord {
 		return r.commandUsage(jsonMode, invoked, spec, "--from applies to evidence record")
@@ -642,15 +661,24 @@ func (r Runner) Run(args []string) int {
 	var value any
 	switch spec.Operation {
 	case opMissionStart:
-		path := inputPath(r.Cwd, rest[0])
-		stdin, readErr := r.stdinIfNeeded(rest[0])
-		if readErr != nil {
-			err = readErr
-			break
-		}
 		var plan missionbundle.Plan
 		var raw []byte
-		plan, raw, err = missionbundle.ReadPlan(path, stdin)
+		if dataPayload != "" {
+			plan, raw, err = missionbundle.ReadPlan("", []byte(dataPayload))
+		} else if len(rest) > 0 && strings.HasPrefix(strings.TrimSpace(rest[0]), "{") {
+			plan, raw, err = missionbundle.ReadPlan("", []byte(rest[0]))
+		} else if len(rest) > 0 {
+			path := inputPath(r.Cwd, rest[0])
+			stdin, readErr := r.stdinIfNeeded(rest[0])
+			if readErr != nil {
+				err = readErr
+				break
+			}
+			plan, raw, err = missionbundle.ReadPlan(path, stdin)
+		} else {
+			err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "requires a plan file, stdin (-), inline JSON, or --data", nil)
+			break
+		}
 		if allowMain {
 			plan.AllowMain = true
 		}
@@ -661,7 +689,7 @@ func (r Runner) Run(args []string) int {
 			value, err = service.Start(plan, raw)
 		}
 	case opMissionList:
-		value, err = service.ListMissions(statusFilter)
+		value, err = service.ListMissions(statusFilter, allMissions)
 	case opMissionShow:
 		value, err = service.Show(rest[0])
 	case opMissionCheck:
@@ -680,7 +708,17 @@ func (r Runner) Run(args []string) int {
 		}
 		value, err = service.AmendScope(rest[0], cleaned, rest[4], reason, dryRun)
 	case opMissionClose:
-		value, err = service.CloseMission(rest[0], rest[2])
+		by := ""
+		if len(rest) == 3 && rest[1] == "--by" {
+			by = rest[2]
+		}
+		if by == "" {
+			by = ws.Config.Defaults.Operator
+		}
+		if by == "" {
+			by = "Alex"
+		}
+		value, err = service.CloseMission(rest[0], by)
 	case opObjectiveShow:
 		var objective missionbundle.Objective
 		objective, _, err = service.Objective(rest[0])
@@ -696,40 +734,121 @@ func (r Runner) Run(args []string) int {
 	case opRunStart:
 		value, err = service.StartRun(rest[0], rest[2])
 	case opReviewRecord:
-		stdin, readErr := r.stdinIfNeeded(rest[1])
-		if readErr != nil {
-			err = readErr
-			break
+		missionRef := rest[0]
+		if dataPayload != "" {
+			var draft missionbundle.ReviewDraft
+			if unmarshalErr := json.Unmarshal([]byte(dataPayload), &draft); unmarshalErr != nil {
+				err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "invalid JSON payload: "+unmarshalErr.Error(), nil)
+				break
+			}
+			value, err = service.RecordReviewDraft(missionRef, draft)
+		} else if len(rest) > 1 && strings.HasPrefix(strings.TrimSpace(rest[1]), "{") {
+			var draft missionbundle.ReviewDraft
+			if unmarshalErr := json.Unmarshal([]byte(rest[1]), &draft); unmarshalErr != nil {
+				err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "invalid JSON payload: "+unmarshalErr.Error(), nil)
+				break
+			}
+			value, err = service.RecordReviewDraft(missionRef, draft)
+		} else if len(rest) > 1 {
+			stdin, readErr := r.stdinIfNeeded(rest[1])
+			if readErr != nil {
+				err = readErr
+				break
+			}
+			value, err = service.RecordReview(missionRef, inputPath(r.Cwd, rest[1]), stdin)
+		} else {
+			draft := missionbundle.ReviewDraft{
+				Type:   "ReviewDraft",
+				Title:  "Mission review for " + missionRef,
+				Status: "passed",
+			}
+			value, err = service.RecordReviewDraft(missionRef, draft)
 		}
-		value, err = service.RecordReview(rest[0], inputPath(r.Cwd, rest[1]), stdin)
 	case opHandoffRecord:
-		stdin, readErr := r.stdinIfNeeded(rest[1])
-		if readErr != nil {
-			err = readErr
-			break
+		missionRef := rest[0]
+		sender := ""
+		for i := 1; i < len(rest); i++ {
+			if (rest[i] == "--by" || rest[i] == "--sender") && i+1 < len(rest) {
+				sender = rest[i+1]
+			}
 		}
-		value, err = service.RecordHandoff(rest[0], inputPath(r.Cwd, rest[1]), rest[3], stdin)
+		if dataPayload != "" {
+			var draft missionbundle.HandoffDraft
+			if unmarshalErr := json.Unmarshal([]byte(dataPayload), &draft); unmarshalErr != nil {
+				err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "invalid JSON payload: "+unmarshalErr.Error(), nil)
+				break
+			}
+			value, err = service.RecordHandoffDraft(missionRef, draft, sender)
+		} else if len(rest) > 1 && strings.HasPrefix(strings.TrimSpace(rest[1]), "{") {
+			var draft missionbundle.HandoffDraft
+			if unmarshalErr := json.Unmarshal([]byte(rest[1]), &draft); unmarshalErr != nil {
+				err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "invalid JSON payload: "+unmarshalErr.Error(), nil)
+				break
+			}
+			value, err = service.RecordHandoffDraft(missionRef, draft, sender)
+		} else if len(rest) > 1 && rest[1] != "--by" && !strings.HasPrefix(rest[1], "--") {
+			stdin, readErr := r.stdinIfNeeded(rest[1])
+			if readErr != nil {
+				err = readErr
+				break
+			}
+			value, err = service.RecordHandoff(missionRef, inputPath(r.Cwd, rest[1]), sender, stdin)
+		} else {
+			draft := missionbundle.HandoffDraft{
+				Type:  "HandoffDraft",
+				Title: "Handoff for " + missionRef,
+				Task:  "Continue mission implementation",
+			}
+			value, err = service.RecordHandoffDraft(missionRef, draft, sender)
+		}
 	case opEvidenceRecord:
-		targetPath := ""
-		if len(rest) > 1 {
-			targetPath = rest[1]
+		missionRef := rest[0]
+		if dataPayload != "" {
+			var draft missionbundle.EvidenceDraft
+			if unmarshalErr := json.Unmarshal([]byte(dataPayload), &draft); unmarshalErr != nil {
+				err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "invalid JSON payload: "+unmarshalErr.Error(), nil)
+				break
+			}
+			value, err = service.RecordEvidenceDraft(missionRef, draft)
+		} else if len(rest) > 1 && strings.HasPrefix(strings.TrimSpace(rest[1]), "{") {
+			var draft missionbundle.EvidenceDraft
+			if unmarshalErr := json.Unmarshal([]byte(rest[1]), &draft); unmarshalErr != nil {
+				err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "invalid JSON payload: "+unmarshalErr.Error(), nil)
+				break
+			}
+			value, err = service.RecordEvidenceDraft(missionRef, draft)
+		} else {
+			targetPath := ""
+			if len(rest) > 1 && !strings.HasPrefix(rest[1], "--") {
+				targetPath = rest[1]
+			}
+			stdin, readErr := r.stdinIfNeeded(targetPath)
+			if readErr != nil {
+				err = readErr
+				break
+			}
+			var absTarget string
+			if targetPath != "" {
+				absTarget = inputPath(r.Cwd, targetPath)
+			}
+			var absFrom string
+			if fromFile != "" {
+				absFrom = inputPath(r.Cwd, fromFile)
+			}
+			value, err = service.RecordEvidence(missionRef, absTarget, stdin, absFrom)
 		}
-		stdin, readErr := r.stdinIfNeeded(targetPath)
-		if readErr != nil {
-			err = readErr
-			break
-		}
-		var absTarget string
-		if targetPath != "" {
-			absTarget = inputPath(r.Cwd, targetPath)
-		}
-		var absFrom string
-		if fromFile != "" {
-			absFrom = inputPath(r.Cwd, fromFile)
-		}
-		value, err = service.RecordEvidence(rest[0], absTarget, stdin, absFrom)
 	case opMissionComplete:
-		value, err = service.Complete(rest[0], rest[2])
+		by := ""
+		if len(rest) == 3 && rest[1] == "--by" {
+			by = rest[2]
+		}
+		if by == "" {
+			by = ws.Config.Defaults.Operator
+		}
+		if by == "" {
+			by = "Alex"
+		}
+		value, err = service.Complete(rest[0], by)
 	case opProposalCheck:
 		value, err = missionbundle.ValidateProposal(ws, rest[0])
 	case opCampaignCheck:
@@ -755,22 +874,138 @@ func (r Runner) Run(args []string) int {
 		}
 		value, err = charter.Compile(ws, parts[0], parts[1], extraSources)
 	case opDecide:
-		stdin, readErr := r.stdinIfNeeded(rest[0])
-		if readErr != nil {
-			err = readErr
+		flags, parseErr := parseDecideArgs(rest)
+		if parseErr != nil {
+			err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", parseErr.Error(), nil)
 			break
 		}
-		value, err = service.RecordDecision(inputPath(r.Cwd, rest[0]), stdin)
+		if dataPayload != "" {
+			flags.jsonPayload = dataPayload
+		}
+		if flags.jsonPayload != "" {
+			var draft missionbundle.DecisionDraft
+			if unmarshalErr := json.Unmarshal([]byte(flags.jsonPayload), &draft); unmarshalErr != nil {
+				err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "invalid JSON payload: "+unmarshalErr.Error(), nil)
+				break
+			}
+			actor := draft.Actor
+			if actor == "" {
+				actor = flags.actor
+			}
+			if actor == "" {
+				actor = ws.Config.Defaults.Operator
+			}
+			if actor == "" {
+				actor = "Alex"
+			}
+			draft.Actor = actor
+			if draft.ActorRole == "" {
+				draft.ActorRole = "owner"
+			}
+			value, err = service.RecordDecisionDraft(draft)
+		} else if flags.file != "" {
+			stdin, readErr := r.stdinIfNeeded(flags.file)
+			if readErr != nil {
+				err = readErr
+				break
+			}
+			value, err = service.RecordDecision(inputPath(r.Cwd, flags.file), stdin)
+		} else {
+			if strings.TrimSpace(flags.title) == "" || strings.TrimSpace(flags.disposition) == "" || strings.TrimSpace(flags.rationale) == "" {
+				err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "direct decision recording requires --title, --disposition, and --rationale", nil)
+				break
+			}
+			actor := flags.actor
+			if actor == "" {
+				actor = ws.Config.Defaults.Operator
+			}
+			if actor == "" {
+				actor = "Alex"
+			}
+			draft := missionbundle.DecisionDraft{
+				Type:        "DecisionDraft",
+				Title:       flags.title,
+				Disposition: flags.disposition,
+				Rationale:   flags.rationale,
+				Actor:       actor,
+				ActorRole:   "owner",
+				Question:    flags.question,
+				Supersedes:  flags.supersedes,
+				Scope:       flags.scope,
+				Targets:     flags.targets,
+			}
+			value, err = service.RecordDecisionDraft(draft)
+		}
 	case opRunTransition:
 		targetRef := rest[0]
-		toState := rest[2]
-		actor := rest[4]
-		reason := rest[6]
-		nextAction := ""
-		if len(rest) == 9 {
-			nextAction = rest[8]
+		if dataPayload != "" || (len(rest) > 0 && strings.HasPrefix(strings.TrimSpace(rest[len(rest)-1]), "{")) {
+			rawJSON := dataPayload
+			if rawJSON == "" {
+				rawJSON = strings.TrimSpace(rest[len(rest)-1])
+			}
+			var payload struct {
+				Target     string `json:"target"`
+				To         string `json:"to"`
+				By         string `json:"by"`
+				Reason     string `json:"reason"`
+				NextAction string `json:"next_action"`
+			}
+			if err := json.Unmarshal([]byte(rawJSON), &payload); err != nil {
+				err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "invalid JSON payload: "+err.Error(), nil)
+				break
+			}
+			if payload.Target != "" {
+				targetRef = payload.Target
+			}
+			actor := payload.By
+			if actor == "" {
+				actor = ws.Config.Defaults.Operator
+			}
+			if actor == "" {
+				actor = "Alex"
+			}
+			value, err = service.TransitionRun(targetRef, payload.To, actor, payload.Reason, payload.NextAction)
+		} else {
+			toState := ""
+			actor := ""
+			reason := ""
+			nextAction := ""
+			for i := 1; i < len(rest); i++ {
+				switch rest[i] {
+				case "--to":
+					if i+1 < len(rest) {
+						toState = rest[i+1]
+						i++
+					}
+				case "--by":
+					if i+1 < len(rest) {
+						actor = rest[i+1]
+						i++
+					}
+				case "--reason":
+					if i+1 < len(rest) {
+						reason = rest[i+1]
+						i++
+					}
+				case "--next-action":
+					if i+1 < len(rest) {
+						nextAction = rest[i+1]
+						i++
+					}
+				}
+			}
+			if actor == "" {
+				actor = ws.Config.Defaults.Operator
+			}
+			if actor == "" {
+				actor = "Alex"
+			}
+			if toState == "" || reason == "" {
+				err = domain.NewRefusal(domain.RefusalInvalidKnownField, "input", "run transition requires --to <state> and --reason <text>", nil)
+				break
+			}
+			value, err = service.TransitionRun(targetRef, toState, actor, reason, nextAction)
 		}
-		value, err = service.TransitionRun(targetRef, toState, actor, reason, nextAction)
 	}
 	if err != nil {
 		return r.refuse(jsonMode, invoked, err)
@@ -809,20 +1044,31 @@ func validateArguments(spec Spec, args []string) string {
 			return "requires exactly one argument"
 		}
 	case two:
-		if len(args) != 2 || args[0] == "" || args[1] == "" {
-			return "requires exactly two arguments"
+		if len(args) < 1 || args[0] == "" {
+			return "requires <mission-ref> [<review.md|->]"
+		}
+		if len(args) > 2 {
+			return "takes at most two arguments"
 		}
 	case titleOption:
 		if len(args) != 3 || args[0] == "" || args[1] != "--title" || args[2] == "" {
 			return "requires <mission-ref> --title <title>"
 		}
 	case byOption:
-		if len(args) != 3 || args[0] == "" || args[1] != "--by" || args[2] == "" {
-			return "requires <ref> --by <owner>"
+		if len(args) == 1 {
+			if args[0] == "" {
+				return "requires <ref> [--by <owner>]"
+			}
+		} else if len(args) == 3 {
+			if args[0] == "" || args[1] != "--by" || args[2] == "" {
+				return "requires <ref> [--by <owner>]"
+			}
+		} else {
+			return "requires <ref> [--by <owner>]"
 		}
 	case twoByOption:
-		if len(args) != 4 || args[0] == "" || args[1] == "" || args[2] != "--by" || args[3] == "" {
-			return "requires <mission-ref> <handoff.md|-> --by <sender>"
+		if len(args) < 1 || args[0] == "" {
+			return "requires <mission-ref> [<handoff.md|->] [--by <sender>]"
 		}
 	case amendOptions:
 		if len(args) != 5 || args[0] == "" || args[1] != "--gap" || args[2] == "" || args[3] != "--by" || args[4] == "" {
@@ -833,13 +1079,7 @@ func validateArguments(spec Spec, args []string) string {
 			return "requires at least one argument"
 		}
 	case transitionOptions:
-		if len(args) < 7 || args[0] == "" || args[1] != "--to" || args[2] == "" || args[3] != "--by" || args[4] == "" || args[5] != "--reason" || args[6] == "" {
-			return "requires <target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>]"
-		}
-		if len(args) == 9 && (args[7] != "--next-action" || args[8] == "") {
-			return "requires [--next-action <action>]"
-		}
-		if len(args) != 7 && len(args) != 9 {
+		if len(args) < 1 || args[0] == "" {
 			return "requires <target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>]"
 		}
 	case contractCreateOptions:
@@ -869,21 +1109,115 @@ func validateArguments(spec Spec, args []string) string {
 			return "takes no positional arguments"
 		}
 	case missionStartOptions:
-		if len(args) != 1 || args[0] == "" {
-			return "requires <plan.md|->"
+		if len(args) > 1 {
+			return "takes at most one plan argument"
 		}
 	case evidenceRecordOptions:
-		if len(args) < 1 || len(args) > 2 || args[0] == "" {
+		if len(args) < 1 || args[0] == "" {
 			return "requires <mission-ref> [draft.md|-]"
 		}
 	case initOptions:
 		if len(args) > 1 {
 			return "takes at most one path argument"
 		}
+	case decideOptions:
+		if len(args) == 0 {
+			return "requires <decision.md|-> or --title, --disposition, and --rationale flags"
+		}
 	default:
 		return "command registry has an invalid argument shape"
 	}
 	return ""
+}
+
+type decideFlags struct {
+	file        string
+	jsonPayload string
+	title       string
+	disposition string
+	rationale   string
+	actor       string
+	question    string
+	supersedes  string
+	scope       []string
+	targets     []string
+}
+
+func parseDecideArgs(args []string) (decideFlags, error) {
+	var flags decideFlags
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch arg {
+		case "--data", "--json-payload":
+			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" {
+				return flags, fmt.Errorf("%s requires a non-empty value", arg)
+			}
+			flags.jsonPayload = args[i+1]
+			i++
+		case "--title":
+			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" {
+				return flags, fmt.Errorf("--title requires a non-empty value")
+			}
+			flags.title = args[i+1]
+			i++
+		case "--disposition":
+			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" {
+				return flags, fmt.Errorf("--disposition requires a non-empty value")
+			}
+			flags.disposition = args[i+1]
+			i++
+		case "--rationale":
+			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" {
+				return flags, fmt.Errorf("--rationale requires a non-empty value")
+			}
+			flags.rationale = args[i+1]
+			i++
+		case "--actor", "--by":
+			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" {
+				return flags, fmt.Errorf("--actor/--by requires a non-empty value")
+			}
+			flags.actor = args[i+1]
+			i++
+		case "--question":
+			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" {
+				return flags, fmt.Errorf("--question requires a non-empty value")
+			}
+			flags.question = args[i+1]
+			i++
+		case "--supersedes":
+			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" {
+				return flags, fmt.Errorf("--supersedes requires a non-empty value")
+			}
+			flags.supersedes = args[i+1]
+			i++
+		case "--scope":
+			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" {
+				return flags, fmt.Errorf("--scope requires a non-empty value")
+			}
+			flags.scope = strings.Split(args[i+1], ",")
+			i++
+		case "--targets":
+			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" {
+				return flags, fmt.Errorf("--targets requires a non-empty value")
+			}
+			flags.targets = strings.Split(args[i+1], ",")
+			i++
+		default:
+			if strings.HasPrefix(arg, "--") {
+				return flags, fmt.Errorf("unknown flag %s", arg)
+			}
+			trimmed := strings.TrimSpace(arg)
+			if strings.HasPrefix(trimmed, "{") && strings.HasSuffix(trimmed, "}") {
+				flags.jsonPayload = trimmed
+				continue
+			}
+			if flags.file != "" {
+				return flags, fmt.Errorf("multiple input files specified")
+			}
+			flags.file = arg
+		}
+	}
+	return flags, nil
 }
 
 func (r Runner) stdinIfNeeded(path string) ([]byte, error) {

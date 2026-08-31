@@ -1,6 +1,8 @@
 package missionbundle
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -39,10 +41,49 @@ type DecisionResult struct {
 	Changed   []string `json:"changed"`
 }
 
+func ValidateDecisionDraft(draft *DecisionDraft) error {
+	if draft.Type == "" {
+		draft.Type = "DecisionDraft"
+	}
+	if draft.Type != "DecisionDraft" && draft.Type != "Decision" {
+		return invalid("type", "Decision input must declare type: DecisionDraft or Decision")
+	}
+	if strings.TrimSpace(draft.Title) == "" {
+		return invalid("title", "Decision title is required")
+	}
+	if strings.TrimSpace(draft.Disposition) == "" {
+		return invalid("disposition", "Decision disposition is required")
+	}
+	validDispositions := map[string]bool{
+		"accepted":   true,
+		"rejected":   true,
+		"deferred":   true,
+		"superseded": true,
+	}
+	if !validDispositions[draft.Disposition] {
+		return invalid("disposition", fmt.Sprintf("invalid disposition %q; must be accepted, rejected, deferred, or superseded", draft.Disposition))
+	}
+	if strings.TrimSpace(draft.Rationale) == "" {
+		return invalid("rationale", "Decision rationale is required")
+	}
+	return nil
+}
+
 func ReadDecisionDraft(path string, stdin []byte) (DecisionDraft, string, error) {
 	data, err := readInput(path, stdin)
 	if err != nil {
 		return DecisionDraft{}, "", err
+	}
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) > 0 && trimmed[0] == '{' {
+		var draft DecisionDraft
+		if err := json.Unmarshal(trimmed, &draft); err != nil {
+			return DecisionDraft{}, "", invalidCause("input", "decode Decision draft JSON", err)
+		}
+		if err := ValidateDecisionDraft(&draft); err != nil {
+			return DecisionDraft{}, "", err
+		}
+		return draft, draft.Body, nil
 	}
 	frontmatter, body, err := splitInput(data)
 	if err != nil {
@@ -52,26 +93,8 @@ func ReadDecisionDraft(path string, stdin []byte) (DecisionDraft, string, error)
 	if err := yaml.Unmarshal(frontmatter, &draft); err != nil {
 		return DecisionDraft{}, "", invalidCause("input", "decode Decision draft frontmatter", err)
 	}
-	if draft.Type != "DecisionDraft" && draft.Type != "Decision" {
-		return DecisionDraft{}, "", invalid("type", "Decision input must declare type: DecisionDraft or Decision")
-	}
-	if strings.TrimSpace(draft.Title) == "" {
-		return DecisionDraft{}, "", invalid("title", "Decision title is required")
-	}
-	if strings.TrimSpace(draft.Disposition) == "" {
-		return DecisionDraft{}, "", invalid("disposition", "Decision disposition is required")
-	}
-	validDispositions := map[string]bool{
-		"accepted":   true,
-		"rejected":   true,
-		"deferred":   true,
-		"superseded": true,
-	}
-	if !validDispositions[draft.Disposition] {
-		return DecisionDraft{}, "", invalid("disposition", fmt.Sprintf("invalid disposition %q; must be accepted, rejected, deferred, or superseded", draft.Disposition))
-	}
-	if strings.TrimSpace(draft.Rationale) == "" {
-		return DecisionDraft{}, "", invalid("rationale", "Decision rationale is required")
+	if err := ValidateDecisionDraft(&draft); err != nil {
+		return DecisionDraft{}, "", err
 	}
 	draft.Body = body
 	return draft, string(data), nil
@@ -86,6 +109,18 @@ func (s Service) RecordDecision(path string, stdin []byte) (DecisionResult, erro
 	return locked.recordDecision(path, stdin)
 }
 
+func (s Service) RecordDecisionDraft(draft DecisionDraft) (DecisionResult, error) {
+	if err := ValidateDecisionDraft(&draft); err != nil {
+		return DecisionResult{}, err
+	}
+	locked, unlock, err := s.beginMutation()
+	if err != nil {
+		return DecisionResult{}, err
+	}
+	defer unlock()
+	return locked.recordDecisionDraft(draft)
+}
+
 var refNumberRegex = regexp.MustCompile(`^D([0-9]+)`)
 
 func (s Service) recordDecision(path string, stdin []byte) (DecisionResult, error) {
@@ -93,7 +128,10 @@ func (s Service) recordDecision(path string, stdin []byte) (DecisionResult, erro
 	if err != nil {
 		return DecisionResult{}, err
 	}
+	return s.recordDecisionDraft(draft)
+}
 
+func (s Service) recordDecisionDraft(draft DecisionDraft) (DecisionResult, error) {
 	// 1. Validate supersession target if declared
 	if draft.Supersedes != "" {
 		found := false

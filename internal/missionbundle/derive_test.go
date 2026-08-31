@@ -130,6 +130,26 @@ func TestDeriveReadinessNextActionAndHolder(t *testing.T) {
 			next: "nothing; the Mission is complete", holder: "no one",
 		},
 		{
+			name: "a resolved Mission has no next action and no holder even with pending objectives",
+			bundle: &Bundle{
+				Ref: "M10", Status: "resolved", RepairBudget: 3,
+				Run:        &Run{Ref: "R1", Status: "active", Repairs: 0},
+				Objectives: []Objective{objective("O1", "implemented"), objective("O2", "pending", "O1")},
+			},
+			startable: 1, blocked: 0, done: 1,
+			next: "nothing; the Mission is resolved", holder: "no one",
+		},
+		{
+			name: "a superseded Mission has no next action and no holder",
+			bundle: &Bundle{
+				Ref: "M10", Status: "superseded", RepairBudget: 3,
+				Run:        &Run{Ref: "R1", Status: "active"},
+				Objectives: []Objective{objective("O1", "pending")},
+			},
+			startable: 1, blocked: 0, done: 0,
+			next: "nothing; the Mission is superseded", holder: "no one",
+		},
+		{
 			name: "a Mission awaiting review is held by the owner",
 			bundle: &Bundle{
 				Ref: "M6", Status: "awaiting-review", RepairBudget: 3,

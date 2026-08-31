@@ -974,7 +974,7 @@ func TestListMissionsReturnsSummaries(t *testing.T) {
 		t.Fatalf("Start failed: %v", err)
 	}
 
-	res, err := service.ListMissions("")
+	res, err := service.ListMissions("", true)
 	if err != nil {
 		t.Fatalf("ListMissions failed: %v", err)
 	}

@@ -1,6 +1,6 @@
 {
   "schema_version": "spectacular.command-catalog.v1",
-  "release_version": "2.11.0",
+  "release_version": "2.12.0",
   "release_inspection": {
     "command": "spectacular --version",
     "arguments": "[--json]",
@@ -10,13 +10,13 @@
   "commands": [
     {
       "command": "spectacular mission start",
-      "arguments": "<plan.md|-> [--allow-main] [--create-branch] [--json]",
+      "arguments": "[<plan.md|->] [--data <json>] [--allow-main] [--create-branch] [--json]",
       "schema": "spectacular.mission.start.v2",
       "effect": "mutating"
     },
     {
       "command": "spectacular mission list",
-      "arguments": "[--status <status>] [--json]",
+      "arguments": "[--all] [--status <status>] [--json]",
       "schema": "spectacular.mission.list.v2",
       "effect": "read-only"
     },
@@ -40,7 +40,7 @@
     },
     {
       "command": "spectacular mission close",
-      "arguments": "<ref> --by <owner> [--json]",
+      "arguments": "<ref> [--by <owner>] [--json]",
       "schema": "spectacular.mission.close.v2",
       "effect": "mutating"
     },
@@ -76,31 +76,31 @@
     },
     {
       "command": "spectacular run transition",
-      "arguments": "<target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>] [--json]",
+      "arguments": "<target-ref> --to <state> --by <actor> --reason <text> [--next-action <action>] [--data <json>] [--json]",
       "schema": "spectacular.run.transition.v2",
       "effect": "mutating"
     },
     {
       "command": "spectacular review record",
-      "arguments": "<mission-ref> <review.md|-> [--json]",
+      "arguments": "<mission-ref> [<review.md|->] [--data <json>] [--json]",
       "schema": "spectacular.review.record.v2",
       "effect": "mutating"
     },
     {
       "command": "spectacular handoff record",
-      "arguments": "<mission-ref> <handoff.md|-> --by <sender> [--json]",
+      "arguments": "<mission-ref> [<handoff.md|->] [--by <sender>] [--data <json>] [--json]",
       "schema": "spectacular.handoff.record.v2",
       "effect": "mutating"
     },
     {
       "command": "spectacular evidence record",
-      "arguments": "<mission-ref> [draft.md|-] [--from <test-output>] [--json]",
+      "arguments": "<mission-ref> [draft.md|-] [--from <test-output>] [--data <json>] [--json]",
       "schema": "spectacular.evidence.record.v2",
       "effect": "mutating"
     },
     {
       "command": "spectacular mission complete",
-      "arguments": "<ref> --by <owner> [--json]",
+      "arguments": "<ref> [--by <owner>] [--json]",
       "schema": "spectacular.mission.complete.v2",
       "effect": "mutating"
     },
@@ -136,7 +136,7 @@
     },
     {
       "command": "spectacular decide",
-      "arguments": "<decision.md|-> [--json]",
+      "arguments": "[<decision.md|->] [--title <title>] [--disposition <accepted|rejected|deferred|superseded>] [--rationale <rationale>] [--actor <name>] [--supersedes <ref>] [--json]",
       "schema": "spectacular.decision.record.v2",
       "effect": "mutating"
     },

@@ -11,6 +11,11 @@ import (
 var tracePathPattern = regexp.MustCompile(`[A-Za-z0-9_./-]+\.md`)
 var shellSegmentPattern = regexp.MustCompile(`&&|;|\|`)
 
+// TraceCertification records whether a trial's telemetry stream satisfies eval certification gates.
+// Note on Telemetry: Usage telemetry reflects observed token metrics. Depending on the test adapter
+// (e.g. opencode vs agy), token counts may represent native provider-reported usage or normalized
+// heuristic character approximations (e.g. len/4) designed for benchmark comparison rather than
+// provider billing accounting.
 type TraceCertification struct {
 	Valid            bool     `json:"valid"`
 	UsageObserved    bool     `json:"usage_observed"`

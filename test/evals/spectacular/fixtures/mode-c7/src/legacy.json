@@ -1,0 +1,6 @@
+[
+  {"id": 1, "title": "Standard Item", "active": true},
+  {"id": "LEG-101", "title": "Legacy Formatted Item", "active": true},
+  {"id": 204, "title": "Another Standard Item", "active": false},
+  {"id": "LEG-999", "title": "Old Edge Item", "active": true}
+]

@@ -75,6 +75,23 @@ func TestNormalizedOpenCodeTraceIsCertified(t *testing.T) {
 	}
 }
 
+func TestNormalizedAntigravityTraceIsCertified(t *testing.T) {
+	trace := `{"type":"spectacular.eval.usage","input_tokens":450,"cached_input_tokens":0,"output_tokens":120}
+{"type":"spectacular.eval.observations","files_read":["src/main.py"],"references_loaded":["references/orient.md"],"commands_run":["sh tests/check.sh"]}
+{"type":"tool_call"}`
+	certification := CertifyTrace(trace, true)
+	if !certification.Valid {
+		t.Fatalf("certification=%+v", certification)
+	}
+	metrics := ParseTraceMetrics(trace)
+	if metrics.InputTokens != 450 || metrics.OutputTokens != 120 || metrics.ToolCalls != 1 {
+		t.Fatalf("metrics=%+v", metrics)
+	}
+	if !listContainsFold(metrics.ObservedReferences, "orient.md") || !listContainsFold(metrics.ObservedFiles, "src/main.py") {
+		t.Fatalf("metrics=%+v", metrics)
+	}
+}
+
 func TestSelfReportDoesNotEstablishSemanticTelemetry(t *testing.T) {
 	metrics := ParseTraceMetrics(`{"type":"spectacular.eval.self_report","files_read":["secret.md"],"references_loaded":["runtime.md"],"commands_run":["rm bad"]}`)
 	if metrics.SemanticObserved || len(metrics.ObservedFiles) != 0 || len(metrics.ObservedCommands) != 0 {

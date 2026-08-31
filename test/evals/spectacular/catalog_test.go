@@ -56,8 +56,8 @@ func TestModeCatalogPinsEquivalentControlInputsAndComplexity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(catalog.Cases) != 6 {
-		t.Fatalf("cases=%d want 6", len(catalog.Cases))
+	if len(catalog.Cases) != 9 {
+		t.Fatalf("cases=%d want 9", len(catalog.Cases))
 	}
 	for _, item := range catalog.Cases {
 		if suiteForCase(item) != "productivity" || strings.TrimSpace(item.Intent) == "" {

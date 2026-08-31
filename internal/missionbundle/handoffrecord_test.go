@@ -394,3 +394,65 @@ func TestHandoffRecordAutoDerivesTreeWhenOmitted(t *testing.T) {
 	}
 	_ = result
 }
+
+func TestHandoffRecordPreservesRuntimePointer(t *testing.T) {
+	service, mission, commit, tree := handoffFixtureMission(t)
+	var b strings.Builder
+	b.WriteString("---\ntype: HandoffDraft\n")
+	b.WriteString("title: Delegate with thread runtime pointer\n")
+	b.WriteString("reviewed:\n    commit: " + commit + "\n    tree: " + tree + "\n")
+	b.WriteString("sender:\n    actor: Alex\n    relation_to_receiver: operator\n")
+	b.WriteString("runtime_pointer:\n    harness: claude-code\n    thread_id: thread-conv-42\n    workspace_mode: share\n")
+	b.WriteString("task: Execute with subagent thread.\n")
+	b.WriteString("asserted: []\n")
+	b.WriteString("assumed: []\n")
+	b.WriteString("stops:\n    - scope would grow\n")
+	b.WriteString("returns:\n    - test output\n")
+	b.WriteString("---\n\nBody.\n")
+
+	result, err := service.RecordHandoff(mission, "-", "Alex", []byte(b.String()))
+	if err != nil {
+		t.Fatalf("recording handoff with runtime_pointer failed: %v", err)
+	}
+
+	reopened := openMissionService(t, service.Workspace.Root)
+	bundle, err := Load(reopened.Workspace, mission)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(bundle.Handoffs) != 1 {
+		t.Fatalf("expected 1 handoff, got %d", len(bundle.Handoffs))
+	}
+	doc := bundle.Handoffs[0].Document
+	if doc.RuntimePointer == nil {
+		t.Fatal("expected RuntimePointer to be parsed and preserved, got nil")
+	}
+	if doc.RuntimePointer.Harness != "claude-code" || doc.RuntimePointer.ThreadID != "thread-conv-42" || doc.RuntimePointer.WorkspaceMode != "share" {
+		t.Fatalf("unexpected runtime pointer contents: %+v", doc.RuntimePointer)
+	}
+	_ = result
+}
+
+func TestHandoffRecordRefusesInvalidWorkspaceMode(t *testing.T) {
+	service, mission, commit, tree := handoffFixtureMission(t)
+	var b strings.Builder
+	b.WriteString("---\ntype: HandoffDraft\n")
+	b.WriteString("title: Delegate with invalid workspace mode\n")
+	b.WriteString("reviewed:\n    commit: " + commit + "\n    tree: " + tree + "\n")
+	b.WriteString("sender:\n    actor: Alex\n    relation_to_receiver: operator\n")
+	b.WriteString("runtime_pointer:\n    harness: claude-code\n    thread_id: thread-conv-42\n    workspace_mode: teleport\n")
+	b.WriteString("task: Execute with subagent thread.\n")
+	b.WriteString("asserted: []\n")
+	b.WriteString("assumed: []\n")
+	b.WriteString("stops:\n    - scope would grow\n")
+	b.WriteString("returns:\n    - test output\n")
+	b.WriteString("---\n\nBody.\n")
+
+	_, err := service.RecordHandoff(mission, "-", "Alex", []byte(b.String()))
+	if err == nil {
+		t.Fatal("expected recording handoff with workspace_mode: teleport to refuse, got success")
+	}
+	if !strings.Contains(err.Error(), "workspace_mode must be one of: share, branch, inherit") {
+		t.Fatalf("unexpected error message: %v", err)
+	}
+}

@@ -15,20 +15,23 @@ import (
 // one thing, so a refusal is attributable to the field the case names rather
 // than to some other difference between two hand-written fixtures.
 type handoffFixture struct {
-	ref        string
-	id         string
-	mission    string
-	title      string
-	commit     string
-	tree       string
-	sender     string
-	relation   string
-	task       string
-	asserted   *[]string
-	assumed    *[]string
-	stops      *[]string
-	returns    *[]string
-	supersedes string
+	ref            string
+	id             string
+	mission        string
+	title          string
+	commit         string
+	tree           string
+	sender         string
+	relation       string
+	task           string
+	runtimeHarness string
+	runtimeThread  string
+	runtimeMode    string
+	asserted       *[]string
+	assumed        *[]string
+	stops          *[]string
+	returns        *[]string
+	supersedes     string
 }
 
 func list(values ...string) *[]string { return &values }
@@ -44,6 +47,18 @@ func (f handoffFixture) write(t *testing.T, directory string) string {
 	b.WriteString("reviewed:\n    commit: " + f.commit + "\n    tree: " + f.tree + "\n")
 	if f.sender != "" || f.relation != "" {
 		b.WriteString("sender:\n    actor: " + f.sender + "\n    relation_to_receiver: " + f.relation + "\n")
+	}
+	if f.runtimeHarness != "" || f.runtimeThread != "" || f.runtimeMode != "" {
+		b.WriteString("runtime_pointer:\n")
+		if f.runtimeHarness != "" {
+			b.WriteString("    harness: " + f.runtimeHarness + "\n")
+		}
+		if f.runtimeThread != "" {
+			b.WriteString("    thread_id: " + f.runtimeThread + "\n")
+		}
+		if f.runtimeMode != "" {
+			b.WriteString("    workspace_mode: " + f.runtimeMode + "\n")
+		}
 	}
 	if f.task != "" {
 		b.WriteString("task: " + f.task + "\n")
@@ -183,6 +198,16 @@ func TestHandoffSchemaRefusesEachMissingRequirement(t *testing.T) {
 			name:   "a handoff naming a different Mission refuses",
 			mutate: func(f *handoffFixture) { f.mission = "M11" },
 			code:   domain.RefusalInvalidKnownField, field: "handoff.mission", wantErr: true,
+		},
+		{
+			name:   "workspace_mode teleport refuses",
+			mutate: func(f *handoffFixture) { f.runtimeMode = "teleport" },
+			code:   domain.RefusalInvalidKnownField, field: "handoff.runtime_pointer.workspace_mode", wantErr: true,
+		},
+		{
+			name:    "valid workspace_mode share is legal",
+			mutate:  func(f *handoffFixture) { f.runtimeMode = "share"; f.runtimeHarness = "claude-code" },
+			wantErr: false,
 		},
 	}
 	for _, test := range tests {

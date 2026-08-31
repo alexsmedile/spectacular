@@ -137,6 +137,32 @@ To keep multi-agent artifacts clean and unambiguous:
 - `.spectacular/missions/<slug>/reviews/`: Canonical Reviews created by `spectacular review record`; never place an input `ReviewDraft` here.
 - `scratch/` or a temporary directory: Ephemeral intake, review prompts, and `ReviewDraft` inputs before the CLI records them.
 
+### Optional runtime pointer for threaded harnesses
+
+For advanced operators delegating to host-managed threads or subagents (e.g. Claude Code `invoke_subagent`, Codex thread runs, OpenAI Agents SDK), the `HandoffDraft` can include an optional `runtime_pointer:` block:
+
+```yaml
+runtime_pointer:
+  harness: claude-code # e.g. "claude-code", "codex", "openai-agents"
+  thread_id: "agent-conv-903ea432" # host thread / conversation ID
+  workspace_mode: "share" # "share" (git worktree), "branch" (isolated git branch), "inherit"
+```
+
+A host thread ID is ephemeral and owns nothing. The Handoff remains the immutable, governed artifact anchored to the repository commit and tree.
+
+## Optional Thread and Subagent Execution (Advanced)
+
+Single-session inline execution is the default. When an advanced operator opts into threaded subagent execution:
+
+1. **Compile Context Sandwich**: Run `spectacular charter <mission-ref>/<objective-ref>` to obtain the exact 3-layer sandwich (Frozen Truth, Steering Sources, Perimeter Guardrails).
+2. **Select Workspace Mode**: Determine workspace isolation before recording or dispatching:
+   - `share` (Git Worktree): Best for parallel Runners operating on disjoint write reservations (`writes:`).
+   - `branch` (Git Branch): Best for exploratory or destructive verifier passes.
+   - `inherit` (Current Tree): Best for sequential bounded edits.
+3. **Record Handoff First**: The Orchestrator records the delegation via `spectacular handoff record <mission> <draft> --by <sender>`, declaring write reservations and optional `runtime_pointer:` (`harness`, `thread_id`, `workspace_mode`). The governed Handoff must exist before the receiver begins acting.
+4. **Dispatch Clean Sub-thread**: Dispatch the subagent runner in the selected workspace (e.g. Claude `invoke_subagent`, OpenAI thread run) with the compiled charter and recorded Handoff pointer as the fresh system/prompt context, avoiding parent history bleed.
+5. **Intake & Re-verify**: On return, the Orchestrator re-verifies any `assumed` items, runs verification checks, and commits Evidence or Reviews.
+
 ## Fan out sparingly
 
 Delegate only cohesive mid-to-long work whose claim ownership is disjoint.

@@ -764,6 +764,16 @@ func (s Service) recordHandoff(missionRef, path, sender string, stdin []byte) (R
 	workspace.SetString(doc, "mission", bundle.Ref)
 	workspace.SetValue(doc, "reviewed", draft.Reviewed)
 	workspace.SetValue(doc, "sender", draft.Sender)
+	if draft.RuntimePointer != nil {
+		switch draft.RuntimePointer.WorkspaceMode {
+		case "", "share", "branch", "inherit":
+		default:
+			return Result{}, invalid("handoff.runtime_pointer.workspace_mode", fmt.Sprintf("workspace_mode must be one of: share, branch, inherit; got %q", draft.RuntimePointer.WorkspaceMode))
+		}
+		if draft.RuntimePointer.Harness != "" || draft.RuntimePointer.ThreadID != "" || draft.RuntimePointer.WorkspaceMode != "" {
+			workspace.SetValue(doc, "runtime_pointer", draft.RuntimePointer)
+		}
+	}
 	workspace.SetString(doc, "task", draft.Task)
 	workspace.SetStrings(doc, "asserted", *draft.Asserted)
 	workspace.SetStrings(doc, "assumed", *draft.Assumed)

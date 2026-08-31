@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.9.0 — 2026-08-31
+
+### Added
+
+- Support optional host-harness thread linkage (`runtime_pointer:` with `harness`, `thread_id`, and `workspace_mode`) in `Handoff` and `HandoffDraft` for advanced multi-agent workflows (Claude Code `invoke_subagent`, Codex thread runs).
+- Strict vocabulary enforcement for `workspace_mode` (`share`, `branch`, `inherit`) in Handoff validation and recording.
+- Comprehensive runtime documentation in `skills/spectacular/references/runtime.md` for thread and subagent orchestration lifecycles.
+
 ## 2.8.2 — 2026-08-30
 
 ### Changed

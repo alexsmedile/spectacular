@@ -1,6 +1,7 @@
 package missionbundle
 
 import (
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -45,6 +46,14 @@ type Sender struct {
 	RelationToReceiver string `yaml:"relation_to_receiver" json:"relation_to_receiver"`
 }
 
+// RuntimePointer holds optional host-harness session linkage for advanced threaded or subagent delegations.
+// A host thread is ephemeral and owns nothing; accountability remains with the sender and Git baseline.
+type RuntimePointer struct {
+	Harness       string `yaml:"harness,omitempty" json:"harness,omitempty"`
+	ThreadID      string `yaml:"thread_id,omitempty" json:"thread_id,omitempty"`
+	WorkspaceMode string `yaml:"workspace_mode,omitempty" json:"workspace_mode,omitempty"`
+}
+
 // Handoff is a delegation stated as a record: what the sender verified, what the
 // sender is only assuming, and what the receiver owes back.
 //
@@ -56,21 +65,22 @@ type Sender struct {
 // scored it would be asserting a fact it cannot know. The receiver re-verifies
 // what arrives under Assumed before acting on it.
 type Handoff struct {
-	ID       string         `json:"id"`
-	Ref      string         `json:"ref"`
-	Title    string         `json:"title"`
-	Status   string         `json:"status,omitempty"`
-	Source   string         `json:"source,omitempty"`
-	Mission  string         `json:"mission"`
-	Created  string         `json:"created,omitempty"`
-	Reviewed HandoffBinding `json:"reviewed"`
-	Sender   Sender         `json:"sender"`
-	Task     string         `json:"task"`
-	Asserted []string       `json:"asserted"`
-	Assumed  []string       `json:"assumed"`
-	Writes   []string       `json:"writes,omitempty"`
-	Stops    []string       `json:"stops"`
-	Returns  []string       `json:"returns"`
+	ID             string          `json:"id"`
+	Ref            string          `json:"ref"`
+	Title          string          `json:"title"`
+	Status         string          `json:"status,omitempty"`
+	Source         string          `json:"source,omitempty"`
+	Mission        string          `json:"mission"`
+	Created        string          `json:"created,omitempty"`
+	Reviewed       HandoffBinding  `json:"reviewed"`
+	Sender         Sender          `json:"sender"`
+	RuntimePointer *RuntimePointer `json:"runtime_pointer,omitempty"`
+	Task           string          `json:"task"`
+	Asserted       []string        `json:"asserted"`
+	Assumed        []string        `json:"assumed"`
+	Writes         []string        `json:"writes,omitempty"`
+	Stops          []string        `json:"stops"`
+	Returns        []string        `json:"returns"`
 	// Supersedes names the Handoff this one corrects, empty when it corrects
 	// nothing. A Handoff is never edited; a correction is a new Handoff. The
 	// superseded record survives as what its sender believed at the time.
@@ -114,6 +124,13 @@ func decodeHandoff(doc *workspace.Document, path string) (*Handoff, error) {
 	}
 	if err := workspace.DecodeValue(doc, "sender", &h.Sender); err != nil {
 		return nil, err
+	}
+	if doc.Unknown["runtime_pointer"] != nil {
+		var rp RuntimePointer
+		if err := workspace.DecodeValue(doc, "runtime_pointer", &rp); err != nil {
+			return nil, err
+		}
+		h.RuntimePointer = &rp
 	}
 	// These lists are decoded as required, which distinguishes absent from empty.
 	// An absent asserted: refuses; an empty one is legal. A sender who verified
@@ -201,11 +218,12 @@ func validateHandoffs(ws *discovery.Workspace, b *Bundle) error {
 // ref, and placement so two senders filing the same delegation cannot disagree
 // about where it lives.
 type HandoffDraft struct {
-	Type     string         `yaml:"type"`
-	Title    string         `yaml:"title"`
-	Reviewed HandoffBinding `yaml:"reviewed"`
-	Sender   Sender         `yaml:"sender"`
-	Task     string         `yaml:"task"`
+	Type           string          `yaml:"type"`
+	Title          string          `yaml:"title"`
+	Reviewed       HandoffBinding  `yaml:"reviewed"`
+	Sender         Sender          `yaml:"sender"`
+	RuntimePointer *RuntimePointer `yaml:"runtime_pointer,omitempty"`
+	Task           string          `yaml:"task"`
 	// Asserted and Assumed are pointers so an absent list is distinguishable
 	// from an empty one at the command boundary, the same distinction the
 	// schema draws on disk. A sender who omits asserted: is told to state it.
@@ -285,6 +303,13 @@ func validateHandoffContent(h *Handoff, b *Bundle) error {
 	}
 	if err := ValidateWritePaths(h.Writes); err != nil {
 		return err
+	}
+	if h.RuntimePointer != nil {
+		switch h.RuntimePointer.WorkspaceMode {
+		case "", "share", "branch", "inherit":
+		default:
+			return invalid("handoff.runtime_pointer.workspace_mode", fmt.Sprintf("workspace_mode must be one of: share, branch, inherit; got %q", h.RuntimePointer.WorkspaceMode))
+		}
 	}
 	// asserted is what the sender claims to have verified. An empty asserted list
 	// is a Handoff that verified nothing, which is a real thing to send but not a

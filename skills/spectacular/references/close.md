@@ -24,6 +24,13 @@ Every modified line in the reviewed commit must support a frozen claim, its requ
 - **Zero Drive-By Edits**: Changes not required by that work—unrelated reformatting, drive-by refactoring, cosmetic comment churn, adjacent file tidy-ups—are recorded as findings, never repaired silently during review.
 - **Observe ≠ Act (Strict Reviewer Role Hygiene)**: Reviewers identify defects, inspect diffs, and record findings or Gaps. **A Reviewer NEVER modifies code files, applies drive-by refactoring, or patches bugs directly.** All required fixes are returned to the Orchestrator to dispatch to a runner as a bounded repair.
 
+### 1-Claim Hunter Pass (Adversarial Falsification)
+
+When testing high-risk claims (security boundaries, concurrency invariants, data migrations, authority limits):
+- **Spawn an isolated, read-only subagent** in a pristine context window whose sole mandate is negative proof: disproving and breaking that single invariant using public interfaces and primary code diffs.
+- **The Fence**: The Hunter attacks exactly **one claim per pass**, operates strictly read-only, and runs for a single shot without recursive critic loops.
+- **Failing-Test-First Rule (Recommended)**: When an adversarial finding is accepted as a valid defect, strongly prefer writing and committing a failing deterministic regression test before applying the root-cause fix and completing the Mission.
+
 ## Persist Evidence when it is earned (Zero Overhead for Routine Code)
 
 For routine coding tasks (`review: automatic`), the clean Git commit and failable test suite passing (`exit 0`) **is** the proof. No separate Evidence or Assessment markdown files should be created.
@@ -66,7 +73,13 @@ reviewer:
 claims:
     - claim: <exact-claim-name-from-mission>
       verdict: pass
-findings: []
+findings:
+    - id: F1
+      claim: <exact-claim-name>
+      severity: blocking | non-blocking | info
+      reachable_surface: cli | api | contract | none-phantom
+      location: "<path>:<lines>"
+      description: "<failure mechanism and reachable reproduction sequence>"
 limitations: []
 ---
 
@@ -82,6 +95,8 @@ rather than the executor's summary of it, and where the consequence is high uses
 a different method, a qualified human, a specialist tool, or an independent
 observation. The reviewer reports verdicts and findings; it never declares the
 Mission complete.
+
+**Reachable Surface Filter**: Findings must identify an exposed, reachable entry point (`reachable_surface` via CLI, API, or contract flow). If disproving a claim requires impossible preconditions (e.g. hand-tampering internal DB rows or private memory without an exposed route), classify the finding as phantom and drop it rather than consuming repair budgets.
 
 ### Dual-Path Independent Review Workflow
 

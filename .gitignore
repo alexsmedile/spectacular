@@ -11,6 +11,7 @@ release-output/
 .spectacular/transactions/
 _archive/
 _backups/
+reports/
 
 # Local-only working folders. Each states its own intent in an AGENTS.md or
 # header; the rules below are what enforce it.

@@ -5,7 +5,7 @@ description: >-
   Use for structured mission orchestration, bulk decisions (`spectacular decide`), single-file mission autopilot,
   supervised subagent dispatch, and multi-session campaigns. Triggers on "start mission", "spectacular decide",
   "flight plan", "autopilot", "supervised dispatch", "handoff", "mission check", or "complete mission".
-  Do not invoke for generic planning, ungrounded chat, ordinary git operations, or tasks outside Spectacular.
+  Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
   version: "2.11.0"
 ---
@@ -13,6 +13,8 @@ metadata:
 # Spectacular
 
 Run one bounded Mission at a time, from truth the owner already accepted.
+
+> **Fast Bailout**: If the query is a simple inspection (e.g. `git branch`, status check, diff, or questions without `$spectacular`), answer directly using native tools and exit immediately with zero ceremony. Do not read `.spectacular/PROJECT.md` or load references.
 
 ## 1. Consolidated CLI Palette & Parameter Grammar
 

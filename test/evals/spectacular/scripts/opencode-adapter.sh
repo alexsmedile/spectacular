@@ -97,7 +97,7 @@ Result fields: role, phase, status, summary, next_action, owner_gate, owner_ques
 cp "$eval_raw" "$eval_trace"
 
 # Normalized token totals (opencode emits per-step counters).
-jq -rs '
+jq -c -rs '
   map(select(.part.type == "step-finish") | .part.tokens)
   | if length > 0 then
       {
@@ -110,7 +110,7 @@ jq -rs '
 ' "$eval_raw" >> "$eval_trace"
 
 # Semantic observation events derived from tool parts.
-jq -rs '
+jq -c -rs '
   [.[] | select(.part.type == "tool") | .part]
   | map(
       if .tool == "read" and ((.state.input.filePath // "") | length > 0) then

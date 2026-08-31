@@ -14,7 +14,7 @@ alternatives:
 disposition: accepted
 question: How should non-governed workspace documents identify themselves, and where does unstructured thinking live?
 rationale: An entity's identity and its validation rules are two facts, not one. Collapsing them into a single atlas_schema or campaign_schema key made non-governance a property of the frontmatter, when it is really a property of discovery skip-listing. Separating type from schema lets a reader and an agent name what a file is without asking whether the CLI validates it, and lets the schema version move independently of the entity.
-ref: D23-accepted
+ref: D23-workspace-entities-type-and-schema
 scope:
     - v2
 ---

@@ -13,7 +13,7 @@ rationale: |
     Formalizes the run transition state matrix and token budget threshold evaluation:
     1. Run State Machine: A Run starts active. Active runs may move to paused, blocked, awaiting-review, completed, or stopped. Paused runs may move to active, blocked, or stopped. Blocked runs may move to active or stopped. Awaiting-review runs may move to active, completed, or stopped. Completed and stopped are terminal states. Every transition requires explicit actor (--by) and reason (--reason) attribution.
     2. Charter Tokenizer: Uses the spectacular-charter-tokenizer.v1 specification with o200k_base vocabulary rules and frozen numeric gates: 1,200 max target (pass), 1,400 warning envelope (warn with safe compaction), 1,440 ceiling (split recommended), and >1,440 hard refusal.
-ref: D22-accepted
+ref: D22-transition-state-machine-and-tokenizer
 ---
 # Context
 

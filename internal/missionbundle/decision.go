@@ -146,9 +146,9 @@ func (s Service) recordDecision(path string, stdin []byte) (DecisionResult, erro
 	}
 	nextN := maxN + 1
 
-	slug := slugify(draft.Disposition)
+	slug := slugifyTitle(draft.Title)
 	if slug == "" {
-		slug = slugify(draft.Title)
+		slug = slugify(draft.Disposition)
 	}
 	if slug == "" {
 		slug = "decision"
@@ -252,4 +252,28 @@ func slugify(s string) string {
 	reg := regexp.MustCompile(`[^a-z0-9]+`)
 	s = reg.ReplaceAllString(s, "-")
 	return strings.Trim(s, "-")
+}
+
+func slugifyTitle(title string) string {
+	title = strings.ToLower(title)
+	reg := regexp.MustCompile(`[^a-z0-9]+`)
+	words := strings.Fields(reg.ReplaceAllString(title, " "))
+	var meaningful []string
+	for _, w := range words {
+		if len(w) > 2 && w != "the" && w != "and" && w != "for" && w != "with" && w != "from" && w != "that" {
+			meaningful = append(meaningful, w)
+		}
+		if len(meaningful) >= 5 {
+			break
+		}
+	}
+	if len(meaningful) == 0 {
+		meaningful = words
+	}
+	res := strings.Join(meaningful, "-")
+	if len(res) > 40 {
+		res = res[:40]
+		res = strings.Trim(res, "-")
+	}
+	return res
 }

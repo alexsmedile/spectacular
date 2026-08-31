@@ -14,7 +14,7 @@ alternatives:
 disposition: accepted
 question: How should Spectacular preserve a project's detailed ontology without introducing a new record type or CLI surface?
 rationale: 'A project needs durable, shared definitions of its concepts, relationships, actions, and rules. The existing earned VOCABULARY.md Anchor is the smallest coherent home: it is canonical Markdown, works with current Anchor discovery, and can remain useful without a graph database or a prose validator.'
-ref: D25-accepted
+ref: D25-vocabulary-canonical-domain-ontology-anchor
 scope:
     - v2
 ---

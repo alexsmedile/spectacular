@@ -38,7 +38,7 @@ mechanical check. Add `schema:` only when a command validates the document and
 refuses on drift — a schema nobody enforces invites tooling to rely on a guarantee
 that does not exist. An Atlas therefore carries `type:` alone. Mechanical checking
 reaches the frontmatter; the body is not enforced and a body check may only warn.
-See `D24-accepted`, which amends `D23-accepted`.
+See `D24-schema-field-mechanically-governs-frontmatter`, which amends `D23-workspace-entities-type-and-schema`.
 
 Never hand-write a frontmatter template into documentation or a test. A published
 template is retrieved from `--schema` and is round tripped through the validator

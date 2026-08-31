@@ -14,7 +14,7 @@ alternatives:
 disposition: accepted
 question: How should Spectacular make a project's ontology easy to scan without creating a second source of authority?
 rationale: A graph makes the whole domain legible, but maps are easier to simplify, split, and redraw than detailed definitions. Keeping the Vocabulary canonical and Atlas maps non-governing preserves one source of semantic truth while giving owners and agents a digestible overview.
-ref: D26-accepted
+ref: D26-atlas-domain-maps-non-governing-visual-projections
 scope:
     - v2
 ---

@@ -191,6 +191,7 @@ Key events: `Decision recorded`, `Mission activated`, `Run transitioned`,
 
 - **Current gap:** ontology-impact declarations are workflow guidance, not a
   typed Mission field or mechanically checked conformance rule.
-- **D25-accepted:** establishes this Anchor and its notation.
-- **D26-accepted:** establishes non-governing Atlas domain maps.
-- **D27-accepted:** establishes ontology impact in planning guidance without a typed Mission field.
+- **D25-vocabulary-canonical-domain-ontology-anchor:** establishes this Anchor and its notation.
+- **D26-atlas-domain-maps-non-governing-visual-projections:** establishes non-governing Atlas domain maps.
+- **D27-ontology-impact-explicit-in-planning:** establishes ontology impact in planning guidance without a typed Mission field.
+- **D28-dynamic-operating-dial-and-anchors:** establishes the Dynamic Operating Dial, 5 Foundational Anchors, and Tiered Verification Protocol.

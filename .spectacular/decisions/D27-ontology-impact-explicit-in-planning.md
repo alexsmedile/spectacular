@@ -14,7 +14,7 @@ alternatives:
 disposition: accepted
 question: How should a Mission account for semantic-model changes before Spectacular has an ontology conformance checker?
 rationale: A new typed field or CLI command would create premature ceremony and falsely imply that prose-level ontology completeness can be mechanically decided. Existing Mission sources and frozen body text can make semantic impact visible now, while retaining a future option for narrow warning-only checks grounded in real project use.
-ref: D27-accepted
+ref: D27-ontology-impact-explicit-in-planning
 scope:
     - v2
 ---

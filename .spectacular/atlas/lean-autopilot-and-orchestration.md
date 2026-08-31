@@ -165,4 +165,4 @@ flowchart LR
 
 - Product Documentation: [`docs/architecture.md`](../../docs/architecture.md), [`docs/process.md`](../../docs/process.md), [`docs/quickstart.md`](../../docs/quickstart.md)
 - Skill References: [`skills/spectacular/references/runtime.md`](../../skills/spectacular/references/runtime.md), [`skills/spectacular/references/owner-guidance.md`](../../skills/spectacular/references/owner-guidance.md), [`skills/spectacular/references/prepare.md`](../../skills/spectacular/references/prepare.md)
-- Decisions: `D11-proposal-retirement`, `D15-branch-guardrail-at-activation`, `D24-accepted`
+- Decisions: `D11-proposal-retirement`, `D15-branch-guardrail-at-activation`, `D24-schema-field-mechanically-governs-frontmatter`, `D28-dynamic-operating-dial-and-anchors`

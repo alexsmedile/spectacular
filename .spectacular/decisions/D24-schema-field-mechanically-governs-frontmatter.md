@@ -14,7 +14,7 @@ alternatives:
 disposition: accepted
 question: Which documents carry schema, and what exactly does declaring one promise?
 rationale: D23 said every nameable workspace entity carries both type and schema. That overclaimed. Proposals, Decisions, and Contracts carry type without schema, so the rule described two document classes while presenting itself as universal. An adversarial review named the consequence, that a schema nobody enforces is ceremony wearing the clothes of a type system, and it invites tooling to rely on a guarantee that does not exist.
-ref: D24-accepted
+ref: D24-schema-field-mechanically-governs-frontmatter
 scope:
     - v2
 ---

@@ -14,7 +14,7 @@ alternatives:
 disposition: accepted
 question: How should Spectacular balance high-level agentic leverage with low-level direct control across diverse project types?
 rationale: Aligning Spectacular with the 20-level Agentic Operating Levels framework and Orca-style orchestration ensures agents ground themselves in hard anchors (types, schemas, state machines) before executing, allows single-agent or multi-agent execution with self-healing test loops, and eliminates token waste through tiered verification and batched reviews.
-ref: D28-accepted
+ref: D28-dynamic-operating-dial-and-anchors
 scope:
     - v2
 ---

@@ -62,4 +62,4 @@ flowchart TD
 
 - Product Documentation: [`docs/architecture.md`](../../docs/architecture.md), [`docs/process.md`](../../docs/process.md)
 - Agent Skill Guidance: [`skills/spectacular/references/prepare.md`](../../skills/spectacular/references/prepare.md)
-- Decisions: `D11-proposal-retirement`, `D15-branch-guardrail-at-activation`, `D24-accepted`
+- Decisions: `D11-proposal-retirement`, `D15-branch-guardrail-at-activation`, `D24-schema-field-mechanically-governs-frontmatter`

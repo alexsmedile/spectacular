@@ -15,7 +15,7 @@ When starting a project from scratch, or when receiving an initial PRD or prompt
       * `3. Invariants & Failure Modes`: `.spectacular/GUARDRAILS.md` & `AGENTS.md` (Non-negotiable safety and architectural rules).
       * `4. Data Structures & Schemas`: Project-specific types/schemas in the codebase (cited in `contracts/`).
       * `5. State Machines & Lifecycles`: Non-governing visual Mermaid diagrams in `.spectacular/atlas/`.
-    - **Dynamic Operating Dial (`mode:`)**:
+    - **Dynamic Operating Dial (`mode:`)**: Prompt-level cognitive guidance (defaults to `leverage` when omitted):
       * Declare `mode: leverage` (default autonomous execution) for familiar features/fixes.
       * Declare `mode: control` for high-risk operations (auth, payments, DB cutovers, unfamiliar libraries) requiring explicit anchor diff reviews.
     - **`M1-bootstrap` Mission Plan**: 2–4 executable claims with verifiable `pass_boundary` and `proof_requirement` directly derived from the PRD's measurable success criteria.

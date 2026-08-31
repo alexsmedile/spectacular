@@ -50,8 +50,8 @@ Before code execution, missions ground themselves in five core anchors without i
 5. **State Machines & Lifecycles**: Non-governing Mermaid diagrams in `.spectacular/atlas/`.
 
 ### Mission Layout & Dynamic Operating Dial
-Missions declare execution posture (`mode:`) and layout tier before writing:
-- **`mode: leverage` (Default)**: Routine features, bug fixes, refactors. Autonomous inner loop; test suite passing (`exit 0`) is primary proof.
+Missions adopt an execution posture (`mode:`) and layout tier before writing (note: `mode:` is prompt-level cognitive guidance and defaults to `leverage` when omitted, with no rigid CLI validator refusal):
+- **`mode: leverage` (Default / Implicit)**: Routine features, bug fixes, refactors. Autonomous inner loop; test suite passing (`exit 0`) is primary proof.
 - **`mode: control`**: High-risk, auth, payments, DB migrations, or out-of-distribution tasks. Mandatory step-by-step gates and dedicated adversarial review.
 
 | Tier | When to Select | Structure |

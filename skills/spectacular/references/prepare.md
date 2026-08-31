@@ -142,7 +142,7 @@ Simplicity must never compromise integrity. Never simplify away:
 After freezing, scope cuts return to the owner.
 
 ### Upfront Architectural Grilling vs. Progressive Horizon Detailing
-- **Upfront Architectural Grilling**: Settle foundational architectural choices that span multiple blocks (e.g. B1 through B7) early at the Campaign/Decision level. Ask focused decision questions before freezing execution blocks.
+- **Upfront Architectural Grilling**: Settle foundational architectural choices that span multiple blocks (e.g. B1 through B7) early at the Campaign/Decision level using **Tier 2 Numbered Batch Cards (`1. Question ➔ A, B, C (Recommended)`)** or **Tier 3 Trade-off Spectrums** (see [owner-guidance.md](owner-guidance.md)). Ask focused batch questions and record rulings atomically via `spectacular decide` before freezing execution blocks.
 - **Progressive Horizon Detailing**:
   > *"Fully detail the active/next mission; keep downstream ones as drafts / sketches. Small missions should stay direct and lean."*
   - Detail **only** the active or immediate next Mission block. Downstream blocks remain lightweight draft sketches without premature claim matrices.

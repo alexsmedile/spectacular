@@ -79,6 +79,11 @@ When an autonomous worker subagent discovers an unrecorded architectural choice 
 - **Git is for durable truth**: `PROJECT.md`, `decisions/`, `campaigns/`, and single-file `missions/`.
 - **Host channels are for live coordination**: Ephemeral pings, ask/reply loops, and task dispatch stay inside host harness tools (`invoke_subagent`, `send_message`, `conversation://<id>`) with zero file pollution in Git.
 
+### The 3-Tier Question Escalator
+- **Tier 1 (Optimistic Consent)**: Non-blocking 1-line default for low-risk implementation choices (`"Proceeding with X unless you prefer Y"`).
+- **Tier 2 (Structured Batch Cards)**: Numbered questions with lettered options (`1. Question ➔ A, B, C (Recommended)`), calibrated context depth, batch shorthand replies (`A, B, A`, `all defaults`), and open write-in support.
+- **Tier 3 (Trade-off Spectrum & Interactive Modals)**: Framing competing design axes for unpredictable exploration, or leveraging interactive UI modals (`ask_question`).
+
 ## Strategic Horizons: Anchors, Roadmaps, Campaigns, and Missions
 
 Spectacular structures work across four distinct strategic altitudes:

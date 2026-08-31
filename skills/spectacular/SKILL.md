@@ -137,8 +137,11 @@ Load a supporting reference only when the primary reference explicitly triggers 
 
 ## 7. Owner Maxims
 
-- **Ask only when open**: Semantic forks, boundaries, authority, risks, irreversible effects, contract conflicts.
-- **Four-part question formula**: (1) Plain outcome · (2) Technical basis · (3) Options (`action -> consequence`) · (4) Recommended default & why.
+- **Ask only when open**: Semantic forks, boundaries, authority, risks, irreversible effects, contract conflicts. Never re-ask settled decisions.
+- **3-Tier Question Escalator**:
+  - *Tier 1 (Optimistic Consent)*: State standard/reversible default and proceed non-blocking (`"Proceeding with X unless you prefer Y"`).
+  - *Tier 2 (Batch Cards & Four-part formula)*: Lead with the plain outcome and Technical basis; format options as action -> consequence (`1. Question ➔ A, B, C (Recommended default)`). Accept shorthand (`A, B, A`, `all defaults`) and open write-ins.
+  - *Tier 3 (Spectrum & Modals)*: Frame competing trade-off axes for open-ended design, or use interactive UI modals (`ask_question`).
 - **Authorization, not labor**: Request permission to act; hold the keyboard (see [owner-guidance.md](references/owner-guidance.md)).
 - **Report, don't widen (Observe ≠ Act)**: If you notice unrelated problems or defects mid-execution, report them to the owner or Orchestrator. Do not edit them or fold them into the current Mission.
 - **Batch gates**: Check prior decisions first; approvals carry forward within the active phase; batch related approvals once.

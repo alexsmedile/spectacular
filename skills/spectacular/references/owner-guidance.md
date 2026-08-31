@@ -19,16 +19,93 @@ Do not run an interview when the Mission or project Anchors already answer the q
 
 ---
 
-## 2. Four-Part Question Format
+## 2. The 3-Tier Question Escalator
 
-When presenting an open decision, use four structured parts:
+Match the question format to the risk, scope, and predictability of the decision:
 
-```text
-1. Plain Outcome: What happens from the user/product perspective.
-2. Technical Basis: Why this choice exists (constraints, trade-offs, invariants).
-3. Concrete Options: Specific choices formatted as "action -> consequence".
-4. Recommended Default: The recommended path and the precise reason for it.
+```mermaid
+flowchart LR
+    T1["⚡ Tier 1: Optimistic Consent<br><i>1-line default · Non-blocking</i>"] --> T2["📋 Tier 2: Structured Cards<br><i>Numbered Qs + Lettered Options</i>"]
+    T2 --> T3["🧭 Tier 3: Spectrum & Modals<br><i>Trade-off axes or Interactive UI</i>"]
 ```
+
+### Tier 1: Optimistic Consent (Low-Risk & Reversible Defaults)
+For standard implementation choices strictly within authorized scope, state the default and proceed without blocking the session:
+> *"I will use pure Go `modernc.org/sqlite` to keep the binary CGO-free. Proceeding with this default unless you specify otherwise."*
+
+---
+
+### Tier 2: Structured Batch Cards (Numbered Questions + Lettered Options)
+
+For architectural forks, kickoff decisions, and campaign planning.
+
+**Format Standard**:
+- **Questions are numbered** (`1.`, `2.`, `3.`)
+- **Options are lettered** (`A`, `B`, `C`, with `(Recommended)` clearly marked).
+- **Adaptive Context Depth**: Calibrate explanation depth to the domain:
+  - *Compact inline* for straightforward library/tool choices.
+  - *Deep consequence breakdown* (2-3 lines per option) for complex architectural trade-offs.
+
+#### Example A: Compact Batch Card (Genesis Kickoff)
+```markdown
+### 🚀 Kickoff Decisions (3 Forks)
+
+1. **Storage Engine**:
+   - **A (Recommended)**: Embedded SQLite (`modernc.org/sqlite` pure Go)
+   - **B**: PostgreSQL Container (Docker required)
+   - **C**: Flat JSON files
+
+2. **Session Authentication**:
+   - **A (Recommended)**: Secure HTTP-only cookies
+   - **B**: Bearer JWT tokens
+
+3. **Background Job Queue**:
+   - **A (Recommended)**: In-memory Go channels
+   - **B**: Redis / Asynq
+
+*Reply `all defaults`, shorthand picks (e.g. `A, B, A`), or write in custom alternatives.*
+```
+
+#### Example B: Deep Consequence Breakdown (High-Impact Domain)
+```markdown
+### ⚖️ Architectural Decision: SQL Migration Strategy
+
+1. **Migration Execution Model**:
+   - **A (Recommended) — Embedded Go strings**:
+     - *Consequence*: Single portable binary; zero filesystem lookup failures at runtime; migrations version-controlled with Go AST.
+   - **B — External `migrations/*.sql` directory**:
+     - *Consequence*: Enables DBAs to edit SQL directly without recompiling, but requires directory path tracking in production deployments.
+   - **C — Manual SQL scripts**:
+     - *Consequence*: Zero automated tooling; requires manual administrator execution on schema drift.
+
+*Reply `A`, `B`, `C`, or write in an alternative.*
+```
+
+---
+
+### Tier 3: The Trade-off Spectrum & Interactive UI Modals
+
+Used when requirements are open-ended, highly unpredictable, or require rich modal steering:
+
+1. **The Trade-off Spectrum (For Unpredictable Design Decisions)**:
+   When choices cannot be neatly pre-packaged into A/B/C, frame the competing design axes:
+   ```markdown
+   ### 🧭 Design Direction: Cache Invalidation Strategy
+   We are balancing two competing architectural axes:
+   - **Axis A (Extreme Simplicity)**: TTL-only expiration (data can be stale for ≤60s; zero invalidation code).
+   - **Axis B (Strict Freshness)**: Event-driven pub/sub invalidation (real-time consistency; introduces Redis/bus dependency).
+
+   Where on this spectrum should we land for v1?
+   ```
+
+2. **Interactive UI Modals (Host Harness Aware)**:
+   When executing inside rich IDEs with tool-assisted UI support (e.g. Antigravity IDE `ask_question`), render interactive selectable option modals so the user can click directly.
+
+---
+
+### Universal Rule: Unrestricted Natural Language Write-Ins
+
+Every structured question card explicitly accepts custom write-in answers. If the user provides a custom path (e.g. *"Actually use DynamoDB because our cloud account provides it"*), the agent accepts it gracefully, records the ruling in `spectacular decide`, and adjusts without friction.
 
 ---
 

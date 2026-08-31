@@ -44,14 +44,31 @@ Invoke `spectacular --version --json` once at startup and require `spectacular.b
 - **CLI Absent**: Read/draft-only. Route to [reduced-mode.md](references/reduced-mode.md). Never emulate command-owned records, fabricate fingerprints, or claim atomic writes.
 - **Declared `manual-bootstrap`**: Owner-approved drafting exception only ([bootstrap.md](references/bootstrap.md)); it cannot create, activate, transition, or complete fingerprint-bound records. Delegated agents cannot declare bootstrap.
 
-## 2. Role Resolution & Context Discipline
+## 2. Role Resolution & Orchestration Discipline
 
 | Role | Entry Contract | Context Spine | Exit |
 |---|---|---|---|
 | **Orchestrator** | Top-level session | PROJECT Anchor → Phase ref → exact records/sources | Safe next action or owner gate |
-| **Runner** | Handoff contract | Handoff → Objective → Run → named working inputs | Bounded result → Orchestrator |
-| **Reviewer** | Review assignment | Review assignment → frozen claims → commit/tree → Evidence | Verdict & findings → Orchestrator |
-| **Autopilot** | Charter | Charter → Objective/Run → permitted sources | Chartered return destination |
+| **Runner** | Dispatch charter / Handoff | Charter/Handoff → Mission claim → assigned code paths | Bounded result → Orchestrator |
+| **Reviewer** | Review assignment | Review assignment → frozen claims → commit/tree → primary proof | Verdict & findings → Orchestrator |
+| **Autopilot** | Charter | Charter → Mission target → permitted sources | Chartered return destination |
+
+### Orchestration Taxonomy: Supervised Dispatch vs. Full Handoff
+- **Supervised Dispatch (90% Default)**: The Orchestrator retains active Mission ownership, dispatches a worker subagent with a $\le 300$-token charter, and waits reactively for completion (`worker_done`). The worker creates zero governance records; tests passing (`exit 0`) + Git commit is the proof.
+- **Full Ownership Handoff (10% Transfer)**: Permanent ownership transfer across distinct sessions, human operators, or different AI harnesses (e.g. Claude $\to$ Codex $\to$ Antigravity). Formally recorded via `spectacular handoff record`.
+
+### The Escalation & Decision Gate Protocol
+- When a worker encounters an ambiguous interface, unrecorded architectural choice, or boundary conflict, it **must not guess or improvise**.
+- It halts immediately (Fail-Fast Stop) and sends an **escalation** to the Orchestrator.
+- The Orchestrator resolves the fork with `spectacular decide` (`.spectacular/decisions/D<N>.md`) and resumes the worker with the locked decision ID.
+
+### Reviewer Role Hygiene (Observe ≠ Act)
+- Reviewers inspect diffs, test logs, and primary evidence to evaluate FROST claims and return structured verdicts (`pass`/`fail` + findings).
+- **Reviewers NEVER edit files, apply drive-by refactors, or fix observed defects.** Bounded repairs are returned to the Orchestrator to dispatch to a runner.
+
+### Channel Separation: Durable Git State vs. Ephemeral Channels
+- **Git is for durable truth**: `PROJECT.md`, `decisions/`, `campaigns/`, and single-file `missions/`.
+- **Host channels are for live coordination**: Ephemeral pings, ask/reply loops, and task dispatch stay inside host harness tools (`invoke_subagent`, `send_message`, `conversation://<id>`) with zero file pollution in Git.
 
 - **Role bootstrap**: Top-level owner session defaults to Orchestrator (reads `.spectacular/PROJECT.md` once). Delegated subagents without an entry contract stop and request one; they never self-promote.
 - **Anti-escalation**: No entry contract or reference may grant authority above constitutional role ceilings.

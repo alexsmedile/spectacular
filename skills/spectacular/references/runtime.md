@@ -12,9 +12,20 @@ Spectacular is runtime-agnostic. Different host harnesses expose different model
 | `fast-code` | Fast, high-throughput code fluency | **Worker / Runner** | Bounded Objective implementation, file edits, local test sweeps, refactoring. |
 | `strict-verifier` | High instruction adherence, clean context | **Validator / Reviewer** | Adversarial verification, independent FROST review, regression suites. |
 
-## Lean Autopilot Delegation Pattern (Subagents & Thread Linking)
+## Supervised Dispatch vs. Full Ownership Handoff
 
-For fast, zero-waste autonomous execution using host subagents (e.g. Antigravity/Claude `invoke_subagent`):
+When coordinating multi-agent work, determine the delegation boundary first:
+
+| Delegation Type | Frequency | Coordination Channel | Governance Files | Lifecycle Owner |
+|---|---|---|---|---|
+| **Supervised Dispatch** | **90% (Default)** | Host subagent / tool (`invoke_subagent`, `send_message`) | **0 files** (test pass + Git commit) | Orchestrator holds Mission and waits on completion (`worker_done`). |
+| **Full Ownership Handoff** | **10% (Transfer)** | `spectacular handoff record` | 1 immutable `Handoff` record | Receiver takes full Mission ownership; sender exits. |
+
+---
+
+## Path A: Supervised Subagent Dispatch (Autopilot Default)
+
+For fast, zero-waste autonomous execution using in-session host subagents (e.g. Antigravity/Claude `invoke_subagent`):
 
 1. **Compact Dispatch Payload ($\le 300\text{--}500$ tokens)**:
    Provide the worker subagent strictly with:
@@ -25,10 +36,10 @@ For fast, zero-waste autonomous execution using host subagents (e.g. Antigravity
    - **Thread Link**: Pass `conversation://<orchestrator-conversation-id>` for session continuity.
 
 2. **Subagent Autopilot Execution**:
-   - Subagent reads the target file and assigned code paths only (no workspace scans).
+   - Subagent reads the target file and assigned code paths only (no full workspace scans).
    - Writes the minimal coherent code satisfying the claim.
    - Executes the test command.
-   - On pass $\to$ creates a clean Git commit and reports completion to the Orchestrator.
+   - On pass $\to$ creates a clean Git commit and reports completion (`worker_done`) to the Orchestrator.
    - Zero sub-record files created.
 
 3. **Sample Subagent Invocation Prompt**:
@@ -38,12 +49,43 @@ For fast, zero-waste autonomous execution using host subagents (e.g. Antigravity
    Allowed Scope: internal/storage/, cmd/
    Verification Command: go test -v ./internal/storage/...
    Thread Context: conversation://2c67bc6b-f518-4aa3-951b-cddf1ba530b5
-   Stop Triggers: Stop and yield back if schema migrations require external dependencies.
+   Stop Triggers: Stop and yield back if schema migrations require external dependencies or unrecorded decisions.
    ```
 
-## Autopilot is explicit and non-default
+---
 
-Never assume it. When the owner turns it on, bind the charter to:
+## The Escalation & Decision Gate Protocol
+
+When an autonomous worker hits an ambiguity, unexpected interface conflict, or unrecorded architectural fork:
+
+```mermaid
+flowchart TD
+    W["🤖 Worker Subagent<br><i>Discovers unexpected design fork</i>"] -->|Halt immediately| E["⚠️ Escalation Message<br><i>Sends question + options to Orchestrator</i>"]
+    E --> O["👑 Orchestrator & Owner<br><i>Selects path & runs `spectacular decide`</i>"]
+    O -->|Resume with D<N> ID| W
+```
+
+1. **Worker Halts (Fail-Fast)**: Do NOT improvise or fabricate architecture. Send an escalation message:
+   ```text
+   ESCALATION: Mission M1 requires a decision on SQL migration strategy.
+   Option A: Embed raw .sql files via go:embed.
+   Option B: Use an external migration library (e.g. golang-migrate).
+   Recommendation: Option A (zero external dependencies).
+   ```
+2. **Orchestrator Decision Gate**: The Orchestrator reviews the fork with the owner and records the ruling atomically:
+   ```bash
+   spectacular decide decision.md --json
+   ```
+   This generates `.spectacular/decisions/D<N>-<slug>.md`.
+3. **Worker Resumed**: The Orchestrator replies to the worker with the locked decision ID (`D<N>`). The worker proceeds with permanent attributable authority.
+
+---
+
+## Path B: Full Ownership Handoff (Cross-Session / Cross-Party)
+
+Used only when transferring ownership across cold sessions, different human engineers, or distinct agent harnesses (e.g. Claude $\to$ Codex $\to$ Antigravity).
+
+Never assume autopilot. When the owner authorizes it, bind the handoff to:
 
 - the exact Mission activation fingerprint
 - Objective and claim scope

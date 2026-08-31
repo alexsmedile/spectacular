@@ -22,7 +22,7 @@ repair budget.
 
 Every modified line in the reviewed commit must support a frozen claim, its required proof, or the minimal implementation needed to satisfy it:
 - **Zero Drive-By Edits**: Changes not required by that work—unrelated reformatting, drive-by refactoring, cosmetic comment churn, adjacent file tidy-ups—are recorded as findings, never repaired silently during review.
-- **Observe ≠ Act**: Reviewers identify defects and record findings or Gaps. A Reviewer never modifies code on the spot to "fix" what they observe.
+- **Observe ≠ Act (Strict Reviewer Role Hygiene)**: Reviewers identify defects, inspect diffs, and record findings or Gaps. **A Reviewer NEVER modifies code files, applies drive-by refactoring, or patches bugs directly.** All required fixes are returned to the Orchestrator to dispatch to a runner as a bounded repair.
 
 ## Persist Evidence when it is earned (Zero Overhead for Routine Code)
 

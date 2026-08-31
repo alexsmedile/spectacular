@@ -68,6 +68,17 @@ Spectacular is designed for fast, token-efficient autonomous execution with mini
 ### Zero Sub-Record Sprawl Policy
 Never create separate `checkpoints/`, `assessments/`, `runs/`, `handoffs/`, or multi-page manual evidence files for routine code tasks. The test suite passing (`exit 0`) and clean Git commit **is** the proof. Context flows across subagents and parallel sessions via lightweight prompts ($\le 300\text{--}500$ tokens) and thread links (`conversation://<id>`).
 
+### Supervised Dispatch vs. Full Ownership Handoff
+- **Supervised Dispatch (90% Default)**: In-session subagent delegation. The Orchestrator retains active Mission ownership, launches a worker subagent with a $\le 300$-token charter, and waits reactively for completion (`worker_done`). Zero governance files are created.
+- **Full Ownership Handoff (10% Transfer)**: Permanent ownership transfer across distinct sessions, human engineers, or different AI harnesses. Formally recorded via `spectacular handoff record`.
+
+### The Escalation & Decision Gate Protocol
+When an autonomous worker subagent discovers an unrecorded architectural choice or boundary conflict, it halts immediately (Fail-Fast Stop) and sends an escalation to the Orchestrator. The Orchestrator records the ruling atomically via `spectacular decide` (`.spectacular/decisions/D<N>.md`) and resumes the worker with the locked decision ID.
+
+### Channel Separation: Durable Git State vs. Ephemeral Channels
+- **Git is for durable truth**: `PROJECT.md`, `decisions/`, `campaigns/`, and single-file `missions/`.
+- **Host channels are for live coordination**: Ephemeral pings, ask/reply loops, and task dispatch stay inside host harness tools (`invoke_subagent`, `send_message`, `conversation://<id>`) with zero file pollution in Git.
+
 ## Strategic Horizons: Anchors, Roadmaps, Campaigns, and Missions
 
 Spectacular structures work across four distinct strategic altitudes:

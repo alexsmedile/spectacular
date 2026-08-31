@@ -160,6 +160,7 @@ add a Campaign binding to Mission frontmatter.
 
 ### On-Demand Anchors (Earned only)
 Specialized anchors emerge only when domain or operational complexity exceeds inline thresholds:
+- `ROADMAP.md`: Macro-level product evolution and strategic multi-horizon themes. Decomposes into mid-term Campaigns as milestones enter active planning.
 - `VOCABULARY.md`: Canonical domain ontology and ubiquitous language. Its glossary index is alphabetical; for the detailed section skeleton, see the body shape in [genesis-examples.md](genesis-examples.md).
   * *Threshold*: If <= 3-4 simple entities with no ambiguous terms or shared rules, keep them inline in `PROJECT.md`.
   * *Earned triggers*: (1) Synonym collision / naming ambiguity (e.g. `User` vs `Account`, `Job` vs `Task`); (2) Non-trivial state machine invariants (e.g. `DRAFT` -> `ACTIVE` -> `REVIEW`); (3) Relationships, permissions, or actions that span several concepts; (4) Bespoke non-standard concepts (e.g. `Anchor`, `Gap`, `Handoff`); (5) Multi-contract shared models.

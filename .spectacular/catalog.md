@@ -121,5 +121,6 @@ Complete navigational inventory. Use [index.md](index.md) for compact routing.
 | `P9` | Proposal | Frozen Handoff records | `.spectacular/archive/proposals/P9-frozen-handoff-records.md` |
 | `PRODUCT` | Anchor | Product direction | `.spectacular/PRODUCT.md` |
 | `PROJECT` | Anchor | Spectacular v2 | `.spectacular/PROJECT.md` |
+| `ROADMAP` | Anchor | Strategic product roadmap and horizons | `.spectacular/ROADMAP.md` |
 | `STACK` | Anchor | Stack | `.spectacular/STACK.md` |
 | `VOCABULARY` | Anchor | Domain ontology and ubiquitous language | `.spectacular/VOCABULARY.md` |

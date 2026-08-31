@@ -62,7 +62,7 @@ func Indexes(existing []discovery.Entry, pending []*workspace.Document, paths ma
 			continue
 		}
 		top := parts[1]
-		if top == "PROJECT.md" || top == "PRODUCT.md" || top == "ARCHITECTURE.md" || top == "STACK.md" {
+		if top == "PROJECT.md" || top == "PRODUCT.md" || top == "ARCHITECTURE.md" || top == "STACK.md" || top == "ROADMAP.md" || top == "VOCABULARY.md" {
 			continue
 		}
 		if top == "missions" && item.Noun != string(domain.Mission) {
@@ -90,7 +90,7 @@ func collectionIndex(path string) string {
 		return ""
 	}
 	switch parts[1] {
-	case "PROJECT.md", "PRODUCT.md", "ARCHITECTURE.md", "STACK.md":
+	case "PROJECT.md", "PRODUCT.md", "ARCHITECTURE.md", "STACK.md", "ROADMAP.md", "VOCABULARY.md":
 		return ""
 	default:
 		return filepath.ToSlash(filepath.Join(".spectacular", parts[1], "index.md"))

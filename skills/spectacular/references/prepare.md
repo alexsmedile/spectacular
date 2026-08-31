@@ -12,6 +12,7 @@ When starting a project from scratch, or when receiving an initial PRD or prompt
      * `.spectacular/STACK.md`: What with (Languages, runtimes, database, libraries, baseline test command).
      * `.spectacular/ARCHITECTURE.md`: How (Directory layout, layers, component boundaries between DB, Server, API, and Domain).
    - **On-Demand Anchors (Earned only)**:
+     * `.spectacular/ROADMAP.md`: Macro-level product evolution and strategic horizons (multi-quarter themes, linking to mid-term Campaigns).
      * `.spectacular/VOCABULARY.md`: Canonical domain ontology and ubiquitous language, earned when concepts, state machines, relationships, or policies are rich. Start with an alphabetical glossary; for the section skeleton that follows it, see [genesis-examples.md](genesis-examples.md).
      * `.spectacular/SECURITY.md`: Non-standard compliance, isolation, or secret rules, only if project-specific.
      * `.spectacular/GUARDRAILS.md`: Custom AI operational rules, only upon explicit owner request.

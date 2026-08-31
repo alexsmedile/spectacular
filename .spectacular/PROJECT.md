@@ -18,6 +18,7 @@ current_truth:
     - Anchor:019fe381-5d61-7223-b362-03a5f99a7b15
     - Anchor:019fe381-5d61-7223-b362-03a5f99a7b16
     - Anchor:01a030b4-6159-7a6a-b77b-e2466a25469b
+    - Anchor:01a030f0-8000-7000-8000-000000000001
     - Contract:019fe381-5d61-7223-b362-03a5f99a7b10
     - Contract:01a00a20-63dd-7670-97f1-9eb8e12adc3a
 direction: Make governed agentic software work legible, recoverable, and safe for humans and machines.

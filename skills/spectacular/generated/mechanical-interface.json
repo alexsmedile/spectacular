@@ -1,6 +1,6 @@
 {
   "schema_version": "spectacular.command-catalog.v1",
-  "release_version": "2.9.0",
+  "release_version": "2.10.0",
   "release_inspection": {
     "command": "spectacular --version",
     "arguments": "[--json]",

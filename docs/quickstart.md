@@ -7,114 +7,80 @@ You need the `spectacular` CLI on your PATH and a project that is a git
 repository. See [Installation](#installation) below if you do not have the CLI
 yet.
 
-## The shape of the work
+## The shape of the work: The Lean 3-Layer Model
 
-Spectacular runs one bounded Mission at a time. A Mission says what work is
-allowed and what success looks like. Once you start it, that agreement is
-locked. The agent does the work; you decide when it is complete.
+Spectacular is designed for fast, token-efficient autonomous execution with minimal ceremony. All governance reduces to 3 simple layers:
 
 ```text
-idea ──▶ Proposal ──▶ Mission (frozen at activation) ──▶ Run ──▶ Review ──▶ owner completes
-          optional        the agreement                  the work    proof     the gate
+1. Ground Truth & Decisions ──▶ 2. Flight Plan Roadmap ──▶ 3. Single-File Mission ──▶ Autonomous Autopilot
+   PROJECT.md + decisions/         campaigns/flight-plan.md    missions/M1.md (≤500t)     Tests pass = Proof
 ```
 
-A Proposal is an optional place to explore. A Mission is the agreement. A Run
-is one attempt to do the work. Only you close the loop.
+- **Layer 1: Living Ground Truth**: `PROJECT.md` (scope/boundaries) + `.spectacular/decisions/` (bulk-ideated architectural choices locked with `spectacular decide`).
+- **Layer 2: Topological Flight Plan**: Multi-session roadmap in `.spectacular/campaigns/flight-plan.md` (4–8 macro milestone blocks).
+- **Layer 3: Single-File Execution Envelopes**: Compact, self-contained Mission files (`missions/M1.md`, $\le 500$ tokens) with inline deliverables checklist and failable test boundaries.
 
 ## 0. Initialize the workspace (greenfield)
 
 If starting on a new project, initialize the Spectacular workspace boundary:
 
 ```sh
-spectacular init
+spectacular init [--name <project>]
 ```
 
-This creates `.spectacular/workspace.yaml` and seeds `.spectacular/PROJECT.md` safely without overwriting any existing files.
+This safely creates `.spectacular/workspace.yaml` and seeds `.spectacular/PROJECT.md` without overwriting existing files.
 
-## 1. Orient before doing anything
+## 1. Upfront Bulk-Decide (Settle Architecture Early)
 
-Ask your agent to orient. It reads the project Anchors — `PROJECT.md`,
-`ARCHITECTURE.md`, `PRODUCT.md`, `STACK.md` — and reports what is known, open,
-or blocked, without changing anything.
+Before starting implementation, brainstorm the technical stack and lock key architectural forks with `spectacular decide`:
 
 ```sh
-spectacular mission show M1
+spectacular decide decision.md
 ```
 
-If the workspace has no missions yet, there is nothing to show. That is the expected
-starting state.
+This writes an immutable record to `.spectacular/decisions/D1-<slug>.md`. Subagents and downstream sessions read these permanent rulings and never re-debate or hallucinate conflicting choices.
 
-## 2. Explore with a Proposal (optional)
+## 2. Sequence the Flight Plan Roadmap
 
-When the approach is not obvious, write a Proposal. It is mutable, carries no
-authority, and exists to be argued with:
+Map 4–8 milestone blocks in `.spectacular/campaigns/flight-plan.md`. Unstarted blocks remain lightweight 4-line draft cards.
 
-```sh
-spectacular proposal check P1
-```
+## 3. Freeze a Single-File Mission and activate it
 
-A Proposal never grants permission to act. It is the cheapest place to be wrong.
-Skip it when the work is small and the approach is settled.
-
-## 3. Freeze a Mission and activate it
-
-A Mission plan is a Markdown file that names the goal, the limits, and what
-must be true at the end. Starting it locks that agreement:
+Create a compact Mission draft (`plan.md`, $\le 500$ tokens) naming the outcome, deliverables checklist, and automated test command (`pass_boundary`). Activate it:
 
 ```sh
 spectacular mission start plan.md
 ```
 
-What the Mission says now is what it is judged against later. Spectacular saves
-a fingerprint of that text. Do not edit a live Mission to match what happened;
-if the agreement is wrong, update it deliberately with `contract amend`.
+This creates `.spectacular/missions/M1-<slug>/M1-<slug>.md` as a frozen execution envelope.
 
-**Branch before you activate.** A Mission that runs on `main` destroys the review
-and isolation boundary it depends on.
+## 4. Run with Autonomous Subagent / Autopilot
 
-## 4. Do the work in a Run
+Delegate work to an autonomous worker subagent or execute in autopilot. Provide the worker with a compact charter ($\le 300\text{--}500$ tokens):
 
-A Run is one attempt at the frozen Mission:
-
-```sh
-spectacular run start M1 --title "First implementation pass"
-spectacular objective promote M1/O1     # start an Objective
-spectacular objective finish M1/O1      # mark it implemented
+```text
+Task: Execute Mission M1 in autopilot.
+Mission File: .spectacular/missions/M1-sqlite/M1-sqlite.md
+Allowed Scope: internal/storage/, cmd/
+Verification Command: go test -v ./internal/storage/...
+Thread Context: conversation://<parent-id>
+Stop Triggers: Stop and yield back if schema migrations require external dependencies.
 ```
 
-Objectives are *earned*: expand one when the work is real, not upfront. Check
-state at any point:
+- **Zero Sub-Record Sprawl**: The worker does not create extra checkpoint or handoff files.
+- **Fail-Fast Decision Gates**: If the worker hits an unrecorded fork, it halts and sends an escalation $\to$ Orchestrator records `spectacular decide` $\to$ Worker resumes.
+- **Tests Pass = Proof**: Passing the test suite (`exit 0`) and creating a clean Git commit is the completion proof.
+
+## 5. The owner completes it
+
+Verify the mission and close the loop:
 
 ```sh
-spectacular mission check M1
+spectacular mission check M1                               # Read-only verification
+spectacular mission complete M1 --by alex                  # Owner completion gate
 ```
 
-`check` validates the record graph and reports per-claim drift — which claims are
-repaired, which evidence is stale, and where the next flag is.
-
-## 5. Record proof, then hand it off
-
-Evidence and Reviews are records, not chat messages:
-
-```sh
-spectacular review record M1 review.md
-spectacular handoff record M1 handoff.md --by alex
-```
-
-A Handoff binds the exact commit and tree it was sent against, verified against
-the repository, and separates `asserted` — what the sender verified — from
-`assumed`, what they are carrying on trust. The receiver re-verifies everything
-under `assumed` before acting.
-
-## 6. The owner completes it
-
-```sh
-spectacular mission complete M1 --by alex
-```
-
-Completion is an owner act. An agent cannot complete its own Mission, and
-completion refuses while a declared Gap is still open. This is the point of the
-whole system: the agent produces work and proof; a human decides it is done.
+Completion is an attributable owner act. The agent produces work and proof; the human approves completion.
 
 ## Installation
 

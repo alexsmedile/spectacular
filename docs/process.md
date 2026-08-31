@@ -4,12 +4,27 @@ How a piece of work moves through Spectacular.
 
 ![The Mission lifecycle](diagrams/lifecycle.svg)
 
-## One Mission at a time
+## The Lean 3-Layer Autopilot Model
 
-Spectacular keeps one live Mission in a workspace. That means every change has
-one clear purpose and one set of limits.
+Spectacular provides an ultra-lean, token-efficient execution lifecycle with minimal ceremony:
 
-If a Mission is too big, the answer is a smaller Mission, not a parallel one.
+1. **Layer 1: Living Ground Truth & Decisions**: `PROJECT.md` (boundaries/non-goals) + `.spectacular/decisions/` (bulk-ideated architectural choices locked with `spectacular decide`).
+2. **Layer 2: Topological Flight Plan**: Multi-session roadmap in `.spectacular/campaigns/flight-plan.md` (4–8 macro milestone blocks).
+3. **Layer 3: Single-File Execution Envelopes**: Compact, self-contained Mission files (`missions/M<N>.md`, $\le 500$ tokens) with inline deliverables checklist and fail-fast stop triggers.
+
+### Mission Layout & Sub-Folder Selection Protocol
+- **Tier 1: Single-File (90% Default)**: `M<N>.md` only. Routine features, bug fixes, refactors where tests passing (`exit 0`) is the proof. Zero sub-folders.
+- **Tier 2: Hybrid Earned (~8%)**: `M<N>.md` + 1 earned sub-record (e.g. `evidence/` for live third-party API receipts, or `objectives/` for parallel worktrees).
+- **Tier 3: Full Governed Bundle (~2%)**: High-stakes zero-downtime DB cutovers, auth/crypto, or payments requiring formal checkpoints (`checkpoints/`) or independent adversarial audit (`reviews/`).
+
+### Dual-Lane Orchestration: Supervised Dispatch vs. Full Handoff
+- **Supervised Dispatch (90% Default)**: In-session subagent delegation. The Orchestrator retains Mission ownership, sends a $\le 300$-token charter, and waits reactively for completion (`worker_done`). Zero extra governance files written.
+- **Full Ownership Handoff (10% Transfer)**: Explicit ownership transfers across distinct sessions, human engineers, or different AI harnesses recorded via `spectacular handoff record`.
+
+### The 3-Tier Question Escalator
+- **Tier 1: Optimistic Consent**: Non-blocking 1-line statement of defaults for low-risk implementation choices (`"Proceeding with X unless you prefer Y"`).
+- **Tier 2: Structured Batch Cards**: Numbered questions with lettered options (`1. Question ➔ A, B, C (Recommended)`), adaptive context depth, batch shorthand replies (`A, B, A`, `all defaults`), and open write-in support.
+- **Tier 3: Trade-off Spectrum & Interactive Modals**: Framing competing design axes for unpredictable exploration, or leveraging interactive UI modals (`ask_question`).
 
 ## Intake and probes
 

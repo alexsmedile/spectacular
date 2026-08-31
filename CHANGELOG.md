@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `spectacular init [--name <project>]` (Command #23 in CLI registry): Safe, conflict-free initialization command creating `.spectacular/workspace.yaml` and `.spectacular/PROJECT.md` without overwriting existing files.
+- **The Lean 3-Layer Autopilot Model**: Reduces governance to Living Ground Truth & Decisions (`PROJECT.md` + `decisions/`), Topological Flight Plan (`campaigns/flight-plan.md`), and Single-File Execution Envelopes (`missions/M<N>.md`, $\le 500$ tokens) with zero sub-record sprawl.
+- **3-Tier Layout Judgment Protocol**: Standardized classification matrix dividing work into Single-File (90% default), Hybrid Earned (~8%), and Full Governed Bundle (~2%).
+- **Dual-Lane Orchestration**: Formalized distinction between Supervised Dispatch ($\le 300$-token charter, 0 files written, tests pass = proof) and Full Ownership Handoff (`spectacular handoff record`).
+- **The Escalation & Decision Gate Protocol**: Subagents halt on ambiguity and escalate to Orchestrator to lock choices via `spectacular decide` (`D<N>`).
+- **The 3-Tier Question Escalator**: Non-blocking Optimistic Consent (Tier 1), Structured Numbered/Lettered Batch Cards (`1. Q ➔ A, B, C (Recommended)`) (Tier 2), and Trade-off Spectrums / Interactive Modals (Tier 3).
+- **Reviewer Role Hygiene (Observe ≠ Act)**: Verifiers inspect primary evidence and report structured verdicts/findings; never apply drive-by fixes to code.
+- **Auto-Default Identifiers**: Auto-resolution of `--by`, `--operator`, and `--from` from workspace configuration and Git config.
+
 ## 2.9.0 — 2026-08-31
 
 ### Added

@@ -83,26 +83,21 @@ blocked instead of reading the whole workspace.
 
 Spectacular splits responsibilities clearly:
 
-> - **The CLI** checks rules and safely updates records.
-> - **The Skill** helps an agent plan, work, and ask the right questions.
-> - **The files** stay readable in Git; there is no separate database to run.
+> - **The CLI** checks rules, validates identities, and atomically updates records.
+> - **The Skill** guides autonomous execution, bulk decisions, subagent dispatch, and fail-fast gates.
+> - **The files** stay readable in Git; there is no separate server or hidden database.
 
-![The Spectacular Division of Labor](docs/diagrams/division-of-labor.svg)
+### The Lean 3-Layer Autopilot Model
+All governance reduces to 3 token-efficient layers:
 
-### Turning a request into checked work
+1. **Layer 1: Living Ground Truth & Decisions**: `PROJECT.md` (boundaries/non-goals) + `.spectacular/decisions/` (bulk-ideated architectural choices locked with `spectacular decide`).
+2. **Layer 2: Topological Flight Plan**: Multi-session roadmap in `.spectacular/campaigns/flight-plan.md` (4–8 macro milestone blocks).
+3. **Layer 3: Single-File Execution Envelopes**: Compact, self-contained Mission files (`missions/M<N>.md`, $\le 500$ tokens) with inline deliverables checklist and failable test boundaries.
 
-The CLI checks the parts a computer can check: identities, fingerprints,
-dependencies, and completion boundaries. Markdown explains the why and the
-trade-offs that need human judgment.
-
-![Spectacular Human + Agent Collaboration Model](docs/diagrams/architecture.svg)
-
-The skill helps turn your request into two useful records:
-
-- **Contract (`contracts/`)**: what the product should do.
-- **Mission (`missions/`)**: the approved work, its limits, and how to tell it is done.
-
-The skill manages the work flow; the CLI checks the records and prevents invalid updates.
+### The 3-Tier Question Escalator
+- **Tier 1 (Optimistic Consent)**: Non-blocking 1-line statement of defaults for low-risk choices (`"Proceeding with X unless you prefer Y"`).
+- **Tier 2 (Structured Batch Cards)**: Numbered questions with lettered options (`1. Question ➔ A, B, C (Recommended)`), adaptive context depth, batch shorthand replies (`A, B, A`, `all defaults`), and open write-in support.
+- **Tier 3 (Trade-off Spectrum & Interactive Modals)**: Framing competing design axes for unpredictable exploration, or leveraging interactive UI modals (`ask_question`).
 
 ## How it works
 

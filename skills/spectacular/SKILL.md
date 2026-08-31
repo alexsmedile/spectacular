@@ -1,6 +1,11 @@
 ---
 name: spectacular
-description: Guide work only when the user explicitly invokes `$spectacular` or `/spectacular`, or when operating inside a canonical `.spectacular/` workspace. Route Orchestrator work through orient, prepare/explore/plan/start, execute/resume, runtime handoff/autopilot, close/review/complete, and audit. Do not invoke for generic planning, ordinary code review, Git operations, project-status questions, or short tasks outside a Spectacular workspace.
+description: >-
+  Guide work only when the user invokes `$spectacular`, `/spectacular`, or in a `.spectacular/` workspace.
+  Use for structured mission orchestration, bulk decisions (`spectacular decide`), single-file mission autopilot,
+  supervised subagent dispatch, and multi-session campaigns. Triggers on "start mission", "spectacular decide",
+  "flight plan", "autopilot", "supervised dispatch", "handoff", "mission check", or "complete mission".
+  Do not invoke for generic planning, ungrounded chat, ordinary git operations, or tasks outside Spectacular.
 metadata:
   version: "2.9.0"
 ---
@@ -9,7 +14,26 @@ metadata:
 
 Run one bounded Mission at a time, from truth the owner already accepted.
 
-## 1. The Lean 3-Layer Autopilot Model
+## 1. Consolidated CLI Palette & Parameter Grammar
+
+Commands output typed `.v2` JSON envelopes. Mutating commands execute as atomic transactions. `--by` and `--operator` auto-resolve from workspace config/git user if omitted:
+
+```bash
+# Core Lifecycle & Decisions
+spectacular init [--name <project>]                               # Initialize fresh workspace
+spectacular decide <file|-> [--json]                              # Record immutable decision D<N>
+spectacular mission start <plan.md|-> [--json]                    # Activate single-file execution envelope
+spectacular mission check <ref> [--json]                          # Verify frozen claims & proof (read-only)
+spectacular mission complete <ref> [--by <owner>] [--json]        # Complete mission after owner gate
+
+# Delegation, Autopilot & Audits
+spectacular charter <mission-ref>[/<obj>] [--json]                # Compile context sandwich (≤1200 tokens)
+spectacular handoff record <mission> <draft|-> [--by <actor>]     # Record cross-party handoff
+spectacular review record <mission> <draft|-> [--json]            # Record independent review RV<N>
+spectacular evidence record <mission> <draft|-> [--json]          # Record third-party proof E<N>
+```
+
+## 2. The Lean 3-Layer Autopilot Model
 
 Spectacular is designed for fast, token-efficient autonomous execution with minimal ceremony. All governance reduces to 3 layers:
 
@@ -44,7 +68,7 @@ Invoke `spectacular --version --json` once at startup and require `spectacular.b
 - **CLI Absent**: Read/draft-only. Route to [reduced-mode.md](references/reduced-mode.md). Never emulate command-owned records, fabricate fingerprints, or claim atomic writes.
 - **Declared `manual-bootstrap`**: Owner-approved drafting exception only ([bootstrap.md](references/bootstrap.md)); it cannot create, activate, transition, or complete fingerprint-bound records. Delegated agents cannot declare bootstrap.
 
-## 2. Role Resolution & Orchestration Discipline
+## 3. Role Resolution & Orchestration Discipline
 
 | Role | Entry Contract | Context Spine | Exit |
 |---|---|---|---|
@@ -75,7 +99,7 @@ Invoke `spectacular --version --json` once at startup and require `spectacular.b
 - **Context boundary**: Runner reads only assigned inputs. Missing context produces one precise request to Orchestrator; no workspace scans. Campaigns are Orchestrator planning context, never worker selectors.
 - **Context Sandwich & Token Discipline**: Worker agents receive a compiled prompt envelope (`spectacular charter`) strictly bounded at $\le 1{,}200$ tokens (`o200k_base`), leaving 99%+ of the model attention window free for codebase AST and test logs. Check token sizes using `bash skills/spectacular/scripts/count-tokens.sh <file|->`.
 
-## 3. Preflight & Isolation
+## 4. Preflight & Isolation
 
 Evaluate branch and worktree isolation independently before mutation:
 - **Branch** separates history; branch before activation (`git checkout -b <mission-slug>`).
@@ -88,7 +112,7 @@ Check workspace (`PROJECT.md`), Git (branch & worktrees), bindings, identity, an
 2. **Technical evidence**: Git branch/worktree, commit SHA, Contract fingerprint, validation mode.
 3. **Next action**: Exactly one safe next action, or one owner gate.
 
-## 4. Primary Phase Router
+## 5. Primary Phase Router
 
 Orchestrators and primary operators load exactly one primary phase reference:
 
@@ -103,7 +127,7 @@ Orchestrators and primary operators load exactly one primary phase reference:
 
 Load a supporting reference only when the primary reference explicitly triggers it. When the phase changes, finish or stop the current phase before routing again.
 
-## 5. Authority Constitution
+## 6. Authority Constitution
 
 - **Owner only**: Outcome, completion criteria, semantic scope, review independence, forbidden-effects.
 - **Operator freely**: Reversible attempts, checks, and bounded repairs inside the Mission.
@@ -111,7 +135,7 @@ Load a supporting reference only when the primary reference explicitly triggers 
 - **Return to owner**: Scope expansion, irreversible/provider effects, exhausted repairs, stops.
 - **Proof separation**: Evidence, deterministic checks, independent review, owner acceptance, and completion are separate layers. A passing check proves only its specific observation.
 
-## 6. Owner Maxims
+## 7. Owner Maxims
 
 - **Ask only when open**: Semantic forks, boundaries, authority, risks, irreversible effects, contract conflicts.
 - **Four-part question formula**: (1) Plain outcome · (2) Technical basis · (3) Options (`action -> consequence`) · (4) Recommended default & why.
@@ -120,7 +144,7 @@ Load a supporting reference only when the primary reference explicitly triggers 
 - **Batch gates**: Check prior decisions first; approvals carry forward within the active phase; batch related approvals once.
 - **State boundary once**: State constraints once, act on them, and use compact 3-part refusals.
 
-## 7. Continuity & Precedence
+## 8. Continuity & Precedence
 
 - Return the state a cold session needs plus exactly one safe next action or owner gate.
 - When Spectacular develops itself, an active Mission's schema and completion boundary remain frozen at activation; later changes apply only to later Missions.

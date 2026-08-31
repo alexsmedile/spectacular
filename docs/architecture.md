@@ -57,6 +57,17 @@ Gap, and Mission-local Decisions.
 That split is why archiving a Mission archives its whole bundle: an Evidence
 record separated from its Mission is not evidence of anything.
 
+## The Lean 3-Layer Autopilot Model
+
+Spectacular is designed for fast, token-efficient autonomous execution with minimal ceremony. All governance reduces to 3 layers:
+
+1. **Layer 1: Living Truth & Decisions**: `PROJECT.md` (boundaries/non-goals) + `.spectacular/decisions/` (bulk-ideated architectural choices recorded with `spectacular decide`).
+2. **Layer 2: Topological Flight Plan**: Multi-session roadmap in `.spectacular/campaigns/` (4–8 macro milestone blocks; unstarted blocks remain 4-line lightweight draft cards).
+3. **Layer 3: Single-File Execution Envelopes**: Compact, self-contained Mission files (`.spectacular/missions/M<N>-<slug>/M<N>-<slug>.md`, $\le 500$ tokens) with inline objectives, deliverable checklists, and fail-fast stop triggers.
+
+### Zero Sub-Record Sprawl Policy
+Never create separate `checkpoints/`, `assessments/`, `runs/`, `handoffs/`, or multi-page manual evidence files for routine code tasks. The test suite passing (`exit 0`) and clean Git commit **is** the proof. Context flows across subagents and parallel sessions via lightweight prompts ($\le 300\text{--}500$ tokens) and thread links (`conversation://<id>`).
+
 ## Strategic Horizons: Anchors, Roadmaps, Campaigns, and Missions
 
 Spectacular structures work across four distinct strategic altitudes:

@@ -12,7 +12,34 @@ Spectacular is runtime-agnostic. Different host harnesses expose different model
 | `fast-code` | Fast, high-throughput code fluency | **Worker / Runner** | Bounded Objective implementation, file edits, local test sweeps, refactoring. |
 | `strict-verifier` | High instruction adherence, clean context | **Validator / Reviewer** | Adversarial verification, independent FROST review, regression suites. |
 
-When dispatching subagents or delegating tasks, map the semantic profile to an available host capability. If model selection is unavailable, use the host default without blocking delegation; isolation and the context contract still apply.
+## Lean Autopilot Delegation Pattern (Subagents & Thread Linking)
+
+For fast, zero-waste autonomous execution using host subagents (e.g. Antigravity/Claude `invoke_subagent`):
+
+1. **Compact Dispatch Payload ($\le 300\text{--}500$ tokens)**:
+   Provide the worker subagent strictly with:
+   - **Mission Target**: Path to `.spectacular/missions/M<N>-<slug>/M<N>-<slug>.md`.
+   - **Mechanical Scope**: Allowed paths (e.g. `cmd/`, `internal/pkg/`).
+   - **Failable Verification**: The exact test command (e.g. `go test -v ./internal/pkg/...`).
+   - **Fail-Fast Stop Triggers**: If an unrecorded architectural choice or external boundary conflict arises $\to$ stop immediately and yield back to Orchestrator.
+   - **Thread Link**: Pass `conversation://<orchestrator-conversation-id>` for session continuity.
+
+2. **Subagent Autopilot Execution**:
+   - Subagent reads the target file and assigned code paths only (no workspace scans).
+   - Writes the minimal coherent code satisfying the claim.
+   - Executes the test command.
+   - On pass $\to$ creates a clean Git commit and reports completion to the Orchestrator.
+   - Zero sub-record files created.
+
+3. **Sample Subagent Invocation Prompt**:
+   ```text
+   Task: Execute Mission M1 (SQLite Storage Engine) in autopilot.
+   Mission File: .spectacular/missions/M1-sqlite-storage/M1-sqlite-storage.md
+   Allowed Scope: internal/storage/, cmd/
+   Verification Command: go test -v ./internal/storage/...
+   Thread Context: conversation://2c67bc6b-f518-4aa3-951b-cddf1ba530b5
+   Stop Triggers: Stop and yield back if schema migrations require external dependencies.
+   ```
 
 ## Autopilot is explicit and non-default
 

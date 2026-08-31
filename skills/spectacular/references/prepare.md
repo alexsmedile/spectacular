@@ -147,10 +147,20 @@ After freezing, scope cuts return to the owner.
   > *"Fully detail the active/next mission; keep downstream ones as drafts / sketches. Small missions should stay direct and lean."*
   - Detail **only** the active or immediate next Mission block. Downstream blocks remain lightweight draft sketches without premature claim matrices.
   - Token budgets from `.spectacular/config.yaml` govern document sizing:
-    - **Active Mission**: 400 – 900 tokens (upper limit: 1,200 tokens).
-    - **Draft / Sketch Mission**: 100 – 300 tokens.
-    - **Decision**: 150 – 400 tokens.
-    - **Context Charter**: $\le 1{,}200$ tokens (hard cap: 1,440 tokens).
+## The Lean Autopilot Pipeline: Bulk-Decide -> Roadmap -> Single-File Mission
+
+To eliminate token waste and maximize autopilot velocity across subagents and threaded sessions:
+
+```mermaid
+flowchart LR
+    A["💡 1. Bulk Ideate & Decide<br><i>Brainstorm & `spectacular decide` (D1..DN)</i>"] --> B["🗺️ 2. Roadmap Mapping<br><i>.spectacular/campaigns/flight-plan.md</i>"]
+    B --> C["🚀 3. Single-File Mission<br><i>spectacular mission start (≤500 tokens)</i>"]
+    C --> D["🤖 4. Autopilot Subagent<br><i>Code, test passing, Git commit, stop if blocked</i>"]
+```
+
+1. **Bulk Ideate & Decide**: Settle foundational architectural choices, libraries, and API shapes early. Record rulings atomically with `spectacular decide` into `.spectacular/decisions/`. Subagents and downstream sessions read these permanent decisions directly and never re-debate or hallucinate reverse choices.
+2. **Roadmap Mapping**: Maintain a single topological roadmap in `.spectacular/campaigns/flight-plan.md` with 4–8 milestone blocks. Unstarted blocks remain 4-line lightweight draft cards.
+3. **Single-File Mission Launch**: Freeze the active block into **one compact single file** ($\le 500$ tokens) with inline deliverables checklist and failable test boundaries. Zero sub-record sprawl.
 
 ## Freeze a compact Mission preview
 
@@ -166,12 +176,41 @@ After freezing, scope cuts return to the owner.
 5. **Atomic Single-Invariant Claims**: One claim = **one** observable invariant + **one** verifiable proof check.
 6. **Key Deliverables in Body**: Include a direct action checklist of target files and verification commands.
 
-Frontmatter:
+### Compact Single-File Mission Template
 
+```yaml
+---
+type: MissionPlan
+title: <title>
+owner: <owner>
+outcome: <observable-outcome>
+review: automatic
+completion:
+  - claim: <claim-name>
+    pass_boundary: <failable-test-command-e.g.-go-test-./...>
+    proof_requirement: <exact-automated-test-assertion>
+authority:
+  operator: [inspect, edit-in-scope, run-checks, commit-local]
+  requires_owner: [push, merge, release, irreversible-effects]
+scope:
+  mechanical: [<allowed-paths>]
+repair_budget: 1
+stops: [scope-drift, unrecorded-architecture-decision]
+---
+# <title>
+
+## Deliverables
+- [ ] Implement component in <target-file>
+- [ ] Add automated unit tests verifying pass boundary
+
+## Fail-Fast Stop Triggers
+- Stop immediately if: unrecorded architectural decision needed, or edits required outside mechanical scope.
+```
+
+Frontmatter Fields:
 - title, owner, outcome, applicable Contract, Git baseline
-- one completion claim per verifiable domain, each with a pass boundary and a
-  proof requirement
-- review level: `automatic | clustered | independent`, defaulted once when shared.
+- one completion claim per verifiable domain, each with a pass boundary and a proof requirement
+- review level: `automatic | clustered | independent` (`automatic` default for code with test assertions)
   Choose `independent` when any claim touches security, privacy, or rights;
   stored data or a migration; a shared or public interface; compatibility; more
   than one system boundary; an external provider; a destructive or

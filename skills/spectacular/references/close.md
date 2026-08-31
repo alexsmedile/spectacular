@@ -24,20 +24,18 @@ Every modified line in the reviewed commit must support a frozen claim, its requ
 - **Zero Drive-By Edits**: Changes not required by that work—unrelated reformatting, drive-by refactoring, cosmetic comment churn, adjacent file tidy-ups—are recorded as findings, never repaired silently during review.
 - **Observe ≠ Act**: Reviewers identify defects and record findings or Gaps. A Reviewer never modifies code on the spot to "fix" what they observe.
 
-## Persist Evidence when it is earned
+## Persist Evidence when it is earned (Zero Overhead for Routine Code)
 
-Write an Evidence file when the claim:
+For routine coding tasks (`review: automatic`), the clean Git commit and failable test suite passing (`exit 0`) **is** the proof. No separate Evidence or Assessment markdown files should be created.
 
-- enters assessment as a material claim
-- depends on an external or provider observation
-- is disputed
-- must survive closure
-
-Routine local progress does not need an Evidence file for every passing check.
+Write a separate Evidence file (`spectacular evidence record`) **only** when the claim:
+- depends on an external or third-party provider observation
+- involves disputed or non-deterministic behavior
+- touches high-risk security boundaries or migrations where raw output must survive long-term closure
 
 ## Create a review record only when required
 
-Earned only when the Mission requires clustered or independent review.
+Earned only when the Mission explicitly declared `clustered` or `independent` review. Routine `automatic` code tasks need no review record.
 
 ```bash
 spectacular review record <mission-ref> <review.md|-> --json

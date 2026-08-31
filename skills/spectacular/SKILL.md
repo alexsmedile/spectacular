@@ -9,16 +9,23 @@ metadata:
 
 Run one bounded Mission at a time, from truth the owner already accepted.
 
-## 1. Core Model & Mechanical Invariants
+## 1. The Lean 3-Layer Autopilot Model
 
-Markdown is canonical. Folders and explicit pointers provide navigable context. Agents recover from canonical records, not chat history. CLI owns deterministic validation, bindings, SHA-256 fingerprints, UUIDv7 identity, and atomic transitions. Missions are frozen execution envelopes; Objectives own outcome-sized claims; Runs are mutable attempts. Human docs (`docs/`) are not runtime governance authority.
+Spectacular is designed for fast, token-efficient autonomous execution with minimal ceremony. All governance reduces to 3 layers:
+
+1. **Layer 1: Living Truth & Decisions**: `PROJECT.md` (boundaries/non-goals) + `.spectacular/decisions/` (bulk-ideated architectural choices recorded with `spectacular decide`).
+2. **Layer 2: Topological Flight Plan**: Multi-session roadmap in `.spectacular/campaigns/` (4–8 macro milestone blocks; unstarted blocks remain 4-line lightweight draft cards).
+3. **Layer 3: Single-File Execution Envelopes**: Compact, self-contained Mission files (`.spectacular/missions/M<N>-<slug>/M<N>-<slug>.md`, $\le 500$ tokens) with inline objectives, deliverable checklists, and fail-fast stop triggers.
+
+### Zero Sub-Record Sprawl Policy
+Never create separate `checkpoints/`, `assessments/`, `runs/`, `handoffs/`, or multi-page manual evidence files for routine code tasks. The test suite passing (`exit 0`) and clean Git commit **is** the proof. Context flows across subagents and parallel sessions via lightweight prompts ($\le 300\text{--}500$ tokens) and thread links (`conversation://<id>`).
 
 | Surface | Responsibility |
 |---|---|
-| **Anchor** | Accepted truth: `PROJECT.md` (scope/boundaries), `STACK.md` (tools), `ARCHITECTURE.md` (layers). |
-| **Campaign** | Optional roadmap sequence in `.spectacular/campaigns/` (planning context; no execution authority). |
+| **Anchor / Decisions** | Accepted truth: `PROJECT.md` (scope/boundaries) + `decisions/D<N>.md` (durable choices). |
+| **Campaign** | Multi-session roadmap sequence in `.spectacular/campaigns/` (planning context; no execution authority). |
 | **Proposal** | Optional mutable exploration (`proposals/`); never current truth or execution authority. |
-| **Mission / Contract** | Frozen execution envelope (`M<N>`) / modular capability specification (`CC-<module>`). |
+| **Mission / Contract** | Single-file frozen execution envelope (`M<N>`) / modular capability specification (`CC-<module>`). |
 
 ### Mechanical Mode (3-State Model)
 Invoke `spectacular --version --json` once at startup and require `spectacular.build-info.v1` plus the exact release in `generated/mechanical-interface.json`. If absent, unreadable, or incompatible → reduced mode:

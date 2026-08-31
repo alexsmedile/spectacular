@@ -153,6 +153,9 @@ token_budgets:
     hard_cap: 1100
 defaults:
   operator: "CustomOperator"
+verification:
+  tier1_quick: "pnpm test:unit"
+  tier0_preflight: "pnpm lint"
 `
 	write(t, filepath.Join(meta, "config.yaml"), configContent)
 	ws2, err := Open(root)
@@ -167,6 +170,12 @@ defaults:
 	}
 	if ws2.Config.Defaults.Operator != "CustomOperator" {
 		t.Fatalf("expected custom operator CustomOperator, got %s", ws2.Config.Defaults.Operator)
+	}
+	if ws2.Config.Verification.Tier1Quick != "pnpm test:unit" {
+		t.Fatalf("expected custom verification tier1_quick 'pnpm test:unit', got %s", ws2.Config.Verification.Tier1Quick)
+	}
+	if ws2.Config.Verification.Tier0Preflight != "pnpm lint" {
+		t.Fatalf("expected custom verification tier0_preflight 'pnpm lint', got %s", ws2.Config.Verification.Tier0Preflight)
 	}
 	// Non-overridden values should retain defaults
 	if ws2.Config.TokenBudgets.Charter.Target != 1200 {

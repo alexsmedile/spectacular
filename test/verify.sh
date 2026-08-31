@@ -87,13 +87,82 @@ security_checks() {
 # workspace that is already syntactically or contractually broken.
 
 preflight_failures=()
+preflight_notices=()
 
 preflight_fail() {
   preflight_failures+=("$1")
 }
 
+preflight_notice() {
+  preflight_notices+=("$1")
+}
+
 preflight_json_escape() {
   printf '%s' "$1" | python3 -S -c 'import json,sys; print(json.dumps(sys.stdin.read()))'
+}
+
+# Scan decisions and missions for duplicate numeric prefixes and downstream linkages
+preflight_prefix_collisions() {
+  local out
+  out="$(python3 -S -c '
+import os, re, sys
+
+repo_root = sys.argv[1]
+notices = []
+
+dec_dir = os.path.join(repo_root, ".spectacular", "decisions")
+if os.path.isdir(dec_dir):
+    d_files = {}
+    for fname in os.listdir(dec_dir):
+        if fname.endswith(".md") and fname != "index.md":
+            m = re.match(r"^(D[0-9]+)", fname)
+            if m:
+                pfx = m.group(1)
+                d_files.setdefault(pfx, []).append(fname)
+    for pfx, files in sorted(d_files.items()):
+        if len(files) > 1:
+            linked = []
+            pattern = re.compile(r"\b" + re.escape(pfx) + r"\b")
+            for search_dir in [dec_dir, os.path.join(repo_root, ".spectacular", "missions")]:
+                if os.path.isdir(search_dir):
+                    for root, _, fnames in os.walk(search_dir):
+                        for fn in fnames:
+                            if fn.endswith(".md") and fn not in files:
+                                fpath = os.path.join(root, fn)
+                                try:
+                                    with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
+                                        if pattern.search(f.read()):
+                                            linked.append(fn)
+                                except Exception:
+                                    pass
+            linked_str = " ".join(sorted(set(linked)))
+            if linked_str:
+                notices.append(f"duplicate_prefix: {pfx} in files [{chr(32).join(files)}]; downstream references linked in: [{linked_str}]")
+            else:
+                notices.append(f"duplicate_prefix: {pfx} in files [{chr(32).join(files)}]; no downstream references detected")
+
+mis_dir = os.path.join(repo_root, ".spectacular", "missions")
+if os.path.isdir(mis_dir):
+    m_dirs = {}
+    for dname in os.listdir(mis_dir):
+        if os.path.isdir(os.path.join(mis_dir, dname)):
+            m = re.match(r"^(M[0-9]+)", dname)
+            if m:
+                pfx = m.group(1)
+                m_dirs.setdefault(pfx, []).append(dname)
+    for pfx, dirs in sorted(m_dirs.items()):
+        if len(dirs) > 1:
+            notices.append(f"duplicate_mission_prefix: {pfx} in directories [{chr(32).join(dirs)}]")
+
+for n in notices:
+    print(n)
+' "$repo_root" 2>/dev/null || true)"
+
+  if [[ -n "$out" ]]; then
+    while IFS= read -r line; do
+      [[ -n "$line" ]] && preflight_notice "$line"
+    done <<<"$out"
+  fi
 }
 
 # Tier 0: static syntax and tree sanity.
@@ -200,6 +269,7 @@ preflight_checks() {
 
   preflight_tier0
   preflight_tier1
+  preflight_prefix_collisions
 
   finished_ns="$(python3 -S -c 'import time; print(time.time_ns())')"
   elapsed_ms=$(( (finished_ns - started_ns) / 1000000 ))
@@ -221,6 +291,14 @@ preflight_checks() {
       preflight_json_escape "$failure" | tr -d '\n'
     done
     if [[ $first -eq 0 ]]; then printf '\n  '; fi
+    printf '],\n'
+    printf '  "notices": ['
+    local first_n=1 notice
+    for notice in ${preflight_notices[@]+"${preflight_notices[@]}"}; do
+      if [[ $first_n -eq 1 ]]; then printf '\n    '; first_n=0; else printf ',\n    '; fi
+      preflight_json_escape "$notice" | tr -d '\n'
+    done
+    if [[ $first_n -eq 0 ]]; then printf '\n  '; fi
     printf '],\n'
     printf '  "cost_units_used": %s,\n' "$elapsed_ms"
     printf '  "cost_units": "milliseconds",\n'

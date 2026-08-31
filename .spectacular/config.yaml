@@ -23,3 +23,9 @@ token_budgets:
 defaults:
   operator: "Alex"
   tokenizer: "o200k_base"
+
+verification:
+  tier0_preflight: "bash test/verify.sh preflight"
+  tier1_quick: "bash test/verify.sh quick"
+  tier2_acceptance: "bash test/verify.sh acceptance"
+  tier3_all: "bash test/verify.sh all"

@@ -40,15 +40,24 @@ type TokenBudgets struct {
 	Campaign      TokenBudget `yaml:"campaign" json:"campaign"`
 }
 
+type VerificationConfig struct {
+	Tier0Preflight  string `yaml:"tier0_preflight,omitempty" json:"tier0_preflight,omitempty"`
+	Tier1Quick      string `yaml:"tier1_quick,omitempty" json:"tier1_quick,omitempty"`
+	Tier2Acceptance string `yaml:"tier2_acceptance,omitempty" json:"tier2_acceptance,omitempty"`
+	Tier3All        string `yaml:"tier3_all,omitempty" json:"tier3_all,omitempty"`
+	SchemaCheck     string `yaml:"schema_check,omitempty" json:"schema_check,omitempty"`
+}
+
 type ConfigDefaults struct {
 	Operator  string `yaml:"operator,omitempty" json:"operator,omitempty"`
 	Tokenizer string `yaml:"tokenizer,omitempty" json:"tokenizer,omitempty"`
 }
 
 type Config struct {
-	SchemaVersion string         `yaml:"schema_version" json:"schema_version"`
-	TokenBudgets  TokenBudgets   `yaml:"token_budgets" json:"token_budgets"`
-	Defaults      ConfigDefaults `yaml:"defaults,omitempty" json:"defaults,omitempty"`
+	SchemaVersion string             `yaml:"schema_version" json:"schema_version"`
+	TokenBudgets  TokenBudgets       `yaml:"token_budgets" json:"token_budgets"`
+	Defaults      ConfigDefaults     `yaml:"defaults,omitempty" json:"defaults,omitempty"`
+	Verification  VerificationConfig `yaml:"verification,omitempty" json:"verification,omitempty"`
 }
 
 func DefaultConfig() Config {
@@ -297,6 +306,21 @@ func load(root, marker string) (*Workspace, error) {
 				}
 				if parsed.Defaults.Tokenizer != "" {
 					cfg.Defaults.Tokenizer = parsed.Defaults.Tokenizer
+				}
+				if parsed.Verification.Tier0Preflight != "" {
+					cfg.Verification.Tier0Preflight = parsed.Verification.Tier0Preflight
+				}
+				if parsed.Verification.Tier1Quick != "" {
+					cfg.Verification.Tier1Quick = parsed.Verification.Tier1Quick
+				}
+				if parsed.Verification.Tier2Acceptance != "" {
+					cfg.Verification.Tier2Acceptance = parsed.Verification.Tier2Acceptance
+				}
+				if parsed.Verification.Tier3All != "" {
+					cfg.Verification.Tier3All = parsed.Verification.Tier3All
+				}
+				if parsed.Verification.SchemaCheck != "" {
+					cfg.Verification.SchemaCheck = parsed.Verification.SchemaCheck
 				}
 			}
 			break

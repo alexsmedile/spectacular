@@ -17,6 +17,17 @@ Spectacular is designed for fast, token-efficient autonomous execution with mini
 2. **Layer 2: Topological Flight Plan**: Multi-session roadmap in `.spectacular/campaigns/` (4–8 macro milestone blocks; unstarted blocks remain 4-line lightweight draft cards).
 3. **Layer 3: Single-File Execution Envelopes**: Compact, self-contained Mission files (`.spectacular/missions/M<N>-<slug>/M<N>-<slug>.md`, $\le 500$ tokens) with inline objectives, deliverable checklists, and fail-fast stop triggers.
 
+### Mission Layout Judgment Protocol (3-Tier Decision Matrix)
+Agents select the minimal sufficient layout tier before writing any mission:
+
+| Tier | When to Select | Structure |
+|---|---|---|
+| **Tier 1: Single-File (90% Default)** | Routine features, bug fixes, refactors, local deterministic code where test suite passing (`exit 0`) is the proof. | `M<N>.md` **only** (zero sub-folders). |
+| **Tier 2: Hybrid Earned (~8%)** | Needs live third-party API receipts (`evidence/`) or splitting work across parallel subagent worktrees (`objectives/`). | `M<N>.md` + only the 1 earned sub-record. |
+| **Tier 3: Full Bundle (~2%)** | High-stakes zero-downtime DB cutovers, core auth/crypto, payments, or cross-org handoffs requiring formal checkpoints (`checkpoints/`) or independent adversarial audit (`reviews/`). | Full directory bundle with all needed governance records. |
+
+**The Golden Rule**: Start Single-File. A sub-folder is earned only when a failable condition (external receipt, parallel worktree split, independent security review) explicitly demands it.
+
 ### Zero Sub-Record Sprawl Policy
 Never create separate `checkpoints/`, `assessments/`, `runs/`, `handoffs/`, or multi-page manual evidence files for routine code tasks. The test suite passing (`exit 0`) and clean Git commit **is** the proof. Context flows across subagents and parallel sessions via lightweight prompts ($\le 300\text{--}500$ tokens) and thread links (`conversation://<id>`).
 

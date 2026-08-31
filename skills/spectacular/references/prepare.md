@@ -160,7 +160,22 @@ flowchart LR
 
 1. **Bulk Ideate & Decide**: Settle foundational architectural choices, libraries, and API shapes early. Record rulings atomically with `spectacular decide` into `.spectacular/decisions/`. Subagents and downstream sessions read these permanent decisions directly and never re-debate or hallucinate reverse choices.
 2. **Roadmap Mapping**: Maintain a single topological roadmap in `.spectacular/campaigns/flight-plan.md` with 4–8 milestone blocks. Unstarted blocks remain 4-line lightweight draft cards.
-3. **Single-File Mission Launch**: Freeze the active block into **one compact single file** ($\le 500$ tokens) with inline deliverables checklist and failable test boundaries. Zero sub-record sprawl.
+3. **Single-File Mission Launch (Tier 1 Default)**: Freeze the active block into **one compact single file** ($\le 500$ tokens) with inline deliverables checklist and failable test boundaries.
+
+### Mission Layout & Sub-Folder Selection Matrix
+
+Start Single-File. Create sub-folders only when earned by a specific failable condition:
+
+| Sub-Folder | What It Holds | When Earned / Needed | When Skipped as Token Waste |
+|---|---|---|---|
+| *(none)* | `M<N>.md` (Single-file) | **90% Default**: Routine features, bug fixes, refactors, deterministic local code where tests pass in minutes. | Never skip; this is the primary lean execution envelope. |
+| **`evidence/`** | Raw external logs, provider API receipts, benchmarks. | **Third-party integrations** (Stripe webhooks, AWS IAM, load tests) where local unit tests cannot prove live API reality. | Routine code tasks where running `go test`/`npm test` exit code 0 in Git is the proof. |
+| **`objectives/`** | Promoted sub-claim files (`O1.md`). | **Parallel subagents or multi-day work** running across disjoint worktrees where workers only see their slice. | Linear or single-day missions where objectives sit in the mission checklist. |
+| **`runs/`** | Separate attempt directories (`R1.md`). | **Failed / Multi-Strategy Work**: Attempt 1 hit a dead end, and Attempt 2 tests a new hypothesis. | Standard runs where code implements in one pass. |
+| **`checkpoints/`** | Mid-execution state snapshots. | **Overnight pauses** or high-risk moments before running irreversible migrations or destructive data scripts. | Standard sessions ($\le 1\text{--}2$ hours). |
+| **`reviews/`** | Formal adversarial review verdict (`RV1.md`). | **High-stakes domains**: Security boundaries, auth crypto, payment flows requiring independent audit (`review: independent`). | Internal features, refactors, or bugs covered by automated tests (`review: automatic`). |
+| **`handoffs/`** | Immutable sender/receiver contract (`H1.md`). | **Cross-organization or cross-harness handoffs** (e.g. human-to-agent, or Claude $\to$ Codex $\to$ Antigravity) needing cryptographic commit/tree proof. | Same-session subagent calls (`invoke_subagent`) where `conversation://<id>` provides context. |
+| **`gaps/`** | Stated limitations / deferred scope (`G1.md`). | **Discovered blockers agreed with owner**: When a known limitation is deferred and bound to Contract. | Normal bugs resolved directly in-scope. |
 
 ## Freeze a compact Mission preview
 

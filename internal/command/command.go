@@ -42,6 +42,7 @@ const (
 	optionalStatus
 	missionStartOptions
 	evidenceRecordOptions
+	initOptions
 )
 
 type operation uint8
@@ -69,6 +70,7 @@ const (
 	opContractCreate
 	opCharter
 	opDecide
+	opInit
 )
 
 type Spec struct {
@@ -466,6 +468,16 @@ supersedes: ""
 <Detailed decision context and impact>
 `,
 	},
+	{
+		Words:         []string{"init"},
+		Arguments:     "[<path>] [--name <name>] [--json]",
+		ArgumentShape: initOptions,
+		JSONSchema:    "spectacular.init.v2",
+		Effect:        Mutating,
+		Operation:     opInit,
+		Description:   "Initializes a new Spectacular workspace safely without overwriting existing files.",
+		OutputType:    "InitResult",
+	},
 }
 
 type Runner struct {
@@ -536,6 +548,10 @@ func (r Runner) Run(args []string) int {
 	if badStatus {
 		return r.usage(jsonMode, invoked, "--status requires exactly one value")
 	}
+	nameOpt, _, badName := removeValueFlag(&args, "--name")
+	if badName {
+		return r.usage(jsonMode, invoked, "--name requires exactly one value")
+	}
 
 	if len(args) == 0 {
 		if help {
@@ -580,8 +596,34 @@ func (r Runner) Run(args []string) int {
 	if statusFilter != "" && spec.Operation != opMissionList {
 		return r.commandUsage(jsonMode, invoked, spec, "--status applies to mission list")
 	}
+	if nameOpt != "" && spec.Operation != opInit {
+		return r.commandUsage(jsonMode, invoked, spec, "--name applies to init")
+	}
 	if override != "" && spec.Operation != opContractAmend {
 		return r.commandUsage(jsonMode, invoked, spec, "--resolution applies to contract amend")
+	}
+	if spec.Operation == opInit {
+		targetDir := r.Cwd
+		if len(rest) == 1 {
+			targetDir = inputPath(r.Cwd, rest[0])
+		}
+		initRes, initErr := InitWorkspace(targetDir, nameOpt)
+		if initErr != nil {
+			return r.refuse(jsonMode, invoked, initErr)
+		}
+		now := r.Now
+		if now == nil {
+			now = time.Now
+		}
+		output := envelope{SchemaVersion: spec.JSONSchema, GeneratedAt: now().UTC().Format(time.RFC3339Nano), Data: initRes}
+		if jsonMode {
+			if err := writeJSON(r.Stdout, output); err != nil {
+				return r.refuse(true, invoked, err)
+			}
+		} else {
+			renderHuman(r.Stdout, initRes)
+		}
+		return 0
 	}
 	ws, err := discovery.Open(r.Cwd)
 	if err != nil {
@@ -834,6 +876,10 @@ func validateArguments(spec Spec, args []string) string {
 		if len(args) < 1 || len(args) > 2 || args[0] == "" {
 			return "requires <mission-ref> [draft.md|-]"
 		}
+	case initOptions:
+		if len(args) > 1 {
+			return "takes at most one path argument"
+		}
 	default:
 		return "command registry has an invalid argument shape"
 	}
@@ -1082,6 +1128,21 @@ func renderHuman(writer io.Writer, value any) {
 		fmt.Fprintf(writer, "Transitioned run %s (%s -> %s)\nBy: %s\nReason: %s\nPath: %s\n", item.Ref, item.From, item.To, item.By, item.Reason, item.Path)
 		for _, changed := range item.Changed {
 			fmt.Fprintf(writer, "  updated: %s\n", changed)
+		}
+	case InitResult:
+		if item.AlreadyInitialized {
+			fmt.Fprintf(writer, "Spectacular workspace already initialized in %s\n", item.MetadataDir)
+			if len(item.SkippedFiles) > 0 {
+				fmt.Fprintf(writer, "Preserved existing files: %s\n", strings.Join(item.SkippedFiles, ", "))
+			}
+			return
+		}
+		fmt.Fprintf(writer, "Initialized Spectacular workspace in %s\n", item.MetadataDir)
+		if len(item.CreatedFiles) > 0 {
+			fmt.Fprintf(writer, "Created: %s\n", strings.Join(item.CreatedFiles, ", "))
+		}
+		if len(item.SkippedFiles) > 0 {
+			fmt.Fprintf(writer, "Preserved existing files: %s\n", strings.Join(item.SkippedFiles, ", "))
 		}
 	default:
 		data, _ := json.MarshalIndent(value, "", "  ")

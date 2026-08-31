@@ -12,7 +12,7 @@ Answer one question: where does this project stand, and what happens next.
 | direction sources | the Anchors and Contracts its `current_truth` field names |
 | the selected Mission | `.spectacular/missions/<slug>/<ref>-<slug>.md` |
 
-If `.spectacular/PROJECT.md` does not exist, the repository is greenfield (uninitialized). Do not report an error: route immediately to One-Shot Genesis in [prepare.md](prepare.md).
+If `.spectacular/PROJECT.md` or `.spectacular/workspace.yaml` does not exist, the repository is greenfield (uninitialized). Do not report an error: initialize via `spectacular init` or route immediately to One-Shot Genesis in [prepare.md](prepare.md).
 
 To see what exists without reading every record, use the generated
 `.spectacular/missions/index.md`. It maps each ref to its source path and is

@@ -30,3 +30,4 @@ Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1
 | `spectacular contract create` | `<ref> [--title <title>] [--json]` | `spectacular.contract.create.v2` | `mutating` |
 | `spectacular charter` | `<mission-ref>/<objective-ref> [sources...] [--json]` | `spectacular.charter.show.v2` | `read-only` |
 | `spectacular decide` | `<decision.md|-> [--json]` | `spectacular.decision.record.v2` | `mutating` |
+| `spectacular init` | `[<path>] [--name <name>] [--json]` | `spectacular.init.v2` | `mutating` |

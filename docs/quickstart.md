@@ -21,6 +21,16 @@ idea ──▶ Proposal ──▶ Mission (frozen at activation) ──▶ Run �
 A Proposal is an optional place to explore. A Mission is the agreement. A Run
 is one attempt to do the work. Only you close the loop.
 
+## 0. Initialize the workspace (greenfield)
+
+If starting on a new project, initialize the Spectacular workspace boundary:
+
+```sh
+spectacular init
+```
+
+This creates `.spectacular/workspace.yaml` and seeds `.spectacular/PROJECT.md` safely without overwriting any existing files.
+
 ## 1. Orient before doing anything
 
 Ask your agent to orient. It reads the project Anchors — `PROJECT.md`,
@@ -31,7 +41,7 @@ or blocked, without changing anything.
 spectacular mission show M1
 ```
 
-If the workspace is empty, there is nothing to show yet. That is the expected
+If the workspace has no missions yet, there is nothing to show. That is the expected
 starting state.
 
 ## 2. Explore with a Proposal (optional)

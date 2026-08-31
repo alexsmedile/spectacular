@@ -6,9 +6,11 @@ Use this when: Orchestrator preparing Genesis, exploration, Proposal, or compact
 
 When starting a project from scratch, or when receiving an initial PRD or prompt of intent:
 
-1. **Scan for Intake Inputs**: Check for existing project kickoff documents in the project root or workspace (e.g. `./PRD.md`, `scratch/PRD.tmp.md`, intake notes, or output from `write-prd`). Treat any starter PRD as an ephemeral launchpad, not an eternal file. Account for these eight foundational dimensions: (1) owner and user-observable outcome, (2) scope boundaries and non-goals, (3) inputs, outputs, and core workflow, (4) stack, runtime, and dependency constraints, (5) architecture and component boundaries, (6) data, state, security, and privacy constraints, (7) acceptance criteria and failable proof, and (8) operations, failure recovery, and delivery constraints. Distill them losslessly into:
+1. **Scan for Intake Inputs & Scaffold Workspace**: Check for existing project kickoff documents in the project root or workspace (e.g. `./PRD.md`, `scratch/PRD.tmp.md`, intake notes, or output from `write-prd`). Treat any starter PRD as an ephemeral launchpad, not an eternal file. Initialize the Spectacular workspace safely:
+   - Run `spectacular init` (or manually create `.spectacular/workspace.yaml` with `schema_version: spectacular.workspace.v1`, `record_roots: [.]`, `project_anchor: PROJECT.md`). `init` safely preserves any existing workspace files and directories without overwriting.
+   - Account for the eight foundational dimensions: (1) owner and user-observable outcome, (2) scope boundaries and non-goals, (3) inputs, outputs, and core workflow, (4) stack, runtime, and dependency constraints, (5) architecture and component boundaries, (6) data, state, security, and privacy constraints, (7) acceptance criteria and failable proof, and (8) operations, failure recovery, and delivery constraints. Distill them losslessly into:
    - **The Core Triad of Anchors**:
-     * `.spectacular/PROJECT.md`: What & Why (Core scope, system boundaries, and strict non-goals).
+     * `.spectacular/PROJECT.md`: What & Why (Core scope, system boundaries, and strict non-goals). Seeded by `spectacular init`.
      * `.spectacular/STACK.md`: What with (Languages, runtimes, database, libraries, baseline test command).
      * `.spectacular/ARCHITECTURE.md`: How (Directory layout, layers, component boundaries between DB, Server, API, and Domain).
    - **On-Demand Anchors (Earned only)**:

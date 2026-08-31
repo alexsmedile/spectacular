@@ -125,7 +125,7 @@ func Open(start string) (*Workspace, error) {
 		}
 		abs = parent
 	}
-	return nil, refusal(domain.RefusalWorkspaceNotFound, start, "no explicit v2 .spectacular/workspace.yaml found", nil)
+	return nil, refusal(domain.RefusalWorkspaceNotFound, start, "no explicit v2 .spectacular/workspace.yaml found (run 'spectacular init' or create .spectacular/workspace.yaml)", nil)
 }
 
 func load(root, marker string) (*Workspace, error) {

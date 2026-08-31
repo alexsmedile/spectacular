@@ -139,6 +139,12 @@
       "arguments": "<decision.md|-> [--json]",
       "schema": "spectacular.decision.record.v2",
       "effect": "mutating"
+    },
+    {
+      "command": "spectacular init",
+      "arguments": "[<path>] [--name <name>] [--json]",
+      "schema": "spectacular.init.v2",
+      "effect": "mutating"
     }
   ]
 }

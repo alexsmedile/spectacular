@@ -16,18 +16,18 @@ import (
 )
 
 func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
-	// Twenty-two commands. Owner authorized mission list.
+	// Twenty-three commands. Owner authorized init.
 	want := []string{
 		"mission start", "mission list", "mission show", "mission check", "mission amend-scope", "mission close", "objective show", "objective promote",
 		"objective finish", "run show", "run start", "run transition", "review record", "handoff record",
 		"evidence record", "mission complete", "proposal check", "campaign check", "contract amend", "contract create",
-		"charter", "decide",
+		"charter", "decide", "init",
 	}
 	if len(Registry) != len(want) {
 		t.Fatalf("registry has %d commands, want %d", len(Registry), len(want))
 	}
-	if len(want) != 22 {
-		t.Fatalf("the public surface is %d commands; owner authorized 22", len(want))
+	if len(want) != 23 {
+		t.Fatalf("the public surface is %d commands; owner authorized 23", len(want))
 	}
 	for i, spec := range Registry {
 		if got := strings.Join(spec.Words, " "); got != want[i] {
@@ -989,5 +989,86 @@ blocks:
 	campOut := run(t, root, nil, 0, "campaign", "check", campFile, "--json")
 	if !strings.Contains(campOut, `"live_state":"planned"`) || !strings.Contains(campOut, `"title":"Test Campaign"`) {
 		t.Fatalf("campaign check failed: %s", campOut)
+	}
+}
+
+func TestInitFreshWorkspace(t *testing.T) {
+	root := t.TempDir()
+
+	// 1. Run init in fresh directory
+	out := run(t, root, nil, 0, "init", "--name", "My Cool Project")
+	if !strings.Contains(out, "Initialized Spectacular workspace") {
+		t.Fatalf("expected initialized message, got: %s", out)
+	}
+	if !strings.Contains(out, ".spectacular/workspace.yaml") || !strings.Contains(out, ".spectacular/PROJECT.md") {
+		t.Fatalf("expected created files listed, got: %s", out)
+	}
+
+	// 2. Check workspace.yaml exists and is valid
+	wsYAML, err := os.ReadFile(filepath.Join(root, ".spectacular", "workspace.yaml"))
+	if err != nil {
+		t.Fatalf("read workspace.yaml: %v", err)
+	}
+	if !strings.Contains(string(wsYAML), "schema_version: spectacular.workspace.v1") {
+		t.Fatalf("unexpected workspace.yaml content: %s", string(wsYAML))
+	}
+
+	// 3. Check PROJECT.md exists with custom name
+	projMD, err := os.ReadFile(filepath.Join(root, ".spectacular", "PROJECT.md"))
+	if err != nil {
+		t.Fatalf("read PROJECT.md: %v", err)
+	}
+	if !strings.Contains(string(projMD), "title: My Cool Project") {
+		t.Fatalf("unexpected PROJECT.md content: %s", string(projMD))
+	}
+
+	// 4. Verify discovery and commands immediately work
+	listOut := run(t, root, nil, 0, "mission", "list")
+	if !strings.Contains(listOut, "No missions found.") {
+		t.Fatalf("mission list failed after init: %s", listOut)
+	}
+}
+
+func TestInitAvoidsOverwritesOnExistingWorkspace(t *testing.T) {
+	root := t.TempDir()
+	meta := filepath.Join(root, ".spectacular")
+	if err := os.MkdirAll(meta, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create custom workspace.yaml and custom PROJECT.md
+	customWS := "schema_version: spectacular.workspace.v1\nrecord_roots: [.]\nproject_anchor: PROJECT.md\nguardrails: CUSTOM_GUARDRAILS.md\n"
+	write(t, filepath.Join(meta, "workspace.yaml"), customWS)
+
+	customProj := "---\ntype: Anchor\ntitle: Custom Original Title\ncurrent_truth: [.spectacular/PROJECT.md]\n---\n# Custom Original Content\n"
+	write(t, filepath.Join(meta, "PROJECT.md"), customProj)
+
+	// Run init again
+	out := run(t, root, nil, 0, "init", "--name", "Different Name", "--json")
+	if !strings.Contains(out, `"schema_version":"spectacular.init.v2"`) {
+		t.Fatalf("expected spectacular.init.v2 JSON schema, got: %s", out)
+	}
+	if !strings.Contains(out, `"already_initialized":true`) {
+		t.Fatalf("expected already_initialized: true, got: %s", out)
+	}
+	if !strings.Contains(out, `".spectacular/workspace.yaml"`) || !strings.Contains(out, `".spectacular/PROJECT.md"`) {
+		t.Fatalf("expected skipped files listed, got: %s", out)
+	}
+
+	// Assert custom content was NOT overwritten
+	afterWS, err := os.ReadFile(filepath.Join(meta, "workspace.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(afterWS) != customWS {
+		t.Fatalf("workspace.yaml was overwritten! got: %s, want: %s", string(afterWS), customWS)
+	}
+
+	afterProj, err := os.ReadFile(filepath.Join(meta, "PROJECT.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(afterProj) != customProj {
+		t.Fatalf("PROJECT.md was overwritten! got: %s, want: %s", string(afterProj), customProj)
 	}
 }

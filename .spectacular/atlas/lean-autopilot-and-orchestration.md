@@ -75,7 +75,32 @@ flowchart TD
 
 ---
 
-### B. Dual-Lane Orchestration: Supervised Dispatch vs. Full Handoff
+### C. Sub-Record Earned Decision Tree
+
+```mermaid
+flowchart TD
+    Start["Does this task need sub-records?"] --> Q1{"Is it routine local code<br/>where unit tests pass?"}
+    Q1 -->|YES| Single["<b>Single-File M&lt;N&gt;.md ONLY</b><br>• Zero sub-folders<br>• Commit + green tests = Proof"]
+    Q1 -->|NO| Fork{"What specific external condition exists?"}
+
+    Fork -->|Live external API receipt needed| Ev["<b>evidence/ E&lt;N&gt;.md</b><br>Third-party network receipts"]
+    Fork -->|Permanent handoff across users/tools| Ho["<b>handoffs/ H&lt;N&gt;.md</b><br>Transferring project keys"]
+    Fork -->|Milestone review or high-stakes auth/DB| Rv["<b>reviews/ RV&lt;N&gt;.md</b><br>Independent reviewer verdict"]
+    Fork -->|Multi-agent parallel worktrees| Obj["<b>objectives/</b><br>Split directory for parallel git branches"]
+    Fork -->|Multi-day mission requiring owner gate| Cp["<b>checkpoints/</b><br>Durable stop point in long campaign"]
+```
+
+| Record Type | **NEVER** Create For (90% Routine) | **ONLY** Create When (The Earned Exception) |
+|---|---|---|
+| **`evidence/`** | Normal code changes, refactors, or local bug fixes. | **Third-party receipts**: You called Stripe, AWS, or an external API and need durable proof of the HTTP response that local tests cannot reproduce. |
+| **`reviews/`** | Individual routine tasks. | **Milestones & High Stakes**: Batch-reviewing a finished 4-mission Campaign milestone, or high-risk auth/payments/zero-downtime DB migrations. |
+| **`handoffs/`** | Delegating a task to a worker subagent in the same session. | **Permanent Transfer**: Handing the project keys to another human or switching runtimes (e.g. Claude $\to$ Antigravity). |
+| **`objectives/`** | Sequential steps inside a standard single-file mission. | **Parallel Worktrees**: Two different agents working in separate git branches/worktrees simultaneously on the same mission. |
+| **`checkpoints/`** | Checking in after an objective finishes (use a simple run note). | **Multi-Day Governance Gates**: A high-stakes mission where work pauses for human/legal sign-off before irreversible operations. |
+
+---
+
+### D. Dual-Lane Orchestration: Supervised Dispatch vs. Full Handoff
 
 ```mermaid
 flowchart TD

@@ -266,6 +266,19 @@ When an escape occurs, `spectacular guard` does not wipe the worker's entire out
 2. **Preserves Valid Work**: Retains all changes and new code in authorized paths.
 3. **Emits Session Continuation Prompt**: Outputs a tailored feedback turn (`FeedbackPrompt`) ready for headless session resumption (e.g. `claude -c`, `agy --continue`, `opencode --session`), allowing the worker to self-correct in seconds without starting over from scratch.
 
+## The 4-Skill Starting Pack: Governance + Domain Execution
+
+Spectacular ships with a curated suite of companion skills under `skills/` providing deep technical domain execution alongside mission governance:
+
+| Skill | Role | Focus |
+| :--- | :--- | :--- |
+| **`spectacular`** | **Mission Governance Spine** | Orchestrates missions, contracts, objectives, flight plans, and subagent dispatch. |
+| **`system-architecture`** | **System & Software Architecture** | C4 context/container models, bounded contexts, service boundaries, and ADRs. |
+| **`data-modeling`** | **Data Modeling & Database Jobs** | Conceptual (Chen) $\to$ Logical (Crow's Foot) $\to$ Physical SQL DDL/ORMs, indexing, and zero-downtime migrations. |
+| **`rapid-prototyping`** | **3-Option Tracer Prototyping** | 3 tracer fragments (A/B/C) across a 5-tier fidelity ladder (Atom $\to$ Integration) with decision ledgers. |
+
+Each skill operates as a high-density, independent micro-kernel. When an operation crosses domain boundaries, skills declare clean **Expansion Handoffs** rather than duplicating instructions.
+
 ## Freeze points
 
 A completed Mission's contract fingerprint is a freeze point, not a stale
@@ -283,3 +296,4 @@ not updated to match the present.
 
 - [Quickstart](quickstart.md) — run one Mission end to end.
 - [Process](process.md) — the lifecycle and its gates in detail.
+

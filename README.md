@@ -99,6 +99,12 @@ All governance reduces to 3 token-efficient layers:
 - **Tier 2 (Structured Batch Cards)**: Numbered questions with lettered options (`1. Question ➔ A, B, C (Recommended)`), adaptive context depth, batch shorthand replies (`A, B, A`, `all defaults`), and open write-in support.
 - **Tier 3 (Trade-off Spectrum & Interactive Modals)**: Framing competing design axes for unpredictable exploration, or leveraging interactive UI modals (`ask_question`).
 
+### The 4-Skill Starting Pack: Full-Lifecycle Engineering
+Spectacular ships with three curated companion micro-kernels under `skills/`:
+- **`system-architecture`**: Bounded contexts, service boundaries, C4 models, and ADR trade-offs.
+- **`data-modeling`**: Conceptual (Chen) $\to$ Logical (Crow's Foot ERD) $\to$ Physical SQL DDL/ORMs, indexing, and zero-downtime expand/contract migrations.
+- **`rapid-prototyping`**: Fast 3-option tracer fragment exploration (A, B, C) across a 5-tier fidelity ladder (Atom $\to$ Integration) with decision ledgers.
+
 ## How it works
 
 ```text

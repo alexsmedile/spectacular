@@ -2,7 +2,25 @@
 
 ## [Unreleased]
 
-## 2.12.0 — 2026-09-01
+## 2.14.0 — 2026-09-01
+
+### Added
+
+- **4-Skill Companion Suite (`spectacular/skills/`)**: Shipped three official companion micro-kernels providing full-lifecycle domain engineering alongside Spectacular's mission governance:
+  - **`system-architecture`**: Bounded contexts, service boundaries, C4 diagrams-as-code, distributed trade-offs, and Architecture Decision Records (ADRs).
+  - **`data-modeling`**: 3-tier data modeling (Conceptual Chen $\to$ Logical Crow's Foot ERD $\to$ Physical SQL DDL/ORMs), PostgreSQL/MySQL/SQLite dialect conversions, Prisma/Drizzle support, composite index ordering, and zero-downtime expand/contract migrations.
+  - **`rapid-prototyping`**: Fast 3-option tracer fragment exploration (A, B, C) across a 5-tier fidelity ladder (Atom $\to$ Integration) with persistent decision ledgers (`Locked`, `Open`, `Level`, `Lineage`).
+- **Atlas Domain Map for Companion Skills (`.spectacular/atlas/companion-skills-and-domain-execution.md`)**: Visualized the 4-Pillar architecture, mutual exclusivity matrix, and expansion handoff state machine.
+- **Strict Expansion Handoff Contracts**: Established clean cross-skill delegation boundaries preventing instruction bloat across domain borders.
+- **Multi-Harness Global Distribution**: Configured and verified canonical symlinks across Claude Code (`~/.claude/skills/`), Codex (`~/.agents/skills/`), OpenCode (`~/.config/opencode/skills/`), Cursor (`~/.cursor/skills/`), Antigravity/Gemini (`~/.gemini/config/skills/`), and the canonical library root (`~/skills/`).
+
+## 2.13.0 — 2026-09-01
+
+### Added
+
+- **Mechanical Perimeter Guard & Zero Wasted Work (`spectacular guard`)**: Built-in OS watchdog monitoring subagent file operations, enforcing strict `writes_paths` perimeters, auto-purging rogue files on escape, and preserving valid progress with surgical quarantine.
+- **Token Efficiency & Process Isolation**: Cross-platform process isolation and snapshot diffing for autonomous subagents.
+
 
 ### Added
 

@@ -18,7 +18,7 @@ Spectacular provides an ultra-lean, token-efficient execution lifecycle with min
 - **Tier 3: Full Governed Bundle (~2%)**: High-stakes zero-downtime DB cutovers, auth/crypto, or payments requiring formal checkpoints (`checkpoints/`) or independent adversarial audit (`reviews/`).
 
 ### Dual-Lane Orchestration: Supervised Dispatch vs. Full Handoff
-- **Supervised Dispatch (90% Default)**: In-session subagent delegation. The Orchestrator retains Mission ownership, compiles an immediate prompt via `spectacular charter <mission>/<objective> --prompt` ($\le 300$ tokens containing only objectives, authorized write paths, non-goals, and the test command), and dispatches to a subagent worker without extra governance files.
+- **Supervised Dispatch (90% Default)**: In-session subagent delegation. The Orchestrator retains Mission ownership, compiles an immediate prompt via `spectacular charter <mission>/<objective> --prompt` (400–600 token sweet spot containing only objectives, authorized write paths, non-goals, interface definitions, and the test command), and dispatches to a subagent worker under `spectacular guard` without extra governance files.
 - **Full Ownership Handoff (10% Transfer)**: Explicit ownership transfers across distinct sessions, human engineers, or different AI harnesses recorded via `spectacular handoff record`.
 
 ### The 3-Tier Question Escalator

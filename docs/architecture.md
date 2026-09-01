@@ -50,6 +50,42 @@ flowchart LR
     M --> E["✅ Evidence & Archive<br><i>Mission complete, Proposal retired</i>"]
 ```
 
+### First-Principles Synthesis: GTD, GSD, Superpowers, and Orca
+
+Spectacular v2 synthesizes the proven strengths of the most effective task management and autonomous agent frameworks while replacing human discipline with **deterministic mechanical enforcement**:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🧠 THE FIRST-PRINCIPLES PIPELINE (GTD → GSD → ORCA → SPECTACULAR)           │
+├───────────────────┬───────────────────────────┬─────────────────────────────┤
+│ Framework Action  │ Spectacular Primitive     │ Operational Mechanism       │
+├───────────────────┼───────────────────────────┼─────────────────────────────┤
+│ 1. Inbox / Triage │ proposals/                │ Cheap, mutable exploration. │
+│    & Capture      │                           │ Brainstorming with zero     │
+│    (GTD)          │                           │ authority or commitment.    │
+├───────────────────┼───────────────────────────┼─────────────────────────────┤
+│ 2. Clarify &      │ contracts/                │ Living, versioned contracts │
+│    Organize (GTD) │ decisions/                │ freeze agreed invariants &  │
+│                   │                           │ irrevocable owner choices.  │
+├───────────────────┼───────────────────────────┼─────────────────────────────┤
+│ 3. Engage &       │ missions/                 │ Bounded execution envelope  │
+│    Momentum (GSD) │ (Iterate to exit 0)       │ with explicit write scope.  │
+│                   │                           │ Passing test suite = proof. │
+├───────────────────┼───────────────────────────┼─────────────────────────────┤
+│ 4. Subagent       │ charter --prompt          │ Single-turn naked worker    │
+│    Isolation      │ (400–600 token budget)    │ envelope. Zero governance   │
+│    (Orca)         │                           │ lore, zero file wandering.  │
+├───────────────────┼───────────────────────────┼─────────────────────────────┤
+│ 5. Modular        │ .agents/skills/           │ High-density micro-kernel   │
+│    Tooling        │ (Progressive Disclosure)  │ with on-demand reference    │
+│    (Superpowers)  │                           │ injection per domain.       │
+├───────────────────┼───────────────────────────┼─────────────────────────────┤
+│ 6. Mechanical     │ spectacular guard         │ OS-level sandbox watchdog,  │
+│    Enforcement    │ mission check --verify    │ surgical quarantine, and    │
+│    (Spectacular)  │ replay:                   │ crash replay verification.  │
+└───────────────────┴───────────────────────────┴─────────────────────────────┘
+```
+
 **Mission-scoped** — they live inside a Mission bundle and have no meaning
 outside it: Objective, Run, Checkpoint, Evidence, Assessment, Review, Handoff,
 Gap, and Mission-local Decisions.

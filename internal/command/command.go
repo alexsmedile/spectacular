@@ -669,7 +669,11 @@ func (r Runner) Run(args []string) int {
 			return r.refuse(jsonMode, invoked, err)
 		}
 	}
-	service := missionbundle.Service{Workspace: ws, Now: r.Now}
+	service := missionbundle.Service{
+		Workspace:     ws,
+		Now:           r.Now,
+		TokenAnalyzer: analyzeTokens,
+	}
 	var value any
 	switch spec.Operation {
 	case opMissionStart:
@@ -719,37 +723,7 @@ func (r Runner) Run(args []string) int {
 			break
 		}
 		if verifyMode {
-			checkVal, checkErr := service.CheckWithVerify(targetRef)
-			if checkErr == nil {
-				if bundle, loadErr := missionbundle.Load(ws, targetRef); loadErr == nil && len(bundle.Objectives) > 0 {
-					totalTokens := 0
-					counted := 0
-					for _, obj := range bundle.Objectives {
-						if c, compileErr := charter.Compile(ws, bundle.Ref, obj.Ref, nil); compileErr == nil && c != nil {
-							if count, countErr := tokenizer.Count(c.RenderPrompt()); countErr == nil {
-								totalTokens += count
-								counted++
-							}
-						}
-					}
-					if counted > 0 {
-						avg := totalTokens / counted
-						status := "within-sweet-spot"
-						if avg > 900 {
-							status = "over-budget"
-						} else if avg > 600 {
-							status = "under-ceiling"
-						}
-						checkVal.TokenEfficiency = &missionbundle.TokenEfficiency{
-							TotalTokens:    totalTokens,
-							AverageTokens:  avg,
-							ObjectiveCount: counted,
-							BudgetStatus:   status,
-						}
-					}
-				}
-			}
-			value, err = checkVal, checkErr
+			value, err = service.CheckWithVerify(targetRef)
 		} else {
 			value, err = service.Check(targetRef)
 		}
@@ -1119,6 +1093,10 @@ func (r Runner) Run(args []string) int {
 			} else if targetRef == "" {
 				targetRef = arg
 			}
+		}
+		if execCmd != "" && len(cmdArgs) > 0 {
+			err = domain.NewRefusal(domain.RefusalInvalidReference, targetRef, "cannot combine --exec with command arguments after --", nil)
+			break
 		}
 		if targetRef == "" || (len(cmdArgs) == 0 && execCmd == "") {
 			err = domain.NewRefusal(domain.RefusalInvalidReference, targetRef, "expected spectacular guard <mission-ref>/<objective-ref> [--watch] [--exec <command>] -- <command...>", nil)
@@ -1937,4 +1915,41 @@ func (r Runner) commandSchema(jsonMode bool, spec Spec) int {
 	}
 	_ = writeJSON(r.Stdout, output)
 	return 0
+}
+
+func analyzeTokens(ws *discovery.Workspace, bundle *missionbundle.Bundle) *missionbundle.TokenEfficiency {
+	if ws == nil || bundle == nil || len(bundle.Objectives) == 0 {
+		return nil
+	}
+	totalTokens := 0
+	counted := 0
+	for _, obj := range bundle.Objectives {
+		c, err := charter.Compile(ws, bundle.Ref, obj.Ref, nil)
+		if err == nil && c != nil {
+			prompt := c.RenderPrompt()
+			tokens, countErr := tokenizer.Count(prompt)
+			if countErr == nil {
+				totalTokens += tokens
+				counted++
+			}
+		}
+	}
+	if counted == 0 {
+		return nil
+	}
+	avg := totalTokens / counted
+	status := "within-sweet-spot"        // <= 600
+	if avg > tokenizer.MaxTargetTokens { // > 1200
+		status = "over-budget"
+	} else if avg > 900 {
+		status = "under-ceiling"
+	} else if avg > 600 {
+		status = "within-ceiling"
+	}
+	return &missionbundle.TokenEfficiency{
+		TotalTokens:    totalTokens,
+		AverageTokens:  avg,
+		ObjectiveCount: counted,
+		BudgetStatus:   status,
+	}
 }

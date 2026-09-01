@@ -80,11 +80,59 @@ func TestGuardRealtimeWatcherKillsRogueProcess(t *testing.T) {
 	}
 }
 
+func TestGuardPreExistingFileModificationIsRestored(t *testing.T) {
+	ws, cleanup := setupTestWorkspace(t)
+	defer cleanup()
+
+	// Pre-create README.md outside allowed perimeter
+	readmePath := filepath.Join(ws.Root, "README.md")
+	if err := os.WriteFile(readmePath, []byte("original text"), 0o644); err != nil {
+		t.Fatalf("failed to write original README: %v", err)
+	}
+
+	// Subagent overwrites README.md with same-length string and writes valid code in src/
+	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", "echo -n 'modified text' > README.md && echo 'package main' > src/app.go"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != "violation" {
+		t.Fatalf("expected violation on same-length edit outside perimeter, got %s", res.Status)
+	}
+
+	// Original README.md MUST be restored
+	content, _ := os.ReadFile(readmePath)
+	if string(content) != "original text" {
+		t.Fatalf("expected README.md to be restored to 'original text', got '%s'", string(content))
+	}
+
+	// Valid work in src/app.go must be preserved
+	if _, err := os.Stat(filepath.Join(ws.Root, "src/app.go")); err != nil {
+		t.Fatalf("expected valid file src/app.go to be preserved")
+	}
+}
+
+func TestGuardRealtimeWatcherCatchesInstantEscape(t *testing.T) {
+	ws, cleanup := setupTestWorkspace(t)
+	defer cleanup()
+
+	// Script that writes rogue file and exits immediately without waiting for ticker
+	res, err := Run(ws, "M1/O1", true, "", []string{"sh", "-c", "echo evil > instant.log"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != "violation" && res.Status != "killed" {
+		t.Fatalf("expected violation or killed status, got %s", res.Status)
+	}
+	if _, err := os.Stat(filepath.Join(ws.Root, "instant.log")); !os.IsNotExist(err) {
+		t.Fatalf("expected instant.log to be quarantined and deleted")
+	}
+}
+
 func TestGuardExecShorthandPipesPrompt(t *testing.T) {
 	ws, cleanup := setupTestWorkspace(t)
 	defer cleanup()
 
-	res, err := Run(ws, "M1/O1", false, "echo", nil)
+	res, err := Run(ws, "M1/O1", false, "echo --flag", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

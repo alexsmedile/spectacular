@@ -29,6 +29,7 @@ type Service struct {
 	Workspace        *discovery.Workspace
 	Now              func() time.Time
 	ApplyTransaction func(root, key string, changes []governance.FileChange) error
+	TokenAnalyzer    func(ws *discovery.Workspace, bundle *Bundle) *TokenEfficiency
 }
 
 type Plan struct {
@@ -278,19 +279,29 @@ func (s Service) CheckWithVerify(ref string) (Check, error) {
 		root = s.Workspace.Root
 	}
 
-	// 1. Run domain verification if script exists
+	// 1. Run domain verification if configured or script exists
 	testCmd := ""
-	checkScriptPath := filepath.Join(root, "tests", "check.sh")
-	if stat, statErr := os.Stat(checkScriptPath); statErr == nil && !stat.IsDir() {
-		testCmd = "sh tests/check.sh"
+	if s.Workspace != nil && s.Workspace.Config.Verification.Tier1Quick != "" {
+		testCmd = s.Workspace.Config.Verification.Tier1Quick
+	} else {
+		checkScriptPath := filepath.Join(root, "tests", "check.sh")
+		if stat, statErr := os.Stat(checkScriptPath); statErr == nil && !stat.IsDir() {
+			testCmd = "sh tests/check.sh"
+		}
 	}
 
 	if testCmd != "" {
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		cmd := exec.CommandContext(ctx, "sh", "-c", testCmd)
+		ctxVerify, cancelVerify := context.WithTimeout(context.Background(), 30*time.Second)
+		cmd := exec.CommandContext(ctxVerify, "sh", "-c", testCmd)
 		cmd.Dir = root
-		if out, err := cmd.CombinedOutput(); err != nil {
+		out, runErr := cmd.CombinedOutput()
+		cancelVerify()
+		if ctxVerify.Err() == context.DeadlineExceeded {
+			check.Valid = false
+			check.Notices = append(check.Notices, "domain verification timed out after 30s")
+			return check, nil
+		}
+		if runErr != nil {
 			check.Valid = false
 			check.Notices = append(check.Notices, fmt.Sprintf("domain verification failed: %s", strings.TrimSpace(string(out))))
 			return check, nil
@@ -304,24 +315,36 @@ func (s Service) CheckWithVerify(ref string) (Check, error) {
 			full := filepath.Join(root, p)
 			_ = os.RemoveAll(full)
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		replayCmd := exec.CommandContext(ctx, "sh", "-c", bundle.Replay.Command)
+		ctxReplay, cancelReplay := context.WithTimeout(context.Background(), 30*time.Second)
+		replayCmd := exec.CommandContext(ctxReplay, "sh", "-c", bundle.Replay.Command)
 		replayCmd.Dir = root
-		if out, err := replayCmd.CombinedOutput(); err != nil {
+		out, runErr := replayCmd.CombinedOutput()
+		cancelReplay()
+		if ctxReplay.Err() == context.DeadlineExceeded {
+			check.Valid = false
+			check.Notices = append(check.Notices, "replay command timed out after 30s")
+			return check, nil
+		}
+		if runErr != nil {
 			check.Valid = false
 			check.Notices = append(check.Notices, fmt.Sprintf("replay command failed: %s", strings.TrimSpace(string(out))))
 			return check, nil
 		}
 
 		if testCmd != "" {
-			ctxPost, cancelPost := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancelPost()
-			cmd := exec.CommandContext(ctxPost, "sh", "-c", testCmd)
-			cmd.Dir = root
-			if out, err := cmd.CombinedOutput(); err != nil {
+			ctxPost, cancelPost := context.WithTimeout(context.Background(), 30*time.Second)
+			postCmd := exec.CommandContext(ctxPost, "sh", "-c", testCmd)
+			postCmd.Dir = root
+			postOut, postErr := postCmd.CombinedOutput()
+			cancelPost()
+			if ctxPost.Err() == context.DeadlineExceeded {
 				check.Valid = false
-				check.Notices = append(check.Notices, fmt.Sprintf("post-replay verification failed: %s", strings.TrimSpace(string(out))))
+				check.Notices = append(check.Notices, "post-replay domain verification timed out after 30s")
+				return check, nil
+			}
+			if postErr != nil {
+				check.Valid = false
+				check.Notices = append(check.Notices, fmt.Sprintf("post-replay verification failed: %s", strings.TrimSpace(string(postOut))))
 				return check, nil
 			}
 		}
@@ -329,16 +352,24 @@ func (s Service) CheckWithVerify(ref string) (Check, error) {
 	}
 
 	// 3. Git working tree cleanliness check
-	ctxGit, cancelGit := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	defer cancelGit()
+	ctxGit, cancelGit := context.WithTimeout(context.Background(), 3*time.Second)
 	gitStatus := exec.CommandContext(ctxGit, "git", "status", "--porcelain")
 	gitStatus.Dir = root
-	if out, err := gitStatus.Output(); err == nil {
+	out, errGit := gitStatus.Output()
+	cancelGit()
+	if ctxGit.Err() == context.DeadlineExceeded {
+		check.Notices = append(check.Notices, "git status timed out after 3s")
+	} else if errGit == nil {
 		if len(bytes.TrimSpace(out)) == 0 {
 			check.Checks = append(check.Checks, "git-working-tree-clean")
 		} else {
 			check.Notices = append(check.Notices, "git working tree contains untracked or uncommitted changes")
 		}
+	}
+
+	// 4. Token efficiency derivation
+	if s.TokenAnalyzer != nil {
+		check.TokenEfficiency = s.TokenAnalyzer(s.Workspace, bundle)
 	}
 
 	return check, nil

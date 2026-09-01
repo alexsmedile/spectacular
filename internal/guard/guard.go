@@ -2,13 +2,17 @@ package guard
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/alexsmedile/spectacular/v2/internal/charter"
@@ -51,28 +55,33 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 		return nil, fmt.Errorf("guard: compile charter: %w", err)
 	}
 
-	if execCmd != "" {
-		fields := strings.Fields(execCmd)
-		if len(fields) > 0 {
-			cmdArgs = append(fields, c.RenderPrompt())
-		}
+	if execCmd != "" && len(cmdArgs) > 0 {
+		return nil, domain.NewRefusal(domain.RefusalInvalidReference, targetRef, "cannot combine --exec with command arguments after --", nil)
 	}
 
-	if len(cmdArgs) == 0 {
+	var cmd *exec.Cmd
+	root := ws.Root
+
+	if execCmd != "" {
+		prompt := c.RenderPrompt()
+		// Use shell execution to natively preserve quotes and argument boundaries
+		cmd = exec.Command("sh", "-c", execCmd+` "$@"`, "spectacular-worker", prompt)
+	} else if len(cmdArgs) > 0 {
+		cmd = exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	} else {
 		return nil, errors.New("guard: command arguments required after -- or via --exec")
 	}
 
+	cmd.Dir = root
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
 	allowed := c.Layer3.WritesPaths
 	testCmd := c.Layer3.VerificationCommand
-	root := ws.Root
 
-	preSnapshot, err := takeSnapshot(root)
+	preSnapshot, err := takeSnapshot(root, allowed)
 	if err != nil {
 		return nil, fmt.Errorf("guard: pre-flight snapshot: %w", err)
 	}
-
-	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	cmd.Dir = root
 
 	var combinedBuf bytes.Buffer
 	cmd.Stdout = &combinedBuf
@@ -102,20 +111,20 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 		var violationPaths []string
 
 		go func() {
-			ticker := time.NewTicker(50 * time.Millisecond)
+			ticker := time.NewTicker(20 * time.Millisecond)
 			defer ticker.Stop()
 			for {
 				select {
 				case <-stopWatch:
 					return
 				case <-ticker.C:
-					currSnapshot, _ := takeSnapshot(root)
-					escaped, _ := diffPaths(preSnapshot, currSnapshot, allowed)
+					currSnapshot, _ := takeSnapshot(root, allowed)
+					escaped, _ := diffPaths(root, preSnapshot, currSnapshot, allowed)
 					if len(escaped) > 0 {
 						watchMu.Lock()
 						violationPaths = escaped
 						watchMu.Unlock()
-						_ = cmd.Process.Kill()
+						killProcessGroup(cmd)
 						return
 					}
 				}
@@ -131,17 +140,24 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 
 		res.Output = combinedBuf.String()
 
-		if len(escapedFound) > 0 {
-			currSnapshot, _ := takeSnapshot(root)
-			_, preserved := diffPaths(preSnapshot, currSnapshot, allowed)
+		// Always run post-flight diff to prevent short-lived race conditions
+		postSnapshot, _ := takeSnapshot(root, allowed)
+		finalEscaped, finalPreserved := diffPaths(root, preSnapshot, postSnapshot, allowed)
+		if len(finalEscaped) > 0 {
+			escapedFound = finalEscaped
+		}
 
-			res.Status = "killed"
+		if len(escapedFound) > 0 {
+			res.Status = "violation"
+			if len(violationPaths) > 0 {
+				res.Status = "killed"
+			}
 			res.EscapedPaths = escapedFound
-			res.PreservedPaths = preserved
+			res.PreservedPaths = finalPreserved
 			res.RolledBack = true
 			res.AutoHealed = true
 			res.ExitCode = 2
-			res.FeedbackPrompt = buildFeedbackPrompt(parts[0], parts[1], preserved, escapedFound, allowed, testCmd)
+			res.FeedbackPrompt = buildFeedbackPrompt(parts[0], parts[1], finalPreserved, escapedFound, allowed, testCmd)
 			surgicalQuarantine(root, preSnapshot, escapedFound)
 			return res, nil
 		}
@@ -156,6 +172,7 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 			res.ExitCode = 0
 		}
 		res.Status = "pass"
+		res.PreservedPaths = finalPreserved
 		return res, nil
 	}
 
@@ -172,12 +189,12 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 		res.ExitCode = 0
 	}
 
-	postSnapshot, err := takeSnapshot(root)
+	postSnapshot, err := takeSnapshot(root, allowed)
 	if err != nil {
 		return nil, fmt.Errorf("guard: post-flight snapshot: %w", err)
 	}
 
-	escaped, preserved := diffPaths(preSnapshot, postSnapshot, allowed)
+	escaped, preserved := diffPaths(root, preSnapshot, postSnapshot, allowed)
 	if len(escaped) > 0 {
 		res.Status = "violation"
 		res.EscapedPaths = escaped
@@ -195,14 +212,28 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 	return res, nil
 }
 
+func killProcessGroup(cmd *exec.Cmd) {
+	if cmd == nil || cmd.Process == nil {
+		return
+	}
+	pgid, err := syscall.Getpgid(cmd.Process.Pid)
+	if err == nil {
+		_ = syscall.Kill(-pgid, syscall.SIGKILL)
+	} else {
+		_ = cmd.Process.Kill()
+	}
+}
+
 type fileMeta struct {
 	modTime int64
 	size    int64
+	hash    string
+	content []byte
 }
 
 type snapshot map[string]fileMeta
 
-func takeSnapshot(root string) (snapshot, error) {
+func takeSnapshot(root string, allowed []string) (snapshot, error) {
 	snap := make(snapshot)
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -212,28 +243,60 @@ func takeSnapshot(root string) (snapshot, error) {
 		if relErr != nil || rel == "." {
 			return nil
 		}
-		// Skip non-project directories
+		// Skip non-project directories & directory symlinks
 		if d.IsDir() {
 			name := d.Name()
-			if name == ".git" || name == "node_modules" || name == "vendor" || name == ".cache" || (strings.HasPrefix(rel, ".spectacular"+string(filepath.Separator)) && name == "raw") {
+			if strings.HasPrefix(name, "_") || name == ".git" || name == "node_modules" || name == "vendor" || name == ".cache" || name == "__pycache__" || name == "target" || name == "dist" || name == ".next" || (strings.HasPrefix(rel, ".spectacular"+string(filepath.Separator)) && name == "raw") {
 				return filepath.SkipDir
 			}
 			return nil
 		}
+		if d.Type()&os.ModeSymlink != 0 {
+			info, sErr := os.Stat(path)
+			if sErr == nil && info.IsDir() {
+				return filepath.SkipDir
+			}
+		}
 
 		info, infoErr := d.Info()
 		if infoErr == nil {
-			snap[filepath.ToSlash(rel)] = fileMeta{
+			meta := fileMeta{
 				modTime: info.ModTime().UnixNano(),
 				size:    info.Size(),
 			}
+			relSlash := filepath.ToSlash(rel)
+			// Compute hash & cache content for files outside allowed paths for cryptographic assurance
+			if !matchesAny(relSlash, allowed) {
+				if h, hErr := computeFileHash(path); hErr == nil {
+					meta.hash = h
+				}
+				if info.Size() < 1024*1024 {
+					if data, readErr := os.ReadFile(path); readErr == nil {
+						meta.content = data
+					}
+				}
+			}
+			snap[relSlash] = meta
 		}
 		return nil
 	})
 	return snap, err
 }
 
-func diffPaths(pre, post snapshot, allowed []string) (escaped []string, preserved []string) {
+func computeFileHash(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+func diffPaths(root string, pre, post snapshot, allowed []string) (escaped []string, preserved []string) {
 	if len(allowed) == 0 {
 		return nil, nil
 	}
@@ -242,10 +305,30 @@ func diffPaths(pre, post snapshot, allowed []string) (escaped []string, preserve
 
 	for path, postMeta := range post {
 		preMeta, exists := pre[path]
-		if !exists || preMeta.modTime != postMeta.modTime || preMeta.size != postMeta.size {
-			// Path was added or modified
+		isAllowed := matchesAny(path, allowed)
+
+		isModified := false
+		if !exists {
+			isModified = true
+		} else if isAllowed {
+			// Inside allowed: fast mtime+size check
+			if preMeta.modTime != postMeta.modTime || preMeta.size != postMeta.size {
+				isModified = true
+			}
+		} else {
+			// Outside allowed: if metadata changed, confirm with cryptographic hash
+			if preMeta.modTime != postMeta.modTime || preMeta.size != postMeta.size {
+				full := filepath.Join(root, filepath.FromSlash(path))
+				currentHash, _ := computeFileHash(full)
+				if preMeta.hash == "" || preMeta.hash != currentHash {
+					isModified = true
+				}
+			}
+		}
+
+		if isModified {
 			seen[path] = true
-			if matchesAny(path, allowed) {
+			if isAllowed {
 				preserved = append(preserved, path)
 			} else {
 				escaped = append(escaped, path)
@@ -302,13 +385,22 @@ func matchesAny(path string, patterns []string) bool {
 	return false
 }
 
-// surgicalQuarantine deletes ONLY escaped paths while preserving valid work in authorized paths.
+// surgicalQuarantine restores or deletes escaped paths while preserving valid work in authorized paths.
 func surgicalQuarantine(root string, pre snapshot, escaped []string) {
 	for _, path := range escaped {
 		full := filepath.Join(root, filepath.FromSlash(path))
-		if _, existed := pre[path]; !existed {
+		meta, existed := pre[path]
+		if !existed {
 			// Rogue new file: remove it
 			_ = os.Remove(full)
+		} else if len(meta.content) > 0 {
+			// Pre-existing file modified: restore exact pre-execution content
+			_ = os.WriteFile(full, meta.content, 0o644)
+		} else {
+			// Fallback: restore via git checkout
+			cmd := exec.Command("git", "checkout", "--", filepath.FromSlash(path))
+			cmd.Dir = root
+			_ = cmd.Run()
 		}
 	}
 }

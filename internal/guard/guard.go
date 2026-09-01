@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/alexsmedile/spectacular/v2/internal/charter"
@@ -73,12 +72,12 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 	}
 
 	cmd.Dir = root
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	setProcessGroup(cmd)
 
 	allowed := c.Layer3.WritesPaths
 	testCmd := c.Layer3.VerificationCommand
 
-	preSnapshot, err := takeSnapshot(root, allowed)
+	preSnapshot, err := takeSnapshot(root, allowed, true)
 	if err != nil {
 		return nil, fmt.Errorf("guard: pre-flight snapshot: %w", err)
 	}
@@ -111,15 +110,15 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 		var violationPaths []string
 
 		go func() {
-			ticker := time.NewTicker(20 * time.Millisecond)
+			ticker := time.NewTicker(50 * time.Millisecond)
 			defer ticker.Stop()
 			for {
 				select {
 				case <-stopWatch:
 					return
 				case <-ticker.C:
-					currSnapshot, _ := takeSnapshot(root, allowed)
-					escaped, _ := diffPaths(root, preSnapshot, currSnapshot, allowed)
+					currSnapshot, _ := takeSnapshot(root, allowed, false)
+					escaped, _ := diffPaths(preSnapshot, currSnapshot, allowed)
 					if len(escaped) > 0 {
 						watchMu.Lock()
 						violationPaths = escaped
@@ -140,9 +139,9 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 
 		res.Output = combinedBuf.String()
 
-		// Always run post-flight diff to prevent short-lived race conditions
-		postSnapshot, _ := takeSnapshot(root, allowed)
-		finalEscaped, finalPreserved := diffPaths(root, preSnapshot, postSnapshot, allowed)
+		// Always run post-flight diff to guarantee zero escapes across short-lived processes
+		postSnapshot, _ := takeSnapshot(root, allowed, false)
+		finalEscaped, finalPreserved := diffPaths(preSnapshot, postSnapshot, allowed)
 		if len(finalEscaped) > 0 {
 			escapedFound = finalEscaped
 		}
@@ -189,12 +188,12 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 		res.ExitCode = 0
 	}
 
-	postSnapshot, err := takeSnapshot(root, allowed)
+	postSnapshot, err := takeSnapshot(root, allowed, false)
 	if err != nil {
 		return nil, fmt.Errorf("guard: post-flight snapshot: %w", err)
 	}
 
-	escaped, preserved := diffPaths(root, preSnapshot, postSnapshot, allowed)
+	escaped, preserved := diffPaths(preSnapshot, postSnapshot, allowed)
 	if len(escaped) > 0 {
 		res.Status = "violation"
 		res.EscapedPaths = escaped
@@ -212,28 +211,17 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 	return res, nil
 }
 
-func killProcessGroup(cmd *exec.Cmd) {
-	if cmd == nil || cmd.Process == nil {
-		return
-	}
-	pgid, err := syscall.Getpgid(cmd.Process.Pid)
-	if err == nil {
-		_ = syscall.Kill(-pgid, syscall.SIGKILL)
-	} else {
-		_ = cmd.Process.Kill()
-	}
-}
-
 type fileMeta struct {
 	modTime int64
 	size    int64
+	mode    os.FileMode
 	hash    string
 	content []byte
 }
 
 type snapshot map[string]fileMeta
 
-func takeSnapshot(root string, allowed []string) (snapshot, error) {
+func takeSnapshot(root string, allowed []string, cacheContent bool) (snapshot, error) {
 	snap := make(snapshot)
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -243,10 +231,10 @@ func takeSnapshot(root string, allowed []string) (snapshot, error) {
 		if relErr != nil || rel == "." {
 			return nil
 		}
-		// Skip non-project directories & directory symlinks
+		// Skip non-project cache directories & directory symlinks
 		if d.IsDir() {
 			name := d.Name()
-			if strings.HasPrefix(name, "_") || name == ".git" || name == "node_modules" || name == "vendor" || name == ".cache" || name == "__pycache__" || name == "target" || name == "dist" || name == ".next" || (strings.HasPrefix(rel, ".spectacular"+string(filepath.Separator)) && name == "raw") {
+			if name == ".git" || name == "node_modules" || name == "vendor" || name == ".cache" || name == "__pycache__" || name == "target" || name == "dist" || name == ".next" || (strings.HasPrefix(rel, ".spectacular"+string(filepath.Separator)) && name == "raw") {
 				return filepath.SkipDir
 			}
 			return nil
@@ -263,14 +251,15 @@ func takeSnapshot(root string, allowed []string) (snapshot, error) {
 			meta := fileMeta{
 				modTime: info.ModTime().UnixNano(),
 				size:    info.Size(),
+				mode:    info.Mode(),
 			}
 			relSlash := filepath.ToSlash(rel)
-			// Compute hash & cache content for files outside allowed paths for cryptographic assurance
+			// Compute hash & optionally cache content for files outside allowed paths for cryptographic assurance
 			if !matchesAny(relSlash, allowed) {
 				if h, hErr := computeFileHash(path); hErr == nil {
 					meta.hash = h
 				}
-				if info.Size() < 1024*1024 {
+				if cacheContent && info.Size() < 1024*1024 {
 					if data, readErr := os.ReadFile(path); readErr == nil {
 						meta.content = data
 					}
@@ -296,7 +285,7 @@ func computeFileHash(path string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func diffPaths(root string, pre, post snapshot, allowed []string) (escaped []string, preserved []string) {
+func diffPaths(pre, post snapshot, allowed []string) (escaped []string, preserved []string) {
 	if len(allowed) == 0 {
 		return nil, nil
 	}
@@ -316,13 +305,9 @@ func diffPaths(root string, pre, post snapshot, allowed []string) (escaped []str
 				isModified = true
 			}
 		} else {
-			// Outside allowed: if metadata changed, confirm with cryptographic hash
-			if preMeta.modTime != postMeta.modTime || preMeta.size != postMeta.size {
-				full := filepath.Join(root, filepath.FromSlash(path))
-				currentHash, _ := computeFileHash(full)
-				if preMeta.hash == "" || preMeta.hash != currentHash {
-					isModified = true
-				}
+			// Outside allowed: unconditional cryptographic hash comparison to prevent any false-negative
+			if preMeta.hash != postMeta.hash {
+				isModified = true
 			}
 		}
 
@@ -394,13 +379,19 @@ func surgicalQuarantine(root string, pre snapshot, escaped []string) {
 			// Rogue new file: remove it
 			_ = os.Remove(full)
 		} else if len(meta.content) > 0 {
-			// Pre-existing file modified: restore exact pre-execution content
-			_ = os.WriteFile(full, meta.content, 0o644)
+			// Pre-existing file modified: restore exact pre-execution content and permissions
+			mode := meta.mode
+			if mode == 0 {
+				mode = 0o644
+			}
+			_ = os.WriteFile(full, meta.content, mode)
 		} else {
-			// Fallback: restore via git checkout
+			// Fallback: restore via git checkout, or delete if not tracked in git
 			cmd := exec.Command("git", "checkout", "--", filepath.FromSlash(path))
 			cmd.Dir = root
-			_ = cmd.Run()
+			if err := cmd.Run(); err != nil {
+				_ = os.Remove(full)
+			}
 		}
 	}
 }

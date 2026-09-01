@@ -111,6 +111,35 @@ func TestGuardPreExistingFileModificationIsRestored(t *testing.T) {
 	}
 }
 
+func TestGuardSameSizeTouchRestoreBypassIsCaught(t *testing.T) {
+	ws, cleanup := setupTestWorkspace(t)
+	defer cleanup()
+
+	readmePath := filepath.Join(ws.Root, "README.md")
+	refPath := filepath.Join(ws.Root, "ref.tmp")
+	if err := os.WriteFile(readmePath, []byte("hello-spectacular"), 0o644); err != nil {
+		t.Fatalf("failed to write README: %v", err)
+	}
+	if err := os.WriteFile(refPath, []byte("ref"), 0o644); err != nil {
+		t.Fatalf("failed to write ref: %v", err)
+	}
+
+	// Subagent tampers with same-length content and runs touch -r ref.tmp to restore identical timestamp
+	cmd := "echo -n 'world-spectacular' > README.md && touch -r ref.tmp README.md"
+	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", cmd})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != "violation" {
+		t.Fatalf("expected cryptographic hash to catch same-size touch -r tamper, got status %s", res.Status)
+	}
+
+	content, _ := os.ReadFile(readmePath)
+	if string(content) != "hello-spectacular" {
+		t.Fatalf("expected README.md restored, got: %s", string(content))
+	}
+}
+
 func TestGuardRealtimeWatcherCatchesInstantEscape(t *testing.T) {
 	ws, cleanup := setupTestWorkspace(t)
 	defer cleanup()

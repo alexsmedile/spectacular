@@ -180,6 +180,56 @@ A Gap is a stated limit, not a defect. It is never closed by deletion: its entry
 survives with a written resolution, so the reason something was impossible stays
 recoverable.
 
+## Deterministic Replay & Crash Recovery Verification (`replay:`)
+
+When autonomous agents implement stateful architectures (e.g. event sourcing, financial ledgers, materialized views, search indexes), they frequently create in-memory caches without persisting an underlying audit trail. If the cache is wiped or the process crashes, the system becomes corrupted.
+
+Spectacular provides an optional `replay:` hook in `M<N>.md` frontmatter to enforce deterministic state reconstruction:
+
+```yaml
+replay:
+  cache_paths:
+    - "balances.json"
+    - "balances.db"
+  command: "python3 src/main.py reconcile"
+```
+
+### How Replay Verification Operates:
+1. **Cache Eviction**: Spectacular deletes the declared `cache_paths` from disk.
+2. **Replay Execution**: It invokes the declared recovery `command` against the raw event journal (e.g. `events.jsonl`).
+3. **Equivalence & Test Assertion**: It verifies that reconstructed balances/indexes match reality and the test suite passes with `exit 0`.
+
+This guarantees that derived data is completely ephemeral and that the raw journal remains the sole, immutable source of truth.
+
+## Mechanical Perimeter Guard & Zero Wasted Work (`spectacular guard`)
+
+When subagents are dispatched to implement an objective, they may occasionally produce unwanted side-effects outside their authorized perimeter (e.g., generating unneeded `.gitignore` files, polluting root configurations, or creating untracked scratch databases).
+
+`spectacular guard <mission>/<objective> [--watch] [--json] -- <command...>` wraps any worker process in an OS-level sandbox watchdog:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🛡️ SPECTACULAR GUARD PERIMETER ENGINE                                       │
+├────────────────────────────────┬────────────────────────────────────────────┤
+│ Mode                           │ Behavior & Enforcement                     │
+├────────────────────────────────┼────────────────────────────────────────────┤
+│ A. Post-Flight Watchdog        │ Default mode (0% runtime overhead). Runs   │
+│    (spectacular guard M1/O1)   │ command, diffs snapshot on exit, auto-     │
+│                                │ purges escaped files, exits 2 on escape.   │
+├────────────────────────────────┼────────────────────────────────────────────┤
+│ B. Real-Time Watcher           │ Spawns background filesystem listener. If  │
+│    (spectacular guard --watch) │ the worker writes outside writes_paths,    │
+│                                │ instantly kills rogue process (SIGKILL),   │
+│                                │ purges illegal file, and emits refusal.    │
+└────────────────────────────────┴────────────────────────────────────────────┘
+```
+
+### Surgical Quarantine (Zero Wasted Work)
+When an escape occurs, `spectacular guard` does not wipe the worker's entire output. Instead, it performs a **surgical quarantine**:
+1. **Purges Escaped Paths**: Deletes or restores *only* the files outside `writes_paths`.
+2. **Preserves Valid Work**: Retains all changes and new code in authorized paths.
+3. **Emits Session Continuation Prompt**: Outputs a tailored feedback turn (`FeedbackPrompt`) ready for headless session resumption (e.g. `claude -c`, `agy --continue`, `opencode --session`), allowing the worker to self-correct in seconds without starting over from scratch.
+
 ## Freeze points
 
 A completed Mission's contract fingerprint is a freeze point, not a stale

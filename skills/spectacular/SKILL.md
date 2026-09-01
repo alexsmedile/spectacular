@@ -14,7 +14,7 @@ metadata:
 
 Run one bounded Mission at a time, from truth the owner already accepted.
 
-> **Fast Bailout**: If the query is a simple inspection (e.g. `git branch`, status check, diff, or questions without `$spectacular`), answer directly using native tools and exit immediately with zero ceremony. Do not read `.spectacular/PROJECT.md` or load references.
+> **Fast Bailout**: If the query is a simple inspection (e.g. `git branch`, status check, diff, or questions without `$spectacular`), answer directly using native tools, report status: "done", and exit immediately with zero ceremony. Do not read `.spectacular/PROJECT.md` or load references.
 
 ## 1. Consolidated CLI Palette & Parameter Grammar
 
@@ -35,140 +35,82 @@ spectacular review record <mission> <draft|-> [--json]            # Record indep
 spectacular evidence record <mission> <draft|-> [--json]          # Record third-party proof E<N>
 ```
 
-## 2. The Lean 3-Layer Autopilot Model
+## 2. Fast Autonomous Model & Foundational Anchors
 
-Spectacular is designed for fast, token-efficient autonomous execution with minimal ceremony. All governance reduces to 3 layers:
+Spectacular prioritizes execution over ceremony. Governance is managed strictly by the top-level **Orchestrator**; dispatched **Workers/Subagents do NOT manage Spectacular files** and execute purely against their code charter:
 
-1. **Layer 1: Living Truth & Decisions**: `PROJECT.md` (boundaries/non-goals) + `.spectacular/decisions/` (bulk-ideated architectural choices recorded with `spectacular decide`).
-2. **Layer 2: Topological Flight Plan**: Multi-session roadmap in `.spectacular/campaigns/` (4–8 macro milestone blocks; unstarted blocks remain 4-line lightweight draft cards).
-3. **Layer 3: Single-File Execution Envelopes**: Compact, self-contained Mission files (`.spectacular/missions/M<N>-<slug>/M<N>-<slug>.md`, $\le 500$ tokens) with inline objectives, deliverable checklists, and fail-fast stop triggers.
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Living Truth (Orchestrator): PROJECT.md & decisions/     │
+│ 2. Single-File Envelope: M<N>.md (frozen claims & checks)   │
+│ 3. Direct Execution (Workers): Zero-preamble code & tests   │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### 5 Foundational Anchors & System Surfaces
-Before code execution, missions ground themselves in five core anchors without introducing redundant governance files:
+### The 5 Foundational Anchors
 1. **Boundaries & Non-Goals**: `PROJECT.md` (`boundaries:`, `constraints:`).
-2. **Vocabulary & Ontology**: `VOCABULARY.md` (canonical domain terms).
-3. **Invariants & Failure Modes**: `GUARDRAILS.md` & `AGENTS.md` (non-negotiable safety rules).
+2. **Vocabulary & Ontology**: `VOCABULARY.md` (Canonical domain terms).
+3. **Invariants & Failure Modes**: `GUARDRAILS.md` & `AGENTS.md` (Non-negotiable safety rules).
 4. **Data Structures & Schemas**: Project-specific types/schemas in the codebase (cited in `contracts/`).
-5. **State Machines & Lifecycles**: Non-governing Mermaid diagrams in `.spectacular/atlas/`.
+5. **State Machines & Lifecycles**: Non-governing visual Mermaid diagrams in `.spectacular/atlas/`.
 
-### Mission Layout & Dynamic Operating Dial
-Missions adopt an execution posture (`mode:`) and layout tier before writing (note: `mode:` is prompt-level cognitive guidance and defaults to `leverage` when omitted, with no rigid CLI validator refusal):
-- **`mode: leverage` (Default / Implicit)**: Routine features, bug fixes, refactors. Autonomous inner loop; test suite passing (`exit 0`) is primary proof.
-- **`mode: control`**: High-risk, auth, payments, DB migrations, or out-of-distribution tasks. Mandatory step-by-step gates and dedicated adversarial review.
-
-| Tier | When to Select | Structure |
-|---|---|---|
-| **Tier 1: Single-File (90% Default)** | Routine features, bug fixes, refactors, local deterministic code where test suite passing (`exit 0`) is the proof. | `M<N>.md` **only** (zero sub-folders). |
-| **Tier 2: Hybrid Earned (~8%)** | Needs live third-party API receipts (`evidence/`) or splitting work across parallel subagent worktrees (`objectives/`). | `M<N>.md` + only the 1 earned sub-record. |
-| **Tier 3: Full Bundle (~2%)** | High-stakes zero-downtime DB cutovers, core auth/crypto, payments, or cross-org handoffs requiring formal checkpoints (`checkpoints/`) or independent adversarial audit (`reviews/`). | Full directory bundle with all needed governance records. |
-
-**The Golden Rule**: Start Single-File. A sub-folder is earned only when a failable condition (external receipt, parallel worktree split, independent security review) explicitly demands it.
-
-### Zero Sub-Record Sprawl & Batched Reviews Policy
-Never create separate `checkpoints/`, `assessments/`, `runs/`, `handoffs/`, or multi-page manual evidence files for routine code tasks. The test suite passing (`exit 0`) and clean Git commit **is** the proof. For major milestones spanning 3–5 missions, batch adversarial reviews into a single summary review rather than generating per-task review files.
-
-| Surface | Responsibility |
-|---|---|
-| **Anchor / Decisions** | Accepted truth: `PROJECT.md` (scope/boundaries) + `decisions/D<N>.md` (durable choices). |
-| **Campaign** | Multi-session roadmap sequence in `.spectacular/campaigns/` (planning context; no execution authority). |
-| **Proposal** | Optional mutable exploration (`proposals/`); never current truth or execution authority. |
-| **Mission / Contract** | Single-file frozen execution envelope (`M<N>`) / modular capability specification (`CC-<module>`). |
+### Operating Dial & Single-File Rule
+- **`mode: leverage` (Default)**: Autonomous inner loop; test suite passing (`exit 0`) + clean commit is primary proof.
+- **`mode: control`**: High-risk operations (auth, payments, DB migrations) requiring explicit anchor diff reviews.
+- **Tier 1 (Single-File, 90% Default)**: `M<N>.md` only. Sub-folders are strictly forbidden unless third-party external receipts (`evidence/`) or multi-worktree splits explicitly demand them.
+- **Tier 2 (Hybrid Earned, ~8%)**: `M<N>.md` + only the 1 earned sub-record (`evidence/` or `objectives/`).
+- **Tier 3 (Full Bundle, ~2%)**: High-stakes cutovers requiring formal checkpoints (`checkpoints/`) or dedicated audit (`reviews/`).
+- **Minimal Drafts (Zero YAML Boilerplate)**: Prefer direct CLI flags (`spectacular decide --title ...`) or 3-line plans; the CLI auto-populates metadata.
+- **Silent Mutation, One-Line Return**: State the 1-line outcome only (`"Recorded Decision D14. Next: run check.sh"`). Never echo YAML frontmatter or full file bodies into chat.
+- **Drop Collection Catalogs**: Never load `catalog.md` or `index.md` into agent context. Query the CLI (`spectacular mission show <ref> --json`) directly.
 
 ### Mechanical Mode (3-State Model)
-Invoke `spectacular --version --json` once at startup and require `spectacular.build-info.v1` plus the exact release in `generated/mechanical-interface.json`. If absent, unreadable, or incompatible → reduced mode:
+Invoke `spectacular --version --json` once at startup and require `spectacular.build-info.v1` plus the exact release in `generated/mechanical-interface.json`:
 - **CLI Usable**: Standard governed workflow and typed CLI validation.
-- **CLI Absent**: Read/draft-only. Route to [reduced-mode.md](references/reduced-mode.md). Never emulate command-owned records, fabricate fingerprints, or claim atomic writes.
-- **Declared `manual-bootstrap`**: Owner-approved drafting exception only ([bootstrap.md](references/bootstrap.md)); it cannot create, activate, transition, or complete fingerprint-bound records. Delegated agents cannot declare bootstrap.
+- **CLI Absent**: Read/draft-only. Route to [reduced-mode.md](references/reduced-mode.md). Never emulate command-owned records or fabricate fingerprints.
+- **Declared `manual-bootstrap`**: Owner-approved drafting exception only ([bootstrap.md](references/bootstrap.md)).
 
-## 3. Role Resolution & Orchestration Discipline
+## 3. Role & Delegation Matrix
 
-| Role | Entry Contract | Context Spine | Exit |
+| Role | Responsibility | Context Spine | Output |
 |---|---|---|---|
-| **Orchestrator** | Top-level session | PROJECT Anchor → Phase ref → exact records/sources | Safe next action or owner gate |
-| **Runner** | Dispatch charter / Handoff | Charter/Handoff → Mission claim → assigned code paths | Bounded result → Orchestrator |
-| **Reviewer** | Review assignment | Review assignment → frozen claims → commit/tree → primary proof | Verdict & findings → Orchestrator |
-| **Autopilot** | Charter | Charter → Mission target → permitted sources | Chartered return destination |
+| **Orchestrator** | Owns workspace truth, decisions (`decide`), & activation | `PROJECT.md` → Phase Ref | Next action or Owner Gate |
+| **Worker / Runner** | Executes code & tests; **ignores governance files** | Lean Charter ($\le 300$ tok) | `exit 0` + Git diff |
+| **Reviewer** | Inspects code against frozen claims (**Observe ≠ Act**) | Frozen claims → Diff | Structured verdict (`pass`/`fail`) |
 
-### Solo Execution vs. Supervised Dispatch
-- **Solo Execution (Orchestrator self-run)**: The Orchestrator carries out the mission directly, executing inner test-and-repair loops without subagent overhead.
-- **Supervised Dispatch (90% of multi-agent work)**: The Orchestrator retains active Mission ownership, dispatches a worker subagent with a $\le 300$-token charter, and waits reactively for completion (`worker_done`). The worker creates zero governance records; tests passing (`exit 0`) + Git commit is the proof.
-- **Full Ownership Handoff (10% Transfer)**: Permanent ownership transfer across distinct sessions, human operators, or different AI harnesses (e.g. Claude $\to$ Codex $\to$ Antigravity). Formally recorded via `spectacular handoff record`.
+- **Escalation Gate**: When a worker hits an architectural fork, it stops immediately. The Orchestrator records the choice via `spectacular decide` (`D<N>.md`) and resumes the worker.
+- **Workers Never Edit Governance**: Subagents never create `checkpoints/`, `runs/`, or `missions/`.
+- **Channel Separation**: Git is for durable truth (`PROJECT.md`, `decisions/`, `missions/`). Host channels are for ephemeral live coordination (`invoke_subagent`, `send_message`, `conversation://<id>`).
+- **Token Discipline**: Worker prompt envelopes (`spectacular charter`) strictly bounded at $\le 1{,}200$ tokens (`o200k_base`).
 
-### The Escalation & Decision Gate Protocol
-- When a worker encounters an ambiguous interface, unrecorded architectural choice, or boundary conflict, it **must not guess or improvise**.
-- It halts immediately (Fail-Fast Stop) and sends an **escalation** to the Orchestrator.
-- The Orchestrator resolves the fork with `spectacular decide` (`.spectacular/decisions/D<N>.md`) and resumes the worker with the locked decision ID.
+## 4. Preflight & Verification Matrix
 
-### Reviewer Role Hygiene (Observe ≠ Act)
-- Reviewers inspect diffs, test logs, and primary evidence to evaluate FROST claims and return structured verdicts (`pass`/`fail` + findings).
-- **Reviewers NEVER edit files, apply drive-by refactors, or fix observed defects.** Bounded repairs are returned to the Orchestrator to dispatch to a runner.
+- **Branch Isolation**: Always `git checkout -b <slug>` before mission activation.
+- **Verification Tiers**:
+  - *Tier 1 (Quick)*: Executed by worker on every edit (`verify.sh quick` or domain test).
+  - *Tier 0 (Preflight)*: Lint & syntax verification (`verify.sh preflight`).
+  - *Tier 2/3 (Acceptance/Release)*: Executed at milestone completion / owner gate.
 
-### Channel Separation: Durable Git State vs. Ephemeral Channels
-- **Git is for durable truth**: `PROJECT.md`, `decisions/`, `campaigns/`, and single-file `missions/`.
-- **Host channels are for live coordination**: Ephemeral pings, ask/reply loops, and task dispatch stay inside host harness tools (`invoke_subagent`, `send_message`, `conversation://<id>`) with zero file pollution in Git.
+## 5. Primary Phase Router (Load $\le 1$ Reference)
 
-- **Role bootstrap**: Top-level owner session defaults to Orchestrator (reads `.spectacular/PROJECT.md` once). Delegated subagents without an entry contract stop and request one; they never self-promote.
-- **Anti-escalation**: No entry contract or reference may grant authority above constitutional role ceilings.
-- **Context boundary**: Runner reads only assigned inputs. Missing context produces one precise request to Orchestrator; no workspace scans. Campaigns are Orchestrator planning context, never worker selectors.
-- **Context Sandwich & Token Discipline**: Worker agents receive a compiled prompt envelope (`spectacular charter`) strictly bounded at $\le 1{,}200$ tokens (`o200k_base`), leaving 99%+ of the model attention window free for codebase AST and test logs. Check token sizes using `bash skills/spectacular/scripts/count-tokens.sh <file|->`.
-
-## 4. Preflight, Isolation & Tiered Verification
-
-Evaluate branch and worktree isolation independently before mutation:
-- **Branch** separates history; branch before activation (`git checkout -b <mission-slug>`).
-- **Worktree** separates concurrent hands (`git worktree add`). Concurrent sessions require separate trees.
-- Quick-patch directly on `main` is an explicit, non-default owner exception.
-
-### Tiered Verification Matrix (Zero Duplicate Runs)
-Assign verification tiers strictly by role to prevent redundant execution:
-- **Tier 1 (Quick / Domain)**: Executed by **Worker** (or solo Orchestrator) on every inner-loop iteration (`verify.sh quick` or domain unit test).
-- **Tier 0 (Preflight / Lint)**: Executed by **Reviewer** (or automated pre-check) to verify syntax, AST boundaries, and contract drift without running heavy tests.
-- **Tier 2 (Acceptance)**: Executed by **Orchestrator** at milestone completion.
-- **Tier 3 (All / Release)**: Executed at the **Owner Gate** prior to final release or mission completion.
-
-### Read-Only Preflight Contract
-Check workspace (`PROJECT.md`), Git (branch & worktrees), bindings, identity, and blockers. Report:
-1. **Plain outcome**: Current project direction, selected Mission, and lifecycle status.
-2. **Technical evidence**: Git branch/worktree, commit SHA, Contract fingerprint, validation mode.
-3. **Next action**: Exactly one safe next action, or one owner gate.
-
-## 5. Primary Phase Router
-
-Orchestrators and primary operators load exactly one primary phase reference:
-
-| Phase | When Session Needs It | Primary Reference |
+| Phase | Trigger Context | Primary Reference |
 |---|---|---|
-| `orient` | Ambiguous, cold-start, or uninitialized workspace state | [orient.md](references/orient.md) |
-| `prepare` | Greenfield Genesis, exploration, Proposal, or Mission drafting | [prepare.md](references/prepare.md) |
-| `execute` | Mission activation, execution mechanics, Git isolation | [execute.md](references/execute.md) |
-| `runtime` | Packaging delegation, Handoff contracts, Autopilot charters | [runtime.md](references/runtime.md) |
-| `close` | Claim assessment, Evidence, review, owner completion | [close.md](references/close.md) |
-| `audit` | Retrospective proof or claim challenge using FROST | [audit.md](references/audit.md) |
+| `orient` | Cold-start or ambiguous workspace | [orient.md](references/orient.md) |
+| `prepare` | Greenfield ideation, Proposal, or Mission drafting | [prepare.md](references/prepare.md) |
+| `execute` | Active Mission execution & concurrency invariants | [execute.md](references/execute.md) |
+| `runtime` | Packaging subagent charters & handoffs | [runtime.md](references/runtime.md) |
+| `close` | Completion claim check & Evidence | [close.md](references/close.md) |
+| `audit` | Independent FROST claim challenge | [audit.md](references/audit.md) |
 
 Load a supporting reference only when the primary reference explicitly triggers it. When the phase changes, finish or stop the current phase before routing again.
 
-## 6. Authority Constitution
+## 6. Authority & Execution Invariants
+- **Authority**: Owner owns outcomes, boundaries, and acceptance. Operator freely attempts reversible checks and bounded repairs. `A Decision is not activation authority` (only owner confirms `mission start`).
+- **Direct Greenfield Execution**: Skip meta-planning chat on direct builds. Write code and tests, run `tests/check.sh` / `verify.sh quick`, and report the terminal result.
+- **Concurrency & Queues**: Bind concurrency to `--workers N`. Track retry attempts per item; route to `dlq.json` only after exceeding failure threshold ($\ge 3$).
+- **Proof Separation**: Test passing (`exit 0`) proves deterministic mechanics. Independent reviews (`reviews/`) evaluate `Frozen fit` and `Truth of proof` without modifying code (Observe ≠ Act).
 
-- **Owner only**: Outcome, completion criteria, semantic scope, review independence, forbidden-effects.
-- **Operator freely**: Reversible attempts, checks, and bounded repairs inside the Mission.
-- **Smallest sensible change**: Inside authorized scope, implement only what the frozen claim needs. Do not add abstractions, configuration, refactors, or cleanup unless the claim requires them.
-- **Return to owner**: Scope expansion, irreversible/provider effects, exhausted repairs, stops.
-- **Proof separation**: Evidence, deterministic checks, independent review, owner acceptance, and completion are separate layers. A passing check proves only its specific observation.
-
-## 7. Owner Maxims
-
-- **Ask only when open**: Semantic forks, boundaries, authority, risks, irreversible effects, contract conflicts. Never re-ask settled decisions.
-- **3-Tier Question Escalator**:
-  - *Tier 1 (Optimistic Consent)*: State standard/reversible default and proceed non-blocking (`"Proceeding with X unless you prefer Y"`).
-  - *Tier 2 (Batch Cards & Four-part formula)*: Lead with the plain outcome and Technical basis; format options as action -> consequence (`1. Question ➔ A, B, C (Recommended default)`). Accept shorthand (`A, B, A`, `all defaults`) and open write-ins.
-  - *Tier 3 (Spectrum & Modals)*: Frame competing trade-off axes for open-ended design, or use interactive UI modals (`ask_question`).
-- **Authorization, not labor**: Request permission to act; hold the keyboard (see [owner-guidance.md](references/owner-guidance.md)).
-- **Report, don't widen (Observe ≠ Act)**: If you notice unrelated problems or defects mid-execution, report them to the owner or Orchestrator. Do not edit them or fold them into the current Mission.
-- **Batch gates**: Check prior decisions first; approvals carry forward within the active phase; batch related approvals once.
-- **State boundary once**: State constraints once, act on them, and use compact 3-part refusals.
-
-## 8. Continuity & Precedence
-
-- Return the state a cold session needs plus exactly one safe next action or owner gate.
-- When Spectacular develops itself, an active Mission's schema and completion boundary remain frozen at activation; later changes apply only to later Missions.
-- **Precedence**: Kernel owns invariants and authority. References own conditional procedure. Entry contracts select bounded context. Any conflict is documentation drift: stop and report.
+## 7. Owner Interaction & Continuity
+- **Questions**: Ask only when open. Lead with the plain outcome and Technical basis; format options as action -> consequence (`1. Option A, B (Recommended default)`).
+- **Self-Hosting**: When developing Spectacular, an active Mission keeps the schema frozen. Under declared `manual-bootstrap`, run focused checks directly.
+- **Continuity**: Return cold-session state plus exactly one safe next action or owner gate. Kernel owns invariants; references own conditional procedures.

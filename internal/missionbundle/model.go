@@ -27,6 +27,13 @@ type Criterion struct {
 	ProofRequirement string `yaml:"proof_requirement" json:"proof_requirement"`
 }
 
+// ReplayHook defines an optional verification hook that tests state reconstruction
+// after cache deletion.
+type ReplayHook struct {
+	CachePaths []string `yaml:"cache_paths,omitempty" json:"cache_paths,omitempty"`
+	Command    string   `yaml:"command" json:"command"`
+}
+
 // Fallback records a seriously-considered rejected approach frozen at plan
 // time. If repair exhausts mid-Run, the recorded fallbacks are surfaced to the
 // owner alongside the failure that consumed the budget.
@@ -247,6 +254,7 @@ type Bundle struct {
 	Stops            []string          `json:"stops,omitempty"`
 	Fallbacks        []Fallback        `json:"fallbacks,omitempty"`
 	AfterMission     []string          `json:"after_mission,omitempty"`
+	Replay           *ReplayHook       `json:"replay,omitempty"`
 	Reviews          []ReviewPointer   `json:"reviews,omitempty"`
 	Handoffs         []HandoffPointer  `json:"handoffs,omitempty"`
 	Evidence         []EvidencePointer `json:"evidence,omitempty"`

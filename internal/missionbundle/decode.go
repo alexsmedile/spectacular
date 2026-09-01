@@ -94,6 +94,9 @@ func decode(ws *discovery.Workspace, entry discovery.Entry) (*Bundle, error) {
 	if _, err = decodeOptional(doc, "after_mission", &b.AfterMission); err != nil {
 		return nil, err
 	}
+	if _, err = decodeOptional(doc, "replay", &b.Replay); err != nil {
+		return nil, err
+	}
 	if _, err = decodeOptional(doc, "run", &b.Run); err != nil {
 		return nil, err
 	}

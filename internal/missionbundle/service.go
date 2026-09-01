@@ -262,6 +262,80 @@ func (s Service) Check(ref string) (Check, error) {
 	return Validate(s.Workspace, bundle)
 }
 
+func (s Service) CheckWithVerify(ref string) (Check, error) {
+	bundle, err := Load(s.Workspace, ref)
+	if err != nil {
+		return Check{}, err
+	}
+	check, err := Validate(s.Workspace, bundle)
+	if err != nil {
+		return check, err
+	}
+
+	root := ""
+	if s.Workspace != nil {
+		root = s.Workspace.Root
+	}
+
+	// 1. Run domain verification if script or command exists
+	testCmd := "sh tests/check.sh"
+	if s.Workspace != nil && s.Workspace.Config.Verification.Tier1Quick != "" {
+		testCmd = s.Workspace.Config.Verification.Tier1Quick
+	}
+
+	// Only run if check script exists or explicit tier1 command configured
+	checkScriptPath := filepath.Join(root, "tests", "check.sh")
+	if _, statErr := os.Stat(checkScriptPath); statErr == nil || (s.Workspace != nil && s.Workspace.Config.Verification.Tier1Quick != "") {
+		cmd := exec.Command("sh", "-c", testCmd)
+		cmd.Dir = root
+		if out, err := cmd.CombinedOutput(); err != nil {
+			check.Valid = false
+			check.Notices = append(check.Notices, fmt.Sprintf("domain verification failed: %s", strings.TrimSpace(string(out))))
+			return check, nil
+		}
+		check.Checks = append(check.Checks, "domain-verification-pass")
+	}
+
+	// 2. Replay check if declared
+	if bundle.Replay != nil && bundle.Replay.Command != "" {
+		for _, p := range bundle.Replay.CachePaths {
+			full := filepath.Join(root, p)
+			_ = os.RemoveAll(full)
+		}
+		replayCmd := exec.Command("sh", "-c", bundle.Replay.Command)
+		replayCmd.Dir = root
+		if out, err := replayCmd.CombinedOutput(); err != nil {
+			check.Valid = false
+			check.Notices = append(check.Notices, fmt.Sprintf("replay command failed: %s", strings.TrimSpace(string(out))))
+			return check, nil
+		}
+
+		if _, statErr := os.Stat(checkScriptPath); statErr == nil {
+			cmd := exec.Command("sh", "-c", testCmd)
+			cmd.Dir = root
+			if out, err := cmd.CombinedOutput(); err != nil {
+				check.Valid = false
+				check.Notices = append(check.Notices, fmt.Sprintf("post-replay verification failed: %s", strings.TrimSpace(string(out))))
+				return check, nil
+			}
+		}
+		check.Checks = append(check.Checks, "replay-reconstruction-pass")
+	}
+
+	// 3. Git working tree cleanliness check
+	gitStatus := exec.Command("git", "status", "--porcelain")
+	gitStatus.Dir = root
+	if out, err := gitStatus.Output(); err == nil {
+		if len(bytes.TrimSpace(out)) == 0 {
+			check.Checks = append(check.Checks, "git-working-tree-clean")
+		} else {
+			check.Notices = append(check.Notices, "git working tree contains untracked or uncommitted changes")
+		}
+	}
+
+	return check, nil
+}
+
 func (s Service) Objective(ref string) (Objective, *Bundle, error) {
 	missionRef, local, err := scopedRef(ref)
 	if err != nil {

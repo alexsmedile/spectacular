@@ -149,6 +149,9 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 		RequiresOwner:  bundle.Authority.RequiresOwner,
 		Stops:          bundle.Stops,
 	}
+	if bundle.Replay != nil && bundle.Replay.Command != "" {
+		layer3.VerificationCommand = bundle.Replay.Command
+	}
 
 	c := &Charter{
 		SchemaVersion: SchemaVersion,

@@ -1,6 +1,9 @@
 package spectaculareval
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 const CatalogSchema = "spectacular.skill-evals.v1"
 
@@ -68,6 +71,7 @@ type Expectation struct {
 	ForbiddenRoles        []string    `json:"forbidden_roles,omitempty"`
 	Phase                 string      `json:"phase,omitempty"`
 	Status                string      `json:"status,omitempty"`
+	AllowedStatuses       []string    `json:"allowed_statuses,omitempty"`
 	ForbiddenStatuses     []string    `json:"forbidden_statuses,omitempty"`
 	RequiredOutputTerms   []string    `json:"required_output_terms,omitempty"`
 	RequiredCommands      []string    `json:"required_commands,omitempty"`
@@ -83,6 +87,36 @@ type Expectation struct {
 	ExactlyOnePrimaryRef  bool        `json:"exactly_one_primary_reference,omitempty"`
 	RequireSingleReturn   bool        `json:"require_single_return,omitempty"`
 	PostChecks            []PostCheck `json:"post_checks,omitempty"`
+}
+
+func (e *Expectation) UnmarshalJSON(data []byte) error {
+	type Alias Expectation
+	var raw struct {
+		Alias
+		StatusRaw json.RawMessage `json:"status,omitempty"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*e = Expectation(raw.Alias)
+	if len(raw.StatusRaw) > 0 {
+		var single string
+		if err := json.Unmarshal(raw.StatusRaw, &single); err == nil {
+			e.Status = single
+			e.AllowedStatuses = []string{single}
+		} else {
+			var multiple []string
+			if err := json.Unmarshal(raw.StatusRaw, &multiple); err == nil {
+				e.AllowedStatuses = multiple
+				if len(multiple) > 0 {
+					e.Status = multiple[0]
+				}
+			} else {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 type PostCheck struct {

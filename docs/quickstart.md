@@ -54,29 +54,30 @@ spectacular mission start plan.md
 
 This creates `.spectacular/missions/M1-<slug>/M1-<slug>.md` as a frozen execution envelope.
 
-## 4. Run with Autonomous Subagent / Autopilot
+## 4. Run with Supervised Subagent (`charter` & `guard`)
 
-Delegate work to an autonomous worker subagent or execute in autopilot. Provide the worker with a compact charter ($\le 300\text{--}500$ tokens):
+Extract a lean, zero-wandering prompt for the subagent worker:
 
-```text
-Task: Execute Mission M1 in autopilot.
-Mission File: .spectacular/missions/M1-sqlite/M1-sqlite.md
-Allowed Scope: internal/storage/, cmd/
-Verification Command: go test -v ./internal/storage/...
-Thread Context: conversation://<parent-id>
-Stop Triggers: Stop and yield back if schema migrations require external dependencies.
+```sh
+spectacular charter M1/O1 --prompt
+```
+
+Wrap the worker command in Spectacular's OS watchdog to enforce authorized write paths with zero wasted work (surgical quarantine on rogue writes):
+
+```sh
+spectacular guard M1/O1 -- <subagent-command>
 ```
 
 - **Zero Sub-Record Sprawl**: The worker does not create extra checkpoint or handoff files.
-- **Fail-Fast Decision Gates**: If the worker hits an unrecorded fork, it halts and sends an escalation $\to$ Orchestrator records `spectacular decide` $\to$ Worker resumes.
-- **Tests Pass = Proof**: Passing the test suite (`exit 0`) and creating a clean Git commit is the completion proof.
+- **Fail-Fast Decision Gates**: If the worker hits an unrecorded fork, it halts and reports `STATUS: BLOCKED` $\to$ Orchestrator records `spectacular decide` $\to$ Worker resumes.
+- **Tests Pass = Proof**: Passing the verification test runner (`exit 0`) and creating a clean Git commit is the completion proof.
 
-## 5. The owner completes it
+## 5. The owner verifies and completes it
 
-Verify the mission and close the loop:
+Verify the mission atomically across schema drift, domain tests, replay hooks, and git cleanliness:
 
 ```sh
-spectacular mission check M1                               # Read-only verification
+spectacular mission check M1 --verify                       # 4-point atomic verification
 spectacular mission complete M1 --by alex                  # Owner completion gate
 ```
 

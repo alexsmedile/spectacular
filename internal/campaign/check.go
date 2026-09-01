@@ -34,6 +34,8 @@ type Check struct {
 	Order         []string `json:"order"`
 	Mermaid       string   `json:"mermaid"`
 	EmbeddedMap   string   `json:"embedded_mermaid"`
+	ASCII         string   `json:"ascii,omitempty"`
+	ASCIIMode     bool     `json:"ascii_mode,omitempty"`
 }
 
 type manifest struct {
@@ -307,6 +309,49 @@ func mermaid(title string, blocks []Block) string {
 
 func escape(value string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(value, "\"", "'"), "\n", " ")
+}
+
+// RenderASCII builds an instant terminal DAG using box drawing characters.
+func (c Check) RenderASCII() string {
+	var b strings.Builder
+	b.WriteString("Campaign DAG: " + c.Title + "\n")
+	if c.StrategicGoal != "" {
+		b.WriteString("Focus: " + c.StrategicGoal + "\n")
+	}
+	b.WriteString("\n")
+
+	blockMap := map[string]Block{}
+	for _, bl := range c.Blocks {
+		blockMap[bl.Ref] = bl
+	}
+
+	for _, ref := range c.Order {
+		bl := blockMap[ref]
+		icon := "[ ]"
+		switch bl.LiveState {
+		case "complete":
+			icon = "[✓]"
+		case "active":
+			icon = "[▶]"
+		case "blocked":
+			icon = "[!]"
+		default:
+			if bl.Ref == c.Current {
+				icon = "[*]"
+			}
+		}
+
+		deps := ""
+		if len(bl.DependsOn) > 0 {
+			deps = fmt.Sprintf(" (after %s)", strings.Join(bl.DependsOn, ", "))
+		}
+
+		b.WriteString(fmt.Sprintf("%s %s: %s [%s]%s\n", icon, bl.Ref, bl.Title, bl.LiveState, deps))
+		if len(bl.Missions) > 0 {
+			b.WriteString(fmt.Sprintf("    └── missions: %s\n", strings.Join(bl.Missions, ", ")))
+		}
+	}
+	return b.String()
 }
 func within(root, path string) bool {
 	relative, err := filepath.Rel(root, path)

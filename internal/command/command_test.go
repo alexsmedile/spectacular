@@ -16,18 +16,18 @@ import (
 )
 
 func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
-	// Twenty-three commands. Owner authorized init.
+	// Twenty-four commands. Owner authorized init and guard.
 	want := []string{
 		"mission start", "mission list", "mission show", "mission check", "mission amend-scope", "mission close", "objective show", "objective promote",
 		"objective finish", "run show", "run start", "run transition", "review record", "handoff record",
 		"evidence record", "mission complete", "proposal check", "campaign check", "contract amend", "contract create",
-		"charter", "decide", "init",
+		"charter", "decide", "init", "guard",
 	}
 	if len(Registry) != len(want) {
 		t.Fatalf("registry has %d commands, want %d", len(Registry), len(want))
 	}
-	if len(want) != 23 {
-		t.Fatalf("the public surface is %d commands; owner authorized 23", len(want))
+	if len(want) != 24 {
+		t.Fatalf("the public surface is %d commands; owner authorized 24", len(want))
 	}
 	for i, spec := range Registry {
 		if got := strings.Join(spec.Words, " "); got != want[i] {
@@ -242,6 +242,11 @@ blocks:
 	human := run(t, root, nil, 0, "campaign", "check", ".spectacular/campaigns/launch.md")
 	if !strings.Contains(human, "CURRENT CAMPAIGN BLOCK: B2 — Release hardening") || !strings.Contains(human, "ORDER") || !strings.Contains(human, "MERMAID") {
 		t.Fatalf("human campaign projection=%s", human)
+	}
+
+	asciiOut := run(t, root, nil, 0, "campaign", "check", ".spectacular/campaigns/launch.md", "--ascii")
+	if !strings.Contains(asciiOut, "Campaign DAG: Launch") || !strings.Contains(asciiOut, "B1") || !strings.Contains(asciiOut, "B2") {
+		t.Fatalf("ascii campaign projection=%s", asciiOut)
 	}
 	write(t, path, `---
 type: Campaign
@@ -719,12 +724,24 @@ func TestCharterAndDecideCLI(t *testing.T) {
 		if !strings.Contains(outJSON, `"schema_version":"spectacular.charter.show.v2"`) || !strings.Contains(outJSON, `"token_count"`) {
 			t.Fatalf("expected charter json envelope, got:\n%s", outJSON)
 		}
+
+		outPrompt := run(t, root, nil, 0, "charter", "M17/O1", "--prompt")
+		if !strings.Contains(outPrompt, "# Objective: M17/O1") || !strings.Contains(outPrompt, "## 1. Initial Code Grounding") || !strings.Contains(outPrompt, "## 3. Worker Contract") {
+			t.Fatalf("expected charter prompt output, got:\n%s", outPrompt)
+		}
 	})
 
 	t.Run("decide command help", func(t *testing.T) {
 		outHelp := run(t, root, nil, 0, "decide", "--help")
 		if !strings.Contains(outHelp, "type: DecisionDraft") || !strings.Contains(outHelp, "spectacular decide") {
 			t.Fatalf("expected decide help template, got:\n%s", outHelp)
+		}
+	})
+
+	t.Run("guard command execution", func(t *testing.T) {
+		outPass := run(t, root, nil, 0, "guard", "M17/O1", "--", "echo", "clean")
+		if !strings.Contains(outPass, "Perimeter Guard: PASS") {
+			t.Fatalf("expected guard pass, got:\n%s", outPass)
 		}
 	})
 }

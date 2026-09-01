@@ -11,7 +11,7 @@ Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1
 | `spectacular mission start` | `[<plan.md|->] [--data <json>] [--allow-main] [--create-branch] [--json]` | `spectacular.mission.start.v2` | `mutating` |
 | `spectacular mission list` | `[--all] [--status <status>] [--json]` | `spectacular.mission.list.v2` | `read-only` |
 | `spectacular mission show` | `<ref> [--json]` | `spectacular.mission.show.v2` | `read-only` |
-| `spectacular mission check` | `<ref> [--json]` | `spectacular.mission.check.v2` | `read-only` |
+| `spectacular mission check` | `<ref> [--verify] [--json]` | `spectacular.mission.check.v2` | `read-only` |
 | `spectacular mission amend-scope` | `<ref> --add <paths> --by <owner> [--reason <text>] [--dry-run] [--json]` | `spectacular.mission.amend_scope.v2` | `mutating` |
 | `spectacular mission close` | `<ref> [--by <owner>] [--json]` | `spectacular.mission.close.v2` | `mutating` |
 | `spectacular objective show` | `<mission-ref>/<objective-ref> [--json]` | `spectacular.objective.show.v2` | `read-only` |
@@ -25,9 +25,10 @@ Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1
 | `spectacular evidence record` | `<mission-ref> [draft.md|-] [--from <test-output>] [--data <json>] [--json]` | `spectacular.evidence.record.v2` | `mutating` |
 | `spectacular mission complete` | `<ref> [--by <owner>] [--json]` | `spectacular.mission.complete.v2` | `mutating` |
 | `spectacular proposal check` | `<ref> [--json]` | `spectacular.proposal.check.v2` | `read-only` |
-| `spectacular campaign check` | `<path> [--json]` | `spectacular.campaign.check.v2` | `read-only` |
+| `spectacular campaign check` | `<path> [--ascii] [--json]` | `spectacular.campaign.check.v2` | `read-only` |
 | `spectacular contract amend` | `<contract-ref> --gap <gap-ref> --by <owner> [--resolution <text>] [--dry-run] [--json]` | `spectacular.contract.amend.v2` | `mutating` |
 | `spectacular contract create` | `<ref> [--title <title>] [--json]` | `spectacular.contract.create.v2` | `mutating` |
-| `spectacular charter` | `<mission-ref>/<objective-ref> [sources...] [--json]` | `spectacular.charter.show.v2` | `read-only` |
+| `spectacular charter` | `<mission-ref>/<objective-ref> [sources...] [--prompt] [--json]` | `spectacular.charter.show.v2` | `read-only` |
 | `spectacular decide` | `[<decision.md|->] [--title <title>] [--disposition <accepted|rejected|deferred|superseded>] [--rationale <rationale>] [--actor <name>] [--supersedes <ref>] [--json]` | `spectacular.decision.record.v2` | `mutating` |
 | `spectacular init` | `[<path>] [--name <name>] [--json]` | `spectacular.init.v2` | `mutating` |
+| `spectacular guard` | `<mission-ref>/<objective-ref> [--watch] [--json] -- <command...>` | `spectacular.guard.v2` | `read-only` |

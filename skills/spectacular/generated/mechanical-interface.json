@@ -28,7 +28,7 @@
     },
     {
       "command": "spectacular mission check",
-      "arguments": "<ref> [--json]",
+      "arguments": "<ref> [--verify] [--json]",
       "schema": "spectacular.mission.check.v2",
       "effect": "read-only"
     },
@@ -112,7 +112,7 @@
     },
     {
       "command": "spectacular campaign check",
-      "arguments": "<path> [--json]",
+      "arguments": "<path> [--ascii] [--json]",
       "schema": "spectacular.campaign.check.v2",
       "effect": "read-only"
     },
@@ -130,7 +130,7 @@
     },
     {
       "command": "spectacular charter",
-      "arguments": "<mission-ref>/<objective-ref> [sources...] [--json]",
+      "arguments": "<mission-ref>/<objective-ref> [sources...] [--prompt] [--json]",
       "schema": "spectacular.charter.show.v2",
       "effect": "read-only"
     },
@@ -145,6 +145,12 @@
       "arguments": "[<path>] [--name <name>] [--json]",
       "schema": "spectacular.init.v2",
       "effect": "mutating"
+    },
+    {
+      "command": "spectacular guard",
+      "arguments": "<mission-ref>/<objective-ref> [--watch] [--json] -- <command...>",
+      "schema": "spectacular.guard.v2",
+      "effect": "read-only"
     }
   ]
 }

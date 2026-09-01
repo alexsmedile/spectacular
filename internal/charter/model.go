@@ -80,6 +80,65 @@ type Charter struct {
 	TokenCount    int                   `json:"token_count"`
 	Disposition   tokenizer.Disposition `json:"disposition"`
 	Compacted     bool                  `json:"compacted"`
+	PromptMode    bool                  `json:"prompt_mode,omitempty"`
+}
+
+// RenderPrompt formats the charter into a lean, ready-to-dispatch worker prompt (<=300 tokens).
+func (c *Charter) RenderPrompt() string {
+	var b strings.Builder
+	b.WriteString("# Objective: " + c.MissionRef + "/" + c.ObjectiveRef + " — " + c.Layer1.Outcome + "\n\n")
+
+	// Section 1: Initial Code Grounding & Target Files
+	b.WriteString("## 1. Initial Code Grounding & Target Files\n")
+	b.WriteString("- **Authorized Write Paths**:\n")
+	if len(c.Layer3.WritesPaths) > 0 {
+		for _, p := range c.Layer3.WritesPaths {
+			b.WriteString("  - `" + p + "`\n")
+		}
+	} else {
+		b.WriteString("  - *(unrestricted)*\n")
+	}
+	if len(c.Layer3.ReadsPaths) > 0 {
+		b.WriteString("- **Reference / Read Paths**:\n")
+		for _, r := range c.Layer3.ReadsPaths {
+			b.WriteString("  - `" + r + "`\n")
+		}
+	}
+	b.WriteString("\n")
+
+	// Section 2: Test Expectation & Verification
+	b.WriteString("## 2. Test Expectation & Verification\n")
+	if c.Layer3.VerificationCommand != "" {
+		b.WriteString("- **Verification Runner**: `" + c.Layer3.VerificationCommand + "` (must pass with exit 0)\n")
+	} else {
+		b.WriteString("- **Verification Runner**: Run domain test suite until exit 0.\n")
+	}
+	if len(c.Layer1.Claims) > 0 {
+		b.WriteString("- **Completion Criteria**:\n")
+		for _, cl := range c.Layer1.Claims {
+			b.WriteString(fmt.Sprintf("  - `%s`: %s (Proof: %s)\n", cl.Claim, cl.PassBoundary, cl.ProofRequirement))
+		}
+	}
+	b.WriteString("\n")
+
+	// Section 3: Worker Contract & Constraints
+	b.WriteString("## 3. Worker Contract\n")
+	b.WriteString("1. **Boundary**: Modify only the authorized write paths. Never create or edit `.spectacular/` files.\n")
+	b.WriteString("2. **Loop**: Implement code and run the verification runner until exit 0.\n")
+	if len(c.Layer2.Decisions) > 0 || len(c.Layer2.NonGoals) > 0 {
+		b.WriteString("3. **Locked Decisions & Non-Goals**:\n")
+		for _, d := range c.Layer2.Decisions {
+			b.WriteString(fmt.Sprintf("   - **%s**: %s\n", d.Ref, d.Title))
+		}
+		for _, ng := range c.Layer2.NonGoals {
+			b.WriteString("   - Non-goal: " + ng + "\n")
+		}
+	}
+	b.WriteString("4. **Completion Return**:\n")
+	b.WriteString("   - When green: Output `STATUS: DONE` with a brief summary of changes.\n")
+	b.WriteString("   - When blocked: Output `STATUS: BLOCKED` with the specific decision required for the Orchestrator.\n")
+
+	return b.String()
 }
 
 // RenderMarkdown formats the 3-layer charter into a clean, token-efficient prompt envelope.

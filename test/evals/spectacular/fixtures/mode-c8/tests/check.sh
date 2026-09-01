@@ -28,7 +28,8 @@ if [ -z "$RUNNER" ]; then
   exit 1
 fi
 
-rm -f dlq.json results.log
+rm -f dlq.json results.log jobs.json
+trap 'rm -f dlq.json results.log jobs.json' EXIT
 
 # 1. Run queue simulation test in Python
 python3 - << PY

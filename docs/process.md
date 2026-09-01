@@ -18,7 +18,7 @@ Spectacular provides an ultra-lean, token-efficient execution lifecycle with min
 - **Tier 3: Full Governed Bundle (~2%)**: High-stakes zero-downtime DB cutovers, auth/crypto, or payments requiring formal checkpoints (`checkpoints/`) or independent adversarial audit (`reviews/`).
 
 ### Dual-Lane Orchestration: Supervised Dispatch vs. Full Handoff
-- **Supervised Dispatch (90% Default)**: In-session subagent delegation. The Orchestrator retains Mission ownership, sends a $\le 300$-token charter, and waits reactively for completion (`worker_done`). Zero extra governance files written.
+- **Supervised Dispatch (90% Default)**: In-session subagent delegation. The Orchestrator retains Mission ownership, compiles an immediate prompt via `spectacular charter <mission>/<objective> --prompt` ($\le 300$ tokens containing only objectives, authorized write paths, non-goals, and the test command), and dispatches to a subagent worker without extra governance files.
 - **Full Ownership Handoff (10% Transfer)**: Explicit ownership transfers across distinct sessions, human engineers, or different AI harnesses recorded via `spectacular handoff record`.
 
 ### The 3-Tier Question Escalator
@@ -157,19 +157,73 @@ The Run-body note names the trigger, what was reviewed, the result, and the
 next action. It supports a cold resume without creating a new record for every
 ordinary progress check.
 
-### Roles use bounded context
+### Supervised Worker Dispatch & Prompt Budgeting (`spectacular charter --prompt`)
 
-An Orchestrator uses Anchors and Campaign maps to plan. A Runner uses its
-assigned Objective, current Run, Handoff, and explicitly named inputs. A
-Reviewer uses frozen claims, the reviewed commit, Evidence, and review criteria.
-An Autopilot receiver uses only its charter and allowed sources.
+When delegating an Objective to a subagent worker, the Orchestrator avoids passing the entire workspace context. Instead, it extracts a lean **Worker Charter Prompt**:
 
-An independent Runner Handoff includes a short **Runner context contract** in
-its body: `Read`, `Do not load`, and `If blocked`. If the contract does not
-answer a needed question, the Runner requests one named authoritative source
-from the Orchestrator rather than scanning the workspace. This preserves both
-token efficiency and the boundary between roadmap context and execution
-authority.
+```sh
+spectacular charter M17/O1 --prompt
+```
+
+The prompt is structured into three self-contained sections designed for **Zero File Wandering**:
+1. **Initial Code Grounding & Target Files**: Explicit authorized write paths and interface definitions, removing the need for blind `ls` or `find` exploratory turns.
+2. **Test Expectation & Verification**: The exact test command (e.g. `sh tests/check.sh`) and pass criteria required to turn the build green.
+3. **Worker Contract & Protocol**:
+   - Strictly implement within authorized paths without touching `.spectacular/` governance files.
+   - Iterate against the test runner until `exit 0`.
+   - Single-Return Signals: `STATUS: DONE` (with changes summary) or `STATUS: BLOCKED` (with decision required).
+
+#### Flexible Prompt Token Budgeting
+
+| Tier | Task Complexity | Target Budget | Typical Payload |
+| :--- | :--- | :--- | :--- |
+| **Tier 1 (Micro)** | Targeted bugfix / single file | **250–400 tokens** | Target file, verification command, return signal |
+| **Tier 2 (Standard)** | Feature / multi-function change | **400–600 tokens** *(Sweet Spot)* | Target files, interface signatures, test expectation, locked decisions |
+| **Tier 3 (Genesis)** | Multi-file module / event journal | **600–900 tokens** *(Ceiling)* | Full mechanical perimeter, data models, crash replay assertion |
+
+> **Splitting Rule**: If an Objective's charter prompt exceeds **900 tokens**, it is an architectural indicator that the Objective should be decomposed into smaller sequential sub-objectives (`O1`, `O2`).
+
+### Atomic Verification Gate (`spectacular mission check --verify`)
+
+During execution and before closing a Mission, `spectacular mission check <ref> --verify` executes a unified, atomic 4-point verification check in a single pass:
+1. **Structural & Contract Drift**: Verifies Mission schema integrity and frozen contract bindings.
+2. **Domain Test Suite**: Runs `tests/check.sh` (or `tier1_quick`).
+3. **Replay Hook Execution**: If declared, evicts cache paths and verifies full state reconstruction.
+4. **Git Cleanliness**: Asserts working tree cleanliness (`git status --porcelain`).
+
+It returns a deterministic JSON receipt:
+```json
+{
+  "ref": "M17",
+  "valid": true,
+  "checks": [
+    "domain-verification-pass",
+    "replay-reconstruction-pass",
+    "git-working-tree-clean"
+  ]
+}
+```
+
+### Visual Campaign Inspection (`spectacular campaign check --ascii`)
+
+To inspect a multi-mission Campaign dependency graph in the terminal without opening heavy visualization tools:
+
+```sh
+spectacular campaign check .spectacular/campaigns/genesis.md --ascii
+```
+
+Renders an instant terminal DAG with live state indicators:
+```text
+Campaign DAG: Multi-Agent Platform Genesis
+Focus: Autonomous subagent orchestration and verification gates.
+
+[✓] B1: Architecture Core [complete]
+    └── missions: M1, M2
+[▶] B2: Replay Verification & Charter Dispatch [active] (after B1)
+    └── missions: M10, M17
+[ ] B3: Active Perimeter Jail [planned] (after B2)
+    └── missions: M18
+```
 
 ## Prove: Evidence, Reviews, Handoffs
 

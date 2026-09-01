@@ -31,6 +31,7 @@ if [ -z "$RUNNER" ]; then
 fi
 
 rm -f tasks.db
+trap 'rm -f tasks.db' EXIT
 
 # 1. Add tasks
 $RUNNER add "Setup repo" --tag dev >/dev/null

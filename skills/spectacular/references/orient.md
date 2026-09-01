@@ -1,53 +1,23 @@
-# Orient
+# Orient Micro-Kernel
 
-Use this when: Orchestrator resolving ambiguous, cold-start, or uninitialized workspace state.
+## 1. Trigger Context
+Orchestrator resolving ambiguous, cold-start, or uninitialized workspace state.
 
-Answer one question: where does this project stand, and what happens next.
-
-## Read
-
-| What | Where |
-|---|---|
-| Project Anchor | `.spectacular/PROJECT.md` |
-| direction sources | the Anchors and Contracts its `current_truth` field names |
-| the selected Mission | `.spectacular/missions/<slug>/<ref>-<slug>.md` |
-
-If `.spectacular/PROJECT.md` or `.spectacular/workspace.yaml` does not exist, the repository is greenfield (uninitialized). Do not report an error: initialize via `spectacular init` or route immediately to One-Shot Genesis in [prepare.md](prepare.md).
-
-To see what exists without reading every record, use the generated
-`.spectacular/missions/index.md`. It maps each ref to its source path and is
-non-authoritative — never cite it as proof.
-
-Stop there. Do not preload history, every record, or generated catalogs.
-
-## Report
-
-Lead with plain project direction, then:
-
-- current Mission outcome and owner
-- Contract and Git baseline
-- validation mode
-- current Objective and Run
-- blocking Gaps or stops
-- one continuation, or one owner gate
-
-## Inspect with the right tool
-
+## 2. CLI Palette & Inspection
 ```bash
-spectacular mission show  <ref> --json   # current state
-spectacular mission check <ref> --json   # validation only, read-only
+spectacular mission show <ref> --json    # Current execution state
+spectacular mission check <ref> --json   # Read-only validation check
+spectacular init [--name <project>]      # Initialize greenfield workspace
 ```
 
-`<ref>` is the Mission's `ref` from its frontmatter — `M7`. Sub-records use a
-slash: `M7/O1` for an Objective, `M7/R1` for a Run. The full command list is in
-[../generated/mechanical-interface.md](../generated/mechanical-interface.md).
+## 3. Negative Constraints (DO NOT)
+- **DO NOT** preload git history, old closed missions, or whole directory listings.
+- **DO NOT** read `.spectacular/catalog.md` or `index.md` (use CLI `--json` instead).
+- **DO NOT** combine multiple active missions into one session; pick exactly one.
+- **DO NOT** invent missing anchors; if uninitialized, run `spectacular init` or route to [prepare.md](prepare.md).
 
-Under `manual-bootstrap`, read the canonical Markdown and its referenced files
-directly — see [bootstrap.md](bootstrap.md). An incompatible CLI refusal is a
-tooling Gap. It is not evidence that the Mission is invalid.
-
-## When several Missions are active
-
-Say which one this session will operate, and why.
-
-Never silently combine two Missions' authority, criteria, scope, or mutable state.
+## 4. One-Line Preflight Report Format
+Emit strictly a 3-line status and proceed without echoing files:
+1. **Direction**: Current project outcome and active Mission reference (`M<N>`).
+2. **Technical Proof**: Git branch, commit SHA, Contract fingerprint, validation mode.
+3. **Next Action**: Exactly one safe next action or one owner gate.

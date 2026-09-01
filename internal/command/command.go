@@ -18,6 +18,7 @@ import (
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
 	"github.com/alexsmedile/spectacular/v2/internal/governance"
+	"github.com/alexsmedile/spectacular/v2/internal/guard"
 	"github.com/alexsmedile/spectacular/v2/internal/missionbundle"
 )
 
@@ -72,6 +73,7 @@ const (
 	opCharter
 	opDecide
 	opInit
+	opGuard
 )
 
 type Spec struct {
@@ -151,8 +153,8 @@ stops: [scope-drift]
 	},
 	{
 		Words:         []string{"mission", "check"},
-		Arguments:     "<ref> [--json]",
-		ArgumentShape: one,
+		Arguments:     "<ref> [--verify] [--json]",
+		ArgumentShape: atLeastOne,
 		JSONSchema:    "spectacular.mission.check.v2",
 		Effect:        ReadOnly,
 		Operation:     opMissionCheck,
@@ -377,8 +379,8 @@ claims.
 	},
 	{
 		Words:         []string{"campaign", "check"},
-		Arguments:     "<path> [--json]",
-		ArgumentShape: one,
+		Arguments:     "<path> [--ascii] [--json]",
+		ArgumentShape: atLeastOne,
 		JSONSchema:    "spectacular.campaign.check.v2",
 		Effect:        ReadOnly,
 		Operation:     opCampaignCheck,
@@ -433,7 +435,7 @@ discovery and grant no authority.
 	},
 	{
 		Words:         []string{"charter"},
-		Arguments:     "<mission-ref>/<objective-ref> [sources...] [--json]",
+		Arguments:     "<mission-ref>/<objective-ref> [sources...] [--prompt] [--json]",
 		ArgumentShape: atLeastOne,
 		JSONSchema:    "spectacular.charter.show.v2",
 		Effect:        ReadOnly,
@@ -478,6 +480,16 @@ supersedes: ""
 		Operation:     opInit,
 		Description:   "Initializes a new Spectacular workspace safely without overwriting existing files.",
 		OutputType:    "InitResult",
+	},
+	{
+		Words:         []string{"guard"},
+		Arguments:     "<mission-ref>/<objective-ref> [--watch] [--json] -- <command...>",
+		ArgumentShape: atLeastOne,
+		JSONSchema:    "spectacular.guard.v2",
+		Effect:        ReadOnly,
+		Operation:     opGuard,
+		Description:   "Executes a command under mechanical perimeter supervision with automatic rollback on escapes.",
+		OutputType:    "GuardResult",
 	},
 }
 
@@ -693,7 +705,24 @@ func (r Runner) Run(args []string) int {
 	case opMissionShow:
 		value, err = service.Show(rest[0])
 	case opMissionCheck:
-		value, err = service.Check(rest[0])
+		targetRef := ""
+		verifyMode := false
+		for _, arg := range rest {
+			if arg == "--verify" {
+				verifyMode = true
+			} else if targetRef == "" {
+				targetRef = arg
+			}
+		}
+		if targetRef == "" {
+			err = domain.NewRefusal(domain.RefusalInvalidReference, "", "expected <mission-ref>", nil)
+			break
+		}
+		if verifyMode {
+			value, err = service.CheckWithVerify(targetRef)
+		} else {
+			value, err = service.Check(targetRef)
+		}
 	case opMissionAmendScope:
 		addPaths := strings.Split(rest[2], ",")
 		var cleaned []string
@@ -852,7 +881,25 @@ func (r Runner) Run(args []string) int {
 	case opProposalCheck:
 		value, err = missionbundle.ValidateProposal(ws, rest[0])
 	case opCampaignCheck:
-		value, err = campaign.Validate(ws, rest[0])
+		targetPath := ""
+		asciiMode := false
+		for _, arg := range rest {
+			if arg == "--ascii" {
+				asciiMode = true
+			} else if targetPath == "" {
+				targetPath = arg
+			}
+		}
+		if targetPath == "" {
+			err = domain.NewRefusal(domain.RefusalInvalidWorkspacePath, "", "expected <campaign-path>", nil)
+			break
+		}
+		var c campaign.Check
+		c, err = campaign.Validate(ws, targetPath)
+		if err == nil {
+			c.ASCIIMode = asciiMode
+			value = c
+		}
 	case opContractAmend:
 		value, err = service.AmendContract(rest[0], rest[2], rest[4], override, dryRun)
 	case opContractCreate:
@@ -862,17 +909,33 @@ func (r Runner) Run(args []string) int {
 		}
 		value, err = service.CreateContract(rest[0], title, ws.Config.Defaults.Operator)
 	case opCharter:
-		targetRef := rest[0]
+		targetRef := ""
+		promptMode := false
 		var extraSources []string
-		if len(rest) > 1 {
-			extraSources = rest[1:]
+		for _, arg := range rest {
+			if arg == "--prompt" {
+				promptMode = true
+			} else if targetRef == "" {
+				targetRef = arg
+			} else {
+				extraSources = append(extraSources, arg)
+			}
+		}
+		if targetRef == "" {
+			err = domain.NewRefusal(domain.RefusalInvalidReference, "", "expected <mission-ref>/<objective-ref> (e.g. M17/O1)", nil)
+			break
 		}
 		parts := strings.Split(targetRef, "/")
 		if len(parts) != 2 {
 			err = domain.NewRefusal(domain.RefusalInvalidReference, targetRef, "expected <mission-ref>/<objective-ref> (e.g. M17/O1)", nil)
 			break
 		}
-		value, err = charter.Compile(ws, parts[0], parts[1], extraSources)
+		var c *charter.Charter
+		c, err = charter.Compile(ws, parts[0], parts[1], extraSources)
+		if err == nil && c != nil {
+			c.PromptMode = promptMode
+			value = c
+		}
 	case opDecide:
 		flags, parseErr := parseDecideArgs(rest)
 		if parseErr != nil {
@@ -1006,6 +1069,28 @@ func (r Runner) Run(args []string) int {
 			}
 			value, err = service.TransitionRun(targetRef, toState, actor, reason, nextAction)
 		}
+	case opGuard:
+		targetRef := ""
+		watchMode := false
+		var cmdArgs []string
+		inCmd := false
+		for i := 0; i < len(rest); i++ {
+			arg := rest[i]
+			if inCmd {
+				cmdArgs = append(cmdArgs, arg)
+			} else if arg == "--" {
+				inCmd = true
+			} else if arg == "--watch" {
+				watchMode = true
+			} else if targetRef == "" {
+				targetRef = arg
+			}
+		}
+		if targetRef == "" || len(cmdArgs) == 0 {
+			err = domain.NewRefusal(domain.RefusalInvalidReference, targetRef, "expected spectacular guard <mission-ref>/<objective-ref> [--watch] -- <command...>", nil)
+			break
+		}
+		value, err = guard.Run(ws, targetRef, watchMode, cmdArgs)
 	}
 	if err != nil {
 		return r.refuse(jsonMode, invoked, err)
@@ -1337,30 +1422,34 @@ func renderHuman(writer io.Writer, value any) {
 			fmt.Fprintf(writer, "notice: %s\n", notice)
 		}
 	case campaign.Check:
-		fmt.Fprintf(writer, "Campaign: %s\n", item.Title)
-		if item.StrategicGoal != "" {
-			fmt.Fprintf(writer, "Outcome: %s\n", item.StrategicGoal)
-		}
-		fmt.Fprintf(writer, "CURRENT CAMPAIGN BLOCK: %s — %s\n", item.CurrentBlock.Ref, item.CurrentBlock.Title)
-		if len(item.CurrentBlock.Missions) > 0 {
-			fmt.Fprintf(writer, "LINKED MISSIONS: %s\n", strings.Join(item.CurrentBlock.Missions, ", "))
-		}
-		if len(item.Next) > 0 {
-			next := make([]string, 0, len(item.Next))
-			for _, block := range item.Next {
-				next = append(next, block.Ref+" — "+block.Title)
+		if item.ASCIIMode {
+			fmt.Fprint(writer, item.RenderASCII())
+		} else {
+			fmt.Fprintf(writer, "Campaign: %s\n", item.Title)
+			if item.StrategicGoal != "" {
+				fmt.Fprintf(writer, "Outcome: %s\n", item.StrategicGoal)
 			}
-			fmt.Fprintf(writer, "NEXT MAP BLOCKS: %s\n", strings.Join(next, ", "))
+			fmt.Fprintf(writer, "CURRENT CAMPAIGN BLOCK: %s — %s\n", item.CurrentBlock.Ref, item.CurrentBlock.Title)
+			if len(item.CurrentBlock.Missions) > 0 {
+				fmt.Fprintf(writer, "LINKED MISSIONS: %s\n", strings.Join(item.CurrentBlock.Missions, ", "))
+			}
+			if len(item.Next) > 0 {
+				next := make([]string, 0, len(item.Next))
+				for _, block := range item.Next {
+					next = append(next, block.Ref+" — "+block.Title)
+				}
+				fmt.Fprintf(writer, "NEXT MAP BLOCKS: %s\n", strings.Join(next, ", "))
+			}
+			if item.ExitCondition != "" {
+				fmt.Fprintf(writer, "Exit: %s\n", item.ExitCondition)
+			}
+			fmt.Fprintln(writer, "ORDER")
+			for index, block := range item.Order {
+				fmt.Fprintf(writer, "  %d. %s\n", index+1, block)
+			}
+			fmt.Fprintln(writer, "MERMAID")
+			fmt.Fprint(writer, item.Mermaid)
 		}
-		if item.ExitCondition != "" {
-			fmt.Fprintf(writer, "Exit: %s\n", item.ExitCondition)
-		}
-		fmt.Fprintln(writer, "ORDER")
-		for index, block := range item.Order {
-			fmt.Fprintf(writer, "  %d. %s\n", index+1, block)
-		}
-		fmt.Fprintln(writer, "MERMAID")
-		fmt.Fprint(writer, item.Mermaid)
 	case missionbundle.Amendment:
 		verb := "amended"
 		switch {
@@ -1444,11 +1533,15 @@ func renderHuman(writer io.Writer, value any) {
 	case missionbundle.Result:
 		fmt.Fprintf(writer, "%s %s\nPath: %s\n", item.Operation, item.Ref, item.Path)
 	case *charter.Charter:
-		fmt.Fprint(writer, item.RenderMarkdown())
-		fmt.Fprintln(writer, "\n---")
-		fmt.Fprintf(writer, "Tokens: %d (%s, %s)\n", item.TokenCount, item.Disposition, tokenizer.Version)
-		if item.Compacted {
-			fmt.Fprintln(writer, "Safe compaction applied to stay within token budget.")
+		if item.PromptMode {
+			fmt.Fprint(writer, item.RenderPrompt())
+		} else {
+			fmt.Fprint(writer, item.RenderMarkdown())
+			fmt.Fprintln(writer, "\n---")
+			fmt.Fprintf(writer, "Tokens: %d (%s, %s)\n", item.TokenCount, item.Disposition, tokenizer.Version)
+			if item.Compacted {
+				fmt.Fprintln(writer, "Safe compaction applied to stay within token budget.")
+			}
 		}
 	case missionbundle.DecisionResult:
 		fmt.Fprintf(writer, "Recorded decision %s (%s)\nPath: %s\n", item.Ref, item.ID, item.Path)
@@ -1477,6 +1570,25 @@ func renderHuman(writer io.Writer, value any) {
 		}
 		if len(item.SkippedFiles) > 0 {
 			fmt.Fprintf(writer, "Preserved existing files: %s\n", strings.Join(item.SkippedFiles, ", "))
+		}
+	case *guard.GuardResult:
+		if item.Status == "pass" {
+			fmt.Fprintf(writer, "Perimeter Guard: PASS (mode: %s)\nTarget: %s/%s\nExit code: %d\n", item.Mode, item.MissionRef, item.ObjectiveRef, item.ExitCode)
+			if item.Output != "" {
+				fmt.Fprint(writer, item.Output)
+			}
+		} else {
+			fmt.Fprintf(writer, "Perimeter Guard: QUARANTINED (%s, mode: %s)\nTarget: %s/%s\n", item.Status, item.Mode, item.MissionRef, item.ObjectiveRef)
+			if len(item.PreservedPaths) > 0 {
+				fmt.Fprintf(writer, "Preserved Valid Paths: %s\n", strings.Join(item.PreservedPaths, ", "))
+			}
+			if len(item.EscapedPaths) > 0 {
+				fmt.Fprintf(writer, "Escaped Paths (Purged & Rolled Back): %s\n", strings.Join(item.EscapedPaths, ", "))
+			}
+			fmt.Fprintf(writer, "Allowed Write Paths: %s\n", strings.Join(item.AllowedPaths, ", "))
+			if item.FeedbackPrompt != "" {
+				fmt.Fprintf(writer, "\nFeedback Turn for Session Continuation:\n%s\n", item.FeedbackPrompt)
+			}
 		}
 	default:
 		data, _ := json.MarshalIndent(value, "", "  ")

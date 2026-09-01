@@ -743,6 +743,18 @@ func TestCharterAndDecideCLI(t *testing.T) {
 		if !strings.Contains(outPass, "Perimeter Guard: PASS") {
 			t.Fatalf("expected guard pass, got:\n%s", outPass)
 		}
+
+		outExec := run(t, root, nil, 0, "guard", "M17/O1", "--exec", "echo")
+		if !strings.Contains(outExec, "Perimeter Guard: PASS") || !strings.Contains(outExec, "# Objective: M17/O1") {
+			t.Fatalf("expected guard --exec pass with prompt output, got:\n%s", outExec)
+		}
+	})
+
+	t.Run("mission check verify mode", func(t *testing.T) {
+		outVerify := run(t, root, nil, 0, "mission", "check", "M17", "--verify")
+		if !strings.Contains(outVerify, "valid=true") {
+			t.Fatalf("expected mission check verify pass, got:\n%s", outVerify)
+		}
 	})
 }
 

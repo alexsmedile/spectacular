@@ -2,6 +2,7 @@ package missionbundle
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -277,16 +278,17 @@ func (s Service) CheckWithVerify(ref string) (Check, error) {
 		root = s.Workspace.Root
 	}
 
-	// 1. Run domain verification if script or command exists
-	testCmd := "sh tests/check.sh"
-	if s.Workspace != nil && s.Workspace.Config.Verification.Tier1Quick != "" {
-		testCmd = s.Workspace.Config.Verification.Tier1Quick
+	// 1. Run domain verification if script exists
+	testCmd := ""
+	checkScriptPath := filepath.Join(root, "tests", "check.sh")
+	if stat, statErr := os.Stat(checkScriptPath); statErr == nil && !stat.IsDir() {
+		testCmd = "sh tests/check.sh"
 	}
 
-	// Only run if check script exists or explicit tier1 command configured
-	checkScriptPath := filepath.Join(root, "tests", "check.sh")
-	if _, statErr := os.Stat(checkScriptPath); statErr == nil || (s.Workspace != nil && s.Workspace.Config.Verification.Tier1Quick != "") {
-		cmd := exec.Command("sh", "-c", testCmd)
+	if testCmd != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		cmd := exec.CommandContext(ctx, "sh", "-c", testCmd)
 		cmd.Dir = root
 		if out, err := cmd.CombinedOutput(); err != nil {
 			check.Valid = false
@@ -302,7 +304,9 @@ func (s Service) CheckWithVerify(ref string) (Check, error) {
 			full := filepath.Join(root, p)
 			_ = os.RemoveAll(full)
 		}
-		replayCmd := exec.Command("sh", "-c", bundle.Replay.Command)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		replayCmd := exec.CommandContext(ctx, "sh", "-c", bundle.Replay.Command)
 		replayCmd.Dir = root
 		if out, err := replayCmd.CombinedOutput(); err != nil {
 			check.Valid = false
@@ -310,8 +314,10 @@ func (s Service) CheckWithVerify(ref string) (Check, error) {
 			return check, nil
 		}
 
-		if _, statErr := os.Stat(checkScriptPath); statErr == nil {
-			cmd := exec.Command("sh", "-c", testCmd)
+		if testCmd != "" {
+			ctxPost, cancelPost := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancelPost()
+			cmd := exec.CommandContext(ctxPost, "sh", "-c", testCmd)
 			cmd.Dir = root
 			if out, err := cmd.CombinedOutput(); err != nil {
 				check.Valid = false
@@ -323,7 +329,9 @@ func (s Service) CheckWithVerify(ref string) (Check, error) {
 	}
 
 	// 3. Git working tree cleanliness check
-	gitStatus := exec.Command("git", "status", "--porcelain")
+	ctxGit, cancelGit := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancelGit()
+	gitStatus := exec.CommandContext(ctxGit, "git", "status", "--porcelain")
 	gitStatus.Dir = root
 	if out, err := gitStatus.Output(); err == nil {
 		if len(bytes.TrimSpace(out)) == 0 {

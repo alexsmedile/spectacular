@@ -483,7 +483,7 @@ supersedes: ""
 	},
 	{
 		Words:         []string{"guard"},
-		Arguments:     "<mission-ref>/<objective-ref> [--watch] [--json] -- <command...>",
+		Arguments:     "<mission-ref>/<objective-ref> [--watch] [--exec <command>] [--json] [-- <command...>]",
 		ArgumentShape: atLeastOne,
 		JSONSchema:    "spectacular.guard.v2",
 		Effect:        ReadOnly,
@@ -719,7 +719,37 @@ func (r Runner) Run(args []string) int {
 			break
 		}
 		if verifyMode {
-			value, err = service.CheckWithVerify(targetRef)
+			checkVal, checkErr := service.CheckWithVerify(targetRef)
+			if checkErr == nil {
+				if bundle, loadErr := missionbundle.Load(ws, targetRef); loadErr == nil && len(bundle.Objectives) > 0 {
+					totalTokens := 0
+					counted := 0
+					for _, obj := range bundle.Objectives {
+						if c, compileErr := charter.Compile(ws, bundle.Ref, obj.Ref, nil); compileErr == nil && c != nil {
+							if count, countErr := tokenizer.Count(c.RenderPrompt()); countErr == nil {
+								totalTokens += count
+								counted++
+							}
+						}
+					}
+					if counted > 0 {
+						avg := totalTokens / counted
+						status := "within-sweet-spot"
+						if avg > 900 {
+							status = "over-budget"
+						} else if avg > 600 {
+							status = "under-ceiling"
+						}
+						checkVal.TokenEfficiency = &missionbundle.TokenEfficiency{
+							TotalTokens:    totalTokens,
+							AverageTokens:  avg,
+							ObjectiveCount: counted,
+							BudgetStatus:   status,
+						}
+					}
+				}
+			}
+			value, err = checkVal, checkErr
 		} else {
 			value, err = service.Check(targetRef)
 		}
@@ -1072,6 +1102,7 @@ func (r Runner) Run(args []string) int {
 	case opGuard:
 		targetRef := ""
 		watchMode := false
+		execCmd := ""
 		var cmdArgs []string
 		inCmd := false
 		for i := 0; i < len(rest); i++ {
@@ -1082,15 +1113,18 @@ func (r Runner) Run(args []string) int {
 				inCmd = true
 			} else if arg == "--watch" {
 				watchMode = true
+			} else if arg == "--exec" && i+1 < len(rest) {
+				execCmd = rest[i+1]
+				i++
 			} else if targetRef == "" {
 				targetRef = arg
 			}
 		}
-		if targetRef == "" || len(cmdArgs) == 0 {
-			err = domain.NewRefusal(domain.RefusalInvalidReference, targetRef, "expected spectacular guard <mission-ref>/<objective-ref> [--watch] -- <command...>", nil)
+		if targetRef == "" || (len(cmdArgs) == 0 && execCmd == "") {
+			err = domain.NewRefusal(domain.RefusalInvalidReference, targetRef, "expected spectacular guard <mission-ref>/<objective-ref> [--watch] [--exec <command>] -- <command...>", nil)
 			break
 		}
-		value, err = guard.Run(ws, targetRef, watchMode, cmdArgs)
+		value, err = guard.Run(ws, targetRef, watchMode, execCmd, cmdArgs)
 	}
 	if err != nil {
 		return r.refuse(jsonMode, invoked, err)
@@ -1525,6 +1559,10 @@ func renderHuman(writer io.Writer, value any) {
 				}
 			}
 			fmt.Fprintln(writer, "  any other verb is undeclared and refused")
+		}
+		if item.TokenEfficiency != nil {
+			fmt.Fprintf(writer, "TOKEN EFFICIENCY: avg %d tokens/obj (%s, %d objectives total %d tokens)\n",
+				item.TokenEfficiency.AverageTokens, item.TokenEfficiency.BudgetStatus, item.TokenEfficiency.ObjectiveCount, item.TokenEfficiency.TotalTokens)
 		}
 	case missionbundle.Objective:
 		fmt.Fprintf(writer, "%s — %s (%s)\n", item.Ref, item.Outcome, item.Status)

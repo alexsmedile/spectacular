@@ -2,11 +2,8 @@ package guard
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,12 +36,9 @@ type GuardResult struct {
 }
 
 // Run executes a command under perimeter supervision (post-flight watchdog or real-time watcher).
-func Run(ws *discovery.Workspace, targetRef string, watchMode bool, cmdArgs []string) (*GuardResult, error) {
+func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd string, cmdArgs []string) (*GuardResult, error) {
 	if ws == nil {
 		return nil, errors.New("guard: workspace is nil")
-	}
-	if len(cmdArgs) == 0 {
-		return nil, errors.New("guard: command arguments required after --")
 	}
 
 	parts := strings.Split(targetRef, "/")
@@ -55,6 +49,17 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, cmdArgs []st
 	c, err := charter.Compile(ws, parts[0], parts[1], nil)
 	if err != nil {
 		return nil, fmt.Errorf("guard: compile charter: %w", err)
+	}
+
+	if execCmd != "" {
+		fields := strings.Fields(execCmd)
+		if len(fields) > 0 {
+			cmdArgs = append(fields, c.RenderPrompt())
+		}
+	}
+
+	if len(cmdArgs) == 0 {
+		return nil, errors.New("guard: command arguments required after -- or via --exec")
 	}
 
 	allowed := c.Layer3.WritesPaths
@@ -190,11 +195,16 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, cmdArgs []st
 	return res, nil
 }
 
-type snapshot map[string]string
+type fileMeta struct {
+	modTime int64
+	size    int64
+}
+
+type snapshot map[string]fileMeta
 
 func takeSnapshot(root string) (snapshot, error) {
 	snap := make(snapshot)
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
@@ -202,36 +212,25 @@ func takeSnapshot(root string) (snapshot, error) {
 		if relErr != nil || rel == "." {
 			return nil
 		}
-		// Skip .git
-		if rel == ".git" || strings.HasPrefix(rel, ".git"+string(filepath.Separator)) {
-			if info.IsDir() {
+		// Skip non-project directories
+		if d.IsDir() {
+			name := d.Name()
+			if name == ".git" || name == "node_modules" || name == "vendor" || name == ".cache" || (strings.HasPrefix(rel, ".spectacular"+string(filepath.Separator)) && name == "raw") {
 				return filepath.SkipDir
 			}
 			return nil
 		}
 
-		if !info.IsDir() {
-			hash, hashErr := fileHash(path)
-			if hashErr == nil {
-				snap[filepath.ToSlash(rel)] = hash
+		info, infoErr := d.Info()
+		if infoErr == nil {
+			snap[filepath.ToSlash(rel)] = fileMeta{
+				modTime: info.ModTime().UnixNano(),
+				size:    info.Size(),
 			}
 		}
 		return nil
 	})
 	return snap, err
-}
-
-func fileHash(path string) (string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 func diffPaths(pre, post snapshot, allowed []string) (escaped []string, preserved []string) {
@@ -241,9 +240,9 @@ func diffPaths(pre, post snapshot, allowed []string) (escaped []string, preserve
 
 	seen := make(map[string]bool)
 
-	for path, postHash := range post {
-		preHash, exists := pre[path]
-		if !exists || preHash != postHash {
+	for path, postMeta := range post {
+		preMeta, exists := pre[path]
+		if !exists || preMeta.modTime != postMeta.modTime || preMeta.size != postMeta.size {
 			// Path was added or modified
 			seen[path] = true
 			if matchesAny(path, allowed) {

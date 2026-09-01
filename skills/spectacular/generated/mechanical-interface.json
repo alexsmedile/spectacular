@@ -148,7 +148,7 @@
     },
     {
       "command": "spectacular guard",
-      "arguments": "<mission-ref>/<objective-ref> [--watch] [--json] -- <command...>",
+      "arguments": "<mission-ref>/<objective-ref> [--watch] [--exec <command>] [--json] [-- <command...>]",
       "schema": "spectacular.guard.v2",
       "effect": "read-only"
     }

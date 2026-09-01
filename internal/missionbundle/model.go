@@ -303,6 +303,15 @@ type Check struct {
 	// using the legacy `human_ref:` spelling. A notice never makes Valid false:
 	// frozen records are not rewritten to finish a rename.
 	Notices []string `json:"notices,omitempty"`
+	// TokenEfficiency reports prompt budget utilization across objectives.
+	TokenEfficiency *TokenEfficiency `json:"token_efficiency,omitempty"`
+}
+
+type TokenEfficiency struct {
+	TotalTokens    int    `json:"total_tokens"`
+	AverageTokens  int    `json:"average_tokens"`
+	ObjectiveCount int    `json:"objective_count"`
+	BudgetStatus   string `json:"budget_status"` // "within-sweet-spot", "under-ceiling", "over-budget"
 }
 
 type Result struct {

@@ -14,7 +14,7 @@ func TestGuardPassesOnCleanWrites(t *testing.T) {
 	defer cleanup()
 
 	// Write within allowed path src/
-	res, err := Run(ws, "M1/O1", false, []string{"sh", "-c", "echo 'package main' > src/app.go"})
+	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", "echo 'package main' > src/app.go"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -31,7 +31,7 @@ func TestGuardSurgicalQuarantinePreservesValidWork(t *testing.T) {
 	defer cleanup()
 
 	// Subagent writes BOTH valid code in src/ and rogue .gitignore
-	res, err := Run(ws, "M1/O1", false, []string{"sh", "-c", "echo 'package main' > src/valid.go && echo '*.db' > .gitignore"})
+	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", "echo 'package main' > src/valid.go && echo '*.db' > .gitignore"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -62,8 +62,8 @@ func TestGuardRealtimeWatcherKillsRogueProcess(t *testing.T) {
 	ws, cleanup := setupTestWorkspace(t)
 	defer cleanup()
 
-	// Script that writes rogue file and sleeps
-	res, err := Run(ws, "M1/O1", true, []string{"sh", "-c", "echo 'evil' > evil.log && sleep 5"})
+	// Script that writes rogue file and sleeps briefly
+	res, err := Run(ws, "M1/O1", true, "", []string{"sh", "-c", "echo 'evil' > evil.log && sleep 0.3"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -77,6 +77,22 @@ func TestGuardRealtimeWatcherKillsRogueProcess(t *testing.T) {
 	// Verify evil.log was deleted
 	if _, err := os.Stat(filepath.Join(ws.Root, "evil.log")); !os.IsNotExist(err) {
 		t.Fatalf("expected evil.log to be rolled back and removed")
+	}
+}
+
+func TestGuardExecShorthandPipesPrompt(t *testing.T) {
+	ws, cleanup := setupTestWorkspace(t)
+	defer cleanup()
+
+	res, err := Run(ws, "M1/O1", false, "echo", nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != "pass" {
+		t.Fatalf("expected pass, got %s", res.Status)
+	}
+	if !strings.Contains(res.Output, "# Objective: M1/O1") {
+		t.Fatalf("expected output to receive prompt, got:\n%s", res.Output)
 	}
 }
 

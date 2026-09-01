@@ -31,4 +31,4 @@ Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1
 | `spectacular charter` | `<mission-ref>/<objective-ref> [sources...] [--prompt] [--json]` | `spectacular.charter.show.v2` | `read-only` |
 | `spectacular decide` | `[<decision.md|->] [--title <title>] [--disposition <accepted|rejected|deferred|superseded>] [--rationale <rationale>] [--actor <name>] [--supersedes <ref>] [--json]` | `spectacular.decision.record.v2` | `mutating` |
 | `spectacular init` | `[<path>] [--name <name>] [--json]` | `spectacular.init.v2` | `mutating` |
-| `spectacular guard` | `<mission-ref>/<objective-ref> [--watch] [--json] -- <command...>` | `spectacular.guard.v2` | `read-only` |
+| `spectacular guard` | `<mission-ref>/<objective-ref> [--watch] [--exec <command>] [--json] [-- <command...>]` | `spectacular.guard.v2` | `read-only` |

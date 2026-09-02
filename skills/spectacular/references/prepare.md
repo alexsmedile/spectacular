@@ -30,13 +30,18 @@ objectives:
     claims: [priority-scheduling]
 ```
 
-## 4. Negative Constraints (DO NOT)
+## 4. Planning Hierarchy: Block (`B<N>`) vs. Mission (`M<N>`)
+- **Block (`B<N>`)**: A thematic thinking domain / planning cluster on a Campaign flight plan (e.g. `B11: Orchestrator Layer`). **Non-governing**: Open-ended circle grouping ideas and trade-offs. Holds no execution authority.
+- **Mission (`M<N>`)**: An atomic, sovereign **Action Contract** (e.g. `M18: Worktree Manager`). **Governing**: Holds frozen claims, Git baselines, repair budgets, and deterministic proof.
+
+## 5. Negative Constraints (DO NOT)
+- **DO NOT** treat a Block (`B<N>`) as an executable Mission; do not attempt to activate, freeze fingerprints, or bind runs to a Block.
 - **DO NOT** conduct multi-turn unprompted grilling. For Interview Mode, batch choices into Tier 2/3 cards (numbered questions, lettered options with recommended defaults) and confirm once.
 - **DO NOT** create multi-folder mission directories for routine code (Tier 1 Single-File `M<N>.md` is default).
 - **DO NOT** write Proposals for obvious tasks; draft directly to Mission or Decision.
 - **DO NOT** echo YAML or generated mission contents into chat (Silent Mutation).
 
-## 5. One-Shot Genesis Flow
+## 6. One-Shot Genesis Flow
 1. Run `spectacular init`.
 2. Author `.spectacular/PROJECT.md` (Boundaries & Constraints).
 3. Record key technical choices via `spectacular decide --title ...`.

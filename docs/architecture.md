@@ -183,13 +183,22 @@ Spectacular structures work across four distinct strategic altitudes:
 
 1. **`PROJECT.md` (Anchor)**: System identity, mission, core boundaries, and strict non-goals.
 2. **`ROADMAP.md` (Anchor)**: Macro-level product evolution and multi-quarter strategic horizons (6–18 months).
-3. **Campaigns (`.spectacular/campaigns/`)**: Mid-term strategic arcs (2–6 weeks) with 4–10 sequenced blocks unblocking one milestone.
+3. **Campaigns (`.spectacular/campaigns/`)**: Mid-term strategic arcs (2–6 weeks) with 4–10 sequenced **Blocks (`B<N>`)** unblocking one milestone.
 4. **Missions (`.spectacular/missions/`)**: Short-term atomic execution envelopes (1–3 days) with frozen verifiable claims and failable proof.
+
+### The Core Distinction: Block (`B<N>`) vs. Mission (`M<N>`)
+
+- **Block (`B<N>`) = Thematic Thinking Domain (Open Circle)**:
+  - A conceptual planning container on a Campaign flight plan (e.g. `B11: Orchestrator Layer`).
+  - **Non-governing**: Holds no baseline commit, no repair budget, and no execution authority. It clusters ideas, trade-offs, and dependency waves across multiple sessions.
+- **Mission (`M<N>`) = Action Contract (Execution Envelope)**:
+  - An atomic, sovereign execution contract (e.g. `M18: Ship Worktree Manager`).
+  - **Governing**: Holds frozen completion claims, Git baselines, repair budgets, and deterministic verification commands. Activated only when work is bounded and ready to execute.
 
 ## Campaigns are plans, not records
 
 A Campaign is an optional Markdown planning map in `.spectacular/campaigns/`.
-It can sequence independent roadmap blocks and link candidate or active
+It sequences conceptual roadmap blocks (`B<N>`) and link candidate or active
 Missions, but it grants no authority and is intentionally excluded from typed
 CLI validation, identities, fingerprints, and lifecycle transitions. Campaigns
 are mutable; a Mission's frozen envelope remains the execution authority.

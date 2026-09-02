@@ -24,7 +24,7 @@ func TestFullVerificationGateRunsAcceptanceBeforeReleaseChecks(t *testing.T) {
 func TestReleaseWorkflowVerifiesBeforePublishing(t *testing.T) {
 	workflow := readRepositoryFile(t, ".github", "workflows", "release.yml")
 	fullGate := strings.Index(workflow, "run: bash test/verify.sh all")
-	publish := strings.Index(workflow, "uses: softprops/action-gh-release@v2")
+	publish := strings.Index(workflow, "uses: softprops/action-gh-release")
 	if fullGate < 0 || publish < 0 {
 		t.Fatalf("release workflow must run the full gate and publish a release:\n%s", workflow)
 	}

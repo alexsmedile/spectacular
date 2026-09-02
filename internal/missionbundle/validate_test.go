@@ -358,3 +358,32 @@ func FuzzObjectiveDependencyGraph(f *testing.F) {
 		}
 	})
 }
+
+func TestMissionValidate_DraftAndSupersededStatuses(t *testing.T) {
+	ws, err := discovery.Open(".")
+	if err != nil {
+		t.Fatalf("discovery.Open failed: %v", err)
+	}
+	m6, err := Load(ws, "M6")
+	if err != nil {
+		t.Fatalf("failed to load M6: %v", err)
+	}
+
+	// Test draft status (unactivated, no baseline/runs)
+	draftMission := cloneBundle(t, m6)
+	draftMission.Status = "draft"
+	draftMission.Baseline = nil
+	draftMission.Activation = nil
+	draftMission.Run = nil
+	draftMission.Runs = nil
+	if err := validateSchema(ws, draftMission); err != nil {
+		t.Errorf("validateSchema failed for draft mission: %v", err)
+	}
+
+	// Test superseded status (archived/superseded)
+	supersededMission := cloneBundle(t, m6)
+	supersededMission.Status = "superseded"
+	if err := validateSchema(ws, supersededMission); err != nil {
+		t.Errorf("validateSchema failed for superseded mission: %v", err)
+	}
+}

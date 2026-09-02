@@ -98,13 +98,13 @@ func validateSchema(_ *discovery.Workspace, b *Bundle) error {
 	if b.Review != "automatic" && b.Review != "clustered" && b.Review != "independent" {
 		return invalid("review", "must be automatic, clustered, or independent")
 	}
-	if b.Status != "defined" && b.Status != "active" && b.Status != "completed" {
-		return invalid("status", "compact Mission status must be defined, active, or completed")
+	if b.Status != "draft" && b.Status != "defined" && b.Status != "active" && b.Status != "completed" && b.Status != "superseded" && b.Status != "withdrawn" && b.Status != "resolved" {
+		return invalid("status", "compact Mission status must be draft, defined, active, completed, superseded, withdrawn, or resolved")
 	}
-	if b.Status == "defined" && (b.Baseline != nil || b.Activation != nil || b.Run != nil || len(b.Runs) != 0) {
-		return invalid("status", "defined Mission must not contain baseline, activation, or Run state")
+	if (b.Status == "draft" || b.Status == "defined") && (b.Baseline != nil || b.Activation != nil || b.Run != nil || len(b.Runs) != 0) {
+		return invalid("status", fmt.Sprintf("%s Mission must not contain baseline, activation, or Run state", b.Status))
 	}
-	if b.Status != "defined" && (b.Baseline == nil || b.Activation == nil || (b.Run == nil && len(b.Runs) == 0)) {
+	if (b.Status == "active" || b.Status == "completed") && (b.Baseline == nil || b.Activation == nil || (b.Run == nil && len(b.Runs) == 0)) {
 		return invalid("status", "active or completed Mission requires baseline, activation, and Run state")
 	}
 	return nil
@@ -181,7 +181,7 @@ func validateContract(ws *discovery.Workspace, b *Bundle) error {
 		// shifting under work in flight, and nothing is in flight here, so the
 		// change is reported rather than refused. Refusing it offered no legal
 		// correction — a completed Mission is never rewritten to satisfy it.
-		if b.Status == "completed" {
+		if b.Status == "completed" || b.Status == "resolved" || b.Status == "superseded" || b.Status == "withdrawn" {
 			b.contractDrift = actual
 			return nil
 		}
@@ -191,7 +191,7 @@ func validateContract(ws *discovery.Workspace, b *Bundle) error {
 }
 
 func validateBaseline(ws *discovery.Workspace, b *Bundle) error {
-	if b.Status == "defined" {
+	if b.Status == "defined" || b.Status == "draft" || ((b.Status == "superseded" || b.Status == "withdrawn" || b.Status == "resolved") && b.Baseline == nil) {
 		return nil
 	}
 	if !commitPattern.MatchString(b.Baseline.Commit) || strings.TrimSpace(b.Baseline.Branch) == "" {
@@ -206,7 +206,7 @@ func validateBaseline(ws *discovery.Workspace, b *Bundle) error {
 }
 
 func validateActivation(_ *discovery.Workspace, b *Bundle) error {
-	if b.Status == "defined" {
+	if b.Status == "defined" || b.Status == "draft" || ((b.Status == "superseded" || b.Status == "withdrawn" || b.Status == "resolved") && b.Activation == nil) {
 		return nil
 	}
 	if b.Activation.By == "" || !timestamp(b.Activation.At) || !shaPattern.MatchString(b.Activation.Fingerprint) {
@@ -478,7 +478,7 @@ func validateDAG(_ *discovery.Workspace, b *Bundle) error {
 }
 
 func validateRun(_ *discovery.Workspace, b *Bundle) error {
-	if b.Status == "defined" {
+	if b.Status == "defined" || b.Status == "draft" || ((b.Status == "superseded" || b.Status == "withdrawn" || b.Status == "resolved") && b.Run == nil && len(b.Runs) == 0) {
 		return nil
 	}
 	runs := allRuns(b)

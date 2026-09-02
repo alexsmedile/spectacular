@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+## 2.16.0 — 2026-09-03
+
+### Added
+
+- **Gated Pipeline Orchestration & 4-Tier Graduated Governance (D30)**:
+  - Transitioned Spectacular from a rigid mission-bound model into a thoughtful Project Manager.
+  - **4-Tier Ladder (`governance:`)**: `inline` (Tier 0 — ephemeral direct pair-programming), `board` (Tier 1 — non-governing `type: WorkBoard` dependency waves), `brief` (Tier 2 — temporary teammate in `linked-worktree` with a Dispatch Brief), and `mission` (Tier 3 — formal durable contracts & charters).
+  - **Gated Waves**: Sequential execution by default; parallel side sessions earned only after interface/contract gates lock.
+  - **"Returned ≠ Done"**: Side sessions emit Return Receipts (`commit`, `tests_passed`, `diff_stat`, `blockers`); Lead alone merges and runs project-wide verification.
+  - **Physical Workspace Modes**: Standardized `lead-checkout`, `linked-worktree` (`.worktrees/<slug>`), `sandbox`, and `read-only`.
+- **Deterministic Worktree Manager (`internal/worktree/`)**:
+  - `Provision`: Safely creates `.worktrees/<slug>` on dedicated branches.
+  - `IsDirty`: Inspects uncommitted changes before pruning.
+  - `Prune`: Conservative cleanup refusing to delete dirty worktrees without confirmation.
+- **Mission Schema Expansion**:
+  - `mission.v2` now supports `draft`, `defined`, `active`, `completed`, `superseded`, `withdrawn`, and `resolved` statuses across validators and domain models.
+- **Charter Write-Path Scoping**:
+  - Layer 3 of `spectacular charter` now constrains workers strictly to objective-specific reservations rather than dumping the entire Mission's mechanical write perimeter.
+- **Atlas Projections**:
+  - Added `.spectacular/atlas/session-orchestration-and-lifecycle.md` and `.spectacular/atlas/governance-tiers-and-cadence.md`.
+
 ## 2.15.0 — 2026-09-02
 
 ### Added

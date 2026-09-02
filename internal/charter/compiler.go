@@ -142,9 +142,19 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 		Gaps:      gaps,
 	}
 
-	// Build Layer 3
+	// Build Layer 3: Scope writable paths to objective-specific reservations if present
+	writesPaths := bundle.Scope.Mechanical
+	for _, hPtr := range bundle.Handoffs {
+		if hPtr.Document != nil && len(hPtr.Document.Writes) > 0 {
+			if strings.Contains(hPtr.Document.Task, targetObj.Ref) || strings.Contains(hPtr.Document.Title, targetObj.Ref) {
+				writesPaths = hPtr.Document.Writes
+				break
+			}
+		}
+	}
+
 	layer3 := Layer3{
-		WritesPaths:    bundle.Scope.Mechanical,
+		WritesPaths:    writesPaths,
 		AllowedActions: bundle.Authority.Operator,
 		RequiresOwner:  bundle.Authority.RequiresOwner,
 		Stops:          bundle.Stops,

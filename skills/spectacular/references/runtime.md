@@ -1,36 +1,61 @@
 # Runtime & Delegation Micro-Kernel
 
 ## 1. Trigger Context
-Orchestrator packaging subagent charters, supervised dispatch, or cross-party handoffs.
+Orchestrator managing multi-step dependency waves, Dispatch Briefs, worktree side sessions, or formal Mission Charters and Handoffs.
 
 ## 2. CLI Palette
 ```bash
-spectacular charter <ref>[/<obj>] --json             # Compile context sandwich (≤300 tok)
-spectacular handoff record <ref> draft.md --by <actor> # Record cross-session transfer
+# Tier 2: Plain Briefs & Worktrees (Zero CLI Churn)
+# Lead provides Dispatch Brief in chat; side worker runs in .worktrees/<slug>
+
+# Tier 3: Governed Charters & Handoffs (When Formal Boundaries Are Required)
+spectacular charter <ref>[/<obj>] --json             # Compile context sandwich (≤1200 tok)
+spectacular handoff record <ref> draft.md --by <actor> # Record immutable cross-party transfer
 ```
 
-## 3. Supervised Dispatch (Zero Framework Lore for Workers)
-Dispatched workers receive strictly:
-- **Code Paths**: Assigned files (`allowed_changed_paths`).
-- **Decision Constraints**: Excerpts from applicable `D<N>` records.
-- **Verification Command**: The test command (e.g. `sh tests/check.sh`).
-- **Stop Triggers**: Stop immediately on unexpected design fork.
+## 3. The 4 Governance Tiers (`governance:`)
+Answers: *"What governs this slice of work?"*
+- **`governance: inline` (Tier 0)**: Direct pair programming in `lead-checkout`. Zero governance files.
+- **`governance: board` (Tier 1)**: Gated dependency pipeline on `type: WorkBoard`. Lead tracks order & gates.
+- **`governance: brief` (Tier 2)**: Temporary teammate in `linked-worktree` with a plain-English Dispatch Brief.
+- **`governance: mission` (Tier 3)**: Full immutable `M<N>.md` contract, Handoff, and compiled Charter.
 
+## 4. Physical Execution Workspace Modes
+- **`lead-checkout`**: Primary working tree for the Lead Orchestrator and strictly sequential steps.
+- **`linked-worktree`**: Isolated git worktree (`.worktrees/<slug>`) on a dedicated branch for one writer.
+- **`sandbox`**: Disposable container or experiment branch with zero merge authority.
+- **`read-only`**: Non-mutating scout or reviewer thread inspecting diffs.
+
+## 5. The Dispatch Brief (Default for Tier 2)
+Dispatched workers receive a self-contained brief:
+- **Goal & Prerequisite**: What to build and which upstream interface gate has locked.
+- **Physical Workspace**: Worktree path and branch name.
+- **Allowed Writable Paths**: Exact file subtrees the worker may touch.
+- **Verification Command**: Command proving completion (e.g. `go test -v ./internal/parser/...`).
+- **Stop / Blocked Condition**: When to halt and return a blocker receipt.
+
+```markdown
+### Dispatch Brief Sample
+Goal: Implement recursive AST parser (internal/parser/).
+Prerequisite: AST types locked at commit a8f12c (Gate 1 passed).
+Workspace: linked-worktree at .worktrees/parser-engine (branch: ast-redesign/parser-engine).
+Writable Paths: internal/parser/**
+Forbidden Paths: .spectacular/**, cmd/**
+Done When: go test -race ./internal/parser/... passes.
+If Blocked: Halt, return current diff, and state the unresolved interface constraint.
+```
+
+## 6. The Session Lifecycle & Invariants
 ```text
-# Sample Dispatch Payload
-Task: Implement SQLite Storage Engine (src/storage.py).
-Allowed Paths: src/storage.py, src/db.py
-Forbidden Paths: .spectacular/**, tests/**
-Constraints from D12: Use Python built-in sqlite3. WAL mode enabled.
-Verification Command: sh tests/check.sh
-Escalation: Halt if schema migrations require external tooling.
+planned ──► ready ──► active ──► returned ──► integrated ──► verified
+                        │
+                        └──► blocked / escalated (returns to Lead)
 ```
+- **"Returned ≠ Done"**: A side worker never marks an item complete. It emits a **Return Receipt** (`commit`, `tests_passed`, `diff_stat`, `blockers`). The Lead alone reviews, merges, and verifies.
+- **Heartbeat & Leases**: Active reservations release upon an explicit `returned`/`aborted` receipt or after a heartbeat timeout (default: 15m).
+- **Conservative Pruning**: Worktrees (`.worktrees/<slug>`) are pruned only after the Lead records `integrated` or `aborted` and confirms uncommitted diffs are safe.
 
-## 4. The 1-Turn Escalation Protocol
-1. **Worker Halts**: Stop immediately on unrecorded fork. Send 1-line query to Orchestrator.
-2. **Orchestrator Decides**: Orchestrator runs `spectacular decide --title "<Title>" --disposition "<Choice>"`.
-3. **Worker Resumes**: Orchestrator returns decision ID (`D<N>`); worker resumes with locked choice.
-
-## 5. Negative Constraints (DO NOT)
+## 7. Negative Constraints (DO NOT)
+- **DO NOT** dispatch parallel workers before upstream contract gates are locked.
 - **DO NOT** make workers manage `.spectacular/` files or create runs/checkpoints.
-- **DO NOT** dispatch subagents with large prompt dumps (keep charter $\le 300\text{--}500$ tokens).
+- **DO NOT** dispatch subagents with unbounded prompt dumps (keep compiled charters $\le 1{,}200$ tokens).

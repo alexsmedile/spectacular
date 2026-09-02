@@ -4,22 +4,31 @@ How a piece of work moves through Spectacular.
 
 ![The Mission lifecycle](diagrams/lifecycle.svg)
 
-## The Lean 3-Layer Autopilot Model
+## The Project Manager & Graduated Governance Model
 
-Spectacular provides an ultra-lean, token-efficient execution lifecycle with minimal ceremony:
+Spectacular operates as a calm Project Manager rather than a rigid form-filler. Multi-step work progresses in sequential dependency waves by default, and parallel side sessions in isolated Git worktrees are earned only after upstream contract gates pass.
 
-1. **Layer 1: Living Ground Truth & Decisions**: `PROJECT.md` (boundaries/non-goals) + `.spectacular/decisions/` (bulk-ideated architectural choices locked with `spectacular decide`).
-2. **Layer 2: Topological Flight Plan**: Multi-session roadmap in `.spectacular/campaigns/flight-plan.md` (4–8 macro milestone blocks).
-3. **Layer 3: Single-File Execution Envelopes**: Compact, self-contained Mission files (`missions/M<N>.md`, $\le 500$ tokens) with inline deliverables checklist and fail-fast stop triggers.
+### The 4-Tier Graduated Governance Ladder (`governance:`)
 
-### Mission Layout & Sub-Folder Selection Protocol
-- **Tier 1: Single-File (90% Default)**: `M<N>.md` only. Routine features, bug fixes, refactors where tests passing (`exit 0`) is the proof. Zero sub-folders.
-- **Tier 2: Hybrid Earned (~8%)**: `M<N>.md` + 1 earned sub-record (e.g. `evidence/` for live third-party API receipts, or `objectives/` for parallel worktrees).
-- **Tier 3: Full Governed Bundle (~2%)**: High-stakes zero-downtime DB cutovers, auth/crypto, or payments requiring formal checkpoints (`checkpoints/`) or independent adversarial audit (`reviews/`).
+Answers: *"What governs this slice of work?"*
 
-### Dual-Lane Orchestration: Supervised Dispatch vs. Full Handoff
-- **Supervised Dispatch (90% Default)**: In-session subagent delegation. The Orchestrator retains Mission ownership, compiles an immediate prompt via `spectacular charter <mission>/<objective> --prompt` (400–600 token sweet spot containing only objectives, authorized write paths, non-goals, interface definitions, and the test command), and dispatches to a subagent worker under `spectacular guard` without extra governance files.
-- **Full Ownership Handoff (10% Transfer)**: Explicit ownership transfers across distinct sessions, human engineers, or different AI harnesses recorded via `spectacular handoff record`.
+- **`governance: inline` (Tier 0)**: Direct pair programming in `lead-checkout`. Zero governance files.
+- **`governance: board` (Tier 1)**: Gated dependency pipeline on non-governing `type: WorkBoard`. The Lead tracks gates, dependencies, and blockers.
+- **`governance: brief` (Tier 2)**: Temporary teammate in isolated `linked-worktree` (`.worktrees/<slug>`), briefed with a plain-English Dispatch Brief.
+- **`governance: mission` (Tier 3)**: Full immutable `M<N>.md` contract, formal Reviews, Evidence packages, and compiled Charters for high-stakes milestones.
+
+### Gated Dependency Waves (Sequential by Default)
+
+1. **Frame & Contract (Lead)**: Define interfaces and types in `lead-checkout`.
+2. **Decision Gate**: Lock the interface contract (via `spectacular decide` or agreed types).
+3. **Dispatch Side Sessions**: Launch independent workers in dedicated `linked-worktree` checkouts.
+4. **"Returned ≠ Done"**: Workers emit Return Receipts (`commit`, `tests_passed`, `diff_stat`, `blockers`).
+5. **Integrate & Verify (Lead)**: The Lead merges branches, runs project acceptance tests, and conservatively prunes worktrees.
+
+### Dual-Lane Delegation: Dispatch Briefs vs. Compiled Charters
+- **Dispatch Brief (Tier 2 Default)**: A plain-English brief containing goal, prerequisite commit, workspace path/branch, writable paths, test command, and stop trigger.
+- **Compiled Charter (Tier 3 Formal)**: A token-budgeted ($\le 1200$ tokens) mechanical context sandwich compiled via `spectacular charter <mission>/<objective>` for strict isolation, untrusted sandboxes, or cross-harness handoffs.
+
 
 ### The 3-Tier Question Escalator
 - **Tier 1: Optimistic Consent**: Non-blocking 1-line statement of defaults for low-risk implementation choices (`"Proceeding with X unless you prefer Y"`).

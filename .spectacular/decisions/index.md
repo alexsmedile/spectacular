@@ -26,6 +26,7 @@
 | `D28-dynamic-operating-dial-and-anchors` | Decision | Codify the Dynamic Operating Dial, 5 Foundational Anchors, and Tiered Verification Protocol | `.spectacular/decisions/D28-dynamic-operating-dial-and-anchors.md` |
 | `D29-banned-synonyms-pattern-pass-and-guardrail-feedback-loop` | Decision | Codify Banned Synonyms Invariant, Architectural Pattern Pass, and Post-Mission Guardrail Feedback Loop | `.spectacular/decisions/D29-banned-synonyms-pattern-pass-and-guardrail-feedback-loop.md` |
 | `D3-4hrlrf` | Decision | Authorize the Spectacular efficiency Proposal | `.spectacular/decisions/D3-4hrlrf.md` |
+| `D30-gated-pipeline-work-boards-and-graduated-orchestration` | Decision | Adopt Gated Pipeline Orchestration, Non-Governing Work Boards, and Graduated Governance | `.spectacular/decisions/D30-gated-pipeline-work-boards-and-graduated-orchestration.md` |
 | `D4-xg7z3u` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D4-xg7z3u.md` |
 | `D5-i3mhkm` | Decision | Authorize the Spectacular efficiency Mission | `.spectacular/decisions/D5-i3mhkm.md` |
 | `D6-5e3xke` | Decision | Authorize M3 implementation Evidence | `.spectacular/decisions/D6-5e3xke.md` |

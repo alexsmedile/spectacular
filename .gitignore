@@ -36,6 +36,7 @@ _snapshots/
 # a tracked file, not this one.
 .claude/settings.json
 .claude/worktrees/
+.worktrees/
 
 # Local working files. TODO.md holds deferred decisions and FEEDBACKS.md holds
 # captured review notes; both are scratch for the owner, not product content.

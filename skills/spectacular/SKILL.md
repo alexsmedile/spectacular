@@ -7,7 +7,7 @@ description: >-
   "flight plan", "autopilot", "supervised dispatch", "handoff", "mission check", or "complete mission".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
-  version: "2.15.0"
+  version: "2.16.0"
 ---
 
 # Spectacular
@@ -54,20 +54,20 @@ Spectacular prioritizes execution over ceremony. Governance is managed strictly 
 4. **Data Structures & Schemas**: Project-specific types/schemas in the codebase (cited in `contracts/`).
 5. **State Machines & Lifecycles**: Non-governing visual Mermaid diagrams in `.spectacular/atlas/`.
 
-### Operating Dial & Single-File Rule
-- **Modular Slices (No Forced Missions)**: Adopt only what is needed. Missions are optional:
-  - *Decisions only*: `spectacular decide --title ...` as standalone zero-ceremony ADRs.
-  - *Interview mode*: Tier 2/3 structured cards to resolve forks into decisions or code without ceremony.
-  - *Projections*: `.spectacular/atlas/` non-governing visual maps; CLI `--graph`/`--timeline` dynamic views.
-  - *Reviews & Retrospectives*: Standalone PR reviews in `.spectacular/reviews/` or reflections in `.spectacular/retrospectives/`.
-  - *Missions*: Use only when formal bounded execution envelopes and frozen proof are earned.
-- **`mode: leverage` (Default)**: Autonomous inner loop; test suite passing (`exit 0`) + clean commit is primary proof.
-- **`mode: control`**: High-risk operations (auth, payments, DB migrations) requiring explicit anchor diff reviews.
-- **Tier 1 (Single-File, 90% Default)**: `M<N>.md` only. Sub-folders are strictly forbidden unless third-party external receipts (`evidence/`) or multi-worktree splits explicitly demand them.
-- **Tier 2 (Hybrid Earned, ~8%)**: `M<N>.md` + only the 1 earned sub-record (`evidence/` or `objectives/`).
-- **Tier 3 (Full Bundle, ~2%)**: High-stakes cutovers requiring formal checkpoints (`checkpoints/`) or dedicated audit (`reviews/`).
+### Graduated Governance Ladder (`governance:`)
+Answers: *"What governs this slice of work?"*
+- **`governance: inline` (Tier 0)**: Direct pair-programming in primary chat (`lead-checkout`). Zero files created.
+- **`governance: board` (Tier 1)**: Gated dependency pipeline on non-governing `type: WorkBoard`. Lead tracks order and gates.
+- **`governance: brief` (Tier 2)**: Temporary teammate in isolated `linked-worktree` with a plain-English Dispatch Brief.
+- **`governance: mission` (Tier 3)**: Full immutable `M<N>.md` contract, Handoff, and compiled Charter for high-stakes milestones.
+
+### Gated Waves & Operating Dial
+- **Gated Waves (Sequential by Default)**: Stay sequential in the Lead session unless tasks have separate inputs, disjoint write scopes, and locked upstream interface contracts. Parallel side sessions are earned only after an interface gate passes.
+- **"Returned ≠ Done"**: Side workers return code, diffs, and test receipts; only the Lead Orchestrator integrates branches and runs project-wide verification.
+- **`mode: leverage` (Default)**: High autonomy; test suite passing (`exit 0`) + clean diff is primary proof.
+- **`mode: control`**: High-precision mode for irreversible cutovers (auth, payments, DB migrations) requiring formal reviews and Evidence.
 - **Minimal Drafts (Zero YAML Boilerplate)**: Prefer direct CLI flags (`spectacular decide --title ...`) or 3-line plans; the CLI auto-populates metadata.
-- **Silent Mutation, One-Line Return**: State the 1-line outcome only (`"Recorded Decision D14. Next: run check.sh"`). Never echo YAML frontmatter or full file bodies into chat.
+- **Silent Mutation, One-Line Return**: State the 1-line outcome only (`"Recorded Decision D30. Next: run preflight"`). Never echo YAML frontmatter or full file bodies into chat.
 - **Drop Collection Catalogs**: Never load catalogs or indexes into agent context. Query the CLI (`spectacular mission show <ref> --json`) directly.
 
 ### GitHub Native Integration Layer (`gh`)
@@ -87,22 +87,24 @@ Invoke `spectacular --version --json` once at startup and require `spectacular.b
 
 | Role | Responsibility | Context Spine | Output |
 |---|---|---|---|
-| **Orchestrator** | Owns workspace truth, decisions (`decide`), & activation | `PROJECT.md` → Phase Ref | Next action or Owner Gate |
-| **Worker / Runner** | Executes code & tests; **ignores governance files** | Lean Charter ($\le 300$ tok) | `exit 0` + Git diff |
+| **Lead (Orchestrator)** | Owns workspace truth, decisions (`decide`), & activation | `PROJECT.md` → Phase Ref | Next action or Owner Gate |
+| **Worker / Side Session** | Executes code & tests in `linked-worktree`; **ignores governance** | Dispatch Brief ($\le 1200$ tok) | Return Receipt + Git diff |
 | **Reviewer** | Inspects code against frozen claims (**Observe ≠ Act**) | Frozen claims → Diff | Structured verdict (`pass`/`fail`) |
 
+- **Physical Workspaces**: `lead-checkout` (Lead/sequential), `linked-worktree` (`.worktrees/<slug>`), `sandbox` (disposable container/spike), `read-only` (reviewer).
 - **Escalation Gate**: When a worker hits an architectural fork, it stops immediately. The Orchestrator records the choice via `spectacular decide` (`D<N>.md`) and resumes the worker.
 - **Workers Never Edit Governance**: Subagents never create `checkpoints/`, `runs/`, or `missions/`.
 - **Channel Separation**: Git is for durable truth (`PROJECT.md`, `decisions/`, `missions/`). Host channels are for ephemeral live coordination (`invoke_subagent`, `send_message`, `conversation://<id>`).
-- **Token Discipline**: Worker prompt envelopes (`spectacular charter`) strictly bounded at $\le 1{,}200$ tokens (`o200k_base`).
+- **Token Discipline**: Worker prompt envelopes strictly bounded at $\le 1{,}200$ tokens (`o200k_base`).
 
 ## 4. Preflight & Verification Matrix
 
-- **Branch Isolation**: Always `git checkout -b <slug>` before mission activation.
+- **Branch Isolation**: Always `git checkout -b <slug>` before mission activation, or dispatch side workers to `.worktrees/<slug>`.
 - **Verification Tiers**:
   - *Tier 1 (Quick)*: Executed by worker on every edit (`verify.sh quick` or domain test).
   - *Tier 0 (Preflight)*: Lint & syntax verification (`verify.sh preflight`).
   - *Tier 2/3 (Acceptance/Release)*: Executed at milestone completion / owner gate.
+
 
 ## 5. Primary Phase Router (Load $\le 1$ Reference)
 

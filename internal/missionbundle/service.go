@@ -1510,13 +1510,13 @@ func (s Service) beginMutation() (Service, func(), error) {
 // lockFile and unlockFile are supplied by service_unix.go and
 // service_windows.go.
 func acquireMutationLock(root string) (func(), error) {
-	directory := filepath.Join(root, ".spectacular", "transactions")
+	directory := filepath.Join(root, ".spectacular", ".engine")
 	if err := os.MkdirAll(directory, 0o755); err != nil {
-		return nil, invalidCause("transactions", "create mutation lock directory", err)
+		return nil, invalidCause("engine", "create mutation lock directory", err)
 	}
 	file, err := os.OpenFile(filepath.Join(directory, ".lock"), os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
-		return nil, invalidCause("transactions", "open mutation lock", err)
+		return nil, invalidCause("engine", "open mutation lock", err)
 	}
 	if err := lockFile(file); err != nil {
 		file.Close()

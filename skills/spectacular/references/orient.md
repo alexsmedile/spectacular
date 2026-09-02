@@ -12,7 +12,7 @@ spectacular init [--name <project>]      # Initialize greenfield workspace
 
 ## 3. Negative Constraints (DO NOT)
 - **DO NOT** preload git history, old closed missions, or whole directory listings.
-- **DO NOT** read `.spectacular/catalog.md` or `index.md` (use CLI `--json` instead).
+- **DO NOT** read catalog caches or `index.md` (use CLI `--json` instead).
 - **DO NOT** combine multiple active missions into one session; pick exactly one.
 - **DO NOT** invent missing anchors; if uninitialized, run `spectacular init` or route to [prepare.md](prepare.md).
 

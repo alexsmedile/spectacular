@@ -25,6 +25,7 @@ func TestSelfHostedIndexesAreRebuildableCollectionCaches(t *testing.T) {
 	for path, expected := range generated {
 		target := filepath.Join(root, filepath.FromSlash(path))
 		if os.Getenv("WRITE_INDEXES") == "1" {
+			_ = os.MkdirAll(filepath.Dir(target), 0755)
 			if err := os.WriteFile(target, expected, 0644); err != nil {
 				t.Fatalf("write generated index %s: %v", path, err)
 			}

@@ -184,8 +184,12 @@ func nextRef(doc *workspace.Document, all map[domain.ID]*workspace.Document, use
 func parentRef(doc *workspace.Document, all map[domain.ID]*workspace.Document) (string, error) {
 	field := ""
 	switch doc.Record.Type {
-	case domain.Objective, domain.Run, domain.Evidence, domain.Handoff, domain.Assessment, domain.Review:
+	case domain.Objective, domain.Run, domain.Evidence, domain.Handoff, domain.Assessment:
 		field = "mission"
+	case domain.Review:
+		if direct, _ := workspace.String(doc, "mission", false); direct != "" {
+			field = "mission"
+		}
 	case domain.Checkpoint:
 		field = "run"
 	case domain.Gap:
@@ -321,7 +325,7 @@ func pathFor(doc *workspace.Document, all map[domain.ID]*workspace.Document, sta
 		// scanning a Mission's reviews/ directory is looking for what was reviewed.
 		mission, err := missionRefFor(doc, ref, all)
 		if err != nil {
-			return "", err
+			return filepath.ToSlash(filepath.Join(".spectacular", "reviews", leaf+"-"+title+".md")), nil
 		}
 		return filepath.ToSlash(filepath.Join(".spectacular", missionDirectory(mission, all, stableDirectories), "reviews", leaf+"-"+title+".md")), nil
 	case domain.Evidence, domain.Decision, domain.Gap, domain.Handoff, domain.Assessment:

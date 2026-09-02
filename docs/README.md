@@ -13,9 +13,12 @@ Product documentation for people using Spectacular. For contributor rules see
 
 ## Concepts
 
-- **[Architecture](architecture.md)** — where Spectacular keeps its files and
-  what the CLI does.
-- **[Process](process.md)** — how a piece of work moves from idea to completion.
+- **[Architecture](architecture.md)** — where Spectacular keeps its files,
+  what the CLI does, and how to adopt surfaces modularly (Decisions, Projections, Interview Mode).
+- **[Process](process.md)** — how a piece of work moves from idea to completion,
+  including standalone interview and unbundled workflows.
+- **[GitHub Integration](github-integration.md)** — how Spectacular leverages native
+  GitHub features (Issues, Pull Requests, Projects, Discussions, Actions, and `gh` CLI).
 
 ## Reference
 

@@ -26,6 +26,9 @@ Spectacular provides an ultra-lean, token-efficient execution lifecycle with min
 - **Tier 2: Structured Batch Cards**: Numbered questions with lettered options (`1. Question ➔ A, B, C (Recommended)`), adaptive context depth, batch shorthand replies (`A, B, A`, `all defaults`), and open write-in support.
 - **Tier 3: Trade-off Spectrum & Interactive Modals**: Framing competing design axes for unpredictable exploration, or leveraging interactive UI modals (`ask_question`).
 
+> [!NOTE]
+> **Standalone Interviewing**: The Question Escalator is not restricted to Mission activation. You can use Interview Mode during early ideation or architectural forks to align on choices, immediately lock the rulings via `spectacular decide`, and write code directly without drafting a Mission or Contract.
+
 ## Intake and probes
 
 Ideas and small experiments do not need a Mission. Keep them in an issue,
@@ -224,6 +227,65 @@ Focus: Autonomous subagent orchestration and verification gates.
 [ ] B3: Active Perimeter Jail [planned] (after B2)
     └── missions: M18
 ```
+
+## Frontier Orchestration: Taming High Generation Velocity
+
+Modern frontier models generate vast amounts of code and unit tests rapidly. Without structural containment, this high **Generation Velocity** leads to two major failure modes: **Blast Radius explosion** (touching or refactoring unrelated files) and **Context Amnesia** (losing architectural nuances and previous review feedback across fresh context windows).
+
+Spectacular tames frontier models by pairing visual navigation with mechanical containment:
+
+```mermaid
+flowchart TD
+    subgraph HUD ["1. Architectural HUD & Maps"]
+        M["🗺️ Atlas Domain Maps (.spectacular/atlas/)<br><i>Non-governing Mermaid views of contexts & transitions</i>"]
+        C["📊 Campaign DAG Projections (campaign check)<br><i>Milestone sequence & dependency flow</i>"]
+    end
+
+    subgraph Dispatch ["2. Supervised Dispatch"]
+        Ch["📦 Charter Sandwich (spectacular charter --prompt)<br><i>Bounded context (≤400-600t): objectives & write paths</i>"]
+        G["🛡️ Watchdog Jail (spectacular guard)<br><i>OS-level quarantine against blast radius sprawl</i>"]
+    end
+
+    subgraph Review ["3. Independent Review Sessions (Observe ≠ Act)"]
+        F["🔍 4-Point FROST Review<br><i>Decision Compliance · Atlas Coverage · Blast Radius · Proof Validity</i>"]
+        R["⚖️ Decision Rulings (spectacular decide)<br><i>Lock newly discovered architectural forks</i>"]
+    end
+
+    HUD --> Dispatch
+    Dispatch --> Review
+    Review -.->|Iterate & Repair| Dispatch
+    Review --> R
+```
+
+### 1. The Architectural HUD & Maps
+Instead of reading thousands of lines of raw diffs across complex repos, the Orchestrator maintains an **Architectural HUD**:
+- **Visual Maps (`.spectacular/atlas/`)**: Non-governing visual Mermaid diagrams of bounded contexts, entity relationships, and state lifecycles. Governed by Decision D26, they navigate and explain without asserting schema claims or causing mission drift.
+- **Topological Projections (`spectacular campaign check`)**: Terminal ASCII DAGs or Mermaid graphs showing milestone readiness and dependencies.
+
+### 2. Controlling Dispatch & Containing Blast Radius
+When the Orchestrator delegates implementation to a subagent:
+- **The Context Sandwich (`spectacular charter M<N>/<obj> --prompt`)**: Workers receive only the lean charter prompt ($\le 400\text{--}600$ tokens: target objective, interface definitions, non-goals, and the test command). Workers are explicitly instructed to ignore `.spectacular/` and never create governance files.
+- **Filesystem Watchdog (`spectacular guard`)**: The charter names explicit authorized write paths (`allowed_changed_paths`). `spectacular guard` acts as an OS-level watchdog, quarantining any rogue file edits outside authorized boundaries.
+- **Fail-Fast Escalation Gate**: If the worker hits an unrecorded fork, it stops immediately (`STATUS: BLOCKED`) rather than hallucinating an ad-hoc pattern. The Orchestrator resolves the fork via `spectacular decide` (`D<N>.md`) and resumes the worker.
+
+### 3. Review Sessions: Enforcing "Observe ≠ Act"
+Frontier models suffer confirmation bias when reviewing their own fresh code. Spectacular enforces a strict separation between generation and review:
+- **Observe ≠ Act**: Reviewers evaluate and report findings; they do not edit code.
+- **The 4-Point Review Rubric**:
+  1. **Decision Compliance**: Did the model strictly obey all locked `D<N>` rulings and stack constraints?
+  2. **Atlas Coverage**: Did the code implement all declared state transitions in the visual Maps?
+  3. **Blast Radius**: Did the changes remain strictly within authorized directories?
+  4. **Proof Validity**: Are automated test receipts authentic, reproducible, and exiting `0`?
+
+### 4. Where Reviews Live & The Traceability Dial
+Spectacular calibrates ceremony based on risk:
+
+- **Routine Fast Code (90% Default)**:
+  For standard features, bug fixes, and clean refactors, **traceability is minimal**. Automated tests passing (`exit 0`) and clean Git commits are the primary proof. Reviews do not generate separate files—feedback is passed directly in session chat, PR descriptions, or commit notes.
+- **High-Stakes Code (~10% Critical)**:
+  For zero-downtime DB cutovers, cryptography, auth, or public API breaks, reviews are formally recorded using `spectacular review record M<N> review_draft.md --json`. This saves an immutable record at `.spectacular/missions/M<N>/reviews/RV<N>.md` capturing `reviewed.commit`, `activation_fingerprint`, and specific verdicts.
+- **Are `reviews/` Standalone?**:
+  In Spectacular's mechanical schema, formal `type: Review` (`RV<N>`) records are **mission-scoped** (`.spectacular/missions/M<N>/reviews/`) because they mechanically validate a Mission's frozen claims and activation fingerprint. In **A La Carte** mode (without a Mission), review findings are kept with zero ceremony in chat or PR notes, while any discovered architectural decisions are locked into `.spectacular/decisions/D<N>.md`, which is top-level and standalone.
 
 ## Prove: Evidence, Reviews, Handoffs
 

@@ -20,15 +20,17 @@ The project root is intentionally small:
 ├── atlas/
 ├── campaigns/
 ├── index.md
-├── catalog.md
 ├── workspace.yaml
 ├── contracts/
 ├── proposals/
 ├── missions/
+├── reviews/
+├── retrospectives/
 ├── evidence/
 ├── decisions/
 ├── gaps/
-└── archive/missions/
+├── archive/
+└── .engine/
 ```
 
 ## Project anchors
@@ -41,9 +43,8 @@ clearly in `PROJECT.md`. Its glossary is alphabetical; its detailed model is
 grouped by bounded context. A linked domain Atlas is a readable projection, not
 a second authority.
 `GUARDRAILS.md` is owner-authored guidance selected by the runtime. `index.md`
-is a deterministic, committed, non-authoritative routing guide. `catalog.md` is
-the corresponding complete, non-authoritative record inventory. Neither is
-canonical or loaded as authority.
+is a deterministic, committed, non-authoritative routing guide. The complete
+navigational inventory is cached at `.cache/catalog.json`.
 
 `campaigns/` holds optional, durable Markdown roadmap maps. Campaigns are
 planning documents, not governed records: the CLI excludes them from the typed
@@ -53,6 +54,20 @@ record graph, and they grant no execution authority.
 slices. An Atlas links user journeys and outcomes to capabilities and technical
 boundaries. It explains why a Campaign block exists; it does not sequence work,
 grant authority, or bind a Mission.
+
+`reviews/` holds standalone code reviews and architectural audits that are
+not bounded to a single Mission, alongside mission-scoped review records.
+
+`retrospectives/` holds freeform milestone post-mortems, reflections, and
+lessons learned. Like Proposals and Atlases, they are evaluative planning
+documents that do not assert rigid execution constraints.
+
+`archive/` is the universal destination for retired records (completed
+Missions, accepted Proposals, superseded specifications).
+
+`.engine/` is a hidden internal directory holding the Write-Ahead Log (WAL)
+transaction journals and mutex `.lock`. It is machine-managed plumbing, never
+edited directly by operators or agents.
 
 **Anchor naming rule**: Single-word uppercase filenames (`<NOUN>.md`) are reserved exclusively for Project Anchors and workspace landmark files (`README.md`, `AGENTS.md`, `HUMAN-WORKSPACE-CONTRACT.md`). All governed records carry their scoped prefix in their filename. The same shape is used by untracked local working files such as `TODO.md` and `FEEDBACKS.md`; a record that needs to rely on one quotes what it needs, because the file is not published alongside the record.
 

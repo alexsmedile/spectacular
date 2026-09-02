@@ -31,7 +31,7 @@ objectives:
 ```
 
 ## 4. Negative Constraints (DO NOT)
-- **DO NOT** conduct multi-turn interview grilling. Pick production defaults; confirm once.
+- **DO NOT** conduct multi-turn unprompted grilling. For Interview Mode, batch choices into Tier 2/3 cards (numbered questions, lettered options with recommended defaults) and confirm once.
 - **DO NOT** create multi-folder mission directories for routine code (Tier 1 Single-File `M<N>.md` is default).
 - **DO NOT** write Proposals for obvious tasks; draft directly to Mission or Decision.
 - **DO NOT** echo YAML or generated mission contents into chat (Silent Mutation).

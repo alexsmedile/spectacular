@@ -17,18 +17,32 @@ projection; this document wins if they differ.
 | Term | Definition | Context |
 | --- | --- | --- |
 | Anchor | Durable project truth about a named concern. | Project definition |
+| A La Carte | Modular adoption of individual Spectacular surfaces without adopting the full mission lifecycle. | Operational mode |
+| Architectural HUD | The visual and topological map (Atlas + Campaign DAG) giving operators an instant mental model of system boundaries. | Planning and navigation |
+| Assessment | Qualitative evaluation of architectural posture, system maturity, or technical debt; captured in Reviews or Retrospectives without rigid binary gates. | Proof and continuity |
 | Atlas | Non-governing visual map of a product or domain slice. | Planning |
+| Atlas Coverage | Verification that generated code implements all state transitions and entity boundaries declared in Atlas maps. | Proof and continuity |
+| Audit | Independent, read-only forensic inspection performed by an auditor agent or operator to verify contract compliance and claim validity. | Governed execution |
+| Blast Radius | The surface area of files, modules, and dependencies impacted by an execution turn; bounded by authorized paths. | Operational safety |
 | Capability Contract | A modular specification of an observable capability. | Project definition |
+| Context Amnesia | The loss of settled architectural nuances or review findings across fresh model windows; solved by durable Git Markdown records. | Operational continuity |
 | Contract | Accepted agreement about a capability and its constraints. | Project definition |
 | Decision | An attributable owner choice that resolves a question. | Proof and continuity |
+| Decision Compliance | Verification that an implementation strictly adheres to locked architectural rulings (`D<N>`). | Proof and continuity |
 | Evidence | Attributable observation supporting a claim. | Proof and continuity |
 | Gap | A stated unresolved limitation or dependency. | Proof and continuity |
+| Generation Velocity | The rapid rate at which frontier models produce code, requiring structural containment and bounded charters. | Governed execution |
 | Handoff | A bounded transfer of work context between operators. | Proof and continuity |
+| High-Stakes Code | Consequential changes (auth, crypto, payments, zero-downtime cutovers) requiring strict review and attributable evidence. | Operational mode |
+| Maps | Explanatory visual projections (`.spectacular/atlas/`) that navigate domain models without enforcing schema authority. | Planning and navigation |
 | Mission | A frozen execution envelope with authority and proof boundaries. | Governed execution |
 | Objective | An outcome-sized claim within a Mission. | Governed execution |
 | Owner | Person accountable for consequential direction and acceptance. | Governed execution |
+| Proof Validity | Verification that test receipts and validation runs are authentic, reproducible, and exit with code 0. | Proof and continuity |
 | Proposal | Mutable exploration that may inform later accepted work. | Planning |
-| Review | An assessment of claims and evidence, separate from owner acceptance. | Proof and continuity |
+| Retrospective | Freeform milestone post-mortem and reflection (`.spectacular/retrospectives/`) capturing lessons learned and forward recommendations without execution ceremony. | Planning and continuity |
+| Review | Attributable evaluation of code or claims against an agreed specification or PR (stored in `.spectacular/reviews/`), yielding an explicit verdict (`passed`/`failed`). | Proof and continuity |
+| Routine Fast Code | Everyday features, refactors, and fixes where passing tests (`exit 0`) and clean Git commits serve as sufficient proof. | Operational mode |
 | Run | A mutable attempt to advance one Objective or Mission. | Governed execution |
 
 ## Bounded contexts
@@ -137,6 +151,15 @@ transfer of owner accountability.
 The pass boundary and proof requirement attached to a completion claim. A
 passing command, Evidence, Review, and owner completion are distinct facts.
 
+### Policy: Autonomous Execution & Frontier Governance
+
+- **A La Carte**: Independent adoption of isolated Spectacular capabilities (Decisions, Projections, Interview Mode) with zero obligation to adopt the full mission lifecycle.
+- **Architectural HUD & Maps**: The non-governing visual projections (`.spectacular/atlas/`) and topological sequence (`campaign check`) that give agents and owners situational awareness.
+- **Generation Velocity & Blast Radius**: High-velocity code generation by frontier models is structurally contained using lean charter prompts ($\le 400\text{--}600$ tokens) and OS filesystem watchdogs (`spectacular guard`).
+- **Context Amnesia**: Multi-session context resets are bridged by storing immutable Decisions and durable Campaign flight plans directly in Git Markdown.
+- **Traceability Dial**: Calibrates proof ceremony: **Routine Fast Code** requires only passing test commands (`exit 0`) and clean Git commits; **High-Stakes Code** demands formal immutable Decisions (`D<N>`), attributable Evidence (`E<N>`), and independent Reviews (`RV<N>`).
+- **4-Point Review Rubric (Observe ≠ Act)**: Evaluates **Decision Compliance** (adherence to `D<N>`), **Atlas Coverage** (satisfaction of declared map states), **Blast Radius** (no unauthorized path leaks), and **Proof Validity** (authentic, reproducible test execution).
+
 ## Relationships
 
 | Relationship | Meaning | Context |
@@ -177,6 +200,18 @@ Key events: `Decision recorded`, `Mission activated`, `Run transitioned`,
 - A documented relationship is not an enforced invariant unless its implementation
   mapping names a schema, code rule, API contract, or test.
 - The Vocabulary is canonical; its Atlas maps are explanatory and non-governing.
+
+### Policy: The Verification Triad (Audit, Assessment, Review)
+
+- **Audit (The Action / Verb)**: An independent, read-only inspection process conducted by an auditor subagent or human reviewer to discover contract drift or verify invariants before completion. The audit itself produces observations.
+- **Review (The Artifact / Verdict)**: The canonical, durable evaluation record stored in `.spectacular/reviews/` (either standalone for PRs/branches or mission-scoped). It states an attributable reviewer verdict (`passed`, `failed`), proof basis, and claim checks.
+- **Assessment (The Qualitative Scale)**: A spectrum-based evaluation of system health, tech debt, or architectural fit. Unlike reviews, assessments do not enforce binary pass/fail gates and are recorded within Reviews or Retrospectives.
+
+### Policy: Guardrails and Dynamic CLI Injection
+
+- `GUARDRAILS.md` is an authoritative project Anchor containing repository-wide technical constraints, safety rules, and banned patterns.
+- Unlike static agent harness prompts (e.g. `.claude/rules/` or `.agents/rules/`), Spectacular guardrails are injected dynamically by the CLI during mission preparation and validated deterministically by `test/verify.sh preflight`.
+- Thin harness pointers or relative symlinks to `GUARDRAILS.md` remain an optional convenience for local IDEs, never a mandatory workspace dependency.
 
 ## Implementation mappings
 

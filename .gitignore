@@ -8,6 +8,8 @@
 skills-lock.json
 coverage.out
 release-output/
+.spectacular/.engine/
+.spectacular/.cache/
 .spectacular/transactions/
 _archive/
 _backups/

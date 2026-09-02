@@ -2,7 +2,22 @@
 
 ## [Unreleased]
 
-## 2.14.0 — 2026-09-01
+## 2.15.0-rc1 — 2026-09-02
+
+### Added
+
+- **Companion Skill: `test-sentinel` (`skills/test-sentinel/`)**: Bundled Staff CI/CD & adversarial test hardening companion skill into Spectacular:
+  - 4-Pillar Architecture: Fast Test Pyramid (Tier 0 $\le 1$s hard gate), Cross-Language Determinism Matrix (zero-sleep, dynamic ports, sorted map keys), Regression Shield (`TestM<N>_<slug>`), and Production GitHub Actions CI.
+  - Hardened CI Templates (`templates/ci-{go,node,python,rust}.yml`): Action commit SHA pinning, path filtering, shallow clones (`fetch-depth: 1`), and fork 401 guards.
+  - Machine-readable receipt schema: `test-sentinel.receipt.v1`.
+- **Clean 10-Item Workspace Architecture**:
+  - Relocated WAL journals and mutex `.lock` to hidden `.spectacular/.engine/`.
+  - Relocated catalog index to on-demand `.spectacular/.cache/catalog.json`.
+  - Decoupled standalone PR reviews (`.spectacular/reviews/`) and freeform post-mortems (`.spectacular/retrospectives/`).
+  - Documented `.spectacular/raw/` as optional to commit.
+- **The Verification Triad (`.spectacular/VOCABULARY.md`)**: Codified formal ontology for Audit, Review, and Assessment, and defined Dynamic Guardrail CLI injection.
+- **GitHub Native Integration & Communication Layer (`docs/github-integration.md`)**: Codified 1 PR = 1 Mission model, GitHub Issues $\leftrightarrow$ Proposals/Gaps mapping, GitHub Projects v2, and `gh` CLI orchestration.
+- **Dogfooded CI/CD Hardening**: Hardened Spectacular's own `.github/workflows/verify.yml` and `release.yml` with action commit SHA pinning, top-level read-only permissions, path filters, and sub-second Tier 0 preflight fail-fast.
 
 ### Added
 

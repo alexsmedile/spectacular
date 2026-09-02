@@ -702,16 +702,18 @@ func validateLayout(ws *discovery.Workspace, b *Bundle) error {
 }
 
 func validateTransactions(ws *discovery.Workspace, _ *Bundle) error {
-	entries, err := os.ReadDir(filepath.Join(ws.MetadataDir, "transactions"))
-	if os.IsNotExist(err) {
-		return nil
-	}
-	if err != nil {
-		return invalidCause("transactions", "cannot inspect transaction recovery state", err)
-	}
-	for _, entry := range entries {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".json") {
-			return domain.NewStateRefusal(domain.RefusalTransactionRecovery, "transactions", "an incomplete atomic transition requires recovery", "no pending journal", entry.Name(), "run a mutating command to invoke deterministic recovery, then re-check", nil)
+	for _, dir := range []string{".engine", "transactions"} {
+		entries, err := os.ReadDir(filepath.Join(ws.MetadataDir, dir))
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			return invalidCause("transactions", "cannot inspect transaction recovery state", err)
+		}
+		for _, entry := range entries {
+			if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".json") {
+				return domain.NewStateRefusal(domain.RefusalTransactionRecovery, "transactions", "an incomplete atomic transition requires recovery", "no pending journal", entry.Name(), "run a mutating command to invoke deterministic recovery, then re-check", nil)
+			}
 		}
 	}
 	return nil

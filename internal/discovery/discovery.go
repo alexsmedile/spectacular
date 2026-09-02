@@ -174,7 +174,7 @@ func load(root, marker string) (*Workspace, error) {
 	// exist even when an older v2 fixture names only its seed root; mutations
 	// never need to rewrite workspace.yaml merely to add an earned collection.
 	if !containsRoot(manifest.RecordRoots, ".") {
-		for _, standard := range []string{"contracts", "proposals", "missions", "evidence", "decisions", "gaps", "handoffs", "assessments", "archive/missions"} {
+		for _, standard := range []string{"contracts", "proposals", "missions", "evidence", "decisions", "gaps", "handoffs", "assessments", "reviews", "archive/missions"} {
 			if _, statErr := os.Stat(filepath.Join(meta, filepath.FromSlash(standard))); statErr == nil && !containsRoot(scanRoots, standard) {
 				scanRoots = append(scanRoots, standard)
 			}
@@ -209,7 +209,7 @@ func load(root, marker string) (*Workspace, error) {
 					return filepath.SkipDir
 				}
 			}
-			if d.IsDir() && (d.Name() == "history" || d.Name() == "transactions" || d.Name() == "campaigns" || d.Name() == "atlas" || d.Name() == "raw") {
+			if d.IsDir() && (d.Name() == "history" || d.Name() == "transactions" || d.Name() == ".engine" || d.Name() == ".cache" || d.Name() == "campaigns" || d.Name() == "atlas" || d.Name() == "raw" || d.Name() == "retrospectives") {
 				return filepath.SkipDir
 			}
 			// Generated indexes are committed navigation aids, never canonical

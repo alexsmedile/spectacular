@@ -567,7 +567,7 @@ func canonicalTreeDigest(t *testing.T, root string) string {
 		if err != nil {
 			return err
 		}
-		if entry.IsDir() && entry.Name() == "transactions" {
+		if entry.IsDir() && (entry.Name() == "transactions" || entry.Name() == ".engine" || entry.Name() == ".cache") {
 			return filepath.SkipDir
 		}
 		if entry.IsDir() || entry.Type()&os.ModeSymlink != 0 {

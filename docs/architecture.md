@@ -6,8 +6,10 @@ clear what people read, what agents follow, and what the CLI can change.
 | Surface | Audience | What it is |
 |---|---|---|
 | `.spectacular/` | governance | The records: Missions, Proposals, Decisions, Evidence |
-| `.spectacular/raw/` | thinking | Unstructured sketchpad; gitignored, skip-listed, no frontmatter and no entity |
+| `.spectacular/.engine/` | the machine | Hidden internal directory for WAL journals and mutex `.lock` |
+| `.spectacular/raw/` | thinking | Unstructured sketchpad; skip-listed, no frontmatter and no entity; optional to commit |
 | `.spectacular/atlas/` | planning | Optional outcome and system maps; explanatory, mutable, and non-authoritative |
+| `.spectacular/retrospectives/` | learning | Optional milestone post-mortems and architectural reflections |
 | `.spectacular/campaigns/` | planning | Optional durable roadmap maps; excluded from the record graph and CLI lifecycle |
 | `skills/` | agents at runtime | Executable guidance the CLI and Skill load |
 | `cmd/` + `internal/` | the machine | A typed CLI that validates and mutates records atomically |
@@ -44,11 +46,66 @@ Thirteen types, in two groups.
 
 ```mermaid
 flowchart LR
-    P["💡 Proposal (P1)<br><i>Brainstorm & draft specs</i>"] --> D["⚖️ Decision (D1)<br><i>Owner locks key choices</i>"]
-    D --> C["📜 Contract (CC-auth)<br><i>Incorporate living invariants</i>"]
-    C --> M["🚀 Mission (M1)<br><i>Execute code & verify proof</i>"]
-    M --> E["✅ Evidence & Archive<br><i>Mission complete, Proposal retired</i>"]
+    subgraph Standalone ["Modular & A La Carte Surfaces (Zero Ceremony)"]
+        direction TB
+        D["⚖️ Decision (D&lt;N&gt;)<br><i>Minimal ceremony ADRs</i>"]
+        A["🗺️ Atlas Projections<br><i>Non-governing visual maps</i>"]
+        I["💬 Interview Mode<br><i>Upfront alignment & cards</i>"]
+    end
+    subgraph FullLifecycle ["Full Governed Mission Lifecycle (Optional)"]
+        direction LR
+        P["💡 Proposal<br><i>Mutable spec draft</i>"] --> C["📜 Contract<br><i>Living invariants</i>"]
+        C --> M["🚀 Mission<br><i>Frozen execution envelope</i>"]
+        M --> E["✅ Evidence & Archive"]
+    end
+    Standalone -.->|Optionally informs| FullLifecycle
 ```
+
+### Modular & A La Carte Adoption: Use Only What You Need
+
+Spectacular is designed around unbundled, progressive adoption. **You are never obligated to use the entire system.** You can adopt individual surfaces independently with minimal ceremony:
+
+1. **Standalone Decisions (`spectacular decide`)**:
+   Use Spectacular purely as an immutable Architectural Decision Record (ADR) system. Settle technical choices with a single command (`spectacular decide --title ... --disposition ... --rationale ...`). The CLI auto-generates IDs (`D<N>`), timestamps, and metadata with zero YAML boilerplate. No Proposals, Contracts, or Missions required.
+2. **Interview Mode (Structured Alignment Without Grilling)**:
+   Use the 3-Tier Question Escalator (or `/grill-me`) to explore tradeoffs, run kickoff interviews, or compare libraries. Numbered questions with lettered options (`A`, `B`, `C`) and `(Recommended)` defaults let you align in one pass. Outcomes pipe directly into `spectacular decide` or code without requiring formal governance.
+3. **Non-Governing Visual Projections (`.spectacular/atlas/`)**:
+   Use Atlas domain maps (Mermaid diagrams) to visualize bounded contexts, state machines, and system lifecycles. Governed by Decision D26, Atlas maps are strictly explanatory: they navigate and clarify without asserting schema claims, causing mission drift, or requiring active missions.
+4. **On-Demand Topological Projections (CLI)**:
+   Inspect dependencies and timelines dynamically (`spectacular mission show <ref> --graph` or `--timeline`). The CLI derives state lines and ASCII DAGs on the fly; nothing is cached or written to disk.
+5. **Full Governed Execution (Missions)**:
+   Layer on Single-File Missions (`.spectacular/missions/M<N>.md`, $\le 500$ tokens) only when you need bounded execution authority, frozen failable test boundaries, and subagent isolation.
+
+### The 10-Folder Workspace Anatomy & Flexibility Spectrum
+
+Spectacular organizes all governance, thinking, planning, and machine state into an explicit 10-item layout. Each folder has a defined ceremony level, role, and authority scope:
+
+```text
+.spectacular/
+├── PROJECT.md               # The single core anchor (Day 1)
+├── decisions/               # Standalone ADRs (spectacular decide)
+├── atlas/                   # (Optional) Architectural HUD (Mermaid domain maps)
+├── reviews/                 # (Optional) Standalone or mission-scoped code reviews
+├── retrospectives/          # (Optional) Milestone post-mortems & lessons learned
+├── proposals/               # (Optional) Mutable brainstorming & exploratory specs
+├── campaigns/               # (Optional) Multi-session flight plans & milestone DAGs
+├── missions/                # (Optional) Frozen execution envelopes when proof is needed
+├── archive/                 # Universal archive for retired records
+└── .engine/                 # Hidden directory for WAL journals & mutex .lock (invisible to users)
+```
+
+| Folder / File | Ceremony & Strictness | Role & Objective | Authority / Governance Level |
+|---|---|---|---|
+| `PROJECT.md` | **Strict Anchor** | Defines system purpose, core boundaries, and non-goals. | **Governing Anchor**; primary invariant baseline. |
+| `decisions/` | **Zero Ceremony** | Standalone immutable ADRs via `spectacular decide`. Fast, single-command rulings. | **Attributable Ruling**; machine-checked frontmatter. |
+| `atlas/` | **Completely Flexible** | Architectural HUD. Visual Mermaid diagrams of bounded contexts, lifecycles, and state machines. | **Non-Governing Planning**; explanatory only; never refuses commands. |
+| `reviews/` | **Flexible Scope** | Standalone PR reviews, code quality audits, and verification reports (or mission-scoped reviews). | **Evaluative Record**; captures reviewer verdict and proof basis. |
+| `retrospectives/`| **Completely Flexible** | Milestone post-mortems, lessons learned, and retrospective reflections. | **Evaluative Freeform**; unconstrained Markdown; outside typed CLI graph. |
+| `proposals/` | **Mutable & Draft** | Exploratory specs, brainstorms, and RFC drafts. The cheapest place to be wrong. | **Zero Authority**; open questions; mutable until accepted or retired. |
+| `campaigns/` | **Durable Planning** | Multi-session flight plans, macro milestones, and roadmap blocks. | **Non-Governing Plan**; DAG ordering without execution authority. |
+| `missions/` | **Strict Mechanical** | Frozen execution envelopes for high-stakes code requiring verifiable test proof. | **Full Execution Authority**; atomic claims, failable gates. |
+| `archive/` | **Permanent Freeze** | Universal resting place for retired missions, accepted proposals, and superseded records. | **Historical Record**; immutable provenance freeze-points. |
+| `.engine/` | **Machine Only** | Write-Ahead Log (WAL) journals and mutex `.lock`. | **Plumbing**; hidden from operators and ignored by Git. |
 
 ### First-Principles Synthesis: GTD, GSD, Superpowers, and Orca
 

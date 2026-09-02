@@ -55,8 +55,8 @@ func TestPlanBuildsReadableScopedMissionBundle(t *testing.T) {
 	if !strings.Contains(root, "non-authoritative") || !strings.Contains(root, "`M1`") || strings.Contains(root, "`M1/R1/C1`") {
 		t.Fatalf("guide is not compact or lacks the active Mission:\n%s", root)
 	}
-	catalog := string(indexes[".spectacular/catalog.md"])
-	if !strings.Contains(catalog, "`M1/R1/C1`") {
+	catalog := string(indexes[".spectacular/.cache/catalog.json"])
+	if !strings.Contains(catalog, "M1/R1/C1") {
 		t.Fatalf("catalog lacks the complete scoped inventory:\n%s", catalog)
 	}
 }
@@ -121,6 +121,17 @@ func TestPlanKeepsExistingBundleDirectoriesStable(t *testing.T) {
 	}
 	if got := paths[evidence.Record.ID]; got != ".spectacular/missions/M1-original-bundle-name/evidence/E1-t2lylz.md" {
 		t.Fatalf("new child escaped stable Mission bundle: %s", got)
+	}
+}
+
+func TestPlanStandaloneReview(t *testing.T) {
+	review := document(t, domain.Review, "019fe381-5d61-7223-b362-03a5f99a7b09", "Standalone PR Review")
+	paths, err := Plan(nil, []*workspace.Document{review})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := paths[review.Record.ID]; got != ".spectacular/reviews/RV1-standalone-pr-review.md" {
+		t.Fatalf("standalone review placed incorrectly: %s", got)
 	}
 }
 

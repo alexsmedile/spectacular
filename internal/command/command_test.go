@@ -486,10 +486,13 @@ func digestTree(t *testing.T, root string) string {
 			return err
 		}
 		if info.IsDir() {
+			if info.Name() == "transactions" || info.Name() == ".engine" || info.Name() == ".cache" {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		rel, _ := filepath.Rel(root, path)
-		if rel == filepath.Join("transactions", ".lock") {
+		if rel == filepath.Join("transactions", ".lock") || rel == filepath.Join(".engine", ".lock") {
 			return nil
 		}
 		data, _ := os.ReadFile(path)

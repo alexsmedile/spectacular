@@ -70,11 +70,11 @@ func applyTransactionWithInstallHook(root, key string, changes []FileChange, fai
 	defer effects.Close()
 	digest := sha256.Sum256([]byte(key))
 	txID := hex.EncodeToString(digest[:16])
-	txRelative := ".spectacular/transactions"
+	txRelative := ".spectacular/.engine"
 	if err := effects.mkdirAll(txRelative, 0o755, ".spectacular"); err != nil {
 		return transactionRefusal("create transaction directory", err)
 	}
-	journalRelative := fmt.Sprintf(".spectacular/transactions/%s.json", txID)
+	journalRelative := fmt.Sprintf(".spectacular/.engine/%s.json", txID)
 	journal := transactionJournal{Schema: "spectacular.transaction.v1", Key: key}
 	seen := map[string]bool{}
 	journalWritten := false
@@ -94,8 +94,8 @@ func applyTransactionWithInstallHook(root, key string, changes []FileChange, fai
 		seen[target] = true
 		item := transactionFile{
 			Target:    filepath.ToSlash(change.Path),
-			Temporary: filepath.ToSlash(filepath.Join(".spectacular", "transactions", fmt.Sprintf("%s-%d.new", txID, i))),
-			Backup:    filepath.ToSlash(filepath.Join(".spectacular", "transactions", fmt.Sprintf("%s-%d.old", txID, i))),
+			Temporary: filepath.ToSlash(filepath.Join(".spectacular", ".engine", fmt.Sprintf("%s-%d.new", txID, i))),
+			Backup:    filepath.ToSlash(filepath.Join(".spectacular", ".engine", fmt.Sprintf("%s-%d.old", txID, i))),
 			Mode:      uint32(change.Mode.Perm()),
 			Delete:    change.Delete,
 		}
@@ -223,40 +223,41 @@ func RecoverTransactions(root string) error {
 		return err
 	}
 	defer effects.Close()
-	txRelative := ".spectacular/transactions"
-	entries, err := effects.readDir(txRelative, ".spectacular")
-	if os.IsNotExist(err) {
-		return nil
-	}
-	if err != nil {
-		return transactionRefusal("read transaction directory", err)
-	}
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+	for _, txRelative := range []string{".spectacular/.engine", ".spectacular/transactions"} {
+		entries, err := effects.readDir(txRelative, ".spectacular")
+		if os.IsNotExist(err) {
 			continue
 		}
-		if entry.Type()&os.ModeSymlink != 0 {
-			return domain.NewRefusal(domain.RefusalPathEscape, entry.Name(), "transaction journal must not be a symlink", nil)
+		if err != nil {
+			return transactionRefusal("read transaction directory", err)
 		}
-		journalRelative := txRelative + "/" + entry.Name()
-		data, readErr := effects.readFile(journalRelative, txRelative)
-		if readErr != nil {
-			return transactionRefusal("read recovery journal", readErr)
-		}
-		var journal transactionJournal
-		if jsonErr := json.Unmarshal(data, &journal); jsonErr != nil || journal.Schema != "spectacular.transaction.v1" {
-			return domain.NewRefusal(domain.RefusalTransactionRecovery, journalRelative, "transaction journal is invalid", jsonErr)
-		}
-		digest := sha256.Sum256([]byte(journal.Key))
-		txID := hex.EncodeToString(digest[:16])
-		if entry.Name() != txID+".json" {
-			return domain.NewRefusal(domain.RefusalPathEscape, entry.Name(), "transaction journal identity does not match its key", nil)
-		}
-		if rollbackErr := rollback(effects, journal); rollbackErr != nil {
-			return rollbackErr
-		}
-		if removeErr := removeEffect(effects, journalRelative, txRelative); removeErr != nil {
-			return removeErr
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+				continue
+			}
+			if entry.Type()&os.ModeSymlink != 0 {
+				return domain.NewRefusal(domain.RefusalPathEscape, entry.Name(), "transaction journal must not be a symlink", nil)
+			}
+			journalRelative := txRelative + "/" + entry.Name()
+			data, readErr := effects.readFile(journalRelative, txRelative)
+			if readErr != nil {
+				return transactionRefusal("read recovery journal", readErr)
+			}
+			var journal transactionJournal
+			if jsonErr := json.Unmarshal(data, &journal); jsonErr != nil || journal.Schema != "spectacular.transaction.v1" {
+				return domain.NewRefusal(domain.RefusalTransactionRecovery, journalRelative, "transaction journal is invalid", jsonErr)
+			}
+			digest := sha256.Sum256([]byte(journal.Key))
+			txID := hex.EncodeToString(digest[:16])
+			if entry.Name() != txID+".json" {
+				return domain.NewRefusal(domain.RefusalPathEscape, entry.Name(), "transaction journal identity does not match its key", nil)
+			}
+			if rollbackErr := rollback(effects, journal); rollbackErr != nil {
+				return rollbackErr
+			}
+			if removeErr := removeEffect(effects, journalRelative, txRelative); removeErr != nil {
+				return removeErr
+			}
 		}
 	}
 	return nil
@@ -265,7 +266,10 @@ func RecoverTransactions(root string) error {
 func rollback(effects *rootedWorkspace, journal transactionJournal) error {
 	digest := sha256.Sum256([]byte(journal.Key))
 	txID := hex.EncodeToString(digest[:16])
-	txRelative := ".spectacular/transactions"
+	txRelative := ".spectacular/.engine"
+	if len(journal.Files) > 0 && strings.HasPrefix(journal.Files[0].Temporary, ".spectacular/transactions") {
+		txRelative = ".spectacular/transactions"
+	}
 	for i := len(journal.Files) - 1; i >= 0; i-- {
 		item := journal.Files[i]
 		if _, err := safeTarget(effects.path, item.Target); err != nil {
@@ -359,11 +363,15 @@ func effectPath(root, relative, scope string) (string, error) {
 }
 
 func transactionArtifact(root, relative, txID string, index int, suffix string) (string, error) {
-	want := fmt.Sprintf(".spectacular/transactions/%s-%d%s", txID, index, suffix)
-	if filepath.ToSlash(relative) != want {
-		return "", domain.NewRefusal(domain.RefusalPathEscape, relative, "transaction artifact identity is invalid", nil)
+	want := fmt.Sprintf(".spectacular/.engine/%s-%d%s", txID, index, suffix)
+	if filepath.ToSlash(relative) == want {
+		return effectPath(root, want, ".spectacular/.engine")
 	}
-	return effectPath(root, want, ".spectacular/transactions")
+	legacyWant := fmt.Sprintf(".spectacular/transactions/%s-%d%s", txID, index, suffix)
+	if filepath.ToSlash(relative) == legacyWant {
+		return effectPath(root, legacyWant, ".spectacular/transactions")
+	}
+	return "", domain.NewRefusal(domain.RefusalPathEscape, relative, "transaction artifact identity is invalid", nil)
 }
 
 type rootedWorkspace struct {
@@ -509,6 +517,7 @@ func (r *rootedWorkspace) remove(relative, scope string) error {
 func cleanupPrepared(effects *rootedWorkspace, files []transactionFile) {
 	for _, item := range files {
 		for _, path := range []string{item.Temporary, item.Backup} {
+			_ = effects.remove(path, filepath.Join(".spectacular", ".engine"))
 			_ = effects.remove(path, filepath.Join(".spectacular", "transactions"))
 		}
 	}

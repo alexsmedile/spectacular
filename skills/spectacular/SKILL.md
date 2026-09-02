@@ -7,7 +7,7 @@ description: >-
   "flight plan", "autopilot", "supervised dispatch", "handoff", "mission check", or "complete mission".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
-  version: "2.14.0"
+  version: "2.15.0-rc1"
 ---
 
 # Spectacular
@@ -55,6 +55,12 @@ Spectacular prioritizes execution over ceremony. Governance is managed strictly 
 5. **State Machines & Lifecycles**: Non-governing visual Mermaid diagrams in `.spectacular/atlas/`.
 
 ### Operating Dial & Single-File Rule
+- **Modular Slices (No Forced Missions)**: Adopt only what is needed. Missions are optional:
+  - *Decisions only*: `spectacular decide --title ...` as standalone zero-ceremony ADRs.
+  - *Interview mode*: Tier 2/3 structured cards to resolve forks into decisions or code without ceremony.
+  - *Projections*: `.spectacular/atlas/` non-governing visual maps; CLI `--graph`/`--timeline` dynamic views.
+  - *Reviews & Retrospectives*: Standalone PR reviews in `.spectacular/reviews/` or reflections in `.spectacular/retrospectives/`.
+  - *Missions*: Use only when formal bounded execution envelopes and frozen proof are earned.
 - **`mode: leverage` (Default)**: Autonomous inner loop; test suite passing (`exit 0`) + clean commit is primary proof.
 - **`mode: control`**: High-risk operations (auth, payments, DB migrations) requiring explicit anchor diff reviews.
 - **Tier 1 (Single-File, 90% Default)**: `M<N>.md` only. Sub-folders are strictly forbidden unless third-party external receipts (`evidence/`) or multi-worktree splits explicitly demand them.
@@ -62,7 +68,14 @@ Spectacular prioritizes execution over ceremony. Governance is managed strictly 
 - **Tier 3 (Full Bundle, ~2%)**: High-stakes cutovers requiring formal checkpoints (`checkpoints/`) or dedicated audit (`reviews/`).
 - **Minimal Drafts (Zero YAML Boilerplate)**: Prefer direct CLI flags (`spectacular decide --title ...`) or 3-line plans; the CLI auto-populates metadata.
 - **Silent Mutation, One-Line Return**: State the 1-line outcome only (`"Recorded Decision D14. Next: run check.sh"`). Never echo YAML frontmatter or full file bodies into chat.
-- **Drop Collection Catalogs**: Never load `catalog.md` or `index.md` into agent context. Query the CLI (`spectacular mission show <ref> --json`) directly.
+- **Drop Collection Catalogs**: Never load catalogs or indexes into agent context. Query the CLI (`spectacular mission show <ref> --json`) directly.
+
+### GitHub Native Integration Layer (`gh`)
+Spectacular leverages native GitHub collaboration features via the `gh` CLI while keeping Git as the durable authority:
+- **Intake (`gh issue view <id>`)**: When prompt or plan cites an issue (`#<id>`), fetch issue context to frame Mission outcome and acceptance claims.
+- **PR Envelope (`gh pr create`)**: For consequential missions, branch `m<N>-<slug>` and link the Mission file in the PR description (`Closes #<id>`).
+- **Review Mirroring (`gh pr review`)**: When an audit review is recorded (`.spectacular/reviews/RV<N>.md`), optionally submit the review body to GitHub's PR timeline.
+- **Local / Airgapped Fallback**: Never require network access; operate 100% locally if `gh` is unauthenticated or the repo is offline.
 
 ### Mechanical Mode (3-State Model)
 Invoke `spectacular --version --json` once at startup and require `spectacular.build-info.v1` plus the exact release in `generated/mechanical-interface.json`:

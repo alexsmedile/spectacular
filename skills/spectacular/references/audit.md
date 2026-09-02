@@ -25,4 +25,4 @@ git log --oneline <baseline>..HEAD       # Inspect actual diffs
 ## 5. Negative Constraints (DO NOT)
 - **DO NOT** edit code or fix bugs during an audit. Report findings to Orchestrator.
 - **DO NOT** widen audit scope beyond the named claim without explicit instruction.
-- **DO NOT** read `catalog.md` or projections; inspect canonical records via CLI.
+- **DO NOT** read catalog caches or projections; inspect canonical records via CLI.

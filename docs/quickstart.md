@@ -20,6 +20,9 @@ Spectacular is designed for fast, token-efficient autonomous execution with mini
 - **Layer 2: Topological Flight Plan**: Multi-session roadmap in `.spectacular/campaigns/flight-plan.md` (4–8 macro milestone blocks).
 - **Layer 3: Single-File Execution Envelopes**: Compact, self-contained Mission files (`missions/M1.md`, $\le 500$ tokens) with inline deliverables checklist and failable test boundaries.
 
+> [!TIP]
+> **Modular Adoption (Zero Ceremony)**: You are not obligated to use the entire 3-layer pipeline. If you only want **Interview Mode** to align on architecture, **`spectacular decide`** to lock durable ADRs, or **`.spectacular/atlas/`** for visual Mermaid maps, you can stop after step 1 with zero subsequent ceremony. Missions are optional execution envelopes for when you want bounded proof.
+
 ## 0. Initialize the workspace (greenfield)
 
 If starting on a new project, initialize the Spectacular workspace boundary:
@@ -29,6 +32,16 @@ spectacular init [--name <project>]
 ```
 
 This safely creates `.spectacular/workspace.yaml` and seeds `.spectacular/PROJECT.md` without overwriting existing files.
+
+### Day 1 Minimal Footprint (Zero Ceremony)
+On Day 1, you do not need 10 folders or 7 anchors. A clean starting workspace needs only:
+
+```text
+.spectacular/
+├── PROJECT.md        # Scope, boundaries, and non-goals
+└── decisions/         # Architectural rulings added via `spectacular decide`
+```
+Visual maps (`atlas/`), roadmaps (`campaigns/`), and execution envelopes (`missions/`) are earned progressively as the project grows.
 
 ## 1. Upfront Bulk-Decide (Settle Architecture Early)
 

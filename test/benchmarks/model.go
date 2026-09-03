@@ -268,9 +268,12 @@ type RunSummary struct {
 	Pairing              PairingSummary                `json:"pairing"`
 	GateFailures         []string                      `json:"gate_failures,omitempty"`
 	CostFindings         []string                      `json:"cost_findings,omitempty"`
-	SharedFailures       []string                      `json:"shared_failures,omitempty"`
-	PerCaseRegressions   []string                      `json:"per_case_regressions,omitempty"`
-	InsufficientEvidence []string                      `json:"insufficient_evidence,omitempty"`
+	SharedFailures             []string                      `json:"shared_failures,omitempty"`
+	QuarantinedCases           []string                      `json:"quarantined_cases,omitempty"`
+	ValidCases                 []string                      `json:"valid_cases,omitempty"`
+	ConditionalEffect          string                        `json:"conditional_comparative_effect,omitempty"`
+	PerCaseRegressions         []string                      `json:"per_case_regressions,omitempty"`
+	InsufficientEvidence       []string                      `json:"insufficient_evidence,omitempty"`
 }
 
 type PairingSummary struct {

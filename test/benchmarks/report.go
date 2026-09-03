@@ -78,7 +78,10 @@ func renderStatic(report StaticComparison) string {
 func renderRun(report RunReport) string {
 	var builder strings.Builder
 	fmt.Fprintf(&builder, "# Spectacular paired behavior benchmark\n\n")
-	fmt.Fprintf(&builder, "Verdict: **%s**<br>\nMeasurement: **%s**<br>\nComparative effect: **%s**<br>\nReadiness: **%s**<br>\nBaseline: `%s` (`%s`)<br>\nCandidate: `%s` (`%s`)<br>\nModel: `%s`<br>\nRead isolation: `%s`<br>\nTier: `%s`<br>\nMinimum repetitions: `%d`\n\n", report.Summary.Verdict, report.Summary.MeasurementStatus, report.Summary.ComparativeEffect, report.Summary.Readiness, report.BaselineRef, report.BaselineMode, report.CandidateRef, report.CandidateMode, report.Model, report.ReadIsolation, report.Tier, report.MinimumRepetitions)
+	fmt.Fprintf(&builder, "Verdict: **%s**<br>\nMeasurement: **%s**<br>\nComparative effect: **%s**<br>\nConditional effect (valid cases): **%s**<br>\nReadiness: **%s**<br>\nBaseline: `%s` (`%s`)<br>\nCandidate: `%s` (`%s`)<br>\nModel: `%s`<br>\nRead isolation: `%s`<br>\nTier: `%s`<br>\nMinimum repetitions: `%d`\n\n", report.Summary.Verdict, report.Summary.MeasurementStatus, report.Summary.ComparativeEffect, report.Summary.ConditionalEffect, report.Summary.Readiness, report.BaselineRef, report.BaselineMode, report.CandidateRef, report.CandidateMode, report.Model, report.ReadIsolation, report.Tier, report.MinimumRepetitions)
+	if len(report.Summary.ValidCases) > 0 || len(report.Summary.QuarantinedCases) > 0 {
+		fmt.Fprintf(&builder, "Case partition: **%d valid** / **%d quarantined**.\n\n", len(report.Summary.ValidCases), len(report.Summary.QuarantinedCases))
+	}
 	fmt.Fprintf(&builder, "## Dimension rates\n\n| Dimension | Baseline | Candidate |\n|---|---:|---:|\n")
 	for _, dimension := range Dimensions {
 		fmt.Fprintf(&builder, "| %s | %.1f%% | %.1f%% |\n", dimension, 100*report.Summary.DimensionRates["baseline"][dimension], 100*report.Summary.DimensionRates["candidate"][dimension])
@@ -93,10 +96,10 @@ func renderRun(report RunReport) string {
 	if len(pairing.UnstableCasePairs) > 0 {
 		fmt.Fprintf(&builder, "\nUnstable case/variant outcomes: `%s`.\n", strings.Join(pairing.UnstableCasePairs, "`, `"))
 	}
-	fmt.Fprintf(&builder, "\n## Observed cost\n\nTotals are controlling across heterogeneous cases; medians remain descriptive only.\n\n| Variant | Usage | Total input | Total cached | Total output | Total tools | Total duration | Input / success |\n|---|---:|---:|---:|---:|---:|---:|---:|\n")
+	fmt.Fprintf(&builder, "\n## Observed cost\n\nTotals are controlling across heterogeneous cases; medians remain descriptive only.\n\n| Variant | Usage | Total input | Total cached | Total output | Total tools | Total duration | Input / success | Tool economy | Branch debris |\n|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n")
 	for _, variant := range []string{"baseline", "candidate"} {
 		cost := report.Summary.ObservedCost[variant]
-		fmt.Fprintf(&builder, "| %s | %d/%d | %d | %d | %d | %d | %dms | %.0f |\n", variant, cost.TrialsWithUsage, cost.TotalTrials, cost.TotalInputTokens, cost.TotalCachedTokens, cost.TotalOutputTokens, cost.TotalToolCalls, cost.TotalDurationMillis, cost.TokensPerSuccess)
+		fmt.Fprintf(&builder, "| %s | %d/%d | %d | %d | %d | %d | %dms | %.0f | %.1f | %d |\n", variant, cost.TrialsWithUsage, cost.TotalTrials, cost.TotalInputTokens, cost.TotalCachedTokens, cost.TotalOutputTokens, cost.TotalToolCalls, cost.TotalDurationMillis, cost.TokensPerSuccess, cost.ToolEconomy, cost.BranchPollution)
 	}
 	if len(report.Summary.CostFindings) > 0 {
 		fmt.Fprintf(&builder, "\n### Cost findings\n\n")
@@ -116,9 +119,9 @@ func renderRun(report RunReport) string {
 			fmt.Fprintf(&builder, "- %s\n", finding)
 		}
 	}
-	if len(report.Summary.SharedFailures) > 0 {
-		fmt.Fprintf(&builder, "\n## Shared failures to diagnose\n\n")
-		for _, finding := range report.Summary.SharedFailures {
+	if len(report.Summary.QuarantinedCases) > 0 {
+		fmt.Fprintf(&builder, "\n## Quarantined cases (shared / unverified failures)\n\n")
+		for _, finding := range report.Summary.QuarantinedCases {
 			fmt.Fprintf(&builder, "- %s\n", finding)
 		}
 	}

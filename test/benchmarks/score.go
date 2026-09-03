@@ -437,24 +437,45 @@ func Summarize(report *RunReport) {
 		}
 		scorePairs[key] = pair
 	}
+	validCandidateScores := []float64{}
+	validBaselineScores := []float64{}
 	for caseID, byVariant := range caseScores {
 		baseline, candidate := average(byVariant["baseline"]), average(byVariant["candidate"])
 		if len(byVariant["baseline"]) == 0 || len(byVariant["candidate"]) == 0 {
 			summary.InsufficientEvidence = append(summary.InsufficientEvidence, caseID+": missing paired result")
+			summary.QuarantinedCases = append(summary.QuarantinedCases, caseID+": missing paired result")
 			continue
 		}
 		if baseline < 1 && candidate < 1 {
-			summary.SharedFailures = append(summary.SharedFailures, fmt.Sprintf("%s: both variants failed at least one assertion; inspect case and adapter evidence", caseID))
+			msg := fmt.Sprintf("%s: both variants failed at least one assertion; quarantined for diagnosis", caseID)
+			summary.SharedFailures = append(summary.SharedFailures, msg)
+			summary.QuarantinedCases = append(summary.QuarantinedCases, caseID)
+		} else {
+			summary.ValidCases = append(summary.ValidCases, caseID)
+			validBaselineScores = append(validBaselineScores, baseline)
+			validCandidateScores = append(validCandidateScores, candidate)
 		}
+	}
+	if len(summary.ValidCases) > 0 {
+		avgBase, avgCand := average(validBaselineScores), average(validCandidateScores)
+		if avgCand > avgBase+0.005 {
+			summary.ConditionalEffect = "improved"
+		} else if avgBase > avgCand+0.005 {
+			summary.ConditionalEffect = "regressed"
+		} else {
+			summary.ConditionalEffect = "parity"
+		}
+	} else {
+		summary.ConditionalEffect = "inconclusive"
 	}
 	for key, pair := range scorePairs {
 		if pair.baseline != nil && pair.candidate != nil && (*pair.baseline-*pair.candidate) >= 0.005 {
 			summary.PerCaseRegressions = append(summary.PerCaseRegressions, fmt.Sprintf("%s: candidate %.3f < baseline %.3f (delta %.3f >= 0.005)", key, *pair.candidate, *pair.baseline, *pair.baseline-*pair.candidate))
 		}
 	}
-	if len(summary.SharedFailures) > 0 {
+	if len(summary.ValidCases) == 0 && len(summary.SharedFailures) > 0 {
 		markInconclusive(&summary)
-		summary.InsufficientEvidence = append(summary.InsufficientEvidence, "shared case failures require diagnosis before a passing comparison")
+		summary.InsufficientEvidence = append(summary.InsufficientEvidence, "all cases quarantined due to shared failures; inspect case and adapter evidence")
 	}
 	if report.MinimumRepetitions > 0 {
 		caseCounts := map[string]map[string]int{}

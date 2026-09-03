@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -35,6 +36,8 @@ func main() {
 		err = matrix(os.Args[2:])
 	case "history":
 		err = history(os.Args[2:])
+	case "calibrate":
+		err = calibrate(os.Args[2:])
 	default:
 		usage()
 		os.Exit(2)
@@ -46,7 +49,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: go run ./test/benchmarks/cmd/bench <validate|adapter-check|plan|static|run|matrix|history> [flags]")
+	fmt.Fprintln(os.Stderr, "usage: go run ./test/benchmarks/cmd/bench <validate|adapter-check|plan|static|run|matrix|history|calibrate> [flags]")
 }
 
 func adapterCheck(args []string) error {
@@ -430,6 +433,63 @@ func history(args []string) error {
 			e.CandidateSafety*100, e.CandidateSuccess*100, e.InputTokens, e.TokensPerSuccess, e.ToolEconomy)
 	}
 	fmt.Println("=========================================================================================================================")
+	return nil
+}
+
+func calibrate(args []string) error {
+	set := flag.NewFlagSet("calibrate", flag.ContinueOnError)
+	repo := set.String("repo", ".", "Git repository")
+	catalogPath := set.String("catalog", "test/benchmarks/evals.json", "benchmark catalog")
+	schemaPath := set.String("schema", "test/benchmarks/agent-result.schema.json", "agent result schema")
+	commit := set.String("commit", "HEAD", "Git revision to calibrate against itself (A/A trial)")
+	tier := set.String("tier", "micro", "micro or smoke")
+	repeats := set.Int("repeats", 2, "number of trial repetitions per arm")
+	seed := set.Int64("seed", 1, "randomization seed")
+	model := set.String("model", "", "model name (e.g. gpt-5.6-terra, claude-opus-5)")
+	adapter := set.String("adapter", "test/benchmarks/adapters/codex-adapter.sh", "adapter executable")
+	spectacularCLI := set.String("spectacular-cli", "", "pinned Spectacular CLI")
+	parallel := set.Int("parallel", 2, "concurrency level")
+	out := set.String("out", "test/benchmarks/reports/calibration-"+time.Now().Format("20060102-150405"), "calibration output directory")
+	if err := set.Parse(args); err != nil {
+		return err
+	}
+	if *model == "" {
+		return fmt.Errorf("model is required")
+	}
+	if *spectacularCLI == "" {
+		return fmt.Errorf("spectacular-cli is required")
+	}
+
+	fmt.Printf("==> Launching A/A Noise-Floor Calibration on commit %s (model: %s, tier: %s, repeats: %d)...\n", *commit, *model, *tier, *repeats)
+	report, err := bench.RunPaired(bench.RunConfig{
+		Repo: *repo, CatalogPath: *catalogPath, SchemaPath: *schemaPath,
+		BaselineRef: *commit, BaselineMode: "skill", CandidateRef: *commit, CandidateMode: "skill",
+		Tier: *tier, Repeats: *repeats, Seed: *seed, Model: *model, Adapter: *adapter,
+		SpectacularCLI: *spectacularCLI, OutputDir: *out, MaxCalls: 50, Parallel: *parallel,
+		TrialTimeout: 10 * time.Minute, RequireCertifiedTelemetry: true,
+	})
+	if err != nil {
+		return err
+	}
+	if err := bench.WriteRunReport(report, *out); err != nil {
+		return err
+	}
+
+	pairing := report.Summary.Pairing
+	baseCost := report.Summary.ObservedCost["baseline"]
+	candCost := report.Summary.ObservedCost["candidate"]
+	tokDelta := math.Abs(float64(baseCost.TotalInputTokens-candCost.TotalInputTokens)) / math.Max(1, float64(baseCost.TotalInputTokens))
+
+	fmt.Println("\n=================================================================================================")
+	fmt.Printf("A/A NOISE-FLOOR CALIBRATION REPORT (%s | %s)\n", *model, *commit)
+	fmt.Println("=================================================================================================")
+	fmt.Printf("Total Paired Trials:        %d\n", pairing.Pairs)
+	fmt.Printf("Discordant Rate (Flips):    %.1f%% (Stochastic Flips between identical arms)\n", 100*pairing.DiscordantRate)
+	fmt.Printf("Input Token Drift (A/A):    %.2f%% (Natural Token Variation)\n", 100*tokDelta)
+	fmt.Printf("Baseline Total Duration:    %dms | Candidate Total Duration: %dms\n", baseCost.TotalDurationMillis, candCost.TotalDurationMillis)
+	fmt.Printf("Recommended Regression Epsilon: max(0.005, %.3f)\n", pairing.DiscordantRate*0.05)
+	fmt.Println("=================================================================================================")
+	fmt.Printf("Calibration receipt saved in: %s/report.md\n", *out)
 	return nil
 }
 

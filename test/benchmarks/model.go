@@ -300,4 +300,6 @@ type CostSummary struct {
 	TotalDurationMillis  int64   `json:"total_duration_ms,omitempty"`
 	SuccessfulTrials     int     `json:"successful_trials,omitempty"`
 	TokensPerSuccess     float64 `json:"input_tokens_per_success,omitempty"`
+	ToolEconomy          float64 `json:"tool_economy_calls_per_success,omitempty"`
+	BranchPollution      int     `json:"total_branch_pollution,omitempty"`
 }

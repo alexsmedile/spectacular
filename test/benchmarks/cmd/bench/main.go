@@ -361,6 +361,8 @@ func history(args []string) error {
 		CandidateSafety  float64   `json:"candidate_safety"`
 		CandidateSuccess float64   `json:"candidate_success"`
 		InputTokens      int       `json:"input_tokens"`
+		TokensPerSuccess float64   `json:"tokens_per_success"`
+		ToolEconomy      float64   `json:"tool_economy"`
 		DurationMS       int64     `json:"duration_ms"`
 	}
 
@@ -380,6 +382,7 @@ func history(args []string) error {
 		}
 		var candSafety, candSuccess float64
 		var inputTok int
+		var tokPerSuccess, toolEcon float64
 		var dur int64
 		if rates, ok := rep.Summary.DimensionRates["candidate"]; ok {
 			candSafety = rates["safety"]
@@ -388,6 +391,8 @@ func history(args []string) error {
 		if cost, ok := rep.Summary.ObservedCost["candidate"]; ok {
 			inputTok = cost.TotalInputTokens
 			dur = cost.TotalDurationMillis
+			tokPerSuccess = cost.TokensPerSuccess
+			toolEcon = cost.ToolEconomy
 		}
 		entries = append(entries, historyEntry{
 			Path:             path,
@@ -399,6 +404,8 @@ func history(args []string) error {
 			CandidateSafety:  candSafety,
 			CandidateSuccess: candSuccess,
 			InputTokens:      inputTok,
+			TokensPerSuccess: tokPerSuccess,
+			ToolEconomy:      toolEcon,
 			DurationMS:       dur,
 		})
 		return nil
@@ -412,17 +419,17 @@ func history(args []string) error {
 		return entries[i].Date.Before(entries[j].Date)
 	})
 
-	fmt.Println("===============================================================================================")
+	fmt.Println("=========================================================================================================================")
 	fmt.Println("SPECTACULAR BENCHMARK EXECUTION HISTORY")
-	fmt.Println("===============================================================================================")
-	fmt.Printf("%-19s | %-24s | %-7s | %-12s | %-8s | %-8s | %-10s\n", "DATE", "MODEL", "TIER", "VERDICT", "SAFETY", "SUCCESS", "INPUT TOK")
-	fmt.Println("-----------------------------------------------------------------------------------------------")
+	fmt.Println("=========================================================================================================================")
+	fmt.Printf("%-19s | %-24s | %-7s | %-12s | %-7s | %-7s | %-10s | %-10s | %-8s\n", "DATE", "MODEL", "TIER", "VERDICT", "SAFETY", "SUCCESS", "INPUT TOK", "TOK/SUCC", "TOOL/SUCC")
+	fmt.Println("-------------------------------------------------------------------------------------------------------------------------")
 	for _, e := range entries {
-		fmt.Printf("%-19s | %-24s | %-7s | %-12s | %-7.1f%% | %-7.1f%% | %-10d\n",
+		fmt.Printf("%-19s | %-24s | %-7s | %-12s | %-6.1f%% | %-6.1f%% | %-10d | %-10.0f | %-8.1f\n",
 			e.Date.Format("2006-01-02 15:04"), e.Model, e.Tier, e.Verdict,
-			e.CandidateSafety*100, e.CandidateSuccess*100, e.InputTokens)
+			e.CandidateSafety*100, e.CandidateSuccess*100, e.InputTokens, e.TokensPerSuccess, e.ToolEconomy)
 	}
-	fmt.Println("===============================================================================================")
+	fmt.Println("=========================================================================================================================")
 	return nil
 }
 

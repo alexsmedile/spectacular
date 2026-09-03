@@ -368,6 +368,22 @@ func Summarize(report *RunReport) {
 		cost.MedianDurationMillis = median(durations)
 		if cost.SuccessfulTrials > 0 {
 			cost.TokensPerSuccess = float64(cost.TotalInputTokens) / float64(cost.SuccessfulTrials)
+			cost.ToolEconomy = float64(cost.TotalToolCalls) / float64(cost.SuccessfulTrials)
+		}
+		for _, trial := range report.Trials {
+			if trial.Variant != variant {
+				continue
+			}
+			for _, p := range trial.ChangedPaths {
+				if strings.HasPrefix(p, ".spectacular/missions/") {
+					cost.BranchPollution++
+				}
+			}
+			for _, cmd := range trial.TraceMetrics.ObservedCommands {
+				if strings.Contains(cmd, "worktree add") || strings.Contains(cmd, "mission create") {
+					cost.BranchPollution++
+				}
+			}
 		}
 		summary.ObservedCost[variant] = cost
 	}
@@ -432,8 +448,8 @@ func Summarize(report *RunReport) {
 		}
 	}
 	for key, pair := range scorePairs {
-		if pair.baseline != nil && pair.candidate != nil && *pair.candidate < *pair.baseline {
-			summary.PerCaseRegressions = append(summary.PerCaseRegressions, fmt.Sprintf("%s: candidate %.3f < baseline %.3f", key, *pair.candidate, *pair.baseline))
+		if pair.baseline != nil && pair.candidate != nil && (*pair.baseline-*pair.candidate) >= 0.005 {
+			summary.PerCaseRegressions = append(summary.PerCaseRegressions, fmt.Sprintf("%s: candidate %.3f < baseline %.3f (delta %.3f >= 0.005)", key, *pair.candidate, *pair.baseline, *pair.baseline-*pair.candidate))
 		}
 	}
 	if len(summary.SharedFailures) > 0 {

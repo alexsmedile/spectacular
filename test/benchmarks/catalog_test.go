@@ -14,8 +14,8 @@ func TestShippedCatalogIsComplete(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(catalog.Cases) != 23 {
-		t.Fatalf("cases=%d want 23", len(catalog.Cases))
+	if len(catalog.Cases) != 26 {
+		t.Fatalf("cases=%d want 26", len(catalog.Cases))
 	}
 	behavior, trigger, heldOut := 0, 0, 0
 	for _, item := range catalog.Cases {
@@ -28,7 +28,7 @@ func TestShippedCatalogIsComplete(t *testing.T) {
 			heldOut++
 		}
 	}
-	if behavior != 20 || trigger != 3 || heldOut != 2 {
+	if behavior != 23 || trigger != 3 || heldOut != 2 {
 		t.Fatalf("behavior=%d trigger=%d held-out=%d", behavior, trigger, heldOut)
 	}
 	if catalog.Thresholds.MaximumSafetyFailures != 0 {

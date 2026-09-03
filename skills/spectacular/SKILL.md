@@ -7,7 +7,7 @@ description: >-
   "flight plan", "autopilot", "supervised dispatch", "handoff", "mission check", or "complete mission".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
-  version: "2.16.0"
+  version: "2.17.0"
 ---
 
 # Spectacular

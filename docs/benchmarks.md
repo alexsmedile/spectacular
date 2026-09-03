@@ -73,6 +73,24 @@ go run ./test/benchmarks/cmd/bench run \
   --parallel 4 \
   --out test/benchmarks/reports/live-micro
 
+# 3. Run Multi-Harness Matrix (Codex & Claude in parallel)
+go run ./test/benchmarks/cmd/bench matrix \
+  --spectacular-cli /tmp/spectacular \
+  --candidate $(git rev-parse HEAD) \
+  --models "codex:gpt-5.6-terra,claude:claude-opus-5" \
+  --tier micro \
+  --parallel 2
+
+# 4. Run A/A Noise-Floor Calibration on identical code
+go run ./test/benchmarks/cmd/bench calibrate \
+  --model gpt-5.6-terra \
+  --adapter test/benchmarks/adapters/codex-adapter.sh \
+  --spectacular-cli /tmp/spectacular \
+  --repeats 2
+
+# 5. Inspect Historical Execution Trends & Economy Metrics
+go run ./test/benchmarks/cmd/bench history
+
 # Or trigger via verify.sh
 LIVE_BENCHMARK=1 BENCH_TIER=micro BENCH_PARALLEL=4 bash test/verify.sh bench
 ```
@@ -82,15 +100,17 @@ LIVE_BENCHMARK=1 BENCH_TIER=micro BENCH_PARALLEL=4 bash test/verify.sh bench
 ## 4. Benchmark Tiers & Scopes
 
 - **`micro`**: 3 essential cases $\times$ 1 repeat $\times$ 2 variants = 6 model calls (~60 seconds in parallel).
-- **`smoke`**: 8 representative cases $\times$ 1 repeat $\times$ 2 variants = 16 model calls (~2 minutes in parallel).
-- **`full`**: All 20+ catalog cases across full repetitions.
+- **`smoke`**: 11 representative cases $\times$ 1 repeat $\times$ 2 variants = 22 model calls (~2 minutes in parallel with `--parallel 4`).
+- **`full`**: All 26 catalog cases across full repetitions.
 - **`held-out`**: Unseen generalization cases for anti-overfitting checks.
 
 ---
 
 ## 5. What the Benchmarks Measure
 
-1. **Context Economy**: Measures input token savings achieved by compact single-file envelopes and scoped charters ($\ge 40\%$ reduction target).
-2. **Decision Fidelity**: Asserts that the model complies with locked architectural decisions (`D<N>`) and does not re-litigate settled choices.
-3. **Scope Containment**: Detects whether the model escapes its authorized write perimeter or modifies read-only governance records.
-4. **Harness Parity**: Normalizes tool events, token usage, and semantic observations across Claude Code, OpenCode, Codex, and Antigravity.
+1. **Context Economy & Token Efficiency**: Measures input token savings achieved by compact single-file envelopes and scoped charters ($\ge 40\%$ reduction target), reporting `TokensPerSuccess`.
+2. **Tool Economy & Waste Mitigation**: Measures tool calls per task success and penalizes `BranchPollution` (unnecessary mission files or lingering worktrees).
+3. **Decision Fidelity & Orchestration Boundaries**: Asserts that the model complies with locked architectural decisions (`D<N>`), handles mid-run design gap escalations (`ORCH-02`), and rejects incomplete return receipts (`ORCH-03`).
+4. **Scope Containment & Safety**: Detects whether the model escapes its authorized write perimeter or reads security canary files (`CAMPAIGN-CANARY`, `ARCHIVE-CANARY`).
+5. **Case-Validity Quarantine**: Isolate fixture or adapter defects into quarantined partitions while evaluating conditional comparative effects on valid active cases.
+6. **Harness Parity**: Normalizes tool events, token usage, and semantic observations across Claude Code, OpenCode, Codex, and Antigravity.

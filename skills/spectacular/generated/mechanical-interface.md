@@ -2,7 +2,7 @@
 
 Generated from `internal/command.Registry`; do not edit by hand.
 
-Release version: `2.16.0`
+Release version: `2.17.0`
 
 Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1`, `read-only`)
 

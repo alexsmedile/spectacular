@@ -1,6 +1,19 @@
 # Changelog
 
-## [Unreleased]
+## 2.17.0 — 2026-09-03
+
+### Added
+
+- **Benchmark Architecture Modernization & Parallel Matrix Engine**:
+  - Flattened benchmark hierarchy into unified, portable `test/benchmarks/`.
+  - Added parallel multi-harness matrix runner (`spectacular bench matrix`) executing trials concurrently across Codex, Claude, and OpenCode with configurable worker pools (`--parallel <N>`).
+  - Added historical trend tracker (`spectacular bench history`) extracting chronological audit timelines, token efficiency, and tool economy.
+  - Added A/A Noise-Floor Calibration engine (`spectacular bench calibrate`) measuring natural stochastic sampler variance on identical commits.
+  - Implemented **Case-Validity Quarantine** separating fixture/adapter defects into quarantined partitions while reporting conditional comparative effects on valid active cases.
+  - Introduced granular economy metrics: `TokensPerSuccess`, `ToolEconomy` (calls per success), and `BranchPollution` (tracking branch and worktree debris).
+  - Upgraded orchestration evals (`ORCH-01`, `ORCH-02`, `ORCH-03`) to multi-phase stateful scenarios testing blast-radius discrimination, contract breach commit blocks, and incomplete return receipt rejections.
+  - Added credit-guarded entry point `bash test/verify.sh bench` requiring explicit `LIVE_BENCHMARK=1` to prevent unintentional credit consumption.
+  - Published comprehensive human-facing guide in `docs/benchmarks.md` and codified the 3-pillar hierarchy in `skills/test-sentinel/`.
 
 ## 2.16.0 — 2026-09-03
 

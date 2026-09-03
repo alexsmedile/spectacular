@@ -40,7 +40,8 @@
         "total_tool_calls": 2,
         "total_duration_ms": 100,
         "successful_trials": 1,
-        "input_tokens_per_success": 100
+        "input_tokens_per_success": 100,
+        "tool_economy_calls_per_success": 2
       },
       "candidate": {
         "trials_with_usage": 1,
@@ -55,7 +56,8 @@
         "total_tool_calls": 1,
         "total_duration_ms": 80,
         "successful_trials": 1,
-        "input_tokens_per_success": 75
+        "input_tokens_per_success": 75,
+        "tool_economy_calls_per_success": 1
       }
     },
     "pairing": {
@@ -69,7 +71,11 @@
     },
     "cost_findings": [
       "paired total input-token reduction 0.250"
-    ]
+    ],
+    "valid_cases": [
+      "AA-01"
+    ],
+    "conditional_comparative_effect": "parity"
   },
   "trials": [
     {

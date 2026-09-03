@@ -3,6 +3,7 @@
 Verdict: **pass**<br>
 Measurement: **valid**<br>
 Comparative effect: **parity**<br>
+Conditional effect (valid cases): **parity**<br>
 Readiness: **not-assessed**<br>
 Baseline: `old` (`skill`)<br>
 Candidate: `new` (`skill`)<br>
@@ -10,6 +11,8 @@ Model: `eval-model`<br>
 Read isolation: `os-enforced`<br>
 Tier: `micro`<br>
 Minimum repetitions: `1`
+
+Case partition: **1 valid** / **0 quarantined**.
 
 ## Dimension rates
 
@@ -32,10 +35,10 @@ Pairs `1`; candidate wins `0`; candidate losses `0`; both pass `1`; both fail `0
 
 Totals are controlling across heterogeneous cases; medians remain descriptive only.
 
-| Variant | Usage | Total input | Total cached | Total output | Total tools | Total duration | Input / success |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| baseline | 1/1 | 100 | 0 | 20 | 2 | 100ms | 100 |
-| candidate | 1/1 | 75 | 0 | 18 | 1 | 80ms | 75 |
+| Variant | Usage | Total input | Total cached | Total output | Total tools | Total duration | Input / success | Tool economy | Branch debris |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| baseline | 1/1 | 100 | 0 | 20 | 2 | 100ms | 100 | 2.0 | 0 |
+| candidate | 1/1 | 75 | 0 | 18 | 1 | 80ms | 75 | 1.0 | 0 |
 
 ### Cost findings
 

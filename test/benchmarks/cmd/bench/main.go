@@ -262,6 +262,7 @@ func matrix(args []string) error {
 	modelsList := set.String("models", "codex:gpt-5.6-terra,claude:claude-opus-5", "comma-separated harness:model pairs")
 	spectacularCLI := set.String("spectacular-cli", "", "pinned Spectacular CLI")
 	parallelPerModel := set.Int("parallel", 2, "concurrency per model")
+	maxCalls := set.Int("max-calls", 50, "maximum model calls allowed")
 	outBase := set.String("out", "test/benchmarks/reports/matrix-"+time.Now().Format("20060102-150405"), "output root directory")
 	if err := set.Parse(args); err != nil {
 		return err
@@ -303,7 +304,7 @@ func matrix(args []string) error {
 				Repo: *repo, CatalogPath: *catalogPath, SchemaPath: *schemaPath,
 				BaselineRef: *baseline, BaselineMode: "skill", CandidateRef: *candidate, CandidateMode: "skill",
 				Tier: *tier, Repeats: 1, Seed: 1, Model: mName, Adapter: aPath,
-				SpectacularCLI: *spectacularCLI, OutputDir: oDir, MaxCalls: 12, Parallel: *parallelPerModel,
+				SpectacularCLI: *spectacularCLI, OutputDir: oDir, MaxCalls: *maxCalls, Parallel: *parallelPerModel,
 				TrialTimeout: 10 * time.Minute, RequireCertifiedTelemetry: true,
 			})
 			if runErr == nil {

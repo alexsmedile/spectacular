@@ -1,0 +1,4 @@
+schema_version: spectacular.workspace.v1
+record_roots:
+  - .
+project_anchor: PROJECT.md

@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
 	"time"
 
 	bench "github.com/alexsmedile/spectacular/v2/test/benchmarks"
@@ -28,6 +31,10 @@ func main() {
 		err = static(os.Args[2:])
 	case "run":
 		err = run(os.Args[2:])
+	case "matrix":
+		err = matrix(os.Args[2:])
+	case "history":
+		err = history(os.Args[2:])
 	default:
 		usage()
 		os.Exit(2)
@@ -39,7 +46,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: go run ./test/benchmarks/cmd/bench <validate|adapter-check|plan|static|run> [flags]")
+	fmt.Fprintln(os.Stderr, "usage: go run ./test/benchmarks/cmd/bench <validate|adapter-check|plan|static|run|matrix|history> [flags]")
 }
 
 func adapterCheck(args []string) error {
@@ -241,6 +248,180 @@ func run(args []string) error {
 		return err
 	}
 	fmt.Printf("paired benchmark: %s (%s)\n", report.Summary.Verdict, filepath.Join(*output, "report.md"))
+	return nil
+}
+
+func matrix(args []string) error {
+	set := flag.NewFlagSet("matrix", flag.ContinueOnError)
+	repo := set.String("repo", ".", "Git repository")
+	catalogPath := set.String("catalog", "test/benchmarks/evals.json", "benchmark catalog")
+	schemaPath := set.String("schema", "test/benchmarks/agent-result.schema.json", "agent result schema")
+	baseline := set.String("baseline", "14158f9", "immutable baseline revision")
+	candidate := set.String("candidate", "", "immutable candidate revision")
+	tier := set.String("tier", "micro", "micro, smoke, full, or held-out")
+	modelsList := set.String("models", "codex:gpt-5.6-terra,claude:claude-opus-5", "comma-separated harness:model pairs")
+	spectacularCLI := set.String("spectacular-cli", "", "pinned Spectacular CLI")
+	parallelPerModel := set.Int("parallel", 2, "concurrency per model")
+	outBase := set.String("out", "test/benchmarks/reports/matrix-"+time.Now().Format("20060102-150405"), "output root directory")
+	if err := set.Parse(args); err != nil {
+		return err
+	}
+	if *candidate == "" {
+		return fmt.Errorf("candidate is required")
+	}
+	if *spectacularCLI == "" {
+		return fmt.Errorf("spectacular-cli is required")
+	}
+
+	targets := strings.Split(*modelsList, ",")
+	type matrixResult struct {
+		harness string
+		model   string
+		report  bench.RunReport
+		outDir  string
+		err     error
+	}
+
+	results := make([]matrixResult, len(targets))
+	var wg sync.WaitGroup
+
+	fmt.Printf("==> Launching multi-harness benchmark matrix across %d targets (tier: %s)...\n", len(targets), *tier)
+	for i, target := range targets {
+		parts := strings.Split(strings.TrimSpace(target), ":")
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid harness:model target %q (expected <harness>:<model>)", target)
+		}
+		harnessName := parts[0]
+		modelName := parts[1]
+		adapterPath := fmt.Sprintf("test/benchmarks/adapters/%s-adapter.sh", harnessName)
+		outDir := filepath.Join(*outBase, harnessName+"-"+filepath.Base(modelName))
+
+		wg.Add(1)
+		go func(idx int, hName, mName, aPath, oDir string) {
+			defer wg.Done()
+			rep, runErr := bench.RunPaired(bench.RunConfig{
+				Repo: *repo, CatalogPath: *catalogPath, SchemaPath: *schemaPath,
+				BaselineRef: *baseline, BaselineMode: "skill", CandidateRef: *candidate, CandidateMode: "skill",
+				Tier: *tier, Repeats: 1, Seed: 1, Model: mName, Adapter: aPath,
+				SpectacularCLI: *spectacularCLI, OutputDir: oDir, MaxCalls: 12, Parallel: *parallelPerModel,
+				TrialTimeout: 10 * time.Minute, RequireCertifiedTelemetry: true,
+			})
+			if runErr == nil {
+				_ = bench.WriteRunReport(rep, oDir)
+			}
+			results[idx] = matrixResult{harness: hName, model: mName, report: rep, outDir: oDir, err: runErr}
+		}(i, harnessName, modelName, adapterPath, outDir)
+	}
+
+	wg.Wait()
+
+	fmt.Println("\n==================================================================================")
+	fmt.Printf("MULTI-HARNESS BENCHMARK MATRIX (Tier: %s | Candidate: %s)\n", *tier, *candidate)
+	fmt.Println("==================================================================================")
+	fmt.Printf("%-10s | %-25s | %-12s | %-10s | %-12s | %-10s\n", "HARNESS", "MODEL", "VERDICT", "SAFETY", "TASK SUCCESS", "DURATION")
+	fmt.Println("----------------------------------------------------------------------------------")
+	for _, res := range results {
+		if res.err != nil {
+			fmt.Printf("%-10s | %-25s | ERROR: %v\n", res.harness, res.model, res.err)
+			continue
+		}
+		summary := res.report.Summary
+		candSafety := "N/A"
+		candSuccess := "N/A"
+		if rates, ok := summary.DimensionRates["candidate"]; ok {
+			candSafety = fmt.Sprintf("%.1f%%", rates["safety"]*100)
+			candSuccess = fmt.Sprintf("%.1f%%", rates["task_success"]*100)
+		}
+		duration := "0ms"
+		if cost, ok := summary.ObservedCost["candidate"]; ok {
+			duration = fmt.Sprintf("%dms", cost.TotalDurationMillis)
+		}
+		fmt.Printf("%-10s | %-25s | %-12s | %-10s | %-12s | %-10s\n", res.harness, res.model, summary.Verdict, candSafety, candSuccess, duration)
+	}
+	fmt.Println("==================================================================================")
+	fmt.Printf("Detailed reports saved in: %s/\n", *outBase)
+	return nil
+}
+
+func history(args []string) error {
+	set := flag.NewFlagSet("history", flag.ContinueOnError)
+	reportsDir := set.String("dir", "test/benchmarks/reports", "reports directory")
+	if err := set.Parse(args); err != nil {
+		return err
+	}
+
+	type historyEntry struct {
+		Path             string    `json:"path"`
+		Model            string    `json:"model"`
+		Tier             string    `json:"tier"`
+		Date             time.Time `json:"date"`
+		Verdict          string    `json:"verdict"`
+		Effect           string    `json:"effect"`
+		CandidateSafety  float64   `json:"candidate_safety"`
+		CandidateSuccess float64   `json:"candidate_success"`
+		InputTokens      int       `json:"input_tokens"`
+		DurationMS       int64     `json:"duration_ms"`
+	}
+
+	var entries []historyEntry
+
+	err := filepath.Walk(*reportsDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() || filepath.Base(path) != "report.json" {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil
+		}
+		var rep bench.RunReport
+		if err := json.Unmarshal(data, &rep); err != nil {
+			return nil
+		}
+		var candSafety, candSuccess float64
+		var inputTok int
+		var dur int64
+		if rates, ok := rep.Summary.DimensionRates["candidate"]; ok {
+			candSafety = rates["safety"]
+			candSuccess = rates["task_success"]
+		}
+		if cost, ok := rep.Summary.ObservedCost["candidate"]; ok {
+			inputTok = cost.TotalInputTokens
+			dur = cost.TotalDurationMillis
+		}
+		entries = append(entries, historyEntry{
+			Path:             path,
+			Model:            rep.Model,
+			Tier:             rep.Tier,
+			Date:             rep.GeneratedAt,
+			Verdict:          rep.Summary.Verdict,
+			Effect:           rep.Summary.ComparativeEffect,
+			CandidateSafety:  candSafety,
+			CandidateSuccess: candSuccess,
+			InputTokens:      inputTok,
+			DurationMS:       dur,
+		})
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Date.Before(entries[j].Date)
+	})
+
+	fmt.Println("===============================================================================================")
+	fmt.Println("SPECTACULAR BENCHMARK EXECUTION HISTORY")
+	fmt.Println("===============================================================================================")
+	fmt.Printf("%-19s | %-24s | %-7s | %-12s | %-8s | %-8s | %-10s\n", "DATE", "MODEL", "TIER", "VERDICT", "SAFETY", "SUCCESS", "INPUT TOK")
+	fmt.Println("-----------------------------------------------------------------------------------------------")
+	for _, e := range entries {
+		fmt.Printf("%-19s | %-24s | %-7s | %-12s | %-7.1f%% | %-7.1f%% | %-10d\n",
+			e.Date.Format("2006-01-02 15:04"), e.Model, e.Tier, e.Verdict,
+			e.CandidateSafety*100, e.CandidateSuccess*100, e.InputTokens)
+	}
+	fmt.Println("===============================================================================================")
 	return nil
 }
 

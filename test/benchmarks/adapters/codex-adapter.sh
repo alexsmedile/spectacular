@@ -9,10 +9,11 @@ set -eu
 : "${SPECTACULAR_EVAL_MODEL:?missing model}"
 
 eval_cli_mode="${SPECTACULAR_EVAL_CLI_MODE:-usable}"
-eval_codex=$(command -v codex) || {
+eval_codex=$(command -v codex || command -v "$HOME/.bun/bin/codex" || echo "")
+if [ -z "$eval_codex" ] || [ ! -x "$eval_codex" ]; then
   echo "codex executable not found" >&2
   exit 127
-}
+fi
 eval_original_path=$PATH
 
 without_spectacular_dirs() {

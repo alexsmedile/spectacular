@@ -17,10 +17,11 @@ set -eu
 : "${SPECTACULAR_EVAL_MODEL:?missing model}"
 
 eval_cli_mode="${SPECTACULAR_EVAL_CLI_MODE:-usable}"
-eval_claude=$(command -v claude) || {
+eval_claude=$(command -v claude || command -v "$HOME/.local/bin/claude" || echo "")
+if [ -z "$eval_claude" ] || [ ! -x "$eval_claude" ]; then
   echo "claude executable not found" >&2
   exit 127
-}
+fi
 eval_original_path=$PATH
 
 without_spectacular_dirs() {

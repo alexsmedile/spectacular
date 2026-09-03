@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -35,6 +36,7 @@ type RunConfig struct {
 	AllowHeldOut              bool
 	ReadIsolation             string
 	MaxCalls                  int
+	Parallel                  int
 	TrialTimeout              time.Duration
 	RequireCertifiedTelemetry bool
 }
@@ -227,57 +229,159 @@ func RunPaired(config RunConfig) (RunReport, error) {
 			"The harness isolates artifacts and exposes only one skill variant per trial; OS-level read isolation remains the adapter's responsibility.",
 		},
 	}
-	for _, spec := range specs {
-		id := trialID(spec)
-		if completed, ok := manifest.Completed[id]; ok {
-			trialPath, loadErr := containedPath(config.OutputDir, completed.TrialPath)
-			if loadErr != nil {
-				return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
+	concurrency := config.Parallel
+	if concurrency > len(specs) {
+		concurrency = len(specs)
+	}
+	if concurrency <= 1 {
+		for _, spec := range specs {
+			id := trialID(spec)
+			if completed, ok := manifest.Completed[id]; ok {
+				trialPath, loadErr := containedPath(config.OutputDir, completed.TrialPath)
+				if loadErr != nil {
+					return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
+				}
+				trialDirectory := filepath.Dir(trialPath)
+				digest, digestErr := directoryDigest(trialDirectory)
+				if digestErr != nil || digest != completed.ArtifactDigest {
+					return RunReport{}, fmt.Errorf("resume %s: artifact digest mismatch", id)
+				}
+				trial, loadErr := loadTrial(trialPath)
+				if loadErr != nil {
+					return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
+				}
+				mode := config.BaselineMode
+				if spec.Variant == "candidate" {
+					mode = config.CandidateMode
+				}
+				if loadErr = validateResumedTrial(trial, spec, commits[spec.Variant], config.Model, mode); loadErr != nil {
+					return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
+				}
+				report.Trials = append(report.Trials, trial)
+				if config.RequireCertifiedTelemetry && len(report.Trials) == 1 {
+					if err := requireCertifiedTrial(trial); err != nil {
+						return RunReport{}, fmt.Errorf("first-trial telemetry preflight: %w", err)
+					}
+				}
+				continue
 			}
-			trialDirectory := filepath.Dir(trialPath)
-			digest, digestErr := directoryDigest(trialDirectory)
-			if digestErr != nil || digest != completed.ArtifactDigest {
-				return RunReport{}, fmt.Errorf("resume %s: artifact digest mismatch", id)
-			}
-			trial, loadErr := loadTrial(trialPath)
-			if loadErr != nil {
-				return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
-			}
-			mode := config.BaselineMode
-			if spec.Variant == "candidate" {
-				mode = config.CandidateMode
-			}
-			if loadErr = validateResumedTrial(trial, spec, commits[spec.Variant], config.Model, mode); loadErr != nil {
-				return RunReport{}, fmt.Errorf("resume %s: %w", id, loadErr)
+			trial, runErr := runOne(config, spec, commits[spec.Variant])
+			if runErr != nil {
+				return RunReport{}, fmt.Errorf("run %s/%s repeat %d: %w", spec.Case.ID, spec.Variant, spec.Repeat, runErr)
 			}
 			report.Trials = append(report.Trials, trial)
+			relative := filepath.ToSlash(filepath.Join("trials", trial.ID, "trial.json"))
+			if err := writeJSON(filepath.Join(config.OutputDir, filepath.FromSlash(relative)), trial); err != nil {
+				return RunReport{}, err
+			}
+			artifactDigest, err := directoryDigest(filepath.Join(config.OutputDir, "trials", trial.ID))
+			if err != nil {
+				return RunReport{}, err
+			}
+			manifest.Completed[trial.ID] = completedTrial{TrialPath: relative, ArtifactDigest: artifactDigest}
+			if err := writeRunManifest(config.OutputDir, manifest); err != nil {
+				return RunReport{}, err
+			}
 			if config.RequireCertifiedTelemetry && len(report.Trials) == 1 {
 				if err := requireCertifiedTrial(trial); err != nil {
-					return RunReport{}, fmt.Errorf("first-trial telemetry preflight: %w", err)
+					return RunReport{}, fmt.Errorf("first-trial telemetry preflight: %w; correct the adapter, then start a new output directory", err)
 				}
 			}
-			continue
 		}
-		trial, runErr := runOne(config, spec, commits[spec.Variant])
-		if runErr != nil {
-			return RunReport{}, fmt.Errorf("run %s/%s repeat %d: %w", spec.Case.ID, spec.Variant, spec.Repeat, runErr)
+	} else {
+		specChan := make(chan trialSpec, len(specs))
+		for _, spec := range specs {
+			specChan <- spec
 		}
-		report.Trials = append(report.Trials, trial)
-		relative := filepath.ToSlash(filepath.Join("trials", trial.ID, "trial.json"))
-		if err := writeJSON(filepath.Join(config.OutputDir, filepath.FromSlash(relative)), trial); err != nil {
-			return RunReport{}, err
+		close(specChan)
+
+		var mu sync.Mutex
+		var wg sync.WaitGroup
+		var firstErr error
+		results := make(map[string]Trial)
+
+		for w := 0; w < concurrency; w++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for spec := range specChan {
+					mu.Lock()
+					if firstErr != nil {
+						mu.Unlock()
+						return
+					}
+					id := trialID(spec)
+					if completed, ok := manifest.Completed[id]; ok {
+						trialPath, loadErr := containedPath(config.OutputDir, completed.TrialPath)
+						if loadErr != nil {
+							firstErr = fmt.Errorf("resume %s: %w", id, loadErr)
+							mu.Unlock()
+							return
+						}
+						trialDirectory := filepath.Dir(trialPath)
+						digest, digestErr := directoryDigest(trialDirectory)
+						if digestErr != nil || digest != completed.ArtifactDigest {
+							firstErr = fmt.Errorf("resume %s: artifact digest mismatch", id)
+							mu.Unlock()
+							return
+						}
+						trial, loadErr := loadTrial(trialPath)
+						if loadErr != nil {
+							firstErr = fmt.Errorf("resume %s: %w", id, loadErr)
+							mu.Unlock()
+							return
+						}
+						mode := config.BaselineMode
+						if spec.Variant == "candidate" {
+							mode = config.CandidateMode
+						}
+						if loadErr = validateResumedTrial(trial, spec, commits[spec.Variant], config.Model, mode); loadErr != nil {
+							firstErr = fmt.Errorf("resume %s: %w", id, loadErr)
+							mu.Unlock()
+							return
+						}
+						results[id] = trial
+						mu.Unlock()
+						continue
+					}
+					mu.Unlock()
+
+					trial, runErr := runOne(config, spec, commits[spec.Variant])
+					if runErr != nil {
+						mu.Lock()
+						if firstErr == nil {
+							firstErr = fmt.Errorf("run %s/%s repeat %d: %w", spec.Case.ID, spec.Variant, spec.Repeat, runErr)
+						}
+						mu.Unlock()
+						return
+					}
+
+					mu.Lock()
+					results[id] = trial
+					relative := filepath.ToSlash(filepath.Join("trials", trial.ID, "trial.json"))
+					if err := writeJSON(filepath.Join(config.OutputDir, filepath.FromSlash(relative)), trial); err != nil && firstErr == nil {
+						firstErr = err
+					}
+					artifactDigest, err := directoryDigest(filepath.Join(config.OutputDir, "trials", trial.ID))
+					if err != nil && firstErr == nil {
+						firstErr = err
+					}
+					manifest.Completed[trial.ID] = completedTrial{TrialPath: relative, ArtifactDigest: artifactDigest}
+					if err := writeRunManifest(config.OutputDir, manifest); err != nil && firstErr == nil {
+						firstErr = err
+					}
+					mu.Unlock()
+				}
+			}()
 		}
-		artifactDigest, err := directoryDigest(filepath.Join(config.OutputDir, "trials", trial.ID))
-		if err != nil {
-			return RunReport{}, err
+		wg.Wait()
+		if firstErr != nil {
+			return RunReport{}, firstErr
 		}
-		manifest.Completed[trial.ID] = completedTrial{TrialPath: relative, ArtifactDigest: artifactDigest}
-		if err := writeRunManifest(config.OutputDir, manifest); err != nil {
-			return RunReport{}, err
-		}
-		if config.RequireCertifiedTelemetry && len(report.Trials) == 1 {
-			if err := requireCertifiedTrial(trial); err != nil {
-				return RunReport{}, fmt.Errorf("first-trial telemetry preflight: %w; correct the adapter, then start a new output directory", err)
+		for _, spec := range specs {
+			id := trialID(spec)
+			if trial, ok := results[id]; ok {
+				report.Trials = append(report.Trials, trial)
 			}
 		}
 	}

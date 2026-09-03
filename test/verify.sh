@@ -343,6 +343,31 @@ release_checks() {
   check release-distribution bash test/release.sh
 }
 
+bench_checks() {
+  echo "==> Running local token sweep and static benchmark..."
+  check sweep-tokens go run ./test/benchmarks/cmd/sweep-tokens
+  check static-bench go run ./test/benchmarks/cmd/bench static --candidate-dir skills/spectacular
+  if [[ "${LIVE_BENCHMARK:-0}" == "1" ]]; then
+    echo "==> LIVE_BENCHMARK=1: Running live model trials (consumes API credits)..."
+    local cli_bin="${TMPDIR:-/tmp}/spectacular-eval-cli"
+    go build -o "$cli_bin" ./cmd/spectacular
+    local model="${BENCH_MODEL:-opencode/muse-spark-1.2-contributor-free}"
+    local adapter="${BENCH_ADAPTER:-test/benchmarks/adapters/opencode-adapter.sh}"
+    local tier="${BENCH_TIER:-micro}"
+    local parallel="${BENCH_PARALLEL:-2}"
+    check live-bench go run ./test/benchmarks/cmd/bench run \
+      --spectacular-cli "$cli_bin" \
+      --candidate "$(git rev-parse HEAD)" \
+      --model "$model" \
+      --adapter "$adapter" \
+      --tier "$tier" \
+      --parallel "$parallel" \
+      --out "test/benchmarks/reports/live-$tier"
+  else
+    echo "==> Notice: Live LLM benchmarks consume API credits. Local static benchmarks passed. Pass LIVE_BENCHMARK=1 to run live model trials."
+  fi
+}
+
 case "$mode" in
   preflight)
     preflight_checks
@@ -355,6 +380,9 @@ case "$mode" in
     static_checks
     acceptance_checks
     ;;
+  bench)
+    bench_checks
+    ;;
   release)
     static_checks
     release_checks
@@ -366,7 +394,7 @@ case "$mode" in
     release_checks
     ;;
   *)
-    echo "usage: bash test/verify.sh [preflight|quick|acceptance|release|all]" >&2
+    echo "usage: bash test/verify.sh [preflight|quick|acceptance|bench|release|all]" >&2
     exit 2
     ;;
 esac

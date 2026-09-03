@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	bench "github.com/alexsmedile/spectacular/v2/test/evals/spectacular"
+	bench "github.com/alexsmedile/spectacular/v2/test/benchmarks"
 )
 
 func main() {
@@ -33,13 +33,13 @@ func main() {
 		os.Exit(2)
 	}
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "spectacular eval:", err)
+		fmt.Fprintln(os.Stderr, "spectacular bench:", err)
 		os.Exit(1)
 	}
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: go run ./test/evals/spectacular/cmd/bench <validate|adapter-check|plan|static|run> [flags]")
+	fmt.Fprintln(os.Stderr, "usage: go run ./test/benchmarks/cmd/bench <validate|adapter-check|plan|static|run> [flags]")
 }
 
 func adapterCheck(args []string) error {
@@ -70,7 +70,7 @@ func adapterCheck(args []string) error {
 
 func validate(args []string) error {
 	set := flag.NewFlagSet("validate", flag.ContinueOnError)
-	catalogPath := set.String("catalog", "test/evals/spectacular/evals.json", "benchmark catalog")
+	catalogPath := set.String("catalog", "test/benchmarks/evals.json", "benchmark catalog")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func validate(args []string) error {
 
 func plan(args []string) error {
 	set := flag.NewFlagSet("plan", flag.ContinueOnError)
-	catalogPath := set.String("catalog", "test/evals/spectacular/evals.json", "benchmark catalog")
+	catalogPath := set.String("catalog", "test/benchmarks/evals.json", "benchmark catalog")
 	tier := set.String("tier", "micro", "micro, smoke, full, or held-out")
 	repeats := set.Int("repeats", 0, "override tier repetitions")
 	if err := set.Parse(args); err != nil {
@@ -138,11 +138,11 @@ func plan(args []string) error {
 func static(args []string) error {
 	set := flag.NewFlagSet("static", flag.ContinueOnError)
 	repo := set.String("repo", ".", "Git repository")
-	catalogPath := set.String("catalog", "test/evals/spectacular/evals.json", "benchmark measurement contract")
+	catalogPath := set.String("catalog", "test/benchmarks/evals.json", "benchmark measurement contract")
 	baselineRef := set.String("baseline", "14158f9", "immutable baseline revision")
 	candidateRef := set.String("candidate", "", "immutable candidate revision")
 	candidateDir := set.String("candidate-dir", "", "candidate skill directory for provisional static inspection")
-	output := set.String("out", "test/evals/spectacular/reports/static", "report directory")
+	output := set.String("out", "test/benchmarks/reports/static", "report directory")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -201,8 +201,8 @@ func static(args []string) error {
 func run(args []string) error {
 	set := flag.NewFlagSet("run", flag.ContinueOnError)
 	repo := set.String("repo", ".", "Git repository")
-	catalogPath := set.String("catalog", "test/evals/spectacular/evals.json", "benchmark catalog")
-	schemaPath := set.String("schema", "test/evals/spectacular/agent-result.schema.json", "agent result schema")
+	catalogPath := set.String("catalog", "test/benchmarks/evals.json", "benchmark catalog")
+	schemaPath := set.String("schema", "test/benchmarks/agent-result.schema.json", "agent result schema")
 	baseline := set.String("baseline", "14158f9", "immutable baseline revision")
 	baselineMode := set.String("baseline-mode", "skill", "skill, workspace-only, or native-direct")
 	candidate := set.String("candidate", "", "immutable candidate revision")
@@ -211,12 +211,13 @@ func run(args []string) error {
 	repeats := set.Int("repeats", 0, "override tier repetitions")
 	seed := set.Int64("seed", 1, "pair randomization seed")
 	model := set.String("model", "", "model identifier")
-	adapter := set.String("adapter", "test/evals/spectacular/scripts/codex-adapter.sh", "adapter executable")
+	adapter := set.String("adapter", "test/benchmarks/adapters/codex-adapter.sh", "adapter executable")
 	spectacularCLI := set.String("spectacular-cli", "", "absolute path to the repository-built Spectacular CLI pinned for every trial")
 	output := set.String("out", "", "new output directory")
 	allowHeldOut := set.Bool("allow-held-out", false, "explicitly authorize a frozen held-out evidence run")
 	readIsolation := set.String("read-isolation", "artifact-only", "artifact-only or os-enforced (external adapter attestation)")
 	maxCalls := set.Int("max-calls", 12, "refuse runs requiring more model calls; set deliberately for larger tiers")
+	parallel := set.Int("parallel", 1, "concurrency level for parallel trial execution")
 	trialTimeout := set.Duration("trial-timeout", 10*time.Minute, "maximum duration for one model trial; zero disables")
 	requireCertifiedTelemetry := set.Bool("require-certified-telemetry", true, "stop after the first trial unless usage and host semantic telemetry are observed")
 	var adapterArgs stringListFlag
@@ -231,7 +232,7 @@ func run(args []string) error {
 		Repo: *repo, CatalogPath: *catalogPath, SchemaPath: *schemaPath,
 		BaselineRef: *baseline, BaselineMode: *baselineMode, CandidateRef: *candidate, CandidateMode: *candidateMode, Tier: *tier,
 		Repeats: *repeats, Seed: *seed, Model: *model, Adapter: *adapter, AdapterArgs: adapterArgs, SpectacularCLI: *spectacularCLI, OutputDir: *output, AllowHeldOut: *allowHeldOut, ReadIsolation: *readIsolation,
-		MaxCalls: *maxCalls, TrialTimeout: *trialTimeout, RequireCertifiedTelemetry: *requireCertifiedTelemetry,
+		MaxCalls: *maxCalls, Parallel: *parallel, TrialTimeout: *trialTimeout, RequireCertifiedTelemetry: *requireCertifiedTelemetry,
 	})
 	if err != nil {
 		return err

@@ -23,11 +23,34 @@ Deterministic test suites, adversarial stress testing, regression shields, and S
 | **Hardened** | Concurrency, race, leak verification | ThreadSanitizer (`-race`), ephemeral tempdirs | 0 races, 0 deadlocks under load. Read [determinism](references/determinism-matrix.md). |
 | **Regression** | Bug intake or incident fix | TDD reproduction test first $\to$ fix $\to$ anchor | Fails on trunk, passes on fix. Read [regression shield](references/regression-shield.md). |
 | **Pipeline** | Automated PR & matrix gate | Deploy SHA-pinned `.github/workflows/ci.yml` | Workflow passes preflight before matrix. Read `templates/`. |
+| **Benchmark** | Model trials, token sweeps, evals | User-invokable A/B evaluations & parallel harness trials | Evaluates context economy & regressions. Read `docs/benchmarks.md`. |
 | **Architecture** | CI/CD audit, gatekeeping & delivery | Audit immutable builds, OIDC, branch protection | Linear history, sub-10m SLA, zero secrets. Read [CI architecture](references/ci-architecture.md). |
 
 ---
 
-## 2. Direct Negative Constraints (DO NOT)
+## 2. Standard Directory & Benchmark Hierarchy
+
+Every repository governed or audited by Test Sentinel must adhere to the flat 3-pillar layout:
+
+```text
+test/
+├── unit/             (or inline *_test.go in internal/ / src/ — sub-second Tier 1 CI gate)
+├── acceptance/       (deterministic integration & CLI fixtures — < 5s Tier 2 CI gate)
+├── benchmarks/       (user-invokable model trials, token sweeps & evals — Tier 3 gate)
+│   ├── cmd/          (flat benchmark CLI runner: go run ./test/benchmarks/cmd run)
+│   ├── adapters/     (harness execution scripts: opencode.sh, claude.sh, codex.sh, agy.sh)
+│   ├── cases.json    (evaluation cases, ground-truth prompts, and schemas)
+│   └── reports/      (generated golden & A/B comparison markdown reports)
+└── verify.sh         (single-entry driver: preflight, quick, acceptance, bench, all)
+```
+
+- **Tests vs Benchmarks Separation**:
+  - `acceptance/` and `unit/` run on every commit in **GitHub Actions CI** (zero cost, 100% deterministic).
+  - `benchmarks/` is **user-invokable** or triggered as an advisory regression gate (supports `--parallel <N>` multi-harness concurrency; protected from accidental token/credit spend).
+
+---
+
+## 3. Direct Negative Constraints (DO NOT)
 
 - **DO NOT write wall-clock sleeps**: Banned: `time.Sleep()`, `setTimeout()`, `time.sleep()`, `thread::sleep()`. Use channel barriers, condition sync, or synthetic clocks (`testing/synctest`, fake timers).
 - **DO NOT bind static ports or shared paths**: Banned: `:8080`, `/tmp/test.db`. Use `:0` dynamic port allocation and OS-assigned tempdirs (`t.TempDir()`, `tmp_path`).

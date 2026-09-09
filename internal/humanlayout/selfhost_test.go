@@ -31,6 +31,14 @@ func TestSelfHostedIndexesAreRebuildableCollectionCaches(t *testing.T) {
 			}
 		}
 		actual, readErr := os.ReadFile(target)
+		if os.IsNotExist(readErr) {
+			// These are rebuildable caches under a gitignored directory, so a
+			// fresh checkout legitimately has none. Absence is not drift: the
+			// check is that a cache which exists still matches what the
+			// generator produces. Failing here made every CI release job fail
+			// once the workflow was repaired enough to reach the tests.
+			continue
+		}
 		if readErr != nil {
 			t.Fatalf("read generated index %s: %v", path, readErr)
 		}

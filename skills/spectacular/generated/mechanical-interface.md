@@ -2,7 +2,7 @@
 
 Generated from `internal/command.Registry`; do not edit by hand.
 
-Release version: `2.17.0`
+Release version: `2.18.0`
 
 Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1`, `read-only`)
 
@@ -32,3 +32,5 @@ Release inspection: `spectacular --version [--json]` (`spectacular.build-info.v1
 | `spectacular decide` | `[<decision.md|->] [--title <title>] [--disposition <accepted|rejected|deferred|superseded>] [--rationale <rationale>] [--actor <name>] [--supersedes <ref>] [--json]` | `spectacular.decision.record.v2` | `mutating` |
 | `spectacular init` | `[<path>] [--name <name>] [--json]` | `spectacular.init.v2` | `mutating` |
 | `spectacular guard` | `<mission-ref>/<objective-ref> [--watch] [--exec <command>] [--json] [-- <command...>]` | `spectacular.guard.v2` | `read-only` |
+| `spectacular doctor` | `[--json]` | `spectacular.doctor.v1` | `read-only` |
+| `spectacular update` | `[-y] [--json]` | `spectacular.update.v1` | `mutating` |

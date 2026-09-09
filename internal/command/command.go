@@ -45,6 +45,7 @@ const (
 	evidenceRecordOptions
 	initOptions
 	decideOptions
+	noArguments
 )
 
 type operation uint8
@@ -74,6 +75,8 @@ const (
 	opDecide
 	opInit
 	opGuard
+	opDoctor
+	opUpdate
 )
 
 type Spec struct {
@@ -491,6 +494,26 @@ supersedes: ""
 		Description:   "Executes a command under mechanical perimeter supervision with automatic rollback on escapes.",
 		OutputType:    "GuardResult",
 	},
+	{
+		Words:         []string{"doctor"},
+		Arguments:     "[--json]",
+		ArgumentShape: noArguments,
+		JSONSchema:    "spectacular.doctor.v1",
+		Effect:        ReadOnly,
+		Operation:     opDoctor,
+		Description:   "Reports the installed binary and plugin versions, the newest release, and any version drift between them.",
+		OutputType:    "Diagnosis",
+	},
+	{
+		Words:         []string{"update"},
+		Arguments:     "[-y] [--json]",
+		ArgumentShape: noArguments,
+		JSONSchema:    "spectacular.update.v1",
+		Effect:        Mutating,
+		Operation:     opUpdate,
+		Description:   "Audits the installation against the newest release and reports how to update it; with -y, replaces the binary.",
+		OutputType:    "UpdateResult",
+	},
 }
 
 type Runner struct {
@@ -537,6 +560,7 @@ func (r Runner) Run(args []string) int {
 	if graphMode && timelineMode {
 		return r.usage(jsonMode, invoked, "cannot combine --graph and --timeline")
 	}
+	assumeYes, duplicateYes := removeFlag(&args, "-y")
 	dryRun, duplicateDryRun := removeFlag(&args, "--dry-run")
 	if duplicateDryRun {
 		return r.usage(jsonMode, invoked, "--dry-run may be supplied at most once")
@@ -630,6 +654,12 @@ func (r Runner) Run(args []string) int {
 	if nameOpt != "" && spec.Operation != opInit {
 		return r.commandUsage(jsonMode, invoked, spec, "--name applies to init")
 	}
+	if duplicateYes {
+		return r.commandUsage(jsonMode, invoked, spec, "-y may be supplied at most once")
+	}
+	if assumeYes && spec.Operation != opUpdate {
+		return r.commandUsage(jsonMode, invoked, spec, "-y applies to update")
+	}
 	if override != "" && spec.Operation != opContractAmend {
 		return r.commandUsage(jsonMode, invoked, spec, "--resolution applies to contract amend")
 	}
@@ -655,6 +685,15 @@ func (r Runner) Run(args []string) int {
 			renderHuman(r.Stdout, initRes)
 		}
 		return 0
+	}
+	// doctor and update diagnose and repair the installation itself, so they
+	// must work on a machine with no workspace at all -- which is exactly the
+	// machine most likely to need them. They return before discovery.
+	switch spec.Operation {
+	case opDoctor:
+		return r.runDoctor(jsonMode, invoked)
+	case opUpdate:
+		return r.runUpdate(jsonMode, invoked, assumeYes)
 	}
 	ws, err := discovery.Open(r.Cwd)
 	if err != nil {
@@ -1221,6 +1260,10 @@ func validateArguments(spec Spec, args []string) string {
 		if len(args) == 0 {
 			return "requires <decision.md|-> or --title, --disposition, and --rationale flags"
 		}
+	case noArguments:
+		if len(args) != 0 {
+			return "takes no arguments"
+		}
 	default:
 		return "command registry has an invalid argument shape"
 	}
@@ -1698,6 +1741,13 @@ func removeFlag(args *[]string, name string) (bool, bool) {
 }
 
 func match(args []string) (Spec, []string, bool) {
+	// `upgrade` is a spelling of `update`, resolved before matching so it stays
+	// an alias rather than a second registry entry: two entries would print two
+	// commands in usage and count as two in the mechanical interface, implying
+	// a distinction that does not exist.
+	if len(args) > 0 && args[0] == "upgrade" {
+		args = append([]string{"update"}, args[1:]...)
+	}
 	for _, spec := range Registry {
 		if len(args) < len(spec.Words) {
 			continue

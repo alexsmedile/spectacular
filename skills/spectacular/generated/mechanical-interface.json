@@ -1,6 +1,6 @@
 {
   "schema_version": "spectacular.command-catalog.v1",
-  "release_version": "2.17.0",
+  "release_version": "2.18.0",
   "release_inspection": {
     "command": "spectacular --version",
     "arguments": "[--json]",
@@ -151,6 +151,18 @@
       "arguments": "<mission-ref>/<objective-ref> [--watch] [--exec <command>] [--json] [-- <command...>]",
       "schema": "spectacular.guard.v2",
       "effect": "read-only"
+    },
+    {
+      "command": "spectacular doctor",
+      "arguments": "[--json]",
+      "schema": "spectacular.doctor.v1",
+      "effect": "read-only"
+    },
+    {
+      "command": "spectacular update",
+      "arguments": "[-y] [--json]",
+      "schema": "spectacular.update.v1",
+      "effect": "mutating"
     }
   ]
 }

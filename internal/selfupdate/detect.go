@@ -14,6 +14,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/alexsmedile/spectacular/v2/internal/buildinfo"
 )
 
 // Host names an agent runtime that can carry the Spectacular plugin.
@@ -85,23 +87,33 @@ func ReadReceipt(prefix string) (Receipt, bool) {
 	return receipt, true
 }
 
-// DetectBinary reports the installed native binary. The receipt is preferred
-// over running the binary: reading a file cannot hang, and a binary that no
-// longer executes is exactly the state a doctor should still be able to report.
+// DetectBinary reports the running binary. The version comes from the binary
+// itself rather than the install receipt: a receipt records what the installer
+// last placed, and a binary updated by any other route leaves it behind. This
+// machine held a 2.12.0 receipt beside a 2.17.0 binary, so a receipt-first
+// reading would have reported a version that was five releases stale.
+//
+// The receipt still supplies the prefix and runtime an update should reuse.
 func DetectBinary(prefix string) Component {
-	component := Component{Name: "binary", Kind: "binary"}
-	binary := filepath.Join(prefix, "bin", "spectacular")
-	if _, err := os.Stat(binary); err != nil {
-		component.Detail = "no binary at " + binary
-		return component
+	component := Component{
+		Name:      "binary",
+		Kind:      "binary",
+		Version:   buildinfo.Version,
+		Installed: true,
 	}
-	component.Path = binary
-	component.Installed = true
-	if receipt, ok := ReadReceipt(prefix); ok {
-		component.Version = receipt.Version
-		return component
+	if executable, err := os.Executable(); err == nil {
+		if resolved, err := filepath.EvalSymlinks(executable); err == nil {
+			component.Path = resolved
+		} else {
+			component.Path = executable
+		}
 	}
-	component.Detail = "installed, but no readable install receipt"
+	// A receipt disagreeing with the running binary is worth surfacing: it means
+	// the binary was replaced by something other than the installer, so the
+	// installer's backup no longer corresponds to what is installed.
+	if receipt, ok := ReadReceipt(prefix); ok && receipt.Version != buildinfo.Version {
+		component.Detail = "install receipt records " + receipt.Version + "; the binary was replaced outside the installer"
+	}
 	return component
 }
 

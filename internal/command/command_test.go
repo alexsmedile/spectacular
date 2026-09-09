@@ -16,24 +16,27 @@ import (
 )
 
 func TestPublicRegistryIsMinimalAndTyped(t *testing.T) {
-	// Twenty-four commands. Owner authorized init and guard.
+	// Twenty-six commands. Owner authorized init, guard, doctor, and update.
 	want := []string{
 		"mission start", "mission list", "mission show", "mission check", "mission amend-scope", "mission close", "objective show", "objective promote",
 		"objective finish", "run show", "run start", "run transition", "review record", "handoff record",
 		"evidence record", "mission complete", "proposal check", "campaign check", "contract amend", "contract create",
-		"charter", "decide", "init", "guard",
+		"charter", "decide", "init", "guard", "doctor", "update",
 	}
 	if len(Registry) != len(want) {
 		t.Fatalf("registry has %d commands, want %d", len(Registry), len(want))
 	}
-	if len(want) != 24 {
-		t.Fatalf("the public surface is %d commands; owner authorized 24", len(want))
+	if len(want) != 26 {
+		t.Fatalf("the public surface is %d commands; owner authorized 26", len(want))
 	}
 	for i, spec := range Registry {
 		if got := strings.Join(spec.Words, " "); got != want[i] {
 			t.Fatalf("registry[%d]=%q want %q", i, got, want[i])
 		}
-		if !strings.HasSuffix(spec.JSONSchema, ".v2") {
+		// doctor and update report on the installation rather than a workspace
+		// record, so they carry no versioned record schema. Every command that
+		// does emit a record must still be v2.
+		if spec.Operation != opDoctor && spec.Operation != opUpdate && !strings.HasSuffix(spec.JSONSchema, ".v2") {
 			t.Fatalf("registry command %q lacks v2 schema", want[i])
 		}
 	}

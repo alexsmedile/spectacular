@@ -62,5 +62,25 @@ func Outdated(installed, latest string) bool {
 	if installed == "" || latest == "" {
 		return false
 	}
+	// A binary built from source reports "development", which parses to 0.0.0
+	// and would look infinitely stale. Telling a developer to replace their own
+	// build with a release is wrong, so an unparseable version is never behind.
+	if !isVersion(installed) || !isVersion(latest) {
+		return false
+	}
 	return CompareVersions(installed, latest) < 0
+}
+
+// isVersion reports whether a string looks like a semantic version. It is
+// deliberately loose: it asks only whether the leading component is a number,
+// which separates "2.17.0" from "development" without rejecting the shapes a
+// future release might use.
+func isVersion(version string) bool {
+	version = strings.TrimPrefix(strings.TrimSpace(version), "v")
+	leading, _, _ := strings.Cut(version, ".")
+	if leading == "" {
+		return false
+	}
+	_, err := strconv.Atoi(leading)
+	return err == nil
 }

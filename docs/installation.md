@@ -87,7 +87,7 @@ first, then install from that directory:
 
 ```sh
 # 1. download the archive and SHA256SUMS for your platform
-VERSION=2.11.0
+VERSION=2.18.0
 PLATFORM=darwin-arm64          # or darwin-amd64, linux-amd64, linux-arm64
 BASE=https://github.com/alexsmedile/spectacular/releases/download/v$VERSION
 
@@ -145,7 +145,40 @@ spectacular --version
 
 ## Update
 
-The two halves update independently.
+Start here:
+
+```sh
+spectacular doctor
+```
+
+It reports the installed binary and plugin versions, the newest release, what is
+behind, and the exact commands to fix it. It needs no workspace and reports the
+local half with no network.
+
+To act on it:
+
+```sh
+spectacular update       # audit, and print the commands that would update
+spectacular update -y    # also replace the binary
+```
+
+`upgrade` is an alias for `update`.
+
+`-y` downloads the release archive for your platform, verifies it against the
+release `SHA256SUMS`, and replaces the binary by rename. The previous binary is
+kept beside it as `spectacular.old`, so a bad update is undone by moving it back:
+
+```sh
+mv ~/.local/bin/spectacular.old ~/.local/bin/spectacular
+```
+
+`update` never installs a plugin. A plugin lives inside its host's own state
+tree, and writing one behind that host's back leaves the host's records
+disagreeing with what is on disk — so plugins are reported with the command to
+run, and you run it.
+
+The rest of this section is what those commands are, if you would rather not
+have them printed for you.
 
 **Skill** — re-run the marketplace command for your host:
 

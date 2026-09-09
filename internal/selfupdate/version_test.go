@@ -54,3 +54,21 @@ func TestOutdatedTreatsAbsenceAsNotOutdated(t *testing.T) {
 		t.Error("an unknown latest version cannot make anything outdated")
 	}
 }
+
+func TestOutdatedIgnoresNonVersions(t *testing.T) {
+	t.Parallel()
+
+	// A binary built from source reports "development". Parsing that as 0.0.0
+	// would make every developer's own build look infinitely stale and prompt
+	// them to replace it with a release.
+	if Outdated("development", "2.18.0") {
+		t.Error("a development build is not outdated")
+	}
+	if Outdated("2.17.0", "unknown") {
+		t.Error("an unparseable latest version cannot make anything outdated")
+	}
+	// A real 0.0.x version is still a version and must compare normally.
+	if !Outdated("0.0.1", "0.0.2") {
+		t.Error("0.0.1 is older than 0.0.2")
+	}
+}

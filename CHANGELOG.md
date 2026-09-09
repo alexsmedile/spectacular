@@ -1,5 +1,43 @@
 # Changelog
 
+## 2.18.0 — 2026-09-09
+
+### Added
+
+- **`spectacular doctor`** — read-only diagnosis of the installation. Reports the
+  installed binary and each host's plugin version, the newest published release,
+  which components are behind, and the exact commands that would update them.
+  Runs outside a workspace, since a machine with a broken install is the one that
+  most needs it, and reports the local half accurately with no network.
+- **`spectacular update`** (alias `spectacular upgrade`) — audits the installation
+  and prints per-host update commands. With `-y`, downloads the release archive
+  for the running platform, verifies it against the release `SHA256SUMS`, and
+  replaces the binary.
+  - The swap is a rename, never a write over the running binary: a rename is
+    atomic on every supported platform, and the displaced binary is kept at
+    `<path>.old` so a bad update is undoable by hand.
+  - Plugins are reported, never installed silently. A plugin lives inside a
+    host's own state tree, and writing one behind that host's back leaves its
+    records disagreeing with what is on disk.
+  - The `-y` remedy is suppressed when the newest release published no archive,
+    so the reader is never sent to a command that cannot succeed.
+
+### Fixed
+
+- **The release workflow published no archives since 2.14.0.** `softprops/action-gh-release`
+  was pinned to commit `c062e49`, which no longer resolves in that repository, so
+  every release job since died during action resolution in under ten seconds.
+  v2.15.0, v2.16.0, and v2.17.0 were tagged but shipped no binaries, and v2.16.0
+  sat marked *Latest* on GitHub with nothing attached. Repinned to `efb3536`
+  (v3.0.3).
+- Version detection reads the running binary rather than the install receipt. A
+  receipt records what the installer last placed, so a binary updated by any
+  other route leaves it stale — one machine held a 2.12.0 receipt beside a
+  2.17.0 binary. The receipt disagreeing with the binary is now surfaced as a
+  note, since it means the installer's backup no longer matches what is installed.
+- A binary built from source reports `development`, which parsed as `0.0.0` and
+  looked infinitely stale. An unparseable version is never reported as outdated.
+
 ## 2.17.0 — 2026-09-03
 
 ### Added

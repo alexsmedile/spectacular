@@ -35,7 +35,7 @@ jobs:
           go run ./cmd/assemble-release --output dist --commit "${{ github.sha }}"
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@c062e49d63c5a61117462002be966a337c731056 # v2.2.1
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           files: |
             dist/*

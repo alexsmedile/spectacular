@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Documentation
+
+- **Delineated `docs/` from `.spectacular/` surface boundary**:
+  - Explicitly defined the boundary between human-facing product documentation (`docs/`) and machine-checked runtime governance (`.spectacular/`) across `docs/architecture.md`, `docs/human-workspace-contract.md`, and `docs/README.md`.
+  - Clarified that `docs/` carries zero agent execution authority and is never loaded as runtime context for autonomous workers.
+  - Documented where specifications belong (Project Anchors, living Contracts, exploratory Proposals, and frozen Missions) and identified anti-patterns (treating `.spectacular/` as a loose wiki or attempting to steer agents through `docs/`).
+
+### Fixed
+
+- Treat an absent rebuildable cache as absent, not as drift in test verification (`9d5f48a`).
+
 ## 2.18.0 — 2026-09-09
 
 ### Added

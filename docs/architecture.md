@@ -1,19 +1,49 @@
 # Architecture
 
-Spectacular keeps five kinds of information in separate places. That makes it
-clear what people read, what agents follow, and what the CLI can change.
+Spectacular organizes project context, runtime guidance, and machine state into
+distinct surfaces. This separation ensures that what humans read, what agents follow,
+and what the CLI validates and mutates never blur together.
 
-| Surface | Audience | What it is |
+| Surface | Audience | What it is | Authority Level |
+|---|---|---|---|
+| `.spectacular/` | governance & runtime | Living Truth, decisions, missions, proof | **Binding Authority** (CLI-enforced) |
+| `.spectacular/.engine/` | the machine | WAL journals and mutex `.lock` | Machine plumbing |
+| `.spectacular/raw/` | thinking | Unstructured sketchpad; skip-listed | None (ephemeral) |
+| `.spectacular/atlas/` | planning | Visual outcome & domain maps (Mermaid) | Explanatory only |
+| `.spectacular/retrospectives/` | learning | Milestone post-mortems and reflections | Evaluative (unconstrained) |
+| `.spectacular/campaigns/` | planning | Strategic roadmap DAGs & block ordering | Planning only |
+| `skills/` | agents at runtime | Executable guidance loaded by LLM harness | Execution guidelines |
+| `cmd/` + `internal/` | the machine | Typed CLI that validates and mutates records | Mechanical enforcement |
+| `docs/` | humans | Public-facing product documentation | **Zero Agent Authority** |
+
+## Surface boundary: docs/ vs .spectacular/
+
+A frequent question when organizing a project is where documentation ends and
+governance begins. Spectacular draws a strict line between **human product documentation**
+and **machine-checked runtime governance**:
+
+| Distinction | `docs/` (Human Documentation) | `.spectacular/` (Governance & Living Truth) |
 |---|---|---|
-| `.spectacular/` | governance | The records: Missions, Proposals, Decisions, Evidence |
-| `.spectacular/.engine/` | the machine | Hidden internal directory for WAL journals and mutex `.lock` |
-| `.spectacular/raw/` | thinking | Unstructured sketchpad; skip-listed, no frontmatter and no entity; optional to commit |
-| `.spectacular/atlas/` | planning | Optional outcome and system maps; explanatory, mutable, and non-authoritative |
-| `.spectacular/retrospectives/` | learning | Optional milestone post-mortems and architectural reflections |
-| `.spectacular/campaigns/` | planning | Optional durable roadmap maps; excluded from the record graph and CLI lifecycle |
-| `skills/` | agents at runtime | Executable guidance the CLI and Skill load |
-| `cmd/` + `internal/` | the machine | A typed CLI that validates and mutates records atomically |
-| `docs/` | humans | What you are reading |
+| **Audience** | Humans: end users, external developers, customers | Machine, Project Owner, and Lead Agent (Orchestrator) |
+| **Purpose** | How humans understand and use the product (guides, concepts, tutorials) | What the system guarantees, what was decided, and what is currently being built |
+| **Authority** | **Zero execution authority**. Never loaded into agent context as operational truth. | **Binding authority**. Governs agent execution scope, baselines, and verification. |
+| **CLI Validation** | Completely unmanaged. No schemas, no transaction locks. | Strictly enforced. Typed schemas, atomic WAL mutations, SHA-256 fingerprints. |
+| **Destination** | Public documentation sites (e.g., `docs.<domain>`). | Version-controlled repository core for execution and auditing. |
+
+### Where do specifications live?
+
+Do not treat `.spectacular/` as a generic internal wiki or dumping ground for raw PRDs:
+
+- **Foundational System Specs**: Authoritative project anchors live at `.spectacular/PROJECT.md`, `PRODUCT.md`, `ARCHITECTURE.md`, and `VOCABULARY.md`.
+- **Living Behavioral Contracts**: Observable system invariants and capability guarantees live in `.spectacular/contracts/` (`CC-<name>.md`).
+- **Exploratory Specs & RFCs**: Uncommitted, mutable ideas live in `.spectacular/proposals/` (`P<N>.md`).
+- **Frozen Execution Envelopes**: Implementation tasks ready for verifiable execution live in `.spectacular/missions/` (`M<N>.md`).
+- **User & Public Developer Guides**: Public tutorials, architecture overviews, and API references live in `docs/`.
+
+### Anti-patterns to avoid
+
+1. **Attempting to govern agents through `docs/`**: Subagents and workers execute from lean, compiled charters or dispatch briefs ($\le 1200$ tokens). They do not browse `docs/`. Any runtime rule, permission, or acceptance criteria placed solely in `docs/` will be ignored by workers—Spectacular's benchmark suites explicitly treat documentation reads as forbidden or invalid authority claims.
+2. **Treating `.spectacular/` as a loose wiki**: Every document in `.spectacular/` has a defined role. Dumping unformatted markdown drafts without schemas or lifecycle awareness breaks mechanical validation. Keep raw ideation in `.spectacular/raw/` or `proposals/`.
 
 ## Why files, not a database
 

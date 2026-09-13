@@ -33,6 +33,15 @@ The project root is intentionally small:
 └── .engine/
 ```
 
+### Separation of governance (.spectacular/) from documentation (docs/)
+
+The `.spectacular/` tree contains only files that are part of Spectacular's
+governance and living truth model. Public-facing product documentation belongs
+in `docs/` at the repository root. `docs/` is written for humans reading about
+the product; it carries no mechanical schema enforcement and zero agent execution authority.
+Never place governed records, proposals, or missions inside `docs/`, and never
+treat `docs/` as runtime authority for an agent.
+
 ## Project anchors
 
 `PROJECT.md` is the project Anchor. `PRODUCT.md`, `ARCHITECTURE.md`, and

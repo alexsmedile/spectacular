@@ -39,5 +39,6 @@ Product documentation for people using Spectacular. For contributor rules see
 
 ---
 
-These pages explain the product. The generated command reference and your
-workspace records define the exact behavior.
+These pages explain the product to human readers. They carry no runtime execution
+authority for autonomous agents. The generated command reference and your
+`.spectacular/` workspace records define exact machine behavior and truth.

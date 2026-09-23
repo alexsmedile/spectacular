@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Added resource discipline to the Spectacular skill: bounded objectives and worker charters, task-sized model choice, compact context and handoffs, measured usage claims, and decisive verification after coherent patches. Clarified its invocation boundary and required Objective argument for `spectacular charter`.
+
 ### Documentation
 
 - **Delineated `docs/` from `.spectacular/` surface boundary**:

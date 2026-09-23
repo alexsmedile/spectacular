@@ -1,7 +1,6 @@
 # Execute Micro-Kernel
 
-## 1. Trigger Context
-Orchestrator activating/resuming a Mission or Worker executing an assigned code charter.
+Use this when: an orchestrator is activating or resuming a Mission, or a worker is executing an assigned code charter.
 
 ## 2. CLI Palette & Execution
 ```bash

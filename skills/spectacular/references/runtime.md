@@ -1,7 +1,6 @@
 # Runtime & Delegation Micro-Kernel
 
-## 1. Trigger Context
-Orchestrator managing multi-step dependency waves, Dispatch Briefs, worktree side sessions, or formal Mission Charters and Handoffs.
+Use this when: an orchestrator is managing multi-step dependency waves, Dispatch Briefs, worktree side sessions, or formal Mission Charters and Handoffs.
 
 ## 2. CLI Palette
 ```bash
@@ -9,7 +8,7 @@ Orchestrator managing multi-step dependency waves, Dispatch Briefs, worktree sid
 # Lead provides Dispatch Brief in chat; side worker runs in .worktrees/<slug>
 
 # Tier 3: Governed Charters & Handoffs (When Formal Boundaries Are Required)
-spectacular charter <ref>[/<obj>] --json             # Compile context sandwich (≤1200 tok)
+spectacular charter <mission-ref>/<objective-ref> --json # Compile context sandwich (≤1200 tok)
 spectacular handoff record <ref> draft.md --by <actor> # Record immutable cross-party transfer
 ```
 

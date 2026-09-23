@@ -1,7 +1,6 @@
 # Audit & FROST Micro-Kernel
 
-## 1. Trigger Context
-Reviewer or bounded auditor conducting retrospective claim or proof challenges.
+Use this when: a reviewer or bounded auditor is conducting retrospective claim or proof challenges.
 
 ## 2. CLI Palette & Inspection
 ```bash

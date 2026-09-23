@@ -1,7 +1,6 @@
 # Close & Review Micro-Kernel
 
-## 1. Trigger Context
-Primary operator or reviewer verifying claims, collecting receipts, or completing a Mission.
+Use this when: the primary operator or reviewer is verifying claims, collecting receipts, or completing a Mission.
 
 ## 2. CLI Palette & Completion
 ```bash

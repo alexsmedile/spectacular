@@ -1,7 +1,6 @@
 # Prepare Micro-Kernel
 
-## 1. Trigger Context
-Orchestrator preparing Greenfield Genesis, Campaign roadmap, Architectural Decisions, or Mission drafting.
+Use this when: an orchestrator is preparing Greenfield Genesis, a Campaign roadmap, Architectural Decisions, or Mission drafting.
 
 ## 2. CLI Palette & Minimal Drafting
 ```bash

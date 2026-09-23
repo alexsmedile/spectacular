@@ -1,7 +1,6 @@
 # Orient Micro-Kernel
 
-## 1. Trigger Context
-Orchestrator resolving ambiguous, cold-start, or uninitialized workspace state.
+Use this when: an orchestrator is resolving ambiguous, cold-start, or uninitialized workspace state.
 
 ## 2. CLI Palette & Inspection
 ```bash

@@ -3,8 +3,9 @@ name: spectacular
 description: >-
   Guide work only when the user invokes `$spectacular`, `/spectacular`, or in a `.spectacular/` workspace.
   Use for structured mission orchestration, bulk decisions (`spectacular decide`), single-file mission autopilot,
-  supervised subagent dispatch, and multi-session campaigns. Triggers on "start mission", "spectacular decide",
-  "flight plan", "autopilot", "supervised dispatch", "handoff", "mission check", or "complete mission".
+  supervised subagent dispatch, and multi-session campaigns. In a `.spectacular/` workspace,
+  triggers include "start mission", "spectacular decide", "flight plan", "autopilot",
+  "supervised dispatch", "handoff", "mission check", or "complete mission".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
   version: "2.18.0"
@@ -29,7 +30,7 @@ spectacular mission check <ref> [--json]                          # Verify froze
 spectacular mission complete <ref> [--by <owner>] [--json]        # Complete mission after owner gate
 
 # Delegation, Autopilot & Audits
-spectacular charter <mission-ref>[/<obj>] [--json]                # Compile context sandwich (≤1200 tokens)
+spectacular charter <mission-ref>/<objective-ref> [--json]       # Compile context sandwich (≤1200 tokens)
 spectacular handoff record <mission> <draft|-> [--by <actor>]     # Record cross-party handoff
 spectacular review record <mission> <draft|-> [--json]            # Record independent review RV<N>
 spectacular evidence record <mission> <draft|-> [--json]          # Record third-party proof E<N>
@@ -97,11 +98,22 @@ Invoke `spectacular --version --json` once at startup and require `spectacular.b
 - **Channel Separation**: Git is for durable truth (`PROJECT.md`, `decisions/`, `missions/`). Host channels are for ephemeral live coordination (`invoke_subagent`, `send_message`, `conversation://<id>`).
 - **Token Discipline**: Worker prompt envelopes strictly bounded at $\le 1{,}200$ tokens (`o200k_base`).
 
+### Resource Discipline
+
+Spend model attention where judgment changes the result:
+- **Scope**: Keep one acceptance outcome active. Start a new objective for a new feature, design direction, or release phase; stop when the current outcome is verified.
+- **Model choice**: Use the least expensive available model capable of the bounded task. Reserve stronger reasoning for architecture forks, ambiguous trade-offs, and final integration review; escalate after a concrete failure or uncertainty.
+- **Dispatch**: Give each worker one result, allowed paths, an artifact, and an acceptance check. Prefer one charter and one return receipt; repeated follow-ups call for a clearer charter.
+- **Context**: Batch independent reads and request bounded output or a digest. Reuse known file spans and decisions instead of reloading unchanged context, logs, or catalogs.
+- **Verification**: Run a focused check after a coherent patch and broader checks at integration. Rerun a passing check only after a relevant change; repair a failing cause before retrying.
+- **Telemetry**: At phase boundaries, inspect usage data if available. Otherwise use compactions, repeated calls, retries, large outputs, and coordination churn as signals; report exact cost only from measured data.
+- **Continuity**: After the first compaction or an objective change, carry a cold-start handoff with accepted decisions, current artifact or diff, passed checks, open risks, and one next action. Suggest a fresh task for a new objective; leave its creation to the owner.
+
 ## 4. Preflight & Verification Matrix
 
 - **Branch Isolation**: Always `git checkout -b <slug>` before mission activation, or dispatch side workers to `.worktrees/<slug>`.
 - **Verification Tiers**:
-  - *Tier 1 (Quick)*: Executed by worker on every edit (`verify.sh quick` or domain test).
+  - *Tier 1 (Quick)*: Executed by worker after each coherent patch (`verify.sh quick` or domain test).
   - *Tier 0 (Preflight)*: Lint & syntax verification (`verify.sh preflight`).
   - *Tier 2/3 (Acceptance/Release)*: Executed at milestone completion / owner gate.
 

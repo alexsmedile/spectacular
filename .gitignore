@@ -42,7 +42,6 @@ _snapshots/
 # captured review notes; both are scratch for the owner, not product content.
 # Governance records that cite them quote what they need, because the file is
 # not published alongside the record.
-TODO.md
 FEEDBACKS.md
 
 # Unstructured thinking: the sketchpad stage before an idea earns an Atlas
@@ -52,3 +51,7 @@ FEEDBACKS.md
 
 # Local-only: backups, snapshots, scratch — never committed
 _local/
+
+# OPF local companions (shared content is committed; personal notes stay local)
+*.local.*
+.octopus.local/

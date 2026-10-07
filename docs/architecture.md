@@ -14,6 +14,8 @@ requiring a workflow transition.
 | Atlas | Entities, concepts, maps, and lasting explanations | Maintained context |
 | Decisions | Choices and rationale | Soft by default; governed validation optional |
 | Plans | Outcomes, approaches, progress, and results | Maintained context |
+| Specs | Reusable behavior and interface descriptions | Optional maintained context |
+| Audits | Scope, inspected revision, findings, and limitations | Optional maintained context |
 | Contracts | Agreements and their amendments | Mechanically governed |
 | Missions and supporting records | Explicitly chosen execution and proof | Mechanically governed |
 
@@ -24,7 +26,9 @@ ordinary work.
 
 ## Product parts
 
-The Skill guides placement, interpretation, and work. It is useful alone. The Go
+The Skill guides placement, interpretation, and work. Its planning route wraps
+native host planning behavior and stores the project copy in plans/ when allowed.
+It is useful alone. The Go
 CLI validates governed frontmatter, computes fingerprints, and performs supported
 atomic mutations. It retains 26 commands and the v2 module/schema identities in
 product v3.

@@ -1,12 +1,17 @@
 ---
 type: Atlas
 title: Decision-aware bounded execution
-version: "0.1"
-created: "2026-08-23T18:24:40+02:00"
-updated: "2026-08-23T23:50:47+02:00"
+version: '0.2'
+created: '2026-08-23T18:24:40+02:00'
+updated: '2026-10-07T18:47:06Z'
 ---
 
 # Atlas: Decision-aware bounded execution
+
+This is an optional advanced coordination map. Ordinary work starts from linked
+context or a plan; these patterns do not enroll work in a Mission or require
+additional skills. See [current workflow](workspace-navigation.md).
+
 
 ## Outcome board
 

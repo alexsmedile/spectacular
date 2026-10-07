@@ -1,112 +1,44 @@
 ---
 type: Atlas
 title: Operating levels and software factory architecture
-version: "0.1"
-created: "2026-08-31T17:59:30+02:00"
-updated: "2026-08-31T17:59:30+02:00"
+version: '0.3'
+created: '2026-08-31T17:59:30+02:00'
+updated: '2026-10-07T18:49:34Z'
 ---
 
-# Atlas: Operating Levels and Software Factory Architecture
+# Working levels and modular delivery
 
-This Atlas projects the operational topology of Spectacular's **20-Level Agentic Operating Model**, **Dynamic Operating Dial** (`mode: leverage` vs. `mode: control`), **5 Foundational Anchors**, and **Trunk-First Multi-Agent Collaboration**.
+Choose a file boundary that matches the meaning and lifetime of the work.
+The operating-level model is a way to discuss scale, not a required process.
 
----
+| Scale | Examples | Useful durable context |
+|---|---|---|
+| Code primitive | Function, type, invariant | Focused code-linked explanation when independently useful |
+| Module | Package, parser, service boundary | Linked Atlas object or interface Spec |
+| Product slice | Feature, release phase, delivered tranche | One coherent plan and outcome |
+| Repository | Accepted project direction and constraints | Anchors and Decisions |
+| Coordinated effort | Several independent slices | Optional linking plan or campaign |
 
-## 1. Outcome Board
+## Split by meaning
 
-| Actor | Journey Step | Desired Outcome | Success Signal |
-|---|---|---|---|
-| **Human Architect** | Ground domain & boundaries | Settle hard data models and invariants before code execution | Schemas, types, and decisions committed upstream to `main` |
-| **Orchestrator** | Choose leverage vs. control | Set mission posture based on task risk and distribution | `mode: leverage` (speed) or `mode: control` (audit) declared |
-| **Worker / Solo** | Self-heal against tools | Implement features and fix test failures autonomously | Fast Tier 1 unit test pass (`exit 0`) with zero prompt loops |
-| **Reviewer** | Independent claim audit | Inspect diffs and primary evidence without modifying code | Structured FROST review verdict recorded (`pass`/`fail`) |
+A parent plan may link a parser slice, installer slice, and delivery slice. Each
+child is independently actionable and has its own verification. Do not create
+one file per implementation step when those steps need the same readers and lifetime.
 
-```mermaid
-flowchart TD
-    subgraph Pyramid["The 5 Operating Tiers (20 Levels)"]
-        G5["<b>Group 5: Agentic System (Levels 17–20)</b><br>Product · Agent · AI Developer Workflow (ADW) · Software Factory"]
-        G4["<b>Group 4: Delivery & Intent (Levels 13–16)</b><br>Application · Repository · Plan · Media-Rich Documentation"]
-        G3["<b>Group 3: Data & Execution (Levels 09–12)</b><br>Database Table · Database · CLI Tools · Deterministic Scripts"]
-        G2["<b>Group 2: Code Structure (Levels 06–08)</b><br>File · Module · Directory Boundaries"]
-        G1["<b>Group 1: Code Primitives (Levels 01–05)</b><br>Line · Block · Function · Type Contract · Class"]
-    end
+A reusable interface spec can outlive a release plan. A domain entity page can
+outlive several specs. A Contract preserves accepted mechanical agreement across
+Missions. Links make those different lifetimes navigable without copying text.
 
-    G5 -->|Steers & Orchestrates| G4
-    G4 -->|Compiles Context Sandwich| G3
-    G3 -->|Executes deterministic tools against| G2
-    G2 -->|Enforces modular AST boundaries on| G1
+## Choose execution deliberately
 
-    style G5 fill:#2d3748,stroke:#4a5568,color:#fff
-    style G4 fill:#2b6cb0,stroke:#3182ce,color:#fff
-    style G3 fill:#2c7a7b,stroke:#319795,color:#fff
-    style G2 fill:#2f855a,stroke:#38a169,color:#fff
-    style G1 fill:#744210,stroke:#975a16,color:#fff
-```
+Ordinary work uses the task’s existing authorization and repository rules. Native
+plan mode owns its controls; the Spectacular Skill stores the project plan in
+plans/ when writing is allowed. Risk can justify suggesting a governed route;
+it does not select one automatically.
 
----
+Coordination does not change Git policy. Main-branch commits, worktrees, reviews,
+and publication follow the owner’s authorization and applicable repository rules.
+A worker’s returned diff is checked after integration before claiming completion.
 
-## 2. System Board
-
-### A. The Dynamic Operating Dial: System Leverage vs. Direct Control
-
-```mermaid
-flowchart LR
-    subgraph Leverage["🚀 Move UP: System Leverage"]
-        L1["<b>When to choose:</b><br>• Familiar domain & repeatable patterns<br>• Strong test suite with clear pass boundary<br>• Routine features, refactors, bug fixes"]
-        L2["<b>Spectacular Posture:</b><br>• <code>mode: leverage</code> (Default)<br>• Single-file mission (<code>M&lt;N&gt;.md</code>)<br>• Worker self-healing test loop<br>• Zero review record sprawl"]
-    end
-
-    subgraph Control["🔍 Move DOWN: Direct Control"]
-        C1["<b>When to choose:</b><br>• Out-of-Distribution (OOD) logic<br>• High-risk auth, payments, zero-downtime DB<br>• Ambiguous failure traces or security cutovers"]
-        C2["<b>Spectacular Posture:</b><br>• <code>mode: control</code><br>• Hard schema & type contract inspection<br>• Explicit step-by-step owner gates<br>• Dedicated independent FROST review"]
-    end
-
-    Leverage <-->|Dynamic Range Slider| Control
-```
-
----
-
-### B. The 5 Foundational Anchors Mapping
-
-Before autonomous execution, Spectacular grounds the rules of physics across 5 canonical project surfaces:
-
-```mermaid
-flowchart TD
-    subgraph Anchors["5 Core Foundational Anchors"]
-        A1["<b>1. Boundaries & Non-Goals</b><br><code>.spectacular/PROJECT.md</code><br><i>Explicit constraints on what NOT to do</i>"]
-        A2["<b>2. Vocabulary & Ontology</b><br><code>.spectacular/VOCABULARY.md</code><br><i>Canonical ubiquitous language</i>"]
-        A3["<b>3. Invariants & Safety</b><br><code>.spectacular/GUARDRAILS.md</code><br><i>Non-negotiable architectural rules</i>"]
-        A4["<b>4. Data Contracts & Schemas</b><br><code>codebase types / contracts/</code><br><i>Database tables, structs, API shapes</i>"]
-        A5["<b>5. State Machines & Lifecycles</b><br><code>.spectacular/atlas/</code><br><i>Visual Mermaid state diagrams</i>"]
-    end
-```
-
----
-
-### C. Trunk-First Collaboration & Worktree Isolation
-
-```mermaid
-flowchart TD
-    subgraph Trunk["👑 Default Branch (`main`): Living Ground Truth"]
-        Dec["⚖️ Decisions (<code>D1..DN</code>)<br><i>Decided upstream first</i>"]
-        Anch["🔒 Core Anchors (<code>PROJECT.md</code>, <code>VOCABULARY.md</code>)"]
-        Flight["🗺️ Flight Plan (<code>campaigns/</code>)"]
-    end
-
-    Trunk -->|<code>git worktree add</code>| WT1["🌲 Worktree 1 (Agent A)<br><b>Branch: feat/M29-auth</b><br>• Isolated working copy<br>• Runs Tier 1 tests locally<br>• Emits worker_done"]
-    Trunk -->|<code>git worktree add</code>| WT2["🌲 Worktree 2 (Agent B)<br><b>Branch: feat/M30-db-pool</b><br>• Isolated working copy<br>• Zero file locking with Agent A<br>• Emits worker_done"]
-
-    WT1 -->|Passes tests + Review| PR1["Pull Request / Fast-Forward Merge"]
-    WT2 -->|Passes tests + Review| PR2["Pull Request / Fast-Forward Merge"]
-
-    PR1 --> Trunk
-    PR2 --> Trunk
-```
-
----
-
-## 3. Links and References
-
-- Product Documentation: [`docs/architecture.md`](../../docs/architecture.md), [`docs/process.md`](../../docs/process.md)
-- Skill References: [`skills/spectacular/SKILL.md`](../../skills/spectacular/SKILL.md), [`skills/spectacular/references/prepare.md`](../../skills/spectacular/references/prepare.md), [`skills/spectacular/references/execute.md`](../../skills/spectacular/references/execute.md), [`skills/spectacular/references/close.md`](../../skills/spectacular/references/close.md)
-- Key Decisions: [`D28-dynamic-operating-dial-and-anchors`](../decisions/D28-dynamic-operating-dial-and-anchors.md), [`D15-branch-guardrail-at-activation`](../decisions/D15-branch-guardrail-at-activation.md), [`D16-auto-prune-merged-worktrees`](../decisions/D16-auto-prune-merged-worktrees.md)
+[Project truth](../PROJECT.md) · [Governance choice](governance-tiers-and-cadence.md) ·
+[Workspace navigation](workspace-navigation.md)

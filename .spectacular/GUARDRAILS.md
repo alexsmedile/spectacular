@@ -1,13 +1,18 @@
 ---
 type: Anchor
-version: "0.1"
+version: "0.2"
 created: "2026-08-10T21:14:12+02:00"
-updated: "2026-08-31T19:40:31+02:00"
+updated: "2026-10-07T18:47:06Z"
 ---
 
 # Spectacular project guardrails
 
 @Orient @Prepare @Start @Resume @Run @Assess @Reconcile @Resolve
+
+## @Ordinary Context
+- Start authorized work from linked context or plans; no Mission is inferred from folder presence or risk.
+- Store project plans in plans/; native host plan-mode restrictions still apply.
+- Use optional specs/ and audits/ only for independently useful content.
 
 ## @Core Product & Identity Invariants
 - Preserve UUID identity, exact revision fingerprints, source drill-down, owner authority, provider boundaries, and recoverable writes.
@@ -23,4 +28,4 @@ updated: "2026-08-31T19:40:31+02:00"
 
 ## @Execution & Safety
 - Parallel subagents must operate under disjoint `writes:` reservations (D21). Overlapping write perimeters are forbidden.
-- Post-mission mistake learnings must be codified directly into this file or `AGENTS.md` upon closure (D29).
+- Retain independently useful learnings where they belong; update guardrails only when an accepted constraint changes.

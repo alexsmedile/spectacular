@@ -4,12 +4,24 @@ Start from the relevant anchor, raw draft, or plan. Read linked constraints,
 implement the authorized work, verify the actual change, and record useful results.
 Ordinary work needs neither a Mission nor the CLI.
 
+## Plan first when useful
+
+The `/spectacular plan` Skill route uses native host planning controls and keeps
+the durable project copy in `.spectacular/plans/`. It does not add a CLI command,
+create a new approval gate, or activate a Mission. A restricted session returns
+an unsaved draft; a session permitted to write saves and reads back the plan.
+
+Reuse that path through planning, implementation, and results. If the host keeps
+its own native plan cache, choose one content owner and reconcile changes rather
+than silently maintaining conflicting copies. See the [Quickstart](quickstart.md).
+
 ## Evolve the smallest useful record
 
 Update the existing owner of a topic before creating another file. Raw can hold a
 complete quick-start draft, with no metadata or promotion requirement. A maintained
 plan describes an intended result, approach, progress, and outcome. Extract a
-lasting explanation into Atlas or a consequential choice into Decisions when it
+lasting explanation into Atlas, reusable behavior into optional specs/, inspection
+findings into optional audits/, or a consequential choice into Decisions when it
 has an independent use.
 
 Split by domain, code module, working phase, or delivered tranche when each part

@@ -1,6 +1,6 @@
 # Shared folder agreements for durable context. Diagnostics are opt-in.
 # Existing governed formats and identity claims retain their validators.
-version: "1.0"
+version: '1.1'
 metadata:
   required: [type, version, created, updated]
   recommended: [description]
@@ -30,6 +30,12 @@ collections:
   retrospectives:
     types: [Retrospective]
     purpose: Findings and lessons with independent lasting value.
+  specs:
+    types: [Spec, Requirement, Interface, Reference]
+    purpose: Optional reusable behavior and interface specifications; no Contract authority.
+  audits:
+    types: [Audit, Reference]
+    purpose: Optional inspection scope, revision, findings, basis, and limitations.
 governed:
   collections: [contracts, proposals, missions, evidence, gaps, handoffs, assessments, reviews, archive]
   purpose: Existing typed records retain mechanical validation and lifecycle rules.

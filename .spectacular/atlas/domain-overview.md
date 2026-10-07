@@ -1,89 +1,56 @@
 ---
 type: Atlas
 title: Spectacular domain overview
-version: "0.1"
-created: "2026-08-24T01:05:49+02:00"
-updated: "2026-08-24T01:05:49+02:00"
+version: '0.2'
+created: '2026-08-24T01:05:49+02:00'
+updated: '2026-10-07T18:47:06Z'
 ---
 
-# Atlas: Spectacular domain overview
+# Spectacular domain overview
 
-This is the visual companion to [VOCABULARY.md](../VOCABULARY.md). It shows the
-whole domain at a legible level; the Vocabulary defines every concept and wins
-if the two documents differ.
-
-## Domain board
+The [Vocabulary](../VOCABULARY.md) defines meanings. Ordinary context remains
+useful independently of the optional governed execution graph.
 
 ```mermaid
 flowchart LR
-  subgraph Definition[Project definition]
-    Project[Entity: Project]
-    Anchor[Entity: Anchor]
-    Vocabulary[Entity: Vocabulary Anchor]
-    Contract[Entity: Contract]
-  end
-
-  subgraph Planning[Planning]
-    Proposal[Entity: Proposal]
-    Atlas[Entity: Atlas]
-  end
-
-  subgraph Execution[Governed execution]
-    Owner[Actor: Owner]
-    Mission[Entity: Mission]
-    Objective[Entity: Objective]
-    Run[Entity: Run]
-    Authority[Policy: Authority]
-    Start[Action: Start Mission]
-    Activated[Event: Mission activated]
-  end
-
-  subgraph Proof[Proof and continuity]
-    Decision[Entity: Decision]
-    Decide[Action: Decide]
-    Evidence[Entity: Evidence]
-    Review[Entity: Review]
-    Handoff[Entity: Handoff]
-    Gap[Entity: Gap]
-  end
-
-  Owner -->|performs| Decide
-  Decide -->|emits| Decision
-  Owner -->|requests| Start
-  Start -->|emits| Activated
-  Project -->|has 1..*| Anchor
-  Project -->|has 0..1| Vocabulary
-  Project -->|has 0..*| Contract
-  Mission -->|governed_by| Contract
-  Proposal -->|references| Atlas
-  Vocabulary -->|references| Atlas
-  Mission -->|contains 1..*| Objective
-  Objective -->|has 0..*| Run
-  Mission -->|governed_by| Authority
-  Mission -->|has 0..*| Evidence
-  Mission -->|has 0..*| Review
-  Mission -->|has 0..*| Handoff
-  Mission -->|has 0..*| Gap
+    subgraph Context[Durable context]
+      Anchor[Anchor]
+      Raw[Raw draft]
+      Plan[Plan]
+      Spec[Spec]
+      Atlas[Atlas objects]
+      Decision[Decision]
+      Audit[Audit findings]
+    end
+    Anchor -->|informs| Plan
+    Raw -->|informs| Plan
+    Plan -->|references| Spec
+    Plan -->|references| Atlas
+    Decision -->|informs| Plan
+    Audit -->|informs| Plan
+    Plan -->|guides| Work[Authorized ordinary work]
+    subgraph Governed[Explicit governed execution]
+      Contract[Contract]
+      Mission[Mission]
+      Proof[Review / Evidence / Handoff]
+    end
+    Plan -.->|owner selects| Mission
+    Mission -->|governed_by| Contract
+    Mission -->|owns| Proof
 ```
 
-## Legend
+## Interpretation
 
-| Type | Rendered as | Purpose |
-| --- | --- | --- |
-| Bounded Context | Mermaid subgraph | Names the context in which terms are interpreted. |
-| Actor | `Actor:` node | Person, organisation, or agent that participates. |
-| Entity | `Entity:` node | A thing with identity and lifecycle. |
-| Value Object | `Value:` node | A defined value without independent identity. |
-| Action | `Action:` node | A meaningful permitted operation. |
-| Event | `Event:` node | A fact that occurred. |
-| Policy / Invariant | `Policy:` node | A rule governing states or actions. |
-| External System | `External:` node | A dependency outside the domain. |
+An object’s type and home explain its meaning; they do not authorize an effect.
+A plan can guide ordinary work without a Proposal, Contract, or Mission. A reusable
+spec remains context until explicitly adopted as a mechanically bound agreement.
+Audit findings do not replace a governed Review or certify completion.
 
-Relationships are labelled edges, never nodes. Use the default labels defined
-in `VOCABULARY.md`; place `1`, `0..1`, `1..*`, or `0..*` on an edge when the
-cardinality is important. No External System is part of this overview today.
+Keep entities, concepts, and relationships navigable through typed small files.
+Paths are soft-document identity; governed objects retain UUIDs and fingerprints.
+Use directed labelled edges and meaningful cardinalities; diagrams are projections,
+not additional mechanical constraints.
 
-## Open questions
-
-- After several projects use this model, which ontology-impact checks are stable
-  enough to become warning-only conformance checks?
+See [workspace navigation](workspace-navigation.md),
+[specification lifecycle](specification-and-governance-lifecycle.md), and the
+[governed object model](governed-execution-model.md).

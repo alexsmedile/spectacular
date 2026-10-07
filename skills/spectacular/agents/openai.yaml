@@ -1,6 +1,6 @@
 interface:
   display_name: "Spectacular"
   short_description: "Keep small linked durable project context"
-  default_prompt: "Use $spectacular to continue from this project’s durable context and choose file placement with minimal ceremony."
+  default_prompt: "Use $spectacular to continue from this project’s durable context and choose file placement with minimal ceremony. Use $spectacular plan to save a native-mode plan in .spectacular/plans/."
 policy:
   allow_implicit_invocation: true

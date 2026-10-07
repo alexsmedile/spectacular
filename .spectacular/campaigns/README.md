@@ -1,88 +1,31 @@
 ---
 type: Reference
-version: "0.1"
-created: "2026-08-22T11:19:29+02:00"
-updated: "2026-08-23T21:14:52+02:00"
+version: '0.2'
+created: '2026-08-22T11:19:29+02:00'
+updated: '2026-10-07T18:49:34Z'
 ---
 
 # Campaigns
 
-Campaigns are optional, durable Markdown roadmap maps. They sequence several
-candidate or active Missions around one strategic outcome, but they grant no
-execution authority and are intentionally excluded from Spectacular's typed
-record graph and CLI lifecycle.
+Campaigns are optional roadmap maps connecting several plans or explicitly
+selected Missions around a strategic outcome. They grant no execution authority.
+A short linking plan is enough when an extra campaign view adds no value.
 
-An Atlas in `../atlas/` explains the user journeys, capabilities, and system
-connections behind a Campaign. A Campaign sequences the work; it does not
-replace that explanation.
+The [context-sandwich campaign](context-sandwich-steering.md) retains historical
+work. Its candidate inputs remain under context-sandwich-steering-plans/; completed
+Missions are the actual execution history. They are not this task’s active work.
 
-Create one file per genuinely independent roadmap arc. Do not create a Campaign
-for every project or use one as an unattended automation queue.
+## Maps and mechanical checking
 
-```md
----
-type: Campaign
-schema: spectacular.campaign.v2
-title: Launch readiness
-focus: Establish a safe release path.
-atlas: ../atlas/release-confidence.md
-current: B2
-exit_condition: Releases are verified and repeatable.
-blocks:
-  - ref: B1
-    title: Release hardening
-    state: complete
-    after: []
-    advances: [publish-a-trustworthy-release]
-    enables: [repeatable-release]
-    missions: [M13]
-  - ref: B2
-    title: Hosted release
-    state: active
-    after: [B1]
-    missions: []
----
-# Campaign: Launch readiness
+A soft Campaign follows basic metadata and the folder agreement. It can sequence
+outcomes and dependencies in prose or a diagram. When choosing the mechanically
+checked Campaign map, retrieve its shape from campaign check --schema and validate
+through that interface. Do not invent frontmatter templates or imply schema
+conformance for a plain map.
 
-> Planning map only. It grants no execution authority.
+Blocks can explain which user journey or enabling capability they advance. Those
+relationships aid interpretation; they do not become Mission bindings or automatic
+execution orders. The map’s current position does not instruct every reader.
 
-## Decisions and non-goals
-```
-
-Every Campaign Block must state the value connection it advances. Cite one or
-more journey steps with `advances:` when the work directly changes a user
-workflow. For enabling work—security, reliability, migration, or developer
-tooling—cite `enables:` and state its eventual user or business consequence in
-the block's prose. Do not invent a customer journey merely to satisfy the map.
-
-`advances:` and `enables:` are planning conventions today: `campaign check`
-does not yet validate them. Keep their references readable and point readers to
-the relevant Atlas file.
-
-A Mission may link to a Campaign block in its Markdown origin or rationale. That
-link is context only; it must not become a frozen Mission binding.
-
-When a Campaign benefits from a mechanical order and Mermaid projection, keep
-the compact frontmatter map shown above, then run:
-
-```sh
-spectacular campaign check .spectacular/campaigns/<campaign>.md
-```
-
-The command is read-only. It validates the map, current block, dependency order,
-and any named Mission refs; detects cycles; and emits an ordered Mermaid
-projection. A Campaign that does not need this projection remains ordinary
-Markdown.
-
-`current` is the Campaign's global map position, not an instruction to every
-agent that reads it. Mission workers follow their assigned Mission, Objective,
-and Run. An orchestrator may embed the generated Mermaid below the matching
-markers; `campaign check` verifies it has not drifted:
-
-````md
-<!-- spectacular:campaign-mermaid:start -->
-```mermaid
-... output from campaign check ...
-```
-<!-- spectacular:campaign-mermaid:end -->
-````
+Current ordinary implementation plans live in [current plans](../plans/durable-plan-mode.md). Atlas explains
+lasting domain relationships; a campaign explains sequencing when useful.

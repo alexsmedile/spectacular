@@ -2,7 +2,7 @@
 name: spectacular
 description: >-
   Guide work only when the user invokes `$spectacular`, `/spectacular`, or in a `.spectacular/` workspace.
-  Use for maintaining small linked workspace knowledge, direct work from raw drafts or plans,
+  Use for maintaining small linked workspace knowledge, direct work from raw drafts or plans, durable planning (`/spectacular plan`),
   explicitly chosen mission orchestration, bulk decisions (`spectacular decide`), single-file mission autopilot,
   supervised subagent dispatch, and multi-session campaigns. In a `.spectacular/` workspace,
   triggers include "start mission", "spectacular decide", "flight plan", "autopilot",
@@ -19,6 +19,11 @@ bounded Mission only when the owner explicitly selects governed execution.
 
 ## Choose the route first
 
+- **Plan (`/spectacular plan` or `$spectacular plan`)**: Read
+  [plan.md](references/plan.md). Use the host’s planning behavior and persist the
+  project plan in `.spectacular/plans/` when writes are permitted. Return the
+  saved path, or explicitly identify an unsaved draft under host restrictions.
+  This Skill route adds no public CLI command and activates no Mission.
 - **Ordinary work (default)**: Read [knowledge.md](references/knowledge.md) when
   placing, maintaining, or working from workspace documents. Follow relevant
   anchors and links, do the authorized work, verify the actual change, and return
@@ -98,7 +103,7 @@ Answers: *"What governs this slice of work?"*
 Spectacular leverages native GitHub collaboration features via the `gh` CLI while keeping Git as the durable authority:
 - **Intake (`gh issue view <id>`)**: When prompt or plan cites an issue (`#<id>`), fetch issue context to frame Mission outcome and acceptance claims.
 - **PR Envelope (`gh pr create`)**: For consequential missions, branch `m<N>-<slug>` and link the Mission file in the PR description (`Closes #<id>`).
-- **Review Mirroring (`gh pr review`)**: When an audit review is recorded (`.spectacular/reviews/RV<N>.md`), optionally submit the review body to GitHub's PR timeline.
+- **Review Mirroring (`gh pr review`)**: When an audit review is recorded (`.spectacular/reviews/RV<N>.md`), submit to a named PR only with explicit user authorization to post there; otherwise return the prepared review locally.
 - **Local / Airgapped Fallback**: Never require network access; operate 100% locally if `gh` is unauthenticated or the repo is offline.
 
 ### Mechanical Mode (3-State Model)
@@ -162,4 +167,5 @@ Load a supporting reference only when the primary reference explicitly triggers 
 ## 7. Owner Interaction & Continuity
 - **Questions**: Ask only when open. Lead with the plain outcome and Technical basis; format options as action -> consequence (`1. Option A, B (Recommended default)`).
 - **Self-Hosting**: When developing Spectacular, an active Mission keeps the schema frozen. Under declared `manual-bootstrap`, run focused checks directly.
+- **Owner gates**: Read [owner-guidance.md](references/owner-guidance.md) when a governed outcome requires owner acceptance or consequential authorization.
 - **Continuity**: Return cold-session state plus exactly one safe next action or owner gate. Kernel owns invariants; references own conditional procedures.

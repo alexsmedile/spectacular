@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Added
+
+- `/spectacular plan` Skill route over native host planning controls, with the
+  durable project copy in `.spectacular/plans/` and honest unsaved-draft reporting
+  when the host prohibits writes. No public CLI command is added.
+- Optional specs/audits folder agreements and an active-workspace example showing
+  Mission-owned reviews, evidence, handoffs, and promoted records.
+
+### Changed
+
+- Align Spectacular’s own anchors and Atlas with durable context; split the
+  Vocabulary’s mechanical model into a linked reference and shorten stale maps.
+- Clarify that plans track work, specs describe reusable behavior, and Contracts
+  retain mechanically bound agreement and amendment/version rules.
+
 ## 3.0.0-rc — 2026-10-07
 
 ### Changed

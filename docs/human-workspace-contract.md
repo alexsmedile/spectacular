@@ -3,27 +3,82 @@
 Create folders when content needs them. Spectacular keeps small typed Markdown
 objects in containers; the minimal workspace can be a single project anchor.
 
+## Example: a project actively working on releases
+
 ```text
-.spectacular/
-├── PROJECT.md
-├── VOCABULARY.md            # optional domain vocabulary and relationships
-├── INDEX.md                 # optional manual navigation
-├── index.json               # generated governed-record navigation, when used
-├── raw/                     # unconstrained captures and sketches
-├── atlas/                   # lasting entities, concepts, maps, explanations
-├── decisions/               # choices and rationale
-├── plans/                   # intended work, progress, results
-├── contracts/               # validated agreements
-├── proposals/               # optional governed open questions
-├── missions/                # explicitly selected governed work
-├── evidence/                # governed proof
-└── archive/                 # governed retirement under existing rules
+project/
+├── docs/                              # human-facing product docs
+│   ├── guides/release.md
+│   └── reference/artifacts.md
+└── .spectacular/
+    ├── PROJECT.md                     # purpose and current constraints
+    ├── VOCABULARY.md                  # domain objects and language
+    ├── INDEX.md                       # optional manual navigation
+    ├── index.json                     # generated governed inventory
+    ├── raw/
+    │   └── release-sketch.md           # freeform starting material
+    ├── plans/
+    │   ├── release-flow.md             # parent approach, progress, results
+    │   └── linux-tranche.md            # independent linked delivery slice
+    ├── specs/
+    │   └── release-integrity.md        # reusable intended behavior; type Spec
+    ├── atlas/
+    │   ├── release-artifact.md         # typed domain object
+    │   └── release-lifecycle.md        # relationships and states
+    ├── decisions/
+    │   └── checksum-policy.md          # soft choice and rationale
+    ├── audits/
+    │   └── release-drift.md            # inspection scope/revision/findings
+    ├── contracts/
+    │   └── CC-r7u2p4-release-integrity.md     # mechanically bound agreement
+    ├── proposals/
+    │   └── P7-signing-options.md       # formally tracked open question
+    ├── missions/
+    │   └── M23-release-integrity/
+    │       ├── M23-release-integrity.md  # explicitly selected frozen slice
+    │       ├── reviews/RV1-release-review.md
+    │       ├── evidence/E1-x4b8q2.md
+    │       ├── handoffs/H1-k4p2a8.md
+    │       ├── objectives/O2-linux-delivery.md  # only if promoted
+    │       └── runs/R2-linux-attempt/R2-linux-attempt.md  # only if promoted
+    ├── campaigns/release-readiness.md # optional sequencing across slices
+    ├── retrospectives/release-lessons.md
+    └── archive/                       # authorized governed retirement
 ```
 
-This is an example, not a required scaffold. Governed workflows may also use
-Gaps, handoffs, assessments, and reviews. The current initializer still creates
-the broader governed layout. Raw aliases `sketch/` and `scratchpad/` have the same
-freeform role; retain the existing one rather than adding all three.
+The names illustrate placement, not records to manufacture. The CLI assigns
+exact governed filenames and reports their paths. Compact Missions keep inline
+Objectives and Runs until supported promotion earns separate files. Mission-owned
+reviews, evidence, handoffs, Gaps, and assessments normally live inside the bundle;
+project-level collections are valid when their enforced format permits them.
+
+Create only the containers whose content is useful. A single project anchor and
+one plan can be enough. Raw aliases sketch/ and scratchpad/ have the same role;
+retain the existing one rather than adding all three. The current initializer
+still creates the broader governed layout.
+
+## Choose a role
+
+| File role | Question it answers | When to extract it |
+|---|---|---|
+| Plan | What will we do, and what happened? | A coherent work outcome needs continuity |
+| Spec | What behavior or interface should exist? | Requirements have independent readers or reuse |
+| Atlas | What are the objects and how do they relate? | An explanation outlives a work plan |
+| Decision | What did we choose and why? | Rationale or supersession needs retention |
+| Audit | What did inspection find at this revision? | Findings have an independent scope and reader |
+| Proposal | Which formally tracked question remains open? | Existing governed exploration is deliberately selected |
+| Contract | What agreement is mechanically bound? | Accepted agreement needs validation and versioning |
+| Mission | Which frozen slice is explicitly executing? | Owner selects governed work |
+| Review / Handoff | What was formally evaluated or transferred? | The selected governed workflow needs that record |
+
+A plan can contain requirements, inspection findings, and a continuity note.
+Optional specs/ and audits/ avoid overloading it only when those parts stand alone.
+A quick handoff can remain in the plan; governed handoffs use their supported
+command. Existing Proposals keep their rules; proposal create remains unavailable.
+
+Root docs/ is managed independently by documentation tools. There is no default
+.spectacular/docs/ copy. A spec is internal intended behavior; public documentation
+explains shipped behavior. Specs do not replace the Contract amendment pipeline.
 
 ## Metadata and folder agreements
 
@@ -34,7 +89,7 @@ leave unknown values unresolved rather than fabricating them. Preserve unknown
 metadata. Types are extensible through the folder agreement.
 
 The [folder agreement](../skills/spectacular/knowledge-folders.yaml) defines the
-current types and metadata for anchors, Atlas, plans, Decisions, campaigns, and
+current types and metadata for anchors, Atlas, plans, specs, audits, Decisions, campaigns, and
 retrospectives. `schema` means an enforced governed frontmatter claim; it is not
 needed for soft context. Existing governed records retain their own metadata,
 identity, and mutation rules. Raw has no metadata or naming obligations.

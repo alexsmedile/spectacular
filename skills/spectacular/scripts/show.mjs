@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // show.mjs — print a record's state and outcome.
 //
-// Read-only fallback for hosts without the `spectacular` CLI. Parses
-// frontmatter properly, unlike the shell tier. It never verifies a fingerprint
+// Read-only fallback for hosts without the `spectacular` CLI. Extracts
+// frontmatter best-effort; conformant YAML parsing is unverified. It never verifies a fingerprint
 // and never writes.
 //
 // Usage: node show.mjs <ref>

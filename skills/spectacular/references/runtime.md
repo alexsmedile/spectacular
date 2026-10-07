@@ -51,7 +51,7 @@ planned ──► ready ──► active ──► returned ──► integrated
                         └──► blocked / escalated (returns to Lead)
 ```
 - **"Returned ≠ Done"**: A side worker never marks an item complete. It emits a **Return Receipt** (`commit`, `tests_passed`, `diff_stat`, `blockers`). The Lead alone reviews, merges, and verifies.
-- **Heartbeat & Leases**: Active reservations release upon an explicit `returned`/`aborted` receipt or after a heartbeat timeout (default: 15m).
+- **Heartbeat & Leases**: A timeout marks a reservation expired and triggers investigation; it does not release writable paths. Reclaim a reservation only after confirming the worker has stopped or is isolated from those paths, including when processing returned/aborted receipts. If cessation cannot be confirmed, keep conflicting writes reserved.
 - **Conservative Pruning**: Worktrees (`.worktrees/<slug>`) are pruned only after the Lead records `integrated` or `aborted` and confirms uncommitted diffs are safe.
 
 ## 7. Negative Constraints (DO NOT)

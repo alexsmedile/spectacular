@@ -30,6 +30,16 @@ container, with agreed metadata and extensible types. Raw has no obligations.
 `sketch/` and `scratchpad/` are equivalent roles used by other tools; keep one
 established home instead of duplicating it.
 
+## Plan mode with a durable home
+
+Ask `/spectacular plan <outcome>` or `$spectacular plan <outcome>` through the Skill.
+The host owns native plan-mode controls; Spectacular keeps the project copy in
+`.spectacular/plans/` when writing is permitted. Reuse the file through planning,
+implementation, and delivery. There is no new binary plan command or Mission gate.
+
+See the [active-workspace tree](docs/human-workspace-contract.md) for optional
+specs/audits and Mission-owned reviews, evidence, and handoffs.
+
 ## Small files, useful links
 
 Prefer one coherent object, question, or outcome per file, often 50–120 lines.

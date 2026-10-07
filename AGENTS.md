@@ -14,11 +14,18 @@ links or path-qualified wikilinks; repair incoming links on moves.
 creation time, and update time; recover historical dates honestly and preserve
 unknown metadata. No extra record identity or lifecycle is required. The runtime
 details live in `skills/spectacular/references/knowledge.md`.
+
+`/spectacular plan` is a Skill route over native host planning controls, with the
+durable project copy in `.spectacular/plans/` when writes are allowed. Optional
+`specs/` and `audits/` contain reusable behavior and inspection findings; create
+them only for independently useful content. They do not replace governed
+Contracts, Reviews, or Handoffs. Canonical Mission-owned records follow the path
+reported by the CLI.
 Folder-specific agreements live in `skills/spectacular/knowledge-folders.yaml`.
 Outside raw/sketch/scratchpad, maintained documents require metadata appropriate
 to those agreements. Raw has no metadata, naming, or promotion obligations.
-Prefer ONTOLOGY.md for new domain-model anchors; retain existing VOCABULARY.md
-until its links and historical bindings can be handled safely. Manual INDEX.md
+Prefer VOCABULARY.md for new domain-model anchors; retain an existing ONTOLOGY.md
+without duplicating its authority or rewriting historical bindings. Manual INDEX.md
 and generated index.json are both valid; do not overwrite manual navigation
 with generated output. Plans go in `.spectacular/plans/`, sketches in the existing
 scratchpad-role folder, never in product `docs/`.

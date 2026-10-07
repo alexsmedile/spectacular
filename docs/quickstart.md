@@ -14,6 +14,19 @@ Create `.spectacular/PROJECT.md` when you need durable project context. Addition
 anchors and folders appear when content needs them; no starter collection of
 empty directories is required for the ordinary workflow.
 
+## Plan with Spectacular
+
+Ask the Skill: `/spectacular plan improve the release flow`, or
+`$spectacular plan improve the release flow` in hosts using that invocation.
+It uses the host’s planning behavior and keeps the project copy at
+`.spectacular/plans/release-flow.md`. This is a Skill route, not a binary command.
+
+The host controls native plan mode, restrictions, and approvals. Spectacular
+cannot toggle a mode through prose. When writes are prohibited, it returns an
+unsaved draft and intended path; saving waits until the host permits it.
+Repeated planning updates the same file. Implementation can later track progress,
+checks, and outcomes there without creating a Mission.
+
 ## Choose a home by purpose
 
 | Home | What belongs there |
@@ -23,6 +36,11 @@ empty directories is required for the ordinary workflow.
 | `atlas/` | Domain maps and lasting explanations |
 | `decisions/` | Consequential choices and why they were made |
 | `plans/` | Intended work, approach, progress, and outcome |
+| `specs/` | Optional reusable behavior and interfaces |
+| `audits/` | Optional revision-scoped inspection findings |
+
+See the [active-workspace example](human-workspace-contract.md) for Mission-owned
+reviews, evidence, handoffs, and optional supporting folders.
 
 A plan can include requirements and design. There is no required Proposal,
 Contract, or Mission before implementation. Agents choose placement and evolve

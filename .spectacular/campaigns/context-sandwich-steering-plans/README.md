@@ -1,20 +1,20 @@
 ---
 type: Reference
-version: "0.1"
-created: "2026-08-23T00:06:46+02:00"
-updated: "2026-08-23T00:06:46+02:00"
+version: '0.2'
+created: '2026-08-23T00:06:46+02:00'
+updated: '2026-10-07T18:49:34Z'
 ---
 
-# Context-sandwich Mission plan inputs
+# Historical Mission plan inputs
 
-These files are `mission start` inputs, not canonical started Missions.
+These files preserve mission start inputs and preparation sketches for the
+context-sandwich campaign. They are not canonical active Missions.
 
-- `M15-governance-contract-baseline.md` is the next activation-ready plan.
-- M16-M21 are preserved future sketches. Re-prepare only the next sketch after
-  its predecessor closes and current Evidence is available.
-- Create and switch to the Mission branch/worktree with native Git before running
-  `spectacular mission start`.
-- Do not start any plan directly on `main`.
+The related Mission bundles now exist under missions/ and are completed. Do not
+interpret the filenames or earlier next-step notes as current activation authority.
+Preserve their input metadata and history; reusing an idea requires a fresh task,
+current context, and explicit owner selection if governed execution is desired.
 
-The Campaign remains the planning map. Only `mission start` creates a canonical
-record under `.spectacular/missions/`.
+New ordinary implementation plans live in [current plans](../../plans/durable-plan-mode.md), including
+[current planning work](../../plans/durable-plan-mode.md). A supported mission
+start invocation alone creates a canonical governed Mission and returns its path.

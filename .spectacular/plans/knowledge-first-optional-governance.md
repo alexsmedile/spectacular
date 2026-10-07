@@ -1,11 +1,11 @@
 ---
 type: Plan
 title: Knowledge-first workspace and optional governance
-version: "0.5"
+version: "0.6"
 created: "2026-10-07T17:50:32Z"
-updated: "2026-10-07T18:26:31Z"
+updated: "2026-10-07T18:58:25Z"
 description: Implement small linked knowledge documents and explicitly optional governance.
-status: draft
+status: implemented
 ---
 
 # Knowledge-first workspace and optional governance
@@ -22,6 +22,9 @@ explicit authorization specified in AGENTS.md.
 
 - [Runtime folder roles, small documents, metadata, and links](../../skills/spectacular/references/knowledge.md)
 - [Mechanical blockers and proposed repairs](knowledge-governance-blockers.md)
+
+The [durable planning update](durable-plan-mode.md) owns the subsequent Skill
+route and self-hosted layout changes.
 
 Runtime rules live in the skill; this plan links them instead of keeping a second
 copy. The inventory holds bounded implementation findings. Progress stays here.

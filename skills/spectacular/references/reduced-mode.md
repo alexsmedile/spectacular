@@ -57,21 +57,26 @@ See the [installation guide](https://github.com/alexsmedile/spectacular/blob/mai
 
 The Skill bundles standalone zero-dependency scripts in `scripts/` that operate without the CLI:
 
-### Shell Tier (Zero toolchain required)
+Run from the target project directory so workspace discovery finds that project.
+Resolve `<skill-dir>` from the loaded SKILL.md location, not the current directory;
+replace it below with that absolute path. Do not change into the installed Skill
+merely to locate a helper. The shell tier needs standard shell utilities.
+
+### Shell Tier
 
 ```bash
-sh scripts/doctor.sh          # inspect mode and report available capabilities
-sh scripts/orient.sh          # workspace orientation, active Missions, and status
-sh scripts/where.sh <ref>     # resolve human ref (e.g. M1, M1/O2) to record path
+sh "<skill-dir>/scripts/doctor.sh"          # inspect mode and report available capabilities
+sh "<skill-dir>/scripts/orient.sh"          # workspace orientation, active Missions, and status
+sh "<skill-dir>/scripts/where.sh" <ref>     # resolve human ref (e.g. M1, M1/O2) to record path
 ```
 
-### Node.js Tier (Rich frontmatter & structural parsing)
+### Node.js Tier (Best-effort extraction)
 
 Where Node.js is available:
 
 ```bash
-node scripts/show.mjs <ref>    # state, outcome, objectives, dependency edges, gaps
-node scripts/check.mjs [<ref>] # structural check; checks all records when ref omitted
+node "<skill-dir>/scripts/show.mjs" <ref>    # state, outcome, objectives, dependency edges, gaps
+node "<skill-dir>/scripts/check.mjs" [<ref>] # structural check; checks all records when ref omitted
 ```
 
 ### Fallback Guarantee & Limits

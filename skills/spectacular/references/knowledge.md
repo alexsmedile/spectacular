@@ -21,6 +21,8 @@ Folder agreements live in [knowledge-folders.yaml](../knowledge-folders.yaml).
 | atlas/ | Linked entities, concepts, relationships, lifecycles, and maps |
 | decisions/ | Consequential choices and rationale |
 | plans/ | Intended outcome, approach, progress, and results |
+| specs/ | Optional reusable behavior and interface specifications |
+| audits/ | Optional revision-scoped inspection findings |
 | contracts/ | Mechanically validated agreements and amendment/version pipeline |
 
 Implementation plans belong in plans/, exploratory sketches in raw/. Product
@@ -37,6 +39,8 @@ are both valid navigation aids. Keep authored content out of generated indexes.
 Update the existing owner of a topic before creating another file. Create a
 folder or anchor only when content needs it. Requirements and design may live
 in a plan; extract lasting knowledge only when it has an independent use.
+For planning requests use [plan.md](plan.md); for the full container and Mission
+bundle layout use [workspace.md](workspace.md).
 Mechanical Decision validation is recommended, not required. Descriptive names
 need no governance flag. A numbered soft Decision may explicitly declare
 governance: context to resolve naming ambiguity; governed identity/schema claims
@@ -102,3 +106,8 @@ Python 3 and PyYAML are required. Exit 0 means no findings, 1 means advisory
 findings, and 2 means unavailable inspection. The checker is read-only, skips raw
 and governed records, checks folder metadata and file link targets, and reports
 JSON. It does not certify section anchors, identities, or Contract bindings.
+
+For an optional size estimate, run the resolved Skill's
+`scripts/count-tokens.sh <file-path>` from the target project. It reports lines,
+words, and an advisory heuristic estimate; it is not the official tokenizer,
+never enforces a soft-file limit, and does not certify a Charter budget.

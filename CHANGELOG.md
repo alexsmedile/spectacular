@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 3.0.0 — 2026-10-07
+
 ### Added
 
 - Freeform, minimal, compact-default, extended, and separate governed document
@@ -19,6 +21,22 @@
   Vocabulary’s mechanical model into a linked reference and shorten stale maps.
 - Clarify that plans track work, specs describe reusable behavior, and Contracts
   retain mechanically bound agreement and amendment/version rules.
+
+### Release scope
+
+- Durable context is the default; Missions are explicitly selected. Contracts
+  retain mechanical validation, amendments, and versioning.
+- Recommend small linked Markdown objects split by domain, module, phase, or
+  delivered tranche. Raw remains unconstrained; maintained context is typed and
+  versioned, with creation/update metadata.
+- Preserve authored `INDEX.md`; generate `index.json` for governed navigation.
+  Keep public documentation in root `docs/`.
+- Soft context no longer blocks unrelated governed discovery; malformed governed
+  records still refuse. Keep 26 commands and v2 module/mechanical schema identities.
+- Remove duplicate verification while retaining race, acceptance, four-platform
+  builds, checksums, reproducibility, installation, rollback, and recovery coverage.
+- Align README, product docs, runtime guidance, self-hosted context, and plugin
+  manifests for the stable release. Isolate the missing-PyYAML test from CI paths.
 
 ## 3.0.0-rc — 2026-10-07
 

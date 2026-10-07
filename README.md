@@ -49,6 +49,9 @@ it into every plan. Relative Markdown links and Obsidian wikilinks are supported
 as agent navigation conventions.
 
 Maintained context carries `type`, document `version`, `created`, and `updated`.
+Compact is the default metadata profile: add a useful description to those basic
+fields. Minimal remains valid; extended metadata is optional and does not activate
+governance. See the [profile guide](skills/spectacular/references/profiles.md).
 Preserve creation dates and unknown fields. Git supplies edit history. Agents
 choose placement, update existing topic owners, and repair links when files move.
 

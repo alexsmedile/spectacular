@@ -72,37 +72,28 @@ Repair both link forms when moving a soft file. Use portable Markdown links in
 public docs. These links navigate knowledge, not governed typed references;
 no mechanical wikilink resolver is currently provided.
 
-## Basic metadata
+## Metadata profiles
 
-Use Markdown with YAML frontmatter. Type is foundational; types are extensible.
-Outside raw, folder agreements require frontmatter with version, created, updated,
-and a descriptive type. A short
-description aids retrieval; title, tags, sources, and maturity status are optional.
-Preserve unknown keys. Repair missing metadata when its values are known;
-diagnostic findings do not activate Missions or block unrelated implementation.
+Use [profiles.md](profiles.md) when choosing metadata or scaling a document.
+Compact is the default for maintained soft context; minimal remains valid.
+All soft profiles require type, document version, created, and updated. A short
+description is recommended; title and extended retrieval fields remain optional.
+The freeform raw/sketch/scratchpad role has no metadata obligations.
 
-Version is the document revision, independent of CLI releases and schemas.
-Start at 0.1 and increment the minor number for meaningful content changes,
-not typo fixes. Keep created immutable; update updated on meaningful edits.
-Use RFC3339 timestamps with timezone. Recover old creation dates from reliable
-history; omit unknown dates rather than fabricating them. Git preserves edits.
+Governed schemas are independent of this scale. Existing records retain enforced
+identity, metadata, mutation, freeze, and archival rules. Contracts keep their
+mechanical validation and amendment/version pipeline. Ordinary edits do not
+rewrite frozen Missions or amend bound Contracts by hand.
 
-Raw has no metadata, naming, validation, or promotion obligation. Reading or linking provisional raw context
-does not authorize publishing it. Keep existing ignored material ignored unless
-retention is explicitly changed. Maintained knowledge can be normalized as useful,
-without requiring promotion before work starts. Governed proof preserves what it
-relies on rather than treating mutable unpublished text as a frozen guarantee.
-
-Existing governed records keep their enforced identity, metadata, and mutation
-rules. Ordinary edits do not rewrite frozen Missions, amend bound Contracts by
-hand, or bypass archival protections. Product verification follows the actual
-change and repository rules; optional knowledge checks are advisory.
+Reading or linking raw does not authorize publishing it. Keep ignored material
+ignored unless retention is explicitly changed; governed proof preserves what it
+relies on. Product checks follow the actual change and repository rules.
 
 ## Optional metadata and link diagnostics
 
 Run `python3 scripts/check-knowledge.py <workspace>`, where workspace is the
 .spectacular directory, from the skill directory when checking context quality.
-Python 3 and PyYAML are required. Exit 0 means no findings, 1 means advisory
+Python 3.9+ and PyYAML are required. Exit 0 means no findings, 1 means advisory
 findings, and 2 means unavailable inspection. The checker is read-only, skips raw
 and governed records, checks folder metadata and file link targets, and reports
 JSON. It does not certify section anchors, identities, or Contract bindings.

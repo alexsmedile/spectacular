@@ -1,9 +1,23 @@
 # Shared folder agreements for durable context. Diagnostics are opt-in.
-# Existing governed formats and identity claims retain their validators.
-version: '1.1'
+# Profiles guide metadata choices; governed formats retain their validators.
+version: '1.2'
 metadata:
   required: [type, version, created, updated]
   recommended: [description]
+  default_profile: compact
+profiles:
+  freeform:
+    applies_to: unconstrained
+    required: []
+  minimal: {applies_to: maintained-context, required_from: metadata.required}
+  compact:
+    extends: minimal
+    recommended_from: metadata.recommended
+    optional: [title]
+  extended:
+    extends: compact
+    optional: [tags, sources, status]
+  governed: {applies_to: governed-records, schema_source: emitting-command, independent_of_context_scale: true}
 unconstrained: [raw, sketch, scratchpad]
 historical: [history]
 navigation:

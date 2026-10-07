@@ -28,8 +28,9 @@ when writes become permitted. Do not emulate unavailable planning APIs.
    metadata. Nested domain folders are useful only when several plans justify them.
 3. Record the intended outcome, constraints, approach, implementation slices,
    verification, and unresolved choices. Link existing specifications and domain
-   objects rather than copying them. Use the maintained metadata agreement from
-   [knowledge.md](knowledge.md); no UUID, governed schema, or lifecycle is required.
+   objects rather than copying them. Use the compact default in
+   [profiles.md](profiles.md); minimal remains valid and no UUID, governed schema,
+   or lifecycle is required.
 4. Persist when the host permits writes, then read back the file and check that
    its links resolve. Return its path and any consequential unresolved choice.
    A saved-plan claim requires the file to exist with the reported content.

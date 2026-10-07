@@ -4,6 +4,9 @@
 
 ### Added
 
+- Freeform, minimal, compact-default, extended, and separate governed document
+  profiles in the folder agreement and runtime/product guidance. Optional fields
+  remain optional; no profile label or historical conversion is required.
 - `/spectacular plan` Skill route over native host planning controls, with the
   durable project copy in `.spectacular/plans/` and honest unsaved-draft reporting
   when the host prohibits writes. No public CLI command is added.

@@ -76,3 +76,4 @@ Archived governed bundles retain existing rules under archive/. Historical
 collections and legacy indexes can remain. Never create this entire tree merely
 to start a task. Plans, specs, and audits use the basic folder metadata agreement;
 governed files use their command-generated schema and validator. Raw is exempt.
+Select metadata using [profiles.md](profiles.md), with compact as the soft default.

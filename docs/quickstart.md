@@ -63,7 +63,10 @@ and maintain those links; the CLI does not currently supply a wikilink resolver.
 Public documentation uses portable Markdown links.
 
 Maintained knowledge carries foundational `type` metadata plus document `version`,
-`created`, and `updated`. A short description helps retrieval. Preserve creation
+`created`, and `updated`. Compact is the default: add a short description when
+useful, with title optional. Minimal remains valid; extended retrieval fields
+are added only when needed. Raw is freeform. See the
+[metadata scale](human-workspace-contract.md#metadata-scale). Preserve creation
 time and unknown fields; omit unknown historical dates rather than inventing
 one. Document versions track meaningful content changes; Git preserves edit
 history. Missing optional metadata does not stop implementation.

@@ -1,9 +1,9 @@
 ---
 type: Atlas
 title: Workspace navigation and durable planning
-version: '0.1'
+version: '0.2'
 created: '2026-10-07T18:42:01Z'
-updated: '2026-10-07T18:42:01Z'
+updated: "2026-10-07T19:06:46Z"
 ---
 
 # Workspace navigation
@@ -23,6 +23,13 @@ For a realistic active-project example, see the [container guide](../../skills/s
 | Accepted mechanical agreements | contracts/CC-*.md; existing version/amendment rules |
 | Formal historical execution | missions/M*-*/M*-*.md and Mission-owned records |
 | Public product guidance | [docs/README.md](../../docs/README.md) |
+
+## Metadata profiles
+
+[Profiles](../../skills/spectacular/references/profiles.md) scale optional detail:
+minimal uses four basic fields; compact adds a recommended description and is the
+soft default; extended adds useful retrieval fields. Raw stays freeform. Governed
+schemas are a separate choice. No new file or profile label is required.
 
 ## Plan, spec, Contract
 

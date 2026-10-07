@@ -14,6 +14,9 @@ links or path-qualified wikilinks; repair incoming links on moves.
 creation time, and update time; recover historical dates honestly and preserve
 unknown metadata. No extra record identity or lifecycle is required. The runtime
 details live in `skills/spectacular/references/knowledge.md`.
+Metadata profiles live in `skills/spectacular/references/profiles.md`: compact is
+the soft default, minimal remains valid, extended fields are optional, and raw is
+freeform. These conventions require no profile label and do not select governance.
 
 `/spectacular plan` is a Skill route over native host planning controls, with the
 durable project copy in `.spectacular/plans/` when writes are allowed. Optional

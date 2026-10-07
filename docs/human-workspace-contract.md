@@ -94,6 +94,26 @@ retrospectives. `schema` means an enforced governed frontmatter claim; it is not
 needed for soft context. Existing governed records retain their own metadata,
 identity, and mutation rules. Raw has no metadata or naming obligations.
 
+## Metadata scale
+
+Compact is the default for maintained context. These are document conventions,
+not a progression toward mandatory governance.
+
+| Profile | Recommended use | Metadata |
+|---|---|---|
+| Freeform | Raw, sketch, scratchpad | None required |
+| Minimal | Small maintained context | type, version, created, updated |
+| Compact (default) | Most plans, specs, Atlas pages, soft Decisions | Minimal plus recommended description; title when useful |
+| Extended | Context needing extra retrieval or attribution | Compact plus relevant optional tags, sources, status, or domain fields |
+| Governed | Explicitly governed records, including Contracts | Exact command-generated schema and validator |
+
+Minimal remains valid. Optional fields stay optional, and raw can be detailed
+without metadata. No profile label is required in the file. Existing documents
+need no bulk conversion; preserve their metadata and choose additions by usefulness.
+Extended does not mean a larger file, and governed is independent of the scale.
+See the [profile guidance](../skills/spectacular/references/profiles.md) for versions,
+dates, evolution, and diagnostic limits.
+
 ## Navigation and manageable files
 
 Use one coherent question, object, or outcome per file. Prefer roughly 50–120
@@ -122,6 +142,6 @@ supported mutation and archival rules. Contract edits require the amendment or
 version pipeline. Completed Mission bindings are preserved.
 
 Optional metadata and file-link diagnostics use `check-knowledge.py` from the
-Skill and require Python 3 with PyYAML. Findings guide cleanup; they do not enroll
+Skill and require Python 3.9+ with PyYAML. Findings guide cleanup; they do not enroll
 work in a Mission. The checker does not certify section anchors or governed
 bindings. Root `docs/` remains public product documentation, never a plan store.

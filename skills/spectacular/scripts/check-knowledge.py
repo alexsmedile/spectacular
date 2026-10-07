@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Optional durable-context diagnostics. Requires Python 3 and PyYAML.
+"""Optional durable-context diagnostics. Requires Python 3.9+ and PyYAML.
 
 Exit 0: no findings; 1: advisory findings; 2: inspection unavailable.
 Never writes files or validates governed identities, bindings, or Contracts.

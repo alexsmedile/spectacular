@@ -6,28 +6,29 @@ Concrete, production-grade examples for launching projects with zero file bloat.
 
 ---
 
-## 1. Core Triad Examples
+## 1. Core anchors when useful
 
-### `.spectacular/PROJECT.md` (What & Why)
-For a new soft Anchor, use the metadata and folder agreement in
-[knowledge.md](knowledge.md). No governed emitting command is required. Preserve
-existing governed Anchor identities; use init only when choosing a governed workspace.
+For new soft Anchors, use [profiles.md](profiles.md) and the folder agreement.
+No emitting command is needed. Preserve existing governed Anchor identities;
+use init only when choosing a governed workspace. Create only the concern whose
+content needs an independent home.
 
-### `.spectacular/STACK.md` (What with)
-For a new soft Anchor, use the metadata and folder agreement in
-[knowledge.md](knowledge.md). No governed emitting command is required. Preserve
-existing governed Anchor identities; use init only when choosing a governed workspace.
-
-### `.spectacular/ARCHITECTURE.md` (How)
-For a new soft Anchor, use the metadata and folder agreement in
-[knowledge.md](knowledge.md). No governed emitting command is required. Preserve
-existing governed Anchor identities; use init only when choosing a governed workspace.
+| Anchor | Distinct purpose |
+|---|---|
+| PROJECT.md | Purpose, direction, boundaries, and non-goals |
+| STACK.md | Languages, runtimes, dependencies, and verification tools |
+| ARCHITECTURE.md | Components, dependencies, and system organization |
 
 ---
 
 ## 2. On-Demand Anchor Example
 
 ### `.spectacular/VOCABULARY.md` (Domain Ontology and Ubiquitous Language)
+
+Use the sections that have independent meaning. When action vocabulary or state
+ambiguity matters, include canonical actions, known banned synonyms, and permitted
+entity states under Actions and events. These are body guidance, not mechanically
+certified frontmatter or a mandatory structure for every soft document.
 
 This is a body shape, not a frontmatter template. Preserve existing
 Anchor metadata for governed history. For a new soft `VOCABULARY.md`,

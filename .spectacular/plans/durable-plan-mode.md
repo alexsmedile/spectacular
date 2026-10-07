@@ -1,9 +1,10 @@
 ---
 type: Plan
-title: Durable planning route and active workspace layout
-version: '0.2'
+title: Durable planning, workspace layout, and document profiles
+version: '0.3'
 created: '2026-10-07T18:42:01Z'
-updated: 2026-10-07T18:58:25Z
+updated: "2026-10-07T19:11:33Z"
+description: Planning route, container roles, and compact-default document profiles.
 ---
 
 # Durable plan mode and workspace navigation
@@ -53,3 +54,17 @@ external-review authorization instructions. No Go source or binary command was
 changed, so the documentation-only route did not run the Go test runner.
 Tag correction for v3.0.0-rc remains subject to the previously requested
 publication approval.
+
+## Document profile scale
+
+The [folder agreement](../../skills/spectacular/knowledge-folders.yaml) defines
+freeform, minimal, compact (soft default), extended, and separate governed profiles.
+[Profile guidance](../../skills/spectacular/references/profiles.md) owns their
+metadata, evolution, and diagnostic limits. No per-file profile label is required;
+existing documents are not bulk-converted. This plan uses compact metadata.
+
+Verification passed: Skill lint has zero errors, review/verification has no
+blockers, all six existing diagnostic tests pass, and 26 maintained documents
+have no findings. Minimal, compact, and extended temporary documents were accepted
+without requiring optional fields; unknown domain metadata survived inspection.
+File targets resolve. No Go behavior or public CLI command changed.

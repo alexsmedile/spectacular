@@ -25,7 +25,9 @@ bounded Mission only when the owner explicitly selects governed execution.
   saved path, or explicitly identify an unsaved draft under host restrictions.
   This Skill route adds no public CLI command and activates no Mission.
 - **Ordinary work (default)**: Read [knowledge.md](references/knowledge.md) when
-  placing, maintaining, or working from workspace documents. Follow relevant
+  placing, maintaining, or working from workspace documents. Use its compact
+  metadata default; minimal is valid, extended fields are earned, and raw is free.
+  Follow relevant
   anchors and links, do the authorized work, verify the actual change, and return
   its outcome. No startup CLI/version check, initialization, Mission, formal
   Decision, branch, commit, or completion record is required by this route.

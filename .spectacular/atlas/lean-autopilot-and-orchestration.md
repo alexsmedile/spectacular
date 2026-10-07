@@ -1,6 +1,9 @@
 ---
 type: Atlas
 title: Lean autopilot and orchestration architecture
+version: "0.1"
+created: "2026-08-31T16:34:55+02:00"
+updated: "2026-08-31T17:55:08+02:00"
 ---
 
 # Atlas: Lean Autopilot and Orchestration Architecture

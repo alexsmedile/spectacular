@@ -76,7 +76,12 @@ node scripts/check.mjs [<ref>] # structural check; checks all records when ref o
 
 ### Fallback Guarantee & Limits
 
-All bundled fallback scripts **read and report only**. None writes files, calculates fingerprints, or verifies cryptographic bindings. They provide a safe baseline floor for reading and drafting, not a mechanical equivalent to the binary.
+All bundled fallback scripts **read and report only**. None writes files,
+calculates fingerprints, or verifies cryptographic bindings. `check.mjs` performs
+best-effort field inspection, not YAML certification; exit 2 means validation
+remains unverified, and exit 1 means field problems were observed. These scripts
+are not a mechanical equivalent to the binary. Ordinary work remains available
+through [knowledge.md](knowledge.md) regardless of CLI availability.
 
 ---
 

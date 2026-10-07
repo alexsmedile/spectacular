@@ -33,6 +33,9 @@ repair_budget: 2
 dependencies: [M19 completed with disjoint write reservations and Handoff validation]
 gaps: []
 stops: [evidence-self-certification, stale-commit-or-tree, command-count-other-than-18, second-proof-dependency-graph, data-loss]
+version: "0.1"
+created: "2026-08-23T00:06:46+02:00"
+updated: "2026-08-23T07:01:29+02:00"
 ---
 
 # Mission: Record Basic Clustered Evidence

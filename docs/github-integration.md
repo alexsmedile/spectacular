@@ -71,7 +71,7 @@ How does an operator or agent know whether to use a GitHub feature or a Spectacu
 │ Architectural choice or ruling │ Spectacular Decision (spectacular decide)  │
 │ Bounded coding execution scope │ Spectacular Mission (.spectacular/missions)│
 │ Contract drift or audit proof  │ Spectacular Review (.spectacular/reviews)  │
-│ Freeform team scratchpad       │ .spectacular/raw/ (optional to commit)     │
+│ Freeform team scratchpad       │ .spectacular/raw/ (ignored, provisional)     │
 └────────────────────────────────┴────────────────────────────────────────────┘
 ```
 
@@ -122,7 +122,7 @@ gh pr create \
 Implements and proves **M14**.
 
 - Closes #142
-- Mission record: [.spectacular/missions/M14-token-refresh/M14-token-refresh.md](.spectacular/missions/M14-token-refresh/M14-token-refresh.md)
+- Mission record: `.spectacular/missions/M14-token-refresh/M14-token-refresh.md` (example path)
 - Verified with \`bash test/verify.sh quick\` (exit 0)."
 ```
 

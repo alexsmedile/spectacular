@@ -2,7 +2,8 @@
 // check.mjs — structural validation of a record, or the whole workspace.
 //
 // Read-only fallback for hosts without the `spectacular` CLI. It checks shape:
-// frontmatter parses, required fields exist, referenced records resolve. It
+// extracted fields exist and referenced records resolve. YAML parsing is
+// unverified: the bundled bounded reader is not a conformant YAML parser. It
 // does NOT verify fingerprints, bindings, claim drift, or authority — those
 // need the CLI, and this says so rather than implying coverage it lacks.
 //
@@ -21,8 +22,8 @@ if (!ws) { console.error('no .spectacular/ workspace found'); process.exit(1); }
 function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
-    if (e.isDirectory()) walk(p, out);
-    else if (e.name.endsWith('.md') && e.name !== 'index.md') out.push(p);
+    if (e.isDirectory() && !['raw', 'sketch', 'scratchpad', 'atlas', 'plans', 'campaigns', 'retrospectives', '.engine', '.cache', 'history'].includes(e.name)) walk(p, out);
+    else if (e.isFile() && e.name.endsWith('.md') && e.name.toLowerCase() !== 'index.md') out.push(p);
   }
   return out;
 }
@@ -33,6 +34,13 @@ function checkOne(file) {
   const text = fs.readFileSync(file, 'utf8');
   const { frontmatter: f } = readRecord(text);
   if (!f) return { file, skipped: 'no frontmatter', problems, notices };
+
+  const claimed = ['id', 'ref', 'human_ref', 'schema', 'schema_version'].some(key => key in f);
+  const strict = path.relative(ws, file).split(path.sep).some(part => ['contracts', 'proposals', 'missions', 'evidence', 'gaps', 'handoffs', 'assessments', 'reviews', 'archive'].includes(part));
+  const canonical = /^(CC-|[A-Z]+[0-9]+([-\.]|$))/.test(path.basename(file));
+  if (!claimed && !strict && path.basename(file) !== 'PROJECT.md' && (!canonical || f.governance === 'context')) {
+    return { file, skipped: 'soft context; use check-knowledge.py for advisory metadata checks', problems, notices };
+  }
 
   const required = REQUIRED[f.type] || REQUIRED.default;
   for (const key of required) {
@@ -86,7 +94,8 @@ for (const file of targets) {
   }
 }
 
-console.log(`\n${checked} record(s) checked, ${failing} with problems, ${noticed} with notices, ${skipped} without frontmatter`);
-console.log('structure only — fingerprints, bindings, claim drift, and authority were NOT verified');
+console.log(`\n${checked} record(s) inspected, ${failing} with problems, ${noticed} with notices, ${skipped} outside governed inspection`);
+console.log('best-effort inspection only — YAML parsing, fingerprints, bindings, claim drift, and authority were NOT verified');
 console.log('run `spectacular mission check <ref>` for the real gate');
-process.exit(failing ? 1 : 0);
+// Exit 2 distinguishes incomplete inspection from a successful validation gate.
+process.exit(failing ? 1 : 2);

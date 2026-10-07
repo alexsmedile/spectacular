@@ -1,126 +1,72 @@
 # Quickstart
 
-This walks through one Mission: from an idea, to an approved plan, to a record
-the next agent can pick up. It takes about fifteen minutes.
+Start from the context you have and do the work. Spectacular keeps that context
+in small linked Markdown documents; a Mission is an explicitly chosen option.
+Ordinary work needs neither the CLI nor a workspace manifest.
 
-You need the `spectacular` CLI on your PATH and a project that is a git
-repository. See [Installation](#installation) below if you do not have the CLI
-yet.
+## Start with one useful document
 
-## The shape of the work: The Lean 3-Layer Model
+Use an existing anchor or raw draft if it already explains the job. Otherwise,
+write a short plan with the intended result, relevant constraints, an approach,
+and how to check the result. Keep progress and results in that same plan.
 
-Spectacular is designed for fast, token-efficient autonomous execution with minimal ceremony. All governance reduces to 3 simple layers:
+Create `.spectacular/PROJECT.md` when you need durable project context. Additional
+anchors and folders appear when content needs them; no starter collection of
+empty directories is required for the ordinary workflow.
 
-```text
-1. Ground Truth & Decisions ──▶ 2. Flight Plan Roadmap ──▶ 3. Single-File Mission ──▶ Autonomous Autopilot
-   PROJECT.md + decisions/         campaigns/flight-plan.md    missions/M1.md (≤500t)     Tests pass = Proof
-```
+## Choose a home by purpose
 
-- **Layer 1: Living Ground Truth**: `PROJECT.md` (scope/boundaries) + `.spectacular/decisions/` (bulk-ideated architectural choices locked with `spectacular decide`).
-- **Layer 2: Topological Flight Plan**: Multi-session roadmap in `.spectacular/campaigns/flight-plan.md` (4–8 macro milestone blocks).
-- **Layer 3: Single-File Execution Envelopes**: Compact, self-contained Mission files (`missions/M1.md`, $\le 500$ tokens) with inline deliverables checklist and failable test boundaries.
+| Home | What belongs there |
+|---|---|
+| Root anchors | Current purpose, accepted architecture, vocabulary, constraints |
+| `raw/` | Captures, research, unfinished drafts, quick-start material |
+| `atlas/` | Domain maps and lasting explanations |
+| `decisions/` | Consequential choices and why they were made |
+| `plans/` | Intended work, approach, progress, and outcome |
 
-> [!TIP]
-> **Modular Adoption (Zero Ceremony)**: You are not obligated to use the entire 3-layer pipeline. If you only want **Interview Mode** to align on architecture, **`spectacular decide`** to lock durable ADRs, or **`.spectacular/atlas/`** for visual Mermaid maps, you can stop after step 1 with zero subsequent ceremony. Missions are optional execution envelopes for when you want bounded proof.
+A plan can include requirements and design. There is no required Proposal,
+Contract, or Mission before implementation. Agents choose placement and evolve
+ordinary documents within the authorized task; they ask when an accepted
+constraint conflicts or a consequential action needs authorization.
 
-## 0. Initialize the workspace (greenfield)
+Raw material remains provisional. Reading it does not authorize publishing it;
+existing ignored captures stay ignored unless you choose a retention change.
 
-If starting on a new project, initialize the Spectacular workspace boundary:
+## Keep documents small and connected
 
-```sh
-spectacular init [--name <project>]
-```
+Prefer one question or coherent outcome per document, usually 50–120 lines.
+Split by domain, code module, working phase, or delivered tranche when each
+part has independent readers or reuse. Link it from
+the plan rather than copying it. Avoid fragments that cannot stand on their own.
 
-This safely creates `.spectacular/workspace.yaml` and seeds `.spectacular/PROJECT.md` without overwriting existing files.
+Use relative Markdown links or Obsidian wikilinks, with section targets and
+aliases where useful. Explicit paths avoid ambiguous filenames. Agents follow
+and maintain those links; the CLI does not currently supply a wikilink resolver.
+Public documentation uses portable Markdown links.
 
-### Day 1 Minimal Footprint (Zero Ceremony)
-On Day 1, you do not need 10 folders or 7 anchors. A clean starting workspace needs only:
+Maintained knowledge carries foundational `type` metadata plus document `version`,
+`created`, and `updated`. A short description helps retrieval. Preserve creation
+time and unknown fields; omit unknown historical dates rather than inventing
+one. Document versions track meaningful content changes; Git preserves edit
+history. Missing optional metadata does not stop implementation.
 
-```text
-.spectacular/
-├── PROJECT.md        # Scope, boundaries, and non-goals
-└── decisions/         # Architectural rulings added via `spectacular decide`
-```
-Visual maps (`atlas/`), roadmaps (`campaigns/`), and execution envelopes (`missions/`) are earned progressively as the project grows.
+## Do the work and verify it
 
-## 1. Upfront Bulk-Decide (Settle Architecture Early)
+An agent reads relevant anchors and linked context, implements the authorized
+change, runs appropriate product checks, and records useful results. An unrelated
+Mission or a missing Spectacular binary does not enroll or stop ordinary work.
+Routine completion does not require a commit or a formal evidence package.
 
-Before starting implementation, brainstorm the technical stack and lock key architectural forks with `spectacular decide`:
+Soft Decisions use descriptive unnumbered filenames. Existing numbered Decisions
+and other governed records retain their enforced identities and mutation rules.
+Do not convert historical records merely to adopt the ordinary workflow.
 
-```sh
-spectacular decide decision.md
-```
+## Choose governed execution when useful
 
-This writes an immutable record to `.spectacular/decisions/D1-<slug>.md`. Subagents and downstream sessions read these permanent rulings and never re-debate or hallucinate conflicting choices.
+Select a Mission explicitly when freezing an agreement and collecting formal
+proof help the task. Governed operations need the compatible CLI and retain
+activation, integrity, and completion rules. See [Process](process.md) for that
+advanced workflow and [Installation](installation.md) for the CLI.
 
-## 2. Sequence the Flight Plan Roadmap
-
-Map 4–8 milestone blocks in `.spectacular/campaigns/flight-plan.md`. Unstarted blocks remain lightweight 4-line draft cards.
-
-## 3. Freeze a Single-File Mission and activate it
-
-Create a compact Mission draft (`plan.md`, $\le 500$ tokens) naming the outcome, deliverables checklist, and automated test command (`pass_boundary`). Activate it:
-
-```sh
-spectacular mission start plan.md
-```
-
-This creates `.spectacular/missions/M1-<slug>/M1-<slug>.md` as a frozen execution envelope.
-
-## 4. Run with Supervised Subagent (`charter` & `guard`)
-
-Extract a lean, zero-wandering prompt for the subagent worker:
-
-```sh
-spectacular charter M1/O1 --prompt
-```
-
-Wrap the worker command in Spectacular's OS watchdog to enforce authorized write paths with zero wasted work (surgical quarantine on rogue writes):
-
-```sh
-spectacular guard M1/O1 -- <subagent-command>
-```
-
-- **Zero Sub-Record Sprawl**: The worker does not create extra checkpoint or handoff files.
-- **Fail-Fast Decision Gates**: If the worker hits an unrecorded fork, it halts and reports `STATUS: BLOCKED` $\to$ Orchestrator records `spectacular decide` $\to$ Worker resumes.
-- **Tests Pass = Proof**: Passing the verification test runner (`exit 0`) and creating a clean Git commit is the completion proof.
-
-## 5. The owner verifies and completes it
-
-Verify the mission atomically across schema drift, domain tests, replay hooks, and git cleanliness:
-
-```sh
-spectacular mission check M1 --verify                       # 4-point atomic verification
-spectacular mission complete M1 --by alex                  # Owner completion gate
-```
-
-Completion is an attributable owner act. The agent produces work and proof; the human approves completion.
-
-## Installation
-
-The CLI installs from a locally verified release directory. It does not fetch a
-binary or require Go on the consuming machine.
-
-Download the archive and `SHA256SUMS` for your platform from the
-[latest release](https://github.com/alexsmedile/spectacular/releases/latest),
-then install from the directory holding them:
-
-```sh
-install/install.sh install \
-  --prefix "$HOME/.local" \
-  --source "$PWD" \
-  --runtime claude \
-  --version "$VERSION"
-```
-
-`--source` is the directory **containing** the `.tar.gz` — the installer
-verifies the checksum and extracts it for you, so do not unpack it first.
-
-Confirm with `spectacular --version`. Full options, platform selection, and
-update steps: [Installation](installation.md).
-
-## Where to go next
-
-- [Architecture](architecture.md) — what the pieces are and why they are separate.
-- [Process](process.md) — the Mission lifecycle in detail, and the gates that hold it.
-- [Mechanical interface](../skills/spectacular/generated/mechanical-interface.md) — the generated command catalog.
+The current initializer creates a governed workspace and several collections.
+It has not been changed to the minimal ordinary-work layout described above.

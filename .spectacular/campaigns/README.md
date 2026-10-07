@@ -1,3 +1,10 @@
+---
+type: Reference
+version: "0.1"
+created: "2026-08-22T11:19:29+02:00"
+updated: "2026-08-23T21:14:52+02:00"
+---
+
 # Campaigns
 
 Campaigns are optional, durable Markdown roadmap maps. They sequence several

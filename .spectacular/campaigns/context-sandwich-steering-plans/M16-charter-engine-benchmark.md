@@ -52,6 +52,9 @@ stops:
   - semantic-source-inference
   - context-reduction-below-40-percent
   - behavioral-regression
+version: "0.1"
+created: "2026-08-23T00:06:46+02:00"
+updated: "2026-08-23T00:35:38+02:00"
 ---
 
 # Mission: Build and Benchmark the Bounded Charter Engine

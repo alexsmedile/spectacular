@@ -7,14 +7,17 @@ import (
 	"testing"
 )
 
-func TestFullVerificationGateRunsAcceptanceBeforeReleaseChecks(t *testing.T) {
+func TestFullVerificationGateRunsCompleteSuiteOnceBeforeReleaseChecks(t *testing.T) {
 	verify := readRepositoryFile(t, "test", "verify.sh")
 	allMode := between(t, verify, "  all)\n", "  *)\n")
 
-	acceptance := strings.Index(allMode, "acceptance_checks")
+	acceptance := strings.Index(allMode, "go test -race -count=1 ./...")
 	release := strings.Index(allMode, "release_checks")
 	if acceptance < 0 || release < 0 {
 		t.Fatalf("all verification mode must run acceptance and release checks:\n%s", allMode)
+	}
+	if strings.Contains(allMode, "acceptance_checks") {
+		t.Fatal("all mode duplicates acceptance already covered by the complete race suite")
 	}
 	if acceptance > release {
 		t.Fatalf("all verification mode must run acceptance before release checks:\n%s", allMode)

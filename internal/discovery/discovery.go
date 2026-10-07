@@ -209,19 +209,18 @@ func load(root, marker string) (*Workspace, error) {
 					return filepath.SkipDir
 				}
 			}
-			if d.IsDir() && (d.Name() == "history" || d.Name() == "transactions" || d.Name() == ".engine" || d.Name() == ".cache" || d.Name() == "campaigns" || d.Name() == "atlas" || d.Name() == "raw" || d.Name() == "retrospectives") {
+			if d.IsDir() && (d.Name() == "history" || d.Name() == "transactions" || d.Name() == ".engine" || d.Name() == ".cache" || d.Name() == "campaigns" || d.Name() == "atlas" || d.Name() == "raw" || d.Name() == "sketch" || d.Name() == "scratchpad" || d.Name() == "plans" || d.Name() == "retrospectives") {
 				return filepath.SkipDir
 			}
 			// Generated indexes are committed navigation aids, never canonical
 			// records. They must be rebuildable and must not enter authority.
-			// Campaigns and Atlases are durable but non-governing planning documents. They are
-			// intentionally outside the typed record graph and CLI lifecycle. raw/ is
-			// unstructured thinking: gitignored, carrying no frontmatter and naming no
-			// entity, so a stray note there can never refuse a command.
+			// Campaigns, Atlases, plans, and raw captures are outside the typed
+			// record graph and CLI lifecycle. Their Markdown remains usable as
+			// ordinary context without enrolling it in governed discovery.
 			// Amendment logs are append-only provenance beside a Contract: they
 			// record how it changed rather than stating anything it agreed, so they
 			// carry no record identity and must not enter authority either.
-			if !d.IsDir() && d.Name() != "index.md" && d.Name() != "catalog.md" && d.Name() != "GUARDRAILS.md" &&
+			if !d.IsDir() && !strings.EqualFold(d.Name(), "index.md") && d.Name() != "catalog.md" && d.Name() != "GUARDRAILS.md" &&
 				!strings.HasSuffix(d.Name(), ".amendments.md") && strings.HasSuffix(d.Name(), ".md") {
 				paths = append(paths, path)
 			}
@@ -242,7 +241,14 @@ func load(root, marker string) (*Workspace, error) {
 		if err != nil || !within(metaReal, real) {
 			return nil, refusal(domain.RefusalPathEscape, absolute, "record escapes .spectacular", err)
 		}
-		doc, err := workspace.ReadFile(absolute)
+		data, err := os.ReadFile(absolute)
+		if err != nil {
+			return nil, fmt.Errorf("read %q: %w", absolute, err)
+		}
+		if softKnowledge(meta, manifest.ProjectAnchor, absolute, data) {
+			continue
+		}
+		doc, err := workspace.Parse(data)
 		if err != nil {
 			return nil, err
 		}

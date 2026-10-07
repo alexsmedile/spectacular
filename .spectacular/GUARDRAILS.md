@@ -1,3 +1,10 @@
+---
+type: Anchor
+version: "0.1"
+created: "2026-08-10T21:14:12+02:00"
+updated: "2026-08-31T19:40:31+02:00"
+---
+
 # Spectacular project guardrails
 
 @Orient @Prepare @Start @Resume @Run @Assess @Reconcile @Resolve

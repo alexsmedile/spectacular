@@ -57,9 +57,9 @@ else
   warn=$((warn+1))
 fi
 
-# 4. Optional TS helpers.
+# 4. Optional JavaScript helpers.
 if command -v node >/dev/null 2>&1; then
-  say "node" "$(node --version 2>/dev/null) — TS helpers available"
+  say "node" "$(node --version 2>/dev/null) — JavaScript helpers available"
 else
   say "node" "absent — shell fallbacks only"
 fi
@@ -68,7 +68,7 @@ printf '\nMODE\n'
 if [ "$cli" -eq 1 ]; then
   printf '  full — read, draft, and governed execution\n'
 else
-  printf '  reduced — read, explain, and draft only\n\n'
+  printf '  reduced governance — ordinary implementation remains available\n\n'
   printf '  Unavailable without the CLI: mission start, objective promote/finish,\n'
   printf '  run start, review record, handoff record, mission complete, contract\n'
   printf '  amend. These produce fingerprints and atomic writes; nothing here\n'

@@ -1,3 +1,10 @@
+---
+type: Reference
+version: "0.1"
+created: "2026-08-23T00:06:46+02:00"
+updated: "2026-08-23T00:06:46+02:00"
+---
+
 # Context-sandwich Mission plan inputs
 
 These files are `mission start` inputs, not canonical started Missions.

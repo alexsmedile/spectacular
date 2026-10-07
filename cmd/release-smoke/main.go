@@ -59,8 +59,11 @@ func main() {
 
 func (r runner) run() error {
 	version, err := exec.Command(r.binary, "--version").CombinedOutput()
-	if err != nil || !regexp.MustCompile(`^spectacular 2\.`).Match(version) {
+	if err != nil {
 		return fmt.Errorf("version inspection: %w: %s", err, version)
+	}
+	if !regexp.MustCompile(`^spectacular [0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?\s*$`).Match(version) {
+		return fmt.Errorf("invalid release version: %s", version)
 	}
 	plan := `---
 type: MissionPlan

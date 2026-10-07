@@ -1,6 +1,9 @@
 ---
 type: Atlas
 title: Specification evolution and governance lifecycle
+version: "0.1"
+created: "2026-08-31T00:45:37+02:00"
+updated: "2026-08-31T17:55:08+02:00"
 ---
 
 # Atlas: Specification evolution and governance lifecycle

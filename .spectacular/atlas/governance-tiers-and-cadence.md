@@ -1,6 +1,9 @@
 ---
 type: Atlas
 title: Governance tiers and cadence
+version: "0.1"
+created: "2026-09-03T01:57:41+02:00"
+updated: "2026-09-03T01:57:41+02:00"
 ---
 
 # Atlas: Governance tiers and cadence

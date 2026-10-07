@@ -31,7 +31,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		os.Exit(1)
 	}
-	defer os.RemoveAll(buildRoot)
 	version, _ := os.ReadFile(filepath.Join(repoRoot, "VERSION"))
 	cliBinary = filepath.Join(buildRoot, "spectacular")
 	smokeBinary = filepath.Join(buildRoot, "release-smoke")
@@ -48,7 +47,9 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, string(output))
 		os.Exit(1)
 	}
-	os.Exit(m.Run())
+	code := m.Run()
+	os.RemoveAll(buildRoot)
+	os.Exit(code)
 }
 
 func TestSelfHostedMissionsValidateWithInstalledBinary(t *testing.T) {

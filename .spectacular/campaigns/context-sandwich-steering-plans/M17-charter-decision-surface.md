@@ -56,6 +56,9 @@ stops:
   - semantic-eligibility-inference
   - execution-state-mutation
   - contract-conflict
+version: "0.2"
+created: "2026-08-23T00:06:46+02:00"
+updated: "2026-10-07T18:09:01Z"
 ---
 
 # Mission: Expose Charter and Atomic Decision Recording
@@ -82,7 +85,7 @@ Eliminates all prompt assembly friction and multi-file governance indexing overh
 - Check if any Objective in the workspace is explicitly blocked on this ref and report it.
 
 ### 3. Surface & Contract Reconcile
-- Bump [`CC-missioncli`](.spectacular/contracts/CC-missioncli-spectacular-mechanical-cli.md) from `v3` to `v4` with 16 commands.
+- Bump [`CC-missioncli`](../../contracts/CC-missioncli-spectacular-mechanical-cli.md) from `v3` to `v4` with 16 commands.
 - Run `go run ./cmd/generate-interface` to update `generated/mechanical-interface.json` and `catalog.md`.
 - Run full verification suite.
 

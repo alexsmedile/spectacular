@@ -1,173 +1,40 @@
 ---
 type: Atlas
 title: Atlas guide
+version: "0.2"
+created: "2026-08-23T18:24:40+02:00"
+updated: "2026-10-07T18:09:01Z"
 ---
 
-# Atlas
+# Atlas: navigable durable context
 
-An Atlas is a top-view map: the user journey, the business system, the shape of a
-product-value slice seen from above. It connects the reason a change matters to
-the capabilities and architecture that make it possible, so an owner, an
-operator, and a later agent can orient without a roadmap becoming execution
-authority.
+Atlas holds domain objects and their relationships: entities, capabilities,
+journeys, lifecycles, and maps. Diagrams are useful views of that knowledge,
+not the only permitted content. Keep each file focused and link related objects.
 
-An Atlas is used twice. First at the thinking-init stage, before any Proposal
-exists, as the place where a shape becomes legible. Later as an attachment: a
-Proposal or a Contract points at the Atlas that explains the ground it stands on.
+## Choose the right home
 
-An Atlas is canonical Markdown for its own explanation. Its frontmatter names the
-entity (`type: Atlas`) and stops there. It carries no `schema:`, because a
-`schema:` states that Spectacular governs the document, and no command validates
-an Atlas. Claiming a schema nobody enforces would invite tooling to rely on a
-guarantee that does not exist. It is skip-listed in discovery, which is what
-makes it non-governing; the `type:` field is identity, not authority. An Atlas does not grant authority or create Mission drift. Contracts
-and Missions remain the places where behavior is agreed and implementation is
-authorized.
+- Anchors explain current project truth and constraints.
+- Atlas explains objects, relationships, and how the system fits together.
+- Plans describe intended changes and their verification.
+- Decisions preserve choices and rationale; mechanical validation is recommended.
+- Contracts preserve accepted agreements through mechanical validation and the
+  amendment/version pipeline.
+- Raw is an unconstrained scratchpad: no metadata, naming, or promotion duties.
 
-## Where thinking lives before an Atlas
+Keep project plans out of product docs/. Documentation tools manage that surface.
+Prefer ONTOLOGY.md for a new domain anchor; this workspace currently retains
+[its existing domain anchor](../VOCABULARY.md) so historical references survive.
 
-`.spectacular/raw/` is the sketchpad: gitignored, skip-listed, no frontmatter, no
-naming rules, folders or files as you like. Nothing there is an entity and nothing
-cites it. Ideas live there until one earns a linkable Atlas map.
+## Small, linked objects
 
-The progression is a cycle, not a pipeline. Grilling, option matrices, and
-half-decisions coexist and cross-reference in `raw/` and `atlas/` for as long as
-they need to. Only crossing into `proposals/` is directional: a Proposal is the
-first official Spectacular document, and writing one is a claim that the thinking
-has settled enough to be validated.
+Use descriptive types and basic metadata under the
+[folder agreement](../../skills/spectacular/knowledge-folders.yaml).
+Aim for one useful question or object per file, usually 50–120 lines. Split
+independently useful knowledge, not every subsection. Relative Markdown links
+and path-qualified wikilinks make relationships navigable.
 
-Use one lowercase, hyphenated file per slice:
-
-```text
-.spectacular/atlas/
-├── README.md
-├── task-recovery.md
-└── release-confidence.md
-```
-
-Do not number Atlas files. They are navigable maps, not a lifecycle queue.
-
-## Connected boards
-
-An Atlas may carry two or three complementary boards for a slice:
-
-- **Outcome board** — the user, their journey, the desired outcome, and the
-  observable success signal.
-- **System board** — the capabilities, ownership boundaries, dependencies,
-  relevant modules or interfaces, technical risks, and proof.
-- **Domain board** — when an earned `VOCABULARY.md` exists, the bounded
-  contexts, objects, actions, events, policies, and relationships that define
-  the project model. The Vocabulary remains canonical; this board is its visual
-  projection.
-
-The shared middle is a capability. Keep the connection explicit:
-
-```mermaid
-flowchart LR
-  D[Desired future] --> J[Journey step]
-  J --> C[Capability]
-  C --> M[Mission]
-  C --> A[Architecture boundary]
-  M --> E[Evidence]
-```
-
-## Relationship vocabulary
-
-For **Outcome and System boards**, use only the smallest useful labels:
-
-| Label | Meaning |
-| --- | --- |
-| `serves` | a capability helps an actor reach an outcome |
-| `enables` | one capability or concern makes another possible |
-| `depends_on` | work cannot proceed without another capability or boundary |
-| `implemented_by` | a capability is realized by a module, interface, or data boundary |
-| `proved_by` | evidence or a check supports a stated claim |
-| `at_risk_from` | a risk can undermine an outcome or capability |
-
-Do not invent a second ontology, graph database, or generic record system.
-Plain nouns and labelled connections are enough while the map remains human-led.
-
-## Domain-map notation
-
-Use the following node types only when a Domain board needs them:
-
-| Node type | Meaning |
-| --- | --- |
-| Bounded Context | A Mermaid subgraph where a term has one intended meaning. |
-| Actor | A person, organisation, or agent that participates. |
-| Entity | A thing with identity and lifecycle. |
-| Value Object | A defined value without independent identity. |
-| Action | A meaningful permitted operation. |
-| Event | A fact that occurred. |
-| Policy / Invariant | A rule that governs state or action. |
-| External System | A dependency outside the project domain. |
-
-Relationships are edges, never nodes. Use the smallest useful label from
-`owns`, `contains`, `belongs_to`, `has`, `references`, `requests`, `performs`,
-`emits`, `transitions_to`, `governed_by`, `reads_from`, and `writes_to`. Add
-UML/ER multiplicity only where it clarifies a rule: `1` means exactly one,
-`0..1` optional, `1..*` one or more, and `0..*` zero or more. Put the
-multiplicity at the appropriate end of the edge.
-
-Do not mix every API, table, UI surface, and test into the Domain board. Those
-belong in the Vocabulary's implementation mappings or in a focused Atlas slice.
-
-## Suggested shape
-
-````md
----
-type: Atlas
-title: Task recovery
----
-
-# Atlas: Task recovery
-
-## Outcome board
-
-| Actor | Journey step | Desired outcome | Success signal |
-| --- | --- | --- | --- |
-| Operator | Understand a stalled task | Resume with one safe next action | A cold session can orient without chat history |
-
-```mermaid
-flowchart LR
-  S[Task stalls] --> U[Understand current state]
-  U --> R[Resume safely]
-```
-
-## System board
-
-| Capability | Connection | Implementation boundary | Proof / risk |
-| --- | --- | --- | --- |
-| Safe cold recovery | serves `Understand current state` | Mission + Handoff records | Cold-resume acceptance test |
-| Explicit authority | enables `Safe cold recovery` | Mission validation | Risk: ambiguous owner gate |
-
-```mermaid
-flowchart LR
-  C[Safe cold recovery] -->|implemented_by| B[Mission and Handoff boundaries]
-  A[Explicit authority] -->|enables| C
-  C -->|proved_by| E[Cold-resume acceptance]
-```
-
-## Domain board (optional)
-
-```mermaid
-flowchart LR
-  subgraph Recovery[Task recovery]
-    Operator[Actor: Operator]
-    Mission[Entity: Mission]
-    Handoff[Entity: Handoff]
-  end
-
-  Operator -->|requests| Mission
-  Mission -->|has 0..*| Handoff
-```
-
-## Links and open questions
-
-- Campaign: `<campaign path>`
-- Candidate Missions or Contracts: `<references>`
-- Open question: `<what must be decided before work freezes?>`
-````
-
-Keep an Atlas compact. If a board no longer fits on one screen or one coherent
-conversation, split it by value slice rather than making a giant product graph.
+Manual INDEX.md and generated index.json are valid entry points. Generated
+inventories state their scope and never replace manually written navigation.
+Atlas does not authorize implementation or acquire a Mission by being read.
+Optional metadata/link diagnostics improve context quality without lifecycle gates.

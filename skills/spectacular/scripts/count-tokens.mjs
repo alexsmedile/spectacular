@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// o200k_base subword token counter
+// Heuristic size estimate; no BPE vocabulary is loaded.
 function countTokens(text) {
   if (!text || text.length === 0) return 0;
   const wordRegex = /'s|'t|'re|'ve|'m|'ll|'d|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+/giu;
@@ -28,7 +28,8 @@ function analyze(filePath, content) {
   console.log(`  Lines:      ${lines}`);
   console.log(`  Words:      ${words}`);
   console.log(`  Characters: ${chars}`);
-  console.log(`  Tokens:     ${tokens} (o200k_base)`);
+  console.log(`  Tokens:     ~${tokens} (heuristic estimate; not an exact o200k_base count)`);
+  console.log('  Advisory only — use the CLI tokenizer for governed budget checks.');
 
   if (tokens <= 300) {
     console.log(`  Status:     Compact / Sketch range (100–300 tokens)`);

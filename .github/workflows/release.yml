@@ -27,6 +27,11 @@ jobs:
       - name: Download Modules
         run: go mod download
 
+      - name: Install Context Diagnostic Test Dependency
+        run: |
+          python3 -m pip install --target "$RUNNER_TEMP/spectacular-context-python" PyYAML==6.0.3
+          echo "PYTHONPATH=$RUNNER_TEMP/spectacular-context-python" >> "$GITHUB_ENV"
+
       - name: Run Full Verification Suite
         run: bash test/verify.sh all
 

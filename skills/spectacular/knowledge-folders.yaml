@@ -1,0 +1,35 @@
+# Shared folder agreements for durable context. Diagnostics are opt-in.
+# Existing governed formats and identity claims retain their validators.
+version: "1.0"
+metadata:
+  required: [type, version, created, updated]
+  recommended: [description]
+unconstrained: [raw, sketch, scratchpad]
+historical: [history]
+navigation:
+  manual: INDEX.md
+  generated: index.json
+  legacy: [index.md, catalog.md]
+collections:
+  anchors:
+    location: root
+    types: [Anchor]
+    purpose: Current durable project truth; VOCABULARY.md names the domain model.
+  atlas:
+    types: [Atlas, Entity, Concept, Map, Reference]
+    purpose: Linked objects, relationships, lifecycles, and explanatory maps.
+  plans:
+    types: [Plan, Reference]
+    purpose: Intended outcome, approach, progress, and verification.
+  decisions:
+    types: [Decision]
+    purpose: Choice, rationale, and supersession; governed validation recommended.
+  campaigns:
+    types: [Campaign, MissionPlan, Reference]
+    purpose: Optional roadmap spanning several plans or Missions.
+  retrospectives:
+    types: [Retrospective]
+    purpose: Findings and lessons with independent lasting value.
+governed:
+  collections: [contracts, proposals, missions, evidence, gaps, handoffs, assessments, reviews, archive]
+  purpose: Existing typed records retain mechanical validation and lifecycle rules.

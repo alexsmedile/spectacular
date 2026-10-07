@@ -1,6 +1,9 @@
 ---
 type: Atlas
 title: Decision-aware bounded execution
+version: "0.1"
+created: "2026-08-23T18:24:40+02:00"
+updated: "2026-08-23T23:50:47+02:00"
 ---
 
 # Atlas: Decision-aware bounded execution

@@ -1,6 +1,9 @@
 ---
 type: Atlas
 title: Operating levels and software factory architecture
+version: "0.1"
+created: "2026-08-31T17:59:30+02:00"
+updated: "2026-08-31T17:59:30+02:00"
 ---
 
 # Atlas: Operating Levels and Software Factory Architecture

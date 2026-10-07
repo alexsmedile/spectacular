@@ -61,6 +61,9 @@ stops:
   - completed-mission-repoint
   - behavioral-contract-amendment
   - downstream-plan-freeze
+version: "0.2"
+created: "2026-08-23T00:06:46+02:00"
+updated: "2026-10-07T18:09:01Z"
 ---
 
 # Mission: Reconcile P11 Governance and Contract Baselines
@@ -71,20 +74,20 @@ This is a governance-only baseline mission. It makes **zero Go code changes** an
 ## Key Deliverables & Actions
 
 ### 1. Contract Baseline Alignment
-- Version-bump [`CC-missioncli`](.spectacular/contracts/CC-missioncli-spectacular-mechanical-cli.md) (`contract_version: "2"` -> `"3"`).
+- Version-bump [`CC-missioncli`](../../contracts/CC-missioncli-spectacular-mechanical-cli.md) (`contract_version: "2"` -> `"3"`).
 - Update the `command_surface:` section to list all 14 registered commands.
 - Define the optional `sources:` frontmatter field for Missions and Objectives.
 
 ### 2. Decision Lineage Reconciliation
-- Verify that [`D21`](.spectacular/decisions/D21-context-sandwich-execution-gates.md) cleanly supersedes [`D17`](.spectacular/decisions/D17-objective-scoped-runs-and-concurrency.md).
-- Ensure the >=40% token reduction gate and M14 benchmark regression gates from [`D12`](.spectacular/decisions/D12-isolation-and-context-compilation.md) are explicitly preserved.
+- Verify that [`D21`](../../decisions/D21-context-sandwich-execution-gates.md) cleanly supersedes [`D17`](../../decisions/D17-objective-scoped-runs-and-concurrency.md).
+- Ensure the >=40% token reduction gate and M14 benchmark regression gates from [`D12`](../../decisions/D12-isolation-and-context-compilation.md) are explicitly preserved.
 
 ### 3. Freeze Specifications
 - **Tokenizer**: Freeze `spectacular-charter-tokenizer.v1` (`o200k_base` byte-exact UTF-8 counting).
 - **Run Lifecycle**: Freeze the 6 states (`active`, `paused`, `blocked`, `awaiting-review`, `completed`, `stopped`) and state transition rules.
 
 ### 4. Progressive Planning Codification
-- Update [`prepare.md`](skills/spectacular/references/prepare.md) with strict rules:
+- Update [`prepare.md`](../../../skills/spectacular/references/prepare.md) with strict rules:
   - Orchestrators plan only 1 block ahead in full detail.
   - Downstream campaign blocks remain fluid summaries.
   - Prohibit dense academic jargon and compound claims in mission plans.

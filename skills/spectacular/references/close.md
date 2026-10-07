@@ -10,7 +10,10 @@ spectacular review record <ref> review.md --json     # Record dedicated review (
 ```
 
 ## 3. Zero-Sprawl Verification Policy
-- **Routine Tasks**: Passing test suite (`exit 0`) + clean Git commit **is** the primary proof.
+- **Frozen claims**: Account for every `pass_boundary` and `proof_requirement`
+  against inspected, attributable evidence. Passing tests prove only what they
+  cover; a clean commit does not prove claim coverage. Unproved claims and
+  unresolved blockers prevent Mission completion.
 - **Separate Evidence (`evidence/`)**: Created only when third-party provider receipts or disputed behaviors must be preserved.
 - **Separate Review (`reviews/`)**: Required only for high-risk operations (`mode: control`, payments, auth, DB migrations).
 

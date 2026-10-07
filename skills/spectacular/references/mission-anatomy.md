@@ -8,46 +8,10 @@ session.
 
 ## Shape
 
-A real Mission file (`M7-render-derived-state.md`), trimmed to one of each thing:
-
-```yaml
----
-type: Mission
-id: 01a00af1-38c0-7268-9529-5856afc7b2f2   # UUIDv7, generated, never hand-written
-ref: M7                                     # human navigation; sub-records are M7/O1, M7/R1
-title: Render derived state and validate the Proposal record
-status: active
-activation:
-    at: "2026-08-16T14:19:42Z"
-    by: Alex
-    fingerprint: sha256:ef7e695f...        # over the frozen envelope only
-authority:
-    operator: [inspect, edit-in-scope, run-checks, bounded-repair, commit-local]
-    requires_owner: [activate-mission, change-outcome-or-completion, expand-scope, push]
-baseline:
-    branch: m7-derived-state
-    commit: 127dac140467a462c3810c85c9ca325c18278a14
-contract:
-    ref: Contract:01a00aae-8921-7b27-96a9-1a4c175e7dc6
-    fingerprint: sha256:1ffd39b4...
-completion:
-    - claim: drift-flags
-      pass_boundary: ...      # what must be observably true
-      proof_requirement: ...  # what would demonstrate it
-objectives:
-    - id: 01a00af1-38c0-72bf-a3b2-0c8f1595b50d
-      claims: [drift-flags]   # every Objective serves at least one claim
-      outcome: ...
-dependencies:
-    - M6 completed with independent review and owner acceptance.
-gaps: []
----
-
-# Origin, rationale, detailed plans, review instructions
-```
-
-Live examples are in `.spectacular/missions/*/*.md`. Read one before
-authoring a new Mission by hand.
+Retrieve a governed Mission input shape through `spectacular mission start
+--schema`, then round-trip it through the emitting validator. Inspect existing
+records as examples of accepted history, not as templates for fabricating an
+active Mission. Activation identity, bindings, and fingerprints belong to the CLI.
 
 ## Frontmatter
 
@@ -129,8 +93,11 @@ Start with one file: `<mission-dir>/<mission-ref>-<slug>.md` (e.g. `.spectacular
 - Add `runs/` (`<run-dir>/<run-ref>-<slug>.md`) when a Run has a distinct job, operator, baseline, or recovery
   boundary.
 
-When you split, keep the same UUID and ref, and leave one pointer where the inline
-detail was. The root Mission record stays the index. Do not add a Mission-local `index.md`.
+These decomposition choices apply to unactivated drafts. Existing governed
+Objectives and Runs cannot be moved or replaced with pointers by ordinary edits.
+Use only a supported governed transition and validate the result; where none
+exists, draft a restructuring under [bootstrap.md](bootstrap.md) with explicit
+owner authorization. The root Mission remains its own bundle entry point.
 
 ## Checkpoints
 
@@ -139,7 +106,7 @@ verification, or resume gate. A checkpoint itself does not grant authority or
 require human review. When it produces a decision, observation, verdict, or
 handoff, create the corresponding Decision, Evidence, Review/Assessment, or
 Handoff record and link it from the Run-body note. See
-[execute.md](execute.md) for the routing table and template.
+[close.md](close.md) for claim-to-evidence accounting.
 
 ## Campaign context
 
@@ -161,16 +128,20 @@ add a Campaign binding to Mission frontmatter.
 ### On-Demand Anchors (Earned only)
 Specialized anchors emerge only when domain or operational complexity exceeds inline thresholds:
 - `ROADMAP.md`: Macro-level product evolution and strategic multi-horizon themes. Decomposes into mid-term Campaigns as milestones enter active planning.
-- `VOCABULARY.md`: Canonical domain ontology and ubiquitous language (D25, D29). Its glossary index is alphabetical; for the detailed section skeleton, see the body shape in [genesis-examples.md](genesis-examples.md).
+- `VOCABULARY.md` (retain an existing `ONTOLOGY.md` without duplicate authority): Canonical domain ontology and ubiquitous language (D25, D29). Its glossary index is alphabetical; for the detailed section skeleton, see the body shape in [genesis-examples.md](genesis-examples.md).
   * *Threshold*: If <= 3-4 simple entities with no ambiguous terms or shared rules, keep them inline in `PROJECT.md`.
   * *Earned triggers*: (1) Synonym collision / naming ambiguity (e.g. `User` vs `Account`, `Job` vs `Task`); (2) Non-trivial state machine invariants (e.g. `DRAFT` -> `ACTIVE` -> `REVIEW`); (3) Relationships, permissions, or actions that span several concepts; (4) Bespoke non-standard concepts (e.g. `Anchor`, `Gap`, `Handoff`); (5) Multi-contract shared models.
   * *Ontology structure*: Must include an explicit **Permitted Actions & Banned Synonyms** table (`Canonical Action` vs `BANNED Synonyms`) and **Permitted Entity States** enumeration to eliminate LLM synonym drift and state-machine fragmentation across fresh context windows.
-  * *Writer Authority & Single-Writer Rule*: **Owner / Lead Orchestrator only.** Worker subagents are strictly read-only consumers and NEVER edit `VOCABULARY.md`.
-  * *When updated (3 Triggers)*: (1) **Genesis Kickoff** from PRD; (2) **Upfront in Planning** when a Mission declares `Ontology impact` (D27) *before* workers write code; (3) **Domain Refactoring** where `VOCABULARY.md` is updated first, then code is renamed to match.
+  * *Writer Authority & Single-Writer Rule*: **Owner / Lead Orchestrator only.** Worker subagents are strictly read-only consumers and NEVER edit the domain Anchor.
+  * *When updated (3 Triggers)*: (1) **Genesis Kickoff** from PRD; (2) **Upfront in Planning** when a Mission declares `Ontology impact` (D27) *before* workers write code; (3) **Domain Refactoring** where the domain Anchor is updated first, then code is renamed to match.
   * *Visual companion*: `atlas/domain-overview.md` is a non-governing projection. Relationships are labelled edges; use `1`, `0..1`, `1..*`, and `0..*` only when cardinality matters.
 - `SECURITY.md`: Project-specific isolation, multi-tenancy, secrets, or compliance rules (only if non-standard).
 - `GUARDRAILS.md`: Custom AI operational rules (only upon explicit owner request; defaults suffice).
 - `PRODUCT.md`: Dedicated commercial/marketing models (only if distinct from repository engineering).
 
 ### Modular Capability Contracts
-Capability Contracts are small, component-level specifications (`CC-<module>.md`). A Mission can bind to a primary contract or coordinate across multiple modular contracts, editing them as ordinary Mission work when observable capabilities change.
+Capability Contracts are small, component-level specifications (`CC-<module>.md`).
+A Mission can bind to a primary Contract or coordinate across modular Contracts.
+Amend bound Contract gaps/editorial fields through `contract amend`; changing
+agreed capabilities requires a `contract_version` bump through the supported
+governed workflow. Never edit a bound agreement by hand as ordinary Mission work.

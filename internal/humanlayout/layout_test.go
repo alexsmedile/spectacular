@@ -1,6 +1,7 @@
 package humanlayout
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -51,14 +52,23 @@ func TestPlanBuildsReadableScopedMissionBundle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	root := string(indexes[".spectacular/index.md"])
-	if !strings.Contains(root, "non-authoritative") || !strings.Contains(root, "`M1`") || strings.Contains(root, "`M1/R1/C1`") {
-		t.Fatalf("guide is not compact or lacks the active Mission:\n%s", root)
+	var catalog struct {
+		Type    string     `json:"type"`
+		Scope   string     `json:"scope"`
+		Entries []indexRow `json:"entries"`
 	}
-	catalog := string(indexes[".spectacular/.cache/catalog.json"])
-	if !strings.Contains(catalog, "M1/R1/C1") {
-		t.Fatalf("catalog lacks the complete scoped inventory:\n%s", catalog)
+	if err := json.Unmarshal(indexes[".spectacular/index.json"], &catalog); err != nil {
+		t.Fatal(err)
 	}
+	if catalog.Type != "Index" || catalog.Scope != "governed-records" || len(catalog.Entries) != len(docs) {
+		t.Fatalf("generated inventory claims the wrong scope: %#v", catalog)
+	}
+	for path := range indexes {
+		if strings.HasSuffix(strings.ToLower(path), "index.md") {
+			t.Fatalf("generated output can overwrite manual navigation: %s", path)
+		}
+	}
+
 }
 
 func TestIndexesClearAnEmptiedActiveCollection(t *testing.T) {
@@ -75,11 +85,11 @@ func TestIndexesClearAnEmptiedActiveCollection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	active := string(indexes[".spectacular/missions/index.md"])
-	if !strings.Contains(active, "non-authoritative") || strings.Contains(active, "`M1`") {
+	active := string(indexes[".spectacular/missions/index.json"])
+	if !strings.Contains(active, `"entries": []`) || strings.Contains(active, `"ref": "M1"`) {
 		t.Fatalf("active Mission index was not cleared:\n%s", active)
 	}
-	if archivedIndex := string(indexes[".spectacular/archive/index.md"]); !strings.Contains(archivedIndex, "`M1`") {
+	if archivedIndex := string(indexes[".spectacular/archive/index.json"]); !strings.Contains(archivedIndex, `"ref": "M1"`) {
 		t.Fatalf("archive collection index omits moved Mission:\n%s", archivedIndex)
 	}
 	if _, exists := indexes[".spectacular/archive/missions/M1-archived-mission/index.md"]; exists {

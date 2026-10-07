@@ -33,6 +33,9 @@ repair_budget: 2
 dependencies: [M18 completed with Objective-scoped Run lifecycle]
 gaps: []
 stops: [overlapping-write-reservations, blocked-upstream-dependency, git-mutation-by-spectacular, path-escape, data-loss]
+version: "0.1"
+created: "2026-08-23T00:06:46+02:00"
+updated: "2026-08-23T01:47:16+02:00"
 ---
 
 # Mission: Enforce Disjoint Write Reservations and Handoff Validation

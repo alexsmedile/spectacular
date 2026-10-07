@@ -1,7 +1,7 @@
 {
   "name": "spectacular",
-  "version": "2.18.0",
-  "description": "Guide governed Spectacular Missions from orientation through verified closure.",
+  "version": "3.0.0-rc",
+  "description": "Keep small linked durable context, with optional governed Missions and validated Contracts.",
   "author": {
     "name": "Alessandro Smedile"
   },

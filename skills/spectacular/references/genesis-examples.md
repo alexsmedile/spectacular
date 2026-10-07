@@ -9,76 +9,19 @@ Concrete, production-grade examples for launching projects with zero file bloat.
 ## 1. Core Triad Examples
 
 ### `.spectacular/PROJECT.md` (What & Why)
-```yaml
----
-type: Anchor
-id: 019fe381-5d61-7223-b362-03a5f99a7b13
-human_ref: PROJECT
-title: Background Job Platform
-updated: "2026-08-17T00:00:00Z"
-direction: Fast, reliable background task processing with exponential backoff and worker pools.
-boundaries:
-  - Core platform handles job scheduling, persistence, and worker execution.
-  - Out of scope: UI dashboard (deferred to M4), third-party notification integrations.
-constraints:
-  - All operations must be crash-resilient and deterministic.
-  - Pure open-source dependencies without proprietary SDKs.
-current_truth:
-  - Anchor:019fe381-5d61-7223-b362-03a5f99a7b15 # ARCHITECTURE
-  - Anchor:019fe381-5d61-7223-b362-03a5f99a7b16 # STACK
-freshness_checked_at: "2026-08-17T00:00:00Z"
-freshness_valid_until: "2027-08-17T00:00:00Z"
----
-
-# Background Job Platform
-
-Core orchestrator for high-throughput background processing.
-```
+For a new soft Anchor, use the metadata and folder agreement in
+[knowledge.md](knowledge.md). No governed emitting command is required. Preserve
+existing governed Anchor identities; use init only when choosing a governed workspace.
 
 ### `.spectacular/STACK.md` (What with)
-```yaml
----
-type: Anchor
-id: 019fe381-5d61-7223-b362-03a5f99a7b16
-human_ref: STACK
-title: Technology Stack
-direction: Native Go toolchain with SQLite/Postgres persistence and zero external runtime dependencies.
-boundaries:
-  - Language: Go 1.24+
-  - Database: SQLite (via modernc.org/sqlite for test/local dev), PostgreSQL ready.
-  - HTTP Router: Chi.
-  - Logging: standard library `log/slog`.
-constraints:
-  - Baseline verification command: `make check` (must run linter, race detector, and unit tests).
----
-
-# Stack
-
-Standardized tooling and runtime dependencies.
-```
+For a new soft Anchor, use the metadata and folder agreement in
+[knowledge.md](knowledge.md). No governed emitting command is required. Preserve
+existing governed Anchor identities; use init only when choosing a governed workspace.
 
 ### `.spectacular/ARCHITECTURE.md` (How)
-```yaml
----
-type: Anchor
-id: 019fe381-5d61-7223-b362-03a5f99a7b15
-human_ref: ARCHITECTURE
-title: System Architecture & Boundaries
-direction: Hexagonal layout isolating pure domain logic from database and network protocols.
-boundaries:
-  - `cmd/server`: Application entry point and dependency injection wiring.
-  - `internal/domain`: Pure domain entities and job execution state machine (ZERO external imports).
-  - `internal/store`: Database schema, migrations, and SQL repository adapter.
-  - `internal/api`: HTTP router, request validation, and JSON handlers.
-constraints:
-  - `domain` must never import `store` or `api`.
-  - Database interactions must pass through explicit domain repository interfaces.
----
-
-# Architecture
-
-Component layout and dependency directions for DB, Server, and API layers.
-```
+For a new soft Anchor, use the metadata and folder agreement in
+[knowledge.md](knowledge.md). No governed emitting command is required. Preserve
+existing governed Anchor identities; use init only when choosing a governed workspace.
 
 ---
 
@@ -86,9 +29,10 @@ Component layout and dependency directions for DB, Server, and API layers.
 
 ### `.spectacular/VOCABULARY.md` (Domain Ontology and Ubiquitous Language)
 
-This is a body shape, not a frontmatter template. Follow the existing project
-Anchor envelope for an earned `VOCABULARY.md`; no command currently emits or
-validates an Anchor template.
+This is a body shape, not a frontmatter template. Preserve existing
+Anchor metadata for governed history. For a new soft `VOCABULARY.md`,
+follow the metadata agreement in [knowledge.md](knowledge.md); retain an existing
+`ONTOLOGY.md` rather than creating a duplicate authority.
 
 ```md
 
@@ -133,10 +77,6 @@ Use an Atlas when several user journeys or system boundaries need a shared map.
 It explains a value slice; it does not authorize work.
 
 ````md
----
-type: Atlas
-title: Job recovery
----
 
 # Atlas: Job recovery
 
@@ -162,46 +102,9 @@ flowchart LR
 
 ## 4. Kickoff Mission: `M1-bootstrap/M1-bootstrap.md`
 
-```yaml
----
-type: Mission
-ref: M1
-title: Bootstrap Core Platform & Ingestion Engine
-status: active
-owner: Alex
-authority:
-  operator: [inspect, edit-in-scope, run-checks, bounded-repair, commit-local]
-  requires_owner: [push, deploy, change-outcome-or-completion]
-baseline:
-  branch: m1-bootstrap
-completion:
-  - claim: project-harness
-    pass_boundary: Linter, formatter, and race-detector test runner execute deterministically with a single command.
-    proof_requirement: Running `make check` executes `golangci-lint` and `go test -race ./...` exiting with code 0.
-
-  - claim: core-job-domain
-    pass_boundary: Job domain entity encapsulates payload validation, state transitions, and retry interval calculation.
-    proof_requirement: Table-driven unit tests in `internal/domain` verify state machine transitions and backoff calculations.
-
-  - claim: persistence-and-api
-    pass_boundary: POST /v1/jobs persists a pending Job and returns 202 Accepted with job UUID; GET /healthz returns 200 OK.
-    proof_requirement: End-to-end integration tests spin up an in-memory SQLite store and HTTP server asserting response codes and DB records.
-
-dependencies: []
-gaps: []
----
-
-# Bootstrap Execution Plan
-
-Establish the modular foundation with strict test harnesses and zero technical debt.
-
-## Execution Steps
-1. Initialize Go module, Makefile, and CI verification scripts.
-2. Implement `internal/domain/job.go` with domain validation and state transitions.
-3. Implement `internal/store/sqlite` with schema migrations and repository interface.
-4. Implement `internal/api` HTTP routes and payload decoding.
-5. Run full verification ladder via `make check`.
-```
+Retrieve frontmatter from the relevant governed command’s `--schema` output
+and round-trip it through its validator. Use prose here to describe intent;
+never fabricate an active record or its command-owned bindings.
 
 ---
 

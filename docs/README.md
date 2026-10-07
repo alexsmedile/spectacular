@@ -1,44 +1,20 @@
 # Spectacular documentation
 
-Product documentation for people using Spectacular. For contributor rules see
-[`AGENTS.md`](../AGENTS.md); for the agent-facing runtime guidance see
-[`skills/spectacular/SKILL.md`](../skills/spectacular/SKILL.md).
+Spectacular keeps durable project context in small linked Markdown files.
+Ordinary work starts from the context you have. Governed execution is an explicit
+choice; Contracts keep mechanical validation.
 
-## Start here
+- [Quickstart](quickstart.md) — start from an anchor, raw draft, or plan.
+- [Installation](installation.md) — install the Skill and optional governance CLI.
+- [Architecture](architecture.md) — context objects, relationships, and product boundaries.
+- [Process](process.md) — evolve knowledge and choose governed execution.
+- [Workspace layout](human-workspace-contract.md) — folder roles, metadata, and navigation.
+- [GitHub integration](github-integration.md) — connect project work to GitHub.
+- [Testing](testing.md) — verification tiers and release proof.
+- [Release recovery](recovery.md) — historical cutover and recovery points.
+- [Mechanical interface](../skills/spectacular/generated/mechanical-interface.md) — generated command and schema reference.
 
-- **[Installation](installation.md)** — install and update the Skill and the CLI,
-  which ship as two separate halves.
-- **[Quickstart](quickstart.md)** — install the CLI and run one Mission end to
-  end, from idea to owner completion.
-
-## Concepts
-
-- **[Architecture](architecture.md)** — where Spectacular keeps its files,
-  what the CLI does, and how to adopt surfaces modularly (Decisions, Projections, Interview Mode).
-- **[Process](process.md)** — how a piece of work moves from idea to completion,
-  including standalone interview and unbundled workflows.
-- **[GitHub Integration](github-integration.md)** — how Spectacular leverages native
-  GitHub features (Issues, Pull Requests, Projects, Discussions, Actions, and `gh` CLI).
-
-## Reference
-
-- **[Human workspace contract](human-workspace-contract.md)** — the normative
-  rules for what a canonical workspace must look like on disk.
-- **[Testing](testing.md)** — the verification tiers and what each one proves.
-- **[Release recovery](recovery.md)** — the v2 cutover baseline and v1 recovery point.
-- **[Mechanical interface](../skills/spectacular/generated/mechanical-interface.md)**
-  — the generated command catalog. Generated from the command registry, so it
-  cannot drift from the binary. When a document and this catalog disagree, the
-  catalog wins.
-
-## Diagrams
-
-- [Mission lifecycle](diagrams/lifecycle.svg)
-- [Architecture](diagrams/architecture.svg)
-- [Division of labor](diagrams/division-of-labor.svg)
-
----
-
-These pages explain the product to human readers. They carry no runtime execution
-authority for autonomous agents. The generated command reference and your
-`.spectacular/` workspace records define exact machine behavior and truth.
+These pages are human-facing product documentation. Contributor instructions
+live in [AGENTS.md](../AGENTS.md); agent runtime guidance lives in the
+[Skill](../skills/spectacular/SKILL.md). Exact governed behavior comes from the
+generated interface and enforced records.

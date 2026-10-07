@@ -2,20 +2,42 @@
 
 ## [Unreleased]
 
+## 3.0.0-rc — 2026-10-07
+
 ### Changed
 
-- Added resource discipline to the Spectacular skill: bounded objectives and worker charters, task-sized model choice, compact context and handoffs, measured usage claims, and decisive verification after coherent patches. Clarified its invocation boundary and required Objective argument for `spectacular charter`.
+- Durable context is the default: work directly from anchors, raw drafts, Atlas,
+  Decisions, and plans. Missions require explicit selection; Contracts retain
+  mechanical validation, amendments, and versioning.
+- Prefer small linked files, split by domain, module, independent lifetime,
+  working phase, or delivered tranche. Raw is unconstrained; maintained context
+  uses foundational type, document version, and creation/update metadata.
+- Generated navigation uses `index.json` for governed records and preserves
+  authored `INDEX.md`. Root `docs/` remains independently managed product docs.
+- Keep the 26-command catalog and v2 Go module/mechanical schema identities.
+- Add resource discipline: bounded objectives, compact context and handoffs,
+  task-sized model selection, measured usage claims, and focused verification.
 
-### Documentation
+### Added
 
-- **Delineated `docs/` from `.spectacular/` surface boundary**:
-  - Explicitly defined the boundary between human-facing product documentation (`docs/`) and machine-checked runtime governance (`.spectacular/`) across `docs/architecture.md`, `docs/human-workspace-contract.md`, and `docs/README.md`.
-  - Clarified that `docs/` carries zero agent execution authority and is never loaded as runtime context for autonomous workers.
-  - Documented where specifications belong (Project Anchors, living Contracts, exploratory Proposals, and frozen Missions) and identified anti-patterns (treating `.spectacular/` as a loose wiki or attempting to steer agents through `docs/`).
+- Folder metadata agreements and optional Python metadata/file-link diagnostics.
+- Discovery and navigation tests covering soft context alongside governed records.
 
 ### Fixed
 
-- Treat an absent rebuildable cache as absent, not as drift in test verification (`9d5f48a`).
+- Soft Markdown no longer makes unrelated governed commands refuse; malformed
+  governed identities and schema claims remain errors.
+- Fallback inspection reports its limits honestly; CLI absence does not restrict
+  ordinary implementation to drafting.
+- Remove duplicate static and acceptance runs; keep complete race, cross-platform,
+  reproducibility, checksum, installation, rollback, and recovery checks.
+- Align plugin and marketplace versions, and clean temporary test/build trees.
+- Treat absent rebuildable caches as absent rather than drift (`9d5f48a`).
+
+### Documentation
+
+- Rewrite the workflow and folder guidance around durable context and optional
+  governance, with explicit documentation, plan, and raw boundaries.
 
 ## 2.18.0 — 2026-09-09
 

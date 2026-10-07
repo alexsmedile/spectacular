@@ -1,6 +1,40 @@
 # Contributor guide
 
-This is Spectacular v2. The root Go module, `cmd/spectacular`, `skills/`,
+## Default workspace workflow
+
+Spectacular maintains durable context as small linked OKF objects. Ordinary work uses anchors for current project
+truth, `raw/` for captures and quick-start drafts, `atlas/` for maps and lasting
+explanations, `decisions/` for choices, and `plans/` for outcomes and approaches.
+Agents judge placement, update an existing document before creating another, and
+split content when it has independent meaning or lifetime. Aim for 50–120 lines
+per soft document as guidance, not a mechanical limit. Follow relative Markdown
+links or path-qualified wikilinks; repair incoming links on moves.
+
+`type:` is foundational. Maintained soft documents use basic document version,
+creation time, and update time; recover historical dates honestly and preserve
+unknown metadata. No extra record identity or lifecycle is required. The runtime
+details live in `skills/spectacular/references/knowledge.md`.
+Folder-specific agreements live in `skills/spectacular/knowledge-folders.yaml`.
+Outside raw/sketch/scratchpad, maintained documents require metadata appropriate
+to those agreements. Raw has no metadata, naming, or promotion obligations.
+Prefer ONTOLOGY.md for new domain-model anchors; retain existing VOCABULARY.md
+until its links and historical bindings can be handled safely. Manual INDEX.md
+and generated index.json are both valid; do not overwrite manual navigation
+with generated output. Plans go in `.spectacular/plans/`, sketches in the existing
+scratchpad-role folder, never in product `docs/`.
+
+The directory does not activate governance. The user must explicitly select
+governed work or a named Mission. CLI absence and unrelated Mission drift do not
+block ordinary implementation. Existing governed records retain their mutation,
+freeze, and archival rules. Soft Decisions use descriptive unnumbered filenames
+without governed identity or schema claims; historical numbered Decisions remain
+governed. Mechanical validation is recommended for Decisions, not obligatory.
+Contracts retain their mechanical validation, amendment, and version pipeline.
+This operative policy replaces D23/D24's restriction on consulting raw
+material and requiring all Decisions to be governed, while retaining D24's
+schema-honesty rule. Historical Decisions remain unchanged.
+
+This is Spectacular v3; the Go module and mechanical record schemas retain v2 identities. The root Go module, `cmd/spectacular`, `skills/`,
 `install/`, and `.spectacular/` are the only live product surface.
 
 `CLAUDE.md` is a compatibility symlink to this file. `AGENTS.md` is
@@ -9,7 +43,7 @@ authoritative; edit it rather than the symlink.
 Run `bash test/verify.sh all` before release changes or Mission completion.
 Use tiered verification during development:
 - `bash test/verify.sh preflight`: Tier 0 static syntax/tree sanity + Tier 1 contract
-  drift on the live Mission. Read-only, sub-second, emits a
+  drift on the live Mission. Read-only, emits a measured
   `spectacular.preflight-receipt.v1` JSON receipt on stdout. Run it before any heavy
   tier; if it fails, repair and do not run `acceptance`, `release`, or `all`.
   `PREFLIGHT_MISSION_REF=<ref>` pins the Mission checked;
@@ -45,9 +79,10 @@ template is retrieved from `--schema` and is round tripped through the validator
 that emitted it. A template that names a field the parser does not read produces a
 document that validates while its meaning silently disappears.
 
-`.spectacular/raw/` is gitignored and skip-listed. Nothing there is an entity and
-nothing cites it. Never write a governed record, Proposal, or Decision into `raw/`:
-it would never appear in review and never be committed.
+`.spectacular/raw/` is gitignored and outside the governed graph. Agents may read
+and link provisional drafts there to start work. That permission does not publish
+them or make them accepted truth. Governed proof preserves any material it relies
+on. Never place a governed record in `raw/`: it would escape governed review.
 
 A Contract is amended through `contract amend`, never by editing a bound Contract by
 hand. An amendment may reach the `gaps:` block and editorial frontmatter only;
@@ -95,12 +130,13 @@ Keep it distinct from the other surfaces:
 | `docs/` | humans reading the product docs | concepts, guides, reference, diagrams |
 | `AGENTS.md` | coding agents | contributor rules and constraints for this repo |
 | `skills/` | agents at runtime | executable guidance the CLI and Skill load |
-| `.spectacular/` | governance | Missions, Proposals, Decisions, Evidence |
+| `.spectacular/` | durable context and optional governed execution | anchors, entities, maps, plans, Decisions, Contracts, Missions, proof |
 
 Rules:
 
 - `docs/` is documentation only. It is never loaded as agent context and must
   not become a second home for Skill guidance or governance records.
+- Its structure is owned by documentation tools such as pageworks, not Spectacular.
 - Governance records stay in `.spectacular/`. Do not narrate Mission state in
   `docs/`; link to the record instead.
 - Nothing in `docs/` is authoritative for behavior. When docs and the generated

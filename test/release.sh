@@ -12,8 +12,14 @@ clean_first="$test_root/clean-v2-first"
 clean_second="$test_root/clean-v2-second"
 
 mkdir -p "$go_cache"
-cp -R "$v2_root" "$clean_first"
-cp -R "$v2_root" "$clean_second"
+trap 'rm -rf "$test_root"' EXIT
+# Independent source trees, without Git history or provisional local drafts.
+for snapshot in "$clean_first" "$clean_second"; do
+  mkdir -p "$snapshot"
+  for source in go.mod go.sum VERSION cmd internal skills install testdata plugin.json .claude-plugin .codex-plugin; do
+    cp -R "$v2_root/$source" "$snapshot/$source"
+  done
+done
 (cd "$clean_first" && GOPROXY=off GOCACHE="$go_cache" GOFLAGS=-mod=readonly go run ./cmd/assemble-release --output "$first" --commit "$commit")
 (cd "$clean_second" && GOPROXY=off GOCACHE="$go_cache" GOFLAGS=-mod=readonly go run ./cmd/assemble-release --output "$second" --commit "$commit")
 release_root="$clean_first"

@@ -44,9 +44,9 @@ _snapshots/
 # not published alongside the record.
 FEEDBACKS.md
 
-# Unstructured thinking: the sketchpad stage before an idea earns an Atlas
-# snippet. No schema, no naming rules, no entity — and skip-listed in discovery
-# so a stray note can never refuse a command. Nothing in the repository cites it.
+# Local captures and quick-start drafts. Agents may consult and link these as
+# provisional context; tracking/publication requires a separate retention choice.
+# Skip-listed in governed discovery so ordinary drafts cannot refuse a command.
 .spectacular/raw/
 
 # Local-only: backups, snapshots, scratch — never committed
@@ -55,3 +55,7 @@ _local/
 # OPF local companions (shared content is committed; personal notes stay local)
 *.local.*
 .octopus.local/
+
+# Python helper bytecode is rebuildable runtime state.
+__pycache__/
+*.pyc

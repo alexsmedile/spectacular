@@ -134,7 +134,7 @@ When acting on an authorization, record who authorized and who performed. An ope
 
 ## 4. Settle Execution Mode at Activation
 
-When approaching the activation gate, route to [execute.md](execute.md) for the execution-mode table, checkpoint rules, and Run-body template. Settle owner involvement in the same activation exchange; do not ask piecemeal later.
+When approaching the activation gate, route to [execute.md](execute.md) for the applicable governed execution boundaries. Settle owner involvement in the same activation exchange; do not ask piecemeal later.
 
 ---
 

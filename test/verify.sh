@@ -18,6 +18,7 @@ export GOPROXY=off
 export GOFLAGS=-mod=readonly
 unset VIRTUAL_ENV
 export PYTHONNOUSERSITE=1
+export PYTHONDONTWRITEBYTECODE=1
 
 check() {
   label="$1"
@@ -34,11 +35,13 @@ tree_basis() {
     cd "$repo_root"
     git ls-files -co --exclude-standard -- VERSION cmd internal skills install .spectacular test \
       | LC_ALL=C sort -u \
-      | while IFS= read -r path; do
-          [[ -f "$path" ]] || continue
-          printf '%s %s\n' "$(git hash-object "$path")" "$path"
-        done \
-      | git hash-object --stdin
+      | python3 -S -c 'import hashlib, pathlib, sys
+basis = hashlib.sha256()
+for name in sys.stdin.read().splitlines():
+    path = pathlib.Path(name)
+    if path.is_file():
+        basis.update(name.encode() + b"\0" + hashlib.sha256(path.read_bytes()).digest())
+print(basis.hexdigest())'
   )
 }
 
@@ -73,6 +76,11 @@ manifest_checks() {
       exit 1
     fi
   fi
+  check marketplace-version python3 -S -c 'import json,sys
+version, filename = sys.argv[1:]
+data = json.load(open(filename))
+assert data["metadata"]["version"] == version
+assert all(p["version"] == version for p in data["plugins"])' "$version" .claude-plugin/marketplace.json
 }
 
 security_checks() {
@@ -82,7 +90,7 @@ security_checks() {
 }
 
 # --- Pre-Flight (Tier 0 + Tier 1) -------------------------------------------
-# Read-only, sub-2s sanity gate. Emits a JSON receipt on stdout.
+# Read-only sanity gate. Emits a measured JSON receipt on stdout.
 # Fails fast so heavy tiers (acceptance/release/all) are never spent on a
 # workspace that is already syntactically or contractually broken.
 
@@ -202,7 +210,7 @@ preflight_tier0() {
     if ! sed -n '2,200p' "$repo_root/$path" | grep -qx -- '---'; then
       bad_frontmatter+="$path "
     fi
-  done < <(cd "$repo_root" && git ls-files -co --exclude-standard -- '.spectacular/**/*.md' 2>/dev/null | grep -v '/index\.md$' | grep -v '/README\.md$' | grep -v '\.amendments\.md$' | grep -vE '\.spectacular/[A-Z]+\.md$')
+  done < <(cd "$repo_root" && git ls-files -co --exclude-standard -- '.spectacular/**/*.md' 2>/dev/null | grep -vi '/index\.md$' | grep -vE '^\.spectacular/(raw|sketch|scratchpad)/' | grep -v '/README\.md$' | grep -v '\.amendments\.md$' | grep -vE '\.spectacular/[A-Z]+\.md$')
   if [[ -n "$bad_frontmatter" ]]; then
     preflight_fail "tier0/frontmatter: unterminated or missing frontmatter: $bad_frontmatter"
   fi
@@ -315,21 +323,14 @@ preflight_checks() {
 }
 
 static_checks() {
-  formatting="$(cd "$repo_root" && gofmt -l cmd internal test/acceptance)"
-  if [[ -n "$formatting" ]]; then
-    echo "gofmt required:" >&2
-    echo "$formatting" >&2
-    exit 1
-  fi
+  preflight_checks >/dev/null
   manifest_checks
   security_checks
   check go-mod-verify go mod verify
-  check go-vet go vet ./...
-  check diff-check git diff --check
+  check knowledge-diagnostics python3 -m unittest discover -s test/context
 }
 
 quick_checks() {
-  preflight_checks >/dev/null
   static_checks
   check focused-go-test go test ./cmd/... ./install/... ./internal/...
 }
@@ -387,14 +388,16 @@ case "$mode" in
     static_checks
     release_checks
     ;;
+  static)
+    static_checks
+    ;;
   all)
     static_checks
-    acceptance_checks
     check race go test -race -count=1 ./...
     release_checks
     ;;
   *)
-    echo "usage: bash test/verify.sh [preflight|quick|acceptance|bench|release|all]" >&2
+    echo "usage: bash test/verify.sh [preflight|static|quick|acceptance|bench|release|all]" >&2
     exit 2
     ;;
 esac

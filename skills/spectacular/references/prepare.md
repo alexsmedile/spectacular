@@ -5,29 +5,17 @@ Use this when: an orchestrator is preparing Greenfield Genesis, a Campaign roadm
 ## 2. CLI Palette & Minimal Drafting
 ```bash
 spectacular init [--name <project>]                               # Initialize workspace
-spectacular decide --title "<Title>" --disposition "<Choice>" --rationale "<Why>" --json  # Direct Decision
+spectacular decide --title "<Title>" --disposition accepted --rationale "<Choice and why>" --json  # Governed Decision
 spectacular mission start plan.md --json                          # Activate from minimal plan
 spectacular mission check <ref> --json                            # Validate generated mission
 ```
 
 ## 3. Minimal Draft Grammar (Zero YAML Boilerplate)
-Never hand-write timestamps, UUIDs, or hash fingerprints. Write minimal drafts; the CLI auto-populates metadata:
-
-```yaml
-# Minimal Mission Plan (plan.md)
-ref: M1
-slug: storage-engine
-outcome: Implement in-memory priority queue with DLQ routing.
-contract: CC-queue
-completion:
-  - claim: priority-scheduling
-    pass_boundary: High priority jobs run before normal/low.
-    proof_requirement: sh tests/check.sh exits 0.
-objectives:
-  - ref: O1
-    outcome: Build queue worker pool and dlq routing.
-    claims: [priority-scheduling]
-```
+For governed drafts, retrieve the current input shape from
+`spectacular mission start --schema` or the relevant command's `--schema` output.
+Use only fields that the emitting interface reads; round-trip through its
+validator before claiming validity. Ordinary context dates and versions follow
+[knowledge.md](knowledge.md). Never invent governed UUIDs or fingerprints.
 
 ## 4. Planning Hierarchy: Block (`B<N>`) vs. Mission (`M<N>`)
 - **Block (`B<N>`)**: A thematic thinking domain / planning cluster on a Campaign flight plan (e.g. `B11: Orchestrator Layer`). **Non-governing**: Open-ended circle grouping ideas and trade-offs. Holds no execution authority.

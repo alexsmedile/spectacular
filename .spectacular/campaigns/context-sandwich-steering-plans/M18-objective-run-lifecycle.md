@@ -56,6 +56,9 @@ stops:
   - implicit-error-recovery
   - command-count-other-than-17
   - transition-atomicity-failure
+version: "0.2"
+created: "2026-08-23T00:06:46+02:00"
+updated: "2026-10-07T18:09:01Z"
 ---
 
 # Mission: Introduce the Objective-scoped Run Lifecycle
@@ -86,7 +89,7 @@ Enables resilient multi-attempt execution directly at the Objective level. If a 
 - Update `spectacular run start` argument shape to `<mission-ref>/<objective-ref> [--title <title>]`.
 
 ### 4. Surface & Contract Reconcile
-- Bump [`CC-missioncli`](.spectacular/contracts/CC-missioncli-spectacular-mechanical-cli.md) from `v4` to `v5` with 17 commands.
+- Bump [`CC-missioncli`](../../contracts/CC-missioncli-spectacular-mechanical-cli.md) from `v4` to `v5` with 17 commands.
 - Run `go run ./cmd/generate-interface` to update `generated/mechanical-interface.json` and `catalog.md`.
 - Run full verification test suite.
 

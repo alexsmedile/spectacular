@@ -1,169 +1,72 @@
-# Human Workspace Contract
+# Workspace layout
 
-Spectacular's canonical Markdown workspace MUST be understandable from the
-filesystem before any projection or JSON is generated. UUIDv7 remains the
-durable identity and SHA-256 remains the exact-revision fingerprint; neither
-is the primary navigation label.
-
-## Workspace layout
-
-The project root is intentionally small:
+Create folders when content needs them. Spectacular keeps small typed Markdown
+objects in containers; the minimal workspace can be a single project anchor.
 
 ```text
 .spectacular/
 ├── PROJECT.md
-├── PRODUCT.md
-├── ARCHITECTURE.md
-├── STACK.md
-├── VOCABULARY.md
-├── GUARDRAILS.md
-├── atlas/
-├── campaigns/
-├── index.md
-├── workspace.yaml
-├── contracts/
-├── proposals/
-├── missions/
-├── reviews/
-├── retrospectives/
-├── evidence/
-├── decisions/
-├── gaps/
-├── archive/
-└── .engine/
+├── VOCABULARY.md            # optional domain vocabulary and relationships
+├── INDEX.md                 # optional manual navigation
+├── index.json               # generated governed-record navigation, when used
+├── raw/                     # unconstrained captures and sketches
+├── atlas/                   # lasting entities, concepts, maps, explanations
+├── decisions/               # choices and rationale
+├── plans/                   # intended work, progress, results
+├── contracts/               # validated agreements
+├── proposals/               # optional governed open questions
+├── missions/                # explicitly selected governed work
+├── evidence/                # governed proof
+└── archive/                 # governed retirement under existing rules
 ```
 
-### Separation of governance (.spectacular/) from documentation (docs/)
+This is an example, not a required scaffold. Governed workflows may also use
+Gaps, handoffs, assessments, and reviews. The current initializer still creates
+the broader governed layout. Raw aliases `sketch/` and `scratchpad/` have the same
+freeform role; retain the existing one rather than adding all three.
 
-The `.spectacular/` tree contains only files that are part of Spectacular's
-governance and living truth model. Public-facing product documentation belongs
-in `docs/` at the repository root. `docs/` is written for humans reading about
-the product; it carries no mechanical schema enforcement and zero agent execution authority.
-Never place governed records, proposals, or missions inside `docs/`, and never
-treat `docs/` as runtime authority for an agent.
+## Metadata and folder agreements
 
-## Project anchors
+Outside raw, maintained soft documents declare foundational `type`, document
+`version`, immutable `created`, and meaningful-edit `updated`. Dates use ISO
+timestamps with timezone; recover historical dates from reliable history and
+leave unknown values unresolved rather than fabricating them. Preserve unknown
+metadata. Types are extensible through the folder agreement.
 
-`PROJECT.md` is the project Anchor. `PRODUCT.md`, `ARCHITECTURE.md`, and
-`STACK.md` are authoritative project Anchors for their named questions.
-`VOCABULARY.md` is an earned Anchor: the canonical domain ontology and
-ubiquitous language when concepts, state, relationships, or rules no longer fit
-clearly in `PROJECT.md`. Its glossary is alphabetical; its detailed model is
-grouped by bounded context. A linked domain Atlas is a readable projection, not
-a second authority.
-`GUARDRAILS.md` is owner-authored guidance selected by the runtime. `index.md`
-is a deterministic, committed, non-authoritative routing guide. The complete
-navigational inventory is cached at `.cache/catalog.json`.
+The [folder agreement](../skills/spectacular/knowledge-folders.yaml) defines the
+current types and metadata for anchors, Atlas, plans, Decisions, campaigns, and
+retrospectives. `schema` means an enforced governed frontmatter claim; it is not
+needed for soft context. Existing governed records retain their own metadata,
+identity, and mutation rules. Raw has no metadata or naming obligations.
 
-`campaigns/` holds optional, durable Markdown roadmap maps. Campaigns are
-planning documents, not governed records: the CLI excludes them from the typed
-record graph, and they grant no execution authority.
+## Navigation and manageable files
 
-`atlas/` holds optional, mutable Markdown maps for coherent product-value
-slices. An Atlas links user journeys and outcomes to capabilities and technical
-boundaries. It explains why a Campaign block exists; it does not sequence work,
-grant authority, or bind a Mission.
+Use one coherent question, object, or outcome per file. Prefer roughly 50–120
+lines, splitting by independent meaning, lifetime, domain, module, phase, or
+tranche when useful. Reuse links instead of copied context. Avoid mandatory
+indexes, logs, and empty folders.
 
-`reviews/` holds standalone code reviews and architectural audits that are
-not bounded to a single Mission, alongside mission-scoped review records.
+Relative Markdown links resolve from the source file. Path-qualified wikilinks
+resolve from `.spectacular/`; use bare filenames only when unambiguous. Aliases
+and section links help readers. Agents repair incoming links on moves.
+`VOCABULARY.md` is preferred for new domain anchors; retain an existing
+`ONTOLOGY.md` when it owns that meaning instead of duplicating authority.
 
-`retrospectives/` holds freeform milestone post-mortems, reflections, and
-lessons learned. Like Proposals and Atlases, they are evaluative planning
-documents that do not assert rigid execution constraints.
+Manual `INDEX.md` and generated `index.json` can coexist. Generated indexes cover
+governed records only and never overwrite authored Markdown. Legacy navigation
+files remain readable; there is no automatic migration.
 
-`archive/` is the universal destination for retired records (completed
-Missions, accepted Proposals, superseded specifications).
+## Where the boundaries break
 
-`.engine/` is a hidden internal directory holding the Write-Ahead Log (WAL)
-transaction journals and mutex `.lock`. It is machine-managed plumbing, never
-edited directly by operators or agents.
+Soft files carrying governed identities or schema claims are checked strictly.
+Malformed governed records still refuse; ordinary documents must not impersonate
+governed records. Never place governed records in ignored raw material.
 
-**Anchor naming rule**: Single-word uppercase filenames (`<NOUN>.md`) are reserved exclusively for Project Anchors and workspace landmark files (`README.md`, `AGENTS.md`, `HUMAN-WORKSPACE-CONTRACT.md`). All governed records carry their scoped prefix in their filename. The same shape is used by untracked local working files such as `TODO.md` and `FEEDBACKS.md`; a record that needs to rely on one quotes what it needs, because the file is not published alongside the record.
+Moving soft content requires link repair. Moving a governed record follows its
+supported mutation and archival rules. Contract edits require the amendment or
+version pipeline. Completed Mission bindings are preserved.
 
-## Mission bundles
-
-Each Mission is a cohesive directory whose name begins with its readable
-Mission reference:
-
-```text
-missions/M4-human-operability/
-├── M4-human-operability.md
-├── objectives/O1-design-human-layout.md
-├── runs/R1-implement-layout/
-│   ├── R1-implement-layout.md
-│   └── checkpoints/C1-layout-approved.md  # optional advanced/historical record
-├── evidence/E1-grkfsd.md
-├── decisions/D1-mpzktq.md
-├── gaps/G1-nrcvhw.md
-├── handoffs/H1-kxsdaf.md
-└── assessments/A1-qptmzr.md
-```
-
-Mission, Objective, Run, and optional Checkpoint-record names combine a scoped
-ordinal with a readable slug. Evidence, Decision, Gap, Handoff, and Assessment
-names combine a scoped ordinal with a stable six-character key derived from the
-UUID. The key is not a content hash. Slugs may change; the frontmatter `id` does
-not.
-
-Canonical human references are scoped: `M4`, `M4/O1`, `M4/R1`, `M4/R1/C1`,
-and `M4/E1-grkfsd`. CLI lookup accepts them in addition to typed UUID refs.
-
-Supporting records live inside their Mission by default. A record is promoted
-to a project-level collection only when it genuinely applies across Missions.
-Archival moves the complete Mission bundle to `archive/missions/` as one
-recoverable transaction.
-
-## What `type:` and `schema:` promise
-
-Every document in the workspace that is a thing you can name declares `type:`.
-It answers what the document is — `Mission`, `Proposal`, `Decision`, `Contract`,
-`Campaign`, `Atlas` — so a reader or an agent can route without opening it.
-
-Some documents also declare `schema:`. That field is a claim with a consequence:
-
-> **Spectacular governs this document, and its frontmatter is under mechanical
-> check.**
-
-A document carries `schema:` when a command validates it and refuses on drift. A
-document that no command validates does not carry one, because a schema nobody
-enforces invites tooling to rely on a guarantee that does not exist.
-
-### The check reaches the frontmatter, not the body
-
-Mechanical enforcement covers frontmatter: required fields, permitted
-vocabularies, reference shapes, ordering. That is the part a machine can decide,
-and where a refusal is always fair.
-
-The body is not mechanically enforced. Prose is where a document explains itself,
-and a validator that graded prose would either be wrong or would flatten the
-writing into a form. The body is the part an agent reads, judges, and writes.
-
-This leaves a real gap: a record can carry valid frontmatter above a body that
-contradicts it, and nothing refuses. A body check may later *sniff* for that
-drift and warn. A warning is the honest register for a judgment a machine cannot
-make cleanly — and it must stay a warning, because a false refusal on prose would
-make the record unwritable.
-
-### Where each document sits
-
-| Document | `type:` | `schema:` | Validated by |
-|---|---|---|---|
-| Mission, Proposal, Decision, Contract, Evidence, Handoff, Review | yes | — | the record type itself |
-| Campaign | yes | `spectacular.campaign.v2` | `campaign check` |
-| Atlas | yes | — | nothing; it is a map, not a record |
-| `raw/` | — | — | nothing; it names no entity |
-
-Governed records are identified through their typed record rather than a
-`schema:` string. A Campaign is not a typed record, so it declares its schema
-explicitly.
-
-## Interface rule
-
-Human output leads with readable reference, outcome, state, current Objective,
-current Run, latest durable checkpoint when present, blocking Gaps, and exactly
-one continuation or owner gate. Ordinary checkpoint notes live in the Run body.
-UUIDs, fingerprints, paths, and generation basis remain available as source
-detail and in `--json`; they do not dominate the default view.
-
-No v1 path reader, migration, alias, or compatibility branch is part of this
-contract. RC.2 is a clean correction of the v2 representation.
+Optional metadata and file-link diagnostics use `check-knowledge.py` from the
+Skill and require Python 3 with PyYAML. Findings guide cleanup; they do not enroll
+work in a Mission. The checker does not certify section anchors or governed
+bindings. Root `docs/` remains public product documentation, never a plan store.

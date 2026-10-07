@@ -1,6 +1,9 @@
 ---
 type: Atlas
 title: Companion skills and domain execution topology
+version: "0.1"
+created: "2026-09-01T13:09:35+02:00"
+updated: "2026-09-01T13:09:35+02:00"
 ---
 
 # Atlas: Companion Skills and Domain Execution Topology

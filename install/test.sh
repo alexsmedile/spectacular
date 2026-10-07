@@ -4,6 +4,7 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 v2_root="$(cd "$script_dir/.." && pwd)"
 test_root="$(mktemp -d)"
+trap 'rm -rf "$test_root"' EXIT
 binary_path="$test_root/spectacular"
 go_cache="${GOCACHE:-$test_root/go-cache}"
 release_version="$(sed -n '1p' "$v2_root/VERSION")"

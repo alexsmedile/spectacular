@@ -7,8 +7,8 @@ Spectacular has **two parts that install and update separately**:
 | **Skill** | `skills/spectacular/` — the method, the routing, the guidance | Every host that reads the plugin manifests |
 | **CLI** | `spectacular` — validation, fingerprints, atomic writes | Installed from a verified release directory |
 
-With the Skill alone, you can read records, learn the method, and draft a
-Mission plan. You need the CLI to start, update, or complete a Mission because
+With the Skill alone, you can maintain linked context and implement ordinary
+authorized work. You need the CLI to start, update, or complete a Mission because
 it safely writes and checks those records.
 
 Check what you have:
@@ -87,7 +87,7 @@ first, then install from that directory:
 
 ```sh
 # 1. download the archive and SHA256SUMS for your platform
-VERSION=2.18.0
+VERSION=3.0.0-rc
 PLATFORM=darwin-arm64          # or darwin-amd64, linux-amd64, linux-arm64
 BASE=https://github.com/alexsmedile/spectacular/releases/download/v$VERSION
 
@@ -241,15 +241,15 @@ sh scripts/orient.sh          # workspace, Missions and status, what is live
 sh scripts/where.sh M12       # resolve a ref to its record path
 ```
 
-Where Node is available, two helpers parse frontmatter properly:
+Where Node is available, two helpers offer bounded frontmatter inspection:
 
 ```sh
 node scripts/show.mjs M12       # state, outcome, objectives, dependency edges, gaps
-node scripts/check.mjs          # structural validation across every record
+node scripts/check.mjs          # advisory inspection of governed records
 ```
 
 All of them read and report only — no writes, no fingerprints, and no fingerprint
-verification. The shell tier reads flat fields; the Node tier checks structure;
+verification. The shell tier reads flat fields; the Node tier offers best-effort structural inspection, not conformant YAML validation;
 neither verifies a binding. Prefer the CLI whenever it is installed.
 
 ## What travels, and what does not
@@ -264,6 +264,6 @@ governed execution.
 
 ## See also
 
-- [Quickstart](quickstart.md) — run one Mission end to end.
+- [Quickstart](quickstart.md) — start from durable context.
 - [Testing](testing.md) — verifying a build before release.
 - [Release recovery](recovery.md) — the cutover baseline and recovery point.

@@ -17,7 +17,9 @@ spectacular mission show <ref> --json           # Inspect active objective
 - **DO NOT** touch files outside `allowed_changed_paths` defined in the charter.
 
 ## 4. Greenfield & Concurrency Invariants
-When creating standalone tools, services, or workers:
+Only when the owner requests queue or batch-processing behavior, follow the
+project's agreed concurrency and failure contracts. The following is an example
+for that specific domain, not a requirement for other tools or services:
 - **Worker Pools**: Bind concurrency strictly to `--workers N` using bounded pools/semaphores.
 - **Retry & DLQ**: Track attempts per item. Route to `dlq.json` only after exceeding failure threshold ($\ge 3$).
 - **Clean Exit**: Drain in-flight jobs, close channels/sockets, and exit with status code 0.

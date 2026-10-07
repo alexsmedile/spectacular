@@ -33,6 +33,9 @@ repair_budget: 2
 dependencies: [M20 completed with basic clustered evidence and 18-command surface]
 gaps: []
 stops: [subjective-quality-classifier, numeric-proxy-as-quality-proof, benign-fixture-rejection, behavioral-regression, forced-timeline-gap-closure, data-loss]
+version: "0.1"
+created: "2026-08-23T00:06:46+02:00"
+updated: "2026-08-23T07:15:58+02:00"
 ---
 
 # Mission: Measure and Harden Scope Guardrails

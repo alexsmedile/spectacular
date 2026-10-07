@@ -2,9 +2,8 @@
 //
 // Not a general YAML implementation. It handles exactly the shapes Spectacular
 // records use: scalars, nested maps, sequences of scalars, sequences of maps,
-// and block scalars (`>-`, `|`). Anything it does not understand is left out
-// rather than guessed at, because a parser that silently mis-reads a governance
-// record is worse than one that admits its limits.
+// and block scalars (`>-`, `|`). Extraction is best-effort and can misinterpret
+// malformed YAML; callers must never use this reader as parsing certification.
 //
 // Read-only. Nothing here writes a record or computes a fingerprint.
 

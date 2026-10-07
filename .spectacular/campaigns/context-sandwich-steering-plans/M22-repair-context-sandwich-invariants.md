@@ -33,6 +33,9 @@ repair_budget: 2
 dependencies: [M21 completed with campaign baseline]
 gaps: []
 stops: [second-dependency-graph, live-file-benchmark-drift, unvalidated-evidence-targets, silent-worktree-git-skip, data-loss]
+version: "0.1"
+created: "2026-08-23T13:50:13+02:00"
+updated: "2026-08-23T13:50:13+02:00"
 ---
 
 # Mission: Repair Context Sandwich Steering Invariants

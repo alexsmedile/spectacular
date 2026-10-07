@@ -2,18 +2,41 @@
 name: spectacular
 description: >-
   Guide work only when the user invokes `$spectacular`, `/spectacular`, or in a `.spectacular/` workspace.
-  Use for structured mission orchestration, bulk decisions (`spectacular decide`), single-file mission autopilot,
+  Use for maintaining small linked workspace knowledge, direct work from raw drafts or plans,
+  explicitly chosen mission orchestration, bulk decisions (`spectacular decide`), single-file mission autopilot,
   supervised subagent dispatch, and multi-session campaigns. In a `.spectacular/` workspace,
   triggers include "start mission", "spectacular decide", "flight plan", "autopilot",
   "supervised dispatch", "handoff", "mission check", or "complete mission".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
-  version: "2.18.0"
+  version: "3.0.0-rc"
 ---
 
 # Spectacular
 
-Run one bounded Mission at a time, from truth the owner already accepted.
+Maintain durable context in small linked OKF objects and execute the user's task directly. Run a
+bounded Mission only when the owner explicitly selects governed execution.
+
+## Choose the route first
+
+- **Ordinary work (default)**: Read [knowledge.md](references/knowledge.md) when
+  placing, maintaining, or working from workspace documents. Follow relevant
+  anchors and links, do the authorized work, verify the actual change, and return
+  its outcome. No startup CLI/version check, initialization, Mission, formal
+  Decision, branch, commit, or completion record is required by this route.
+  An unrelated live or stale Mission does not enroll the task. Finish this route
+  here; the governed procedures below do not apply.
+- **Governed work (explicit opt-in)**: Use the procedures below when the owner
+  requests a governed CLI operation or explicitly starts/resumes work under a
+  named Mission. Existing bindings remain protected. High risk may justify
+  suggesting this route, but does not activate it automatically.
+
+Directory presence and document type organize context; neither grants authority.
+Owner instructions, accepted constraints, repository checks, and actual effect
+permissions apply in both routes. Missing CLI blocks only command-owned actions;
+continue independent ordinary work without fabricating governed records.
+
+## Governed procedures
 
 > **Fast Bailout**: If the query is a simple inspection (e.g. `git branch`, status check, diff, or questions without `$spectacular`), answer directly using native tools, report status: "done", and exit immediately with zero ceremony. Do not read `.spectacular/PROJECT.md` or load references.
 
@@ -50,7 +73,7 @@ Spectacular prioritizes execution over ceremony. Governance is managed strictly 
 
 ### The 5 Foundational Anchors
 1. **Boundaries & Non-Goals**: `PROJECT.md` (`boundaries:`, `constraints:`).
-2. **Vocabulary & Ontology**: `VOCABULARY.md` (Canonical domain terms).
+2. **Ontology**: `VOCABULARY.md` (domain entities, relationships, and vocabulary; use an existing `ONTOLOGY.md` without duplicating its authority).
 3. **Invariants & Failure Modes**: `GUARDRAILS.md` & `AGENTS.md` (Non-negotiable safety rules).
 4. **Data Structures & Schemas**: Project-specific types/schemas in the codebase (cited in `contracts/`).
 5. **State Machines & Lifecycles**: Non-governing visual Mermaid diagrams in `.spectacular/atlas/`.
@@ -79,7 +102,7 @@ Spectacular leverages native GitHub collaboration features via the `gh` CLI whil
 - **Local / Airgapped Fallback**: Never require network access; operate 100% locally if `gh` is unauthenticated or the repo is offline.
 
 ### Mechanical Mode (3-State Model)
-Invoke `spectacular --version --json` once at startup and require `spectacular.build-info.v1` plus the exact release in `generated/mechanical-interface.json`:
+For a requested governed CLI operation, invoke `spectacular --version --json` and require `spectacular.build-info.v1` plus the exact release in `generated/mechanical-interface.json`:
 - **CLI Usable**: Standard governed workflow and typed CLI validation.
 - **CLI Absent**: Read/draft-only. Route to [reduced-mode.md](references/reduced-mode.md). Never emulate command-owned records or fabricate fingerprints.
 - **Declared `manual-bootstrap`**: Owner-approved drafting exception only ([bootstrap.md](references/bootstrap.md)).
@@ -134,7 +157,6 @@ Load a supporting reference only when the primary reference explicitly triggers 
 ## 6. Authority & Execution Invariants
 - **Authority**: Owner owns outcomes, boundaries, and acceptance. Operator freely attempts reversible checks and bounded repairs. `A Decision is not activation authority` (only owner confirms `mission start`).
 - **Direct Greenfield Execution**: Skip meta-planning chat on direct builds. Write code and tests, run `tests/check.sh` / `verify.sh quick`, and report the terminal result.
-- **Concurrency & Queues**: Bind concurrency to `--workers N`. Track retry attempts per item; route to `dlq.json` only after exceeding failure threshold ($\ge 3$).
 - **Proof Separation**: Test passing (`exit 0`) proves deterministic mechanics. Independent reviews (`reviews/`) evaluate `Frozen fit` and `Truth of proof` without modifying code (Observe ≠ Act).
 
 ## 7. Owner Interaction & Continuity

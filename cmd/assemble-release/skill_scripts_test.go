@@ -25,7 +25,7 @@ func TestDoctorRequiresExactCLICompatibility(t *testing.T) {
 		want    string
 	}{
 		{name: "compatible", version: current, want: "full — read, draft, and governed execution"},
-		{name: "incompatible", version: "0.0.1", want: "reduced — read, explain, and draft only"},
+		{name: "incompatible", version: "0.0.1", want: "reduced governance — ordinary implementation remains available"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			bin := t.TempDir()

@@ -1,6 +1,9 @@
 ---
 type: Atlas
 title: Spectacular domain overview
+version: "0.1"
+created: "2026-08-24T01:05:49+02:00"
+updated: "2026-08-24T01:05:49+02:00"
 ---
 
 # Atlas: Spectacular domain overview

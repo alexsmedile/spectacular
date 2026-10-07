@@ -1,6 +1,6 @@
 interface:
   display_name: "Spectacular"
-  short_description: "Guide compact governed Missions through completion"
-  default_prompt: "Use $spectacular to orient to this project and continue its compact Mission workflow."
+  short_description: "Keep small linked durable project context"
+  default_prompt: "Use $spectacular to continue from this project’s durable context and choose file placement with minimal ceremony."
 policy:
   allow_implicit_invocation: true

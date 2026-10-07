@@ -33,7 +33,8 @@ runner drives lives under `test/`:
 
 ```text
 test/
-├── verify.sh          # the runner: preflight | quick | acceptance | release | all
+├── verify.sh          # the runner: preflight | static | quick | acceptance | release | all
+├── context/           # optional metadata and link diagnostics
 ├── acceptance/        # CLI acceptance suite, built binary against fixtures
 ├── evals/             # skill-behaviour benchmark, not part of the release gate
 └── release.sh         # distribution gate: build, checksums, install, recovery
@@ -55,13 +56,19 @@ bash test/verify.sh release
 bash test/verify.sh all
 ```
 
-`preflight` is a read-only, sub-second sanity gate. It emits a
+`preflight` is a read-only sanity gate with measured elapsed time. It emits a
 `spectacular.preflight-receipt.v1` receipt and fails fast, so a heavier tier is
 never spent on a workspace that is already broken.
 
+Every code verification tier runs preflight before heavier work. `static` runs
+syntax, module, manifest, security, and context-diagnostic checks without Go tests.
+CI runs package race tests once and acceptance once per supported platform.
+
 `all` is the pre-release gate. It runs static checks, package tests, the real
 binary acceptance suite, race detection, installation tests, and reproducible
-release proof.
+release proof. Acceptance is included once in `go test -race ./...`, rather than
+being repeated in a separate invocation. Independent release snapshots copy only
+product sources and are cleaned after the reproducibility and installer checks.
 
 ## The installed-binary lifecycle proof
 

@@ -75,7 +75,7 @@ class KnowledgeDiagnostics(unittest.TestCase):
 
 class MissingDependency(unittest.TestCase):
     def test_unavailable_inspection_does_not_claim_success(self):
-        result = subprocess.run([sys.executable, '-S', str(SCRIPT), '.'], capture_output=True, text=True)
+        result = subprocess.run([sys.executable, '-I', '-S', str(SCRIPT), '.'], capture_output=True, text=True)
         self.assertEqual(result.returncode, 2)
         self.assertIn('inspection unavailable', result.stderr)
 

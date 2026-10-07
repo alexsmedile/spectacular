@@ -9,7 +9,7 @@ description: >-
   "supervised dispatch", "handoff", "mission check", or "complete mission".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
-  version: "3.0.0"
+  version: "3.1.0"
 ---
 
 # Spectacular

@@ -1,9 +1,9 @@
 ---
 type: Atlas
 title: Workspace navigation and durable planning
-version: '0.2'
+version: '0.3'
 created: '2026-10-07T18:42:01Z'
-updated: "2026-10-07T19:06:46Z"
+updated: "2026-10-07T19:26:45Z"
 ---
 
 # Workspace navigation
@@ -31,8 +31,12 @@ minimal uses four basic fields; compact adds a recommended description and is th
 soft default; extended adds useful retrieval fields. Raw stays freeform. Governed
 schemas are a separate choice. No new file or profile label is required.
 
-## Plan, spec, Contract
+## Requirement, plan, spec, Contract
 
+Independently useful needs and acceptance criteria can live in requirements/.
+Existing Requirement files in specs/ remain valid; keep one linked owner. See
+[requirements guidance](../../skills/spectacular/references/requirements.md) and
+[optional drafting methods](../../skills/spectacular/references/drafting-methods.md).
 A plan answers what to do and tracks results. Reusable behavior can be extracted
 to an optional specs/ file; its type is Spec and it has basic document metadata.
 An agreed mechanically bound capability belongs in a Contract, whose supported
@@ -50,6 +54,6 @@ can use optional audits/ with type Audit, inspected revision, scope, findings,
 basis, and limitations. A governed Review, Evidence, or Handoff follows the path
 reported by its command, normally inside its owning Mission bundle.
 
-This repository does not need empty specs/ or audits/ folders to illustrate those
+This repository does not need empty requirements/, specs/, or audits/ folders to illustrate those
 roles. Frozen historical records remain in place; manual INDEX.md links current
 knowledge while generated index.json inventories cover governed records only.

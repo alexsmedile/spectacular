@@ -1,9 +1,9 @@
 ---
 type: Index
 title: Durable context entry points
-version: "1.1"
+version: "1.2"
 created: "2026-10-07T18:09:01Z"
-updated: "2026-10-07T18:42:01Z"
+updated: "2026-10-07T19:26:45Z"
 description: Manually maintained navigation for project truth, domain objects, and current plans.
 ---
 
@@ -16,6 +16,7 @@ non-authoritative projections and state which records they cover.
 - [Domain model](VOCABULARY.md): existing ontology anchor; preserve historical links.
 - [Atlas](atlas/README.md): linked entities, relationships, and maps.
 - [Durable planning route](plans/durable-plan-mode.md): current Skill and layout work.
+- [Linked requirements and drafting](plans/linked-requirements-and-drafting.md): v3.1 delivery.
 - [Workspace navigation](atlas/workspace-navigation.md): container roles and record ownership.
 - [Current implementation plan](plans/knowledge-first-optional-governance.md):
   durable context and optional execution governance.

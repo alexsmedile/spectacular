@@ -37,6 +37,12 @@ The host owns native plan-mode controls; Spectacular keeps the project copy in
 `.spectacular/plans/` when writing is permitted. Reuse the file through planning,
 implementation, and delivery. There is no new binary plan command or Mission gate.
 
+Use optional `requirements/` to distribute a PRD into linked needs and acceptance
+criteria. Keep behavior in `specs/` and delivery in `plans/`; existing requirements
+in specs remain valid. Skeletons and anatomy guides are optional drafting aids.
+See [linked requirements](skills/spectacular/references/requirements.md) and
+[drafting methods](skills/spectacular/references/drafting-methods.md).
+
 See the [active-workspace tree](docs/human-workspace-contract.md) for optional
 specs/audits and Mission-owned reviews, evidence, and handoffs.
 

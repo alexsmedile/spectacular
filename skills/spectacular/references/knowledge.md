@@ -21,6 +21,7 @@ Folder agreements live in [knowledge-folders.yaml](../knowledge-folders.yaml).
 | atlas/ | Linked entities, concepts, relationships, lifecycles, and maps |
 | decisions/ | Consequential choices and rationale |
 | plans/ | Intended outcome, approach, progress, and results |
+| requirements/ | Optional linked needs, constraints, and acceptance criteria |
 | specs/ | Optional reusable behavior and interface specifications |
 | audits/ | Optional revision-scoped inspection findings |
 | contracts/ | Mechanically validated agreements and amendment/version pipeline |
@@ -39,6 +40,8 @@ are both valid navigation aids. Keep authored content out of generated indexes.
 Update the existing owner of a topic before creating another file. Create a
 folder or anchor only when content needs it. Requirements and design may live
 in a plan; extract lasting knowledge only when it has an independent use.
+For a distributed PRD, use [requirements.md](requirements.md). Optional drafting
+aids live in [drafting-methods.md](drafting-methods.md); load them only when useful.
 For planning requests use [plan.md](plan.md); for the full container and Mission
 bundle layout use [workspace.md](workspace.md).
 Mechanical Decision validation is recommended, not required. Descriptive names

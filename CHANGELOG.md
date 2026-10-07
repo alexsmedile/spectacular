@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## 3.1.0 — 2026-10-07
+
+### Added
+
+- Optional requirements/ container for small linked needs, constraints, and
+  acceptance criteria, with PRD overview guidance and documented folder types.
+- Optional skeleton and anatomy drafting aids for requirements, specs, plans,
+  and prototypes, without new lifecycle stages or required companion files.
+
+### Changed
+
+- Planning and prototyping follow linked requirements and retain one content
+  owner. Existing Requirement files in specs/ remain valid without migration.
+- Update README, workspace examples, contributor guidance, metadata profiles,
+  and plugin manifests. Governed schemas and the 26-command catalog stay unchanged.
+
+
 ## 3.0.0 — 2026-10-07
 
 ### Added

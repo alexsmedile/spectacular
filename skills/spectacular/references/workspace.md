@@ -1,6 +1,6 @@
 # Workspace containers and record ownership
 
-Use this when: choosing among plans, specs, proposals, Contracts, Atlas, audits,
+Use this when: choosing among requirements, plans, specs, proposals, Contracts, Atlas, audits,
 reviews, handoffs, or explaining an active project’s tree.
 
 ## Choose by the question the file answers
@@ -10,6 +10,7 @@ reviews, handoffs, or explaining an active project’s tree.
 | Root anchors | What is true about this project now? | Maintained context |
 | raw/ | What did we capture or sketch? | Unconstrained |
 | plans/ | What will we do, and what happened? | Maintained context |
+| requirements/ | What is needed and how will acceptance be observed? | Optional maintained context |
 | specs/ | What behavior or interface should exist? | Optional maintained context |
 | atlas/ | What are the objects and how do they relate? | Maintained context |
 | decisions/ | What did we choose and why? | Soft or explicitly governed |
@@ -21,7 +22,7 @@ reviews, handoffs, or explaining an active project’s tree.
 | retrospectives/ | What lessons deserve independent retention? | Optional maintained context |
 | Root docs/ | How does a person use the shipped product? | External documentation surface |
 
-Create optional specs or audits only when the content has independent use. A plan
+Create optional requirements, specs, or audits only when the content has independent use. A plan
 can carry its own requirements and inspection findings. An audit note has scope,
 revision inspected, findings, basis, and limitations; it does not certify governed
 completion. A spec can state intended behavior without becoming an accepted Contract.
@@ -58,6 +59,7 @@ project/
     ├── raw/release-sketch.md
     ├── plans/release-flow.md      # approach, progress, result; type Plan
     ├── plans/linux-tranche.md     # independent delivery slice; linked by parent
+    ├── requirements/verified-download.md # need and acceptance; type Requirement
     ├── specs/release-integrity.md # behavior and interfaces; type Spec
     ├── atlas/release-artifact.md  # entity and relationships; type Entity
     ├── decisions/checksum-policy.md  # soft Decision, no governed identity
@@ -74,6 +76,6 @@ project/
 
 Archived governed bundles retain existing rules under archive/. Historical
 collections and legacy indexes can remain. Never create this entire tree merely
-to start a task. Plans, specs, and audits use the basic folder metadata agreement;
+to start a task. Requirements, plans, specs, and audits use the basic folder metadata agreement;
 governed files use their command-generated schema and validator. Raw is exempt.
 Select metadata using [profiles.md](profiles.md), with compact as the soft default.

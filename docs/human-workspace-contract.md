@@ -20,6 +20,9 @@ project/
     ├── plans/
     │   ├── release-flow.md             # parent approach, progress, results
     │   └── linux-tranche.md            # independent linked delivery slice
+    ├── requirements/
+    │   ├── release-needs.md            # short linked overview; type Reference
+    │   └── verified-download.md        # need and acceptance; type Requirement
     ├── specs/
     │   └── release-integrity.md        # reusable intended behavior; type Spec
     ├── atlas/
@@ -62,7 +65,8 @@ still creates the broader governed layout.
 | File role | Question it answers | When to extract it |
 |---|---|---|
 | Plan | What will we do, and what happened? | A coherent work outcome needs continuity |
-| Spec | What behavior or interface should exist? | Requirements have independent readers or reuse |
+| Requirement | What is needed and how is acceptance observed? | A need has independent meaning, reuse, or delivery scope |
+| Spec | What behavior or interface should exist? | Behavior or interfaces have independent readers or reuse |
 | Atlas | What are the objects and how do they relate? | An explanation outlives a work plan |
 | Decision | What did we choose and why? | Rationale or supersession needs retention |
 | Audit | What did inspection find at this revision? | Findings have an independent scope and reader |
@@ -72,7 +76,17 @@ still creates the broader governed layout.
 | Review / Handoff | What was formally evaluated or transferred? | The selected governed workflow needs that record |
 
 A plan can contain requirements, inspection findings, and a continuity note.
-Optional specs/ and audits/ avoid overloading it only when those parts stand alone.
+Optional requirements/, specs/, and audits/ avoid overloading it only when those
+parts stand alone. Existing Requirement files in specs/ remain valid; choose one
+content owner and link it without duplication or mandatory migration. A short PRD
+overview can link needs, domain objects, specs, decisions, and delivery plans.
+See [linked requirements](../skills/spectacular/references/requirements.md).
+
+Skeletons provide optional starting outlines; anatomies explain artifact parts
+and relationships. They add no lifecycle or validation gate. Draft directly in
+the intended file or use raw; avoid a redundant skeleton beside its finished
+artifact. Project-specific reusable methods can live in Atlas when useful. See
+[drafting methods](../skills/spectacular/references/drafting-methods.md).
 A quick handoff can remain in the plan; governed handoffs use their supported
 command. Existing Proposals keep their rules; proposal create remains unavailable.
 
@@ -89,7 +103,7 @@ leave unknown values unresolved rather than fabricating them. Preserve unknown
 metadata. Types are extensible through the folder agreement.
 
 The [folder agreement](../skills/spectacular/knowledge-folders.yaml) defines the
-current types and metadata for anchors, Atlas, plans, specs, audits, Decisions, campaigns, and
+current types and metadata for anchors, Atlas, requirements, plans, specs, audits, Decisions, campaigns, and
 retrospectives. `schema` means an enforced governed frontmatter claim; it is not
 needed for soft context. Existing governed records retain their own metadata,
 identity, and mutation rules. Raw has no metadata or naming obligations.
@@ -103,7 +117,7 @@ not a progression toward mandatory governance.
 |---|---|---|
 | Freeform | Raw, sketch, scratchpad | None required |
 | Minimal | Small maintained context | type, version, created, updated |
-| Compact (default) | Most plans, specs, Atlas pages, soft Decisions | Minimal plus recommended description; title when useful |
+| Compact (default) | Most requirements, plans, specs, Atlas pages, soft Decisions | Minimal plus recommended description; title when useful |
 | Extended | Context needing extra retrieval or attribution | Compact plus relevant optional tags, sources, status, or domain fields |
 | Governed | Explicitly governed records, including Contracts | Exact command-generated schema and validator |
 

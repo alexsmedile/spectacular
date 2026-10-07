@@ -68,6 +68,18 @@ class KnowledgeDiagnostics(unittest.TestCase):
         self.assertIn('ambiguous link: topic', issues)
         self.assertIn('missing link: absent.md', issues)
 
+    def test_requirements_link_to_delivery_and_preserve_existing_specs(self):
+        self.document('requirements/overview.md', type='Reference', body='[[requirements/guest-purchase]]')
+        self.document('requirements/guest-purchase.md', type='Requirement', body='[Spec](../specs/checkout.md)')
+        self.document('specs/checkout.md', type='Spec')
+        self.document('specs/existing-need.md', type='Requirement')
+        self.document('plans/checkout.md', body='[[requirements/guest-purchase]]')
+        report = self.report()
+        self.assertEqual(report['findings'], [])
+        self.assertEqual(len(report['documents']), 5)
+        self.document('requirements/misplaced-plan.md', type='Plan')
+        self.assertTrue(any('outside requirements agreement' in x['issue'] for x in self.report()['findings']))
+
     def test_manual_index_type_and_governed_frontmatter_exclusion(self):
         self.document('INDEX.md')
         self.assertTrue(any('type Index' in x['issue'] for x in self.report()['findings']))

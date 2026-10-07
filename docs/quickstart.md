@@ -36,6 +36,7 @@ checks, and outcomes there without creating a Mission.
 | `atlas/` | Domain maps and lasting explanations |
 | `decisions/` | Consequential choices and why they were made |
 | `plans/` | Intended work, approach, progress, and outcome |
+| `requirements/` | Optional linked needs, constraints, and acceptance criteria |
 | `specs/` | Optional reusable behavior and interfaces |
 | `audits/` | Optional revision-scoped inspection findings |
 

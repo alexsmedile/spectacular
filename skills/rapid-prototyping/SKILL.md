@@ -35,7 +35,14 @@ Always maintain the 4-field decision ledger at the start of every exploration ro
 
 ## Workflow
 
-1. **Frame one decision:** Identify the single open axis, the fidelity level, locked constraints, and 2–3 success signals.
+1. **Frame one decision:** In a `.spectacular/` workspace, follow relevant linked
+   requirements and specifications before choosing success signals. Keep existing
+   Requirement files in specs/ valid; use requirements/ only for independently
+   useful needs. Read [drafting-methods.md](../spectacular/references/drafting-methods.md)
+   only when an optional skeleton or anatomy helps. Keep observations in the
+   owning plan or draft; create no extra method or proof file by default.
+   Identify the single open axis, fidelity level, locked constraints, and 2–3
+   success signals.
 2. **Generate 3 tracer fragments (A, B, C):** Produce three distinct, concrete options spanning the trade-off space.
 3. **Present the matrix:** Display the options side-by-side with clear differentiators.
 4. **Transition upon feedback:**

@@ -28,7 +28,10 @@ when writes become permitted. Do not emulate unavailable planning APIs.
    metadata. Nested domain folders are useful only when several plans justify them.
 3. Record the intended outcome, constraints, approach, implementation slices,
    verification, and unresolved choices. Link existing specifications and domain
-   objects rather than copying them. Use the compact default in
+   objects rather than copying them. For a distributed PRD, read
+   [requirements.md](requirements.md) and link the applicable needs and acceptance
+   criteria. Use [drafting-methods.md](drafting-methods.md) only when a skeleton or
+   anatomy helps the task. Use the compact default in
    [profiles.md](profiles.md); minimal remains valid and no UUID, governed schema,
    or lifecycle is required.
 4. Persist when the host permits writes, then read back the file and check that

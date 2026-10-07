@@ -20,8 +20,12 @@ freeform. These conventions require no profile label and do not select governanc
 
 `/spectacular plan` is a Skill route over native host planning controls, with the
 durable project copy in `.spectacular/plans/` when writes are allowed. Optional
-`specs/` and `audits/` contain reusable behavior and inspection findings; create
-them only for independently useful content. They do not replace governed
+`requirements/`, `specs/`, and `audits/` contain linked needs and acceptance,
+reusable behavior, and inspection findings; create
+them only for independently useful content. Existing Requirement files in specs/
+remain valid; link one owner rather than duplicating or bulk-moving them. Optional
+skeletons and anatomy guides aid drafting without extra gates or companion files.
+They do not replace governed
 Contracts, Reviews, or Handoffs. Canonical Mission-owned records follow the path
 reported by the CLI.
 Folder-specific agreements live in `skills/spectacular/knowledge-folders.yaml`.

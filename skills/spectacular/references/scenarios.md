@@ -2,6 +2,8 @@
 
 Use this when: creating end-to-end user scenarios, preparing beta tests, or
 checking feasibility and actual behavior with real software.
+For deliberate adversarial breakage campaigns, start with [breakage.md](breakage.md);
+this file owns shared case storage, attempt provenance, and verdicts.
 
 ## Store the journey separately from its attempts
 

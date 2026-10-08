@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Keep small linked durable context, with optional governed Missions and validated Contracts.",
-    "version": "3.3.0"
+    "version": "3.4.0"
   },
   "plugins": [
     {
       "name": "spectacular",
       "source": "./",
       "description": "Keep small linked durable context, with optional governed Missions and validated Contracts.",
-      "version": "3.3.0",
+      "version": "3.4.0",
       "author": {
         "name": "Alessandro Smedile"
       },

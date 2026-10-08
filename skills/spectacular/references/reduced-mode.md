@@ -31,23 +31,33 @@ Without the CLI, you cannot run `mission start`, `objective promote`, `objective
 
 To restore full governed execution:
 
-1. Download the platform release archive and `SHA256SUMS` from `https://github.com/alexsmedile/spectacular/releases/latest`.
-2. Verify checksum: `shasum -a 256 --check SHA256SUMS --ignore-missing`.
-3. Install from the directory holding the archive:
+1. Select the release matching the generated mechanical interface. Download its
+   platform archive and `SHA256SUMS` from the corresponding GitHub release into
+   a dedicated directory. Record that absolute directory as `<release-dir>`.
+2. In that directory verify the downloaded archive with
+   `shasum -a 256 --check SHA256SUMS --ignore-missing`; stop on failure.
+3. Obtain a repository checkout or source distribution of Spectacular at the
+   same release tag (`v<VERSION>`). Its `install/install.sh` is the installer;
+   the platform archive is the payload, not an installer checkout. Record the
+   absolute checkout/source root as `<repo-dir>`. Keep its install/ helpers together.
+4. After installation is authorized, replace the placeholders below. Choose
+   `codex` for Codex or `claude` for Claude; other hosts can continue ordinary work
+   without this runtime installer. The command works from any directory:
 
 ```bash
-install/install.sh install \
+bash "<repo-dir>/install/install.sh" install \
   --prefix "$HOME/.local" \
-  --source "$PWD" \
-  --runtime claude \
+  --source "<release-dir>" \
+  --runtime <codex-or-claude> \
   --version <VERSION>
 ```
 
-4. Confirm installation:
+The installer consumes the archive and checksum manifest from `<release-dir>`;
+leave the archive packed. If `$HOME/.local/bin` is absent from PATH, add it before
+using `spectacular` by name.
 
-```bash
-spectacular --version
-```
+5. Confirm with `spectacular --version --json`, then apply the kernel's mechanical
+   mode compatibility check before resuming command-owned work.
 
 See the [installation guide](https://github.com/alexsmedile/spectacular/blob/main/docs/installation.md) for full installation and platform troubleshooting.
 

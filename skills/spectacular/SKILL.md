@@ -4,12 +4,12 @@ description: >-
   Guide work only when the user invokes `$spectacular`, `/spectacular`, or in a `.spectacular/` workspace.
   Use for maintaining small linked workspace knowledge, direct work from raw drafts or plans, durable planning (`/spectacular plan`),
   explicitly chosen mission orchestration, bulk decisions (`spectacular decide`), single-file mission autopilot,
-  supervised subagent dispatch, and multi-session campaigns. In a `.spectacular/` workspace,
+  supervised subagent dispatch, multi-session campaigns, and deliberate breakage testing. In a `.spectacular/` workspace,
   triggers include "start mission", "spectacular decide", "flight plan", "autopilot",
-  "supervised dispatch", "handoff", "mission check", or "complete mission".
+  "supervised dispatch", "handoff", "mission check", "complete mission", "break this software", or "breakage tests".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
-  version: "3.3.0"
+  version: "3.4.0"
 ---
 
 # Spectacular
@@ -24,6 +24,12 @@ bounded Mission only when the owner explicitly selects governed execution.
   project plan in `.spectacular/plans/` when writes are permitted. Return the
   saved path, or explicitly identify an unsaved draft under host restrictions.
   This Skill route adds no public CLI command and activates no Mission.
+- **Breakage testing (`/spectacular breakage`, `$spectacular breakage`, or a request
+  to deliberately break software in a Spectacular workspace)**: Read
+  [breakage.md](references/breakage.md). Inspect the target, present principles
+  and 12–24 plausible adversarial cases before executing them, then run authorized
+  trials and preserve reproducible findings. A principles/list-only request stops
+  at preparation. This Skill route adds no public CLI command or Mission.
 - **Ordinary work (default)**: Read [knowledge.md](references/knowledge.md) when
   placing, maintaining, or working from workspace documents. Use its compact
   metadata default; minimal is valid, extended fields are earned, and raw is free.

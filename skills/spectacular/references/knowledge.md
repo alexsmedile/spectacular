@@ -25,6 +25,7 @@ Folder agreements live in [knowledge-folders.yaml](../knowledge-folders.yaml).
 | plans/ | Intended outcome, approach, progress, and results |
 | requirements/ | Optional linked needs, constraints, and acceptance criteria |
 | specs/ | Optional reusable behavior and interface specifications |
+| scenarios/ | Optional reusable user journeys and observable success criteria |
 | audits/ | Optional revision-scoped inspection findings |
 | contracts/ | Mechanically validated agreements and amendment/version pipeline |
 
@@ -44,6 +45,7 @@ folder or anchor only when content needs it. Requirements and design may live
 in a plan; extract lasting knowledge only when it has an independent use.
 For a distributed PRD, use [requirements.md](requirements.md). Optional drafting
 aids live in [drafting-methods.md](drafting-methods.md); load them only when useful.
+For user journeys and field validation, use [scenarios.md](scenarios.md).
 For planning requests use [plan.md](plan.md); for the full container and Mission
 bundle layout use [workspace.md](workspace.md).
 Mechanical Decision validation is recommended, not required. Descriptive names

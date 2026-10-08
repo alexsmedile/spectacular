@@ -47,8 +47,13 @@ in specs remain valid. Skeletons and anatomy guides are optional drafting aids.
 See [linked requirements](skills/spectacular/references/requirements.md) and
 [drafting methods](skills/spectacular/references/drafting-methods.md).
 
+Use optional `scenarios/` for reusable end-to-end user journeys and beta testing.
+Define prerequisites, final outputs, success criteria, and recovery variants;
+select cases in a plan and record actual evidence and verdicts in `audits/`.
+Keep reusable cases after a campaign and retire obsolete ones to `archive/scenarios/`.
+
 See the [active-workspace tree](docs/human-workspace-contract.md) for optional
-specs/audits and Mission-owned reviews, evidence, and handoffs.
+specs/scenarios/audits and Mission-owned reviews, evidence, and handoffs.
 
 ## Small files, useful links
 

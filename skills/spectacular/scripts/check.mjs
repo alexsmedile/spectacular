@@ -36,7 +36,9 @@ function checkOne(file) {
   if (!f) return { file, skipped: 'no frontmatter', problems, notices };
 
   const claimed = ['id', 'ref', 'human_ref', 'schema', 'schema_version'].some(key => key in f);
-  const strict = path.relative(ws, file).split(path.sep).some(part => ['contracts', 'proposals', 'missions', 'evidence', 'gaps', 'handoffs', 'assessments', 'reviews', 'archive'].includes(part));
+  const parts = path.relative(ws, file).split(path.sep);
+  const archivedScenario = parts[0] === 'archive' && parts[1] === 'scenarios' && ['Scenario', 'Reference'].includes(f.type);
+  const strict = parts.some(part => ['contracts', 'proposals', 'missions', 'evidence', 'gaps', 'handoffs', 'assessments', 'reviews'].includes(part)) || (parts.includes('archive') && !archivedScenario);
   const canonical = /^(CC-|[A-Z]+[0-9]+([-\.]|$))/.test(path.basename(file));
   if (!claimed && !strict && path.basename(file) !== 'PROJECT.md' && (!canonical || f.governance === 'context')) {
     return { file, skipped: 'soft context; use check-knowledge.py for advisory metadata checks', problems, notices };

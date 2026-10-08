@@ -17,7 +17,8 @@ Governed filenames and references follow their existing writer and archival rule
 
 A folder owns a role, not a mandatory stage. Reuse the existing topic owner; split
 by independent meaning, lifetime, domain, module, phase, or delivered tranche.
-Requirements own needs and acceptance, specs own behavior, and plans own delivery.
+Requirements own needs and acceptance, specs own behavior, scenarios own reusable
+user journeys, and plans own delivery. Audits own observations from specific attempts.
 Skeletons and anatomies are optional methods; do not create containers for them.
 
 ## Read by task, not filesystem order
@@ -71,6 +72,12 @@ Retire a Proposal only when its question is answered: write resolved_by and acce
 status before moving, with authorization and source fingerprint. Partial delivery
 stays open. Archive independently useful completed plans and campaign inputs under
 archive/plans/ and archive/campaigns/; do not keep stale activation instructions live.
+
+Keep reusable cases in scenarios/ after a campaign finishes: passing once does not
+retire a case. Move obsolete or superseded soft cases to archive/scenarios/,
+retaining their metadata and links to replacements and earlier Audits. Repair
+incoming mutable links; preserve frozen governed proof under its existing rules.
+Soft scenarios need no governed archive authorization fields or fingerprints.
 
 Legacy imports may use archive/raw/ to preserve their original bytes and unsupported
 historical frontmatter outside discovery. They remain source material, not accepted

@@ -1,6 +1,6 @@
 # Workspace containers and record ownership
 
-Use this when: choosing among requirements, plans, specs, proposals, Contracts, Atlas, audits,
+Use this when: choosing among requirements, plans, specs, scenarios, proposals, Contracts, Atlas, audits,
 reviews, handoffs, or explaining an active project’s tree.
 
 ## Choose by the question the file answers
@@ -12,6 +12,7 @@ reviews, handoffs, or explaining an active project’s tree.
 | plans/ | What will we do, and what happened? | Maintained context |
 | requirements/ | What is needed and how will acceptance be observed? | Optional maintained context |
 | specs/ | What behavior or interface should exist? | Optional maintained context |
+| scenarios/ | Can a user reach a concrete outcome, and how will we verify it? | Optional maintained context |
 | atlas/ | What are the objects and how do they relate? | Maintained context |
 | decisions/ | What did we choose and why? | Soft or explicitly governed |
 | audits/ | What did inspection find at a named revision? | Optional maintained context |
@@ -22,10 +23,12 @@ reviews, handoffs, or explaining an active project’s tree.
 | retrospectives/ | What lessons deserve independent retention? | Optional maintained context |
 | Root docs/ | How does a person use the shipped product? | External documentation surface |
 
-Create optional requirements, specs, or audits only when the content has independent use. A plan
+Create optional requirements, specs, scenarios, or audits only when the content has independent use. A plan
 can carry its own requirements and inspection findings. An audit note has scope,
 revision inspected, findings, basis, and limitations; it does not certify governed
 completion. A spec can state intended behavior without becoming an accepted Contract.
+A reusable Scenario owns the journey and success criteria; a plan selects cases
+and an Audit records observed outcomes. See [scenarios.md](scenarios.md).
 Existing Proposal identity/lifecycle rules remain; `proposal create` is unavailable.
 Ordinary unanswered questions can stay in raw or the plan without a Proposal.
 
@@ -64,6 +67,7 @@ project/
     ├── plans/linux-tranche.md     # independent delivery slice; linked by parent
     ├── requirements/verified-download.md # need and acceptance; type Requirement
     ├── specs/release-integrity.md # behavior and interfaces; type Spec
+    ├── scenarios/verify-download.md # user journey and final output; type Scenario
     ├── atlas/release-artifact.md  # entity and relationships; type Entity
     ├── decisions/checksum-policy.md  # soft Decision, no governed identity
     ├── audits/release-drift.md    # inspected revision and findings; type Audit
@@ -79,6 +83,6 @@ project/
 
 Archived governed bundles retain existing rules under archive/. Historical
 collections and legacy indexes can remain. Never create this entire tree merely
-to start a task. Requirements, plans, specs, and audits use the basic folder metadata agreement;
+to start a task. Requirements, plans, specs, scenarios, and audits use the basic folder metadata agreement;
 governed files use their command-generated schema and validator. Raw is exempt.
 Select metadata using [profiles.md](profiles.md), with compact as the soft default.

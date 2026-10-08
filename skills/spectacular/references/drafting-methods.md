@@ -29,6 +29,9 @@ explicit. They are body outlines, not published frontmatter templates.
   boundaries and verification examples.
 - Plan: outcome and linked requirements; constraints; delivery slices; checks;
   open choices, progress, and result.
+- Scenario: user and end-to-end goal; software, permissions, and initial data;
+  actions and final output; observable success criteria; relevant failure and
+  recovery variants. Use [scenarios.md](scenarios.md) for field validation.
 - Prototype: requirement and open axis; locked constraints; representative slice;
   success signals; observations and selected direction.
 

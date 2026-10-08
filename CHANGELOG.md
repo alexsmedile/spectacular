@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+## 3.3.0 — 2026-10-09
+
+### Added
+
+- Reusable user journeys in optional `scenarios/`, with explicit prerequisites,
+  final outputs, observable success criteria, and failure/recovery variants.
+- Beta testing and field validation guidance: select representative goals,
+  plan coverage, and record attributable evidence and per-attempt verdicts.
+
+### Changed
+
+- Keep reusable scenarios separate from campaign plans and Audit observations;
+  retire obsolete cases to `archive/scenarios/` while preserving links and provenance.
+- Distinguish hypotheses and documented feasibility from observed execution;
+  unexecuted or insufficiently evidenced cases remain unverified.
+
+### Fixed
+
+- Skip archived soft Scenarios and References during governed structural inspection,
+  while preserving checks for explicit governed claims.
+
 ## 3.2.0 — 2026-10-09
 
 ### Changed

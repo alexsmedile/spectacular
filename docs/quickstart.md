@@ -38,6 +38,7 @@ checks, and outcomes there without creating a Mission.
 | `plans/` | Intended work, approach, progress, and outcome |
 | `requirements/` | Optional linked needs, constraints, and acceptance criteria |
 | `specs/` | Optional reusable behavior and interfaces |
+| `scenarios/` | Optional reusable user journeys, final outputs, and success criteria |
 | `audits/` | Optional revision-scoped inspection findings |
 
 See the [active-workspace example](human-workspace-contract.md) for Mission-owned

@@ -20,11 +20,14 @@ freeform. These conventions require no profile label and do not select governanc
 
 `/spectacular plan` is a Skill route over native host planning controls, with the
 durable project copy in `.spectacular/plans/` when writes are allowed. Optional
-`requirements/`, `specs/`, and `audits/` contain linked needs and acceptance,
-reusable behavior, and inspection findings; create
+`requirements/`, `specs/`, `scenarios/`, and `audits/` contain linked needs and acceptance,
+reusable behavior, user journeys with observable outcomes, and inspection findings; create
 them only for independently useful content. Existing Requirement files in specs/
 remain valid; link one owner rather than duplicating or bulk-moving them. Optional
 skeletons and anatomy guides aid drafting without extra gates or companion files.
+Reusable Scenarios live in `.spectacular/scenarios/`; plans select cases, Audits
+record attempts and evidence, and obsolete cases retire to `archive/scenarios/`
+with repaired links. See `skills/spectacular/references/scenarios.md`.
 They do not replace governed
 Contracts, Reviews, or Handoffs. Canonical Mission-owned records follow the path
 reported by the CLI.

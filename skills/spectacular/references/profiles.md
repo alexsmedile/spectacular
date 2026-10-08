@@ -14,7 +14,7 @@ layer, UUID, or schema field is required to select one.
 |---|---|---|
 | Freeform | raw/, sketch/, scratchpad/ | None required |
 | Minimal | Small maintained context | type, version, created, updated |
-| Compact (default) | Most requirements, plans, specs, Atlas, and soft Decisions | Minimal plus recommended description; title when useful |
+| Compact (default) | Most requirements, plans, specs, scenarios, Atlas, and soft Decisions | Minimal plus recommended description; title when useful |
 | Extended | Context with independently useful retrieval detail | Compact plus relevant optional tags, sources, status, or domain fields |
 | Governed | Explicitly governed records; Contracts retain this route | Exact emitting command's schema and validator |
 

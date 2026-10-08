@@ -25,6 +25,8 @@ project/
     │   └── verified-download.md        # need and acceptance; type Requirement
     ├── specs/
     │   └── release-integrity.md        # reusable intended behavior; type Spec
+    ├── scenarios/
+    │   └── verify-download.md          # reusable journey; type Scenario
     ├── atlas/
     │   ├── release-artifact.md         # typed domain object
     │   └── release-lifecycle.md        # relationships and states
@@ -46,7 +48,7 @@ project/
     │       └── runs/R2-linux-attempt/R2-linux-attempt.md  # only if promoted
     ├── campaigns/release-readiness.md # optional sequencing across slices
     ├── retrospectives/release-lessons.md
-    └── archive/                       # authorized governed retirement
+    └── archive/                       # retired context and governed bundles
 ```
 
 The names illustrate placement, not records to manufacture. The CLI assigns
@@ -67,6 +69,7 @@ still creates the broader governed layout.
 | Plan | What will we do, and what happened? | A coherent work outcome needs continuity |
 | Requirement | What is needed and how is acceptance observed? | A need has independent meaning, reuse, or delivery scope |
 | Spec | What behavior or interface should exist? | Behavior or interfaces have independent readers or reuse |
+| Scenario | Can a user reach a concrete final outcome? | A journey needs independent reuse and observable criteria |
 | Atlas | What are the objects and how do they relate? | An explanation outlives a work plan |
 | Decision | What did we choose and why? | Rationale or supersession needs retention |
 | Audit | What did inspection find at this revision? | Findings have an independent scope and reader |
@@ -76,11 +79,18 @@ still creates the broader governed layout.
 | Review / Handoff | What was formally evaluated or transferred? | The selected governed workflow needs that record |
 
 A plan can contain requirements, inspection findings, and a continuity note.
-Optional requirements/, specs/, and audits/ avoid overloading it only when those
+Optional requirements/, specs/, scenarios/, and audits/ avoid overloading it only when those
 parts stand alone. Existing Requirement files in specs/ remain valid; choose one
 content owner and link it without duplication or mandatory migration. A short PRD
 overview can link needs, domain objects, specs, decisions, and delivery plans.
 See [linked requirements](../skills/spectacular/references/requirements.md).
+
+Scenarios retain goals and expected outcomes across attempts. A campaign plan
+selects cases by frequency, value, and risk; an Audit records software versions,
+case revision, observed outputs, evidence, and limitations for each attempt.
+Use passed, failed, blocked, or not verified verdicts; documented feasibility
+alone does not establish a field-test pass. Keep reusable cases after a campaign
+and retire obsolete cases to archive/scenarios/ with repaired links.
 
 Skeletons provide optional starting outlines; anatomies explain artifact parts
 and relationships. They add no lifecycle or validation gate. Draft directly in

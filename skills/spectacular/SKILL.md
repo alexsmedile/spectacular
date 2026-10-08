@@ -9,7 +9,7 @@ description: >-
   "supervised dispatch", "handoff", "mission check", or "complete mission".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
-  version: "3.2.0"
+  version: "3.3.0"
 ---
 
 # Spectacular
@@ -34,6 +34,9 @@ bounded Mission only when the owner explicitly selects governed execution.
   [plan.md](references/plan.md); continue through the authorized batch and
   reconcile its existing document owners before returning. No startup CLI/version check, initialization, Mission, formal
   Decision, branch, commit, or completion record is required by this route.
+  For end-to-end user scenarios, beta testing, or field validation, read
+  [scenarios.md](references/scenarios.md). Save reusable cases in scenarios/ and
+  link execution findings from audits/ or the current plan.
   An unrelated live or stale Mission does not enroll the task. Finish this route
   here; the governed procedures below do not apply.
 - **Governed work (explicit opt-in)**: Use the procedures below when the owner

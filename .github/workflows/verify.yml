@@ -68,7 +68,7 @@ jobs:
 
       - name: Run Tests with Race Detector & Coverage
         run: |
-          go test -race -count=1 -coverprofile=coverage.out -covermode=atomic ./cmd/... ./install/... ./internal/... ./test
+          go test -race -count=1 -coverprofile=coverage.out -covermode=atomic ./cmd/... ./install/... ./internal/... ./test ./scripts/check-architecture
 
       - name: Upload Coverage Artifact
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0

@@ -53,3 +53,30 @@ Historical records remain valid under their original rules. Adopting soft contex
 does not rewrite completed Mission bindings, bypass Contract amendments, or
 publish ignored raw drafts. See [Workspace layout](human-workspace-contract.md)
 and [Process](process.md).
+
+## Delivery milestones
+
+A milestone names who can complete which workflow, in which environment, and
+what observation closes the outcome. Start with a thin integrated path and
+resolve the uncertainties that could invalidate it. Prerequisites are justified
+by the workflow or exposure they enable; an MVP label does not prescribe a
+database, authentication system, event broker, or deployment platform.
+
+Evaluate usability, integrity, distribution, operation, value validation, and
+publication separately. A prototype can answer a design question; an integrated
+workflow can establish technical usability; a representative user experiment
+can test a value hypothesis. Alpha and beta have project-defined audiences,
+limitations, and exit evidence.
+
+Plans own delivery gates and proof links. Requirements own needs and acceptance.
+Use MoSCoW, risk, and reversibility to bound the next useful increment. Companion
+skills contribute architecture decisions, executable checks, data migration,
+interface compatibility, and durable-delivery proof only when relevant.
+
+## Implementation boundaries
+
+The CLI uses a single command registry and application service facade. Mission
+readers consume detached data through an injected loader. Pure Run transition
+rules are separated from persistence effects, and coordinated writes retain
+atomic transactions and recovery. Production dependency rules are checked
+automatically, including platform-specific source files.

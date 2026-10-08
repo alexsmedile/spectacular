@@ -1,9 +1,9 @@
 ---
 type: Atlas
 title: Specification evolution and governance lifecycle
-version: '0.2'
+version: '0.3'
 created: '2026-08-31T00:45:37+02:00'
-updated: '2026-10-07T18:47:06Z'
+updated: '2026-10-07T20:07:46Z'
 ---
 
 # Specification and work evolution
@@ -14,6 +14,7 @@ Update the existing owner first; create another object only for independent use.
 | Current content | Useful next form | What changes |
 |---|---|---|
 | Raw draft | Plan | Maintain outcome, approach, progress, and results |
+| Plan contains independently useful needs | Linked Requirement | Extract acceptance, link its delivery plan |
 | Plan contains reusable behavior | Linked Spec | Extract behavior/interfaces, keep work in the plan |
 | Plan contains lasting explanation | Linked Atlas object | Reuse domain context across future plans |
 | Choice needs durable rationale | Decision | Preserve the choice and supersession |
@@ -28,6 +29,7 @@ A Contract can serve many Missions; completed Mission bindings remain historical
 flowchart LR
     Raw[Raw draft] -->|guides directly| Work[Authorized work]
     Plan[Durable plan] -->|guides directly| Work
+    Plan -->|extract reusable need| Requirement[Requirement]
     Plan -->|extract reusable behavior| Spec[Soft Spec]
     Plan -->|extract lasting explanation| Atlas[Atlas]
     Plan -->|preserve choice| Decision[Decision]
@@ -46,4 +48,4 @@ Do not relabel or move historical records to imitate the soft workflow. Raw has
 no promotion obligation and stays unpublished unless retention is explicitly changed.
 
 [Workspace navigation](workspace-navigation.md) ·
-[Domain overview](domain-overview.md) · [Planning work](../plans/durable-plan-mode.md)
+[Domain overview](domain-overview.md) · [Planning work](../archive/plans/durable-plan-mode.md)

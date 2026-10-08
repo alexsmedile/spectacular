@@ -12,7 +12,7 @@ project/
 │   └── reference/artifacts.md
 └── .spectacular/
     ├── PROJECT.md                     # purpose and current constraints
-    ├── VOCABULARY.md                  # domain objects and language
+    ├── ONTOLOGY.md                  # domain objects and language
     ├── INDEX.md                       # optional manual navigation
     ├── index.json                     # generated governed inventory
     ├── raw/
@@ -138,8 +138,8 @@ indexes, logs, and empty folders.
 Relative Markdown links resolve from the source file. Path-qualified wikilinks
 resolve from `.spectacular/`; use bare filenames only when unambiguous. Aliases
 and section links help readers. Agents repair incoming links on moves.
-`VOCABULARY.md` is preferred for new domain anchors; retain an existing
-`ONTOLOGY.md` when it owns that meaning instead of duplicating authority.
+`ONTOLOGY.md` is preferred for new domain anchors; retain an existing
+`VOCABULARY.md` when it owns that meaning instead of duplicating authority.
 
 Manual `INDEX.md` and generated `index.json` can coexist. Generated indexes cover
 governed records only and never overwrite authored Markdown. Legacy navigation
@@ -159,3 +159,27 @@ Optional metadata and file-link diagnostics use `check-knowledge.py` from the
 Skill and require Python 3.9+ with PyYAML. Findings guide cleanup; they do not enroll
 work in a Mission. The checker does not certify section anchors or governed
 bindings. Root `docs/` remains public product documentation, never a plan store.
+
+## Configuration and generated navigation
+
+Ordinary Markdown work needs no CLI or configuration. The current governed CLI
+requires workspace.yaml to locate records and the project Anchor. Optional
+config.yaml supplies supported overrides; omit it when built-in defaults suffice.
+YAML keeps those settings human-editable, consistent with record frontmatter.
+JSON serves generated data instead.
+
+Manual INDEX.md owns reading routes through current work, reusable knowledge, and
+history. Generated index.json inventories governed records only. Optional collection
+JSON files are filtered views of that same graph; none provides separate authority.
+Do not generate Markdown indexes or a second catalog.json cache.
+
+In this source repository, run `go run ./scripts/rebuild-workspace-index.go` to print
+the governed root inventory, or append --write to refresh it. This requires Go and
+the source checkout, adds no public CLI command, and preserves manual navigation.
+
+Read by task: optional INDEX → PROJECT → relevant Requirement → Spec → Plan,
+consulting Ontology, Atlas, Decisions, and guardrails as useful. Retire completed
+work under archive/, preserving governed provenance and bindings; completed plans
+and campaign inputs need not occupy live containers. Legacy imports can remain
+byte-preserved under archive/raw/ with no current authority. See the
+[naming and retirement guide](../skills/spectacular/references/navigation.md).

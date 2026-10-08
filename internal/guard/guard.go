@@ -39,7 +39,7 @@ type GuardResult struct {
 }
 
 // Run executes a command under perimeter supervision (post-flight watchdog or real-time watcher).
-func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd string, cmdArgs []string) (*GuardResult, error) {
+func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd string, cmdArgs []string, load charter.MissionLoader) (*GuardResult, error) {
 	if ws == nil {
 		return nil, errors.New("guard: workspace is nil")
 	}
@@ -49,7 +49,7 @@ func Run(ws *discovery.Workspace, targetRef string, watchMode bool, execCmd stri
 		return nil, domain.NewRefusal(domain.RefusalInvalidReference, targetRef, "expected <mission-ref>/<objective-ref> (e.g. M17/O1)", nil)
 	}
 
-	c, err := charter.Compile(ws, parts[0], parts[1], nil)
+	c, err := charter.Compile(ws, parts[0], parts[1], nil, load)
 	if err != nil {
 		return nil, fmt.Errorf("guard: compile charter: %w", err)
 	}

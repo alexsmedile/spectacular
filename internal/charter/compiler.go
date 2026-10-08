@@ -9,7 +9,7 @@ import (
 	"github.com/alexsmedile/spectacular/v2/internal/charter/tokenizer"
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
-	"github.com/alexsmedile/spectacular/v2/internal/missionbundle"
+	"github.com/alexsmedile/spectacular/v2/internal/missionview"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
 
@@ -18,15 +18,25 @@ var (
 	ErrRefusalOverCap    = errors.New("charter compiler: token count exceeds hard 1440 ceiling")
 )
 
+// MissionLoader supplies a detached read model; composition owns the decoder.
+type MissionLoader func(*discovery.Workspace, string) (*missionview.Mission, error)
+
 // Compile builds a read-only 3-layer Context Sandwich charter for the given Mission and Objective.
-func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, extraSources []string) (*Charter, error) {
+func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, extraSources []string, load MissionLoader) (*Charter, error) {
 	if ws == nil {
 		return nil, errors.New("charter compiler: workspace is nil")
 	}
 
-	bundle, err := missionbundle.Load(ws, missionRef)
+	if load == nil {
+		return nil, errors.New("charter compiler: mission loader is required")
+	}
+	bundle, err := load(ws, missionRef)
 	if err != nil {
 		return nil, fmt.Errorf("charter compiler: load mission %s: %w", missionRef, err)
+	}
+
+	if bundle == nil {
+		return nil, errors.New("charter compiler: mission loader returned nil")
 	}
 
 	missionEntry, err := ws.Lookup(missionRef, domain.Mission)
@@ -41,7 +51,7 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 		objKey = parts[len(parts)-1]
 	}
 
-	var targetObj *missionbundle.Objective
+	var targetObj *missionview.Objective
 	for i := range bundle.Objectives {
 		if bundle.Objectives[i].Ref == objKey || bundle.Objectives[i].ID == objKey {
 			targetObj = &bundle.Objectives[i]
@@ -53,17 +63,14 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 	}
 
 	// 1. Build Layer 1: Frozen Truth
-	baselineCommit := ""
-	if bundle.Baseline != nil {
-		baselineCommit = bundle.Baseline.Commit
-	}
+	baselineCommit := bundle.BaselineCommit
 
 	layer1 := Layer1{
 		ProjectAnchor: ws.Manifest.ProjectAnchor,
 		MissionRef:    bundle.Ref,
 		ObjectiveRef:  targetObj.Ref,
 		Outcome:       targetObj.Outcome,
-		ContractRef:   bundle.Contract.Ref,
+		ContractRef:   bundle.ContractRef,
 		GitBaseline:   baselineCommit,
 	}
 
@@ -90,7 +97,7 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 			missionSources = sources
 		}
 	}
-	orderedSources := declaredSourceRefs(bundle.Contract.Ref, missionSources, targetObj.Sources, extraSources)
+	orderedSources := declaredSourceRefs(bundle.ContractRef, missionSources, targetObj.Sources, extraSources)
 
 	// 3. Build Layer 2: Owner Steering & Layer 3: Perimeter
 	var boundSources []BoundSource
@@ -143,11 +150,11 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 	}
 
 	// Build Layer 3: Scope writable paths to objective-specific reservations if present
-	writesPaths := bundle.Scope.Mechanical
+	writesPaths := bundle.WritesPaths
 	for _, hPtr := range bundle.Handoffs {
-		if hPtr.Document != nil && len(hPtr.Document.Writes) > 0 {
-			if strings.Contains(hPtr.Document.Task, targetObj.Ref) || strings.Contains(hPtr.Document.Title, targetObj.Ref) {
-				writesPaths = hPtr.Document.Writes
+		if len(hPtr.Writes) > 0 {
+			if strings.Contains(hPtr.Task, targetObj.Ref) || strings.Contains(hPtr.Title, targetObj.Ref) {
+				writesPaths = hPtr.Writes
 				break
 			}
 		}
@@ -155,13 +162,11 @@ func Compile(ws *discovery.Workspace, missionRef string, objectiveRef string, ex
 
 	layer3 := Layer3{
 		WritesPaths:    writesPaths,
-		AllowedActions: bundle.Authority.Operator,
-		RequiresOwner:  bundle.Authority.RequiresOwner,
+		AllowedActions: bundle.AllowedActions,
+		RequiresOwner:  bundle.RequiresOwner,
 		Stops:          bundle.Stops,
 	}
-	if bundle.Replay != nil && bundle.Replay.Command != "" {
-		layer3.VerificationCommand = bundle.Replay.Command
-	}
+	layer3.VerificationCommand = bundle.VerificationCommand
 
 	c := &Charter{
 		SchemaVersion: SchemaVersion,

@@ -13,6 +13,21 @@ description: >-
 
 Transform domain entities into high-performance database schemas with explicit relational integrity and zero-downtime migration paths.
 
+## Ownership before schema
+
+Start from the existing module ownership and consistency decisions. For each
+data set, identify its authoritative writer, consumers, required transaction
+invariants, and whether reads need current truth, historical snapshots, or
+rebuildable projections. Consult `system-architecture` only when those boundaries
+are unresolved.
+
+Within one owner, use relational integrity and normalization as appropriate.
+Across owners, communicate through stable IDs and explicit APIs or events; a
+shared database or FK does not grant another module write authority. Explain
+cross-owner joins, deletes, and migration coordination. Snapshot history-sensitive
+values; define freshness and rebuild behavior for read projections. Do not split
+an invariant across stores merely to make the schema look modular.
+
 ## 3-Tier Modeling Workflow
 
 ```mermaid
@@ -52,6 +67,9 @@ flowchart LR
 
 ## DDL Schema Scaffold Pattern
 
+This example assumes one coordinated data owner. Reassess the FK and deletion
+policy when customers and orders have independently owned models.
+
 ```sql
 CREATE TABLE customers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -68,17 +86,26 @@ CREATE TABLE orders (
 CREATE INDEX idx_orders_customer_id ON orders(customer_id);
 ```
 
+## Gates for the selected increment
+
+Consult the applicable prompts in
+[Spectacular readiness](../spectacular/references/milestone-readiness.md) when
+planning a delivery or launch. Apply migration, historical-data, recovery, and compatibility gates when the
+increment introduces or changes persistent data. Scope proof to the actual engine,
+data, and exposure; do not require a database for every MVP.
+
 ## Expansion Handoffs
 
 | Out-of-Scope Need | Action / Delegate |
 |---|---|
 | Service boundaries, bounded contexts, C4 models | Invoke `system-architecture` companion skill |
 | UI/UX prototype with multiple data layout options | Invoke `rapid-prototyping` companion skill |
-| Governed multi-step rollout mission or contract | Invoke `spectacular` mission governance |
+| Executable ownership, compatibility, and rollback proof | Use `test-sentinel` with the relevant invariant |
+| Durable rollout plan or explicitly requested governance | Use `spectacular` ordinary plans; Mission governance only on owner opt-in |
 
 ## Core Invariants & Negative Constraints
 
 - **DO NOT leave relationships untyped or implicit.** Explicitly define `ON DELETE RESTRICT` (default) or `ON DELETE CASCADE` (dependent weak entities only).
-- **DO NOT allow unresolved M:N relations in physical DDL.** Always implement an associative junction table with composite `(a_id, b_id)` primary key.
+- **DO NOT allow unresolved M:N relations in physical DDL.** Use an associative table with explicit relationship uniqueness; choose a composite key or a surrogate key plus the appropriate unique constraint.
 - **DO NOT use local timezone timestamps.** Store all timestamps in UTC (`TIMESTAMPTZ` / ISO8601).
-- **DO NOT execute blocking table locks on live workloads.** Follow the 4-phase Expand/Contract pattern (Expand $\to$ Dual-Write $\to$ Switch Reads $\to$ Contract).
+- **DO NOT execute blocking table locks on live workloads.** Choose an engine-appropriate non-blocking rollout. Use Expand/Contract when needed; dual-write only with explicit ownership, reconciliation, and rollback.

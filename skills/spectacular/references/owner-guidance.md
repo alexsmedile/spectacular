@@ -37,7 +37,13 @@ For standard implementation choices strictly within authorized scope, state the 
 
 ### Tier 2: Structured Batch Cards (Numbered Questions + Lettered Options)
 
-For architectural forks, kickoff decisions, and campaign planning.
+For consequential architectural forks, kickoff decisions, and campaign planning.
+Ask only the choices needed for the next outcome; batch questions sharing the
+same gate, rather than collecting all future choices at kickoff. For a designer
+or other nontechnical owner, ask about workflow, privacy, simplicity and effects.
+Recommend engineering defaults within authorized scope with a plain-language
+consequence; reserve library/storage/queue option cards for choices the owner
+needs to make or explicitly requests.
 
 **Format Standard**:
 - **Questions are numbered** (`1.`, `2.`, `3.`)
@@ -105,7 +111,7 @@ Used when requirements are open-ended, highly unpredictable, or require rich mod
 
 ### Universal Rule: Unrestricted Natural Language Write-Ins
 
-Every structured question card explicitly accepts custom write-in answers. If the user provides a custom path (e.g. *"Actually use DynamoDB because our cloud account provides it"*), the agent accepts it gracefully, records the ruling in `spectacular decide`, and adjusts without friction.
+Every structured question card explicitly accepts custom write-in answers. If the user provides a custom path (e.g. *"Actually use DynamoDB because our cloud account provides it"*), the agent records it in the existing context owner and adjusts. Use `spectacular decide` only for an explicitly selected governed Decision; ordinary choices need no formal record.
 
 ---
 

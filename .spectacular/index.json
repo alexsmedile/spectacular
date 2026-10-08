@@ -1,0 +1,822 @@
+{
+  "type": "Index",
+  "version": "1.0",
+  "generated": true,
+  "scope": "governed-records",
+  "entries": [
+    {
+      "ref": "ARCHITECTURE",
+      "noun": "Anchor",
+      "title": "Architecture",
+      "path": ".spectacular/ARCHITECTURE.md"
+    },
+    {
+      "ref": "CC-missioncli",
+      "noun": "Contract",
+      "title": "Spectacular mechanical Mission CLI",
+      "path": ".spectacular/contracts/CC-missioncli-spectacular-mechanical-cli.md",
+      "status": "current"
+    },
+    {
+      "ref": "CC-projsurf",
+      "noun": "Contract",
+      "title": "Derived state and dependency shape",
+      "path": ".spectacular/contracts/CC-projsurf-derived-state-and-dependency-shape.md",
+      "status": "current"
+    },
+    {
+      "ref": "CC-v2prod",
+      "noun": "Contract",
+      "title": "Spectacular v2 product contract",
+      "path": ".spectacular/contracts/CC-v2prod-spectacular-v2-product.md",
+      "status": "current"
+    },
+    {
+      "ref": "D1-rnkfzw",
+      "noun": "Decision",
+      "title": "Authorize the v2.1 governed-autonomy Proposal",
+      "path": ".spectacular/decisions/D1-rnkfzw.md"
+    },
+    {
+      "ref": "D10-repoint",
+      "noun": "Decision",
+      "title": "Re-point only the live Mission; a completed Mission keeps the binding it agreed to",
+      "path": ".spectacular/decisions/D10-repoint.md"
+    },
+    {
+      "ref": "D11-proposal-retirement",
+      "noun": "Decision",
+      "title": "Retire an absorbed Proposal to the archive with a stated resolver",
+      "path": ".spectacular/decisions/D11-proposal-retirement.md"
+    },
+    {
+      "ref": "D12-isolation-and-context-compilation",
+      "noun": "Decision",
+      "title": "Adopt Git worktree isolation and bounded context-sandwich compilation for async execution",
+      "path": ".spectacular/decisions/D12-isolation-and-context-compilation.md"
+    },
+    {
+      "ref": "D13-preparation-judgment-gate",
+      "noun": "Decision",
+      "title": "Adopt light gate for Mission design sufficiency and slice coherence",
+      "path": ".spectacular/decisions/D13-preparation-judgment-gate.md"
+    },
+    {
+      "ref": "D14-preflight-discovery-caching",
+      "noun": "Decision",
+      "title": "Enable fast-path session preflight caching bounded by Git tree SHA",
+      "path": ".spectacular/decisions/D14-preflight-discovery-caching.md"
+    },
+    {
+      "ref": "D15-branch-guardrail-at-activation",
+      "noun": "Decision",
+      "title": "Enforce automatic branch and worktree guardrails at Mission activation",
+      "path": ".spectacular/decisions/D15-branch-guardrail-at-activation.md"
+    },
+    {
+      "ref": "D16-auto-prune-merged-worktrees",
+      "noun": "Decision",
+      "title": "Prune background execution worktrees automatically upon Evidence merge",
+      "path": ".spectacular/decisions/D16-auto-prune-merged-worktrees.md"
+    },
+    {
+      "ref": "D17-objective-scoped-runs-and-concurrency",
+      "noun": "Decision",
+      "title": "Scope Runs to Objectives and govern concurrency by reservations",
+      "path": ".spectacular/decisions/D17-objective-scoped-runs-and-concurrency.md"
+    },
+    {
+      "ref": "D18-inspect-native-git-at-mission-start",
+      "noun": "Decision",
+      "title": "Inspect native Git state at Mission start without owning Git effects",
+      "path": ".spectacular/decisions/D18-inspect-native-git-at-mission-start.md"
+    },
+    {
+      "ref": "D19-confirm-cleanup-at-mission-closure",
+      "noun": "Decision",
+      "title": "Propose verified Git cleanup and confirm it at Mission closure",
+      "path": ".spectacular/decisions/D19-confirm-cleanup-at-mission-closure.md"
+    },
+    {
+      "ref": "D2-435ztz",
+      "noun": "Decision",
+      "title": "Authorize the v2.1 governed-autonomy Mission",
+      "path": ".spectacular/decisions/D2-435ztz.md"
+    },
+    {
+      "ref": "D20-use-live-charter-retrieval-without-a-persistent-cache",
+      "noun": "Decision",
+      "title": "Compile charters from live governance without a persistent cache",
+      "path": ".spectacular/decisions/D20-use-live-charter-retrieval-without-a-persistent-cache.md"
+    },
+    {
+      "ref": "D21-context-sandwich-execution-gates",
+      "noun": "Decision",
+      "title": "Preserve proof gates while staging the context-sandwich command surface",
+      "path": ".spectacular/decisions/D21-context-sandwich-execution-gates.md"
+    },
+    {
+      "ref": "D22-transition-state-machine-and-tokenizer",
+      "noun": "Decision",
+      "title": "Run transition state machine and charter tokenizer specification",
+      "path": ".spectacular/decisions/D22-transition-state-machine-and-tokenizer.md"
+    },
+    {
+      "ref": "D23-workspace-entities-type-and-schema",
+      "noun": "Decision",
+      "title": "Identify workspace entities with type and version them with schema",
+      "path": ".spectacular/decisions/D23-workspace-entities-type-and-schema.md"
+    },
+    {
+      "ref": "D24-schema-field-mechanically-governs-frontmatter",
+      "noun": "Decision",
+      "title": "A schema field means Spectacular mechanically governs the frontmatter",
+      "path": ".spectacular/decisions/D24-schema-field-mechanically-governs-frontmatter.md"
+    },
+    {
+      "ref": "D25-vocabulary-canonical-domain-ontology-anchor",
+      "noun": "Decision",
+      "title": "Make VOCABULARY.md the canonical domain ontology Anchor",
+      "path": ".spectacular/decisions/D25-vocabulary-canonical-domain-ontology-anchor.md"
+    },
+    {
+      "ref": "D26-atlas-domain-maps-non-governing-visual-projections",
+      "noun": "Decision",
+      "title": "Use Atlas domain maps as non-governing visual projections",
+      "path": ".spectacular/decisions/D26-atlas-domain-maps-non-governing-visual-projections.md"
+    },
+    {
+      "ref": "D27-ontology-impact-explicit-in-planning",
+      "noun": "Decision",
+      "title": "Make ontology impact explicit in planning without adding a Mission field",
+      "path": ".spectacular/decisions/D27-ontology-impact-explicit-in-planning.md"
+    },
+    {
+      "ref": "D28-dynamic-operating-dial-and-anchors",
+      "noun": "Decision",
+      "title": "Codify the Dynamic Operating Dial, 5 Foundational Anchors, and Tiered Verification Protocol",
+      "path": ".spectacular/decisions/D28-dynamic-operating-dial-and-anchors.md"
+    },
+    {
+      "ref": "D29-banned-synonyms-pattern-pass-and-guardrail-feedback-loop",
+      "noun": "Decision",
+      "title": "Codify Banned Synonyms Invariant, Architectural Pattern Pass, and Post-Mission Guardrail Feedback Loop",
+      "path": ".spectacular/decisions/D29-banned-synonyms-pattern-pass-and-guardrail-feedback-loop.md"
+    },
+    {
+      "ref": "D3-4hrlrf",
+      "noun": "Decision",
+      "title": "Authorize the Spectacular efficiency Proposal",
+      "path": ".spectacular/decisions/D3-4hrlrf.md"
+    },
+    {
+      "ref": "D30-gated-pipeline-work-boards-and-graduated-orchestration",
+      "noun": "Decision",
+      "title": "Adopt Gated Pipeline Orchestration, Non-Governing Work Boards, and Graduated Governance",
+      "path": ".spectacular/decisions/D30-gated-pipeline-work-boards-and-graduated-orchestration.md"
+    },
+    {
+      "ref": "D31-use-ontology-consolidate-retired-workspa",
+      "noun": "Decision",
+      "title": "Use ONTOLOGY and consolidate retired workspace records",
+      "path": ".spectacular/decisions/D31-use-ontology-consolidate-retired-workspa.md"
+    },
+    {
+      "ref": "D4-xg7z3u",
+      "noun": "Decision",
+      "title": "Authorize the Spectacular efficiency Mission",
+      "path": ".spectacular/decisions/D4-xg7z3u.md"
+    },
+    {
+      "ref": "D5-i3mhkm",
+      "noun": "Decision",
+      "title": "Authorize the Spectacular efficiency Mission",
+      "path": ".spectacular/decisions/D5-i3mhkm.md"
+    },
+    {
+      "ref": "D6-5e3xke",
+      "noun": "Decision",
+      "title": "Authorize M3 implementation Evidence",
+      "path": ".spectacular/decisions/D6-5e3xke.md"
+    },
+    {
+      "ref": "D7-cgsri6",
+      "noun": "Decision",
+      "title": "Authorize the lean control-plane Proposal",
+      "path": ".spectacular/decisions/D7-cgsri6.md"
+    },
+    {
+      "ref": "D8-qhjurh",
+      "noun": "Decision",
+      "title": "Authorize the lean control-plane Mission",
+      "path": ".spectacular/decisions/D8-qhjurh.md"
+    },
+    {
+      "ref": "D9-amendcmd",
+      "noun": "Decision",
+      "title": "Amend a Contract through its own command, not through Mission completion",
+      "path": ".spectacular/decisions/D9-amendcmd.md"
+    },
+    {
+      "ref": "M1",
+      "noun": "Mission",
+      "title": "Restore human-operable workspace",
+      "path": ".spectacular/archive/missions/M1-human-operability/M1-human-operability.md",
+      "status": "resolved"
+    },
+    {
+      "ref": "M1/A1-nolpc6",
+      "noun": "Assessment",
+      "title": "RC.2 human-operability assessment",
+      "path": ".spectacular/archive/missions/M1-human-operability/assessments/A1-nolpc6.md",
+      "status": "recorded"
+    },
+    {
+      "ref": "M1/D1-t5to5d",
+      "noun": "Decision",
+      "title": "Continue the bounded human-operability repair",
+      "path": ".spectacular/archive/missions/M1-human-operability/decisions/D1-t5to5d.md",
+      "status": "superseded"
+    },
+    {
+      "ref": "M1/D2-ds7nnm",
+      "noun": "Decision",
+      "title": "Accept the verified RC.2 candidate",
+      "path": ".spectacular/archive/missions/M1-human-operability/decisions/D2-ds7nnm.md"
+    },
+    {
+      "ref": "M1/D3-fl3qcg",
+      "noun": "Decision",
+      "title": "Archive the completed RC.2 Mission",
+      "path": ".spectacular/archive/missions/M1-human-operability/decisions/D3-fl3qcg.md"
+    },
+    {
+      "ref": "M1/E1-t2lylz",
+      "noun": "Evidence",
+      "title": "Human-operability implementation proof",
+      "path": ".spectacular/archive/missions/M1-human-operability/evidence/E1-t2lylz.md",
+      "status": "recorded"
+    },
+    {
+      "ref": "M1/G1-3sk7lb",
+      "noun": "Gap",
+      "title": "Owner disposition on the human-operable RC.2 candidate",
+      "path": ".spectacular/archive/missions/M1-human-operability/gaps/G1-3sk7lb.md"
+    },
+    {
+      "ref": "M1/O1",
+      "noun": "Objective",
+      "title": "Implement readable workspace and interface",
+      "path": ".spectacular/archive/missions/M1-human-operability/objectives/O1-implement-readable-workspace.md",
+      "status": "satisfied"
+    },
+    {
+      "ref": "M1/R1",
+      "noun": "Run",
+      "title": "Implement human workspace layout",
+      "path": ".spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/R1-implement-layout.md",
+      "status": "returned"
+    },
+    {
+      "ref": "M1/R1/C1",
+      "noun": "Checkpoint",
+      "title": "Human-operability candidate ready for owner review",
+      "path": ".spectacular/archive/missions/M1-human-operability/runs/R1-implement-layout/checkpoints/C1-layout-in-progress.md",
+      "status": "final-review-ready"
+    },
+    {
+      "ref": "M10",
+      "noun": "Mission",
+      "title": "Make a resolved Gap closable and a declared check real",
+      "path": ".spectacular/archive/missions/M10-superseded-by-d9/M10-superseded-by-d9.md",
+      "status": "resolved"
+    },
+    {
+      "ref": "M11",
+      "noun": "Mission",
+      "title": "Make a resolved Gap closable and a declared check real",
+      "path": ".spectacular/archive/missions/M11-make-a-resolved-gap-closable-and-a-declared-check-real/M11-make-a-resolved-gap-closable-and-a-declared-check-real.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M11/RV1",
+      "noun": "Review",
+      "title": "Independent review of M11 gap closure, declared check resolution, contract amend command, and versioning",
+      "path": ".spectacular/archive/missions/M11-make-a-resolved-gap-closable-and-a-declared-check-real/reviews/RV1-independent-review-of-m11-gap-closure-declared-check-resolution-contract-amend-command-and-versioning.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M12",
+      "noun": "Mission",
+      "title": "Make a handoff a record and a record path one system",
+      "path": ".spectacular/archive/missions/M12-make-a-handoff-a-record-and-a-record-path-one-system/M12-make-a-handoff-a-record-and-a-record-path-one-system.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M12/RV1",
+      "noun": "Review",
+      "title": "Independent review of M12",
+      "path": ".spectacular/archive/missions/M12-make-a-handoff-a-record-and-a-record-path-one-system/reviews/RV1-independent-review-of-m12.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M13",
+      "noun": "Mission",
+      "title": "Modernize CI/CD pipeline, security scanning, and release automation",
+      "path": ".spectacular/archive/missions/M13-modernize-ci-cd-pipeline-security-scanning-and-release-automation/M13-modernize-ci-cd-pipeline-security-scanning-and-release-automation.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M13/RV1",
+      "noun": "Review",
+      "title": "Independent review of M13 CI/CD pipeline and release automation",
+      "path": ".spectacular/archive/missions/M13-modernize-ci-cd-pipeline-security-scanning-and-release-automation/reviews/RV1-independent-review-of-m13-ci-cd-pipeline-and-release-automation.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M14",
+      "noun": "Mission",
+      "title": "Build the Spectacular effectiveness benchmark suite",
+      "path": ".spectacular/archive/missions/M14-build-the-spectacular-effectiveness-benchmark-suite/M14-build-the-spectacular-effectiveness-benchmark-suite.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M14/RV1",
+      "noun": "Review",
+      "title": "Independent review of the Spectacular effectiveness benchmark suite",
+      "path": ".spectacular/archive/missions/M14-build-the-spectacular-effectiveness-benchmark-suite/reviews/RV1-independent-review-of-the-spectacular-effectiveness-benchmark-suite.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M14/RV2",
+      "noun": "Review",
+      "title": "Independent review of hardened benchmark validity and mode frontier",
+      "path": ".spectacular/archive/missions/M14-build-the-spectacular-effectiveness-benchmark-suite/reviews/RV2-independent-review-of-hardened-benchmark-validity-and-mode-frontier.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M15",
+      "noun": "Mission",
+      "title": "Reconcile P11 governance and Contract baselines",
+      "path": ".spectacular/archive/missions/M15-reconcile-p11-governance-and-contract-baselines/M15-reconcile-p11-governance-and-contract-baselines.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M15/RV1",
+      "noun": "Review",
+      "title": "Independent review of M15 governance and contract baseline reconciliation",
+      "path": ".spectacular/archive/missions/M15-reconcile-p11-governance-and-contract-baselines/reviews/RV1-independent-review-of-m15-governance-and-contract-baseline-reconciliation.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M16",
+      "noun": "Mission",
+      "title": "Build and benchmark the bounded charter engine",
+      "path": ".spectacular/archive/missions/M16-build-and-benchmark-the-bounded-charter-engine/M16-build-and-benchmark-the-bounded-charter-engine.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M16/RV1",
+      "noun": "Review",
+      "title": "Independent review of M16 charter compiler and effectiveness benchmark proof",
+      "path": ".spectacular/archive/missions/M16-build-and-benchmark-the-bounded-charter-engine/reviews/RV1-independent-review-of-m16-charter-compiler-and-effectiveness-benchmark-proof.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M17",
+      "noun": "Mission",
+      "title": "Expose charter and atomic Decision recording",
+      "path": ".spectacular/archive/missions/M17-expose-charter-and-atomic-decision-recording/M17-expose-charter-and-atomic-decision-recording.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M17/RV1",
+      "noun": "Review",
+      "title": "Independent review of M17 charter and atomic decision recording surface",
+      "path": ".spectacular/archive/missions/M17-expose-charter-and-atomic-decision-recording/reviews/RV1-independent-review-of-m17-charter-and-atomic-decision-recording-surface.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M18",
+      "noun": "Mission",
+      "title": "Introduce the Objective-scoped Run lifecycle",
+      "path": ".spectacular/archive/missions/M18-introduce-the-objective-scoped-run-lifecycle/M18-introduce-the-objective-scoped-run-lifecycle.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M18/RV1",
+      "noun": "Review",
+      "title": "Independent review of M18 objective-scoped run lifecycle and transitions",
+      "path": ".spectacular/archive/missions/M18-introduce-the-objective-scoped-run-lifecycle/reviews/RV1-independent-review-of-m18-objective-scoped-run-lifecycle-and-transitions.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M19",
+      "noun": "Mission",
+      "title": "Enforce disjoint write reservations and Handoff validation",
+      "path": ".spectacular/archive/missions/M19-enforce-disjoint-write-reservations-and-handoff-validation/M19-enforce-disjoint-write-reservations-and-handoff-validation.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M19/RV1",
+      "noun": "Review",
+      "title": "Independent review of M19 disjoint write reservations and dependency locks",
+      "path": ".spectacular/archive/missions/M19-enforce-disjoint-write-reservations-and-handoff-validation/reviews/RV1-independent-review-of-m19-disjoint-write-reservations-and-dependency-locks.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M2",
+      "noun": "Mission",
+      "title": "Implement answer-key governed autonomy",
+      "path": ".spectacular/archive/missions/M2-implement-answer-key-governed-autonomy/M2-implement-answer-key-governed-autonomy.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M2/D1-znlkfe",
+      "noun": "Decision",
+      "title": "Activate the v2.1 governed-autonomy Mission",
+      "path": ".spectacular/archive/missions/M2-implement-answer-key-governed-autonomy/decisions/D1-znlkfe.md"
+    },
+    {
+      "ref": "M2/O1",
+      "noun": "Objective",
+      "title": "Preparation compiles and freezes minimal completion criteria with explicit readiness diagnostics.",
+      "path": ".spectacular/archive/missions/M2-implement-answer-key-governed-autonomy/objectives/O1-preparation-compiles-and-freezes-minimal-completion-criteria-with-explicit-readiness-diagnostics.md",
+      "status": "implemented"
+    },
+    {
+      "ref": "M2/O2",
+      "noun": "Objective",
+      "title": "Evidence closure applies automatic, clustered, or independent review according to each frozen criterion.",
+      "path": ".spectacular/archive/missions/M2-implement-answer-key-governed-autonomy/objectives/O2-evidence-closure-applies-automatic-clustered-or-independent-review-according-to-each-frozen-criterion.md",
+      "status": "implemented"
+    },
+    {
+      "ref": "M2/O3",
+      "noun": "Objective",
+      "title": "Objective dependencies and Handoffs support cohesive, disjoint runner claim scopes and explicit returns.",
+      "path": ".spectacular/archive/missions/M2-implement-answer-key-governed-autonomy/objectives/O3-objective-dependencies-and-handoffs-support-cohesive-disjoint-runner-claim-scopes-and-explicit-returns.md",
+      "status": "implemented"
+    },
+    {
+      "ref": "M2/O4",
+      "noun": "Objective",
+      "title": "Autopilot resource limits disclose hard, observed, or unsupported enforcement and reject false hard guarantees.",
+      "path": ".spectacular/archive/missions/M2-implement-answer-key-governed-autonomy/objectives/O4-autopilot-resource-limits-disclose-hard-observed-or-unsupported-enforcement-and-reject-false-hard-guarantees.md",
+      "status": "implemented"
+    },
+    {
+      "ref": "M2/R1",
+      "noun": "Run",
+      "title": "Initial governed Run",
+      "path": ".spectacular/archive/missions/M2-implement-answer-key-governed-autonomy/runs/R1-initial-governed-run/R1-initial-governed-run.md",
+      "status": "closed"
+    },
+    {
+      "ref": "M20",
+      "noun": "Mission",
+      "title": "Record basic clustered Evidence",
+      "path": ".spectacular/archive/missions/M20-record-basic-clustered-evidence/M20-record-basic-clustered-evidence.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M20/RV1",
+      "noun": "Review",
+      "title": "Independent review of M20 basic clustered evidence recording and surface-18",
+      "path": ".spectacular/archive/missions/M20-record-basic-clustered-evidence/reviews/RV1-independent-review-of-m20-basic-clustered-evidence-recording-and-surface-18.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M21",
+      "noun": "Mission",
+      "title": "Measure and harden scope guardrails",
+      "path": ".spectacular/archive/missions/M21-measure-and-harden-scope-guardrails/M21-measure-and-harden-scope-guardrails.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M21/RV1",
+      "noun": "Review",
+      "title": "Independent review of M21 measured scope hardening and final campaign regression",
+      "path": ".spectacular/archive/missions/M21-measure-and-harden-scope-guardrails/reviews/RV1-independent-review-of-m21-measured-scope-hardening-and-final-campaign-regression.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M22",
+      "noun": "Mission",
+      "title": "Repair Context Sandwich steering invariants",
+      "path": ".spectacular/archive/missions/M22-repair-context-sandwich-steering-invariants/M22-repair-context-sandwich-steering-invariants.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M22/RV1",
+      "noun": "Review",
+      "title": "Independent review of M22 repaired Context Sandwich steering invariants",
+      "path": ".spectacular/archive/missions/M22-repair-context-sandwich-steering-invariants/reviews/RV1-independent-review-of-m22-repaired-context-sandwich-steering-invariants.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M3",
+      "noun": "Mission",
+      "title": "Make Spectacular launch and execution lean",
+      "path": ".spectacular/archive/missions/M3-make-spectacular-launch-and-execution-lean/M3-make-spectacular-launch-and-execution-lean.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M3/D1-deldrh",
+      "noun": "Decision",
+      "title": "Activate the Spectacular efficiency Mission",
+      "path": ".spectacular/archive/missions/M3-make-spectacular-launch-and-execution-lean/decisions/D1-deldrh.md"
+    },
+    {
+      "ref": "M3/E1-npnuyp",
+      "noun": "Evidence",
+      "title": "Lean launch and question contract proof",
+      "path": ".spectacular/archive/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E1-npnuyp.md"
+    },
+    {
+      "ref": "M3/E2-7nclqi",
+      "noun": "Evidence",
+      "title": "Progressive context proof",
+      "path": ".spectacular/archive/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E2-7nclqi.md"
+    },
+    {
+      "ref": "M3/E3-ravzes",
+      "noun": "Evidence",
+      "title": "Reconstructible CLI recovery proof",
+      "path": ".spectacular/archive/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E3-ravzes.md"
+    },
+    {
+      "ref": "M3/E4-6oodeg",
+      "noun": "Evidence",
+      "title": "Lean execution and FROST proof",
+      "path": ".spectacular/archive/missions/M3-make-spectacular-launch-and-execution-lean/evidence/E4-6oodeg.md"
+    },
+    {
+      "ref": "M3/O1",
+      "noun": "Objective",
+      "title": "Launch guidance performs the approved preflight and asks dual-layer decision questions.",
+      "path": ".spectacular/archive/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O1-launch-guidance-performs-the-approved-preflight-and-asks-dual-layer-decision-questions.md",
+      "status": "implemented"
+    },
+    {
+      "ref": "M3/O2",
+      "noun": "Objective",
+      "title": "Context supports compact cards with progressive authoritative drill-down.",
+      "path": ".spectacular/archive/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O2-context-supports-compact-cards-with-progressive-authoritative-drill-down.md",
+      "status": "implemented"
+    },
+    {
+      "ref": "M3/O3",
+      "noun": "Objective",
+      "title": "Common CLI mistakes have intuitive aliases or runnable corrective refusals.",
+      "path": ".spectacular/archive/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O3-common-cli-mistakes-have-intuitive-aliases-or-runnable-corrective-refusals.md",
+      "status": "implemented"
+    },
+    {
+      "ref": "M3/O4",
+      "noun": "Objective",
+      "title": "Lean cluster, local commit, schema continuity, and FROST review guidance is explicit.",
+      "path": ".spectacular/archive/missions/M3-make-spectacular-launch-and-execution-lean/objectives/O4-lean-cluster-local-commit-schema-continuity-and-frost-review-guidance-is-explicit.md",
+      "status": "implemented"
+    },
+    {
+      "ref": "M3/R1",
+      "noun": "Run",
+      "title": "Initial governed Run",
+      "path": ".spectacular/archive/missions/M3-make-spectacular-launch-and-execution-lean/runs/R1-initial-governed-run/R1-initial-governed-run.md",
+      "status": "closed"
+    },
+    {
+      "ref": "M4",
+      "noun": "Mission",
+      "title": "Make Spectacular control operations lean",
+      "path": ".spectacular/archive/missions/M4-make-spectacular-control-operations-lean/M4-make-spectacular-control-operations-lean.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M4/D1-mfcxne",
+      "noun": "Decision",
+      "title": "Activate the lean control-plane Mission",
+      "path": ".spectacular/archive/missions/M4-make-spectacular-control-operations-lean/decisions/D1-mfcxne.md"
+    },
+    {
+      "ref": "M4/O1",
+      "noun": "Objective",
+      "title": "Compact-first policy and minimal verification are canonical.",
+      "path": ".spectacular/archive/missions/M4-make-spectacular-control-operations-lean/objectives/O1-compact-first-policy-and-minimal-verification-are-canonical.md",
+      "status": "implemented"
+    },
+    {
+      "ref": "M4/O2",
+      "noun": "Objective",
+      "title": "Creation commands support stdin, automatic IDs, and atomic batches.",
+      "path": ".spectacular/archive/missions/M4-make-spectacular-control-operations-lean/objectives/O2-creation-commands-support-stdin-automatic-ids-and-atomic-batches.md",
+      "status": "implemented"
+    },
+    {
+      "ref": "M4/O3",
+      "noun": "Objective",
+      "title": "Decision validation and compact Mission progress are immediate and atomic.",
+      "path": ".spectacular/archive/missions/M4-make-spectacular-control-operations-lean/objectives/O3-decision-validation-and-compact-mission-progress-are-immediate-and-atomic.md",
+      "status": "implemented"
+    },
+    {
+      "ref": "M4/R1",
+      "noun": "Run",
+      "title": "Initial governed Run",
+      "path": ".spectacular/archive/missions/M4-make-spectacular-control-operations-lean/runs/R1-initial-governed-run/R1-initial-governed-run.md",
+      "status": "closed"
+    },
+    {
+      "ref": "M5",
+      "noun": "Mission",
+      "title": "Align the Spectacular Skill with compact Missions",
+      "path": ".spectacular/archive/missions/M5-implement-compact-expandable-missions/M5-implement-compact-expandable-missions.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M5/RV1",
+      "noun": "Review",
+      "title": "M5 independent completion review",
+      "path": ".spectacular/archive/missions/M5-implement-compact-expandable-missions/reviews/RV1-independent-review.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M6",
+      "noun": "Mission",
+      "title": "Implement the compact Mission CLI",
+      "path": ".spectacular/archive/missions/M6-implement-compact-mission-cli/M6-implement-compact-mission-cli.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M6/RV1",
+      "noun": "Review",
+      "title": "M6 independent completion review",
+      "path": ".spectacular/archive/missions/M6-implement-compact-mission-cli/reviews/RV1-m6-independent-completion-review.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M7",
+      "noun": "Mission",
+      "title": "Render derived state and validate the Proposal record",
+      "path": ".spectacular/archive/missions/M7-render-derived-state-and-validate-the-proposal-record/M7-render-derived-state-and-validate-the-proposal-record.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M7/RV1",
+      "noun": "Review",
+      "title": "Clustered review of M7 derived state, drift, authority, equivalence, and Proposal schema",
+      "path": ".spectacular/archive/missions/M7-render-derived-state-and-validate-the-proposal-record/reviews/RV1-clustered-review-of-m7-derived-state-drift-authority-equivalence-and-proposal-schema.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M8",
+      "noun": "Mission",
+      "title": "Freeze the schema and record what was asked for",
+      "path": ".spectacular/archive/missions/M8-freeze-the-schema-and-record-what-was-asked-for/M8-freeze-the-schema-and-record-what-was-asked-for.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M8/RV1",
+      "noun": "Review",
+      "title": "Independent review of M8 frozen schema, request fidelity, edge kinds, fallbacks, and mission order",
+      "path": ".spectacular/archive/missions/M8-freeze-the-schema-and-record-what-was-asked-for/reviews/RV1-independent-review-of-m8-frozen-schema-request-fidelity-edge-kinds-fallbacks-and-mission-order.md",
+      "status": "passed"
+    },
+    {
+      "ref": "M9",
+      "noun": "Mission",
+      "title": "Remove dead v1 surface and close the deferred cleanup ask",
+      "path": ".spectacular/archive/missions/M9-remove-dead-v1-surface-and-close-the-deferred-cleanup-ask/M9-remove-dead-v1-surface-and-close-the-deferred-cleanup-ask.md",
+      "status": "completed"
+    },
+    {
+      "ref": "M9/RV1",
+      "noun": "Review",
+      "title": "Independent review of M9 v1 surface removal, next-action review integration, working-tree accounting, and gap sweep",
+      "path": ".spectacular/archive/missions/M9-remove-dead-v1-surface-and-close-the-deferred-cleanup-ask/reviews/RV1-independent-review-of-m9-v1-surface-removal-next-action-review-integration-working-tree-accounting-and-gap-sweep.md",
+      "status": "passed"
+    },
+    {
+      "ref": "ONTOLOGY",
+      "noun": "Anchor",
+      "title": "Domain ontology and ubiquitous language",
+      "path": ".spectacular/ONTOLOGY.md"
+    },
+    {
+      "ref": "P1",
+      "noun": "Proposal",
+      "title": "Repair v2 human operability",
+      "path": ".spectacular/archive/proposals/P1-human-operability.md",
+      "status": "accepted"
+    },
+    {
+      "ref": "P10",
+      "noun": "Proposal",
+      "title": "Preparation judgment checkpoint",
+      "path": ".spectacular/proposals/P10-preparation-judgment-checkpoint.md",
+      "status": "draft"
+    },
+    {
+      "ref": "P11",
+      "noun": "Proposal",
+      "title": "Context-sandwich compilation and decision steering protocol",
+      "path": ".spectacular/archive/proposals/P11-context-sandwich-compilation-and-decision-steering-protocol.md",
+      "status": "accepted"
+    },
+    {
+      "ref": "P12",
+      "noun": "Proposal",
+      "title": "Owner interaction design for decision presentation and anti-slop execution",
+      "path": ".spectacular/proposals/P12-owner-interaction-design.md",
+      "status": "draft"
+    },
+    {
+      "ref": "P13",
+      "noun": "Proposal",
+      "title": "Ontology anchors and visual domain maps",
+      "path": ".spectacular/archive/proposals/P13-ontology-anchors-and-visual-domain-maps.md",
+      "status": "accepted"
+    },
+    {
+      "ref": "P2",
+      "noun": "Proposal",
+      "title": "Add answer-key governed autonomy",
+      "path": ".spectacular/archive/proposals/P2-add-answer-key-governed-autonomy.md",
+      "status": "accepted"
+    },
+    {
+      "ref": "P3",
+      "noun": "Proposal",
+      "title": "Reduce Spectacular launch and execution waste",
+      "path": ".spectacular/archive/proposals/P3-reduce-spectacular-launch-and-execution-waste.md",
+      "status": "accepted"
+    },
+    {
+      "ref": "P4",
+      "noun": "Proposal",
+      "title": "Make Spectacular control operations lean",
+      "path": ".spectacular/archive/proposals/P4-make-spectacular-control-operations-lean.md",
+      "status": "accepted"
+    },
+    {
+      "ref": "P5",
+      "noun": "Proposal",
+      "title": "Reduce repeated cost and brittle paths",
+      "path": ".spectacular/proposals/P5-reduce-repeated-cost-and-brittle-paths.md",
+      "status": "draft"
+    },
+    {
+      "ref": "P6",
+      "noun": "Proposal",
+      "title": "Condense projection surfaces",
+      "path": ".spectacular/archive/proposals/P6-condense-projection-surfaces.md",
+      "status": "accepted"
+    },
+    {
+      "ref": "P7",
+      "noun": "Proposal",
+      "title": "Amend a signed record without breaking it",
+      "path": ".spectacular/archive/proposals/P7-amend-a-signed-record-without-breaking-it.md",
+      "status": "accepted"
+    },
+    {
+      "ref": "P8",
+      "noun": "Proposal",
+      "title": "Add mechanical Git branch guardrails to mission start",
+      "path": ".spectacular/archive/proposals/P8-cli-git-branch-guardrail.md",
+      "status": "accepted"
+    },
+    {
+      "ref": "P9",
+      "noun": "Proposal",
+      "title": "Frozen Handoff records",
+      "path": ".spectacular/archive/proposals/P9-frozen-handoff-records.md",
+      "status": "accepted"
+    },
+    {
+      "ref": "PRODUCT",
+      "noun": "Anchor",
+      "title": "Product direction",
+      "path": ".spectacular/PRODUCT.md"
+    },
+    {
+      "ref": "PROJECT",
+      "noun": "Anchor",
+      "title": "Spectacular durable context",
+      "path": ".spectacular/PROJECT.md"
+    },
+    {
+      "ref": "ROADMAP",
+      "noun": "Anchor",
+      "title": "Strategic product roadmap and horizons",
+      "path": ".spectacular/ROADMAP.md"
+    },
+    {
+      "ref": "STACK",
+      "noun": "Anchor",
+      "title": "Stack",
+      "path": ".spectacular/STACK.md"
+    }
+  ]
+}

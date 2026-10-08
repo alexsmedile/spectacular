@@ -2,7 +2,7 @@
 type: Anchor
 id: 019fe381-5d61-7223-b362-03a5f99a7b13
 title: Spectacular durable context
-updated: '2026-10-07T18:47:06Z'
+updated: '2026-10-07T20:05:13Z'
 boundaries:
 - Spectacular v3 is the live product; the Go module and mechanical schemas retain
   v2 identities.
@@ -35,38 +35,41 @@ freshness_valid_until: '2027-08-10T00:00:00Z'
 human_ref: PROJECT
 last_closed_mission: Mission:019fe381-5d61-7223-b362-03a5f99a7b02
 created: '2026-08-10T21:14:12+02:00'
-version: '0.2'
+version: '0.3'
 ---
-
 # Spectacular: durable context
 
-This Anchor states current direction and boundaries. Ordinary work starts from
-small linked context; a named Mission is an explicitly selected execution option.
-Historical Contract and Mission records preserve their existing mechanical rules.
+Keep needs, domain objects, relationships, choices, and delivery plans in small
+linked files. A named Mission is an explicitly selected execution option.
 
 ## Current workflow
 
-- Work directly from anchors, raw drafts, Atlas, Decisions, or plans.
-- Use the [planning route](../skills/spectacular/references/plan.md) to keep the
-  project copy in plans/ while respecting native host plan-mode restrictions.
-- Prefer one retrievable object, question, or outcome per file, often 50–120 lines.
-  Split by domain, module, phase, tranche, or independent lifetime and link the parts.
-- Extract optional specs/ or audits/ only when they have independent readers.
-- Keep root docs/ as independently managed public product documentation.
+- Start from [entry points](INDEX.md), then read relevant linked context only.
+- [Ontology](ONTOLOGY.md) owns domain meanings; requirements/ owns reusable needs,
+  specs/ owns behavior, and plans/ owns delivery and results.
+- Use the [planning route](../skills/spectacular/references/plan.md), respecting
+  native host restrictions and storing the project copy in plans/ when allowed.
+- Prefer one useful concern per file; split by domain, module, phase, tranche,
+  meaning, or lifetime. Use raw freely and create optional folders only as needed.
+- Root docs/ is independently managed product documentation.
 
-## Navigation
+## Current maintenance
 
-[Entry points](INDEX.md) · [Vocabulary](VOCABULARY.md) ·
-[Workspace navigation](atlas/workspace-navigation.md) ·
-[Current planning work](plans/durable-plan-mode.md)
+[Workspace cleanup](plans/workspace-layout-cleanup.md) records the current patch.
+Prior v3 delivery plans and the completed campaign are retained under archive/.
+Generated [index.json](index.json) inventories governed records only; the manual
+INDEX.md owns reading routes for current context and historical work.
 
 ## Compatibility and authority
 
-Product v3 retains the v2 Go module and mechanical schema identities. UUIDs and
-fingerprints belong to governed records; soft context needs only its folder
-metadata agreement. Contracts retain validation and the amendment/version pipeline.
-No folder, file type, or inferred risk activates a Mission.
+Product v3 retains the v2 Go module and mechanical schemas. UUIDs and fingerprints
+remain governed identities. Contracts retain validation and amendment/version
+rules; completed Mission bindings are preserved during archival.
 
-Completed Missions, historical Decisions, and bound Contracts are preserved.
-The current initializer still creates the broader governed layout. The 26-command
-CLI catalog has no binary plan command; planning is a Skill route.
+The governed CLI requires workspace.yaml for discovery. Ordinary work does not.
+Optional config.yaml overrides built-in defaults; this repository needs no copy
+of those defaults. Naming and navigation guidance lives in the
+[Skill reference](../skills/spectacular/references/navigation.md).
+
+The owner selected ONTOLOGY.md and archive consolidation in D31, superseding
+D25's naming choice. Historical Decisions and accepted Contracts are preserved.

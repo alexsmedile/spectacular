@@ -9,7 +9,7 @@ description: >-
   "supervised dispatch", "handoff", "mission check", or "complete mission".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
-  version: "3.1.0"
+  version: "3.2.0"
 ---
 
 # Spectacular
@@ -27,9 +27,12 @@ bounded Mission only when the owner explicitly selects governed execution.
 - **Ordinary work (default)**: Read [knowledge.md](references/knowledge.md) when
   placing, maintaining, or working from workspace documents. Use its compact
   metadata default; minimal is valid, extended fields are earned, and raw is free.
-  Follow relevant
-  anchors and links, do the authorized work, verify the actual change, and return
-  its outcome. No startup CLI/version check, initialization, Mission, formal
+  Follow the task-sized reading route in [navigation.md](references/navigation.md)
+  when useful: optional INDEX → PROJECT → relevant Requirement → Spec → Plan,
+  consulting Ontology, Atlas, and Decisions as needed. Follow relevant links, do the authorized work, verify the actual change, and return
+  its outcome. For multi-step delivery, use the milestone and batch guidance in
+  [plan.md](references/plan.md); continue through the authorized batch and
+  reconcile its existing document owners before returning. No startup CLI/version check, initialization, Mission, formal
   Decision, branch, commit, or completion record is required by this route.
   An unrelated live or stale Mission does not enroll the task. Finish this route
   here; the governed procedures below do not apply.
@@ -80,7 +83,7 @@ Spectacular prioritizes execution over ceremony. Governance is managed strictly 
 
 ### The 5 Foundational Anchors
 1. **Boundaries & Non-Goals**: `PROJECT.md` (`boundaries:`, `constraints:`).
-2. **Ontology**: `VOCABULARY.md` (domain entities, relationships, and vocabulary; use an existing `ONTOLOGY.md` without duplicating its authority).
+2. **Ontology**: `ONTOLOGY.md` (domain entities, relationships, and vocabulary; use an existing `VOCABULARY.md` without duplicating its authority).
 3. **Invariants & Failure Modes**: `GUARDRAILS.md` & `AGENTS.md` (Non-negotiable safety rules).
 4. **Data Structures & Schemas**: Project-specific types/schemas in the codebase (cited in `contracts/`).
 5. **State Machines & Lifecycles**: Non-governing visual Mermaid diagrams in `.spectacular/atlas/`.
@@ -94,7 +97,9 @@ Answers: *"What governs this slice of work?"*
 
 ### Gated Waves & Operating Dial
 - **Gated Waves (Sequential by Default)**: Stay sequential in the Lead session unless tasks have separate inputs, disjoint write scopes, and locked upstream interface contracts. Parallel side sessions are earned only after an interface gate passes.
-- **"Returned ≠ Done"**: Side workers return code, diffs, and test receipts; only the Lead Orchestrator integrates branches and runs project-wide verification.
+- **Prerequisite vs Parallel Tracks**: Explicitly distinguish in campaign DAGs between *Blocking Prerequisites* (hard gates required before downstream waves, e.g. `blocks: [Wave X]`) and *Orthogonal Parallel Tracks* (disjoint write scopes running concurrently with zero file collisions).
+- **Core-First Gate (Multi-Package / Shared Core)**: In modular or shared-engine architectures (e.g. shared headless core + client applications), changes to the shared engine/contracts must pass independent verification before dependent consumer workers begin downstream integration.
+- **"Returned ≠ Done"**: Side workers return code, diffs, and structured JSON receipts; only the Lead Orchestrator integrates branches and runs project-wide verification.
 - **`mode: leverage` (Default)**: High autonomy; test suite passing (`exit 0`) + clean diff is primary proof.
 - **`mode: control`**: High-precision mode for irreversible cutovers (auth, payments, DB migrations) requiring formal reviews and Evidence.
 - **Minimal Drafts (Zero YAML Boilerplate)**: Prefer direct CLI flags (`spectacular decide --title ...`) or 3-line plans; the CLI auto-populates metadata.
@@ -119,10 +124,15 @@ For a requested governed CLI operation, invoke `spectacular --version --json` an
 | Role | Responsibility | Context Spine | Output |
 |---|---|---|---|
 | **Lead (Orchestrator)** | Owns workspace truth, decisions (`decide`), & activation | `PROJECT.md` → Phase Ref | Next action or Owner Gate |
-| **Worker / Side Session** | Executes code & tests in `linked-worktree`; **ignores governance** | Dispatch Brief ($\le 1200$ tok) | Return Receipt + Git diff |
+| **Worker / Side Session** | Executes code & tests in `linked-worktree`; **ignores governance** | Dispatch Brief ($\le 1200$ tok) | Structured Return Receipt + Git diff |
 | **Reviewer** | Inspects code against frozen claims (**Observe ≠ Act**) | Frozen claims → Diff | Structured verdict (`pass`/`fail`) |
 
 - **Physical Workspaces**: `lead-checkout` (Lead/sequential), `linked-worktree` (`.worktrees/<slug>`), `sandbox` (disposable container/spike), `read-only` (reviewer).
+- **Worktree Pre-warming & Bootstrapping**: Before dispatching a worker to `.worktrees/<slug>`, the Lead Orchestrator must pre-warm runtime dependencies (symlinking shared `node_modules`, bootstrapping ignored sandbox configurations/`.env` files, compiling C/C++ native bindings) so the worker executes in an initialized environment.
+- **Structured JSON Return Receipt**: Workers must conclude their handoff with a standard JSON return block:
+  ```json
+  { "slug": "<slug>", "status": "ready_for_review" | "blocked", "test_exit_code": 0, "modified_files": ["..."], "uncovered_risks": [], "diff_stat": "+NN -NN" }
+  ```
 - **Escalation Gate**: When a worker hits an architectural fork, it stops immediately. The Orchestrator records the choice via `spectacular decide` (`D<N>.md`) and resumes the worker.
 - **Workers Never Edit Governance**: Subagents never create `checkpoints/`, `runs/`, or `missions/`.
 - **Channel Separation**: Git is for durable truth (`PROJECT.md`, `decisions/`, `missions/`). Host channels are for ephemeral live coordination (`invoke_subagent`, `send_message`, `conversation://<id>`).

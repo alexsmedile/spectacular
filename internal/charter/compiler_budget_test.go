@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
+	"github.com/alexsmedile/spectacular/v2/internal/missionbundle"
 )
 
 // The threshold helper has its own table test. This checks the integration
@@ -18,7 +19,7 @@ func TestCompileRefusesWhenConfiguredHardCapIsExceeded(t *testing.T) {
 	ws.Config.TokenBudgets.Charter.Target = 1
 	ws.Config.TokenBudgets.Charter.HardCap = 1
 
-	_, err = Compile(ws, "M18", "O1", nil)
+	_, err = Compile(ws, "M18", "O1", nil, missionbundle.ReadView)
 	if err == nil {
 		t.Fatal("Compile succeeded despite exceeding the configured hard cap")
 	}

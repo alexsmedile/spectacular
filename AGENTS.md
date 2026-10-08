@@ -31,10 +31,13 @@ reported by the CLI.
 Folder-specific agreements live in `skills/spectacular/knowledge-folders.yaml`.
 Outside raw/sketch/scratchpad, maintained documents require metadata appropriate
 to those agreements. Raw has no metadata, naming, or promotion obligations.
-Prefer VOCABULARY.md for new domain-model anchors; retain an existing ONTOLOGY.md
+Prefer ONTOLOGY.md for new domain-model anchors; retain an existing VOCABULARY.md
 without duplicating its authority or rewriting historical bindings. Manual INDEX.md
 and generated index.json are both valid; do not overwrite manual navigation
-with generated output. Plans go in `.spectacular/plans/`, sketches in the existing
+with generated output. Naming, reading routes, configuration roles, and retirement
+live in skills/spectacular/references/navigation.md. Use archive/ as the retirement
+home; retain completed bundles and resolved Proposals with their provenance.
+Plans go in `.spectacular/plans/`, sketches in the existing
 scratchpad-role folder, never in product `docs/`.
 
 The directory does not activate governance. The user must explicitly select
@@ -44,7 +47,8 @@ freeze, and archival rules. Soft Decisions use descriptive unnumbered filenames
 without governed identity or schema claims; historical numbered Decisions remain
 governed. Mechanical validation is recommended for Decisions, not obligatory.
 Contracts retain their mechanical validation, amendment, and version pipeline.
-This operative policy replaces D23/D24's restriction on consulting raw
+The owner selected ONTOLOGY.md in D31, superseding D25's naming choice while
+preserving historical identities and Decisions. This operative policy replaces D23/D24's restriction on consulting raw
 material and requiring all Decisions to be governed, while retaining D24's
 schema-honesty rule. Historical Decisions remain unchanged.
 

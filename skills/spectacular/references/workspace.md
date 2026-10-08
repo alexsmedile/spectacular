@@ -43,6 +43,9 @@ under plans only when it has an independent reader; a governed Handoff instead
 uses the supported `handoff record` path. Audit observations and a governed Review
 are different artifacts: record the latter only when that workflow is requested.
 
+For naming, task-sized reading routes, configuration and inventory roles, and
+retirement guidance, see [navigation.md](navigation.md).
+
 ## Example of an active project
 
 These names illustrate placement, not templates or records to manufacture.
@@ -53,7 +56,7 @@ project/
 │   └── guides/release.md
 └── .spectacular/
     ├── PROJECT.md
-    ├── VOCABULARY.md
+    ├── ONTOLOGY.md
     ├── INDEX.md                  # optional manual routes
     ├── index.json                # generated governed inventory only
     ├── raw/release-sketch.md

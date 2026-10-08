@@ -6,7 +6,9 @@ authorized work from a raw draft or plan without opting into a Mission.
 ## Work from the relevant context
 
 Read the relevant anchors and nearby documents, follow useful links, then act.
-An index may help navigation; load only the portion needed. Finish when the
+Follow the task-sized reading route in [navigation.md](navigation.md): optional
+INDEX → PROJECT → relevant Requirement → Spec → Plan, consulting Ontology, Atlas,
+and Decisions when useful. Load only relevant linked context. Finish when the
 requested outcome is verified and relevant durable knowledge is updated.
 No CLI, manifest, governed lifecycle, or formal record is needed for this route.
 Spectacular maintains durable context as navigable OKF objects and relationships.
@@ -32,8 +34,8 @@ pageworks; Spectacular does not manage its structure or use it as a plan store.
 Raw, sketch, and scratchpad name the same role across tools. Use the established
 one rather than creating three copies; all are outside knowledge obligations.
 
-VOCABULARY.md is the preferred domain-model anchor name. Read an existing
-ONTOLOGY.md when it owns that model; do not create a duplicate authority or
+ONTOLOGY.md is the preferred domain-model anchor name. Read an existing
+VOCABULARY.md when it owns that model; do not create a duplicate authority or
 rename historical bindings casually. A manual INDEX.md and generated index.json
 are both valid navigation aids. Keep authored content out of generated indexes.
 

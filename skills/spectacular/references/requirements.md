@@ -29,9 +29,26 @@ unknowns, or dependencies only when they help. These are drafting prompts, not
 mandatory sections or mechanically validated body fields. Distinguish proposed
 needs from accepted constraints; agents do not invent stakeholder acceptance.
 
+Resolve product choices progressively: ask the few questions needed for the
+next usable outcome, using the owner’s language and concrete consequences.
+Carry accepted constraints forward. Recommend reversible technical defaults
+within scope and explain their effect; do not ask a nontechnical owner to choose
+a database, queue, or protocol library without a product consequence requiring
+their judgment. Defer provider, privacy, irreversible-effect, and publication
+choices until their gate, while continuing independent authorized work.
+
 Use descriptive filenames such as guest-purchase.md. Group by domain only when
 several files justify it. Prefer roughly 50–120 lines; link shared constraints
 instead of repeating them. Preserve creation dates and evolve the same file.
+
+## Acceptance and value hypotheses
+
+When a requirement affects launch or MVP acceptance, consult
+[milestone-readiness.md](milestone-readiness.md). Distinguish observable behavior
+and integrity constraints from the value hypothesis to be tested with users.
+State the audience/environment and consequence of omission for Must requirements;
+keep proposed thresholds distinct from accepted ones. Link delivery gates in the
+plan rather than duplicating their state here.
 
 ## Connect needs to delivery
 

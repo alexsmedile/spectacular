@@ -30,5 +30,5 @@ method file, or bulk migration is introduced.
 - Planning and prototyping can consult optional skeleton and anatomy guidance.
 - Product docs show the container and its distinction from specs and plans.
 
-[Delivery plan](../plans/linked-requirements-and-drafting.md) records verification.
+[Delivery plan](../archive/plans/linked-requirements-and-drafting.md) records verification.
 [Runtime guide](../../skills/spectacular/references/requirements.md) owns usage.

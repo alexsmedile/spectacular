@@ -42,7 +42,9 @@ Always maintain the 4-field decision ledger at the start of every exploration ro
    only when an optional skeleton or anatomy helps. Keep observations in the
    owning plan or draft; create no extra method or proof file by default.
    Identify the single open axis, fidelity level, locked constraints, and 2–3
-   success signals.
+   success signals. Bound the round by the question, effort limit and decision
+   it unlocks. Close with selection/integration, rejection, or reasoned deferral
+   and a revisit condition; justify further rounds with missing evidence.
 2. **Generate 3 tracer fragments (A, B, C):** Produce three distinct, concrete options spanning the trade-off space.
 3. **Present the matrix:** Display the options side-by-side with clear differentiators.
 4. **Transition upon feedback:**
@@ -52,15 +54,27 @@ Always maintain the 4-field decision ledger at the start of every exploration ro
    - `S` : Step down to a simpler fidelity level to settle a prerequisite.
    - `F` : Finalize the selected fragment into the target codebase.
 
+## Exploration versus delivery and value
+
+For MVP or launch experiments, consult
+[Spectacular readiness](../spectacular/references/milestone-readiness.md). A spike
+closes uncertainty with a decision; a walking skeleton exercises an integrated
+workflow; value validation observes the intended users against a stated hypothesis
+and threshold. Report which result the fragment actually proves. A selected mock
+or Level 5 integration does not itself establish product acceptance or authorize
+release. Record supported, contradicted, or inconclusive evidence in the existing
+plan, with a bounded next action when needed.
+
 ## Expansion Handoffs
 
 | Out-of-Scope Need | Action / Delegate |
 |---|---|
 | Bounded contexts, C4 architecture, ADR documentation | Invoke `system-architecture` companion skill |
 | Database schema design, Crow's Foot ERD, DDL migration | Invoke `data-modeling` companion skill |
-| Mission governance, flight plans, verification receipts | Invoke `spectacular` mission governance |
+| Durable exploration context or explicitly requested governance | Use the existing Spectacular plan/draft; Mission governance requires owner opt-in |
 
 ## Core Invariants & Negative Constraints
 
 - **DO NOT mutate production code before Level 5 integration.** Keep candidate fragments isolated or disposable until final lineage is uniquely approved.
 - **DO NOT present options without explicit decision axes.** Every matrix round must isolate exactly one open axis.
+- **Early UX evidence:** Disposable labels, mockups and flow trials may precede a working service to test language and simplicity. Mark simulated behavior. Level 5 integrates the selected UI with the functioning service; neither mockups nor backend tests establish usability acceptance. Do not postpone all UX research merely because service work comes first.

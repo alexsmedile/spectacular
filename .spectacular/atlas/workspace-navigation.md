@@ -1,9 +1,9 @@
 ---
 type: Atlas
 title: Workspace navigation and durable planning
-version: '0.3'
+version: '0.4'
 created: '2026-10-07T18:42:01Z'
-updated: "2026-10-07T19:26:45Z"
+updated: '2026-10-07T20:07:46Z'
 ---
 
 # Workspace navigation
@@ -16,12 +16,12 @@ For a realistic active-project example, see the [container guide](../../skills/s
 | Need | Actual home in this repository |
 |---|---|
 | Current direction | [PROJECT.md](../PROJECT.md) |
-| Domain meanings | [VOCABULARY.md](../VOCABULARY.md) |
-| Planning this change | [durable-plan-mode.md](../plans/durable-plan-mode.md) |
-| Earlier implementation and results | [knowledge-first-optional-governance.md](../plans/knowledge-first-optional-governance.md) |
+| Domain meanings | [ONTOLOGY.md](../ONTOLOGY.md) |
+| Planning this change | [workspace-layout-cleanup.md](../plans/workspace-layout-cleanup.md) |
+| Earlier implementation and results | [knowledge-first-optional-governance.md](../archive/plans/knowledge-first-optional-governance.md) |
 | Lasting relationships | [domain-overview.md](domain-overview.md) |
 | Accepted mechanical agreements | contracts/CC-*.md; existing version/amendment rules |
-| Formal historical execution | missions/M*-*/M*-*.md and Mission-owned records |
+| Formal historical execution | archive/missions/M*-*/M*-*.md and Mission-owned records |
 | Public product guidance | [docs/README.md](../../docs/README.md) |
 
 ## Metadata profiles
@@ -54,6 +54,8 @@ can use optional audits/ with type Audit, inspected revision, scope, findings,
 basis, and limitations. A governed Review, Evidence, or Handoff follows the path
 reported by its command, normally inside its owning Mission bundle.
 
-This repository does not need empty requirements/, specs/, or audits/ folders to illustrate those
-roles. Frozen historical records remain in place; manual INDEX.md links current
-knowledge while generated index.json inventories cover governed records only.
+Create requirements/, specs/, or audits/ only for useful content. This repository
+has one retained Requirement and no need for empty specs/ or audits/. Frozen
+execution lives under archive/; manual INDEX.md links current context while generated
+index.json inventories governed records. Configuration and filename conventions
+live in the [navigation reference](../../skills/spectacular/references/navigation.md).

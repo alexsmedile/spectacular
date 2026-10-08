@@ -692,8 +692,18 @@ func fileInScope(path string, allowed []string) bool {
 
 func validateLayout(ws *discovery.Workspace, b *Bundle) error {
 	base := filepath.Base(b.Path)
-	if !strings.HasPrefix(filepath.ToSlash(b.Path), ".spectacular/missions/") || !strings.HasPrefix(base, b.Ref+"-") || !strings.HasSuffix(base, ".md") {
-		return invalid("path", "Mission entry point must be .spectacular/missions/<bundle>/<ref>-<slug>.md")
+	path := filepath.ToSlash(b.Path)
+	live := strings.HasPrefix(path, ".spectacular/missions/")
+	archived := strings.HasPrefix(path, ".spectacular/archive/missions/")
+	if archived {
+		terminal := b.Status == "completed" || b.Status == "resolved" || b.Status == "superseded" || b.Status == "withdrawn"
+		parts := strings.Split(path, "/")
+		if !terminal || len(parts) != 5 || path != filepath.ToSlash(filepath.Clean(b.Path)) || !strings.HasPrefix(parts[3], b.Ref+"-") {
+			return invalid("path", "only terminal Missions may use canonical archive/missions/<bundle>/<ref>-<slug>.md paths")
+		}
+	}
+	if (!live && !archived) || !strings.HasPrefix(base, b.Ref+"-") || !strings.HasSuffix(base, ".md") {
+		return invalid("path", "Mission entry point must be .spectacular/[archive/]missions/<bundle>/<ref>-<slug>.md")
 	}
 	if _, err := os.Lstat(filepath.Join(ws.Root, filepath.FromSlash(b.Path))); err != nil {
 		return invalidCause("path", "Mission entry point is unavailable", err)

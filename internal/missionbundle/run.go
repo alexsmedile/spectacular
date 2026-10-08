@@ -6,17 +6,9 @@ import (
 	"strings"
 
 	"github.com/alexsmedile/spectacular/v2/internal/domain"
+	"github.com/alexsmedile/spectacular/v2/internal/runpolicy"
 	"github.com/alexsmedile/spectacular/v2/internal/workspace"
 )
-
-var validRunTransitions = map[string][]string{
-	"active":          {"paused", "blocked", "awaiting-review", "completed", "stopped"},
-	"paused":          {"active", "blocked", "stopped"},
-	"blocked":         {"active", "stopped"},
-	"awaiting-review": {"active", "completed", "stopped"},
-	"completed":       {}, // terminal
-	"stopped":         {}, // terminal
-}
 
 type TransitionResult struct {
 	Operation string   `json:"operation"`
@@ -29,21 +21,7 @@ type TransitionResult struct {
 	Changed   []string `json:"changed"`
 }
 
-func ValidateTransition(from, to string) error {
-	allowed, ok := validRunTransitions[from]
-	if !ok {
-		return domain.NewRefusal(domain.RefusalInvalidTransition, "status", fmt.Sprintf("unknown origin run state %q", from), nil)
-	}
-	for _, a := range allowed {
-		if a == to {
-			return nil
-		}
-	}
-	if len(allowed) == 0 {
-		return domain.NewRefusal(domain.RefusalInvalidTransition, "status", fmt.Sprintf("state %q is terminal and cannot transition to %q", from, to), nil)
-	}
-	return domain.NewRefusal(domain.RefusalInvalidTransition, "status", fmt.Sprintf("illegal transition from %q to %q (allowed: %s)", from, to, strings.Join(allowed, ", ")), nil)
-}
+func ValidateTransition(from, to string) error { return runpolicy.ValidateTransition(from, to) }
 
 func (s Service) TransitionRun(targetRef, toState, actor, reason, nextAction string) (TransitionResult, error) {
 	if strings.TrimSpace(actor) == "" {

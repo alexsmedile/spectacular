@@ -19,7 +19,7 @@ func TestCompilePreservesFrozenMissionTruth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	charter, err := Compile(ws, "M18", "O1", nil)
+	charter, err := Compile(ws, "M18", "O1", nil, missionbundle.ReadView)
 	if err != nil {
 		t.Fatal(err)
 	}

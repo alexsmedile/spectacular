@@ -1,8 +1,8 @@
 ---
 type: Anchor
-version: "0.2"
-created: "2026-08-10T21:14:12+02:00"
-updated: "2026-10-07T18:47:06Z"
+version: '0.3'
+created: '2026-08-10T21:14:12+02:00'
+updated: '2026-10-07T20:07:46Z'
 ---
 
 # Spectacular project guardrails
@@ -20,7 +20,7 @@ updated: "2026-10-07T18:47:06Z"
 - Do not add v1 compatibility, generic record/search commands, an authoritative projection, or a second product root.
 
 ## @Alignment & Domain Ontology
-- All domain actions and entity states must adhere strictly to canonical terms defined in `VOCABULARY.md`. Using Banned Synonyms is an invariant violation.
+- All domain actions and entity states must adhere strictly to canonical terms defined in `ONTOLOGY.md`. Using Banned Synonyms is an invariant violation.
 - Missions must state explicit `Ontology impact` during preparation (D27).
 
 ## @Architecture & Pattern Discipline

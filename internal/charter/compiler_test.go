@@ -6,6 +6,7 @@ import (
 
 	"github.com/alexsmedile/spectacular/v2/internal/charter/tokenizer"
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
+	"github.com/alexsmedile/spectacular/v2/internal/missionbundle"
 )
 
 func TestCompiler_CompileM16(t *testing.T) {
@@ -14,7 +15,7 @@ func TestCompiler_CompileM16(t *testing.T) {
 		t.Fatalf("discovery.Open failed: %v", err)
 	}
 
-	charter, err := Compile(ws, "M16", "O1", []string{"D12-isolation-and-context-compilation", "D21-context-sandwich-execution-gates"})
+	charter, err := Compile(ws, "M16", "O1", []string{"D12-isolation-and-context-compilation", "D21-context-sandwich-execution-gates"}, missionbundle.ReadView)
 	if err != nil {
 		t.Fatalf("Compile failed: %v", err)
 	}
@@ -62,7 +63,7 @@ func TestCompiler_DeduplicationPreservesOrder(t *testing.T) {
 		"D12-isolation-and-context-compilation", // Duplicate
 	}
 
-	charter, err := Compile(ws, "M16", "O1", sources)
+	charter, err := Compile(ws, "M16", "O1", sources, missionbundle.ReadView)
 	if err != nil {
 		t.Fatalf("Compile failed: %v", err)
 	}
@@ -92,7 +93,7 @@ func TestCompiler_SafeCompactionPreservesClaims(t *testing.T) {
 		"D12-isolation-and-context-compilation",
 		"D20-use-live-charter-retrieval-without-a-persistent-cache",
 		"D21-context-sandwich-execution-gates",
-	})
+	}, missionbundle.ReadView)
 	if err != nil {
 		t.Fatalf("Compile failed: %v", err)
 	}

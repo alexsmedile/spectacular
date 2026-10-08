@@ -1,0 +1,116 @@
+{
+  "module": "github.com/alexsmedile/spectacular/v2",
+  "packages": {
+    "buildinfo": {
+      "internal": []
+    },
+    "campaign": {
+      "internal": [
+        "discovery",
+        "domain"
+      ]
+    },
+    "charter": {
+      "internal": [
+        "charter/tokenizer",
+        "discovery",
+        "domain",
+        "missionview",
+        "workspace"
+      ]
+    },
+    "charter/tokenizer": {
+      "internal": []
+    },
+    "command": {
+      "internal": [
+        "campaign",
+        "charter",
+        "charter/tokenizer",
+        "discovery",
+        "domain",
+        "governance",
+        "guard",
+        "missionbundle",
+        "selfupdate"
+      ]
+    },
+    "discovery": {
+      "internal": [
+        "domain",
+        "workspace"
+      ]
+    },
+    "domain": {
+      "internal": [],
+      "external": [
+        "errors",
+        "fmt",
+        "github.com/google/uuid",
+        "strings",
+        "time"
+      ]
+    },
+    "governance": {
+      "internal": [
+        "domain"
+      ]
+    },
+    "guard": {
+      "internal": [
+        "charter",
+        "discovery",
+        "domain"
+      ]
+    },
+    "humanlayout": {
+      "internal": [
+        "discovery",
+        "domain",
+        "workspace"
+      ]
+    },
+    "missionbundle": {
+      "internal": [
+        "discovery",
+        "domain",
+        "governance",
+        "humanlayout",
+        "missionview",
+        "runpolicy",
+        "workspace"
+      ]
+    },
+    "missionview": {
+      "internal": [],
+      "external": []
+    },
+    "runpolicy": {
+      "internal": [
+        "domain"
+      ],
+      "external": [
+        "fmt",
+        "strings"
+      ]
+    },
+    "runtime": {
+      "internal": [
+        "domain"
+      ]
+    },
+    "selfupdate": {
+      "internal": [
+        "buildinfo"
+      ]
+    },
+    "workspace": {
+      "internal": [
+        "domain"
+      ]
+    },
+    "worktree": {
+      "internal": []
+    }
+  }
+}

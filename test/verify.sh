@@ -224,8 +224,18 @@ preflight_tier1() {
   else
     # Default to the live Mission: the highest-numbered one in missions/.
     # PREFLIGHT_MISSION_REF pins a specific ref; PREFLIGHT_ALL_MISSIONS=1 sweeps all.
-    local candidates
-    candidates="$(find "$repo_root/.spectacular/missions" -mindepth 1 -maxdepth 1 -type d 2>/dev/null \
+    local candidates roots=()
+    if [[ -d "$repo_root/.spectacular/missions" ]]; then
+      roots+=("$repo_root/.spectacular/missions")
+    fi
+    if [[ "${PREFLIGHT_ALL_MISSIONS:-0}" == "1" && -d "$repo_root/.spectacular/archive/missions" ]]; then
+      roots+=("$repo_root/.spectacular/archive/missions")
+    fi
+    # Ordinary work may have no live Mission container after retirement.
+    if [[ ${#roots[@]} -eq 0 ]]; then
+      return
+    fi
+    candidates="$(find "${roots[@]}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null \
       | while IFS= read -r dir; do basename "$dir" | cut -d- -f1; done \
       | sed -n 's/^M\([0-9][0-9]*\)$/\1/p' | sort -n)"
     if [[ -z "$candidates" ]]; then
@@ -326,13 +336,14 @@ static_checks() {
   preflight_checks >/dev/null
   manifest_checks
   security_checks
+  check architecture-boundaries go run ./scripts/check-architecture
   check go-mod-verify go mod verify
   check knowledge-diagnostics python3 -m unittest discover -s test/context
 }
 
 quick_checks() {
   static_checks
-  check focused-go-test go test ./cmd/... ./install/... ./internal/...
+  check focused-go-test go test ./cmd/... ./install/... ./internal/... ./scripts/check-architecture
 }
 
 acceptance_checks() {

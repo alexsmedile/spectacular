@@ -27,13 +27,13 @@ Make architecture decisions traceable to business outcomes, measurable quality a
 ## Core Workflow Steps
 
 1. **Frame the problem:** Business outcomes, actors, system boundaries, constraints, non-goals, measurable quality scenarios.
-2. **Model domain & ownership:** Capabilities, bounded contexts, invariants, authoritative owners (distinguish logical vs deployment).
+2. **Model domain & ownership:** Capabilities, bounded contexts, invariants, authoritative owners (distinguish logical vs deployment). For module design/review, apply the [module boundary review](references/architecture-method.md#module-boundary-review); distinguish declared, implemented, and verified boundaries.
 3. **Compare system shapes:** Evaluate simplest viable shapes against ranked drivers (delivery, operational cost, failure modes).
 4. **Trace runtime behavior:** Happy path + failure modes (timeouts, retries, idempotency, backpressure, degraded modes, recovery).
 5. **Design data ownership:** Transaction boundaries, consistency semantics, authoritative writers.
 6. **Design operations & security:** Trust boundaries, IAM, secrets, encryption, observability, capacity, deployment, disaster recovery.
 7. **Record decisions & uncertainty:** ADR capturing chosen option, drivers, consequences, confidence, and open validation questions.
-8. **Plan evolution:** Thin delivery slices with backward compatibility, rollback steps, and verified acceptance gates.
+8. **Plan evolution:** Thin delivery slices with backward compatibility, rollback steps, and verified acceptance gates. End a delivery design with the minimum path to the first real workflow, its dependencies and actual authorization boundaries; distinguish technical feasibility from usable-product acceptance.
 
 ## C4 Abstraction Levels & Quick Pattern
 
@@ -54,13 +54,38 @@ flowchart LR
     customer -->|"HTTPS"| web -->|"JSON/HTTPS"| api -->|"SQL/TLS"| db
 ```
 
+## Module responsibilities and evidence
+
+For each material module, identify its reason to change, owned data and writers,
+public operations/read views, hidden details, allowed dependency direction,
+external effects, and transaction invariants. Attach an executable check or state
+that enforcement is absent. Keep shared types minimal; use consumer-defined ports
+where they remove a concrete dependency. Preserve coordinated transactions even
+when implementations move into separate files. File size is a signal, not proof
+of a failed boundary.
+
+Use existing project owners and artifacts. Pass only the relevant boundary facts
+to companion skills; do not duplicate their procedures or load the whole family.
+Software interface contracts do not activate governed Spectacular Contracts or
+Missions.
+
+## Delivery prerequisites
+
+For substantial delivery or launch design, consult the relevant prompts in
+[Spectacular readiness](../spectacular/references/milestone-readiness.md). Classify
+prerequisites by first workflow, real exposure, and wider distribution; explain
+the failure each prevents. Choose the simplest integrated path. Do not infer auth,
+queues, multi-region infrastructure, or deployment gates from an MVP label.
+
 ## Expansion Handoffs
 
 | Out-of-Scope Need | Action / Delegate |
 |---|---|
+| Executable dependency, isolation, compatibility, and transaction proof | Use `test-sentinel` with the boundary and expected refusal |
+| Typed operations across module or external interfaces | Use `action-contracts` with the owner, consumers, and effects |
 | Physical DDL, ER diagrams, indexing, zero-downtime migrations | Invoke `data-modeling` companion skill |
 | 3-option tracer spike on ambiguous UI/architecture variants | Invoke `rapid-prototyping` companion skill |
-| Mission tracking, contracts, receipts, and flight plans | Invoke `spectacular` mission governance |
+| Durable delivery context or explicitly requested governance | Use `spectacular` ordinary plans by default; Mission procedures only on owner opt-in |
 
 ## Core Invariants & Negative Constraints
 

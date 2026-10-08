@@ -15,13 +15,13 @@ A production test suite divides verification into distinct operational tiers. Lo
   /         \    Tier 1: Pure Unit Tests (in-memory logic, zero I/O, domain invariants)
  /-----------\   [Default budget: ≤ 5s]
 /             \  Tier 0: Preflight Static Sanity (linting, secret scan, git untracked check)
----------------  [HARD GATE: ≤ 1s]
+---------------  [Measured project budget; 1s is an initial target]
 ```
 
-### Tier 0: Preflight Static Sanity (Hard Invariant: $\le 1$ Second)
-- **Goal**: Fail in under 1,000 milliseconds before any compiler, test runner, or heavy container spins up.
+### Tier 0: Preflight Static Sanity (Measured Project Budget)
+- **Goal**: Reject known syntax, policy, or contract failures before expensive downstream verification. Measure the actual runner and use the repository's budget.
 - **Scope**: Syntax checking, formatting, linters (fast pass), secret leak scan (`gitleaks`), untracked working tree sanity.
-- **Rule**: **This is a hard gate**. If a workspace is dirty or syntax is broken, no downstream tier runs.
+- **Rule**: A failed required preflight blocks heavier tiers. Dirty state alone is not a failure: preserve user changes and classify new files according to repository policy.
 
 ### Tier 1: Pure In-Memory Unit Tests (Default: $\le 5$ Seconds)
 - **Goal**: Instant feedback loop during development.
@@ -42,9 +42,9 @@ A production test suite divides verification into distinct operational tiers. Lo
 
 > [!IMPORTANT]
 > **Hard vs Configurable Gates**:
-> - **Tier 0 ($\le 1$s)** is a **hard gate**. Preflight must remain sub-second regardless of codebase size.
+> - **Tier 0 success** is a prerequisite when the repository requires it. Its latency target is measured and configurable; do not weaken checks to force a sub-second result.
 > - **Tiers 1–3 latency numbers are defaults for modular services**. In large monolithic repositories (e.g. 5,000+ unit tests), enforce budgets per-package or per-module rather than artificially dropping test coverage to meet a global timer.
-> - Overrides should be declared in repository configuration (e.g. `test/config.yaml` or project Makefile).
+> - Use existing repository configuration or the verification driver for budgets. Do not create a configuration file solely to satisfy this example.
 
 ---
 
@@ -54,6 +54,6 @@ A production test suite divides verification into distinct operational tiers. Lo
 |---|---|---|---|---|---|
 | **Tier 0** (Preflight) | `golangci-lint run --fast`, `gitleaks` | `eslint --max-warnings 0`, `biome check` | `ruff check`, `ruff format --check` | `cargo check`, `cargo clippy -- -D warnings` | `verify.sh preflight` |
 | **Tier 1** (Unit) | `go test ./internal/... -short` | `vitest run --testPathIgnorePatterns integration` | `pytest -m "not integration" -q` | `cargo test --lib` | `verify.sh quick` |
-| **Tier 2** (Hardened) | `go test -race ./...` | `vitest run --testPathPattern integration` | `pytest -m integration` | `cargo test --tests` | `verify.sh quick` (or heavy) |
+| **Tier 2** (Hardened) | `go test -race ./...` | `vitest run --testPathPattern integration` | `pytest -m integration` | `cargo test --tests` | Project-selected hardened/race gate |
 | **Tier 3** (Acceptance) | End-to-end fixture tests against built binary | Playwright smoke, CLI subprocess tests | `pytest -m acceptance` | `cargo test --test cli_e2e` | `verify.sh acceptance` |
 | **Tier 4** (Matrix / CI) | Multi-OS cross-compilation & checksum verification | Multi-Node matrix (`18`, `20`, `22`) | Multi-Python matrix (`3.10`–`3.12`) | Cross-target matrix (`x86_64`, `aarch64`) | `verify.sh release` |

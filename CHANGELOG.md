@@ -2,6 +2,48 @@
 
 ## [Unreleased]
 
+## 3.2.0 — 2026-10-09
+
+### Changed
+
+- Split Mission services and CLI handlers by capability, expose detached Mission
+  read views to Charter/Guard, and isolate pure Run transition rules.
+- Align companion skills around explicit ownership, conditional prerequisites,
+  proportional launch gates, and evidence appropriate to each product claim.
+- Keep ordinary delivery plans authoritative through bounded batches,
+  experiment decisions, and reconciliation of existing context owners.
+
+
+
+- Prefer ONTOLOGY.md for new domain-model anchors; retain existing Vocabulary
+  authority until a rename is authorized. Document filenames and task-sized reading routes.
+- Clarify governed discovery configuration, optional overrides, manual navigation,
+  generated JSON inventory scopes, and a single archive retirement home.
+- Align self-hosted anchors and navigation; retire completed Missions, resolved
+  Proposals, delivered plans, and campaign inputs with provenance. Remove legacy
+  generated Markdown indexes, duplicate catalog cache, and redundant config defaults.
+
+### Added
+
+- Milestone readiness guidance distinguishing usable workflows, integrity,
+  distribution, operation, MVP value validation, and publication authority.
+- Action Contracts, Domain Invariants, and Event Spine companion skills.
+- Enforced production import boundaries and negative architecture checks in CI.
+
+
+
+- Repository index rebuild utility reusing governed discovery and JSON projection,
+  with atomic generated-only writes and no new public CLI command.
+
+
+### Fixed
+
+- Validate canonical archived compact Missions only in terminal states, retaining
+  their frozen proof and bindings. Preflight tolerates an absent live Mission
+  container and includes archived bundles in its explicit all-Mission sweep.
+- Make the symlink-escape regression construct its required directory instead
+  of depending on live Missions in Spectacular’s own workspace.
+
 ## 3.1.0 — 2026-10-07
 
 ### Added

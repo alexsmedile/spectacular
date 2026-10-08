@@ -64,6 +64,41 @@ Identify business capabilities, language, entities, invariants, commands, events
 
 Do not make these boundaries identical without a reason. Prefer high cohesion, low coupling, explicit contracts, and ownership aligned with the ability to change and operate the capability.
 
+## Module boundary review
+
+Use this lens for modularization or module reviews; scale it to the changed
+capabilities. Inspect imports, call paths, data access, and transactions before
+judging folder layout.
+
+| Boundary fact | Evidence to capture | Verification |
+|---|---|---|
+| Responsibility and ownership | Reason to change; authoritative writer | Changes remain local; writes go through the owner |
+| Public surface | Minimal operations, IDs, detached read views | Contract compatibility; consumers cannot mutate canonical state |
+| Dependency direction | Allowed imports/calls; hidden implementation | Negative import checks; acyclic production graph |
+| Policy versus effects | Pure rules; consumer ports; concrete adapters | Rules tested without filesystem, database, network, or processes |
+| Transaction integrity | Invariants requiring one coordinated commit | Failure injection and rollback preserve those invariants |
+
+Classify each important boundary as **declared**, **implemented**, or **verified**,
+citing the enforcement location and command for the last category. Language
+visibility rules may protect external consumers while permitting sibling imports;
+verify their actual scope. Check platform-specific sources where relevant.
+
+Extract a read model through the existing decoder before duplicating parsing.
+Copy nested mutable data or use immutable values. Introduce ports for actual
+consumer needs, avoiding interfaces that merely mirror every implementation.
+Keep one composition point for concrete adapters. Extract pure rules separately
+from persistence while retaining one coordinator for coupled writes.
+
+Compare a coherent package, a modular monolith, and distribution only when their
+drivers apply. Do not create one module per entity, a generic shared-business
+kernel, or an event bus solely to reduce imports. An invariant requiring immediate
+consistency can justify a shared transaction boundary.
+
+Pass the ownership/consistency facts to `data-modeling`, public operation semantics
+to `action-contracts`, and executable expectations to `test-sentinel`. Load
+`event-spine` only for durable asynchronous delivery. Follow existing project
+artifacts rather than creating a second boundary catalog.
+
 ## 3. Compare system shapes
 
 Record the credible candidates required by workflow step 3. When selecting patterns, load only the relevant section of [decision-guide.md](decision-guide.md).
@@ -149,11 +184,23 @@ Turn uncertainty into validation work:
 - Test backup restoration and regional recovery
 - Validate migration and rollback on production-like data
 
+Bound each experiment by a question, representative evidence, effort limit and
+decision. End with selection plus integration, rejection, or reasoned deferral
+and revisit condition. Extend only for identified missing evidence; successful
+synthetic tests do not establish real integration or user acceptance.
+
 For each consequential decision, record status, context, ranked drivers, credible options, choice, consequences, confidence, reversal conditions, and validation evidence. Give each material assumption or open question an owner or next action.
 
 ## 8. Plan evolution
 
 Sequence implementation as thin, observable slices. Prefer expand-and-contract migrations, dual-read or dual-write only with reconciliation, compatibility windows, and explicit exit criteria. Include rollback for every material migration step.
+
+For product delivery, identify the shortest end-to-end workflow that can be
+used with a real dependency, the minimum integrated batch that enables it,
+and its closure evidence. Show which later capabilities can wait. Keep chosen
+constraints; recommend Docker, OS isolation or distribution only for a stated
+need, never as inferred startup gates. Disclose unenforced boundaries and do
+independent local work while live-access authorization remains pending.
 
 ## Architecture review lens
 

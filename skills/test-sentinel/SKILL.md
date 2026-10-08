@@ -2,7 +2,7 @@
 name: test-sentinel
 description: >-
   Design deterministic test suites, concurrency stress tests, regression anchors, and pinned GitHub Actions CI pipelines.
-  Triggers on "test suite", "stress test", "race condition", "flaky test", "regression test", "ci cd", or "github actions".
+  Triggers on "test suite", "stress test", "race condition", "flaky test", "regression test", "ci cd", "github actions", "architecture tests", or "dependency boundary checks".
   Do not invoke for generic code styling, non-test refactors, or writing documentation reports.
 version: 0.4.1
 category: devtools
@@ -18,19 +18,23 @@ Deterministic test suites, adversarial stress testing, regression shields, and S
 
 | Route | Trigger / Need | Core Action | Complete When |
 |---|---|---|---|
-| **Preflight** | Fast static sanity, secret check | Lint + secret scan (`gitleaks`) | Exits 0 in $\le 1$s. Read [test pyramid](references/test-pyramid.md). |
-| **Unit** | Domain invariant verification | In-memory tests; zero disk/network I/O | All tests pass in $\le 5$s. Read [test pyramid](references/test-pyramid.md). |
+| **Preflight** | Fast static sanity, secret check | Lint + secret scan (`gitleaks`) | Exits 0 within the project's measured budget. Read [test pyramid](references/test-pyramid.md). |
+| **Unit** | Domain invariant verification | In-memory tests; zero disk/network I/O | All tests pass within the project's measured budget. Read [test pyramid](references/test-pyramid.md). |
 | **Hardened** | Concurrency, race, leak verification | ThreadSanitizer (`-race`), ephemeral tempdirs | 0 races, 0 deadlocks under load. Read [determinism](references/determinism-matrix.md). |
 | **Regression** | Bug intake or incident fix | TDD reproduction test first $\to$ fix $\to$ anchor | Fails on trunk, passes on fix. Read [regression shield](references/regression-shield.md). |
-| **Pipeline** | Automated PR & matrix gate | Deploy SHA-pinned `.github/workflows/ci.yml` | Workflow passes preflight before matrix. Read `templates/`. |
-| **Benchmark** | Model trials, token sweeps, evals | User-invokable A/B evaluations & parallel harness trials | Evaluates context economy & regressions. Read `docs/benchmarks.md`. |
-| **Architecture** | CI/CD audit, gatekeeping & delivery | Audit immutable builds, OIDC, branch protection | Linear history, sub-10m SLA, zero secrets. Read [CI architecture](references/ci-architecture.md). |
+| **Pipeline** | Automated PR & matrix gate | Update the existing SHA-pinned workflow | Existing workflow passes preflight before its matrix. Read `templates/`. |
+| **Benchmark** | Model trials, token sweeps, evals | User-invokable A/B evaluations & parallel harness trials | Evaluates context economy & regressions. Read the project's existing benchmark runner and cost policy. |
+| **Module boundaries** | Import rules, isolation, compatibility, atomicity | Execute positive and negative checks against declared boundaries | Forbidden dependencies and mutations fail; allowed behavior passes. |
+| **Architecture** | CI/CD audit, gatekeeping & delivery | Audit immutable builds, OIDC, branch protection | Repository delivery policy and measured budgets pass. Read [CI architecture](references/ci-architecture.md). |
 
 ---
 
 ## 2. Standard Directory & Benchmark Hierarchy
 
-Every repository governed or audited by Test Sentinel must adhere to the flat 3-pillar layout:
+Follow the repository's existing layout and verification driver. The following
+layout is an optional starting point; do not relocate tests or add modes solely
+to match it. Timing figures are planning targets, measured on the actual runner,
+not universal acceptance gates:
 
 ```text
 test/
@@ -45,7 +49,7 @@ test/
 ```
 
 - **Tests vs Benchmarks Separation**:
-  - `acceptance/` and `unit/` run on every commit in **GitHub Actions CI** (zero cost, 100% deterministic).
+  - `acceptance/` and `unit/` run on every commit in **GitHub Actions CI** (no model calls; measure runner cost and determinism).
   - `benchmarks/` is **user-invokable** or triggered as an advisory regression gate (supports `--parallel <N>` multi-harness concurrency; protected from accidental token/credit spend).
 
 ---
@@ -60,13 +64,38 @@ test/
 - **DO NOT bake configuration or secrets into builds**: Inject secrets, base URLs, and environment variables dynamically at runtime (Vault, K8s ConfigMaps).
 - **DO NOT store long-lived cloud credentials in CI secrets**: Use OpenID Connect (OIDC) for short-lived, keyless cloud authentication.
 - **DO NOT use `pull_request_target` with write tokens**: Never expose deployment secrets to untrusted, unreviewed fork code.
-- **DO NOT bypass branch protection or merge stale branches**: Enforce strict linear history (squash/rebase) and require branches to be up to date (or use GitHub merge queues) before merging.
-- **DO NOT author oversized PRs**: Cap PR diffs at $\le 300\text{--}400$ lines (soft review guideline; require explicit owner justification if exceeded).
+- **DO NOT bypass branch protection or merge stale branches**: Follow the repository's merge and history policy; do not impose a new topology.
+- **DO NOT author oversized PRs**: Aim for reviewable, cohesive diffs; 300–400 changed lines is a soft signal. Separate mechanical moves from behavioral changes in the review; follow repository policy without inventing an approval gate.
 - **DO NOT create governance records**: `test-sentinel` is read-only on `.spectacular/`. Spectacular owns claims and contracts; `test-sentinel` owns executable test proof.
 - **DO NOT generate markdown report sprawl**: Banned: `TEST_PLAN.md`, `COVERAGE.md` in `docs/`. Tests and machine receipts are the only deliverables.
 - **DO NOT use floating GitHub Action tags**: Banned: `uses: actions/checkout@v4`. Use verified full commit SHAs (`actions/checkout@<sha> # v4.2.2`).
 
 ---
+
+## Module proof and fixture isolation
+
+Consume the owner/API/dependency/transaction facts from `system-architecture`.
+Test forbidden imports and unclassified packages, detached read-model aliasing,
+consumer ports with substitute adapters, compatible outputs, and rollback of
+coordinated writes. Prefer behavior and negative cases over folder/file counts.
+Verify the checker itself refuses violations; include platform-specific sources
+and connect checks to the existing CI gates. Report unenforced boundaries.
+
+Fixture isolation includes environment and tool configuration, not only tempdirs.
+For nested Git repositories, remove or scope inherited `GIT_INDEX_FILE`,
+`GIT_DIR`, `GIT_WORK_TREE`, and related overrides. Isolate credentials, working
+directory, configuration, and PATH overrides as appropriate. A temporary index
+for workspace hygiene must never become the index of a fixture repository.
+Preserve the real staged entries; distinguish harness failures from product bugs.
+
+## Claim coverage at milestone gates
+
+For delivery or release proof, use the applicable dimensions in
+[Spectacular readiness](../spectacular/references/milestone-readiness.md). Tie
+results to the artifact/version, environment, dependency conditions, and material
+limitations. Distinguish mocks, integration, real dependencies, and observed user
+behavior. Report unverified claims; passing technical checks does not establish
+MVP value or publication authority. Recheck affected evidence after material changes.
 
 ## 3. Consolidated Command Palette
 
@@ -83,11 +112,9 @@ npm test -- --ci --runInBand                      # Node isolated
 pytest -m integration -v                          # Python integration
 cargo test --all-targets --locked                 # Rust locked
 
-# Pipeline Deployment (copy and adapt template)
-cp templates/ci-go.yml .github/workflows/ci.yml
-cp templates/ci-node.yml .github/workflows/ci.yml
-cp templates/ci-python.yml .github/workflows/ci.yml
-cp templates/ci-rust.yml .github/workflows/ci.yml
+# Pipeline templates (examples only; inspect existing files before adapting)
+# Select the relevant templates/ci-*.yml and merge into the existing workflow.
+# Do not overwrite a workflow with cp or add a duplicate pipeline.
 ```
 
 ---
@@ -96,8 +123,8 @@ cp templates/ci-rust.yml .github/workflows/ci.yml
 
 When fixing defects: `Failing Repro (Red) → Implement Fix (Green) → Permanent Anchor`.
 
-- In Spectacular workspaces: Name anchor **`TestM<N>_<slug>`** (e.g. `TestM14_TokenRefreshRace`).
-- In standalone workspaces: Name anchor **`TestRegression_<slug>`** (e.g. `TestRegression_TokenRefreshRace`).
+- For an explicitly selected Mission: use an existing project convention such as **`TestM<N>_<slug>`** (e.g. `TestM14_TokenRefreshRace`).
+- For ordinary work, including Spectacular workspaces: use the existing convention or name anchor **`TestRegression_<slug>`** (e.g. `TestRegression_TokenRefreshRace`).
 
 ---
 
@@ -124,5 +151,5 @@ When fixing defects: `Failing Repro (Red) → Implement Fix (Green) → Permanen
 |---|---|
 | Contract drafting, failable claims, mission gates | `spectacular` (`.spectacular/missions/`) |
 | Git commit, branch creation, worktrees, PRs | `git-ops` / `gh` CLI |
-| Architectural decisions and options comparison | `system-architecture` (`spectacular decide`) |
+| Architectural decisions and options comparison | `system-architecture`; governed recording only on explicit owner selection |
 | Database schema migration and ER modeling | `data-modeling` |

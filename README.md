@@ -17,13 +17,17 @@ helps. Contracts retain their validation and amendment process.
 ```text
 .spectacular/
 ├── PROJECT.md              # purpose and current project truth
-├── VOCABULARY.md           # domain objects, terms, and relationships, when useful
+├── ONTOLOGY.md           # domain objects, terms, and relationships, when useful
 ├── INDEX.md                # optional authored navigation
 ├── raw/                    # freeform captures and quick-start drafts
 ├── atlas/                  # lasting maps and explanations
 ├── decisions/              # choices and rationale
 └── plans/                  # intended work, approach, progress, and results
 ```
+
+A useful reading route is INDEX → PROJECT → relevant Requirement → Spec → Plan,
+with Ontology, Atlas, and Decisions consulted as needed. See the
+[naming and navigation guide](skills/spectacular/references/navigation.md).
 
 Create only what the project needs. Each folder is a Markdown knowledge
 container, with agreed metadata and extensible types. Raw has no obligations.
@@ -96,3 +100,15 @@ mechanical record schema identities; there is no automatic historical migration.
 Contributor rules live in [AGENTS.md](AGENTS.md). After code changes, use
 `bash test/verify.sh quick`; before releasing, use `bash test/verify.sh all`.
 See [Testing](docs/testing.md) for the verification boundaries.
+
+## Milestones and readiness
+
+Plan delivery around the first usable end-to-end workflow. Define its audience,
+environment, prerequisites, and observable completion evidence. Alpha, beta,
+and pilot labels follow the project’s own exposure and exit criteria.
+
+Spectacular distinguishes technical correctness, distribution, operation, MVP
+value validation, and publication authority. Passing tests proves only their
+covered behavior; validating user value requires a representative experiment.
+Keep these facts in the existing plan and requirements, with proportional gates
+and explicit limitations. See [Architecture](docs/architecture.md).

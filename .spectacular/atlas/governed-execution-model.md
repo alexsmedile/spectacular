@@ -9,7 +9,7 @@ updated: '2026-10-07T18:47:06Z'
 # Governed execution objects
 
 Use this model only for explicitly selected governed work. The
-[Vocabulary](../VOCABULARY.md) defines project terms; the
+[Vocabulary](../ONTOLOGY.md) defines project terms; the
 [generated interface](../../skills/spectacular/generated/mechanical-interface.md)
 and code define exact fields, transitions, and validation.
 

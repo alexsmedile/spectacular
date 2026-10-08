@@ -1,6 +1,6 @@
 {
   "name": "spectacular",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Keep small linked durable context, with optional governed Missions and validated Contracts.",
   "author": {
     "name": "Alessandro Smedile"

@@ -43,12 +43,61 @@ module, phase, or delivered tranche when each part stands alone; keep the parent
 as a short linking plan. Large reusable behavior belongs in optional `specs/`;
 lasting explanations belong in `atlas/`. See [workspace.md](workspace.md).
 
+## Milestones and delivery batches
+
+Define the first usable outcome before decomposing substantial product work. A
+milestone states who can complete which workflow, in what environment, and what
+evidence closes it. A technical task contributes to that outcome; passing its
+unit tests does not close the milestone. Separate a pilot, a broader usable
+product, and release only when the project needs those distinctions; use its
+own names. Do not infer dates, release acceptance, or additional authority.
+
+For product-stage gates, exposure prerequisites, prioritization, or MVP value
+experiments, read [milestone-readiness.md](milestone-readiness.md). Keep its
+relevant facts in this plan; technical completion, distribution, and product
+validation require different evidence.
+Group tasks into a bounded batch with one observable result, dependencies,
+checks, and a stopping boundary. Prefer a workflow exercised from input to
+result over a collection of disconnected components. State whether evidence is
+synthetic, integrated, exercised with a real dependency, or accepted by a person.
+Keep correctness, recovery and permission checks alongside each feature.
+
+For each experiment, name the question, smallest representative test, effort
+bound, and decision it unlocks. Close with a choice and integration step, a
+rejected option, or a reasoned deferral with a revisit condition. If inconclusive,
+state the missing evidence and justify a bounded extension; do not append an
+indefinite chain of micro-spikes or treat feasibility as working integration.
+
+### Multi-Wave Campaign Plans (`CampaignPlan`)
+
+For multi-milestone initiatives, structure the plan around sequential waves with explicit gates:
+- **Wave & Track Topology**: Distinguish between sequential waves, *Blocking Prerequisites* (`blocks: [Wave X]`), and *Orthogonal Parallel Tracks* (disjoint write scopes). Each slice declares a feature branch, physical worktree (`.worktrees/<slug>`), and verification gate.
+- **Dispatch Briefs**: Embed compact, ready-to-run handoff prompts for each wave ($\le 1200$ tokens) covering invariants, scope boundaries, test commands, and the structured JSON return receipt schema.
+- **Pre-warmed Worktrees**: Ensure the orchestrator bootstraps runtime dependencies (e.g. symlinking `node_modules`, `.env.sandbox`, C-bindings) before dispatching workers.
+
 ## Resume and evolve
 
 Reuse the same path through planning, implementation, and delivery. Record useful
 progress, checks, and outcomes there; planning again updates the existing plan.
 Approval and execution follow the host and user instructions, not a new Spectacular
 gate. Do not create a Proposal, Contract, Mission, or audit record automatically.
+
+When implementation is authorized, a repeated “continue” resumes the current
+batch through its verified outcome. Keep intermediate updates and checks; a
+completed fragment is a progress update, not a default stopping point. Stop for
+the agreed boundary, a real blocker, missing effect authorization, or host limits,
+and record what remains. Continuation does not authorize scope expansion, live
+data access, publication, or a new Mission.
+
+At a batch boundary, briefly reconcile implemented, verified, and open work in
+the existing owners. The plan owns delivery detail; anchors summarize current
+truth; an existing roadmap owns milestone state; a campaign or status document
+may own receipts. Link details rather than copying them. Update only affected
+claims, remove superseded next steps, and leave one executable resume point.
+Create no extra status file or catalog by default; preserve frozen records.
+When Git checkpoints are already authorized, align them with coherent verified
+batches and report unpublished changes. Skill edits alone authorize no commit,
+push, or tag.
 
 A native host plan file can remain a cache or pointer. `.spectacular/plans/` is the
 durable project copy; choose one content owner and reconcile changes when importing

@@ -121,6 +121,11 @@ func TestMissionStartRejectsSymlinkedTargetWithoutPartialWrite(t *testing.T) {
 	root := missionServiceFixture(t)
 	svc := openMissionService(t, root)
 	missionRoot := filepath.Join(root, ".spectacular", "missions")
+	// The self-hosted workspace can have no live collection after retirement.
+	// This test needs a target directory to replace, not a pre-existing Mission.
+	if err := os.MkdirAll(missionRoot, 0755); err != nil {
+		t.Fatal(err)
+	}
 	heldRoot := filepath.Join(root, ".spectacular", "missions-held")
 	outside := t.TempDir()
 	if err := os.Rename(missionRoot, heldRoot); err != nil {

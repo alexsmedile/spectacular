@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
+	"github.com/alexsmedile/spectacular/v2/internal/missionbundle"
 )
 
 func TestGuardPassesOnCleanWrites(t *testing.T) {
@@ -14,7 +15,7 @@ func TestGuardPassesOnCleanWrites(t *testing.T) {
 	defer cleanup()
 
 	// Write within allowed path src/
-	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", "echo 'package main' > src/app.go"})
+	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", "echo 'package main' > src/app.go"}, missionbundle.ReadView)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -31,7 +32,7 @@ func TestGuardSurgicalQuarantinePreservesValidWork(t *testing.T) {
 	defer cleanup()
 
 	// Subagent writes BOTH valid code in src/ and rogue .gitignore
-	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", "echo 'package main' > src/valid.go && echo '*.db' > .gitignore"})
+	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", "echo 'package main' > src/valid.go && echo '*.db' > .gitignore"}, missionbundle.ReadView)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -63,7 +64,7 @@ func TestGuardRealtimeWatcherKillsRogueProcess(t *testing.T) {
 	defer cleanup()
 
 	// Script that writes rogue file and sleeps briefly
-	res, err := Run(ws, "M1/O1", true, "", []string{"sh", "-c", "echo 'evil' > evil.log && sleep 0.3"})
+	res, err := Run(ws, "M1/O1", true, "", []string{"sh", "-c", "echo 'evil' > evil.log && sleep 0.3"}, missionbundle.ReadView)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -91,7 +92,7 @@ func TestGuardPreExistingFileModificationIsRestored(t *testing.T) {
 	}
 
 	// Subagent overwrites README.md with same-length string and writes valid code in src/
-	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", "echo -n 'modified text' > README.md && echo 'package main' > src/app.go"})
+	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", "echo -n 'modified text' > README.md && echo 'package main' > src/app.go"}, missionbundle.ReadView)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -126,7 +127,7 @@ func TestGuardSameSizeTouchRestoreBypassIsCaught(t *testing.T) {
 
 	// Subagent tampers with same-length content and runs touch -r ref.tmp to restore identical timestamp
 	cmd := "echo -n 'world-spectacular' > README.md && touch -r ref.tmp README.md"
-	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", cmd})
+	res, err := Run(ws, "M1/O1", false, "", []string{"sh", "-c", cmd}, missionbundle.ReadView)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -145,7 +146,7 @@ func TestGuardRealtimeWatcherCatchesInstantEscape(t *testing.T) {
 	defer cleanup()
 
 	// Script that writes rogue file and exits immediately without waiting for ticker
-	res, err := Run(ws, "M1/O1", true, "", []string{"sh", "-c", "echo evil > instant.log"})
+	res, err := Run(ws, "M1/O1", true, "", []string{"sh", "-c", "echo evil > instant.log"}, missionbundle.ReadView)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -161,7 +162,7 @@ func TestGuardExecShorthandPipesPrompt(t *testing.T) {
 	ws, cleanup := setupTestWorkspace(t)
 	defer cleanup()
 
-	res, err := Run(ws, "M1/O1", false, "echo --flag", nil)
+	res, err := Run(ws, "M1/O1", false, "echo --flag", nil, missionbundle.ReadView)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

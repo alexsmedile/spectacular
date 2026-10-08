@@ -110,7 +110,7 @@ func TestM22_RepairedSteeringInvariants(t *testing.T) {
 			t.Fatalf("discovery.Open failed: %v", err)
 		}
 
-		compiled, err := charter.Compile(ws, "M16", "O1", []string{"D12-isolation-and-context-compilation"})
+		compiled, err := charter.Compile(ws, "M16", "O1", []string{"D12-isolation-and-context-compilation"}, missionbundle.ReadView)
 		if err != nil {
 			t.Fatalf("failed to compile charter: %v", err)
 		}

@@ -1,9 +1,9 @@
 ---
 type: Atlas
 title: Atlas guide
-version: '0.3'
+version: '0.4'
 created: '2026-08-23T18:24:40+02:00'
-updated: '2026-10-07T18:42:01Z'
+updated: '2026-10-07T20:07:46Z'
 ---
 
 # Atlas: navigable durable context
@@ -13,7 +13,7 @@ lifecycles, and maps. Keep each file focused and link related objects.
 
 ## Entry points
 
-- [Workspace navigation](workspace-navigation.md): plans, specs, audits, and
+- [Workspace navigation](workspace-navigation.md): requirements, plans, specs, audits, and
   governed record ownership, with links to current work.
 - [Domain overview](domain-overview.md): ordinary context and optional governance.
 - [Specification lifecycle](specification-and-governance-lifecycle.md): how a
@@ -25,7 +25,7 @@ Anchors define current project truth. Plans own intended work and results;
 Atlas explains lasting relationships. Decisions preserve choices. Contracts keep
 their mechanical validation and amendment/version pipeline. Raw is unconstrained.
 
-VOCABULARY.md is this project’s domain Anchor; preserve an existing ONTOLOGY.md
+ONTOLOGY.md is this project’s domain Anchor; preserve an existing ONTOLOGY.md
 in projects that already use it. Product docs/ stays outside this context store.
 
 ## Small, linked objects

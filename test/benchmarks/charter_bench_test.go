@@ -10,6 +10,7 @@ import (
 	"github.com/alexsmedile/spectacular/v2/internal/charter"
 	"github.com/alexsmedile/spectacular/v2/internal/charter/tokenizer"
 	"github.com/alexsmedile/spectacular/v2/internal/discovery"
+	"github.com/alexsmedile/spectacular/v2/internal/missionbundle"
 )
 
 func TestContextCharter_PairedContextEconomyAndDecisionFidelity(t *testing.T) {
@@ -47,7 +48,7 @@ func TestContextCharter_PairedContextEconomyAndDecisionFidelity(t *testing.T) {
 		"D12-isolation-and-context-compilation",
 		"D21-context-sandwich-execution-gates",
 	}
-	compiledCharter, err := charter.Compile(ws, "M16", "O1", sources)
+	compiledCharter, err := charter.Compile(ws, "M16", "O1", sources, missionbundle.ReadView)
 	if err != nil {
 		t.Fatalf("charter.Compile failed: %v", err)
 	}
@@ -106,7 +107,7 @@ func TestContextCharter_MissingSourceRefusal(t *testing.T) {
 	}
 
 	// Request a non-existent decision ref
-	_, err = charter.Compile(ws, "M16", "O1", []string{"D999-non-existent-decision"})
+	_, err = charter.Compile(ws, "M16", "O1", []string{"D999-non-existent-decision"}, missionbundle.ReadView)
 	if err == nil {
 		t.Fatal("expected charter.Compile to refuse missing source, but got nil error")
 	}

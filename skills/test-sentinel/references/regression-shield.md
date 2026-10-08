@@ -30,13 +30,13 @@ flowchart LR
   ```
 
 ### Step 3: Anchor Permanently in the Test Suite (ANCHOR)
-- Commit the test into the permanent test suite. It will execute on every future PR to prevent the bug from ever recurring.
+- Keep the test in the permanent suite and its existing CI gate. Commit only when separately authorized; a regression fix does not grant Git publication authority.
 
 ---
 
 ## 2. Naming Conventions
 
-Test names must clearly identify that the test is a regression shield rather than a general feature test:
+Follow the existing naming convention; these examples identify regressions without creating new project policy:
 
 ### Standard Standalone Repositories (Default)
 Use `TestRegression_<slug>`:
@@ -54,7 +54,7 @@ def test_regression_token_refresh_race(): ...
 ```
 
 ### Spectacular Repositories (When Mission Ref Exists)
-When working within a Spectacular workspace on a bound Mission (`M<N>`), tie the test directly to the Mission ref:
+When the owner explicitly selected the bound Mission (`M<N>`) and the project uses this convention, tie the test to that ref. Ordinary Spectacular work uses the default or existing convention:
 ```go
 func TestM14_TokenRefreshRace(t *testing.T) { ... }
 ```

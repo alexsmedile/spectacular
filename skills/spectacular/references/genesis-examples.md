@@ -23,7 +23,7 @@ content needs an independent home.
 
 ## 2. On-Demand Anchor Example
 
-### `.spectacular/VOCABULARY.md` (Domain Ontology and Ubiquitous Language)
+### `.spectacular/ONTOLOGY.md` (Domain Ontology and Ubiquitous Language)
 
 Use the sections that have independent meaning. When action vocabulary or state
 ambiguity matters, include canonical actions, known banned synonyms, and permitted
@@ -31,9 +31,9 @@ entity states under Actions and events. These are body guidance, not mechanicall
 certified frontmatter or a mandatory structure for every soft document.
 
 This is a body shape, not a frontmatter template. Preserve existing
-Anchor metadata for governed history. For a new soft `VOCABULARY.md`,
+Anchor metadata for governed history. For a new soft `ONTOLOGY.md`,
 follow the metadata agreement in [knowledge.md](knowledge.md); retain an existing
-`ONTOLOGY.md` rather than creating a duplicate authority.
+`VOCABULARY.md` rather than creating a duplicate authority.
 
 ```md
 

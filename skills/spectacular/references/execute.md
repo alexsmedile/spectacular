@@ -38,5 +38,7 @@ actual implementation rather than introducing generic worker/DLQ defaults.
 ## 5. Authority & Context Invariants
 - **Progressive Context**: Drill down strictly: `Mission card -> current Objective -> exact sources`.
 - **Authority Separation**: The `plan carries meaning`, while `tooling carries repeatability`.
+- **Core-First Gate**: In shared engine setups, core independent verification must pass before downstream client integration.
+- **Worktree Pre-warming**: Lead orchestrator must pre-warm native dependencies and env sandboxes in `.worktrees/<slug>` before worker dispatch.
 - **Activation Boundary**: `A Decision is not activation authority` (only owner confirmation authorizes `mission start`).
 - **Self-Hosting & Bootstrap**: When developing Spectacular, an `active Mission keeps the schema` frozen. Under declared `manual-bootstrap`, run `focused checks` directly.

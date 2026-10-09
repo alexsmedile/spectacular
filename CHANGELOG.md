@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+## 3.4.0 — 2026-10-09
+
+### Added
+
+- Deliberate breakage testing through the `$spectacular breakage` Skill route:
+  inspect the target, present principles and 12–24 adversarial cases, then run
+  authorized trials with explicit failure criteria and reproducible findings.
+- Coverage guidance for invalid inputs, state corruption, concurrency,
+  interruptions, permissions, dependency failures, resource limits, accuracy,
+  usability, and recovery; reusable cases share Scenario and Audit conventions.
+
+### Fixed
+
+- Clarify CLI restoration with separate installer and release-payload locations,
+  matching release versions, and runtime selection for Codex or Claude.
+
 ## 3.3.0 — 2026-10-09
 
 ### Added

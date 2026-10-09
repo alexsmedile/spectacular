@@ -87,7 +87,7 @@ first, then install from that directory:
 
 ```sh
 # 1. download the archive and SHA256SUMS for your platform
-VERSION=3.3.0
+VERSION=3.4.0
 PLATFORM=darwin-arm64          # or darwin-amd64, linux-amd64, linux-arm64
 BASE=https://github.com/alexsmedile/spectacular/releases/download/v$VERSION
 

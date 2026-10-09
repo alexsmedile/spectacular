@@ -115,3 +115,35 @@ verdict. These paths illustrate placement; create only the artifacts needed.
 Follow [navigation.md](navigation.md): keep reusable cases active after a test
 campaign, and retire obsolete cases to archive/scenarios/ with provenance and
 repaired links. A completed campaign does not make its reusable cases obsolete.
+
+## Lessons from field campaigns
+
+Distilled from an adversarial hardening pass on a CLI + shared core (Fatture in
+Casa + Fatturino), Node 24.16.0. Keep these in mind when a journey crosses a
+compiled artifact and a shared dependency.
+
+- **Test the artifact, not the source.** A CLI whose `bin` points at `dist/`
+  executes compiled JavaScript; a green `vitest` run on `src/` proves nothing
+  about the running app. Build first, restart background daemons, then run the
+  HTTP/UI journey. Record the inspected revision and the build.
+- **A copied dependency can drift.** A `file:../core` dependency may be copied or
+  hard-linked; verify the installed `dist/` hash matches the rebuilt core before
+  trusting consumer results. State which copy was exercised.
+- **HTTP and UI are different evidence.** An endpoint returning 200 is not a
+  click that saved a file. Keep them as separate steps with separate verdicts;
+  mark the unobserved one `Not verified` rather than inferring success.
+- **Concurrency needs two axes.** Test races inside one process *and* across
+  instances/connections. Guards that live only in memory (or only in the
+  engine) fail silently once a second worker or a second tenant appears.
+- **Adversarial inputs before serialization.** Strings where numbers belong,
+  XML metacharacters in identifiers, out-of-range rates, huge amounts, and
+  non-ISO dates should fail as typed errors before reaching XML/SQL/money math —
+  not as a `TypeError` mid-serialization.
+- **A green suite is not coverage.** Passing tests show the exercised cases work,
+  not that the untested conditions are safe. Preserve the failing reproduction
+  and record the fail-before / pass-after transition.
+- **Classify before calling it a bug.** Forced bollo, offsetting negative lines,
+  numbering gaps, and payment-state transitions may be deliberate limits.
+  Require an explicit criterion; otherwise label them design limits, not defects.
+- **Keep reports immutable.** Each attempt gets its own dated run directory; link
+  it to the scenario and the verified revision. Never overwrite an earlier report.

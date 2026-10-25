@@ -89,6 +89,12 @@ queues, multi-region infrastructure, or deployment gates from an MVP label.
 
 ## Core Invariants & Negative Constraints
 
+- For consultation-first knowledge architectures, consume the domain protocol
+  and version; preserve one semantic owner across section/file/collection forms.
+  Overview, operation and navigation responsibilities are distinct. Resolve
+  contradictions explicitly, retain local essentials without copying reusable
+  contracts, and keep generated catalogs derived. Do not import production
+  src/output or execution governance into a reference repository by default.
 - **DO NOT make architectural claims without inspecting evidence.** In codebases, inspect source, configs, schemas, and telemetry before asserting state; label unverified statements as assumptions.
 - **DO NOT produce monolithic all-or-nothing designs.** Structure architectures in independently verifiable, reversible slices.
 - **DO NOT mix architectural decisions with ungrounded speculation.** Explicitly separate *Facts*, *Assumptions*, *Decisions*, and *Open Questions*.

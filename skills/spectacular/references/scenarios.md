@@ -4,6 +4,8 @@ Use this when: creating end-to-end user scenarios, preparing beta tests, or
 checking feasibility and actual behavior with real software.
 For deliberate adversarial breakage campaigns, start with [breakage.md](breakage.md);
 this file owns shared case storage, attempt provenance, and verdicts.
+For visual UI evidence and prototypes before implementation, also read
+[ui-testing.md](ui-testing.md). HTTP success does not establish visual quality.
 
 ## Store the journey separately from its attempts
 
@@ -110,6 +112,16 @@ The case belongs in scenarios/reconcile-supplier-invoices.md; a campaign plan
 links it and prioritizes its variants. An Audit records the actual attempt and
 verdict. These paths illustrate placement; create only the artifacts needed.
 
+## Match evidence to the claimed modality
+
+For generated media and other perceptual products, separate structural checks,
+measurements on actual output, observed perceptual behavior and creative/user
+acceptance. Hash the inspected artifact and record revision, temporal coverage,
+method and observer. Synthetic tones, extracted frames, successful decoding or
+starting a player cannot establish listening, continuous viewing or semantic
+quality. Missing tools/evidence leave that criterion not verified while independent
+checks continue. Reports must not promote a partial pass into overall acceptance.
+
 ## Retire by relevance
 
 Follow [navigation.md](navigation.md): keep reusable cases active after a test
@@ -147,3 +159,22 @@ compiled artifact and a shared dependency.
   Require an explicit criterion; otherwise label them design limits, not defects.
 - **Keep reports immutable.** Each attempt gets its own dated run directory; link
   it to the scenario and the verified revision. Never overwrite an earlier report.
+
+- **Validate a packed install outside the workspace.** A local dependency can
+  resolve an adjacent checkout and hide missing distribution files. Pack the app,
+  install into a fresh temporary consumer with no workspace module lookup, and
+  exercise its actual CLI, assets, native adapters, and document emission. If the
+  shared core is bundled, verify it is present in the tarball and installed tree.
+- **Equivalent validation must be exercised.** A WASM/XSD fallback must accept
+  valid documents and reject invalid ones with the system executable absent.
+  Verify the exact runtime and dependency version; older WASM wrappers may fail
+  in modern Node even when dependency installation succeeds. Never substitute
+  syntax-only parsing for schema validation.
+- **Queued APIs need observable completion.** Verify an immediate accepted
+  response while the transport is still pending, authenticated status polling,
+  redacted public errors, tenant isolation, and resuming the same durable job
+  after restart. A background callback alone is not automatic boot recovery.
+- **Download failure is a separate verdict.** A success toast or a server-side
+  file does not prove a file reached the browser's download destination. Preserve
+  tool timeouts and a usable persistent download link; keep native save behavior
+  unverified until an actual downloaded file is observed.

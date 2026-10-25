@@ -9,7 +9,7 @@ description: >-
   "supervised dispatch", "handoff", "mission check", "complete mission", "break this software", or "breakage tests".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
-  version: "3.4.0"
+  version: "3.4.1"
 ---
 
 # Spectacular
@@ -30,15 +30,29 @@ bounded Mission only when the owner explicitly selects governed execution.
   and 12–24 plausible adversarial cases before executing them, then run authorized
   trials and preserve reproducible findings. A principles/list-only request stops
   at preparation. This Skill route adds no public CLI command or Mission.
+- **UI testing and design refinement**: For visual audits, responsive UI reviews,
+  progressive disclosure, or reorganizing a user journey, read
+  [ui-testing.md](references/ui-testing.md). Collect screenshots and representative
+  states before critique; state principles, prototype information hierarchy at
+  low fidelity, then implement the authorized direction and repeat visual checks.
+  This route adds no public CLI command, Mission, or automatic approval gate.
 - **Ordinary work (default)**: Read [knowledge.md](references/knowledge.md) when
   placing, maintaining, or working from workspace documents. Use its compact
   metadata default; minimal is valid, extended fields are earned, and raw is free.
+  Apply its consultation-first maintenance and progressive-expansion guidance;
+  document purpose/scope agreements do not become governed Contracts or Missions.
+  Reusable protocols can be versioned outside instances; local interfaces retain
+  essential rules and meaningful exceptions. Manual navigation and generated
+  frontmatter catalogs are separate views, never competing metadata owners.
   Follow the task-sized reading route in [navigation.md](references/navigation.md)
   when useful: optional INDEX → PROJECT → relevant Requirement → Spec → Plan,
   consulting Ontology, Atlas, and Decisions as needed. Follow relevant links, do the authorized work, verify the actual change, and return
   its outcome. For multi-step delivery, use the milestone and batch guidance in
   [plan.md](references/plan.md); continue through the authorized batch and
-  reconcile its existing document owners before returning. No startup CLI/version check, initialization, Mission, formal
+  reconcile its existing document owners before returning. Integrate external reviews into
+  the existing phases and acceptance criteria; do not create a competing roadmap.
+  Keep mechanical checks, real-artifact inspection, perceptual review and owner
+  acceptance distinct; missing evidence is not verified. No startup CLI/version check, initialization, Mission, formal
   Decision, branch, commit, or completion record is required by this route.
   For end-to-end user scenarios, beta testing, or field validation, read
   [scenarios.md](references/scenarios.md). Save reusable cases in scenarios/ and

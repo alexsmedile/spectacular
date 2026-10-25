@@ -65,6 +65,20 @@ or Level 5 integration does not itself establish product acceptance or authorize
 release. Record supported, contradicted, or inconclusive evidence in the existing
 plan, with a bounded next action when needed.
 
+## Assembled design-system specimens
+
+For a primitive/component-library spike, use a deterministic specimen board: semantic
+primitives, individually inspectable components with variants/states, and a few compositions
+reusing the same pieces. Consume selected type/palette decisions and show candidate
+geometry as provisional. Use a dedicated specimen skill when available; image-generated
+boards are visual references, not font, token or interaction evidence.
+
+A user's explicit request for one best-hypothesis base overrides the default three-option
+matrix: produce one reviewable recommendation, preserve Locked/Open/Level/Lineage, and
+record approval scope without forcing a selection among invented alternatives. Keep
+production adapters untouched until integration is authorized. Theme/component analogies
+(e.g. Tailwind/shadcn) specify contract depth, not an installed dependency or available API.
+
 ## Expansion Handoffs
 
 | Out-of-Scope Need | Action / Delegate |

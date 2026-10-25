@@ -63,6 +63,40 @@ choices and accepted changes to project truth; explicitly supersede changed
 Decisions rather than erasing their rationale. Ask about conflicting authority
 or consequential ambiguity; choose routine placement autonomously.
 
+## Consultation-first maintenance and progressive expansion
+
+Treat ordinary durable context as maintained knowledge, with task-relevant
+reading paths. Separate subject knowledge, workspace-maintenance conventions,
+and raw/source material by declared role; keep Spectacular's existing homes
+and interfaces rather than importing a domain-specific meta directory.
+
+One current owner holds a definition or decision. Overview, ontology and atlas
+views may summarize it with a link; they must not create competing versions.
+Classify incoming material → locate its owner → compare/reconcile → integrate
+within authorization → repair navigation and preserve provenance. A conflict
+remains explicit until an authorized decision resolves it; a mother/overview
+document does not automatically outrank a detailed owner. Review linked summaries
+when current definitions change; an audit snapshot is derived, revision-scoped
+knowledge rather than a new source of project truth.
+
+Expand a document into linked objects when meaning, readers or lifetime warrant
+it. Preserve the overview's purpose as a synthesis and route to detailed owners.
+Small/compact/expanded describe representation depth, not quality, acceptance
+or execution authority. Optional modules can own accepted knowledge; missing
+inapplicable modules need no placeholder. A reusable protocol defines roles and
+contracts; workspace instances contain their actual answers and exceptions. Reference schema/version
+and retain essential local use rules rather than copying every reusable contract.
+This preserves Spectacular metadata/folder agreements; it does not import another
+domain's directory recipe. Optional JSON catalogs derive existing frontmatter and
+never infer status or replace authored navigation.
+
+Here, a **document contract** can mean a plain-language purpose, scope,
+exclusions and relationships. It is not a governed Spectacular **Contract**,
+`schema:` claim, Mission or permission to amend bound records. Do not add a
+registry, validation script, formal lifecycle or governed record solely to
+maintain ordinary Markdown knowledge. Existing metadata agreements and
+mechanical Contract obligations continue to apply.
+
 ## Small files and links
 
 Aim for one retrievable question or outcome, usually 50–120 lines. This is a

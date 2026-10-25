@@ -75,6 +75,18 @@ For multi-milestone initiatives, structure the plan around sequential waves with
 - **Dispatch Briefs**: Embed compact, ready-to-run handoff prompts for each wave ($\le 1200$ tokens) covering invariants, scope boundaries, test commands, and the structured JSON return receipt schema.
 - **Pre-warmed Worktrees**: Ensure the orchestrator bootstraps runtime dependencies (e.g. symlinking `node_modules`, `.env.sandbox`, C-bindings) before dispatching workers.
 
+## Integrate an external review
+
+Compare recommendations against implemented behavior and evidence before adding
+work. Map accepted recommendations to existing phase owners and update their exit
+criteria in place; distinguish already implemented, partially qualified and new
+work. Preserve working contracts and explicit non-goals. Reuse an established
+canonical roadmap even outside the default Spectacular folder; link rather than
+relocate or duplicate it. A packaging plan does not become a second product plan.
+When implementation is requested, start the highest-value bounded batch and keep
+its results in those same owners. Do not leave stale completed claims in status
+or tests when the supporting evidence proves only a narrower capability.
+
 ## Resume and evolve
 
 Reuse the same path through planning, implementation, and delivery. Record useful

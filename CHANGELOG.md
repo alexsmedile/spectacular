@@ -1,6 +1,18 @@
 # Changelog
 
+## Documentation alignment — 2026-10-10
+
+Ordinary knowledge: versioned reusable protocols, local essentials, explicit overview/detail conflict reconciliation and derived catalogs; mechanical interfaces unchanged.
+
 ## [Unreleased]
+
+### Ontology
+
+- Domain ontology revision 0.5 adds domain protocol, repository instance, canonical owner, document contract, representation depth and progressive expansion. Ordinary semantic agreements remain separate from governed Contracts; no CLI/schema/release changes.
+
+### Changed
+
+- Ordinary knowledge guidance now distinguishes content, maintenance meta and raw roles; preserves one owner through progressive expansion; separates representation depth, applicability and authority. Plain-language document contracts do not activate governed Contracts, schemas or Missions. No CLI, release version or mechanical-record changes.
 
 ## 3.4.0 — 2026-10-09
 

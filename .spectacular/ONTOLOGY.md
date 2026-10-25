@@ -6,8 +6,8 @@ title: Domain ontology and ubiquitous language
 direction: Give owners and agents one readable model of Spectacular's concepts, relationships,
   rules, and actions.
 created: '2026-08-24T01:05:49+02:00'
-version: '0.4'
-updated: '2026-10-07T20:07:46Z'
+version: '0.5'
+updated: '2026-10-10T02:22:27+02:00'
 ---
 
 # Domain vocabulary and relationships
@@ -35,6 +35,12 @@ explicit; a type alone does not select governance.
 | Contract | Accepted agreement about a capability and its constraints. | Project definition |
 | Decision | Choice and rationale; soft by default, mechanical validation recommended. | Durable context |
 | Decision Compliance | Verification that an implementation strictly adheres to locked architectural rulings (`D<N>`). | Proof and continuity |
+| Document contract | Plain-language purpose, scope, exclusions and relationships for an ordinary knowledge document; distinct from a mechanically governed Contract. | Ordinary knowledge |
+| Domain protocol | Reusable conventions and semantic roles for a family of knowledge repositories; instances own their actual answers and overrides. | Knowledge architecture |
+| Repository instance | A concrete maintained collection implementing declared domain roles; directory presence alone does not select authority or governance. | Knowledge architecture |
+| Canonical owner | Current declared home of a definition or decision; summaries link rather than maintain rival definitions. | Semantic ownership |
+| Representation depth | Degree of decomposition from a document to linked records or object containers; independent of approval and completeness. | Knowledge architecture |
+| Progressive expansion | Add independently useful detail while preserving the overview's purpose and repairing retrieval links. | Knowledge maintenance |
 | Durable Context | Project knowledge that remains useful across chats, agents, and working phases. | Continuity |
 | Evidence | Attributable observation supporting a claim. | Proof and continuity |
 | Gap | A stated unresolved limitation or dependency. | Proof and continuity |
@@ -105,6 +111,24 @@ drafting only when useful. Optional Missions bind Contracts and own proof. See t
 Relationships are directed labelled edges; use owns, contains, references,
 governed_by, reads_from, writes_to, emits, and transitions_to where meaningful.
 Use 1, 0..1, 1..*, or 0..* only when cardinality matters.
+
+## Ordinary knowledge architecture
+
+A domain protocol defines reusable semantic roles; an instance holds its actual
+knowledge and exceptions. Content, maintenance meta and raw/source material are
+roles, not mandatory folders. Follow existing workspace homes and metadata;
+do not import a specialist's physical tree into every Spectacular project.
+
+An overview links current owners. Expansion may give a record independent
+linked objects while the overview keeps its question. Applicability, authority,
+scoped approval, evidence, completeness and representation depth are independent.
+Small/compact/expanded representations are not a governance or maturity ladder.
+
+Classify incoming knowledge, locate its owner, compare/reconcile, integrate
+within authorization and repair retrieval/history. Preserve explicit conflicts,
+source meaning and decision scope. A document contract adds no schema claim,
+Mission or command-owned Contract; existing governed records retain their rules.
+Detailed maintenance guidance belongs to [knowledge](../skills/spectacular/references/knowledge.md).
 
 ## Invariants and policies
 

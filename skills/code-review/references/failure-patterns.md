@@ -21,6 +21,10 @@ prompts, not evidence that a project has a defect. Prioritize by actual usage an
 | Unnecessary abstractions / competing owners | Identify real readers and writers; demonstrate behavioral divergence or maintenance cost rather than criticizing file count. |
 | Dependency / environment illusion | Check declared dependencies, lockfiles, clean-import assumptions and generated sources without implicit installation. |
 | Scope and legacy confusion | Check current requirements before marking deferred UI, preserved compatibility, experimental tools or purchased sources as defects. |
+| Fail-open controls | Distinguish required missing config from optional absence; trace fallback values to the actual authorization, acceptance or write decision. |
+| Boundary asymmetry | Trace producer IDs/paths/units through adapters to filesystem, HTML, network or subprocess sinks; a safe producer does not validate every supported direct caller. |
+| Input/output aliasing | Test output equal to or containing an input, partial directory overlap, same file through symlinks and missing directory components before destructive writes. |
+| API or dependency hallucination | Compare imports, method signatures and flags with the pinned, installed runtime; declarations/source availability alone do not prove the integration executes. |
 
-For a large repo, inventory all major surfaces, select risk-based deep traces and disclose
-remaining coverage. An exhaustive scan is not an exhaustive semantic review.
+Preserve documented single-writer and supported legacy constraints when refuting
+candidates; report operational limitations separately from contract violations.

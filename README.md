@@ -88,6 +88,18 @@ does not block ordinary work. Existing governed records retain their identities,
 freeze points, and mutation rules. A `schema` field claims mechanical governance;
 ordinary context uses folder agreements instead.
 
+## Evidence-based code review
+
+The bundled [code-review skill](skills/code-review/SKILL.md) reviews diffs, audits
+codebases and checks test credibility, including AI-generated projects. It traces
+entrypoints and consumers, tests candidates against counterevidence, and reports
+priority, confidence, reproduction and coverage limits separately. Review is
+read-only until fixes are requested; no CLI initialization or Mission is needed.
+
+The [research notes](skills/code-review/references/research-sources.md) record
+external methods adopted and rejected. A passing alternate runtime, an aggregate
+score or a successful schema check does not certify production readiness.
+
 ## Install
 
 The Skill and CLI install separately. The Skill provides the context workflow;

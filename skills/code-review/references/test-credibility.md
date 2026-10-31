@@ -15,8 +15,11 @@ still make this test green? Demonstrate that counterexample when feasible.
 | Catch-all / conditional assertions | Verify the intended assertion executes and unexpected errors fail; distinguish deliberate optional-dependency skips. |
 | Happy-path-only fixtures | Add the smallest negative case exposing a demonstrated bug, including unchanged-state assertions on rejection. |
 | Coverage without sensitivity | In a disposable copy, introduce a plausible defect and run the same focused test; a surviving mutation exposes only that test's blind spot. |
+| UI acknowledgement accepted as completion | An unchanged button label is not confirmation. Observe the intended persisted state or effect, and show that a no-op handler fails. Use disposable server data, not a pre-existing local service. |
 | E2E label with substituted pipeline | Trace which boundaries actually execute; label the proven integration scope precisely. |
 | Green suite from partial discovery | Check runner patterns, languages, skipped tests and dependency guards; report executed versus omitted suites. |
+| Invariants missing across inputs | Try metamorphic checks: change bytes while keeping an ID, rename/move a project, convert equivalent units, reorder independent records. State which output must change or remain invariant. |
+| Property claims from one example | For containment, revision binding, ownership and no-clobber, vary valid/invalid boundaries; compare both observable outputs and preserved inputs. |
 
 Run the unmodified focused test first, then the counterexample or isolated mutation, then
 confirm the trial did not alter the checkout. Mutation is optional when static reasoning
@@ -32,3 +35,10 @@ A test that accurately verifies an incorrect domain assumption is a wrong oracle
 no-op test. Passing parse/type/schema checks cannot certify rendered output, accessibility,
 audio/visual quality or owner acceptance. Preserve useful low-level tests and identify the
 specific higher-level evidence missing.
+
+For isolated mutation evidence, record the source revision/dirty scope, exact mutation,
+focused command and observed result. Verify the loaded module actually comes from the
+mutated copy; import caches and path manipulation can silently test the original. A survivor identifies a specific blind spot, not a
+suite-wide score; a killed mutant proves only the exercised sensitivity. Restore or
+remove only the disposable trial, never the user's checkout. Reuse prior passing runs
+while the relevant source and dependencies are unchanged.

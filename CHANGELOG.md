@@ -12,6 +12,12 @@ Ordinary knowledge: versioned reusable protocols, local essentials, explicit ove
 
 ### Changed
 
+- Expanded the bundled `code-review` skill to 1.1.1 with stack applicability,
+  active refutation, incremental variant searches and primary-source provenance.
+  Lessons cover filesystem versus hash boundaries, actual local-server exposure,
+  persisted-state test oracles, mutation-module identity and runtime-specific
+  evidence. No CLI, release-version or mechanical-record changes.
+
 - Ordinary knowledge guidance now distinguishes content, maintenance meta and raw roles; preserves one owner through progressive expansion; separates representation depth, applicability and authority. Plain-language document contracts do not activate governed Contracts, schemas or Missions. No CLI, release version or mechanical-record changes.
 
 ## 3.4.0 — 2026-10-09

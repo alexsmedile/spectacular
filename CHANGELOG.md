@@ -12,6 +12,11 @@ Ordinary knowledge: versioned reusable protocols, local essentials, explicit ove
 
 ### Changed
 
+- Spectacular skill 3.4.4 adds a decision-based research stopping rule: continue
+  for material evidence, otherwise choose a bounded authorized step. Preserve
+  design-only scope, recovery and required checks; activity is not progress.
+  Guidance-only update; no CLI, release-version or deployment changes.
+
 - Spectacular skill 3.4.3 strengthens capability-first slices, reusable module/state
   boundaries, workflow-specific prerequisites, selective downstream invalidation and
   recovery. Completion claims now map to attributable evidence; thread coordination

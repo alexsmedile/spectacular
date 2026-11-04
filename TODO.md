@@ -21,6 +21,9 @@ extensions:
 
 ## Future Companion Skills Ideas (Full-Lifecycle Software Factory)
 
+- [ ] [companions] Qualify the research stopping rule on desktop, SaaS and internal-tool cases ~b
+  > [Partial source study and proposed checks](.spectacular/audits/action-overthinking-study.md), inspired by Dan Martell's post. Guidance integrated through owner-requested lesson-learned in skill 3.4.4; behavioral trials remain unexecuted. Verify less redundant research without weakening evidence, recovery or design-only scope. Caption and two slides inspected; remaining carousel not verified.
+
 - **`ui-craftsman`** (Frontend & Design Systems): Accessible (WCAG AA) components, design tokens (Tailwind/CSS vars), state machines (Zustand/XState), optimistic UI, form validation (Zod), and micro-interactions. Direct handoff from `rapid-prototyping` Level 3.
 - **`api-design`** (Interface & Wire Contracts): OpenAPI 3.1, gRPC / Protobuf, GraphQL, RFC 7807 Problem Details error envelopes, cursor pagination, and webhook signing/retry specs. Bridges `system-architecture` and `data-modeling`.
 - **`test-engineer` / `adversarial-qa`** (Proof & Falsification): TDD failure-test-first enforcement, dedicated Hunter adversarial passes (concurrency races, auth edge cases, injection), property-based testing, and contract fixtures.

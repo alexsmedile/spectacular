@@ -68,6 +68,26 @@ rejected option, or a reasoned deferral with a revisit condition. If inconclusiv
 state the missing evidence and justify a bounded extension; do not append an
 indefinite chain of micro-spikes or treat feasibility as working integration.
 
+### Research stopping rule
+
+Before extending research, name the decision it could change and the missing
+evidence. Continue when a source can resolve a material unknown or a required
+verification remains outstanding. Stop repeating comparisons once the evidence
+supports the scoped decision; this is not a fixed source count or time limit.
+
+If further reading would only repeat known options, choose the smallest authorized
+step that answers the remaining question: inspect existing behavior, run a bounded
+representative probe, or use a reversible default within scope. State its question,
+effort bound, observable result and decision before acting; apply the experiment
+closure guidance above. An inconclusive result needs a specific evidence gap and
+justified extension, not an endless series of probes or a speculative framework.
+
+Research and design can themselves be the useful action. A design-only request
+still ends with a recommendation, not implementation; missing approval never becomes
+permission through an action bias. Preserve correctness, recovery and required
+checks. Do not equate files changed, code written or tools called with progress,
+or infer psychological/financial traits from a user's hesitation.
+
 ### Capability boundaries
 
 Map user outcome → required capabilities → observed working path before dividing

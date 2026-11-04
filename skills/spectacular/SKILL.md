@@ -9,7 +9,7 @@ description: >-
   "supervised dispatch", "handoff", "mission check", "complete mission", "break this software", or "breakage tests".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
-  version: "3.4.3"
+  version: "3.4.4"
 ---
 
 # Spectacular
@@ -74,6 +74,11 @@ Directory presence and document type organize context; neither grants authority.
 Owner instructions, accepted constraints, repository checks, and actual effect
 permissions apply in both routes. Missing CLI blocks only command-owned actions;
 continue independent ordinary work without fabricating governed records.
+
+Before another research round, name the decision it could change; follow the
+[research stopping rule](references/plan.md#research-stopping-rule) when more reading
+would only repeat known options. Prefer a bounded authorized step that resolves
+material uncertainty; activity alone is not progress and grants no extra authority.
 
 ## Governed procedures
 

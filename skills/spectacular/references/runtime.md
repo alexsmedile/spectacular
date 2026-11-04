@@ -1,6 +1,9 @@
 # Runtime & Delegation Micro-Kernel
 
-Use this when: an orchestrator is managing multi-step dependency waves, Dispatch Briefs, worktree side sessions, or formal Mission Charters and Handoffs.
+Use this when: managing authorized subagents or separate task threads, dependency
+waves, Dispatch Briefs, worktree side sessions, or formal Mission Charters and Handoffs.
+Separate conversations do not isolate files, state or authority. Use host thread
+tools when requested and available; do not present a subagent as a new app thread.
 
 ## 2. CLI Palette
 ```bash
@@ -20,7 +23,8 @@ Answers: *"What governs this slice of work?"*
 - **`governance: mission` (Tier 3)**: Full immutable `M<N>.md` contract, Handoff, and compiled Charter.
 
 ## 4. Physical Execution Workspace Modes
-- **`lead-checkout`**: Primary working tree for the Lead Orchestrator and strictly sequential steps.
+- **`lead-checkout`**: Primary working tree; sequential writes by default. Explicitly
+  assigned workers may share it only with disjoint writable paths and coordinated interfaces.
 - **`linked-worktree`**: Isolated git worktree (`.worktrees/<slug>`) on a dedicated branch for one writer.
 - **`sandbox`**: Disposable container or experiment branch with zero merge authority.
 - **`read-only`**: Non-mutating scout or reviewer thread inspecting diffs.
@@ -31,13 +35,21 @@ Before dispatching a subagent to `.worktrees/<slug>`, the Lead Orchestrator must
 2. Verify native C/C++ bindings (e.g. SQLite bindings) resolve cleanly in the new path.
 3. Ensure the branch is strictly checked out at the authorized upstream gate commit.
 
+Use worktrees only when selected within user/host authority; multiple threads do
+not require them. In a shared checkout, reserve package manifests, lockfiles,
+schemas and common anchors to one writer. A worker needing another assignment's
+paths reports the dependency before editing; separate sections in one file still
+require explicit coordination. Preserve pre-existing dirty work.
+
 ## 5. The Dispatch Brief (Default for Tier 2)
 Dispatched workers receive a self-contained brief:
-- **Goal & Prerequisite**: What to build and which upstream interface gate has locked.
-- **Physical Workspace**: Worktree path and branch name.
+- **Goal & Prerequisite**: Observable outcome, authoritative context and settled upstream interfaces.
+- **Physical Workspace**: Actual checkout/sandbox and branch when relevant; no invented worktree.
 - **Allowed Writable Paths**: Exact file subtrees the worker may touch.
 - **Verification Command**: Command proving completion (e.g. `go test -v ./internal/parser/...`).
 - **Stop / Blocked Condition**: When to halt and return a blocker receipt.
+- **Integration Owner**: Who reviews returned changes, reconciles shared contracts
+  and exercises the combined path. Independent checks may run before integration.
 
 ```markdown
 ### Dispatch Brief Sample
@@ -75,5 +87,7 @@ planned ──► ready ──► active ──► returned ──► integrated
 
 ## 7. Negative Constraints (DO NOT)
 - **DO NOT** dispatch parallel workers before upstream contract gates are locked.
-- **DO NOT** make workers manage `.spectacular/` files or create runs/checkpoints.
+- **DO NOT** let workers mutate unassigned shared context or create governed
+  runs/checkpoints. A specifically assigned ordinary plan/reference may be updated
+  within its reserved paths; the lead owns cross-thread reconciliation.
 - **DO NOT** dispatch subagents with unbounded prompt dumps (keep compiled charters $\le 1{,}200$ tokens).

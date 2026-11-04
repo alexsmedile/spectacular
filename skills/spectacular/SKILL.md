@@ -9,7 +9,7 @@ description: >-
   "supervised dispatch", "handoff", "mission check", "complete mission", "break this software", or "breakage tests".
   Do not invoke for generic planning, ungrounded chat, ordinary git operations, or simple status/branch checks.
 metadata:
-  version: "3.4.1"
+  version: "3.4.3"
 ---
 
 # Spectacular
@@ -24,6 +24,12 @@ bounded Mission only when the owner explicitly selects governed execution.
   project plan in `.spectacular/plans/` when writes are permitted. Return the
   saved path, or explicitly identify an unsaved draft under host restrictions.
   This Skill route adds no public CLI command and activates no Mission.
+  Define module/state ownership before extraction; see
+  [capability boundaries](references/plan.md#capability-boundaries) and
+  [workflow/change consequences](references/plan.md#workflow-and-change-consequences).
+  Navigation, execution permission, result acceptance and downstream use are distinct.
+  Use [milestone-readiness.md](references/milestone-readiness.md) to distinguish
+  implemented, integrated, portable, usable, accepted and distributable claims.
 - **Breakage testing (`/spectacular breakage`, `$spectacular breakage`, or a request
   to deliberately break software in a Spectacular workspace)**: Read
   [breakage.md](references/breakage.md). Inspect the target, present principles
@@ -94,7 +100,7 @@ spectacular evidence record <mission> <draft|-> [--json]          # Record third
 
 ## 2. Fast Autonomous Model & Foundational Anchors
 
-Spectacular prioritizes execution over ceremony. Governance is managed strictly by the top-level **Orchestrator**; dispatched **Workers/Subagents do NOT manage Spectacular files** and execute purely against their code charter:
+Spectacular prioritizes execution over ceremony. Governance is managed strictly by the top-level **Orchestrator**; dispatched workers preserve unassigned governance and shared context. Specifically assigned ordinary documents may be updated within reserved paths; see [runtime.md](references/runtime.md).
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -150,7 +156,7 @@ For a requested governed CLI operation, invoke `spectacular --version --json` an
 | **Worker / Side Session** | Executes code & tests in `linked-worktree`; **ignores governance** | Dispatch Brief ($\le 1200$ tok) | Structured Return Receipt + Git diff |
 | **Reviewer** | Inspects code against frozen claims (**Observe ≠ Act**) | Frozen claims → Diff | Structured verdict (`pass`/`fail`) |
 
-- **Physical Workspaces**: `lead-checkout` (Lead/sequential), `linked-worktree` (`.worktrees/<slug>`), `sandbox` (disposable container/spike), `read-only` (reviewer).
+- **Physical Workspaces**: `lead-checkout` (sequential by default; disjoint assigned paths may be shared), `linked-worktree` (`.worktrees/<slug>`), `sandbox` (disposable container/spike), `read-only` (reviewer).
 - **Worktree Pre-warming & Bootstrapping**: Before dispatching a worker to `.worktrees/<slug>`, the Lead Orchestrator must pre-warm runtime dependencies (symlinking shared `node_modules`, bootstrapping ignored sandbox configurations/`.env` files, compiling C/C++ native bindings) so the worker executes in an initialized environment.
 - **Structured JSON Return Receipt**: Workers must conclude their handoff with a standard JSON return block:
   ```json

@@ -12,6 +12,12 @@ Ordinary knowledge: versioned reusable protocols, local essentials, explicit ove
 
 ### Changed
 
+- Spectacular skill 3.4.3 strengthens capability-first slices, reusable module/state
+  boundaries, workflow-specific prerequisites, selective downstream invalidation and
+  recovery. Completion claims now map to attributable evidence; thread coordination
+  supports disjoint shared-checkout assignments without mandatory worktrees. No CLI,
+  mechanical-schema, release-version, installation or deployment changes.
+
 - Expanded the bundled `code-review` skill to 1.1.1 with stack applicability,
   active refutation, incremental variant searches and primary-source provenance.
   Lessons cover filesystem versus hash boundaries, actual local-server exposure,

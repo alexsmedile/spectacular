@@ -74,6 +74,22 @@ integrated, real-dependency, and user-observed evidence. A mock cannot prove liv
 integration; an integration test cannot establish user value. Recheck affected
 claims after material changes rather than reusing stale evidence.
 
+Use completion language only as far as the evidence supports it:
+
+| Claim | Minimum relevant evidence |
+|---|---|
+| Implemented | Code exists and applicable checks pass for the stated behavior |
+| Integrated | The path runs across the actual components; mocks are identified |
+| Portable | The artifact runs outside the source environment with declared dependencies |
+| Usable | Intended interaction is observed in the declared user context |
+| Accepted | The responsible person accepted the identified result and scope |
+| Distributable | Artifact contents, install/access and applicable upgrade/recovery are verified |
+
+These qualify claims, not six mandatory gates for every edit. A successful build
+cannot replace a missing browser check; an isolated synthetic host cannot establish
+real-world usability. Name unavailable verification and continue independent work
+without bypassing environment restrictions or inventing acceptance.
+
 For an MVP experiment, state the target user/problem, value hypothesis, smallest
 representative intervention, observation window, measure and decision threshold,
 and outcome: supported, contradicted, or inconclusive. Thresholds must be agreed

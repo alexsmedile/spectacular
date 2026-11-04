@@ -68,10 +68,53 @@ rejected option, or a reasoned deferral with a revisit condition. If inconclusiv
 state the missing evidence and justify a bounded extension; do not append an
 indefinite chain of micro-spikes or treat feasibility as working integration.
 
+### Capability boundaries
+
+Map user outcome → required capabilities → observed working path before dividing
+work into screens or packages. In the existing plan, summarize each proposed module's
+responsibility, exclusions, input/output, owned state and authoritative writer,
+host-supplied identity/permissions/storage, dependencies and intended consumers.
+Keep one writer per fact; an adapter or derived view does not create another authority.
+Extract for concrete reuse and exercise a second consumer before claiming generality;
+a synthetic consumer proves isolation, not adoption. Do not delay the first useful
+workflow until every possible shared capability has become a kit.
+
+For infrastructure and UI primitives, inspect existing dependencies and their current
+primary documentation before choosing reuse, adaptation or new code. Preserve stable
+identity, saved state, accessibility, drafts and compatibility across that choice.
+Name modules after demonstrated responsibility; distinguish a naming proposal from
+an authorized migration. A library choice does not define domain state or approvals.
+
+### Workflow and change consequences
+
+Use when the slice has staged actions or dependent results. Generic lifecycle phases
+are an overview, not a universal executable workflow. For relevant steps identify
+goal, versioned inputs, prerequisites, executor, decision owner, output, completion
+criteria, applicable gates, correction/reassignment, recovery and downstream dependencies.
+These are reasoning prompts in existing owners, not a required schema or workflow engine.
+
+Opening a view does not execute work; permission to execute does not accept its
+result; accepting a result does not authorize every downstream use. Significant
+actions need an explicit trigger, preconditions, effect, authority and observable
+receipt. Review surfaces display decisions, changes, history and consequences;
+the owning domain/workflow evaluates eligibility without duplicating approval state.
+
+Ask what becomes stale when an input, rule or interface changes. Identify unaffected
+results, outputs to regenerate, checks to rerun and decisions to reconfirm. Follow
+actual dependencies rather than resetting everything or silently reusing old approval.
+Preserve historical artifacts/decisions and state their current applicability.
+Use existing state mechanisms; do not impose event sourcing or a dependency engine.
+
+With the first slice introducing persistence or external effects, select applicable
+reload, concurrent edit, duplicate request, dependency failure and interrupted-result
+registration cases. Specify how to recover a completed effect without repeating it.
+Keep recovery proportional to actual risks; a local app need not become a distributed
+system. Verification cases belong with the workflow, not in a later polish phase.
+
 ### Multi-Wave Campaign Plans (`CampaignPlan`)
 
 For multi-milestone initiatives, structure the plan around sequential waves with explicit gates:
-- **Wave & Track Topology**: Distinguish between sequential waves, *Blocking Prerequisites* (`blocks: [Wave X]`), and *Orthogonal Parallel Tracks* (disjoint write scopes). Each slice declares a feature branch, physical worktree (`.worktrees/<slug>`), and verification gate.
+- **Wave & Track Topology**: Distinguish between sequential waves, *Blocking Prerequisites* (`blocks: [Wave X]`), and *Orthogonal Parallel Tracks* (disjoint write scopes). Each slice declares writable paths, actual workspace and verification gate; branches/worktrees are used only when selected within user/host authority.
 - **Dispatch Briefs**: Embed compact, ready-to-run handoff prompts for each wave ($\le 1200$ tokens) covering invariants, scope boundaries, test commands, and the structured JSON return receipt schema.
 - **Pre-warmed Worktrees**: Ensure the orchestrator bootstraps runtime dependencies (e.g. symlinking `node_modules`, `.env.sandbox`, C-bindings) before dispatching workers.
 
